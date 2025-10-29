@@ -42,6 +42,8 @@ spec:
       value: "{{  rpm.dname }}.spec"
     - name: path-context
       value: "rpms/{{ rpm.dname }}"
+    - name: mock-config-template-file
+      value: "mock/mock.cfg"
     - name: self-ref-url
       value: "{{ pipeline_url }}"
     - name: self-ref-revision
