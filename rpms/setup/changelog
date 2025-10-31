@@ -1140,3 +1140,4 @@
 * Wed Apr 16 1997 Erik Troan <ewt@redhat.com>
 - Don't verify md5sum, size, or timestamp of /var/log/lastlog, /etc/passwd,
   or /etc/group.
+
