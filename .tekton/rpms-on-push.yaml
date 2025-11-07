@@ -30,6 +30,10 @@ spec:
       value: rootfiles
     - name: target-branch
       value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
     - name: specfile
       value: "rootfiles.spec"
     - name: path-context
@@ -87,6 +91,10 @@ spec:
       value: setup
     - name: target-branch
       value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
     - name: specfile
       value: "setup.spec"
     - name: path-context
