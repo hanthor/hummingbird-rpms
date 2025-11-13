@@ -1,0 +1,220 @@
+---
+rpmlint:
+  command: |
+    rpmlint "${TEST_RPM:?}"
+  known_issues:
+    - pattern: "W: obsolete-not-provided python2-rpm"
+      description: "python2-rpm is obsolete and intentionally not provided"
+      fails: "sometimes"
+    - pattern: "E: non-executable-script /usr/lib/rpm/rpm.daily 644 /bin/sh"
+      description: "rpm.daily script marked as non-executable"
+      fails: "sometimes"
+    - pattern: "W: non-etc-or-var-file-marked-as-conffile /usr/lib/sysimage/rpm/Index.db"
+      description: "RPM database files marked as conffile outside /etc"
+      fails: "sometimes"
+    - pattern: "W: non-etc-or-var-file-marked-as-conffile /usr/lib/sysimage/rpm/Packages.db"
+      description: "RPM database files marked as conffile outside /etc"
+      fails: "sometimes"
+    - pattern: "W: non-etc-or-var-file-marked-as-conffile /usr/lib/sysimage/rpm/rpmdb.sqlite"
+      description: "RPM database files marked as conffile outside /etc"
+      fails: "sometimes"
+    - pattern: "W: non-etc-or-var-file-marked-as-conffile /usr/lib/sysimage/rpm/rpmdb.sqlite-shm"
+      description: "RPM database files marked as conffile outside /etc"
+      fails: "sometimes"
+    - pattern: "W: non-etc-or-var-file-marked-as-conffile /usr/lib/sysimage/rpm/rpmdb.sqlite-wal"
+      description: "RPM database files marked as conffile outside /etc"
+      fails: "sometimes"
+    - pattern: "W: non-coherent-filename test.rpm rpm-6.0.0-1.fc44.x86_64.rpm"
+      description: "Test RPM filename does not match expected naming convention"
+      fails: "sometimes"
+    - pattern: "W: no-manual-page-for-binary rpmquery"
+      description: "rpmquery binary has no manual page"
+      fails: "sometimes"
+    - pattern: "W: no-manual-page-for-binary rpmverify"
+      description: "rpmverify binary has no manual page"
+      fails: "sometimes"
+    - pattern: "W: name-repeated-in-summary RPM"
+      description: "Package name 'RPM' appears in summary"
+      fails: "sometimes"
+    - pattern: "W: install-file-in-docs /usr/share/doc/rpm/INSTALL"
+      description: "INSTALL file included in documentation"
+      fails: "sometimes"
+    - pattern: "W: hidden-file-or-dir /usr/lib/sysimage/rpm/.rpm.lock"
+      description: "Hidden lock file in RPM sysimage directory"
+      fails: "sometimes"
+    - pattern: "W: files-duplicate /usr/share/licenses/rpm/COPYING /usr/share/doc/rpm/COPYING"
+      description: "COPYING file duplicated in licenses and docs directories"
+      fails: "sometimes"
+    - pattern: "W: empty-%postun"
+      description: "Empty %postun script"
+      fails: "sometimes"
+    - pattern: "W: dangerous-command-in-%pre ln"
+      description: "Hard link command used in %pre script"
+      fails: "sometimes"
+    - pattern: "W: cross-directory-hard-link /usr/lib/rpm/platform/(ia32e-linux|ppc32dy4-linux|ppc64pseries-linux|ppc64iseries-linux|ppc8260-linux|ppc8560-linux|ppciseries-linux|ppcpseries-linux|sparcv9-linux|x86_64-linux)/macros"
+      description: "Cross-directory hard links for platform macros"
+      fails: "sometimes"
+
+rpm-binaries-available:
+  command: |
+    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+
+    # Create a container with a command that keeps it running
+    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
+
+    # Ensure cleanup on exit
+    cleanup() {
+      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+
+    # Copy RPM into container
+    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
+
+    # Start the container
+    "${TEST_ENGINE}" start "${container_id}"
+
+    # Install the test RPM
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y \
+      /tmp/test.rpm \
+      which
+
+    # Verify binaries are available
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which rpm
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --version
+
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which rpmdb
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpmdb --version
+
+    # Cleanup
+    "${TEST_ENGINE}" stop "${container_id}"
+    "${TEST_ENGINE}" rm -f "${container_id}"
+
+rpm-database-queries:
+  command: |
+    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+
+    # Create a container with a command that keeps it running
+    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
+
+    # Ensure cleanup on exit
+    cleanup() {
+      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+
+    # Copy RPM into container
+    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
+
+    # Start the container
+    "${TEST_ENGINE}" start "${container_id}"
+
+    # Install the test RPM
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
+
+    # Verify database queries work
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q rpm
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -qi rpm
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -ql rpm
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q --provides rpm
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q --requires rpm
+
+    # Cleanup
+    "${TEST_ENGINE}" stop "${container_id}"
+    "${TEST_ENGINE}" rm -f "${container_id}"
+
+rpm-libraries:
+  command: |
+    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+
+    # Create a container with a command that keeps it running
+    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
+
+    # Ensure cleanup on exit
+    cleanup() {
+      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+
+    # Copy RPM into container
+    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
+
+    # Start the container
+    "${TEST_ENGINE}" start "${container_id}"
+
+    # Install the test RPM
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
+
+    # Verify libraries
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" ldconfig -p | grep librpm
+
+    # Cleanup
+    "${TEST_ENGINE}" stop "${container_id}"
+    "${TEST_ENGINE}" rm -f "${container_id}"
+
+rpm-macros:
+  command: |
+    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+
+    # Create a container with a command that keeps it running
+    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
+
+    # Ensure cleanup on exit
+    cleanup() {
+      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+
+    # Copy RPM into container
+    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
+
+    # Start the container
+    "${TEST_ENGINE}" start "${container_id}"
+
+    # Install the test RPM
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
+
+    # Verify macros
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_bindir}"
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_libdir}"
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_sysconfdir}"
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --showrc
+
+    # Cleanup
+    "${TEST_ENGINE}" stop "${container_id}"
+    "${TEST_ENGINE}" rm -f "${container_id}"
+
+rpm-install-package:
+  command: |
+    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+
+    # Create a container with a command that keeps it running
+    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
+
+    # Ensure cleanup on exit
+    cleanup() {
+      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+
+    # Copy RPM into container
+    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
+
+    # Start the container
+    "${TEST_ENGINE}" start "${container_id}"
+
+    # Install the test RPM
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
+
+    # Download package
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf download which
+
+    # Install package
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -ivh which-*.rpm
+
+    # Verify installation
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which --version
+
+    # Cleanup
+    "${TEST_ENGINE}" stop "${container_id}"
+    "${TEST_ENGINE}" rm -f "${container_id}"
