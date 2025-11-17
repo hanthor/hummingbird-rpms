@@ -7,9 +7,16 @@ delete-konflux-comments:
 	podman run -it --rm -e GITLAB_TOKENS='{"gitlab.com":"COM_GITLAB_TOKEN"}' -e COM_GITLAB_TOKEN -v $(PWD):/src:z quay.io/cki/cki-tools:production /src/ci/delete_konflux_comments.py $(ARGS)
 
 
-.PHONY: check-host check 
+.PHONY: check-host check
 check-host:
 	git ls-files -z 'ci/*.sh' | xargs -0 shellcheck --external-sources --enable=all
+	# FIXME: add pytest to gitlab-ci container
+	if command -v pytest > /dev/null; then \
+	  pytest -v; \
+	else \
+	  echo "pytest not installed, skipping tests"; \
+	fi
+
 check:
 	$(PODMAN_RUN) $(PODMAN_IMAGE) make check-host
 
@@ -19,4 +26,3 @@ generate-host:
 	ci/generate.sh $(ARGS)
 generate:
 	$(PODMAN_RUN) $(PODMAN_IMAGE) make generate-host ARGS='$(ARGS)'
-
