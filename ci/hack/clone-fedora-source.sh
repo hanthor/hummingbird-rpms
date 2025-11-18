@@ -44,16 +44,21 @@ RUN dnf install -y fedpkg git
 EOF
 )
 
+# Extract command substitutions to avoid SC2312
+RPMS_MOUNT="$(pwd)/rpms:${WORKDIR}:Z"
+USER_ID=$(id -u)
+GROUP_ID=$(id -g)
+
 # Clone the package using the built image
 podman run --rm \
-    -v "$(pwd)/rpms:${WORKDIR}:Z" \
+    -v "${RPMS_MOUNT}" \
     -w "${WORKDIR}" \
     --userns=keep-id \
-    --user "$(id -u):$(id -g)" \
+    --user "${USER_ID}:${GROUP_ID}" \
     "${CONTAINER_IMAGE}" \
     bash -c "
         fedpkg clone --anonymous --branch ${BRANCH} ${PKG} && \
-        chown -R $(id -u):$(id -g) ${PKG}
+        chown -R ${USER_ID}:${GROUP_ID} ${PKG}
     "
 
 rm -rf "${DEST}/.git"
