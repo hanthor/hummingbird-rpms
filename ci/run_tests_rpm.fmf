@@ -62,15 +62,17 @@ discover:
         #!/bin/bash
         set -euo pipefail
         shopt -s inherit_errexit
-        echo "IMAGE_NAME: ${IMAGE_NAME:-unset}"
-        echo "IMAGE_URL: ${IMAGE_URL:-unset}"
-        if [[ -n ${IMAGE_NAME:-} ]]; then
-            package_name=${IMAGE_NAME%-main}
-        fi
-        if [[ -n ${IMAGE_URL:-} ]]; then
-          files_dir=$(mktemp -d)
-          oras pull "${IMAGE_URL}" -o "${files_dir}"
-          rpm_file=$(ls -1 "${files_dir}/"*.rpm | grep -v '.src.rpm' | paste -sd,)
-          src_rpm_file=$(ls -1 "${files_dir}/"*.src.rpm)
-          ci/run_tests_rpm.sh --rpm "${rpm_file}" --src-rpm "${src_rpm_file}" "${package_name:-}"
-        fi
+
+        # Extract package name from IMAGE_NAME (remove -main suffix if present)
+        package_name=${IMAGE_NAME%-main}
+
+        # Create temporary directory for RPM artifacts
+        files_dir=$(mktemp -d)
+        trap "rm -rf ${files_dir}" EXIT
+
+        # Fetch RPMs from ORAS container image
+        oras pull "${IMAGE_URL}" -o "${files_dir}"
+        src_rpm_file=$(ls -1 "${files_dir}/"*.src.rpm)
+
+        # Run tests with the fetched RPM directory
+        ci/run_tests_rpm.sh --repo "${files_dir}" --src-rpm "${src_rpm_file}" "${package_name}"
