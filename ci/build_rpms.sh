@@ -6,8 +6,9 @@
 # - Builds the RPM using mock in the upstream RPM Build Pipeline container
 # - Outputs both binary and source RPMs to .out/PACKAGE_NAME/RPMS/
 #
-# Usage: ./ci/build_rpms.sh PACKAGE_NAME
+# Usage: ./ci/build_rpms.sh [OPTIONS] PACKAGE_NAME
 #   PACKAGE_NAME - Name of the package directory in rpms/
+#   --arch ARCH  - Target architecture (default: auto-detected via uname -m)
 #
 # The built RPMs can be found in: .out/PACKAGE_NAME/RPMS/
 #
@@ -21,6 +22,20 @@ OUT_DIR=${SCRIPT_DIR}/../.out
 
 image=localhost/rpm-build-with-spectool:latest
 arch=x86_64
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --arch)
+            arch="$2"
+            shift 2
+            ;;
+        *)
+            package_name="$1"
+            shift
+            ;;
+    esac
+done
 
 package_name=$1
 test -n "${package_name}" || exit 1
