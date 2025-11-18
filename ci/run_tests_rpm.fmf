@@ -64,13 +64,37 @@ discover:
         shopt -s inherit_errexit
         echo "IMAGE_NAME: ${IMAGE_NAME:-unset}"
         echo "IMAGE_URL: ${IMAGE_URL:-unset}"
+        echo "REPO_PATH: ${REPO_PATH:-unset}"
+
         if [[ -n ${IMAGE_NAME:-} ]]; then
             package_name=${IMAGE_NAME%-main}
         fi
-        if [[ -n ${IMAGE_URL:-} ]]; then
+
+        # Support for repo directory (preferred method)
+        if [[ -n ${REPO_PATH:-} ]]; then
+          src_rpm_file=""
+          if [[ -f ${REPO_PATH}/*.src.rpm ]]; then
+            src_rpm_file=$(ls -1 "${REPO_PATH}"/*.src.rpm | head -n1)
+          fi
+
+          if [[ -n ${src_rpm_file} ]]; then
+            ci/run_tests_rpm.sh --repo "${REPO_PATH}" --src-rpm "${src_rpm_file}" "${package_name:-}"
+          else
+            ci/run_tests_rpm.sh --repo "${REPO_PATH}" "${package_name:-}"
+          fi
+        # Fallback: pull RPMs from ORAS image (legacy method)
+        elif [[ -n ${IMAGE_URL:-} ]]; then
           files_dir=$(mktemp -d)
           oras pull "${IMAGE_URL}" -o "${files_dir}"
-          rpm_file=$(ls -1 "${files_dir}/"*.rpm | grep -v '.src.rpm' | paste -sd,)
-          src_rpm_file=$(ls -1 "${files_dir}/"*.src.rpm)
-          ci/run_tests_rpm.sh --rpm "${rpm_file}" --src-rpm "${src_rpm_file}" "${package_name:-}"
+
+          src_rpm_file=""
+          if [[ -f ${files_dir}/*.src.rpm ]]; then
+            src_rpm_file=$(ls -1 "${files_dir}"/*.src.rpm | head -n1)
+          fi
+
+          if [[ -n ${src_rpm_file} ]]; then
+            ci/run_tests_rpm.sh --repo "${files_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}"
+          else
+            ci/run_tests_rpm.sh --repo "${files_dir}" "${package_name:-}"
+          fi
         fi

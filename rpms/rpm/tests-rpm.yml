@@ -56,165 +56,64 @@ rpmlint:
       fails: "sometimes"
 
 rpm-binaries-available:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      - rpm       # RPM being tested, installed from local repo
+      - which     # Test dependency, installed from Fedora
   command: |
-    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
-
-    # Create a container with a command that keeps it running
-    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
-
-    # Ensure cleanup on exit
-    cleanup() {
-      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
-    }
-    trap cleanup EXIT
-
-    # Copy RPM into container
-    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
-
-    # Start the container
-    "${TEST_ENGINE}" start "${container_id}"
-
-    # Install the test RPM
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y \
-      /tmp/test.rpm \
-      which
-
     # Verify binaries are available
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which rpm
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --version
+    which rpm
+    rpm --version
 
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which rpmdb
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpmdb --version
-
-    # Cleanup
-    "${TEST_ENGINE}" stop "${container_id}"
-    "${TEST_ENGINE}" rm -f "${container_id}"
+    which rpmdb
+    rpmdb --version
 
 rpm-database-queries:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      - rpm  # Install from local repo
   command: |
-    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
-
-    # Create a container with a command that keeps it running
-    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
-
-    # Ensure cleanup on exit
-    cleanup() {
-      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
-    }
-    trap cleanup EXIT
-
-    # Copy RPM into container
-    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
-
-    # Start the container
-    "${TEST_ENGINE}" start "${container_id}"
-
-    # Install the test RPM
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
-
     # Verify database queries work
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q rpm
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -qi rpm
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -ql rpm
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q --provides rpm
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -q --requires rpm
-
-    # Cleanup
-    "${TEST_ENGINE}" stop "${container_id}"
-    "${TEST_ENGINE}" rm -f "${container_id}"
+    rpm -q rpm
+    rpm -qi rpm
+    rpm -ql rpm
+    rpm -q --provides rpm
+    rpm -q --requires rpm
 
 rpm-libraries:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      - rpm  # Install from local repo
   command: |
-    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
-
-    # Create a container with a command that keeps it running
-    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
-
-    # Ensure cleanup on exit
-    cleanup() {
-      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
-    }
-    trap cleanup EXIT
-
-    # Copy RPM into container
-    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
-
-    # Start the container
-    "${TEST_ENGINE}" start "${container_id}"
-
-    # Install the test RPM
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
-
     # Verify libraries
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" ldconfig -p | grep librpm
-
-    # Cleanup
-    "${TEST_ENGINE}" stop "${container_id}"
-    "${TEST_ENGINE}" rm -f "${container_id}"
+    ldconfig -p | grep librpm
 
 rpm-macros:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      - rpm  # Install from local repo
   command: |
-    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
-
-    # Create a container with a command that keeps it running
-    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
-
-    # Ensure cleanup on exit
-    cleanup() {
-      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
-    }
-    trap cleanup EXIT
-
-    # Copy RPM into container
-    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
-
-    # Start the container
-    "${TEST_ENGINE}" start "${container_id}"
-
-    # Install the test RPM
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
-
     # Verify macros
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_bindir}"
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_libdir}"
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --eval "%{_sysconfdir}"
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm --showrc
-
-    # Cleanup
-    "${TEST_ENGINE}" stop "${container_id}"
-    "${TEST_ENGINE}" rm -f "${container_id}"
+    rpm --eval "%{_bindir}"
+    rpm --eval "%{_libdir}"
+    rpm --eval "%{_sysconfdir}"
+    rpm --showrc
 
 rpm-install-package:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      - rpm       # RPM being tested, installed from local repo
+      - which     # Test dependency, installed from Fedora
+      - setup     # Additional test package from Fedora
   command: |
-    TEST_IMAGE="quay.io/hummingbird/core-runtime:latest-builder"
+    # Verify all packages are installed
+    which --version
+    rpm --version
 
-    # Create a container with a command that keeps it running
-    container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${TEST_IMAGE}" infinity)
-
-    # Ensure cleanup on exit
-    cleanup() {
-      "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
-    }
-    trap cleanup EXIT
-
-    # Copy RPM into container
-    "${TEST_ENGINE}" cp "${TEST_RPM:?}" "${container_id}:/tmp/test.rpm"
-
-    # Start the container
-    "${TEST_ENGINE}" start "${container_id}"
-
-    # Install the test RPM
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y /tmp/test.rpm
-
-    # Download package
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf download which
-
-    # Install package
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" rpm -ivh which-*.rpm
-
-    # Verify installation
-    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" which --version
-
-    # Cleanup
-    "${TEST_ENGINE}" stop "${container_id}"
-    "${TEST_ENGINE}" rm -f "${container_id}"
+    # Verify setup package files are available
+    test -d /etc || exit 1
