@@ -1,0 +1,4 @@
+FROM quay.io/redhat-user-workloads/rpm-build-pipeline-tenant/environment:latest
+
+# Install rpmdevtools (includes spectool and other RPM development tools)
+RUN dnf install -y rpmdevtools curl dist-git-client && dnf clean all
