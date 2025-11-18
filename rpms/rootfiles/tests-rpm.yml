@@ -1,15 +1,41 @@
 ---
-# Tests specific to the setup package
+# Tests specific to the rootfiles package
 rpmlint:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      remote:
+        - rpmlint
   command: |
-    rpmlint "${TEST_RPM:?}"
+    # Find the binary RPM for the package being tested
+    TEST_RPM=$(find "${TEST_RPMS_DIR:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.rpm" ! -name "*.src.rpm" -type f | head -n1)
+    if [[ -z ${TEST_RPM} ]]; then
+      echo "Error: No binary RPM found for package ${PACKAGE_NAME}"
+      exit 1
+    fi
+
+    rpmlint "${TEST_RPM}"
   known_issues:
     - pattern: "E: spelling-error"
       description: "rpmlint flags spelling error"
       fails: "sometimes"
 
 src-rpmlint:
+  environment:
+    base: quay.io/hummingbird/core-runtime:latest-builder
+    packages:
+      remote:
+        - rpmlint
   command: |
+    # Find the source RPM for the package being tested
+    # Look in TEST_SRC_RPMS_DIR first, then fall back to TEST_RPMS_DIR
+    search_dir="${TEST_SRC_RPMS_DIR:-${TEST_RPMS_DIR}}"
+    TEST_SRC_RPM=$(find "${search_dir:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.src.rpm" -type f | head -n1)
+    if [[ -z ${TEST_SRC_RPM} ]]; then
+      echo "Skipping: No source RPM found for package ${PACKAGE_NAME}"
+      exit 0
+    fi
+
     # Run rpmlint on source RPM
     rpmlint "${TEST_SRC_RPM}"
   known_issues:
