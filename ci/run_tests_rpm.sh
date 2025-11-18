@@ -41,6 +41,21 @@ EOF
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 base_dir="$(dirname "${SCRIPT_DIR}")"
 
+# Support running from any directory by converting relative paths to absolute
+convert_path_to_absolute() {
+    local path=$1
+    if [[ "${path}" = /* ]]; then
+        # Already absolute
+        echo "${path}"
+    else
+        # Relative path - convert relative to current directory, not script location
+        cd "${CURRENT_DIR}" && echo "$(cd "$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    fi
+}
+
+# Store the directory from which the script was invoked
+CURRENT_DIR="$(pwd)"
+
 # Color codes for logging
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -170,8 +185,12 @@ if [[ ! -d ${package_dir} ]]; then
     exit 1
 fi >&2
 
-# Split comma-delimited RPM paths into array
-IFS=',' read -ra RPM_PATHS <<< "${RPM_PATH}"
+# Split comma-delimited RPM paths into array and convert to absolute paths
+IFS=',' read -ra RPM_PATHS_RAW <<< "${RPM_PATH}"
+RPM_PATHS=()
+for rpm_path in "${RPM_PATHS_RAW[@]}"; do
+    RPM_PATHS+=("$(convert_path_to_absolute "${rpm_path}")")
+done
 
 # Validate all RPM files exist
 for rpm_file in "${RPM_PATHS[@]}"; do
@@ -182,9 +201,12 @@ for rpm_file in "${RPM_PATHS[@]}"; do
 done >&2
 
 # Validate source RPM file exists if provided
-if [[ -n ${TEST_SRC_RPM} ]] && [[ ! -f ${TEST_SRC_RPM} ]]; then
-    echo "Error: Source RPM file '${TEST_SRC_RPM}' not found"
-    exit 1
+if [[ -n ${TEST_SRC_RPM} ]]; then
+    TEST_SRC_RPM="$(convert_path_to_absolute "${TEST_SRC_RPM}")"
+    if [[ ! -f ${TEST_SRC_RPM} ]]; then
+        echo "Error: Source RPM file '${TEST_SRC_RPM}' not found"
+        exit 1
+    fi
 fi >&2
 
 # Setup test environment
