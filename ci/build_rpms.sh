@@ -7,8 +7,9 @@
 # - Outputs binary RPMs to .out/PACKAGE_NAME/RPMS/
 # - Outputs source RPMs to .out/PACKAGE_NAME/SRPMS/
 #
-# Usage: ./ci/build_rpms.sh PACKAGE_NAME
+# Usage: ./ci/build_rpms.sh [OPTIONS] PACKAGE_NAME
 #   PACKAGE_NAME - Name of the package directory in rpms/
+#   --arch ARCH  - Target architecture (default: auto-detected via uname -m)
 #
 # The built RPMs can be found in: .out/PACKAGE_NAME/RPMS/ and .out/PACKAGE_NAME/SRPMS/
 #
@@ -24,10 +25,6 @@ REPO_ROOT=${SCRIPT_DIR}/..
 image=localhost/rpm-builder:latest
 arch=x86_64
 
-<<<<<<< Updated upstream
-package_name=$1
-test -n "${package_name}" || exit 1
-=======
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,12 +38,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-if [[ -z "${package_name}" ]]; then
-    echo "Error: PACKAGE_NAME is required"
-    exit 1
-fi
->>>>>>> Stashed changes
 
 # Use .out directory as workdir for easier debugging
 workdir="${OUT_DIR}/${package_name}"
