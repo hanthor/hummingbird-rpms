@@ -1,0 +1,8 @@
+FROM quay.io/redhat-user-workloads/rpm-build-pipeline-tenant/environment:latest
+
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y \
+    dist-git-client \
+    curl \
+    && \
+    dnf clean all
