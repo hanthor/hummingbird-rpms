@@ -13,28 +13,35 @@ Usage: $0 [OPTIONS] PACKAGE_NAME
 Run tests for RPM packages.
 
 OPTIONS:
-    --rpm PATH[,PATH...] Path to binary RPM file(s) to test (required)
-                         Multiple RPMs can be specified as comma-delimited list
-    --src-rpm PATH       Path to source RPM file (optional, enables source RPM tests)
-    --verbose, -v        Enable verbose output during testing
-    --help, -h           Show this help message
+    --repo DIR            Directory containing RPM files to use as local repository
+                          (required) Will find and test PACKAGE_NAME in this directory
+                          All RPMs in directory are added to the repository
+    --src-rpm PATH        Path to source RPM file (optional, enables source RPM tests)
+    --verbose, -v         Enable verbose output during testing
+    --help, -h            Show this help message
 
 ARGUMENTS:
-    PACKAGE_NAME         Name of the RPM package (must correspond to a folder in rpms/)
-                         Examples: rootfiles, setup
+    PACKAGE_NAME          Name of the RPM package (must correspond to a folder in rpms/)
+                          Examples: rootfiles, setup, rpm
 
 EXAMPLES:
-    $0 --rpm /path/to/rootfiles-1.0-1.fc40.x86_64.rpm rootfiles
-    $0 --rpm /path/to/setup-2.0-1.fc40.noarch.rpm --verbose setup
-    $0 --rpm /path/to/setup.rpm --src-rpm /path/to/setup.src.rpm setup
-    $0 --rpm /path/to/setup.fc40.rpm,/path/to/setup.fc41.rpm setup
+    # Test RPM from a directory repository
+    $0 --repo /path/to/rpms rpm
+
+    # Test with source RPM
+    $0 --repo /path/to/rpms --src-rpm /path/to/setup.src.rpm setup
+
+    # Test with verbose output
+    $0 --repo ./.out/rpm/RPMS --verbose setup
 
 DESCRIPTION:
     Runs default tests for the specified RPM package. Tests are defined in
     ci/default-tests/tests-rpm.yml and package-specific tests in
     rpms/<package>/tests-rpm.yml (if present).
 
-    When multiple RPMs are specified, the same test suite is run for each RPM.
+    All RPMs in the repository directory are added to a local repository,
+    allowing tests to reference any RPM in the set. The PACKAGE_NAME is used to
+    locate the primary RPM to test.
 EOF
 }
 
@@ -126,12 +133,95 @@ TEST_FAIL() {
 }
 export -f TEST_FAIL
 
+# Setup local DNF repository - copy RPMs to container
+# $1 = container_id
+# $2+ = RPM file paths (one or more)
+setup_local_repo() {
+    local container_id=$1
+    shift
+    local rpm_files=("$@")
+
+    if [[ ${#rpm_files[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    # Copy all RPMs to container
+    for rpm_file in "${rpm_files[@]}"; do
+        "${TEST_ENGINE}" cp "${rpm_file}" "${container_id}:/tmp/local-repo/"
+    done
+}
+
+# Finalize local DNF repository - run commands in the container
+# $1 = container_id
+finalize_local_repo() {
+    local container_id=$1
+
+    # Create repository metadata
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y createrepo_c 2>/dev/null || \
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" yum install -y createrepo_c 2>/dev/null || true
+
+    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" createrepo_c /tmp/local-repo
+
+    # Configure DNF to use local repo with high priority
+    cat > /tmp/local-repo.conf << 'REPO_CONFIG'
+[local-repo]
+name=Local Test Repository
+baseurl=file:///tmp/local-repo
+enabled=1
+gpgcheck=0
+priority=1
+REPO_CONFIG
+
+    "${TEST_ENGINE}" cp /tmp/local-repo.conf "${container_id}:/etc/yum.repos.d/local-repo.repo"
+}
+
+# Install packages from appropriate sources
+# $1 = container_id
+# $2+ = package names
+# Environment variables:
+#   TEST_PACKAGE_SOURCES = JSON map of package names to sources (local or fedora)
+install_test_packages() {
+    local container_id=$1
+    shift
+    local packages=("$@")
+
+    if [[ ${#packages[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    # Separate packages by source
+    local local_packages=()
+    local fedora_packages=()
+
+    for pkg in "${packages[@]}"; do
+        local source=$(echo "${TEST_PACKAGE_SOURCES}" | jq -r --arg pkg "${pkg}" '.[$pkg] // "fedora"')
+        if [[ "${source}" == "local" ]]; then
+            local_packages+=("${pkg}")
+        else
+            fedora_packages+=("${pkg}")
+        fi
+    done
+
+    # Install packages
+    if [[ ${#local_packages[@]} -gt 0 ]]; then
+        "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y "${local_packages[@]}" || true
+    fi
+
+    if [[ ${#fedora_packages[@]} -gt 0 ]]; then
+        "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" dnf install -y "${fedora_packages[@]}" || true
+    fi
+}
+
+export -f setup_local_repo
+export -f finalize_local_repo
+export -f install_test_packages
+
 # Parse command line arguments
 TEST_VERBOSE=false
 TEST_ENGINE=podman
 TEST_IMAGE="${TEST_IMAGE:-quay.io/hummingbird/core-runtime:latest-builder}"
 TEST_SRC_RPM=""
-RPM_PATH=""
+REPO_PATH=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -139,8 +229,8 @@ while [[ $# -gt 0 ]]; do
             TEST_VERBOSE=true
             shift
             ;;
-        --rpm)
-            RPM_PATH=$2
+        --repo)
+            REPO_PATH=$2
             shift 2
             ;;
         --src-rpm)
@@ -176,8 +266,8 @@ if [[ -z ${PACKAGE_NAME:-} ]]; then
     exit 1
 fi >&2
 
-if [[ -z ${RPM_PATH:-} ]]; then
-    echo "Error: --rpm PATH is required"
+if [[ -z ${REPO_PATH:-} ]]; then
+    echo "Error: --repo DIR is required"
     echo "Usage: $0 [OPTIONS] PACKAGE_NAME"
     exit 1
 fi >&2
@@ -189,20 +279,53 @@ if [[ ! -d ${package_dir} ]]; then
     exit 1
 fi >&2
 
-# Split comma-delimited RPM paths into array and convert to absolute paths
-IFS=',' read -ra RPM_PATHS_RAW <<< "${RPM_PATH}"
+# Process repo directory: find all RPMs and locate the package
 RPM_PATHS=()
-for rpm_path in "${RPM_PATHS_RAW[@]}"; do
-    RPM_PATHS+=("$(convert_path_to_absolute "${rpm_path}")")
+ALL_REPO_RPMS=()
+
+REPO_PATH="$(convert_path_to_absolute "${REPO_PATH}")"
+if [[ ! -d ${REPO_PATH} ]]; then
+    echo "Error: Repository directory '${REPO_PATH}' not found"
+    exit 1
+fi >&2
+
+# Find all RPMs in the repo directory
+while IFS= read -r rpm_file; do
+    ALL_REPO_RPMS+=("${rpm_file}")
+done < <(find "${REPO_PATH}" -maxdepth 1 -name "*.rpm" -type f | sort)
+
+if [[ ${#ALL_REPO_RPMS[@]} -eq 0 ]]; then
+    echo "Error: No RPM files found in '${REPO_PATH}'"
+    exit 1
+fi >&2
+
+# Find the RPM matching PACKAGE_NAME (binary RPM, not source)
+package_rpm=""
+for rpm_file in "${ALL_REPO_RPMS[@]}"; do
+    # Skip source RPMs (.src.rpm)
+    if [[ ${rpm_file} =~ \.src\.rpm$ ]]; then
+        continue
+    fi
+
+    # Extract the base name without extension
+    base_name=$(basename "${rpm_file}" .rpm)
+    # Extract package name (everything before the version)
+    # RPM format: name-version-release.arch.rpm
+    # We'll check if the filename starts with the package name followed by a dash and digit
+    if [[ ${base_name} =~ ^${PACKAGE_NAME}-[0-9] ]]; then
+        package_rpm="${rpm_file}"
+        break
+    fi
 done
 
-# Validate all RPM files exist
-for rpm_file in "${RPM_PATHS[@]}"; do
-    if [[ ! -f ${rpm_file} ]]; then
-        echo "Error: RPM file '${rpm_file}' not found"
-        exit 1
-    fi
-done >&2
+if [[ -z ${package_rpm} ]]; then
+    echo "Error: No RPM found for package '${PACKAGE_NAME}' in '${REPO_PATH}'"
+    echo "Available RPMs:"
+    ls -1 "${REPO_PATH}"/*.rpm 2>/dev/null || true
+    exit 1
+fi >&2
+
+RPM_PATHS=("${package_rpm}")
 
 # Validate source RPM file exists if provided
 if [[ -n ${TEST_SRC_RPM} ]]; then
@@ -224,10 +347,12 @@ temp_dir=$(mktemp -d)
 trap 'rm -rf "${temp_dir}"' EXIT
 
 log_heading "Testing ${PACKAGE_NAME}"
-log_info "RPM file(s): ${#RPM_PATHS[@]}"
-for rpm_file in "${RPM_PATHS[@]}"; do
-    log_info "  - ${rpm_file}"
+log_info "Repository path: ${REPO_PATH}"
+log_info "Repository RPMs: ${#ALL_REPO_RPMS[@]}"
+for rpm_file in "${ALL_REPO_RPMS[@]}"; do
+    log_info "  - $(basename "${rpm_file}")"
 done
+log_info "Primary RPM: $(basename "${RPM_PATHS[0]}")"
 if [[ -n ${TEST_SRC_RPM} ]]; then
     log_info "Source RPM file: ${TEST_SRC_RPM}"
 fi
@@ -298,16 +423,82 @@ for rpm_file in "${RPM_PATHS[@]}"; do
         command=$(jq -r '.command' <<< "${single_test_data}")
         known_issues=$(jq -c '.known_issues // []' <<< "${single_test_data}")
         source_dir=$(jq -r '.source_dir // "."' <<< "${single_test_data}")
+        environment=$(jq -c '.environment // {}' <<< "${single_test_data}")
 
-        # Run test in subshell to avoid side effects
-        (
-            [[ ${TEST_VERBOSE} == true ]] && set -x
-            # Change to the directory where the test is defined
-            cd "${source_dir}"
-            # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
-            export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
-            eval "${command}"
-        ) &> "${temp_dir}/output.log" &
+        # Check if test requires environment setup
+        if [[ "${environment}" != "{}" ]]; then
+            # Run test with environment setup
+            base_image=$(jq -r '.base // "quay.io/hummingbird/core-runtime:latest-builder"' <<< "${environment}")
+            packages=$(jq -r '.packages[]? // empty' <<< "${environment}" | tr '\n' ' ')
+
+            # Create package sources map (first package from local repo, others from fedora)
+            package_sources=$(jq -c '
+                if .packages then
+                    [.packages[] | select(. != null)] as $pkgs |
+                    ($pkgs[0] // "rpm") as $first |
+                    ($pkgs | map(select(. == $first) | {(.): "local"}) + map(select(. != $first) | {(.): "fedora"}) | add)
+                else {} end
+            ' <<< "${environment}")
+
+            # Run test in subshell with environment setup
+            (
+                [[ ${TEST_VERBOSE} == true ]] && set -x
+                # Change to the directory where the test is defined
+                cd "${source_dir}"
+
+                # Create container
+                container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${base_image}" infinity)
+                cleanup() {
+                    "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+                }
+                trap cleanup EXIT
+
+                # Start container first
+                "${TEST_ENGINE}" start "${container_id}"
+
+                # Create repo directory in container
+                "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" mkdir -p /tmp/local-repo
+
+                # Copy RPMs to container
+                setup_local_repo "${container_id}" "${ALL_REPO_RPMS[@]}"
+
+                # Finalize local repo (create metadata and configure DNF)
+                finalize_local_repo "${container_id}"
+
+                # Install packages
+                if [[ -n "${packages}" ]]; then
+                    export TEST_PACKAGE_SOURCES="${package_sources}"
+                    install_test_packages "${container_id}" ${packages}
+                fi
+
+                # Copy source RPM if provided
+                if [[ -n ${TEST_SRC_RPM} ]]; then
+                    "${TEST_ENGINE}" cp "${TEST_SRC_RPM}" "${container_id}:/tmp/test.src.rpm"
+                fi
+
+                # Copy primary RPM file if needed by test
+                "${TEST_ENGINE}" cp "${TEST_RPM}" "${container_id}:/tmp/test.rpm"
+
+                # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
+                export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
+
+                # Run test command
+                eval "${command}"
+
+                # Cleanup
+                "${TEST_ENGINE}" stop "${container_id}"
+            ) &> "${temp_dir}/output.log" &
+        else
+            # Run test without environment setup (local testing)
+            (
+                [[ ${TEST_VERBOSE} == true ]] && set -x
+                # Change to the directory where the test is defined
+                cd "${source_dir}"
+                # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
+                export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
+                eval "${command}"
+            ) &> "${temp_dir}/output.log" &
+        fi
 
         if ! wait -n; then
             issue_result=$(check_known_issues "${known_issues}" "${temp_dir}/output.log")
@@ -406,16 +597,75 @@ if [[ -n ${src_rpm_test_names} ]]; then
         command=$(jq -r '.command' <<< "${single_test_data}")
         known_issues=$(jq -c '.known_issues // []' <<< "${single_test_data}")
         source_dir=$(jq -r '.source_dir // "."' <<< "${single_test_data}")
+        environment=$(jq -c '.environment // {}' <<< "${single_test_data}")
 
-        # Run test in subshell to avoid side effects
-        (
-            [[ ${TEST_VERBOSE} == true ]] && set -x
-            # Change to the directory where the test is defined
-            cd "${source_dir}"
-            # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
-            export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
-            eval "${command}"
-        ) &> "${temp_dir}/output.log" &
+        # Check if test requires environment setup
+        if [[ "${environment}" != "{}" ]]; then
+            # Run test with environment setup
+            base_image=$(jq -r '.base // "quay.io/hummingbird/core-runtime:latest-builder"' <<< "${environment}")
+            packages=$(jq -r '.packages[]? // empty' <<< "${environment}" | tr '\n' ' ')
+
+            # Create package sources map (packages from local repo, unless specified otherwise)
+            package_sources=$(jq -c '
+                if .packages then
+                    [.packages[] | select(. != null)] | map({(.): "fedora"}) | add
+                else {} end
+            ' <<< "${environment}")
+
+            # Run test in subshell with environment setup
+            (
+                [[ ${TEST_VERBOSE} == true ]] && set -x
+                # Change to the directory where the test is defined
+                cd "${source_dir}"
+
+                # Create container
+                container_id=$("${TEST_ENGINE:?}" create --entrypoint sleep "${base_image}" infinity)
+                cleanup() {
+                    "${TEST_ENGINE}" rm -f "${container_id}" 2>/dev/null || true
+                }
+                trap cleanup EXIT
+
+                # Start container first
+                "${TEST_ENGINE}" start "${container_id}"
+
+                # Setup local repo with all repo RPMs if available
+                if [[ ${#ALL_REPO_RPMS[@]} -gt 0 ]]; then
+                    "${TEST_ENGINE}" exec --user 0 -e HOME=/root "${container_id}" mkdir -p /tmp/local-repo
+                    setup_local_repo "${container_id}" "${ALL_REPO_RPMS[@]}"
+                    finalize_local_repo "${container_id}"
+                fi
+
+                # Install packages
+                if [[ -n "${packages}" ]]; then
+                    export TEST_PACKAGE_SOURCES="${package_sources}"
+                    install_test_packages "${container_id}" ${packages}
+                fi
+
+                # Copy source RPM if provided
+                if [[ -n ${TEST_SRC_RPM} ]]; then
+                    "${TEST_ENGINE}" cp "${TEST_SRC_RPM}" "${container_id}:/tmp/test.src.rpm"
+                fi
+
+                # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
+                export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
+
+                # Run test command
+                eval "${command}"
+
+                # Cleanup
+                "${TEST_ENGINE}" stop "${container_id}"
+            ) &> "${temp_dir}/output.log" &
+        else
+            # Run test without environment setup (local testing)
+            (
+                [[ ${TEST_VERBOSE} == true ]] && set -x
+                # Change to the directory where the test is defined
+                cd "${source_dir}"
+                # Ensure TEST_RPM, TEST_SRC_RPM, TEST_ENGINE and TEST_IMAGE are available in subshell
+                export TEST_RPM TEST_SRC_RPM TEST_ENGINE TEST_IMAGE
+                eval "${command}"
+            ) &> "${temp_dir}/output.log" &
+        fi
 
         if ! wait -n; then
             issue_result=$(check_known_issues "${known_issues}" "${temp_dir}/output.log")
