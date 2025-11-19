@@ -10,7 +10,7 @@ Be respectful and constructive. By participating, you agree to uphold a professi
 
 
 ### Repository layout
-- `rpms/<package>/` – RPM spec, sources, and package-specific tests (`tests-rpm.yml`)
+- `rpms/<package>/` – RPM dist-gits (spec, sources)
 - `ci/` – helper scripts and default tests
   - `build_rpms.sh` – build RPMs using Mock in the Konflux-compatible container
   - `run_tests_rpm.sh` – run rpmlint and install/rebuild tests in a container
@@ -18,6 +18,7 @@ Be respectful and constructive. By participating, you agree to uphold a professi
   - `run_tests_rpm.fmf` – tmt/Testing Farm entry point
 - `konflux-templates/` – Konflux/PAC resources
 - `mock/` – mock configuration
+- `test/rpms/<package>.yml` – package-specific tests
 
 
 ### Prerequisites
