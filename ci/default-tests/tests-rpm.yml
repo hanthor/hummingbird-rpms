@@ -5,17 +5,22 @@ rpm-integrity-check:
   environment:
     base: quay.io/hummingbird/core-runtime:latest-builder
   command: |
-    # Find the binary RPM for the package being tested
-    TEST_RPM=$(find "${TEST_RPMS_DIR:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.rpm" ! -name "*.src.rpm" -type f | head -n1)
-    if [[ -z ${TEST_RPM} ]]; then
-      echo "Error: No binary RPM found for package ${PACKAGE_NAME}"
+    # Find all binary RPMs for the package being tested
+    mapfile -t TEST_RPMS < <(find "${TEST_RPMS_DIR:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.rpm" ! -name "*.src.rpm" -type f | sort)
+    if [[ ${#TEST_RPMS[@]} -eq 0 ]]; then
+      echo "Error: No binary RPMs found for package ${PACKAGE_NAME}"
       exit 1
     fi
 
-    rpm -K "${TEST_RPM}"
-    rpm -qip "${TEST_RPM}"
-    rpm -qlp "${TEST_RPM}"
-    rpm -qRp "${TEST_RPM}"
+    echo "Checking ${#TEST_RPMS[@]} RPM(s) for ${PACKAGE_NAME}:"
+    for rpm_file in "${TEST_RPMS[@]}"; do
+      echo "=== Checking $(basename "${rpm_file}") ==="
+      rpm -K "${rpm_file}"
+      rpm -qip "${rpm_file}"
+      rpm -qlp "${rpm_file}"
+      rpm -qRp "${rpm_file}"
+      echo ""
+    done
 
 rpmlint:
   environment:
@@ -24,14 +29,16 @@ rpmlint:
       remote:
         - rpmlint
   command: |
-    # Find the binary RPM for the package being tested
-    TEST_RPM=$(find "${TEST_RPMS_DIR:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.rpm" ! -name "*.src.rpm" -type f | head -n1)
-    if [[ -z ${TEST_RPM} ]]; then
-      echo "Error: No binary RPM found for package ${PACKAGE_NAME}"
+    # Find all binary RPMs for the package being tested
+    mapfile -t TEST_RPMS < <(find "${TEST_RPMS_DIR:?}" -maxdepth 1 -name "${PACKAGE_NAME:?}-[0-9]*.rpm" ! -name "*.src.rpm" -type f | sort)
+    if [[ ${#TEST_RPMS[@]} -eq 0 ]]; then
+      echo "Error: No binary RPMs found for package ${PACKAGE_NAME}"
       exit 1
     fi
 
-    rpmlint "${TEST_RPM}"
+    echo "Running rpmlint on ${#TEST_RPMS[@]} RPM(s) for ${PACKAGE_NAME}:"
+    # Run rpmlint on all RPMs at once for better output
+    rpmlint "${TEST_RPMS[@]}"
 
 rpm-install:
   environment:
