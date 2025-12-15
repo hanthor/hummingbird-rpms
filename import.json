@@ -769,6 +769,13 @@
     "source": "https://src.fedoraproject.org/rpms/libyaml.git",
     "version": "0.2.5"
   },
+  "llvm": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "8b060ccdde9c4bb4af93e03c002d3199919a5d49",
+    "source": "https://src.fedoraproject.org/rpms/llvm.git",
+    "version": "21.1.7"
+  },
   "lua": {
     "branch": "rawhide",
     "release": "4",
