@@ -57,8 +57,17 @@ dotnet10.0:
     - "linux-d320-c4xlarge/arm64"
     - "linux-d320-c4xlarge/amd64"
 
+<<<<<<< HEAD
 glibc:
   timeout_hours: 16
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
+=======
+gcc:
+  # Larger builders are required for the build to complete in a reasonable time
+  timeout_hours: 12
+  build_platforms:
+    - "linux-d160-c8xlarge/amd64"
+    - "linux-d160-c8xlarge/arm64"
+>>>>>>> 1d60553 (Import gcc-16.0.0-0.4)
