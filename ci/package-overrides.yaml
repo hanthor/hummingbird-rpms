@@ -24,5 +24,25 @@
 # All available MPLs can be found in the:
 # https://konflux.pages.redhat.com/docs/users/getting-started/multi-platform-builds.html documentation.
 
-setup:
+llvm:
   timeout_hours: 12
+  build_platforms:
+    - "linux-d160-m4xlarge/arm64"
+    - "linux-d160-m4xlarge/amd64"
+
+# Required to prevent running out of storage
+rust:
+  timeout_hours: 12
+  build_platforms:
+    - "linux-d160-m4xlarge/arm64"
+    - "linux-d160-m4xlarge/amd64"
+  # Required to prevent Syft OOMing during SBOM generation
+  task_run_specs:
+    - pipelineTaskName: upload-to-quay
+      stepSpecs:
+        - name: run-syft
+          computeResources:
+            requests:
+              memory: 10Gi
+            limits:
+              memory: 10Gi
