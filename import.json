@@ -594,6 +594,13 @@
     "source": "https://src.fedoraproject.org/rpms/libXau.git",
     "version": "1.0.12"
   },
+  "libXcomposite": {
+    "branch": "rawhide",
+    "release": "6",
+    "sha": "394fe9352ac75344e2be92be60b8c941cecb88a4",
+    "source": "https://src.fedoraproject.org/rpms/libXcomposite.git",
+    "version": "0.4.6"
+  },
   "libaio": {
     "branch": "rawhide",
     "release": "22",
