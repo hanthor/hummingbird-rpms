@@ -580,6 +580,13 @@
     "source": "https://src.fedoraproject.org/rpms/less.git",
     "version": "685"
   },
+  "libX11": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "48daeff665e77cca1a911c060d8691d6520444c2",
+    "source": "https://src.fedoraproject.org/rpms/libX11.git",
+    "version": "1.8.12"
+  },
   "libaio": {
     "branch": "rawhide",
     "release": "22",
