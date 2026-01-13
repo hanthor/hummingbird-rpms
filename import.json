@@ -2,9 +2,9 @@
   "R-rpm-macros": {
     "branch": "rawhide",
     "release": "1",
-    "sha": "bad36ae3ab4eacce668ddb086741d85f0c9cd6d6",
+    "sha": "c031cbbe1727a54efc5d63dca1d01542587487a2",
     "source": "https://src.fedoraproject.org/rpms/R-rpm-macros.git",
-    "version": "1.3.3"
+    "version": "1.3.4"
   },
   "abattis-cantarell-fonts": {
     "branch": "rawhide",
