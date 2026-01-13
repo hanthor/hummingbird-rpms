@@ -615,6 +615,13 @@
     "source": "https://src.fedoraproject.org/rpms/libXi.git",
     "version": "1.8.2"
   },
+  "libXrender": {
+    "branch": "rawhide",
+    "release": "3",
+    "sha": "d61da602716cd660009068fb1c8575a246a708d4",
+    "source": "https://src.fedoraproject.org/rpms/libXrender.git",
+    "version": "0.9.12"
+  },
   "libaio": {
     "branch": "rawhide",
     "release": "22",
