@@ -1070,6 +1070,13 @@
     "source": "https://src.fedoraproject.org/rpms/memcached.git",
     "version": "1.6.40"
   },
+  "mkfontscale": {
+    "branch": "rawhide",
+    "release": "3",
+    "sha": "4c964229334de6ae8440b03ab92b02fa760ec5b9",
+    "source": "https://src.fedoraproject.org/rpms/mkfontscale.git",
+    "version": "1.2.3"
+  },
   "mpfr": {
     "branch": "rawhide",
     "release": "2",
