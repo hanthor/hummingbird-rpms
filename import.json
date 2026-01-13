@@ -1161,6 +1161,13 @@
     "source": "https://src.fedoraproject.org/rpms/npth.git",
     "version": "1.8"
   },
+  "nss": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "117904af75156b27473b2531bd59d1bb8297b346",
+    "source": "https://src.fedoraproject.org/rpms/nss.git",
+    "version": "3.119.1"
+  },
   "oniguruma": {
     "branch": "rawhide",
     "release": "3",
