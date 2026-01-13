@@ -1028,6 +1028,13 @@
     "source": "https://src.fedoraproject.org/rpms/lzo.git",
     "version": "2.10"
   },
+  "mailcap": {
+    "branch": "rawhide",
+    "release": "9",
+    "sha": "53a3fcd698c9cd68b1661aab30c221da9df58b30",
+    "source": "https://src.fedoraproject.org/rpms/mailcap.git",
+    "version": "2.1.54"
+  },
   "make": {
     "branch": "rawhide",
     "release": "11",
