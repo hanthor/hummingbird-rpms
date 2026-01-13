@@ -1056,6 +1056,13 @@
     "source": "https://src.fedoraproject.org/rpms/mariadb10.11.git",
     "version": "10.11.15"
   },
+  "mawk": {
+    "branch": "rawhide",
+    "release": "5.20250131",
+    "sha": "96738dbf5ce8d51ba359ecd42d03c41bb15bca8f",
+    "source": "https://src.fedoraproject.org/rpms/mawk.git",
+    "version": "1.3.4"
+  },
   "mpfr": {
     "branch": "rawhide",
     "release": "2",
