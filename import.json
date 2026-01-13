@@ -1247,10 +1247,10 @@
   },
   "shadow-utils": {
     "branch": "rawhide",
-    "release": "7",
-    "sha": "d39147a22233042f440eae625add65ddefeaa4bc",
+    "release": "3",
+    "sha": "f47e36e72a473fbb90a92bc73f63042fea7e87df",
     "source": "https://src.fedoraproject.org/rpms/shadow-utils.git",
-    "version": "4.18.0"
+    "version": "4.19.0"
   },
   "sqlite": {
     "branch": "rawhide",
