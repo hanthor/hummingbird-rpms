@@ -706,6 +706,13 @@
     "source": "https://src.fedoraproject.org/rpms/libidn2.git",
     "version": "2.3.8"
   },
+  "libipt": {
+    "branch": "rawhide",
+    "release": "3",
+    "sha": "8ae203f7e0fe138b57958b64573bab55cc6b439a",
+    "source": "https://src.fedoraproject.org/rpms/libipt.git",
+    "version": "2.1.2"
+  },
   "libksba": {
     "branch": "rawhide",
     "release": "4",
