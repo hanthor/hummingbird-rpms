@@ -804,6 +804,13 @@
     "source": "https://src.fedoraproject.org/rpms/libsepol.git",
     "version": "3.9"
   },
+  "libsodium": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "82ba1a4307a6e817547ece6a20f3e8a3147ef621",
+    "source": "https://src.fedoraproject.org/rpms/libsodium.git",
+    "version": "1.0.21"
+  },
   "libsolv": {
     "branch": "rawhide",
     "release": "1",
