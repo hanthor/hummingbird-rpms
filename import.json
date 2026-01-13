@@ -1168,6 +1168,13 @@
     "source": "https://src.fedoraproject.org/rpms/nss.git",
     "version": "3.119.1"
   },
+  "ocaml-srpm-macros": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "879c0c005e2c36cdeab62c21711a9b7f9ef1c8db",
+    "source": "https://src.fedoraproject.org/rpms/ocaml-srpm-macros.git",
+    "version": "11"
+  },
   "oniguruma": {
     "branch": "rawhide",
     "release": "3",
