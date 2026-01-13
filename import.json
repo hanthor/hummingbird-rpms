@@ -1021,6 +1021,13 @@
     "source": "https://src.fedoraproject.org/rpms/lz4.git",
     "version": "1.10.0"
   },
+  "lzo": {
+    "branch": "rawhide",
+    "release": "15",
+    "sha": "33af998ffc871fec76bbc68c04bf1da8f5d9a9ed",
+    "source": "https://src.fedoraproject.org/rpms/lzo.git",
+    "version": "2.10"
+  },
   "make": {
     "branch": "rawhide",
     "release": "11",
