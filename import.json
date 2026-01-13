@@ -1063,6 +1063,13 @@
     "source": "https://src.fedoraproject.org/rpms/mawk.git",
     "version": "1.3.4"
   },
+  "memcached": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "cb9a3265c2c1dc3e7f2217047bbec8c64f9d16fa",
+    "source": "https://src.fedoraproject.org/rpms/memcached.git",
+    "version": "1.6.40"
+  },
   "mpfr": {
     "branch": "rawhide",
     "release": "2",
