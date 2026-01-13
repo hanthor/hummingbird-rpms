@@ -895,6 +895,13 @@
     "source": "https://src.fedoraproject.org/rpms/libverto.git",
     "version": "0.3.2"
   },
+  "libxcb": {
+    "branch": "rawhide",
+    "release": "6",
+    "sha": "5db9f5e727bbb4a5ba2b070c0068137e7b4714db",
+    "source": "https://src.fedoraproject.org/rpms/libxcb.git",
+    "version": "1.17.0"
+  },
   "libxcrypt": {
     "branch": "rawhide",
     "release": "2",
