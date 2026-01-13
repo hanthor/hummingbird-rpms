@@ -897,8 +897,8 @@
   },
   "pam": {
     "branch": "rawhide",
-    "release": "3",
-    "sha": "a6b937d812c29318262dccd9153f8c6220b10b8c",
+    "release": "4",
+    "sha": "73454d1e42ccc2582e0c0c7abbd7e52d0c1bbf45",
     "source": "https://src.fedoraproject.org/rpms/pam.git",
     "version": "1.7.1"
   },
