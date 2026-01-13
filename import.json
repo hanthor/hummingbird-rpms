@@ -1525,6 +1525,13 @@
     "source": "https://src.fedoraproject.org/rpms/postgresql18.git",
     "version": "18.1"
   },
+  "psmisc": {
+    "branch": "rawhide",
+    "release": "6",
+    "sha": "a5a8e658c9aaf2458ab9aa099c5edcc38bf6087a",
+    "source": "https://src.fedoraproject.org/rpms/psmisc.git",
+    "version": "23.7"
+  },
   "publicsuffix-list": {
     "branch": "rawhide",
     "release": "1",
