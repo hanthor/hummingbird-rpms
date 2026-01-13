@@ -629,6 +629,13 @@
     "source": "https://src.fedoraproject.org/rpms/libcbor.git",
     "version": "0.13.0"
   },
+  "libcomps": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "f37c31cb14166a41fb9693249c37ae5f3f2eb794",
+    "source": "https://src.fedoraproject.org/rpms/libcomps.git",
+    "version": "0.1.23"
+  },
   "libeconf": {
     "branch": "rawhide",
     "release": "2",
