@@ -1504,6 +1504,13 @@
     "source": "https://src.fedoraproject.org/rpms/pkgconf.git",
     "version": "2.3.0"
   },
+  "policycoreutils": {
+    "branch": "rawhide",
+    "release": "7",
+    "sha": "1e699f4433984366beee3846578c9d4a030cce21",
+    "source": "https://src.fedoraproject.org/rpms/policycoreutils.git",
+    "version": "3.9"
+  },
   "popt": {
     "branch": "rawhide",
     "release": "9",
