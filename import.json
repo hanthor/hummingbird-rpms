@@ -979,6 +979,13 @@
     "source": "https://src.fedoraproject.org/rpms/lksctp-tools.git",
     "version": "1.0.21"
   },
+  "llhttp": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "468222c0d8eb86eb4793252162fe598531f5cf3f",
+    "source": "https://src.fedoraproject.org/rpms/llhttp.git",
+    "version": "9.3.0"
+  },
   "lua": {
     "branch": "rawhide",
     "release": "4",
