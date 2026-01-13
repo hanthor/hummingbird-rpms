@@ -1007,6 +1007,13 @@
     "source": "https://src.fedoraproject.org/rpms/lua.git",
     "version": "5.4.8"
   },
+  "lua-rpm-macros": {
+    "branch": "rawhide",
+    "release": "16",
+    "sha": "757854d726a316a52e56a17e171931a4a7ff6c3d",
+    "source": "https://src.fedoraproject.org/rpms/lua-rpm-macros.git",
+    "version": "1"
+  },
   "lz4": {
     "branch": "rawhide",
     "release": "3",
