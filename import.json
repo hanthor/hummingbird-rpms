@@ -734,6 +734,13 @@
     "source": "https://src.fedoraproject.org/rpms/libmpc.git",
     "version": "1.3.1"
   },
+  "libnl3": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "09fa873018672ff63de97a3cac8586c093c43608",
+    "source": "https://src.fedoraproject.org/rpms/libnl3.git",
+    "version": "3.12.0"
+  },
   "libpsl": {
     "branch": "rawhide",
     "release": "1",
