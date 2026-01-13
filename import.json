@@ -533,8 +533,8 @@
   },
   "kernel-headers": {
     "branch": "rawhide",
-    "release": "0.rc4.3609fa95fb0f.31",
-    "sha": "91b3296f9575d26645f436de8f489f68e0ed3627",
+    "release": "0.rc5.38",
+    "sha": "6babe99712f068df33344bff405d519de0353445",
     "source": "https://src.fedoraproject.org/rpms/kernel-headers.git",
     "version": "6.19.0"
   },
