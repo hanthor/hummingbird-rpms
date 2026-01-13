@@ -972,6 +972,13 @@
     "source": "https://src.fedoraproject.org/rpms/libzip.git",
     "version": "1.11.4"
   },
+  "lksctp-tools": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "a3b79ece7b6b24685e970b4229bffd41f580197b",
+    "source": "https://src.fedoraproject.org/rpms/lksctp-tools.git",
+    "version": "1.0.21"
+  },
   "lua": {
     "branch": "rawhide",
     "release": "4",
