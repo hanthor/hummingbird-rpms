@@ -720,6 +720,13 @@
     "source": "https://src.fedoraproject.org/rpms/libksba.git",
     "version": "1.6.7"
   },
+  "libmnl": {
+    "branch": "rawhide",
+    "release": "8",
+    "sha": "9d0d52784ff41ec61cefa701de34a9f2eb0bc276",
+    "source": "https://src.fedoraproject.org/rpms/libmnl.git",
+    "version": "1.0.5"
+  },
   "libmpc": {
     "branch": "rawhide",
     "release": "8",
