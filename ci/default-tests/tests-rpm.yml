@@ -23,12 +23,12 @@ rpm-integrity-check:
 
 rpm-install:
   command: |
-    # Test installing the RPM using dnf-installroot
+    # Test installing the RPM using dnf-installroot via podman run
 
     # Get the package name from the RPM
     rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
 
-    # Create a temporary directory for the build context
+    # Create a temporary directory for the test
     build_dir=$(mktemp -d)
 
     # Ensure cleanup on exit
@@ -37,13 +37,10 @@ rpm-install:
     }
     trap cleanup EXIT
 
-    # Copy the Containerfile to the build context
-    cp ../rpm-install-test.Containerfile "${build_dir}/Containerfile"
-
-    # Copy repo configs to the build context
+    # Copy repo configs
     cp -r ../repos "${build_dir}/repos"
 
-    # Create local-repo directory in build context
+    # Create local-repo directory
     mkdir -p "${build_dir}/local-repo"
 
     # Determine which RPMs to include in the local repository
@@ -55,33 +52,69 @@ rpm-install:
       rpm_files=("${TEST_RPM}")
     fi
 
-    # Copy RPM files to local-repo and create repository metadata
+    # Copy RPM files to local-repo
     for rpm_file in "${rpm_files[@]}"; do
       cp "${rpm_file}" "${build_dir}/local-repo/"
     done
 
-    # Run createrepo_c in a container to generate repository metadata
-    "${TEST_ENGINE}" run --rm --user 0 -e HOME=/root \
-      -v "${build_dir}/local-repo:/repo:z" \
-      quay.io/hummingbird-ci/builder:latest \
-      createrepo_c /repo
+    # Run createrepo_c to generate repository metadata
+    if command -v createrepo_c &>/dev/null; then
+      # Use native createrepo_c if available (faster, no container overhead)
+      createrepo_c "${build_dir}/local-repo"
+    else
+      # Fall back to container
+      "${TEST_ENGINE}" run --rm --user 0 -e HOME=/root \
+        -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/builder:latest \
+        createrepo_c /repo
+    fi
 
     echo "Created local repository with $(ls -1 "${build_dir}/local-repo/"*.rpm | wc -l) RPM(s)"
 
-    # Build the image, installing the package by name from the local repository.
-    # The Containerfile verifies:
-    #   1. The package is installed (rpm -q)
-    #   2. The package came from local-repo (dnf info)
-    sanitized_name="${rpm_name//[^a-zA-Z0-9._-]/-}"
-    test_image="rpm-install-test:${sanitized_name}-$$"
-    "${TEST_ENGINE}" build \
-      -t "${test_image}" \
-      --cap-add=ALL \
-      --build-arg PACKAGE_NAME="${rpm_name}" \
-      "${build_dir}"
+    # Create the local repo config file
+    cat > "${build_dir}/local.repo" << 'REPOEOF'
+    [local-repo]
+    name=Local Repository
+    baseurl=file:///tmp/local-repo
+    enabled=1
+    gpgcheck=0
+    priority=1
+    REPOEOF
 
-    # Cleanup the test image
-    "${TEST_ENGINE}" rmi -f "${test_image}" 2>/dev/null || true
+    # Run the install test in a container
+    "${TEST_ENGINE}" run --rm \
+      --cap-add=ALL \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      -v "${build_dir}/repos:/tmp/repos:ro,z" \
+      -v "${build_dir}/local.repo:/etc/yum.repos.d/local.repo:ro,z" \
+      quay.io/hummingbird-ci/builder:latest-hatchling \
+      bash -c "
+        set -e
+        NEWROOT=/new-root-fs
+        DNF_FLAGS='-y --use-host-config --nodocs --setopt=install_weak_deps=False'
+
+        # Copy repo configs
+        cp /tmp/repos/*.repo /etc/yum.repos.d/ 2>/dev/null || true
+
+        # Create the new root directory
+        mkdir -p \${NEWROOT}
+
+        # Import the fedora GPG key
+        rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-rawhide-primary --root \${NEWROOT}
+
+        # Install filesystem first, then the test package
+        dnf-installroot \${NEWROOT} \${DNF_FLAGS} install filesystem
+        dnf-installroot \${NEWROOT} \${DNF_FLAGS} install ${rpm_name}
+
+        # Verify the package was installed from local-repo
+        install_repo=\$(dnf --installroot=\${NEWROOT} info --installed ${rpm_name} 2>/dev/null | \
+          grep '^From repo' | cut -d: -f2 | tr -d ' ')
+        if [ \"\${install_repo}\" != 'local-repo' ]; then
+          echo \"Error: Package '${rpm_name}' was not installed from local-repo (got: \${install_repo:-unknown})\"
+          exit 1
+        fi
+        echo \"Verified: ${rpm_name} installed from local-repo\"
+      "
 
 # Source RPM tests (only run when --src-rpm is provided)
 src-rpm-hum-suffix-check:
