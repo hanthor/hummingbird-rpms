@@ -545,6 +545,13 @@
     "source": "https://src.fedoraproject.org/rpms/kernel-headers.git",
     "version": "6.19.0"
   },
+  "kernel-srpm-macros": {
+    "branch": "rawhide",
+    "release": "27",
+    "sha": "1af058e32f13f3e5e6da785654c4898b14c16262",
+    "source": "https://src.fedoraproject.org/rpms/kernel-srpm-macros.git",
+    "version": "1.0"
+  },
   "keyutils": {
     "branch": "rawhide",
     "release": "6",
