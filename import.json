@@ -1042,6 +1042,13 @@
     "source": "https://src.fedoraproject.org/rpms/make.git",
     "version": "4.4.1"
   },
+  "mariadb-connector-c": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "2e0812edc47931ba02239525103d2674a13ec51b",
+    "source": "https://src.fedoraproject.org/rpms/mariadb-connector-c.git",
+    "version": "3.4.8"
+  },
   "mpfr": {
     "branch": "rawhide",
     "release": "2",
