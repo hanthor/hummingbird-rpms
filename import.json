@@ -601,6 +601,13 @@
     "source": "https://src.fedoraproject.org/rpms/libassuan.git",
     "version": "2.5.7"
   },
+  "libbpf": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "b47048b51fc7d778ce3887378c7ca9a112ec7ee1",
+    "source": "https://src.fedoraproject.org/rpms/libbpf.git",
+    "version": "1.6.2"
+  },
   "libcap": {
     "branch": "rawhide",
     "release": "1",
