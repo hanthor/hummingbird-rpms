@@ -1518,6 +1518,13 @@
     "source": "https://src.fedoraproject.org/rpms/popt.git",
     "version": "1.19"
   },
+  "postgresql18": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "ffaf8f51302d7d9dc13cf51a9058a9efaa384dfd",
+    "source": "https://src.fedoraproject.org/rpms/postgresql18.git",
+    "version": "18.1"
+  },
   "publicsuffix-list": {
     "branch": "rawhide",
     "release": "1",
