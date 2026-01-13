@@ -748,6 +748,13 @@
     "source": "https://src.fedoraproject.org/rpms/libnsl2.git",
     "version": "2.0.1"
   },
+  "libpng": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "9610bc3d34ed63be4928630fd0b1dad8561740c5",
+    "source": "https://src.fedoraproject.org/rpms/libpng.git",
+    "version": "1.6.53"
+  },
   "libpsl": {
     "branch": "rawhide",
     "release": "1",
