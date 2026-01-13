@@ -99,8 +99,8 @@
   },
   "binutils": {
     "branch": "rawhide",
-    "release": "13",
-    "sha": "d7078a903f45f89a34ef0866efa7440f378412cb",
+    "release": "14",
+    "sha": "64b8d9de6167e2e34940e27126926f4a4a6899dd",
     "source": "https://src.fedoraproject.org/rpms/binutils.git",
     "version": "2.45.50"
   },
