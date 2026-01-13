@@ -993,6 +993,13 @@
     "source": "https://src.fedoraproject.org/rpms/lmdb.git",
     "version": "0.9.33"
   },
+  "logrotate": {
+    "branch": "rawhide",
+    "release": "4",
+    "sha": "13aa8f0c0ad355e81c7b215461944d9106e1d6a5",
+    "source": "https://src.fedoraproject.org/rpms/logrotate.git",
+    "version": "3.22.0"
+  },
   "lua": {
     "branch": "rawhide",
     "release": "4",
