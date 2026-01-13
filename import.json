@@ -1077,6 +1077,13 @@
     "source": "https://src.fedoraproject.org/rpms/mkfontscale.git",
     "version": "1.2.3"
   },
+  "mpdecimal": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "64c1db3132450c1a4860329a66edcfab1a00a2a1",
+    "source": "https://src.fedoraproject.org/rpms/mpdecimal.git",
+    "version": "4.0.1"
+  },
   "mpfr": {
     "branch": "rawhide",
     "release": "2",
