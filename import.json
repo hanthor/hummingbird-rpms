@@ -1252,6 +1252,13 @@
     "source": "https://src.fedoraproject.org/rpms/libusb1.git",
     "version": "1.0.29"
   },
+  "libutempter": {
+    "branch": "rawhide",
+    "release": "20",
+    "sha": "4df35f3fe48acd46bccee525506cdefbe5b773f3",
+    "source": "https://src.fedoraproject.org/rpms/libutempter.git",
+    "version": "1.2.1"
+  },
   "libverto": {
     "branch": "rawhide",
     "release": "11",
