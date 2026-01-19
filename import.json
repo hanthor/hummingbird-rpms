@@ -1091,6 +1091,13 @@
     "source": "https://src.fedoraproject.org/rpms/libipt.git",
     "version": "2.1.2"
   },
+  "libkcapi": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "7204da484796ca5ae2b4aa9ddc794bb9a6da96d8",
+    "source": "https://src.fedoraproject.org/rpms/libkcapi.git",
+    "version": "1.5.0"
+  },
   "libksba": {
     "branch": "rawhide",
     "release": "4",
