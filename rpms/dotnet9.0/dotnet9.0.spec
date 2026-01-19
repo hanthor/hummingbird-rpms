@@ -635,6 +635,10 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
+# Disable W^X enforcement which fails in containerized builds
+# See https://github.com/dotnet/sdk/issues/31457
+export DOTNET_EnableWriteXorExecute=0
+
 # Escape commas in the vendor name
 vendor=$(echo "%{?dist_vendor}%{!?dist_vendor:%_host_vendor}" | sed -E 's/,/%2c/')
 

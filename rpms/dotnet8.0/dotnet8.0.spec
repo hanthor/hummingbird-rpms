@@ -552,6 +552,10 @@ export EXTRA_LDFLAGS="$LDFLAGS"
 # suggested compile-time change doesn't work, unfortunately.
 export COMPlus_LTTng=0
 
+# Disable W^X enforcement which fails in containerized builds
+# See https://github.com/dotnet/sdk/issues/31457
+export DOTNET_EnableWriteXorExecute=0
+
 %ifarch ppc64le s390x
 max_attempts=3
 %else
