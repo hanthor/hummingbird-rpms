@@ -573,6 +573,20 @@
     "source": "https://src.fedoraproject.org/rpms/elinks.git",
     "version": "0.19.0"
   },
+  "emacs": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "f80a82071a282d7a2a7ae8863f3c19f4464a9b77",
+    "source": "https://src.fedoraproject.org/rpms/emacs.git",
+    "version": "30.2"
+  },
+  "erlang": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "42b68d57d80b09e246786b3c7c04b9973fc1b12f",
+    "source": "https://src.fedoraproject.org/rpms/erlang.git",
+    "version": "26.2.5.16"
+  },
   "execstack": {
     "branch": "rawhide",
     "release": "1",
