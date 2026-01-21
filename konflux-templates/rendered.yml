@@ -3181,6 +3181,44 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- expect ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+  name: expect-main
+spec:
+  application: rpms-main
+  componentName: expect-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/expect-main
+  source:
+    git:
+      context: rpms/expect
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: expect-main
+  name: expect-main
+spec:
+  image:
+    name: hummingbird-tenant/expect-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- fedora-logos ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1

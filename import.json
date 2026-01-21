@@ -580,6 +580,13 @@
     "source": "https://src.fedoraproject.org/rpms/expat.git",
     "version": "2.7.3"
   },
+  "expect": {
+    "branch": "rawhide",
+    "release": "30",
+    "sha": "c8144e2b07e72feb316eb06d27c86af9d62c3698",
+    "source": "https://src.fedoraproject.org/rpms/expect.git",
+    "version": "5.45.4"
+  },
   "fedora-logos": {
     "branch": "rawhide",
     "release": "2",
