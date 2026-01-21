@@ -566,6 +566,13 @@
     "source": "https://src.fedoraproject.org/rpms/elfutils.git",
     "version": "0.194"
   },
+  "elinks": {
+    "branch": "rawhide",
+    "release": "2",
+    "sha": "f0497f818a4d1534670c8cefec579e6c70c751a4",
+    "source": "https://src.fedoraproject.org/rpms/elinks.git",
+    "version": "0.19.0"
+  },
   "expat": {
     "branch": "rawhide",
     "release": "1",
