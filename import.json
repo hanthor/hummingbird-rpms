@@ -573,6 +573,20 @@
     "source": "https://src.fedoraproject.org/rpms/elinks.git",
     "version": "0.19.0"
   },
+  "execstack": {
+    "branch": "rawhide",
+    "release": "1",
+    "sha": "1fc5bcc6e9032c774201b653576dd84881a2c8aa",
+    "source": "https://src.fedoraproject.org/rpms/execstack.git",
+    "version": "0.5.0"
+  },
+  "exim": {
+    "branch": "rawhide",
+    "release": "3",
+    "sha": "61504913af627efd02b35df7c6c04797582c1079",
+    "source": "https://src.fedoraproject.org/rpms/exim.git",
+    "version": "4.99.1"
+  },
   "expat": {
     "branch": "rawhide",
     "release": "1",
