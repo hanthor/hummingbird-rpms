@@ -373,8 +373,9 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
         shutil.rmtree(temp_dir / '.git')
 
         # First, check all non-spec files are identical
+        # Exclude import.json as it only exists locally (not in upstream)
         if subprocess.run(
-            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--exclude=*.spec', str(package_dir), str(temp_dir)],
+            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--exclude=*.spec', '--exclude=import.json', str(package_dir), str(temp_dir)],
             stdout=subprocess.DEVNULL,
         ).returncode != 0:
             return False
@@ -382,7 +383,7 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
         # Then check including spec files, ignoring Release: lines
         # This checks all other files again, but dist-gits are small and this is very robust
         return subprocess.run(
-            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--ignore-matching-lines=^Release:', str(package_dir), str(temp_dir)],
+            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--ignore-matching-lines=^Release:', '--exclude=import.json', str(package_dir), str(temp_dir)],
             stdout=subprocess.DEVNULL,
         ).returncode == 0
 
