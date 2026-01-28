@@ -1,7 +1,7 @@
 %global distro  Hummingbird OS
 
 # Fedora version we're tracking
-%global fedora_version 44
+%global fedora_version 43
 
 Name:           hummingbird-release
 Version:        20251124
