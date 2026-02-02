@@ -282,6 +282,11 @@ export TEST_ENGINE
 export TEST_IMAGE
 export PACKAGE_NAME
 export TEST_JOBS
+# Export CI directory paths for tests that need absolute paths to CI resources
+export CI_DIR="${SCRIPT_DIR}"
+export CI_REPOS_DIR="${SCRIPT_DIR}/repos"
+# Export test files directory for package-specific test resources (e.g., test/rpms/nss-fips/)
+export TEST_FILES_DIR="${base_dir}/test/rpms/${PACKAGE_NAME}"
 
 temp_dir=$(mktemp -d)
 trap 'rm -rf "${temp_dir}"' EXIT
@@ -320,8 +325,26 @@ if [[ -f ${package_tests_file} ]]; then
     # Handle empty/null YAML files (files with only comments)
     if [[ ${package_test_data} != "null" && -n ${package_test_data} ]]; then
         package_test_data=$(jq --arg dir "${package_dir}" 'to_entries | map(.value.source_dir = $dir) | from_entries' <<< "${package_test_data}")
-        # Merge tests (package-specific tests override default tests with same name)
-        test_data=$(jq -s '.[0] * .[1]' <(echo "${test_data}") <(echo "${package_test_data}"))
+        # Deep merge tests: package-specific test properties override/extend default test properties
+        # This allows package tests to add known_issues to a default test while keeping the command
+        # IMPORTANT: Preserve source_dir from default tests - package overrides should NOT change
+        # where default test commands run from (they need ci/default-tests/ not rpms/<pkg>/)
+        test_data=$(jq -s '
+            .[0] as $default | .[1] as $pkg |
+            ($default | keys) + ($pkg | keys) | unique | 
+            reduce .[] as $key ({}; 
+                . + {($key): (
+                    if ($default[$key] != null and $pkg[$key] != null) then
+                        # Both exist: merge but preserve source_dir from default
+                        (($default[$key]) * ($pkg[$key])) + {source_dir: $default[$key].source_dir}
+                    elif ($default[$key] != null) then
+                        $default[$key]
+                    else
+                        $pkg[$key]
+                    end
+                )}
+            )
+        ' <(echo "${test_data}") <(echo "${package_test_data}"))
     else
         log_info "Package-specific tests file is empty or contains no tests; skipping"
     fi

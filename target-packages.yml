@@ -373,6 +373,7 @@ packages:
   - nodejs24
   - npth
   - nss
+  - nss-fips
   - nss_wrapper
   - numpy
   - ocaml-srpm-macros
