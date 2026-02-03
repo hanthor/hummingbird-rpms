@@ -1,7 +1,7 @@
 {
-  "branch": "rawhide",
-  "release": "2",
-  "sha": "09205c5d9a557e1ae1fdf00aff065b88c9f42eed",
+  "branch": "f43",
+  "release": "1",
+  "sha": "1453a377769e1812e29d53b5a01271676b589760",
   "source": "https://src.fedoraproject.org/rpms/nss.git",
-  "version": "3.119.1"
+  "version": "3.120.0"
 }
