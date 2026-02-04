@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Prarit Bhargava <prarit@redhat.com>
+Date: Tue, 4 Feb 2026 00:00:00 +0000
+Subject: [PATCH] Skip Socket#connect timeout test in isolated environments.
+
+The Socket#connect timeout test expects IO::TimeoutError when connecting
+to 192.0.2.1:1 (TEST-NET-1), but in isolated CI environments without
+network routing, it fails immediately with Errno::ENETUNREACH instead
+of timing out.
+
+Skip this test as it is environment-dependent.
+---
+ spec/ruby/library/socket/socket/connect_spec.rb | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/spec/ruby/library/socket/socket/connect_spec.rb b/spec/ruby/library/socket/socket/connect_spec.rb
+index 1111111111..2222222222 100644
+--- a/spec/ruby/library/socket/socket/connect_spec.rb
++++ b/spec/ruby/library/socket/socket/connect_spec.rb
+@@ -62,6 +62,7 @@ describe 'Socket#connect' do
+ 
+     it "fails with timeout" do
++      skip "unreliable in isolated network environments"
+       remote_addr = Socket.sockaddr_in(1, "192.0.2.1") # TEST-NET-1
+ 
+       -> {
