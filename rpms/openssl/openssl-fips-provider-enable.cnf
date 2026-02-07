@@ -1,0 +1,16 @@
+# Enable FIPS provider by default
+# Drop-in config for openssl-fips-provider-default package
+# This overrides the default provider section from openssl.cnf
+
+[provider_sect]
+fips = fips_sect
+base = base_sect
+
+[fips_sect]
+activate = 1
+
+[base_sect]
+activate = 1
+
+[evp_properties]
+default_properties = fips=yes
