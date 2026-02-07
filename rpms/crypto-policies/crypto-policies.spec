@@ -11,7 +11,7 @@
 
 Name:           crypto-policies
 Version:        %{git_date}
-Release:        1.git%{git_commit_hash}%{?dist}
+Release:        2.git%{git_commit_hash}%{?dist}
 Summary:        System-wide crypto policies
 
 License:        LGPL-2.1-or-later
@@ -59,6 +59,15 @@ the policies provided by the crypto-policies package. These can be
 either the pre-built policies from the base package or custom policies
 defined in simple policy definition files.
 
+%package config-fips
+Summary: Set FIPS as the default system crypto policy
+Requires: %{name} = %{version}-%{release}
+
+%description config-fips
+This package configures the system to use FIPS as the default crypto policy
+without requiring kernel FIPS mode to be enabled. This is useful for
+container images that need FIPS-compliant cryptography by default.
+
 %prep
 %setup -q -n fedora-crypto-policies-%{git_commit_hash}-%{git_commit}
 %autopatch -p1
@@ -82,6 +91,10 @@ mkdir -p -m 755 %{buildroot}%{_bindir}
 make DESTDIR=%{buildroot} DIR=%{_datarootdir}/crypto-policies MANDIR=%{_mandir} %{?_smp_mflags} install
 install -p -m 644 default-config %{buildroot}%{_sysconfdir}/crypto-policies/config
 install -p -m 644 default-fips-config %{buildroot}%{_datarootdir}/crypto-policies/default-fips-config
+
+# Create config-fips subpackage config
+mkdir -p -m 755 %{buildroot}%{_datarootdir}/crypto-policies/config-fips
+echo "FIPS" > %{buildroot}%{_datarootdir}/crypto-policies/config-fips/config
 touch %{buildroot}%{_sysconfdir}/crypto-policies/state/current
 touch %{buildroot}%{_sysconfdir}/crypto-policies/state/CURRENT.pol
 
@@ -223,6 +236,29 @@ else
     end
 end
 
+%post config-fips -p <lua>
+-- Set FIPS policy, overriding the default set by the main package
+local policy = "FIPS"
+local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
+if cf then
+    cf:write(policy.."\n")
+    cf:close()
+end
+cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w")
+if cf then
+    cf:write(policy.."\n")
+    cf:close()
+end
+local policypath = "%{_datarootdir}/crypto-policies/"..policy
+for fn in posix.files(policypath) do
+    if fn ~= "." and fn ~= ".." then
+        local backend = fn:gsub(".*/", ""):gsub("%%..*", "")
+        local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config"
+        posix.unlink(cfgfn)
+        posix.symlink(policypath.."/"..fn, cfgfn)
+    end
+end
+
 %pre
 # Drop removed javasystem backend; can be dropped in F43
 rm -f "%{_sysconfdir}/crypto-policies/back-ends/javasystem.config" 2>/dev/null || :
@@ -288,7 +324,14 @@ exit 0
 %{_mandir}/man8/update-crypto-policies.8*
 %{_datarootdir}/crypto-policies/python
 
+%files config-fips
+%dir %{_datarootdir}/crypto-policies/config-fips
+%{_datarootdir}/crypto-policies/config-fips/config
+
 %changelog
+* Sat Feb 07 2026 Robert Sturla <rsturla@redhat.com> - 20251128-2.git19878fe
+- Add config-fips subpackage for FIPS policy without kernel FIPS mode
+
 * Fri Nov 28 2025 Alexander Sosedkin <asosedkin@redhat.com> - 20251128-1.git19878fe
 - openssl: allow disabling all TLS / DTLS protocols
 - gnutls: do enabled-curve for hybrids with said curve
