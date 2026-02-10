@@ -96,19 +96,18 @@ Provides: %{name}-config
 Conflicts: %{name}-config-default
 
 %description config-fips
-This package configures the system to use FIPS as the default crypto policy
-without requiring kernel FIPS mode to be enabled. This is useful for
-container images that need FIPS-compliant cryptography by default.
+This package configures the system to use FIPS as the crypto policy.
+Install this to ensure FIPS policies regardless of host configuration.
 
 %package config-default
-Summary: Set DEFAULT as the system crypto policy
+Summary: Set DEFAULT as the default system crypto policy
 Requires: %{name} = %{version}-%{release}
 Provides: %{name}-config
 Conflicts: %{name}-config-fips
 
 %description config-default
 This package configures the system to use DEFAULT as the crypto policy.
-Install this to ensure non-FIPS policy regardless of host configuration.
+Install this to ensure non-FIPS policies regardless of host configuration.
 
 %prep
 %setup -q -n fedora-crypto-policies-%{git_commit_hash}-%{git_commit}
@@ -333,7 +332,7 @@ exit 0
 
 %changelog
 * Sat Feb 07 2026 Robert Sturla <rsturla@redhat.com> - 20251128-2.git19878fe
-- Add config-fips subpackage for FIPS policy without kernel FIPS mode
+- Add subpackages for FIPS and DEFAULT policies
 
 * Fri Nov 28 2025 Alexander Sosedkin <asosedkin@redhat.com> - 20251128-1.git19878fe
 - openssl: allow disabling all TLS / DTLS protocols
@@ -1129,4 +1128,3 @@ exit 0
 
 * Mon May 19 2014 Nikos Mavrogiannopoulos <nmav@redhat.com> - 0.9-1-20140519gitf15621a
 - Initial package build
-
