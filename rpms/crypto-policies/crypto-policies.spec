@@ -9,6 +9,32 @@
 %define rpmstatedir %{_localstatedir}/lib/rpm-state/%{name}
 %define rpmstate_autopolicy %{rpmstatedir}/autopolicy-reapplication-needed
 
+# Macro to generate %post scriptlet for config subpackages
+# Usage: %%config_subpackage_post <subpackage> <policy>
+%define config_subpackage_post() \
+%post %1 -p <lua> \
+-- Set %2 policy \
+local policy = "%2" \
+local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w") \
+if cf then \
+    cf:write(policy.."\\n") \
+    cf:close() \
+end \
+cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w") \
+if cf then \
+    cf:write(policy.."\\n") \
+    cf:close() \
+end \
+local policypath = "%{_datarootdir}/crypto-policies/"..policy \
+for fn in posix.files(policypath) do \
+    if fn ~= "." and fn ~= ".." then \
+        local backend = fn:gsub(".*/", ""):gsub("%%%..*", "") \
+        local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config" \
+        posix.unlink(cfgfn) \
+        posix.symlink(policypath.."/"..fn, cfgfn) \
+    end \
+end
+
 Name:           crypto-policies
 Version:        %{git_date}
 Release:        2.git%{git_commit_hash}%{?dist}
@@ -228,51 +254,9 @@ if posix.access("%{rpmstate_autopolicy}") then
     posix.unlink("%{rpmstate_autopolicy}")
 end
 
-%post config-fips -p <lua>
--- Set FIPS policy, overriding the default set by the main package
-local policy = "FIPS"
-local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
-if cf then
-    cf:write(policy.."\n")
-    cf:close()
-end
-cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w")
-if cf then
-    cf:write(policy.."\n")
-    cf:close()
-end
-local policypath = "%{_datarootdir}/crypto-policies/"..policy
-for fn in posix.files(policypath) do
-    if fn ~= "." and fn ~= ".." then
-        local backend = fn:gsub(".*/", ""):gsub("%%..*", "")
-        local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config"
-        posix.unlink(cfgfn)
-        posix.symlink(policypath.."/"..fn, cfgfn)
-    end
-end
+%config_subpackage_post config-fips FIPS
 
-%post config-default -p <lua>
--- Set DEFAULT policy
-local policy = "DEFAULT"
-local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
-if cf then
-    cf:write(policy.."\n")
-    cf:close()
-end
-cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w")
-if cf then
-    cf:write(policy.."\n")
-    cf:close()
-end
-local policypath = "%{_datarootdir}/crypto-policies/"..policy
-for fn in posix.files(policypath) do
-    if fn ~= "." and fn ~= ".." then
-        local backend = fn:gsub(".*/", ""):gsub("%%..*", "")
-        local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config"
-        posix.unlink(cfgfn)
-        posix.symlink(policypath.."/"..fn, cfgfn)
-    end
-end
+%config_subpackage_post config-default DEFAULT
 
 %pre
 # Drop removed javasystem backend; can be dropped in F43
