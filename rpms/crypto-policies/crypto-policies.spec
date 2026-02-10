@@ -202,15 +202,10 @@ end
 
 %post -p <lua>
 if not posix.access("%{_sysconfdir}/crypto-policies/config") then
+    -- Always use DEFAULT policy regardless of host FIPS mode.
+    -- Use crypto-policies-config-fips subpackage to get FIPS by default.
     local policy = "DEFAULT"
-    local cf = io.open("/proc/sys/crypto/fips_enabled", "r")
-    if cf then
-        if cf:read() == "1" then
-            policy = "FIPS"
-        end
-        cf:close()
-    end
-    cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
+    local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
     if cf then
         cf:write(policy.."\n")
         cf:close()
