@@ -34,6 +34,10 @@ BLOCKLIST=(
     "python-rpm-lockfile-prototype"
 )
 
+# Lockfile may list unversioned name (e.g. ruby, golang) while rpms/ has versioned dirs (ruby3.3, golang1.25).
+# Consider lockfile name "present" if any rpms/ directory name starts with it.
+PREFIX_PACKAGES=(ruby golang tomcat)
+
 show_help() {
     cat << EOF
 Usage: $0 [OPTIONS]
@@ -101,6 +105,25 @@ filter_blocklist() {
     local pattern
     pattern=$(printf '%s\n' "${BLOCKLIST[@]}" | paste -sd'|')
     echo "${input}" | grep -Ev "^(${pattern})$" || true
+}
+
+# Remove packages from missing list if they are prefix names (e.g. ruby, golang) and we have
+# a versioned directory that starts with that name (e.g. ruby3.3, golang1.25).
+filter_prefix_matches() {
+    local missing_list="$1"
+    local imported_list="$2"
+    local result=""
+    local pkg
+    while IFS= read -r pkg; do
+        [[ -z "${pkg}" ]] && continue
+        if [[ " ${PREFIX_PACKAGES[*]} " == *" ${pkg} "* ]]; then
+            if echo "${imported_list}" | grep -qE "^${pkg}"; then
+                continue
+            fi
+        fi
+        result="${result}${result:+$'\n'}${pkg}"
+    done <<< "${missing_list}"
+    echo "${result}"
 }
 
 check_command yq
@@ -237,6 +260,7 @@ imported_packages=$(get_imported_packages)
 
 missing=$(comm -23 <(echo "${lockfile_srpms}") <(echo "${imported_packages}"))
 missing=$(filter_blocklist "${missing}")
+missing=$(filter_prefix_matches "${missing}" "${imported_packages}")
 
 # Get missing build dependencies if requested
 missing_builddeps=""
