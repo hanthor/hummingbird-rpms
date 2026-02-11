@@ -9,35 +9,9 @@
 %define rpmstatedir %{_localstatedir}/lib/rpm-state/%{name}
 %define rpmstate_autopolicy %{rpmstatedir}/autopolicy-reapplication-needed
 
-# Macro to generate %post scriptlet for config subpackages
-# Usage: %%config_subpackage_post <subpackage> <policy>
-%define config_subpackage_post() \
-%post %1 -p <lua> \
--- Set %2 policy \
-local policy = "%2" \
-local cf = io.open("%{_sysconfdir}/crypto-policies/config", "w") \
-if cf then \
-    cf:write(policy.."\\n") \
-    cf:close() \
-end \
-cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w") \
-if cf then \
-    cf:write(policy.."\\n") \
-    cf:close() \
-end \
-local policypath = "%{_datarootdir}/crypto-policies/"..policy \
-for fn in posix.files(policypath) do \
-    if fn ~= "." and fn ~= ".." then \
-        local backend = fn:gsub(".*/", ""):gsub("%%%..*", "") \
-        local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config" \
-        posix.unlink(cfgfn) \
-        posix.symlink(policypath.."/"..fn, cfgfn) \
-    end \
-end
-
 Name:           crypto-policies
 Version:        %{git_date}
-Release:        2.git%{git_commit_hash}%{?dist}
+Release:        3.git%{git_commit_hash}%{?dist}
 Summary:        System-wide crypto policies
 
 License:        LGPL-2.1-or-later
@@ -69,9 +43,9 @@ Conflicts: gnutls < 3.8.10
 # Most users want this, the split is mostly for Fedora CoreOS
 Recommends: crypto-policies-scripts
 
-# Require one of the config subpackages to set the active policy
-Requires: %{name}-config
-Suggests: %{name}-config-default
+# Require a config subpackage, suggest the default one
+Requires: crypto-policies-config
+Suggests: crypto-policies-config-default
 
 %description
 This package provides pre-built configuration files with
@@ -89,25 +63,21 @@ the policies provided by the crypto-policies package. These can be
 either the pre-built policies from the base package or custom policies
 defined in simple policy definition files.
 
-%package config-fips
-Summary: Set FIPS as the default system crypto policy
-Requires: %{name} = %{version}-%{release}
-Provides: %{name}-config
-Conflicts: %{name}-config-default
-
-%description config-fips
-This package configures the system to use FIPS as the crypto policy.
-Install this to ensure FIPS policies regardless of host configuration.
-
 %package config-default
-Summary: Set DEFAULT as the default system crypto policy
-Requires: %{name} = %{version}-%{release}
-Provides: %{name}-config
-Conflicts: %{name}-config-fips
+Summary: Default crypto policy configuration
+Provides: crypto-policies-config = %{version}-%{release}
+Conflicts: crypto-policies-config-fips
 
 %description config-default
-This package configures the system to use DEFAULT as the crypto policy.
-Install this to ensure non-FIPS policies regardless of host configuration.
+This package sets the system crypto policy to DEFAULT.
+
+%package config-fips
+Summary: FIPS crypto policy configuration
+Provides: crypto-policies-config = %{version}-%{release}
+Conflicts: crypto-policies-config-default
+
+%description config-fips
+This package sets the system crypto policy to FIPS.
 
 %prep
 %setup -q -n fedora-crypto-policies-%{git_commit_hash}-%{git_commit}
@@ -130,16 +100,11 @@ mkdir -p -m 755 %{buildroot}%{_sysconfdir}/crypto-policies/policies/modules/
 mkdir -p -m 755 %{buildroot}%{_bindir}
 
 make DESTDIR=%{buildroot} DIR=%{_datarootdir}/crypto-policies MANDIR=%{_mandir} %{?_smp_mflags} install
-install -p -m 644 default-config %{buildroot}%{_sysconfdir}/crypto-policies/config
 install -p -m 644 default-fips-config %{buildroot}%{_datarootdir}/crypto-policies/default-fips-config
 
-# Create config-fips subpackage config
-mkdir -p -m 755 %{buildroot}%{_datarootdir}/crypto-policies/config-fips
-echo "FIPS" > %{buildroot}%{_datarootdir}/crypto-policies/config-fips/config
-
-# Create config-default subpackage config
-mkdir -p -m 755 %{buildroot}%{_datarootdir}/crypto-policies/config-default
-echo "DEFAULT" > %{buildroot}%{_datarootdir}/crypto-policies/config-default/config
+# Create policy-config files for config subpackages
+echo "DEFAULT" > %{buildroot}%{_sysconfdir}/crypto-policies/policy-config-default
+echo "FIPS" > %{buildroot}%{_sysconfdir}/crypto-policies/policy-config-fips
 touch %{buildroot}%{_sysconfdir}/crypto-policies/state/current
 touch %{buildroot}%{_sysconfdir}/crypto-policies/state/CURRENT.pol
 
@@ -246,16 +211,38 @@ if arg[2] == 2 then
 end
 
 %post -p <lua>
--- Policy is set by config-default or config-fips subpackage.
--- Only handle autopolicy reapplication for upgrades here.
-if posix.access("%{rpmstate_autopolicy}") then
-    os.execute("%{_libexecdir}/fips-crypto-policy-overlay >/dev/null 2>/dev/null || :")
-    posix.unlink("%{rpmstate_autopolicy}")
+if not posix.access("%{_sysconfdir}/crypto-policies/config") then
+    local policy = "DEFAULT"
+    local cf = io.open("%{_sysconfdir}/crypto-policies/policy-config", "r")
+    if cf then
+        policy = cf:read() or "DEFAULT"
+        cf:close()
+    end
+    cf = io.open("%{_sysconfdir}/crypto-policies/config", "w")
+    if cf then
+        cf:write(policy.."\n")
+        cf:close()
+    end
+    cf = io.open("%{_sysconfdir}/crypto-policies/state/current", "w")
+    if cf then
+        cf:write(policy.."\n")
+        cf:close()
+    end
+    local policypath = "%{_datarootdir}/crypto-policies/"..policy
+    for fn in posix.files(policypath) do
+        if fn ~= "." and fn ~= ".." then
+            local backend = fn:gsub(".*/", ""):gsub("%%..*", "")
+            local cfgfn = "%{_sysconfdir}/crypto-policies/back-ends/"..backend..".config"
+            posix.unlink(cfgfn)
+            posix.symlink(policypath.."/"..fn, cfgfn)
+        end
+    end
+else
+    if posix.access("%{rpmstate_autopolicy}") then
+        os.execute("%{_libexecdir}/fips-crypto-policy-overlay >/dev/null 2>/dev/null || :")
+        posix.unlink("%{rpmstate_autopolicy}")
+    end
 end
-
-%config_subpackage_post config-fips FIPS
-
-%config_subpackage_post config-default DEFAULT
 
 %pre
 # Drop removed javasystem backend; can be dropped in F43
@@ -263,6 +250,12 @@ rm -f "%{_sysconfdir}/crypto-policies/back-ends/javasystem.config" 2>/dev/null |
 # Drop removed openssl backend; can be dropped in F44
 rm -f "%{_sysconfdir}/crypto-policies/back-ends/openssl.config" 2>/dev/null || :
 exit 0
+
+%post config-default
+ln -sf policy-config-default %{_sysconfdir}/crypto-policies/policy-config
+
+%post config-fips
+ln -sf policy-config-fips %{_sysconfdir}/crypto-policies/policy-config
 
 %posttrans scripts
 %{_bindir}/update-crypto-policies --no-check >/dev/null 2>/dev/null || :
@@ -322,17 +315,18 @@ exit 0
 %{_mandir}/man8/update-crypto-policies.8*
 %{_datarootdir}/crypto-policies/python
 
-%files config-fips
-%dir %{_datarootdir}/crypto-policies/config-fips
-%{_datarootdir}/crypto-policies/config-fips/config
-
 %files config-default
-%dir %{_datarootdir}/crypto-policies/config-default
-%{_datarootdir}/crypto-policies/config-default/config
+%{_sysconfdir}/crypto-policies/policy-config-default
+
+%files config-fips
+%{_sysconfdir}/crypto-policies/policy-config-fips
 
 %changelog
-* Sat Feb 07 2026 Robert Sturla <rsturla@redhat.com> - 20251128-2.git19878fe
-- Add subpackages for FIPS and DEFAULT policies
+* Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 20251128-3.git19878fe
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
+
+* Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 20251128-2.git19878fe
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
 
 * Fri Nov 28 2025 Alexander Sosedkin <asosedkin@redhat.com> - 20251128-1.git19878fe
 - openssl: allow disabling all TLS / DTLS protocols
