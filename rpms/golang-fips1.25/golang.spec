@@ -413,23 +413,26 @@ tsan_go_dir="../llvm/compiler-rt-%{llvm_compiler_rt_version}.src/lib/tsan/go"
 # by just reading GOARCH directly from Go.
 export GOARCH=$(go env GOARCH)
 
+# Build race detector .syso files and store them outside src/ to avoid
+# polluting the source tree with arch-specific binaries. This ensures
+# consistent inode allocation for the noarch -src package across all archs.
 %if %{race}
 %ifarch x86_64
 pushd "${tsan_go_dir}"
   CFLAGS="%{tsan_buildflags} %{tsan_optflag}" CC=clang GOAMD64=v3 ./buildgo.sh
 popd
-cp "${tsan_go_dir}"/race_linux_amd64.syso ./src/runtime/race/internal/amd64v3/race_linux.syso
+cp "${tsan_go_dir}"/race_linux_amd64.syso ../race_amd64v3.syso
 
 pushd "${tsan_go_dir}"
-  CFLAGS="%{tsan_buildflags} %{tsan_optflag}" CC=clang GOAMD64=v3 ./buildgo.sh
+  CFLAGS="%{tsan_buildflags} %{tsan_optflag}" CC=clang GOAMD64=v1 ./buildgo.sh
 popd
-cp "${tsan_go_dir}"/race_linux_amd64.syso ./src/runtime/race/internal/amd64v1/race_linux.syso
+cp "${tsan_go_dir}"/race_linux_amd64.syso ../race_amd64v1.syso
 
 %else
 pushd "${tsan_go_dir}"
   CFLAGS="%{tsan_buildflags} %{tsan_optflag}" CC=clang ./buildgo.sh
 popd
-cp "${tsan_go_dir}"/race_linux_%{gohostarch}.syso ./src/runtime/race/race_linux_%{gohostarch}.syso
+cp "${tsan_go_dir}"/race_linux_%{gohostarch}.syso ../race_%{gohostarch}.syso
 %endif
 %endif
 
@@ -498,6 +501,18 @@ mkdir -p $RPM_BUILD_ROOT%{goroot}
 # https://code.google.com/p/go/issues/detail?id=5830
 cp -apv api bin doc lib pkg src misc test go.env VERSION \
    $RPM_BUILD_ROOT%{goroot}
+
+# Install race detector .syso files for the -race subpackage.
+# These were built outside src/ to keep the source tree arch-independent,
+# ensuring consistent inode allocation for the noarch -src package.
+%if %{race}
+%ifarch x86_64
+cp ../race_amd64v3.syso $RPM_BUILD_ROOT%{goroot}/src/runtime/race/internal/amd64v3/race_linux.syso
+cp ../race_amd64v1.syso $RPM_BUILD_ROOT%{goroot}/src/runtime/race/internal/amd64v1/race_linux.syso
+%else
+cp ../race_%{gohostarch}.syso $RPM_BUILD_ROOT%{goroot}/src/runtime/race/race_linux_%{gohostarch}.syso
+%endif
+%endif
 
 # bz1099206
 find $RPM_BUILD_ROOT%{goroot}/src -exec touch -r $RPM_BUILD_ROOT%{goroot}/VERSION "{}" \;
