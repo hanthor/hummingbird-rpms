@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 2%{?dist}
+Release: 2.1%{?dist}
 License: Python-2.0.1
 
 
@@ -415,6 +415,21 @@ Patch464: 00464-enable-pac-and-bti-protections-for-aarch64.patch
 # in the conditionalized skip to a release available in CentOS Stream 10,
 # which is tested as working.
 Patch466: 00466-downstream-only-skip-tests-not-working-with-older-expat-version.patch
+
+# 00329 #
+# Support OpenSSL FIPS mode
+# - In FIPS mode, OpenSSL wrappers are always used in hashlib
+# - The "usedforsecurity" keyword argument can be used to the various digest
+#   algorithms in hashlib so that you can whitelist a callsite with
+#   "usedforsecurity=False"
+# - OpenSSL wrappers for the hashes blake2{b512,s256},
+# - In FIPS mode, the blake2 hashes use OpenSSL wrappers
+#   and do not offer extended functionality (keys, tree hashing, custom digest size)
+#
+# - In FIPS mode, hmac.HMAC can only be instantiated with an OpenSSL wrapper
+#   or a string with OpenSSL hash name as the "digestmod" argument.
+#   The argument must be specified (instead of defaulting to 'md5').
+Patch329: 00329-fips.patch
 
 # (New patches go here ^^^)
 #
@@ -1069,6 +1084,7 @@ BuildPython() {
   --with-dtrace \
   --with-lto \
   --with-ssl-default-suites=openssl \
+  --with-builtin-hashlib-hashes=blake2 \
   --without-static-libpython \
 %if %{with rpmwheels}
   --with-wheel-pkg-dir=%{python_wheel_dir} \
