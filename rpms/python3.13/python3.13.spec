@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: Python-2.0.1
 
 
@@ -420,6 +420,21 @@ Patch475: 00475-cve-2025-15367.patch
 # which is modified with this patch, hence they need a
 # direct call to the check function.
 Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
+
+# 00329 #
+# Support OpenSSL FIPS mode
+# - In FIPS mode, OpenSSL wrappers are always used in hashlib
+# - The "usedforsecurity" keyword argument can be used to the various digest
+#   algorithms in hashlib so that you can whitelist a callsite with
+#   "usedforsecurity=False"
+# - OpenSSL wrappers for the hashes blake2{b512,s256},
+# - In FIPS mode, the blake2 hashes use OpenSSL wrappers
+#   and do not offer extended functionality (keys, tree hashing, custom digest size)
+#
+# - In FIPS mode, hmac.HMAC can only be instantiated with an OpenSSL wrapper
+#   or a string with OpenSSL hash name as the "digestmod" argument.
+#   The argument must be specified (instead of defaulting to 'md5').
+Patch329: 00329-fips.patch
 
 # (New patches go here ^^^)
 #
@@ -968,6 +983,7 @@ BuildPython() {
   --with-dtrace \
   --with-lto \
   --with-ssl-default-suites=openssl \
+  --with-builtin-hashlib-hashes=blake2 \
   --without-static-libpython \
 %if %{with rpmwheels}
   --with-wheel-pkg-dir=%{python_wheel_dir} \

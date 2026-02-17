@@ -1,6 +1,7 @@
 {
   "branch": "f43",
-  "modification_status": "clean",
+  "modification_status": "modified",
+  "modification_reason": "Add FIPS mode support (00329-fips.patch) - OpenSSL FIPS mode compliance for hashlib and hmac",
   "release": "1",
   "sha": "b909398e15b11e691b444782103e3290985b908f",
   "source": "https://src.fedoraproject.org/rpms/python3.13.git",
