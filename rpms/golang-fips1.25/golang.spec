@@ -48,8 +48,8 @@
 
 # Disable FIPS by default
 %global fips 0
-# Enable FIPS by default in RHEL
-%if 0%{?rhel}
+# Enable FIPS by default in RHEL and Hummingbird
+%if 0%{?rhel} || 0%{?hummingbird}
 %global fips 1
 %endif
 
