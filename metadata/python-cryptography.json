@@ -1,0 +1,8 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "1",
+  "sha": "09809af65a1e4281a1be5c2e934b845c75c37c6a",
+  "source": "https://src.fedoraproject.org/rpms/python-cryptography.git",
+  "version": "46.0.5"
+}
