@@ -1,0 +1,6 @@
+# Source generation tool dependencies
+# Note: Requires venv with --system-site-packages for RPM bindings
+#   python3 -m venv --system-site-packages .venv
+
+PyYAML>=6.0
+specfile>=0.28.0

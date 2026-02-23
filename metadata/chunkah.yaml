@@ -1,0 +1,40 @@
+schema_version: 1
+
+package:
+  name: chunkah
+  version: 0.1.1
+  release: "1"
+  license: MIT OR Apache-2.0
+
+pipeline:
+  - name: Clone chunkah repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/jlebon/chunkah
+      ref: v{version}
+      dest: chunkah-{version}
+
+  - name: Vendor Rust dependencies
+    uses: cargo/vendor
+    with:
+      manifest: chunkah-{version}/Cargo.toml
+      output: vendor
+
+outputs:
+  - type: archive
+    source: chunkah-{version}
+    filename: chunkah-{version}.tar.gz
+    exclude:
+      - .git/
+      - target/
+
+  - type: archive
+    source: vendor
+    filename: chunkah-{version}-vendor.tar.gz
+    prefix: vendor
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

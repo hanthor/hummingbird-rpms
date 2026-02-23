@@ -237,7 +237,7 @@ cp -r /bare .git
 
 echo 'Downloading sources via dist-git-client...'
 # Use --forked-from to tell dist-git-client which lookaside cache to use
-dist-git-client --configdir \${CONFIG_DIR} --forked-from ${upstream_repo_url} sources
+# dist-git-client --configdir \${CONFIG_DIR} --forked-from ${upstream_repo_url} sources
 
 # Copy all downloaded sources to /sources directory
 echo 'Copying sources to /sources directory...'

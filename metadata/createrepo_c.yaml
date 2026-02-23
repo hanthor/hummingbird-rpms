@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: createrepo_c
+  version: 1.2.1
+  release: "5"
+  license: GPL-2.0-or-later
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/createrepo_c.git
+  branch: rawhide
+  last_synced_sha: dffa8a0501aa700b7bb6f31e1659d6b12ed042fe
+
+pipeline:
+  - name: Clone createrepo_c repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/rpm-software-management/createrepo_c
+      ref: "{version}"
+      dest: "{name}-{version}"
+
+outputs:
+  - type: archive
+    source: "{name}-{version}"
+    filename: "{name}-{version}.tar.gz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: libxcrypt
+  version: 4.5.2
+  release: "3"
+  license: LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND 0BSD AND CC0-1.0 AND LicenseRef-Fedora-Public-Domain
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/libxcrypt.git
+  branch: rawhide
+  last_synced_sha: da4ebbd1399bfc4dc96cec0dad7db4abf81490c6
+
+pipeline:
+  - name: Clone libxcrypt repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/besser82/libxcrypt
+      ref: "v{version}"
+      dest: "{name}-{version}"
+
+outputs:
+  - type: archive
+    source: "{name}-{version}"
+    filename: "{name}-{version}.tar.xz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

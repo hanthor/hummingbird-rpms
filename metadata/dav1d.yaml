@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: dav1d
+  version: 1.5.2
+  release: "3"
+  license: BSD-2-Clause
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/dav1d.git
+  branch: rawhide
+  last_synced_sha: 47a6b82879ef92422e7278496859b04e8b78cc86
+
+pipeline:
+  - name: Clone dav1d repository
+    uses: git-checkout
+    with:
+      repository: https://code.videolan.org/videolan/dav1d.git
+      ref: "{version}"
+      dest: "{name}-{version}"
+
+outputs:
+  - type: archive
+    source: "{name}-{version}"
+    filename: "{name}-{version}.tar.bz2"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

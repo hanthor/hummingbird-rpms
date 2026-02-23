@@ -1,0 +1,36 @@
+schema_version: 1
+
+package:
+  name: mawk
+  version: 1.3.4
+  release: "6.20260129"
+  license: GPL-2.0-only
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/mawk.git
+  branch: rawhide
+  last_synced_sha: 651339a5ee1436add65dc443806eafcd45fc0f61
+
+# mawk uses a custom versioning scheme with a date suffix
+# The tarball is named mawk-1.3.4-20260129.tgz
+
+pipeline:
+  - name: Clone mawk repository
+    uses: git-clone
+    with:
+      repository: https://github.com/ThomasDickey/mawk-snapshots
+      dest: "mawk-{version}-20260129"
+      ref: t20260129
+
+outputs:
+  - type: archive
+    source: "mawk-{version}-20260129"
+    filename: "mawk-{version}-20260129.tgz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

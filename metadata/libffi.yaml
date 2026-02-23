@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: libffi
+  version: 3.5.2
+  release: "2"
+  license: MIT
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/libffi.git
+  branch: rawhide
+  last_synced_sha: e4808b82fa5440938c999d25745182c99b1f4774
+
+pipeline:
+  - name: Clone libffi repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/libffi/libffi
+      ref: v{version}
+      dest: "{name}-{version}"
+
+outputs:
+  - type: archive
+    source: "{name}-{version}"
+    filename: "{name}-{version}.tar.gz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

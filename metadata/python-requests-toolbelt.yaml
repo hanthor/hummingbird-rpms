@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: python-requests-toolbelt
+  version: 1.0.0
+  release: "15"
+  license: Apache-2.0
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/python-requests-toolbelt.git
+  branch: rawhide
+  last_synced_sha: e66d429aa9f997ba6af4a0854825d349ce983bbf
+
+pipeline:
+  - name: Clone requests-toolbelt repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/sigmavirus24/requests-toolbelt
+      ref: "{version}"
+      dest: requests-toolbelt-{version}
+
+outputs:
+  - type: archive
+    source: requests-toolbelt-{version}
+    filename: requests-toolbelt-{version}.tar.gz
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

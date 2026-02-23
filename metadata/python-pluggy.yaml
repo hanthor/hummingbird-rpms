@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: python-pluggy
+  version: 1.6.0
+  release: "5"
+  license: MIT
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/python-pluggy.git
+  branch: rawhide
+  last_synced_sha: de3ebcec0a38f38e69a431a523897833b7ed8263
+
+pipeline:
+  - name: Clone pluggy repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/pytest-dev/pluggy
+      ref: "{version}"
+      dest: "pluggy-{version}"
+
+outputs:
+  - type: archive
+    source: "pluggy-{version}"
+    filename: "pluggy-{version}.tar.gz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"

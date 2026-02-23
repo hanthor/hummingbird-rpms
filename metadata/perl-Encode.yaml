@@ -1,0 +1,33 @@
+schema_version: 1
+
+package:
+  name: perl-Encode
+  version: 3.21
+  release: "521"
+  license: (GPL-1.0-or-later OR Artistic-1.0-Perl) AND Artistic-2.0
+
+tracking:
+  source: https://src.fedoraproject.org/rpms/perl-Encode.git
+  branch: rawhide
+  last_synced_sha: 8d0a740f39cbd2c1af75ad80280eb0bd7597f264
+
+pipeline:
+  - name: Clone Encode repository
+    uses: git-checkout
+    with:
+      repository: https://github.com/dankogai/p5-encode
+      ref: "v{version}"
+      dest: "Encode-{version}"
+
+outputs:
+  - type: archive
+    source: "Encode-{version}"
+    filename: "Encode-{version}.tar.gz"
+    exclude:
+      - .git/
+
+spec_updates:
+  - tag: Version
+    value: "{version}"
+  - tag: Release
+    value: "{release}%{?dist}"
