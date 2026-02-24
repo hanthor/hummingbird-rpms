@@ -4,5 +4,6 @@
   "sha": "b02a6280d34cd886ad0b139d4f49107d459020c1",
   "source": "https://src.fedoraproject.org/rpms/glib2.git",
   "version": "2.87.2",
-  "modification_status": "clean"
+  "modification_status": "modified",
+  "modification_reason": "Switch HMAC backend from GnuTLS to OpenSSL for FIPS compliance"
 }

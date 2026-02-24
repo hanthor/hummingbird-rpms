@@ -1,0 +1,200 @@
+---
+# Tests specific to the glib2 package
+
+openssl-hmac-dependency:
+  summary: Verify glib2 depends on libcrypto (OpenSSL) and not libgnutls
+  command: |
+    # Only run on the main glib2 package (sub-packages don't carry this dependency)
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM:?}")
+    if [[ "${rpm_name}" != "glib2" ]]; then
+      echo "Skipping: This test only runs on glib2 (got: ${rpm_name})"
+      exit 0
+    fi
+
+    # Check that glib2 requires libcrypto.so.3 (OpenSSL)
+    deps=$(rpm -qRp "${TEST_RPM:?}")
+
+    if ! grep -q "libcrypto.so.3" <<<"${deps}"; then
+      TEST_FAIL "glib2 RPM does not have a dependency on libcrypto.so.3 (OpenSSL)"
+    fi
+    echo "PASS: glib2 depends on libcrypto.so.3"
+
+    # Check that glib2 does NOT require libgnutls
+    if grep -q "libgnutls" <<<"${deps}"; then
+      TEST_FAIL "glib2 RPM still depends on libgnutls - OpenSSL migration incomplete"
+    fi
+    echo "PASS: glib2 does not depend on libgnutls"
+
+openssl-hmac-functional:
+  summary: Verify HMAC functionality works using OpenSSL backend
+  command: |
+    # Only run on the main glib2 package
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM:?}")
+    if [[ "${rpm_name}" != "glib2" ]]; then
+      echo "Skipping: This test only runs on glib2 (got: ${rpm_name})"
+      exit 0
+    fi
+
+    # Install glib2 in a container and run a C program that exercises the HMAC API
+    # to verify the OpenSSL backend produces correct results
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    # Create local repo
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+
+    if command -v createrepo_c &>/dev/null; then
+      createrepo_c "${build_dir}/local-repo"
+    else
+      "${TEST_ENGINE}" run --rm --user 0 -e HOME=/root \
+        -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/builder:latest \
+        createrepo_c /repo
+    fi
+
+    # Copy the test C program from external file (inline C breaks YAML parsing)
+    cp "${TEST_FILES_DIR}/test_hmac.c" "${build_dir}/test_hmac.c"
+
+    # Run the test inside a container
+    "${TEST_ENGINE}" run --rm \
+      --cap-add=ALL \
+      -v "${CI_REPOS_DIR}:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      -v "${build_dir}/test_hmac.c:/tmp/test_hmac.c:ro,z" \
+      quay.io/hummingbird-ci/builder:latest-hatchling \
+      bash -c '
+        set -e
+
+        # Set up repos
+        cp /tmp/repos/fedora-43.repo /etc/yum.repos.d/
+        cp /tmp/repos/hummingbird.repo /etc/yum.repos.d/
+
+        printf "%s\n" \
+          "[local-repo]" \
+          "name=Local Repository" \
+          "baseurl=file:///tmp/local-repo" \
+          "enabled=1" \
+          "gpgcheck=0" \
+          "priority=1" \
+          > /etc/yum.repos.d/local.repo
+
+        # Install glib2, glib2-devel, gcc, pkg-config, and openssl-libs
+        dnf -y install glib2 glib2-devel gcc pkg-config openssl-libs
+
+        # Verify libglib links to libcrypto at runtime
+        echo "Checking libglib-2.0 for libcrypto dlopen references..."
+        if strings /usr/lib64/libglib-2.0.so.0 | grep -q "libcrypto.so.3"; then
+          echo "PASS: libglib-2.0.so.0 contains libcrypto.so.3 dlopen reference"
+        else
+          echo "FAIL: libglib-2.0.so.0 does not contain libcrypto.so.3 reference"
+          exit 1
+        fi
+
+        # Verify no gnutls references remain
+        if strings /usr/lib64/libglib-2.0.so.0 | grep -q "libgnutls"; then
+          echo "FAIL: libglib-2.0.so.0 still contains libgnutls reference"
+          exit 1
+        fi
+        echo "PASS: libglib-2.0.so.0 does not reference libgnutls"
+
+        # Compile and run the test program
+        gcc -o /tmp/test_hmac /tmp/test_hmac.c $(pkg-config --cflags --libs glib-2.0)
+        /tmp/test_hmac
+      '
+
+openssl-hmac-negative:
+  summary: Verify HMAC fails without libcrypto (proves OpenSSL backend is in use)
+  command: |
+    # Only run on the main glib2 package
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM:?}")
+    if [[ "${rpm_name}" != "glib2" ]]; then
+      echo "Skipping: This test only runs on glib2 (got: ${rpm_name})"
+      exit 0
+    fi
+
+    # This is the critical test: if we remove libcrypto.so.3 and g_hmac_new
+    # returns NULL, the OpenSSL backend is definitely in use. If it still
+    # succeeds, the build is broken (compiled with built-in HMAC instead).
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    # Create local repo
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+
+    if command -v createrepo_c &>/dev/null; then
+      createrepo_c "${build_dir}/local-repo"
+    else
+      "${TEST_ENGINE}" run --rm --user 0 -e HOME=/root \
+        -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/builder:latest \
+        createrepo_c /repo
+    fi
+
+    cp "${TEST_FILES_DIR}/test_hmac.c" "${build_dir}/test_hmac.c"
+    cp "${TEST_FILES_DIR}/test_hmac_no_openssl.c" "${build_dir}/test_hmac_no_openssl.c"
+
+    "${TEST_ENGINE}" run --rm \
+      --cap-add=ALL \
+      -v "${CI_REPOS_DIR}:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      -v "${build_dir}/test_hmac.c:/tmp/test_hmac.c:ro,z" \
+      -v "${build_dir}/test_hmac_no_openssl.c:/tmp/test_hmac_no_openssl.c:ro,z" \
+      quay.io/hummingbird-ci/builder:latest-hatchling \
+      bash -c '
+        set -e
+
+        # Set up repos
+        cp /tmp/repos/fedora-43.repo /etc/yum.repos.d/
+        cp /tmp/repos/hummingbird.repo /etc/yum.repos.d/
+
+        printf "%s\n" \
+          "[local-repo]" \
+          "name=Local Repository" \
+          "baseurl=file:///tmp/local-repo" \
+          "enabled=1" \
+          "gpgcheck=0" \
+          "priority=1" \
+          > /etc/yum.repos.d/local.repo
+
+        # Install glib2, glib2-devel, gcc, pkg-config
+        dnf -y install glib2 glib2-devel gcc pkg-config openssl-libs
+
+        # Step 1: Compile both the positive and negative test programs
+        gcc -o /tmp/test_hmac /tmp/test_hmac.c \
+          $(pkg-config --cflags --libs glib-2.0)
+        gcc -o /tmp/test_hmac_no_openssl /tmp/test_hmac_no_openssl.c \
+          $(pkg-config --cflags --libs glib-2.0)
+
+        # Step 2: Verify HMAC works BEFORE breaking OpenSSL
+        echo "=== Sanity check: HMAC works with libcrypto present ==="
+        /tmp/test_hmac
+        echo "PASS: HMAC works with libcrypto present"
+
+        # Step 3: Hide libcrypto.so.3 by renaming it
+        echo ""
+        echo "=== Hiding libcrypto.so.3 ==="
+        mv /usr/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3.hidden
+        echo "Renamed libcrypto.so.3 -> libcrypto.so.3.hidden"
+
+        # Step 4: Run the negative test - should PASS (g_hmac_new returns NULL)
+        echo ""
+        echo "=== Running negative test (expect g_hmac_new to return NULL) ==="
+        /tmp/test_hmac_no_openssl
+
+        # Step 5: Restore libcrypto for cleanup
+        mv /usr/lib64/libcrypto.so.3.hidden /usr/lib64/libcrypto.so.3
+      '
