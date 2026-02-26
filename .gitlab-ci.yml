@@ -122,7 +122,10 @@ dist_git_update:
       # Remove include.path to .gitlab-runner.ext.conf which re-injects the read-only
       # gitlab-ci-token into the remote URL, preventing the credential helper from working.
       git config --local --unset-all include.path || true
-      git branch --quiet --force "${CI_COMMIT_BRANCH:-$CI_DEFAULT_BRANCH}" "origin/${CI_COMMIT_BRANCH:-$CI_DEFAULT_BRANCH}"
+      # Only reset to origin for scheduled runs, not MR runs (MRs should test their own changes)
+      if [ "$CI_PIPELINE_SOURCE" = "schedule" ]; then
+        git branch --quiet --force "${CI_COMMIT_BRANCH:-$CI_DEFAULT_BRANCH}" "origin/${CI_COMMIT_BRANCH:-$CI_DEFAULT_BRANCH}"
+      fi
   script:
     - |
       ./ci/dist_git_update_multi_mr.sh --max=500 --clean-only
