@@ -221,7 +221,10 @@ if [[ "${CLEAN_ONLY}" == true ]]; then
 fi
 
 # Make sure we're on the target branch before running updates
-git checkout --quiet "${TARGET_BRANCH}" 2>/dev/null || true
+# For MR runs, stay on the detached HEAD (the MR commit) instead of checking out a branch
+if [[ "${CI_PIPELINE_SOURCE:-}" != "merge_request_event" ]]; then
+    git checkout --quiet "${TARGET_BRANCH}" 2>/dev/null || true
+fi
 
 # Save the current commit before running updates
 START_COMMIT=$(git rev-parse HEAD)
