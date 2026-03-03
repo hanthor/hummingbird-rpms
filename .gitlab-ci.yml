@@ -32,12 +32,6 @@ default:
       - api_failure
       - job_execution_timeout
 
-# Need full history for ci/validate_package_modifications.py consistency check
-variables:
-  GIT_DEPTH: 0
-  # Fix "invalid index-pack output" error with large repos
-  GIT_CONFIG_PARAMETERS: "'core.compression=0' 'http.postBuffer=524288000'"
-
 .rules:
   mr:
     if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -63,6 +57,8 @@ tree_status:
 
 check:
   script:
+    # Fetch full history for git commit trailer validation
+    - git fetch --unshallow --quiet
     - make check-host
   rules:
     - !reference [.rules, mr]
