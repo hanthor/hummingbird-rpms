@@ -1,0 +1,47 @@
+From 87f4a99c208c1942a9429f94628fd8c72f876179 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Tue, 3 Mar 2026 14:21:00 +0000
+Subject: [PATCH] Support setting version string via ldflags
+
+When xcaddy is built directly from source (e.g. distro packaging),
+Go's debug.ReadBuildInfo() reports the main module version as
+"(devel)" rather than the actual release version. The upstream
+build process works around this by building from a separate wrapper
+module that imports xcaddy as a versioned dependency, but packagers
+typically build directly from the source tarball.
+
+Add a version variable that can be set via -ldflags -X at build
+time, allowing packagers to inject the correct version string.
+---
+ cmd/main.go | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/cmd/main.go b/cmd/main.go
+index 9a898d3..d52aabb 100644
+--- a/cmd/main.go
++++ b/cmd/main.go
+@@ -33,6 +33,11 @@ import (
+ 	"github.com/caddyserver/xcaddy/internal/utils"
+ )
+ 
++// version can be set at build time via -ldflags to override the version
++// reported by debug.ReadBuildInfo() (which returns "(devel)" when built
++// as the main module, e.g. in distro packaging).
++var version string
++
+ var (
+ 	caddyVersion     = os.Getenv("CADDY_VERSION")
+ 	raceDetector     = os.Getenv("XCADDY_RACE_DETECTOR") == "1"
+@@ -207,6 +212,9 @@ func splitWith(arg string) (module, version, replace string, err error) {
+ 
+ // xcaddyVersion returns a detailed version string, if available.
+ func xcaddyVersion() string {
++	if version != "" {
++		return version
++	}
+ 	mod := goModule()
+ 	ver := mod.Version
+ 	if mod.Sum != "" {
+-- 
+2.53.0
+
