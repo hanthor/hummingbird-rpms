@@ -32,6 +32,10 @@ default:
       - api_failure
       - job_execution_timeout
 
+# Need full history for ci/validate_package_modifications.py consistency check
+variables:
+  GIT_DEPTH: 0
+
 .rules:
   mr:
     if: $CI_PIPELINE_SOURCE == 'merge_request_event'
