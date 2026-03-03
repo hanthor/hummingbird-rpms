@@ -35,6 +35,8 @@ default:
 # Need full history for ci/validate_package_modifications.py consistency check
 variables:
   GIT_DEPTH: 0
+  # Fix "invalid index-pack output" error with large repos
+  GIT_CONFIG_PARAMETERS: "'core.compression=0' 'http.postBuffer=524288000'"
 
 .rules:
   mr:
