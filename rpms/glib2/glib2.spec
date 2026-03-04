@@ -7,11 +7,10 @@ License:        LGPL-2.1-or-later
 URL:            https://www.gtk.org
 Source:         https://download.gnome.org/sources/glib/2.87/glib-%{version}.tar.xz
 
-# Use OpenSSL (via dlopen) for HMAC instead of GLib's built-in implementation,
-# for FIPS compliance. Derived from the GnuTLS-based approach in:
-# https://gitlab.gnome.org/GNOME/glib/-/merge_requests/903
+# Disable GLib's built-in GHmac for FIPS compliance.
+# Applications should use a FIPS-certified crypto library directly.
 # https://bugzilla.redhat.com/show_bug.cgi?id=1630260
-Patch:          openssl-hmac.patch
+Patch:          fips-disable-ghmac.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=2192204
 Patch:          default-terminal.patch
@@ -43,16 +42,6 @@ BuildRequires:  /usr/bin/rst2man
 BuildRequires:  shared-mime-info
 BuildRequires:  /usr/bin/dbus-daemon
 BuildRequires:  /usr/bin/update-desktop-database
-
-# For openssl-hmac.patch. We now dlopen libcrypto.so.3 so that we can build a
-# static glib2 without depending on a static build of OpenSSL as well. This will
-# ensure we notice if the OpenSSL soname bumps, so that we can update our patch.
-BuildRequires:  openssl-libs
-%if 0%{?__isa_bits} == 64
-Requires: libcrypto.so.3()(64bit)
-%else
-Requires: libcrypto.so.3
-%endif
 
 Provides: bundled(cmph)
 Provides: bundled(dirent)
@@ -113,7 +102,6 @@ the functionality of the installed glib2 package.
     -Dglib_debug=disabled \
     -Ddocumentation=true \
     -Dinstalled_tests=true \
-    -Dopenssl_hmac=true \
     --default-library=both \
     %{nil}
 %meson_build
