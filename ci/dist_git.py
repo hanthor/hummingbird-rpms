@@ -1099,6 +1099,28 @@ def create_overlay(package_name: str, reason: str | None = None) -> None:
     logging.info("Created overlay for %s (%s)", package_name, ', '.join(parts))
 
 
+def _restore_release_lines(original_releases: dict[Path, list[str]]) -> None:
+    """Restore saved Release: lines into spec files, preserving order.
+
+    Each Release: line in the spec is replaced with the corresponding
+    saved value (by position), so specs with multiple Release: lines
+    (e.g. for subpackages) get each one restored correctly.
+    """
+    for spec_file, release_lines in original_releases.items():
+        if not spec_file.exists():
+            continue
+        content = spec_file.read_text()
+        idx = 0
+        restored_lines: list[str] = []
+        for line in content.splitlines(True):
+            if line.rstrip('\n').startswith('Release:') and idx < len(release_lines):
+                restored_lines.append(release_lines[idx] + '\n')
+                idx += 1
+            else:
+                restored_lines.append(line)
+        spec_file.write_text(''.join(restored_lines))
+
+
 def apply_overlay(package_name: str, package_dir: Path) -> tuple[bool, str]:
     """Apply overlay changes to a package directory.
 
@@ -1118,14 +1140,13 @@ def apply_overlay(package_name: str, package_dir: Path) -> tuple[bool, str]:
     if not changes:
         return (True, "Empty overlay (no changes)")
 
-    # Save original Release: values from all spec files
-    original_releases: dict[Path, str] = {}
+    # Save all original Release: lines from each spec file (in order)
+    original_releases: dict[Path, list[str]] = {}
     for spec_file in package_dir.glob('*.spec'):
-        content = spec_file.read_text()
-        for line in content.splitlines():
-            if line.startswith('Release:'):
-                original_releases[spec_file] = line
-                break
+        release_lines = [line for line in spec_file.read_text().splitlines()
+                         if line.startswith('Release:')]
+        if release_lines:
+            original_releases[spec_file] = release_lines
 
     # Normalize Release: before applying patches
     normalize_release_in_specs(package_dir)
@@ -1155,19 +1176,12 @@ def apply_overlay(package_name: str, package_dir: Path) -> tuple[bool, str]:
 
             if result.returncode != 0:
                 # Restore Release: before returning
-                for spec_file, original_line in original_releases.items():
-                    if spec_file.exists():
-                        content = spec_file.read_text()
-                        restored = re.sub(r'^Release:.*$', original_line, content, flags=re.MULTILINE)
-                        spec_file.write_text(restored)
+                _restore_release_lines(original_releases)
                 return (False, f"{patch_name} failed:\n{result.stdout}\n{result.stderr}")
             applied_items.append(patch_name)
 
     # Restore original Release: values
-    for spec_file, original_line in original_releases.items():
-        content = spec_file.read_text()
-        restored = re.sub(r'^Release:.*$', original_line, content, flags=re.MULTILINE)
-        spec_file.write_text(restored)
+    _restore_release_lines(original_releases)
 
     return (True, f"Applied: {', '.join(applied_items)}")
 
@@ -1347,6 +1361,14 @@ def rebuild_overlay(package_name: str) -> tuple[bool, str]:
     assert 'branch' in metadata
     assert 'sha' in metadata
 
+    # Save local Release: lines before rebuilding (overlay excludes Release:)
+    local_releases: dict[Path, list[str]] = {}
+    for spec_file in package_dir.glob('*.spec'):
+        release_lines = [line for line in spec_file.read_text().splitlines()
+                         if line.startswith('Release:')]
+        if release_lines:
+            local_releases[spec_file.relative_to(package_dir)] = release_lines
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
 
@@ -1386,6 +1408,10 @@ def rebuild_overlay(package_name: str) -> tuple[bool, str]:
                 shutil.copytree(item, dst)
             else:
                 shutil.copy2(item, dst)
+
+    # Restore local Release: values (resolve relative paths against updated package_dir)
+    absolute_releases = {package_dir / rel: lines for rel, lines in local_releases.items()}
+    _restore_release_lines(absolute_releases)
 
     return (True, f"Rebuilt rpms/{package_name}/ from upstream + overlay")
 
