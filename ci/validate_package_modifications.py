@@ -14,6 +14,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import yaml
+
 # Import from dist_git.py
 sys.path.insert(0, str(Path(__file__).parent))
 from dist_git import (
@@ -24,6 +26,8 @@ from dist_git import (
     is_package_unmodified,
     run_git,
 )
+
+OVERLAYS_DIR = ROOT_DIR / 'overlays'
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -329,6 +333,129 @@ def check_local_modifications(package_name: str, last_sync_sha: str | None) -> t
     return True, None
 
 
+def validate_overlay(package_name: str) -> tuple[bool, str | None]:
+    """
+    Validate the overlay for a modified package.
+
+    Checks that if an overlay directory exists for a package, it contains
+    a valid overlay.yaml with a changes list, where each change has a
+    description and at least patches or files, and that all referenced
+    patch and overlay files exist.
+
+    Args:
+        package_name: Package name to validate
+
+    Returns:
+        (is_valid, error_message) tuple
+    """
+    overlay_dir = OVERLAYS_DIR / package_name
+
+    if not overlay_dir.exists():
+        # Overlays are optional for now
+        return True, None
+
+    # Check overlay.yaml exists and is valid
+    overlay_yaml = overlay_dir / 'overlay.yaml'
+    if not overlay_yaml.exists():
+        return False, f"{package_name}: Overlay directory exists but missing overlay.yaml"
+
+    try:
+        with open(overlay_yaml) as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        return False, f"{package_name}: overlay.yaml is not valid YAML: {e}"
+    except OSError as e:
+        return False, f"{package_name}: Failed to read overlay.yaml: {e}"
+
+    if not isinstance(data, dict):
+        return False, f"{package_name}: overlay.yaml must be a YAML mapping, got {type(data).__name__}"
+
+    if 'changes' not in data:
+        return False, f"{package_name}: overlay.yaml missing required 'changes' key"
+
+    changes = data['changes']
+    if not isinstance(changes, list) or not changes:
+        return False, f"{package_name}: overlay.yaml 'changes' must be a non-empty list"
+
+    package_dir = RPMS_DIR / package_name
+
+    for i, change in enumerate(changes):
+        if not isinstance(change, dict):
+            return False, f"{package_name}: changes[{i}] must be a mapping"
+
+        if 'description' not in change:
+            return False, f"{package_name}: changes[{i}] missing required 'description' key"
+
+        if not isinstance(change['description'], str) or not change['description'].strip():
+            return False, f"{package_name}: changes[{i}] 'description' must be a non-empty string"
+
+        patches = change.get('patches', [])
+        files = change.get('files', [])
+
+        if not patches and not files:
+            return False, f"{package_name}: changes[{i}] must have at least 'patches' or 'files'"
+
+        # Validate patch files
+        for j, patch_name in enumerate(patches):
+            if not isinstance(patch_name, str):
+                return False, f"{package_name}: changes[{i}].patches[{j}] must be a string"
+
+            patch_file = overlay_dir / patch_name
+            if not patch_file.exists():
+                return False, (
+                    f"{package_name}: changes[{i}].patches[{j}] references "
+                    f"{patch_name} but file does not exist"
+                )
+
+            try:
+                patch_content = patch_file.read_text()
+            except OSError as e:
+                return False, f"{package_name}: Failed to read {patch_name}: {e}"
+
+            if not patch_content.strip():
+                return False, f"{package_name}: {patch_name} is empty"
+
+            # Verify files referenced in +++ b/ lines exist in rpms/<package>/
+            # Skip deleted files (timestamp 1970-01-01 indicates file was removed)
+            for line in patch_content.splitlines():
+                if line.startswith('+++ b/'):
+                    # Strip timestamp suffix that diff -ruN appends
+                    parts = line[len('+++ b/'):].split('\t')
+                    relative_path = parts[0]
+                    # Files deleted by the overlay have epoch timestamp
+                    if len(parts) > 1 and '1970-01-01' in parts[1]:
+                        continue
+                    target_file = package_dir / relative_path
+                    if not target_file.exists():
+                        return False, (
+                            f"{package_name}: {patch_name} references {relative_path} "
+                            f"but the file does not exist in rpms/{package_name}/"
+                        )
+
+        # Validate overlay files
+        for j, file_path in enumerate(files):
+            if not isinstance(file_path, str):
+                return False, f"{package_name}: changes[{i}].files[{j}] must be a string"
+
+            # Check source exists in overlays/<package>/files/
+            src = overlay_dir / 'files' / file_path
+            if not src.exists():
+                return False, (
+                    f"{package_name}: changes[{i}].files[{j}] references "
+                    f"{file_path} but file does not exist in overlays/{package_name}/files/"
+                )
+
+            # Check target exists in rpms/<package>/
+            target = package_dir / file_path
+            if not target.exists():
+                return False, (
+                    f"{package_name}: changes[{i}].files[{j}] references "
+                    f"{file_path} but the file does not exist in rpms/{package_name}/"
+                )
+
+    return True, None
+
+
 def validate_package(package_name: str, check_actual_state: bool = True) -> tuple[bool, str | None]:
     """
     Validate modification_status for a package.
@@ -391,6 +518,11 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     # Check 5: Modified packages must have reason
     if status == 'modified' and not metadata.get('modification_reason'):
         return False, f"{package_name}: Marked as modified but missing modification_reason"
+
+    # Validate overlay if present
+    valid, error = validate_overlay(package_name)
+    if not valid:
+        return False, error
 
     # Check 6: Verify git history matches metadata (fast check)
     # Skip if running expensive check (which uses filesystem comparison instead)

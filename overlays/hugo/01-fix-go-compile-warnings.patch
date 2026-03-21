@@ -1,0 +1,15 @@
+diff -ruN a/hugo.spec b/hugo.spec
+--- a/hugo.spec	2026-03-21 00:28:20.916896490 +0000
++++ b/hugo.spec	2026-03-21 00:28:20.917100473 +0000
+@@ -44,6 +44,11 @@
+ # Skip tests that uses the network.
+ # Based on https://sources.debian.org/data/main/h/hugo/0.58.3-1/debian/patches/0005-skip-modules-TestClient.patch
+ Patch0001:      0010-skip-modules-TestClient.patch
++Patch0002:      0002-commands-hugobuilder.go-Fix-compile-warnings.patch
++Patch0003:      0003-commands-import.go-Fix-compile-warning.patch
++Patch0004:      0004-common-hstore-scratch_test.go-Fix-compile-warnings.patch
++Patch0005:      0005-common-loggers-logger.go-Fix-compile-warnings.patch
++Patch0006:      0006-transform-livereloadinject-livereloadinject.go-Fix-c.patch
+ 
+ BuildRequires:  go-vendor-tools
+ BuildRequires:  gcc-c++

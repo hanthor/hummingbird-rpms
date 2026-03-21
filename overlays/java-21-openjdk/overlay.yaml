@@ -1,0 +1,5 @@
+changes:
+- description: Weaken cups-libs to Recommends to exclude gnutls from FIPS container
+    images
+  patches:
+  - 01-weaken-cups-libs-to-recommends-to-exclude-gnutls-f.patch

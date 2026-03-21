@@ -1,0 +1,25 @@
+diff -ruN a/dotnet8.0.spec b/dotnet8.0.spec
+--- a/dotnet8.0.spec	2026-03-21 00:27:44.755419769 +0000
++++ b/dotnet8.0.spec	2026-03-21 00:27:44.755570366 +0000
+@@ -551,6 +551,10 @@
+ # suggested compile-time change doesn't work, unfortunately.
+ export COMPlus_LTTng=0
+ 
++# Disable W^X enforcement which fails in containerized builds
++# See https://github.com/dotnet/sdk/issues/31457
++export DOTNET_EnableWriteXorExecute=0
++
+ %ifarch ppc64le s390x
+ max_attempts=3
+ %else
+@@ -593,6 +597,10 @@
+ 
+ 
+ %install
++# Disable W^X enforcement which fails in containerized builds
++# See https://github.com/dotnet/sdk/issues/31457
++export DOTNET_EnableWriteXorExecute=0
++
+ install -dm 0755 %{buildroot}%{_libdir}/dotnet
+ ls artifacts/%{runtime_arch}/Release
+ mkdir -p built-sdk

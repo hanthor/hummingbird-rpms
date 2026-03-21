@@ -1,0 +1,4 @@
+changes:
+- description: Add FMF version file
+  files:
+  - .fmf/version

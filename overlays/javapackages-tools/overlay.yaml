@@ -1,0 +1,4 @@
+changes:
+- description: drop asciidoctor BuildRequires
+  patches:
+  - 01-drop-asciidoctor-buildrequires.patch

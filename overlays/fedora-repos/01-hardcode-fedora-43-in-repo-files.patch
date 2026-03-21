@@ -1,0 +1,221 @@
+diff -ruN a/fedora-cisco-openh264.repo b/fedora-cisco-openh264.repo
+--- a/fedora-cisco-openh264.repo	2026-03-21 00:27:46.665603263 +0000
++++ b/fedora-cisco-openh264.repo	2026-02-02 19:25:14.952650728 +0000
+@@ -1,32 +1,32 @@
+ [fedora-cisco-openh264]
+-name=Fedora $releasever openh264 (From Cisco) - $basearch
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-$releasever&arch=$basearch
++name=Fedora 43 openh264 (From Cisco) - $basearch
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-43&arch=$basearch
+ type=rpm
+ enabled=1
+ metadata_expire=14d
+ repo_gpgcheck=0
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=True
+ 
+ [fedora-cisco-openh264-debuginfo]
+-name=Fedora $releasever openh264 (From Cisco) - $basearch - Debug
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-debug-$releasever&arch=$basearch
++name=Fedora 43 openh264 (From Cisco) - $basearch - Debug
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-debug-43&arch=$basearch
+ type=rpm
+ enabled=0
+ metadata_expire=14d
+ repo_gpgcheck=0
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=True
+ 
+ [fedora-cisco-openh264-source]
+-name=Fedora $releasever openh264 (From Cisco) - $basearch - Source
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-source-$releasever&arch=$basearch
++name=Fedora 43 openh264 (From Cisco) - $basearch - Source
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-source-43&arch=$basearch
+ type=rpm
+ enabled=0
+ metadata_expire=14d
+ repo_gpgcheck=0
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=True
+diff -ruN a/fedora-updates-archive.repo b/fedora-updates-archive.repo
+--- a/fedora-updates-archive.repo	2026-03-21 00:27:46.665603263 +0000
++++ b/fedora-updates-archive.repo	2026-02-02 19:25:14.952650728 +0000
+@@ -10,13 +10,13 @@
+ # yum repositories, which means only packages that can't be found
+ # elsewhere will be downloaded from here.
+ [updates-archive]
+-name=Fedora $releasever - $basearch - Updates Archive
+-baseurl=https://fedoraproject-updates-archive.fedoraproject.org/fedora/$releasever/$basearch/
++name=Fedora 43 - $basearch - Updates Archive
++baseurl=https://fedoraproject-updates-archive.fedoraproject.org/fedora/43/$basearch/
+ enabled=AUTO_VALUE
+ metadata_expire=6h
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=True
+ cost=10000 # default is 1000
+diff -ruN a/fedora-updates-testing.repo b/fedora-updates-testing.repo
+--- a/fedora-updates-testing.repo	2026-03-21 00:27:46.665603263 +0000
++++ b/fedora-updates-testing.repo	2026-02-02 19:25:14.952650728 +0000
+@@ -1,36 +1,36 @@
+ [updates-testing]
+-name=Fedora $releasever - $basearch - Test Updates
+-#baseurl=http://download.example/pub/fedora/linux/updates/testing/$releasever/Everything/$basearch/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-f$releasever&arch=$basearch
++name=Fedora 43 - $basearch - Test Updates
++#baseurl=http://download.example/pub/fedora/linux/updates/testing/43/Everything/$basearch/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-f43&arch=$basearch
+ enabled=AUTO_VALUE
+ countme=1
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [updates-testing-debuginfo]
+-name=Fedora $releasever - $basearch - Test Updates Debug
+-#baseurl=http://download.example/pub/fedora/linux/updates/testing/$releasever/Everything/$basearch/debug/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-debug-f$releasever&arch=$basearch
++name=Fedora 43 - $basearch - Test Updates Debug
++#baseurl=http://download.example/pub/fedora/linux/updates/testing/43/Everything/$basearch/debug/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-debug-f43&arch=$basearch
+ enabled=0
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [updates-testing-source]
+-name=Fedora $releasever - Test Updates Source
+-#baseurl=http://download.example/pub/fedora/linux/updates/testing/$releasever/Everything/SRPMS/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-source-f$releasever&arch=$basearch
++name=Fedora 43 - Test Updates Source
++#baseurl=http://download.example/pub/fedora/linux/updates/testing/43/Everything/SRPMS/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-source-f43&arch=$basearch
+ enabled=0
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+diff -ruN a/fedora-updates.repo b/fedora-updates.repo
+--- a/fedora-updates.repo	2026-03-21 00:27:46.665603263 +0000
++++ b/fedora-updates.repo	2026-02-02 19:25:14.952650728 +0000
+@@ -1,36 +1,36 @@
+ [updates]
+-name=Fedora $releasever - $basearch - Updates
+-#baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Everything/$basearch/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-f$releasever&arch=$basearch
++name=Fedora 43 - $basearch - Updates
++#baseurl=http://download.example/pub/fedora/linux/updates/43/Everything/$basearch/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-f43&arch=$basearch
+ enabled=AUTO_VALUE
+ countme=1
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [updates-debuginfo]
+-name=Fedora $releasever - $basearch - Updates - Debug
+-#baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Everything/$basearch/debug/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-debug-f$releasever&arch=$basearch
++name=Fedora 43 - $basearch - Updates - Debug
++#baseurl=http://download.example/pub/fedora/linux/updates/43/Everything/$basearch/debug/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-debug-f43&arch=$basearch
+ enabled=0
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [updates-source]
+-name=Fedora $releasever - Updates Source
+-#baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Everything/SRPMS/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-source-f$releasever&arch=$basearch
++name=Fedora 43 - Updates Source
++#baseurl=http://download.example/pub/fedora/linux/updates/43/Everything/SRPMS/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-source-f43&arch=$basearch
+ enabled=0
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+ metadata_expire=6h
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+diff -ruN a/fedora.repo b/fedora.repo
+--- a/fedora.repo	2026-03-21 00:27:46.665603263 +0000
++++ b/fedora.repo	2026-02-02 19:25:14.952650728 +0000
+@@ -1,36 +1,36 @@
+ [fedora]
+-name=Fedora $releasever - $basearch
+-#baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
++name=Fedora 43 - $basearch
++#baseurl=http://download.example/pub/fedora/linux/releases/43/Everything/$basearch/os/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-43&arch=$basearch
+ enabled=AUTO_VALUE
+ countme=1
+ metadata_expire=AUTO_VALUE
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [fedora-debuginfo]
+-name=Fedora $releasever - $basearch - Debug
+-#baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/tree/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-debug-$releasever&arch=$basearch
++name=Fedora 43 - $basearch - Debug
++#baseurl=http://download.example/pub/fedora/linux/releases/43/Everything/$basearch/debug/tree/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-debug-43&arch=$basearch
+ enabled=0
+ metadata_expire=AUTO_VALUE
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False
+ 
+ [fedora-source]
+-name=Fedora $releasever - Source
+-#baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Everything/source/tree/
+-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-source-$releasever&arch=$basearch
++name=Fedora 43 - Source
++#baseurl=http://download.example/pub/fedora/linux/releases/43/Everything/source/tree/
++metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-source-43&arch=$basearch
+ enabled=0
+ metadata_expire=AUTO_VALUE
+ repo_gpgcheck=0
+ type=rpm
+ gpgcheck=1
+-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
++gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-$basearch
+ skip_if_unavailable=False

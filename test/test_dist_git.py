@@ -9,6 +9,8 @@ import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import yaml
+
 import pytest
 
 #
@@ -51,6 +53,7 @@ def workdir(tmp_path: Path) -> Path:
     # Create directories for imports
     (rpms_dir / 'rpms').mkdir()
     (rpms_dir / 'metadata').mkdir()
+    (rpms_dir / 'overlays').mkdir()
 
     # Create default upstream-releases.json for tests
     # Note: rawhide is not included as it's auto-resolved to the highest version
@@ -2331,3 +2334,509 @@ def test_update_proceeds_when_track_version_matches(workdir: Path, upstream_repo
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.5'
+
+
+def test_create_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Create an overlay for a modified package."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Make a local modification (add a comment line to the spec)
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Local comment\n%description'))
+
+    # Mark as modified with --dry-run (writes metadata but no commit)
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Added local comment'],
+        cwd=workdir, check=True,
+    )
+
+    # Commit the change manually
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Run create-overlay
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    # Verify overlay.yaml exists and contains the modification reason in changes list
+    overlay_yaml = workdir / 'overlays' / 'vanilla' / 'overlay.yaml'
+    assert overlay_yaml.exists()
+    yaml_data = yaml.safe_load(overlay_yaml.read_text())
+    assert 'changes' in yaml_data
+    assert len(yaml_data['changes']) == 1
+    assert 'Added local comment' in yaml_data['changes'][0]['description']
+    patch_filename = yaml_data['changes'][0]['patches'][0]
+
+    # Verify patch file exists and contains the added comment
+    overlay_patch = workdir / 'overlays' / 'vanilla' / patch_filename
+    assert overlay_patch.exists()
+    patch_content = overlay_patch.read_text()
+    assert '# Local comment' in patch_content
+
+    # Verify the patch does NOT contain Release: changes
+    for line in patch_content.splitlines():
+        if line.startswith('+') or line.startswith('-'):
+            assert not line.lstrip('+-').startswith('Release:'), \
+                f"Patch should not contain Release: changes, found: {line}"
+
+
+def test_create_overlay_with_added_file(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Create an overlay that includes a new file."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Add a new file
+    (workdir / 'rpms' / 'vanilla' / 'my-fix.patch').write_text(
+        '--- a/file.c\n+++ b/file.c\n@@ -1 +1 @@\n-old\n+new\n'
+    )
+
+    # Modify the spec to reference it
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace(
+        'Summary: Test package vanilla',
+        'Summary: Test package vanilla\nPatch0: my-fix.patch'
+    ))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Added patch file'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Add patch file'], cwd=workdir, check=True)
+
+    # Run create-overlay
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    # Verify overlay.yaml and patch file exist
+    overlay_yaml = workdir / 'overlays' / 'vanilla' / 'overlay.yaml'
+    assert overlay_yaml.exists()
+    yaml_data = yaml.safe_load(overlay_yaml.read_text())
+    change = yaml_data['changes'][0]
+
+    # Verify the new file was extracted to files/ directory (not embedded in patch)
+    assert 'files' in change
+    assert 'my-fix.patch' in change['files']
+    extracted_file = workdir / 'overlays' / 'vanilla' / 'files' / 'my-fix.patch'
+    assert extracted_file.exists()
+    extracted_content = extracted_file.read_text()
+    assert '+new' in extracted_content or 'new' in extracted_content
+
+    # Verify the patch contains the spec change (Patch0: line) but NOT the file content
+    patch_filename = change['patches'][0]
+    patch_content = (workdir / 'overlays' / 'vanilla' / patch_filename).read_text()
+    assert 'Patch0: my-fix.patch' in patch_content
+
+
+def test_apply_overlay_on_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Update with overlay applies overlay instead of 3-way merge."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Make a local modification (add comment to spec)
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Local comment\n%description'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Added local comment'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Create overlay and commit it
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay for vanilla'], cwd=workdir, check=True)
+
+    # Add an upstream commit with a non-conflicting change AND version bump
+    upstream_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    upstream_content = upstream_spec.read_text()
+    updated_upstream = upstream_content.replace('Version: 1.0', 'Version: 2.0')
+    updated_upstream = updated_upstream.replace('%files', '# Upstream comment\n%files')
+    upstream_spec.write_text(updated_upstream)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Bump version and add comment'],
+                   cwd=upstream_repos['vanilla'], check=True)
+
+    # Run update
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, f"Update failed: {result.stderr}"
+
+    # Verify BOTH local comment AND upstream change are present in the final spec
+    merged_spec = vanilla_spec.read_text()
+    assert '# Local comment' in merged_spec, "Local modification missing"
+    assert '# Upstream comment' in merged_spec, "Upstream change missing"
+
+    # Verify modification_status is still 'modified'
+    metadata = json.loads((workdir / 'metadata' / 'vanilla.json').read_text())
+    assert metadata['modification_status'] == 'modified'
+
+    # Verify overlay patch was regenerated (its content should be updated for the new baseline)
+    overlay_yaml = workdir / 'overlays' / 'vanilla' / 'overlay.yaml'
+    yaml_data = yaml.safe_load(overlay_yaml.read_text())
+    patch_filename = yaml_data['changes'][0]['patches'][0]
+    patch_content = (workdir / 'overlays' / 'vanilla' / patch_filename).read_text()
+    assert '# Local comment' in patch_content
+
+    # Verify "applying overlay" appears in stderr (not "merging local changes")
+    assert 'applying overlay' in result.stderr
+    assert 'merging local changes' not in result.stderr
+
+
+def test_apply_overlay_conflict(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Update with conflicting overlay fails with exit code 2."""
+    # Import chocolate
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Make a local modification (change License line)
+    chocolate_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    spec_content = chocolate_spec.read_text()
+    chocolate_spec.write_text(spec_content.replace('License: GPL', 'License: MIT'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'chocolate', '--modified',
+         '--reason', 'Changed license'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Change license'], cwd=workdir, check=True)
+
+    # Create overlay and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'chocolate'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay for chocolate'], cwd=workdir, check=True)
+
+    # Make a CONFLICTING upstream change (change same License line differently + version bump)
+    upstream_spec = upstream_repos['chocolate'] / 'chocolate.spec'
+    upstream_content = upstream_spec.read_text()
+    updated_upstream = upstream_content.replace('License: GPL', 'License: Apache-2.0')
+    updated_upstream = updated_upstream.replace('Version: 10', 'Version: 11')
+    upstream_spec.write_text(updated_upstream)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Change license to Apache'],
+                   cwd=upstream_repos['chocolate'], check=True)
+
+    # Run update
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'chocolate'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    # Verify exit code is 2 (conflict)
+    assert result.returncode == 2, f"Expected exit code 2 for conflicts, got {result.returncode}"
+
+    # Verify "Overlay failed" in stderr
+    assert 'Overlay failed' in result.stderr
+
+
+def test_update_fallback_to_merge_without_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Update falls back to 3-way merge when no overlay exists."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Make a local modification
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Local comment\n%description'))
+
+    # Mark as modified and commit (do NOT create an overlay)
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Local comment added'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Add upstream commit with version bump
+    upstream_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    upstream_content = upstream_spec.read_text()
+    updated_upstream = upstream_content.replace('Version: 1.0', 'Version: 2.0')
+    updated_upstream = updated_upstream.replace('%files', '# Upstream comment\n%files')
+    upstream_spec.write_text(updated_upstream)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Bump version'],
+                   cwd=upstream_repos['vanilla'], check=True)
+
+    # Run update
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, f"Update failed: {result.stderr}"
+
+    # Verify it falls back to 3-way merge
+    assert 'merging local changes' in result.stderr
+
+    # Verify both local and upstream changes are present
+    merged_spec = vanilla_spec.read_text()
+    assert '# Local comment' in merged_spec, "Local modification missing"
+    assert '# Upstream comment' in merged_spec, "Upstream change missing"
+
+
+def test_regenerate_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Regenerate overlay updates patch but preserves yaml metadata."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Make a local modification
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# First comment\n%description'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Original reason'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'First modification'], cwd=workdir, check=True)
+
+    # Create overlay and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay'], cwd=workdir, check=True)
+
+    # Make an additional local modification to the spec
+    current_spec = vanilla_spec.read_text()
+    vanilla_spec.write_text(current_spec.replace('%files', '# Second comment\n%files'))
+    subprocess.run(['git', 'commit', '-a', '-m', 'Second modification'], cwd=workdir, check=True)
+
+    # Run regenerate-overlay
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'regenerate-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    # Verify overlay patch now includes BOTH modifications
+    overlay_yaml = workdir / 'overlays' / 'vanilla' / 'overlay.yaml'
+    yaml_data = yaml.safe_load(overlay_yaml.read_text())
+    patch_filename = yaml_data['changes'][0]['patches'][0]
+    patch_content = (workdir / 'overlays' / 'vanilla' / patch_filename).read_text()
+    assert '# First comment' in patch_content
+    assert '# Second comment' in patch_content
+
+    # Verify overlay.yaml was NOT overwritten (still has original description)
+    assert 'Original reason' in yaml_data['changes'][0]['description']
+
+
+def test_verify_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Verify overlay detects when overlay is in sync or out of sync."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Verified comment\n%description'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Test verify'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Create overlay and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay'], cwd=workdir, check=True)
+
+    # Verify overlay — should succeed (exit code 0)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'verify-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, f"verify-overlay should succeed, got: {result.stderr}"
+
+    # Make another spec change WITHOUT regenerating the overlay
+    current_spec = vanilla_spec.read_text()
+    vanilla_spec.write_text(current_spec.replace('%files', '# Extra change\n%files'))
+    subprocess.run(['git', 'commit', '-a', '-m', 'Extra change'], cwd=workdir, check=True)
+
+    # Verify overlay — should fail (exit code non-zero, overlay is out of sync)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'verify-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode != 0, "verify-overlay should fail when overlay is out of sync"
+
+
+def test_diff_uses_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Diff uses overlay.patch directly when available, without cloning upstream."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Overlay diff comment\n%description'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Test diff overlay'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Create overlay and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay'], cwd=workdir, check=True)
+
+    # Run diff
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'diff', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    # Verify the output contains the modification (the patch content)
+    assert result.returncode == 1  # Exit code 1 means diffs found
+    assert '# Overlay diff comment' in result.stdout
+
+    # Verify it does NOT contain "Cloning" in stderr (should be instant, not cloning upstream)
+    assert 'Cloning' not in result.stderr
+
+
+def test_create_overlay_release_excluded(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Create overlay excludes Release: line changes."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify BOTH a content line AND the Release: line
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    modified = spec_content.replace('Release: 1', 'Release: 1.1')
+    modified = modified.replace('%description', '# Release test comment\n%description')
+    vanilla_spec.write_text(modified)
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Bump release and add comment'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Bump release and modify'], cwd=workdir, check=True)
+
+    # Run create-overlay
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    # Read overlay patch
+    overlay_yaml = workdir / 'overlays' / 'vanilla' / 'overlay.yaml'
+    assert overlay_yaml.exists()
+    yaml_data = yaml.safe_load(overlay_yaml.read_text())
+    patch_filename = yaml_data['changes'][0]['patches'][0]
+    patch_content = (workdir / 'overlays' / 'vanilla' / patch_filename).read_text()
+
+    # Verify it contains the content change
+    assert '# Release test comment' in patch_content
+
+    # Verify it does NOT contain "Release:" anywhere in the patch
+    for line in patch_content.splitlines():
+        if line.startswith('+') or line.startswith('-'):
+            stripped = line.lstrip('+-')
+            assert not stripped.startswith('Release:'), \
+                f"Patch should not contain Release: changes, found: {line}"
+
+
+def test_rebuild_overlay(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Rebuild replaces rpms/<package>/ with upstream + overlay result."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    vanilla_spec.write_text(spec_content.replace('%description', '# Rebuild test\n%description'))
+
+    # Mark as modified and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Test rebuild'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Create overlay and commit
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'create-overlay', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'add', 'overlays/'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add overlay'], cwd=workdir, check=True)
+
+    # Trash the rpms/ directory to simulate needing a rebuild
+    vanilla_spec.write_text('completely wrong content')
+    subprocess.run(['git', 'commit', '-a', '-m', 'Trash spec'], cwd=workdir, check=True)
+
+    # Rebuild from overlay
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild-overlay', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, f"rebuild-overlay failed: {result.stderr}"
+
+    # Verify the spec was restored with the overlay modification
+    rebuilt_spec = vanilla_spec.read_text()
+    assert '# Rebuild test' in rebuilt_spec
+    assert 'completely wrong content' not in rebuilt_spec

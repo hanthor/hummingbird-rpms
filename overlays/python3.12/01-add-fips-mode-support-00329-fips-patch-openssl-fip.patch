@@ -1,0 +1,55 @@
+diff -ruN a/python3.12.spec b/python3.12.spec
+--- a/python3.12.spec	2026-03-21 00:29:06.226813319 +0000
++++ b/python3.12.spec	2026-03-21 00:29:06.227754761 +0000
+@@ -430,6 +430,21 @@
+ # (cherry-picked from commit b234a2b67539f787e191d2ef19a7cbdce32874e7)
+ Patch475: 00475-cve-2025-15367.patch
+ 
++# 00329 #
++# Support OpenSSL FIPS mode
++# - In FIPS mode, OpenSSL wrappers are always used in hashlib
++# - The "usedforsecurity" keyword argument can be used to the various digest
++#   algorithms in hashlib so that you can whitelist a callsite with
++#   "usedforsecurity=False"
++# - OpenSSL wrappers for the hashes blake2{b512,s256},
++# - In FIPS mode, the blake2 hashes use OpenSSL wrappers
++#   and do not offer extended functionality (keys, tree hashing, custom digest size)
++#
++# - In FIPS mode, hmac.HMAC can only be instantiated with an OpenSSL wrapper
++#   or a string with OpenSSL hash name as the "digestmod" argument.
++#   The argument must be specified (instead of defaulting to 'md5').
++Patch329: 00329-fips.patch
++
+ # (New patches go here ^^^)
+ #
+ # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
+@@ -875,6 +890,7 @@
+   --with-dtrace \
+   --with-lto \
+   --with-ssl-default-suites=openssl \
++  --with-builtin-hashlib-hashes=blake2 \
+   --without-static-libpython \
+ %if %{with rpmwheels}
+   --with-wheel-pkg-dir=%{python_wheel_dir} \
+@@ -1340,10 +1356,6 @@
+ %{pylibdir}/pydoc_data
+ 
+ %{dynload_dir}/_blake2.%{SOABI_optimized}.so
+-%{dynload_dir}/_md5.%{SOABI_optimized}.so
+-%{dynload_dir}/_sha1.%{SOABI_optimized}.so
+-%{dynload_dir}/_sha2.%{SOABI_optimized}.so
+-%{dynload_dir}/_sha3.%{SOABI_optimized}.so
+ 
+ %{dynload_dir}/_asyncio.%{SOABI_optimized}.so
+ %{dynload_dir}/_bisect.%{SOABI_optimized}.so
+@@ -1630,10 +1642,6 @@
+ # ...with debug builds of the built-in "extension" modules:
+ 
+ %{dynload_dir}/_blake2.%{SOABI_debug}.so
+-%{dynload_dir}/_md5.%{SOABI_debug}.so
+-%{dynload_dir}/_sha1.%{SOABI_debug}.so
+-%{dynload_dir}/_sha2.%{SOABI_debug}.so
+-%{dynload_dir}/_sha3.%{SOABI_debug}.so
+ 
+ %{dynload_dir}/_asyncio.%{SOABI_debug}.so
+ %{dynload_dir}/_bisect.%{SOABI_debug}.so

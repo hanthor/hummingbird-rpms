@@ -1,0 +1,12 @@
+diff -ruN a/fontconfig.spec b/fontconfig.spec
+--- a/fontconfig.spec	2026-03-21 00:27:52.812773025 +0000
++++ b/fontconfig.spec	2026-03-21 00:27:52.813387513 +0000
+@@ -23,6 +23,8 @@
+ Patch5:		%{name}-disable-network-required-test.patch
+ Patch6:		%{name}-lower-nonlatin-conf.patch
+ Patch7:		%{name}-fix-crash.patch
++# Disable bwrap test - requires user namespaces not available in container builds
++Patch8:		%{name}-disable-bwrap-test.patch
+ 
+ BuildRequires:	libxml2-devel
+ BuildRequires:	freetype-devel >= %{freetype_version}

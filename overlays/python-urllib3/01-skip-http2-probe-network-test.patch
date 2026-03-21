@@ -1,0 +1,14 @@
+diff -ruN a/python-urllib3.spec b/python-urllib3.spec
+--- a/python-urllib3.spec	2026-03-21 00:29:02.535575356 +0000
++++ b/python-urllib3.spec	2026-03-21 00:29:02.535769878 +0000
+@@ -175,6 +175,10 @@
+ # even when we export the CI environment variable to increase timeouts.
+ k="${k-}${k+ and }not (TestHTTPProxyManager and test_tunneling_proxy_request_timeout[https-https])"
+ 
++# Skip test_http2_probe_blocked_per_thread tests - they require network access
++# to TARPIT_HOST which is unavailable in konflux build environments
++k="${k-}${k+ and }not test_http2_probe_blocked_per_thread"
++
+ %pytest -v -rs ${ignore-} -k "${k-}"
+ %pytest -v -rs ${ignore-} -k "${k-}" --integration
+ %endif

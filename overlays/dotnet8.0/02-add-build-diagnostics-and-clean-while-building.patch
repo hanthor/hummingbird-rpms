@@ -1,0 +1,19 @@
+diff -ruN a/dotnet8.0.spec b/dotnet8.0.spec
+--- a/dotnet8.0.spec	2026-03-21 00:27:44.755419769 +0000
++++ b/dotnet8.0.spec	2026-03-21 00:27:44.755570366 +0000
+@@ -492,6 +492,7 @@
+ 
+ %build
+ cat /etc/os-release
++ulimit -a
+ 
+ %if %{without bootstrap}
+ # We need to create a copy because we will mutate this
+@@ -574,6 +575,7 @@
+ VERBOSE=1 retry_until_success $max_attempts \
+     timeout 5h \
+     ./build.sh \
++    --clean-while-building \
+ %if %{without bootstrap}
+     --with-sdk previously-built-dotnet \
+ %endif

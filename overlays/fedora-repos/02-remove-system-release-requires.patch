@@ -1,0 +1,19 @@
+diff -ruN a/fedora-repos.spec b/fedora-repos.spec
+--- a/fedora-repos.spec	2026-03-21 00:27:46.692823322 +0000
++++ b/fedora-repos.spec	2026-03-21 00:27:46.693260958 +0000
+@@ -9,7 +9,6 @@
+ URL:            https://fedoraproject.org/
+ 
+ Provides:       fedora-repos(%{version}) = %{release}
+-Requires:       system-release(%{version})
+ Obsoletes:      fedora-repos < 33-0.7
+ Obsoletes:      fedora-repos-modular < 39-0.3
+ %if %{rawhide_release} == %{version}
+@@ -143,7 +142,6 @@
+ %package eln
+ Summary:        ELN repo definitions
+ Requires:       fedora-gpg-keys >= %{version}-%{release}
+-Requires:       system-release(%{version})
+ 
+ %description eln
+ This package provides repository files for ELN (Enterprise Linux Next)

@@ -1,0 +1,11 @@
+changes:
+- description: Rename package from ruby to ruby3.4 with versioned subpackages to allow
+    multiple Ruby versions to coexist
+  patches:
+  - 01-versioned-package-rename.patch
+- description: Skip Socket#connect timeout test that is unreliable in isolated network
+    environments like Konflux CI
+  patches:
+  - 02-skip-socket-connect-timeout-test.patch
+  files:
+  - ruby-3.4.8-Skip-Socket-connect-timeout-test.patch

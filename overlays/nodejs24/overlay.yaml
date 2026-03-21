@@ -1,0 +1,9 @@
+changes:
+- description: Switch from hardcoded release string to %{autorelease} for automatic
+    release numbering
+  patches:
+  - 01-use-autorelease.patch
+- description: Disable internet-dependent tests that fail in Konflux due to no network
+    access
+  patches:
+  - 02-disable-networking-tests.patch

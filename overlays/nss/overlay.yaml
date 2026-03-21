@@ -1,0 +1,5 @@
+changes:
+- description: Lower nss-softokn minimum version to 3.90.0 to allow FIPS-certified
+    softokn from RHEL 9.2
+  patches:
+  - 01-lower-nss-softokn-minimum-version-to-3-90-0-to-all.patch

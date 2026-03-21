@@ -1,0 +1,18 @@
+diff -ruN a/nss.spec b/nss.spec
+--- a/nss.spec	2026-03-21 00:28:45.901223875 +0000
++++ b/nss.spec	2026-03-21 00:28:45.902140848 +0000
+@@ -68,8 +68,12 @@
+ URL:              http://www.mozilla.org/projects/security/pki/nss/
+ Requires:         nspr >= %{nspr_version}
+ Requires:         nss-util >= %{nss_version}
+-# TODO: revert to same version as nss once we are done with the merge
+-Requires:         nss-softokn%{_isa} >= %{nss_version}
++# The nss-softokn minimum is set to 3.90.0 to allow using older
++# FIPS-certified softokn/freebl binaries (e.g., from RHEL 9.2).
++# NSS loads softokn via the PKCS#11 interface (C_GetFunctionList),
++# not through direct linking, so version skew is safe as long as the
++# PKCS#11 contract is maintained.
++Requires:         nss-softokn%{_isa} >= 3.90.0
+ Requires:         nss-system-init
+ Requires:         p11-kit-trust
+ Requires:         crypto-policies >= %{crypto_policies_version}

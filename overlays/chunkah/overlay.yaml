@@ -1,0 +1,7 @@
+changes:
+- description: Backport fix for non-deterministic stability from HashMap iteration
+    (https://github.com/coreos/chunkah/commit/c05927f1278ec5b0806ba16fa609dd68c2724d8a)
+  patches:
+  - 01-backport-fix-for-non-deterministic-stability-from.patch
+  files:
+  - 0003-rpm-fix-non-deterministic-stability-from-HashMap-iteration.patch

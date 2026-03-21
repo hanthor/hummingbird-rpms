@@ -1,0 +1,9 @@
+changes:
+- description: Disable W^X enforcement (DOTNET_EnableWriteXorExecute=0) which fails
+    in containerized builds
+  patches:
+  - 01-disable-write-xor-execute-enforcement.patch
+- description: Add ulimit diagnostics output and --clean-while-building flag to reduce
+    disk usage during builds
+  patches:
+  - 02-add-build-diagnostics-and-clean-while-building.patch

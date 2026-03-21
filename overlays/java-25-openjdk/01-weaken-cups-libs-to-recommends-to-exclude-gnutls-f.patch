@@ -1,0 +1,12 @@
+diff -ruN a/java-25-openjdk.spec b/java-25-openjdk.spec
+--- a/java-25-openjdk.spec	2026-03-21 00:28:28.583217742 +0000
++++ b/java-25-openjdk.spec	2026-03-21 00:28:28.583325216 +0000
+@@ -1079,7 +1079,7 @@
+ # libsctp.so.1 is being `dlopen`ed on demand
+ Requires: lksctp-tools%{?_isa}
+ # for printing support
+-Requires: cups-libs
++Recommends: cups-libs
+ # for system security properties
+ Requires: crypto-policies
+ # for FIPS PKCS11 provider

@@ -1,0 +1,58 @@
+diff -ruN a/python3.14.spec b/python3.14.spec
+--- a/python3.14.spec	2026-03-21 00:29:08.500547821 +0000
++++ b/python3.14.spec	2026-03-21 00:29:08.501561055 +0000
+@@ -444,6 +444,21 @@
+ # direct call to the check function.
+ Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
+ 
++# 00329 #
++# Support OpenSSL FIPS mode
++# - In FIPS mode, OpenSSL wrappers are always used in hashlib
++# - The "usedforsecurity" keyword argument can be used to the various digest
++#   algorithms in hashlib so that you can whitelist a callsite with
++#   "usedforsecurity=False"
++# - OpenSSL wrappers for the hashes blake2{b512,s256},
++# - In FIPS mode, the blake2 hashes use OpenSSL wrappers
++#   and do not offer extended functionality (keys, tree hashing, custom digest size)
++#
++# - In FIPS mode, hmac.HMAC can only be instantiated with an OpenSSL wrapper
++#   or a string with OpenSSL hash name as the "digestmod" argument.
++#   The argument must be specified (instead of defaulting to 'md5').
++Patch329: 00329-fips.patch
++
+ # (New patches go here ^^^)
+ #
+ # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
+@@ -1094,6 +1109,7 @@
+   --with-dtrace \
+   --with-lto \
+   --with-ssl-default-suites=openssl \
++  --with-builtin-hashlib-hashes=blake2 \
+   --without-static-libpython \
+ %if %{with rpmwheels}
+   --with-wheel-pkg-dir=%{python_wheel_dir} \
+@@ -1654,14 +1670,12 @@
+ %{1}/_elementtree.%{2}.so\
+ %{1}/_hashlib.%{2}.so\
+ %{1}/_heapq.%{2}.so\
+-%{1}/_hmac.%{2}.so\
+ %{1}/_interpchannels.%{2}.so\
+ %{1}/_interpqueues.%{2}.so\
+ %{1}/_interpreters.%{2}.so\
+ %{1}/_json.%{2}.so\
+ %{1}/_lsprof.%{2}.so\
+ %{1}/_lzma.%{2}.so\
+-%{1}/_md5.%{2}.so\
+ %{1}/_multibytecodec.%{2}.so\
+ %{1}/_multiprocessing.%{2}.so\
+ %{1}/_pickle.%{2}.so\
+@@ -1670,9 +1684,6 @@
+ %{1}/_queue.%{2}.so\
+ %{1}/_random.%{2}.so\
+ %{1}/_remote_debugging.%{2}.so\
+-%{1}/_sha1.%{2}.so\
+-%{1}/_sha2.%{2}.so\
+-%{1}/_sha3.%{2}.so\
+ %{1}/_socket.%{2}.so\
+ %{1}/_sqlite3.%{2}.so\
+ %{1}/_ssl.%{2}.so\

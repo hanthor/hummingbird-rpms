@@ -29,6 +29,7 @@ from typing import Literal, NotRequired, TypedDict, cast
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RPMS_DIR = ROOT_DIR / 'rpms'
 METADATA_DIR = ROOT_DIR / 'metadata'
+OVERLAYS_DIR = ROOT_DIR / 'overlays'
 RELEASES_JSON = ROOT_DIR / 'upstream-releases.json'
 PACKAGE_OVERRIDES_YAML = ROOT_DIR / 'ci' / 'package-overrides.yaml'
 RENAMED_PACKAGES_JSON = ROOT_DIR / 'ci' / 'renamed_packages.json'
@@ -928,6 +929,467 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
     return has_conflicts
 
 
+def _sanitize_patch_name(description: str) -> str:
+    """Generate a patch filename fragment from a description string."""
+    name = description.lower()
+    name = re.sub(r'[^a-z0-9]+', '-', name)
+    name = name.strip('-')[:50].rstrip('-')
+    return name or 'modifications'
+
+
+def _generate_overlay_diff(package_name: str, metadata: PackageMetadata,
+                           package_dir: Path,
+                           extract_new_files_to: Path | None = None) -> str | None:
+    """Generate a unified diff between upstream and local package directory.
+
+    Clones upstream at recorded SHA, normalizes Release: in both copies,
+    and returns the diff output. Returns None if no differences found.
+
+    If extract_new_files_to is provided, files that exist locally but not
+    upstream are copied there (preserving relative paths) and excluded from
+    the diff output.
+    """
+    assert 'source' in metadata
+    assert 'branch' in metadata
+    assert 'sha' in metadata
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+
+        # Clone upstream at recorded SHA
+        upstream_dir = tmp / 'upstream'
+        run_git('clone', '--quiet', '--branch', metadata['branch'],
+                '--single-branch', metadata['source'], str(upstream_dir))
+        run_git('checkout', '--quiet', metadata['sha'], cwd=upstream_dir)
+        shutil.rmtree(upstream_dir / '.git')
+
+        # Resolve autorelease in upstream copy if needed
+        if uses_autorelease(upstream_dir):
+            upstream_package_name = Path(metadata['source']).stem
+            resolved_release = query_autorelease_from_mdapi(
+                upstream_package_name, metadata['branch'], metadata.get('release', ''))
+            if resolved_release:
+                replace_autorelease_in_spec(upstream_dir, resolved_release)
+
+        # Make copies for diffing (so we don't modify originals)
+        upstream_copy = tmp / 'upstream_copy'
+        local_copy = tmp / 'local_copy'
+        shutil.copytree(upstream_dir, upstream_copy)
+        shutil.copytree(package_dir, local_copy)
+
+        # Normalize Release: in both copies
+        normalize_release_in_specs(upstream_copy)
+        normalize_release_in_specs(local_copy)
+
+        # Extract files to overlays/files/ directory if requested.
+        # Extracts: new files (not in upstream) and modified .patch files
+        # (to avoid patch-within-patch issues that confuse `patch -p1`).
+        if extract_new_files_to is not None:
+            for f in sorted(local_copy.rglob('*')):
+                if f.is_file():
+                    rel = f.relative_to(local_copy)
+                    upstream_f = upstream_copy / rel
+                    is_new = not upstream_f.exists()
+                    is_modified_patch = (upstream_f.exists()
+                                         and f.suffix == '.patch'
+                                         and f.read_bytes() != upstream_f.read_bytes())
+                    if is_new or is_modified_patch:
+                        dst = extract_new_files_to / rel
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        # Copy from original package_dir (un-normalized)
+                        shutil.copy2(package_dir / rel, dst)
+                        # Remove from both copies so diff excludes it entirely
+                        f.unlink()
+                        if upstream_f.exists():
+                            upstream_f.unlink()
+
+        # Create symlinks for diff
+        diff_dir = tmp / 'diffdir'
+        diff_dir.mkdir()
+        (diff_dir / 'a').symlink_to(upstream_copy)
+        (diff_dir / 'b').symlink_to(local_copy)
+
+        # Run diff
+        result = subprocess.run(
+            ['diff', '-ruN', 'a/', 'b/'],
+            cwd=diff_dir, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            return None
+        elif result.returncode == 1:
+            return result.stdout
+        else:
+            sys.exit(f"ERROR: diff failed for {package_name}: {result.stderr}")
+    return None  # unreachable, but keeps type checker happy
+
+
+def _load_overlay_yaml(overlay_dir: Path) -> dict:
+    """Load and return parsed overlay.yaml from an overlay directory."""
+    yaml_path = overlay_dir / 'overlay.yaml'
+    with open(yaml_path) as f:
+        return yaml.safe_load(f)
+
+
+def _get_overlay_changes(overlay_dir: Path) -> list[dict]:
+    """Read overlay.yaml and return the changes list."""
+    data = _load_overlay_yaml(overlay_dir)
+    return data.get('changes', [])
+
+
+def create_overlay(package_name: str, reason: str | None = None) -> None:
+    """Create an overlay for a modified package.
+
+    Generates a change entry with a patch file and/or extracted files in
+    overlays/<package>/. New files (not in upstream) are stored in
+    overlays/<package>/files/ and the patch only captures modifications
+    to existing files, excluding Release: line changes.
+    """
+    metadata = load_package_metadata(package_name)
+    if not metadata:
+        sys.exit(f"ERROR: Package {package_name} not found (missing metadata/{package_name}.json)")
+
+    if metadata.get('modification_status') == 'native':
+        sys.exit(f"ERROR: Cannot create overlay for native package {package_name}")
+
+    package_dir = RPMS_DIR / package_name
+    if not package_dir.exists():
+        sys.exit(f"ERROR: Package directory rpms/{package_name}/ does not exist")
+
+    description = reason or metadata.get('modification_reason', '')
+
+    # Write overlay
+    overlay_dir = OVERLAYS_DIR / package_name
+    overlay_dir.mkdir(parents=True, exist_ok=True)
+
+    # Extract new files to files/ directory, exclude them from diff
+    files_dir = overlay_dir / 'files'
+    if files_dir.exists():
+        shutil.rmtree(files_dir)
+
+    diff_content = _generate_overlay_diff(package_name, metadata, package_dir,
+                                          extract_new_files_to=files_dir)
+
+    # Collect list of extracted new files
+    new_files: list[str] = []
+    if files_dir.exists():
+        new_files = sorted(str(f.relative_to(files_dir))
+                           for f in files_dir.rglob('*') if f.is_file())
+
+    if diff_content is None and not new_files:
+        logging.info("No differences found for %s (after normalizing Release:)", package_name)
+        return
+
+    change: dict[str, object] = {'description': description}
+    if diff_content:
+        patch_filename = f"01-{_sanitize_patch_name(description)}.patch"
+        (overlay_dir / patch_filename).write_text(diff_content)
+        change['patches'] = [patch_filename]
+    if new_files:
+        change['files'] = new_files
+
+    yaml_data = {'changes': [change]}
+    (overlay_dir / 'overlay.yaml').write_text(
+        yaml.dump(yaml_data, default_flow_style=False, sort_keys=False))
+
+    parts = []
+    if diff_content:
+        parts.append(f"{len(diff_content)} bytes in patch")
+    if new_files:
+        parts.append(f"{len(new_files)} file(s)")
+    logging.info("Created overlay for %s (%s)", package_name, ', '.join(parts))
+
+
+def apply_overlay(package_name: str, package_dir: Path) -> tuple[bool, str]:
+    """Apply overlay changes to a package directory.
+
+    Reads overlay.yaml for the list of changes and applies them in order.
+    Each change may include files to copy and/or patches to apply.
+    Normalizes Release: before applying patches, then restores original values.
+
+    Returns:
+        (success, message) tuple
+    """
+    overlay_dir = OVERLAYS_DIR / package_name
+    yaml_path = overlay_dir / 'overlay.yaml'
+    if not yaml_path.exists():
+        return (True, "No overlay found")
+
+    changes = _get_overlay_changes(overlay_dir)
+    if not changes:
+        return (True, "Empty overlay (no changes)")
+
+    # Save original Release: values from all spec files
+    original_releases: dict[Path, str] = {}
+    for spec_file in package_dir.glob('*.spec'):
+        content = spec_file.read_text()
+        for line in content.splitlines():
+            if line.startswith('Release:'):
+                original_releases[spec_file] = line
+                break
+
+    # Normalize Release: before applying patches
+    normalize_release_in_specs(package_dir)
+
+    # Apply each change in order
+    applied_items: list[str] = []
+    for change in changes:
+        # Copy overlay files first
+        for file_path in change.get('files', []):
+            src = overlay_dir / 'files' / file_path
+            dst = package_dir / file_path
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            applied_items.append(f"files/{file_path}")
+
+        # Apply patches
+        for patch_name in change.get('patches', []):
+            patch_file = overlay_dir / patch_name
+            patch_content = patch_file.read_text()
+            if not patch_content.strip():
+                continue
+
+            result = subprocess.run(
+                ['patch', '-p1', '--no-backup-if-mismatch'],
+                input=patch_content, cwd=package_dir,
+                capture_output=True, text=True)
+
+            if result.returncode != 0:
+                # Restore Release: before returning
+                for spec_file, original_line in original_releases.items():
+                    if spec_file.exists():
+                        content = spec_file.read_text()
+                        restored = re.sub(r'^Release:.*$', original_line, content, flags=re.MULTILINE)
+                        spec_file.write_text(restored)
+                return (False, f"{patch_name} failed:\n{result.stdout}\n{result.stderr}")
+            applied_items.append(patch_name)
+
+    # Restore original Release: values
+    for spec_file, original_line in original_releases.items():
+        content = spec_file.read_text()
+        restored = re.sub(r'^Release:.*$', original_line, content, flags=re.MULTILINE)
+        spec_file.write_text(restored)
+
+    return (True, f"Applied: {', '.join(applied_items)}")
+
+
+def regenerate_overlay(package_name: str) -> None:
+    """Regenerate overlay for a package, keeping existing overlay.yaml structure.
+
+    Only works for single-change overlays. For multi-change overlays, changes
+    must be maintained manually.
+    """
+    overlay_dir = OVERLAYS_DIR / package_name
+    if not overlay_dir.exists():
+        sys.exit(f"ERROR: Overlay directory overlays/{package_name}/ does not exist.\n"
+                 f"       Use 'create-overlay' to create a new overlay.")
+
+    changes = _get_overlay_changes(overlay_dir)
+    if len(changes) > 1:
+        sys.exit(f"ERROR: Cannot regenerate multi-change overlay for {package_name}.\n"
+                 f"       Multi-change overlays must be maintained manually.")
+
+    metadata = load_package_metadata(package_name)
+    if not metadata:
+        sys.exit(f"ERROR: Package {package_name} not found (missing metadata/{package_name}.json)")
+
+    if metadata.get('modification_status') == 'native':
+        sys.exit(f"ERROR: Cannot regenerate overlay for native package {package_name}")
+
+    package_dir = RPMS_DIR / package_name
+    if not package_dir.exists():
+        sys.exit(f"ERROR: Package directory rpms/{package_name}/ does not exist")
+
+    # Clear and regenerate files/ directory
+    files_dir = overlay_dir / 'files'
+    if files_dir.exists():
+        shutil.rmtree(files_dir)
+
+    diff_content = _generate_overlay_diff(package_name, metadata, package_dir,
+                                          extract_new_files_to=files_dir)
+
+    # Collect extracted new files
+    new_files: list[str] = []
+    if files_dir.exists():
+        new_files = sorted(str(f.relative_to(files_dir))
+                           for f in files_dir.rglob('*') if f.is_file())
+
+    # Update the existing change entry
+    change = changes[0] if changes else {}
+    patches = change.get('patches', [])
+
+    # Write to the existing patch file (or create one)
+    if diff_content:
+        patch_filename = patches[0] if patches else 'overlay.patch'
+        patch_path = overlay_dir / patch_filename
+        patch_path.write_text(diff_content)
+        change['patches'] = [patch_filename]
+        logging.info("Regenerated overlay for %s (%d bytes in %s)",
+                     package_name, len(diff_content), patch_filename)
+    else:
+        # Remove old patch files if diff is now empty
+        for patch_name in patches:
+            patch_path = overlay_dir / patch_name
+            if patch_path.exists():
+                patch_path.unlink()
+        if 'patches' in change:
+            del change['patches']
+        logging.info("No spec differences found for %s (after normalizing Release:)",
+                     package_name)
+
+    # Update files list
+    if new_files:
+        change['files'] = new_files
+    elif 'files' in change:
+        del change['files']
+
+    # Save updated overlay.yaml
+    data = _load_overlay_yaml(overlay_dir)
+    data['changes'] = [change]
+    (overlay_dir / 'overlay.yaml').write_text(
+        yaml.dump(data, default_flow_style=False, sort_keys=False))
+
+
+def verify_overlay(package_name: str) -> tuple[bool, str]:
+    """Verify that applying an overlay to upstream reproduces the local package.
+
+    Clones upstream at recorded SHA, applies all overlay patches, and compares
+    the result against rpms/<package>/.
+
+    Returns:
+        (success, message) tuple
+    """
+    metadata = load_package_metadata(package_name)
+    if not metadata:
+        return (False, f"Package {package_name} not found")
+
+    if metadata.get('modification_status') == 'native':
+        return (False, f"Cannot verify overlay for native package {package_name}")
+
+    overlay_yaml = OVERLAYS_DIR / package_name / 'overlay.yaml'
+    if not overlay_yaml.exists():
+        return (False, f"No overlay found for {package_name}")
+
+    package_dir = RPMS_DIR / package_name
+    if not package_dir.exists():
+        return (False, f"Package directory rpms/{package_name}/ does not exist")
+
+    assert 'source' in metadata
+    assert 'branch' in metadata
+    assert 'sha' in metadata
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+
+        # Clone upstream at recorded SHA
+        upstream_dir = tmp / 'upstream'
+        run_git('clone', '--quiet', '--branch', metadata['branch'],
+                '--single-branch', metadata['source'], str(upstream_dir))
+        run_git('checkout', '--quiet', metadata['sha'], cwd=upstream_dir)
+        shutil.rmtree(upstream_dir / '.git')
+
+        # Resolve autorelease in upstream if needed
+        if uses_autorelease(upstream_dir):
+            upstream_package_name = Path(metadata['source']).stem
+            resolved_release = query_autorelease_from_mdapi(
+                upstream_package_name, metadata['branch'], metadata.get('release', ''))
+            if resolved_release:
+                replace_autorelease_in_spec(upstream_dir, resolved_release)
+
+        # Copy upstream to a temp location for patching
+        test_dir = tmp / 'test'
+        shutil.copytree(upstream_dir, test_dir)
+
+        # Apply overlay
+        success, message = apply_overlay(package_name, test_dir)
+        if not success:
+            return (False, f"Failed to apply overlay: {message}")
+
+        # Compare result against actual rpms/<package>/
+        # Ignore Release: lines and trailing whitespace (same as is_package_unmodified)
+        result = subprocess.run(
+            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines',
+             '--ignore-matching-lines=^Release:', str(test_dir), str(package_dir)],
+            capture_output=True, text=True)
+
+        if result.returncode == 0:
+            return (True, f"Overlay for {package_name} verified successfully")
+        elif result.returncode == 1:
+            return (False, f"Overlay for {package_name} does not reproduce local package:\n{result.stdout}")
+        else:
+            return (False, f"diff error: {result.stderr}")
+
+
+def rebuild_overlay(package_name: str) -> tuple[bool, str]:
+    """Rebuild rpms/<package>/ from upstream + overlay.
+
+    Clones upstream at recorded SHA, applies the overlay, and replaces
+    the contents of rpms/<package>/ with the result.
+
+    Returns:
+        (success, message) tuple
+    """
+    metadata = load_package_metadata(package_name)
+    if not metadata:
+        return (False, f"Package {package_name} not found")
+
+    if metadata.get('modification_status') == 'native':
+        return (False, f"Cannot rebuild native package {package_name}")
+
+    overlay_yaml = OVERLAYS_DIR / package_name / 'overlay.yaml'
+    if not overlay_yaml.exists():
+        return (False, f"No overlay found for {package_name}")
+
+    package_dir = RPMS_DIR / package_name
+    if not package_dir.exists():
+        return (False, f"Package directory rpms/{package_name}/ does not exist")
+
+    assert 'source' in metadata
+    assert 'branch' in metadata
+    assert 'sha' in metadata
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+
+        # Clone upstream at recorded SHA
+        upstream_dir = tmp / 'upstream'
+        run_git('clone', '--quiet', '--branch', metadata['branch'],
+                '--single-branch', metadata['source'], str(upstream_dir))
+        run_git('checkout', '--quiet', metadata['sha'], cwd=upstream_dir)
+        shutil.rmtree(upstream_dir / '.git')
+
+        # Resolve autorelease in upstream if needed
+        if uses_autorelease(upstream_dir):
+            upstream_package_name = Path(metadata['source']).stem
+            resolved_release = query_autorelease_from_mdapi(
+                upstream_package_name, metadata['branch'], metadata.get('release', ''))
+            if resolved_release:
+                replace_autorelease_in_spec(upstream_dir, resolved_release)
+
+        # Copy upstream to a temp location for patching
+        build_dir = tmp / 'build'
+        shutil.copytree(upstream_dir, build_dir)
+
+        # Apply overlay
+        success, message = apply_overlay(package_name, build_dir)
+        if not success:
+            return (False, f"Failed to apply overlay: {message}")
+
+        # Replace rpms/<package>/ contents with the result
+        for item in package_dir.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+        for item in build_dir.iterdir():
+            dst = package_dir / item.name
+            if item.is_dir():
+                shutil.copytree(item, dst)
+            else:
+                shutil.copy2(item, dst)
+
+    return (True, f"Rebuilt rpms/{package_name}/ from upstream + overlay")
+
+
 def update(package_name: str, skip_build_check: bool = False, sync: bool = False,
            dry_run: bool = False, allow_prerelease: bool = False, mark: bool = False,
            ref: str | None = None) -> None:
@@ -1062,10 +1524,36 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # Sync mode: discard local modifications
         has_modifications = not is_package_unmodified(package_name, metadata, upstream_dir)
         has_conflicts = False
+        autorelease_handled = False
 
         if not sync and metadata.get('modification_status') == 'modified' and has_modifications:
-            has_conflicts = merge_local_modifications(package_name, package_dir, Path(tmpdir),
-                                                     metadata, upstream_dir, latest_sha)
+            overlay_yaml = OVERLAYS_DIR / package_name / 'overlay.yaml'
+            if overlay_yaml.exists():
+                # Overlay exists - apply it to clean upstream
+                logging.info("Updating %s: %s -> %s (applying overlay)",
+                             package_name, metadata['sha'][:8], latest_sha[:8])
+                shutil.rmtree(package_dir)
+                shutil.rmtree(upstream_dir / '.git')
+                shutil.copytree(upstream_dir, package_dir)
+
+                # Handle autorelease BEFORE applying overlay
+                # (so Release: normalize works on concrete values)
+                if has_autorelease:
+                    replace_autorelease_in_spec(package_dir, release)
+                    autorelease_handled = True
+
+                success, message = apply_overlay(package_name, package_dir)
+                if success:
+                    logging.info("Overlay applied successfully for %s", package_name)
+                    # Regenerate overlay since upstream changed (diff baseline changed)
+                    regenerate_overlay(package_name)
+                else:
+                    logging.warning("Overlay failed for %s: %s", package_name, message)
+                    has_conflicts = True
+            else:
+                # No overlay - fall back to 3-way merge
+                has_conflicts = merge_local_modifications(package_name, package_dir, Path(tmpdir),
+                                                          metadata, upstream_dir, latest_sha)
         else:
             # No modifications or sync mode - simple update
             action = "Syncing" if sync else "Updating"
@@ -1075,7 +1563,8 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             shutil.copytree(upstream_dir, package_dir)
 
         # Replace %autorelease in package_dir (now safe, no longer a git repo)
-        if has_autorelease:
+        # Skip if already handled during overlay application
+        if has_autorelease and not autorelease_handled:
             replace_autorelease_in_spec(package_dir, release)
 
         logging.info("Updated to %s-%s", version, release)
@@ -1099,7 +1588,12 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
 
         # Commit the changes
         if not dry_run:
-            run_git('add', '-f', f'rpms/{package_name}', f'metadata/{package_name}.json', cwd=ROOT_DIR)
+            add_paths = [f'rpms/{package_name}', f'metadata/{package_name}.json']
+            # Include regenerated overlay if it exists
+            overlay_dir = OVERLAYS_DIR / package_name
+            if overlay_dir.exists():
+                add_paths.append(f'overlays/{package_name}')
+            run_git('add', '-f', *add_paths, cwd=ROOT_DIR)
             verb = "Sync" if sync else "Update"
             commit_msg = f"{verb} {upstream_package_name} from {old_version}-{old_release} to {version}-{release}\n\nUpstream: {latest_sha}"
             run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
@@ -1234,6 +1728,27 @@ def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False
     if metadata.get('modification_status') == 'native':
         print(f"{package_name}: Native package (no upstream to diff against)")
         return None
+
+    # If overlay exists, use it directly (instant, no clone needed)
+    overlay_yaml = OVERLAYS_DIR / package_name / 'overlay.yaml'
+    if overlay_yaml.exists() and output_mode == 'full' and not raw:
+        overlay_dir = OVERLAYS_DIR / package_name
+        changes = _get_overlay_changes(overlay_dir)
+        if not changes:
+            return False
+        has_content = False
+        for change in changes:
+            for patch_name in change.get('patches', []):
+                patch_content = (overlay_dir / patch_name).read_text()
+                if patch_content.strip():
+                    print(patch_content)
+                    has_content = True
+            for file_path in change.get('files', []):
+                src = overlay_dir / 'files' / file_path
+                if src.exists():
+                    print(f"New file: {file_path}")
+                    has_content = True
+        return has_content
 
     # Clone upstream to temp directory
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1528,7 +2043,34 @@ Examples:
     diff_mode.add_argument('--name-only', action='store_true',
                           help='Show only names of changed files')
     diff_parser.add_argument('--raw', action='store_true',
-                            help='Show raw diff without filters (includes Release:, whitespace)')
+                             help='Show raw diff without filters (includes Release:, whitespace)')
+
+    # create-overlay command
+    create_overlay_parser = subparsers.add_parser('create-overlay',
+                                                  help='Create an overlay for a modified package')
+    create_overlay_parser.add_argument('package', help='Package name')
+    create_overlay_parser.add_argument('--reason', help='Description of the modification')
+
+    # regenerate-overlay command
+    regenerate_overlay_parser = subparsers.add_parser('regenerate-overlay',
+                                                      help='Regenerate overlay.patch for a package')
+    regenerate_overlay_parser.add_argument('package', help='Package name')
+
+    # verify-overlay command
+    verify_overlay_parser = subparsers.add_parser('verify-overlay',
+                                                   help='Verify overlay reproduces local package')
+    verify_overlay_parser.add_argument('package', nargs='?', default=None,
+                                       help='Package name to verify')
+    verify_overlay_parser.add_argument('--all', action='store_true',
+                                       help='Verify all packages with overlays')
+
+    # rebuild-overlay command
+    rebuild_overlay_parser = subparsers.add_parser('rebuild-overlay',
+                                                    help='Rebuild rpms/<package>/ from upstream + overlay')
+    rebuild_overlay_parser.add_argument('package', nargs='?', default=None,
+                                        help='Package name to rebuild')
+    rebuild_overlay_parser.add_argument('--all', action='store_true',
+                                        help='Rebuild all packages with overlays')
 
     args = parser.parse_args()
 
@@ -1541,7 +2083,9 @@ Examples:
         sys.exit("ERROR: --dry-run is not supported with the rename command")
 
     # Check git config for commands that will commit
-    if args.command not in ['list', 'diff', 'set-upstream'] and (not args.dry_run or args.command == 'rename'):
+    no_commit_commands = ['list', 'diff', 'set-upstream', 'create-overlay', 'regenerate-overlay', 'verify-overlay',
+                         'rebuild-overlay']
+    if args.command not in no_commit_commands and (not args.dry_run or args.command == 'rename'):
         check_git_config()
 
     match args.command:
@@ -1629,6 +2173,65 @@ Examples:
 
             # Exit with code 1 if any diffs found
             sys.exit(1 if has_diffs else 0)
+        case 'create-overlay':
+            create_overlay(args.package, args.reason)
+        case 'regenerate-overlay':
+            regenerate_overlay(args.package)
+        case 'verify-overlay':
+            if args.all:
+                # Verify all packages with overlays
+                if not OVERLAYS_DIR.exists():
+                    sys.exit("ERROR: No overlays directory found")
+                overlay_packages = sorted(
+                    d.name for d in OVERLAYS_DIR.iterdir()
+                    if d.is_dir() and (d / 'overlay.yaml').exists()
+                )
+                if not overlay_packages:
+                    sys.exit("ERROR: No overlays found")
+                all_ok = True
+                for pkg in overlay_packages:
+                    success, message = verify_overlay(pkg)
+                    if success:
+                        logging.info("%s", message)
+                    else:
+                        logging.warning("%s", message)
+                        all_ok = False
+                sys.exit(0 if all_ok else 1)
+            elif args.package:
+                success, message = verify_overlay(args.package)
+                if success:
+                    logging.info("%s", message)
+                else:
+                    sys.exit(f"ERROR: {message}")
+            else:
+                sys.exit("ERROR: Specify a package name or use --all")
+        case 'rebuild-overlay':
+            if args.all:
+                if not OVERLAYS_DIR.exists():
+                    sys.exit("ERROR: No overlays directory found")
+                overlay_packages = sorted(
+                    d.name for d in OVERLAYS_DIR.iterdir()
+                    if d.is_dir() and (d / 'overlay.yaml').exists()
+                )
+                if not overlay_packages:
+                    sys.exit("ERROR: No overlays found")
+                all_ok = True
+                for pkg in overlay_packages:
+                    success, message = rebuild_overlay(pkg)
+                    if success:
+                        logging.info("%s", message)
+                    else:
+                        logging.warning("%s", message)
+                        all_ok = False
+                sys.exit(0 if all_ok else 1)
+            elif args.package:
+                success, message = rebuild_overlay(args.package)
+                if success:
+                    logging.info("%s", message)
+                else:
+                    sys.exit(f"ERROR: {message}")
+            else:
+                sys.exit("ERROR: Specify a package name or use --all")
 
 
 if __name__ == '__main__':

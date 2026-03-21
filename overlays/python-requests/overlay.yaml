@@ -1,0 +1,4 @@
+changes:
+- description: Skip network-dependent tests
+  patches:
+  - 01-skip-network-dependent-tests.patch

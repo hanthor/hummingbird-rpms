@@ -1,0 +1,6 @@
+changes:
+- description: Conditionally skip timeout to hardcoded IPv4 address via env var
+  patches:
+  - 01-conditionally-skip-timeout-to-hardcoded-ipv4-addre.patch
+  files:
+  - hiredis-skip-async-timeout-test.patch

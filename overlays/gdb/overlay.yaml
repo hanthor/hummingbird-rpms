@@ -1,0 +1,7 @@
+changes:
+- description: Rename patch include files
+  patches:
+  - 01-rename-patch-include-files.patch
+  files:
+  - _gdb.spec.patch-applications.include
+  - _gdb.spec.patch-declarations.include

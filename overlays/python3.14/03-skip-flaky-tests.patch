@@ -1,0 +1,38 @@
+diff -ruN a/python3.14.spec b/python3.14.spec
+--- a/python3.14.spec	2026-03-21 00:29:08.500547821 +0000
++++ b/python3.14.spec	2026-03-21 00:29:08.501561055 +0000
+@@ -1500,6 +1500,16 @@
+   # test_check_probes is failing since it was introduced in 3.12.0rc1,
+   # the test is skipped until it is fixed in upstream.
+   # see: https://github.com/python/cpython/issues/104280#issuecomment-1669249980
++  # test_signal is skipped due to https://github.com/python/cpython/issues/118989
++  # test.test_concurrent_futures.test_deadlock tends to time out on s390x and ppc64le in
++  # freethreading{,-debug} build, skipping it to shorten the build time
++  # see: https://github.com/python/cpython/issues/121719
++  # test_interrupt and test_interrupt_no_handler
++  # reported in https://github.com/python/cpython/issues/133651
++  # test_margin_is_sufficient
++  # reported in https://github.com/python/cpython/issues/140222
++  # test_resource is skipped because test_fsize_ismax and test_fsize_not_too_big
++  # assume RLIMIT_FSIZE is unlimited, which is not the case in containerized builds
+   LD_LIBRARY_PATH=$ConfDir $ConfDir/python -m test.regrtest \
+     -wW --slowest %{_smp_mflags} \
+     %ifarch riscv64
+@@ -1508,6 +1518,17 @@
+     --timeout=2700 \
+     %endif
+     -i test_check_probes \
++    -i test_interrupt \
++    -i test_interrupt_no_handler \
++    -i test_margin_is_sufficient \
++    -x test_resource \
++    %ifarch %{mips64}
++    -x test_ctypes \
++    %endif
++    %ifarch s390x ppc64le
++    -x test_signal \
++    -i test_deadlock \
++    %endif
+ 
+   echo FINISHED: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
+ 

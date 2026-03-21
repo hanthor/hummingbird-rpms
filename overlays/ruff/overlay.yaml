@@ -1,0 +1,4 @@
+changes:
+- description: Disable tests and skip hanging checks
+  patches:
+  - 01-disable-tests-and-skip-hanging-checks.patch

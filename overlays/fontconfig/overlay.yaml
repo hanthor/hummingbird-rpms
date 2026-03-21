@@ -1,0 +1,6 @@
+changes:
+- description: Disable bwrap test in container builds
+  patches:
+  - 01-disable-bwrap-test-in-container-builds.patch
+  files:
+  - fontconfig-disable-bwrap-test.patch

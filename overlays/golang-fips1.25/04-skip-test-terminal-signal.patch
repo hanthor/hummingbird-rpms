@@ -1,0 +1,12 @@
+diff -ruN a/golang.spec b/golang.spec
+--- a/golang.spec	2026-03-21 00:28:03.903458379 +0000
++++ b/golang.spec	2026-03-21 00:28:03.903721012 +0000
+@@ -213,6 +213,8 @@
+ Patch6:         0006-Default-to-ld.bfd-on-ARM64.patch
+ # Related: https://sourceware.org/bugzilla/show_bug.cgi?id=33204
+ Patch7:         revert_dwarf5.patch
++# Skip TestTerminalSignal in podman containers - wait4() hangs with --init
++Patch10:        0010-Skip-TestTerminalSignal.patch
+ 
+ # Having documentation separate was broken
+ Obsoletes:      %{name}-docs < 1.1-4

@@ -1,0 +1,6 @@
+changes:
+- description: Removed GLib built-in HMAC backend for FIPS compliance
+  patches:
+  - 01-removed-glib-built-in-hmac-backend-for-fips-compli.patch
+  files:
+  - fips-disable-ghmac.patch

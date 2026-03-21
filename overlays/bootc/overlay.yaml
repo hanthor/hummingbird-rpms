@@ -1,0 +1,8 @@
+changes:
+- description: Version bump to 1.14.0
+  patches:
+  - 01-version-bump-to-1-14-0.patch
+- description: Fix build environment for Hummingbird (explicit CARGO_FEATURES, remove
+    unused shell completions, handle completion directory paths)
+  patches:
+  - 02-fix-build-environment-for-hummingbird.patch

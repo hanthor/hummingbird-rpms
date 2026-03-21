@@ -1,0 +1,9 @@
+changes:
+- description: Replace $releasever with hardcoded 43 in all repo files so packages
+    resolve correctly on Hummingbird
+  patches:
+  - 01-hardcode-fedora-43-in-repo-files.patch
+- description: Remove Requires on system-release(%{version}) which is not provided
+    by Hummingbird's system-release package
+  patches:
+  - 02-remove-system-release-requires.patch

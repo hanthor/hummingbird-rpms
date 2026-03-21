@@ -1,0 +1,4 @@
+changes:
+- description: Add FIPS and DEFAULT config subpackages
+  patches:
+  - 01-add-fips-and-default-config-subpackages.patch

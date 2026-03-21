@@ -1,0 +1,44 @@
+diff -ruN a/bootc.spec b/bootc.spec
+--- a/bootc.spec	2026-03-21 00:27:36.144734038 +0000
++++ b/bootc.spec	2026-03-21 00:27:36.144874650 +0000
+@@ -146,7 +146,8 @@
+ %endif
+
+ %install
+-%make_install INSTALL="install -p -c"
++# Pass CARGO_FEATURES explicitly to prevent auto-detection rebuild in install environment
++%make_install INSTALL="install -p -c" CARGO_FEATURES="%{?with_rhsm:rhsm}"
+ %if %{with ostree_ext}
+ make install-ostree-hooks DESTDIR=%{?buildroot}
+ %endif
+@@ -164,6 +165,9 @@
+ touch %{?buildroot}/%{_docdir}/bootc/baseimage/base/sysroot/.keepdir
+ find %{?buildroot}/%{_docdir} ! -type d -printf '%{_docdir}/%%P\n' | sort > bootcdoclist.txt
+
++rm -f %{buildroot}/%{_datadir}/elvish/lib/bootc.elv
++rm -f %{buildroot}/%{_datadir}/powershell/Modules/Bootc/Bootc.psm1
++
+ %if %{with check}
+ %check
+ if grep -qEe 'Seccomp:.*0$' /proc/self/status; then
+@@ -190,6 +194,15 @@
+ %endif
+ %{_unitdir}/*
+ %{_mandir}/man*/*bootc*
++%if 0%{?rhel} && 0%{?rhel} <= 9
++%{_datadir}/bash-completion/completions/bootc
++%{_datadir}/zsh/site-functions/_bootc
++%{_datadir}/fish/vendor_completions.d/bootc.fish
++%else
++%{bash_completions_dir}/bootc
++%{zsh_completions_dir}/_bootc
++%{fish_completions_dir}/bootc.fish
++%endif
+
+ %files -n system-reinstall-bootc
+ %{_bindir}/system-reinstall-bootc
+@@ -202,4 +215,3 @@
+
+ %changelog
+ %autochangelog
+-

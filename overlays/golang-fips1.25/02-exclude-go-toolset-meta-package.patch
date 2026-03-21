@@ -1,0 +1,29 @@
+diff -ruN a/golang.spec b/golang.spec
+--- a/golang.spec	2026-03-21 00:28:03.903458379 +0000
++++ b/golang.spec	2026-03-21 00:28:03.903721012 +0000
+@@ -330,6 +330,7 @@
+ %{summary}.
+ %endif
+ 
++%if ! %{defined hummingbird}
+ %package -n go-toolset
+ Summary:        Package that installs go-toolset
+ Requires:       %{name} = %{version}-%{release}
+@@ -339,6 +340,7 @@
+ 
+ %description -n go-toolset
+ This is the main package for go-toolset.
++%endif
+ 
+ %if %{race}
+ %package race
+@@ -723,7 +725,9 @@
+ %files shared -f go-shared.list
+ %endif
+ 
++%if ! %{defined hummingbird}
+ %files -n go-toolset
++%endif
+ 
+ %if %{race}
+ %files race

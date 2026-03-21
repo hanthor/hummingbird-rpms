@@ -1,0 +1,7 @@
+changes:
+- description: Add FIPS mode support (00329-fips.patch) - OpenSSL FIPS mode compliance
+    for hashlib and hmac
+  patches:
+  - 01-add-fips-mode-support-00329-fips-patch-openssl-fip.patch
+  files:
+  - 00329-fips.patch

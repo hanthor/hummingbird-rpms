@@ -1,0 +1,10 @@
+changes:
+- description: Fix Go compile warnings
+  patches:
+  - 01-fix-go-compile-warnings.patch
+  files:
+  - 0002-commands-hugobuilder.go-Fix-compile-warnings.patch
+  - 0003-commands-import.go-Fix-compile-warning.patch
+  - 0004-common-hstore-scratch_test.go-Fix-compile-warnings.patch
+  - 0005-common-loggers-logger.go-Fix-compile-warnings.patch
+  - 0006-transform-livereloadinject-livereloadinject.go-Fix-c.patch

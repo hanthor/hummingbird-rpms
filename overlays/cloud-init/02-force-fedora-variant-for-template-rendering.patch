@@ -1,0 +1,13 @@
+diff -ruN a/cloud-init.spec b/cloud-init.spec
+--- a/cloud-init.spec	2026-03-21 01:50:41.888538370 +0000
++++ b/cloud-init.spec	2026-03-21 01:50:41.888674542 +0000
+@@ -17,7 +17,8 @@
+ # https://github.com/canonical/cloud-init/pull/6423
+ # Fixes systemd dependency cycle on Fedora by adding DefaultDependencies=no
+ # and including Fedora in distribution-specific conditional blocks
+-Patch:          0001-fix-avoid-dependency-cycle-on-Fedora.patch
++Patch0:         0001-fix-avoid-dependency-cycle-on-Fedora.patch
++Patch1:         0002-fix-force-fedora-variant-for-template-rendering.patch
+
+ BuildArch:      noarch
+

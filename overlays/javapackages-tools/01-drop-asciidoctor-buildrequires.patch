@@ -1,0 +1,23 @@
+diff -ruN a/javapackages-tools.spec b/javapackages-tools.spec
+--- a/javapackages-tools.spec	2026-03-21 00:28:31.104295120 +0000
++++ b/javapackages-tools.spec	2026-03-21 00:28:31.104460282 +0000
+@@ -22,7 +22,6 @@
+ Source:         https://github.com/fedora-java/javapackages/archive/%{version}.tar.gz
+ 
+ BuildRequires:  coreutils
+-BuildRequires:  rubygem-asciidoctor
+ BuildRequires:  %{python_prefix}-devel
+ BuildRequires:  %{python_prefix}-lxml
+ BuildRequires:  %{python_prefix}-setuptools
+@@ -133,6 +132,11 @@
+     --without-ivy \
+ %endif
+     --without-generators
++# HUM: stub out asciidoctor; just touch the target file. We don't want to
++# predict the section, so just create both .1 and .7. The ./install script
++# picks out the right one.
++asciidoctor() { set -x; T="target/$(basename $5 .txt)"; touch ${T}.1 ${T}.7; set +x; }
++export -f asciidoctor
+ ./build
+ 
+ %install

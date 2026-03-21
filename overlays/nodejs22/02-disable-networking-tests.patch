@@ -1,0 +1,27 @@
+diff -ruN a/test-should-pass.txt b/test-should-pass.txt
+--- a/test-should-pass.txt	2026-03-21 00:28:40.360701221 +0000
++++ b/test-should-pass.txt	2026-02-26 12:46:14.058623895 +0000
+@@ -319,15 +319,19 @@
+ fixtures/warnings.js
+ fixtures/worker-preload.js
+ internet/test-dgram-connect.js
+-internet/test-dgram-membership.js
+-internet/test-dgram-multicast-multi-process.js
++# Disabled on 12.01.2026
++# As it failed on Konflux due to not having network access
++# internet/test-dgram-membership.js
++# internet/test-dgram-multicast-multi-process.js
+ internet/test-dns-cares-domains.js
+ internet/test-dns-getDefaultResultOrder.js
+ internet/test-dns-regress-6244.js
+ internet/test-dns-setserver-in-callback-of-resolve4.js
+ internet/test-https-issue-43963.js
+-internet/test-net-autoselectfamily-events-timeout.js
+-internet/test-net-connect-timeout.js
++# Disabled on 12.01.2026
++# As it failed on Konflux due to not having network access
++# internet/test-net-autoselectfamily-events-timeout.js
++# internet/test-net-connect-timeout.js
+ internet/test-trace-events-dns.js
+ message/console_assert.js
+ message/max_tick_depth.js

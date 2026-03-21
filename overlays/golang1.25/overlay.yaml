@@ -1,0 +1,11 @@
+changes:
+- description: Rename package from golang to golang1.25 with basepackagename macro
+    to allow multiple Go versions to coexist
+  patches:
+  - 01-versioned-package-rename.patch
+- description: Skip TestTerminalSignal test that hangs in podman containers with --init
+    as used by mock for RPM builds
+  patches:
+  - 02-skip-test-terminal-signal.patch
+  files:
+  - 0010-Skip-TestTerminalSignal.patch

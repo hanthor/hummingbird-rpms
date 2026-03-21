@@ -1,0 +1,6 @@
+changes:
+- description: Carry hummingbird path along
+  patches:
+  - 01-carry-hummingbird-path-along.patch
+  files:
+  - 0010-Skip-TestTerminalSignal.patch

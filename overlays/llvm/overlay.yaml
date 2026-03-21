@@ -1,0 +1,4 @@
+changes:
+- description: Skip libarcher tests for setrlimit limitations
+  patches:
+  - 01-skip-libarcher-tests-for-setrlimit-limitations.patch

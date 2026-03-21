@@ -1,0 +1,42 @@
+diff -ruN a/glib2.spec b/glib2.spec
+--- a/glib2.spec	2026-03-21 01:30:00.675559385 +0000
++++ b/glib2.spec	2026-03-21 01:30:00.675788808 +0000
+@@ -7,10 +7,10 @@
+ URL:            https://www.gtk.org
+ Source:         https://download.gnome.org/sources/glib/2.88/glib-%{version}.tar.xz
+ 
+-# Required for RHEL core crypto components policy. Good for Fedora too.
++# Disable GLib's built-in GHmac for FIPS compliance.
++# Applications should use a FIPS-certified crypto library directly.
+ # https://bugzilla.redhat.com/show_bug.cgi?id=1630260
+-# https://gitlab.gnome.org/GNOME/glib/-/merge_requests/903
+-Patch:          gnutls-hmac.patch
++Patch:          fips-disable-ghmac.patch
+ 
+ # https://bugzilla.redhat.com/show_bug.cgi?id=2192204
+ Patch:          default-terminal.patch
+@@ -41,16 +41,6 @@
+ BuildRequires:  /usr/bin/dbus-daemon
+ BuildRequires:  /usr/bin/update-desktop-database
+ 
+-# For gnutls-hmac.patch. We now dlopen libgnutls.so.30 so that we can build a
+-# static glib2 without depending on a static build of GnuTLS as well. This will
+-# ensure we notice if the GnuTLS soname bumps, so that we can update our patch.
+-BuildRequires:  gnutls
+-%if 0%{?__isa_bits} == 64
+-Requires: libgnutls.so.30()(64bit)
+-%else
+-Requires: libgnutls.so.30
+-%endif
+-
+ Provides: bundled(cmph)
+ Provides: bundled(dirent)
+ Provides: bundled(gnulib)
+@@ -110,7 +100,6 @@
+     -Dglib_debug=disabled \
+     -Ddocumentation=true \
+     -Dinstalled_tests=true \
+-    -Dgnutls=true \
+     --default-library=both \
+     %{nil}
+ %meson_build

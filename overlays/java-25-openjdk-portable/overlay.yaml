@@ -1,0 +1,9 @@
+changes:
+- description: Comment out fastdebug bootstrap JDK requirement since fastdebug variants
+    may not be available in all repos during distro bootstrap
+  patches:
+  - 01-disable-fastdebug-bootstrap.patch
+- description: Add explicit %changelog directive before %autochangelog for proper
+    changelog generation
+  patches:
+  - 02-add-changelog-separator.patch

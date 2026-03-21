@@ -1,0 +1,11 @@
+changes:
+- description: Extend RHEL-specific FIPS conditionals to also match Hummingbird builds
+    for FIPS provider, MLKEM patch, and HMAC checksum generation
+  patches:
+  - 01-enable-hummingbird-fips-conditionals.patch
+- description: Add openssl-config-fips subpackage that installs a drop-in config to
+    enable the FIPS provider by default without kernel FIPS mode
+  patches:
+  - 02-add-config-fips-subpackage.patch
+  files:
+  - openssl-fips-provider-enable.cnf

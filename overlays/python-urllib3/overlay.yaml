@@ -1,0 +1,4 @@
+changes:
+- description: Skip HTTP/2 probe network test
+  patches:
+  - 01-skip-http2-probe-network-test.patch

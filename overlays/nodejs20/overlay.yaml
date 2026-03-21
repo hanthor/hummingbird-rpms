@@ -1,0 +1,4 @@
+changes:
+- description: Disable networking tests
+  patches:
+  - 01-disable-networking-tests.patch

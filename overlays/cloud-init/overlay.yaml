@@ -1,0 +1,9 @@
+changes:
+- description: Upgrade to 26.1 with rebased Fedora dependency cycle patch
+  patches:
+  - 01-upgrade-to-26-1-with-rebased-dependency-cycle-patc.patch
+- description: Force fedora variant for template rendering
+  patches:
+  - 02-force-fedora-variant-for-template-rendering.patch
+  files:
+  - 0002-fix-force-fedora-variant-for-template-rendering.patch

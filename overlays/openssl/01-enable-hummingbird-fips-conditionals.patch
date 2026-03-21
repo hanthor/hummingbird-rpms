@@ -1,0 +1,30 @@
+diff -ruN a/openssl.spec b/openssl.spec
+--- a/openssl.spec	2026-03-21 00:28:55.804204842 +0000
++++ b/openssl.spec	2026-03-21 00:28:55.804743940 +0000
+@@ -95,7 +95,7 @@
+ Patch0050: 0050-Make-openssl-speed-run-in-FIPS-mode.patch
+ Patch0051: 0051-Backport-upstream-27483-for-PKCS11-needs.patch
+ Patch0052: 0052-Red-Hat-9-FIPS-indicator-defines.patch
+-%if ( %{defined rhel} && (! %{defined centos}) && (! %{defined eln}) )
++%if ( ( %{defined rhel} || %{defined hummingbird} ) && (! %{defined centos}) && (! %{defined eln}) )
+ Patch0053: 0053-Allow-hybrid-MLKEM-in-FIPS-mode.patch
+ %endif
+ Patch0054: 0054-Temporarily-disable-SLH-DSA-FIPS-self-tests.patch
+@@ -132,7 +133,7 @@
+ Requires: ca-certificates >= 2008-5
+ Requires: crypto-policies >= 20180730
+ Recommends: pkcs11-provider%{?_isa}
+-%if ( %{defined rhel} && (! %{defined centos}) && (! %{defined eln}) )
++%if ( ( %{defined rhel} || %{defined hummingbird} ) && (! %{defined centos}) && (! %{defined eln}) )
+ Requires: openssl-fips-provider
+ %endif
+ 
+@@ -317,7 +318,7 @@
+ # Add generation of HMAC checksum of the final stripped library
+ # We manually copy standard definition of __spec_install_post
+ # and add hmac calculation/embedding to fips.so
+-%if ( %{defined rhel} && (! %{defined centos}) && (! %{defined eln}) )
++%if ( ( %{defined rhel} || %{defined hummingbird} ) && (! %{defined centos}) && (! %{defined eln}) )
+ %define __spec_install_post \
+     rm -rf $RPM_BUILD_ROOT/%{_libdir}/ossl-modules/fips.so \
+     %{?__debug_package:%{__debug_install_post}} \

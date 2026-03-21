@@ -1,0 +1,4 @@
+changes:
+- description: Pre-existing modification - requires review
+  files:
+  - uuid-1.6.2-ldflags.patch

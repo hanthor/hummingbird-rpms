@@ -1,0 +1,4 @@
+changes:
+- description: Versioned package rename
+  patches:
+  - 01-versioned-package-rename.patch

@@ -1,0 +1,15 @@
+changes:
+- description: Add FIPS mode support (00329-fips.patch) - OpenSSL FIPS mode compliance
+    for hashlib and hmac
+  patches:
+  - 01-add-fips-mode-support.patch
+  files:
+  - 00329-fips.patch
+- description: Remove prebuilt JIT stencils - always build from source (matching CentOS
+    Stream)
+  patches:
+  - 02-remove-prebuilt-jit-stencils.patch
+- description: Skip flaky tests that fail in containerized or architecture-specific
+    builds
+  patches:
+  - 03-skip-flaky-tests.patch

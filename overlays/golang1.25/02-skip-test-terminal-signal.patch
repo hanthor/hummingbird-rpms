@@ -1,0 +1,12 @@
+diff -ruN a/golang.spec b/golang.spec
+--- a/golang.spec	2026-03-21 00:28:07.380449751 +0000
++++ b/golang.spec	2026-03-21 00:28:07.380679634 +0000
+@@ -162,6 +162,8 @@
+ Patch8:         fix_cgo_panic-with-gcc15-in-368.patch
+ # Related to https://github.com/golang/go/issues/74476
+ Patch9:         skip_lsan_tests.patch
++# TestTerminalSignal hangs in mock (podman --init)
++Patch10:        0010-Skip-TestTerminalSignal.patch
+ 
+ # Having documentation separate was broken
+ Obsoletes:      %{name}-docs < 1.1-4

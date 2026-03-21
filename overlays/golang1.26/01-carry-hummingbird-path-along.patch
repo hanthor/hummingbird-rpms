@@ -1,0 +1,44 @@
+diff -ruN a/golang.spec b/golang.spec
+--- a/golang.spec	2026-03-21 01:44:07.007884548 +0000
++++ b/golang.spec	2026-03-21 01:44:07.008105831 +0000
+@@ -13,7 +13,7 @@
+ %global _binaries_in_noarch_packages_terminate_build 0
+ 
+ # Do not check any files in doc or src for requires
+-%global __requires_exclude_from ^(%{_datadir}|/usr/lib)/%{name}/(doc|src)/.*$
++%global __requires_exclude_from ^(%{_datadir}|/usr/lib)/%{basepackagename}/(doc|src)/.*$
+ 
+ # Don't alter timestamps of especially the .a files (or else go will rebuild later)
+ # Actually, don't strip at all since we are not even building debug packages and this corrupts the dwarf testdata
+@@ -72,7 +72,7 @@
+ %global race 0
+ 
+ # Fedora GOROOT
+-%global goroot          /usr/lib/%{name}
++%global goroot          /usr/lib/%{basepackagename}
+ 
+ %ifarch x86_64
+ %global gohostarch  amd64
+@@ -110,7 +110,12 @@
+ %global go_version %{go_api}%{?go_patch:.%{go_patch}}%{?go_prerelease:~%{go_prerelease}}
+ %global go_source %{go_api}%{?go_patch:.%{go_patch}}%{?go_prerelease}
+ 
+-Name:           golang
++%global basepackagename golang
++
++# Override default doc directory to use basepackagename instead of name
++%global _docdir_fmt %{basepackagename}
++
++Name:           %{basepackagename}1.26
+ Version:        %{go_version}
+ Release: 0%{?dist}
+ Summary:        The Go Programming Language
+@@ -162,6 +167,8 @@
+ Patch8:         fix_cgo_panic-with-gcc15-in-368.patch
+ # Related to https://github.com/golang/go/issues/74476
+ Patch9:         skip_lsan_tests.patch
++# TestTerminalSignal hangs in mock (podman --init)
++Patch10:        0010-Skip-TestTerminalSignal.patch
+ 
+ # Having documentation separate was broken
+ Obsoletes:      %{name}-docs < 1.1-4

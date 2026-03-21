@@ -1,0 +1,9 @@
+changes:
+- description: Change release version from 22.22.0-7 to 22.22.0-1.2 for Hummingbird
+    rebuild
+  patches:
+  - 01-bump-release-version.patch
+- description: Disable internet-dependent tests that fail in Konflux due to no network
+    access
+  patches:
+  - 02-disable-networking-tests.patch
