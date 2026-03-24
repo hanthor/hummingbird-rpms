@@ -79,8 +79,8 @@
 
 Name:           nodejs%{node_version_major}
 Epoch:          %{node_epoch}
-Version:        %{node_version}
-Release:        %{node_release}
+Version:        25.8.1
+Release:        0.1
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
