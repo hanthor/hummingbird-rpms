@@ -5,5 +5,6 @@
   "release": "1",
   "sha": "1ca5a5357a764c48972f417bd3f5a142aed43458",
   "source": "https://src.fedoraproject.org/rpms/openssl.git",
+  "track_upstream": "latest",
   "version": "3.5.5"
 }
