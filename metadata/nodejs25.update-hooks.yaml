@@ -1,0 +1,12 @@
+update_spec: >-
+  sed -Ei
+  '/^%nodejs_define_version\s+node\>/s|:[0-9]+\.[0-9]+\.[0-9]+-|:'"${UPDATE_NEW_VERSION}"'-|'
+  "${UPDATE_SPEC_FILE}"
+
+download_sources: |
+  packaging/make-nodejs-tarball.sh "${UPDATE_NEW_VERSION}" >&2
+  echo "node-v${UPDATE_NEW_VERSION}-stripped.tar.gz"
+
+post_update: |
+  packaging/fill-versions.sh "${UPDATE_SPEC_FILE}" "node-v${UPDATE_NEW_VERSION}-stripped.tar.gz"
+  rm -rf "node-v${UPDATE_NEW_VERSION}"

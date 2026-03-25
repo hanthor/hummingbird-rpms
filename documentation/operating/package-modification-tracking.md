@@ -204,6 +204,86 @@ returned by the project ID lookup:
 }
 ```
 
+## Per-Package Update Hooks
+
+When `check_upstream_versions.py check --update` updates a package, it
+normally uses the specfile library to bump `Version`/`Release` and downloads
+new sources from the URLs declared in the spec. Some packages need custom
+logic (e.g. generating stripped tarballs or patching macro-based version
+lines). A per-package hooks file lets you override or extend the default
+update phases without changing `check_upstream_versions.py` itself.
+
+### Hooks file location
+
+```
+metadata/<package>.update-hooks.yaml
+```
+
+For example, `metadata/nodejs25.update-hooks.yaml`.
+
+### Hook phases
+
+The YAML file supports three optional keys. Each value is a shell command
+string executed with `bash -eo pipefail -c` in the package directory as
+the working directory.
+
+| Phase | Behaviour |
+|---|---|
+| `update_spec` | **Replaces** the default specfile-library Version/Release update. A changelog entry is still added automatically via the Specfile object. |
+| `download_sources` | **Replaces** the default URL-based source download. Must print one filename per line to stdout for files to upload to the lookaside cache. Redirect any other output to stderr (`>&2`). |
+| `post_update` | **Additive** — runs after spec + sources are ready. No default equivalent. |
+
+Omitting a phase means the default logic runs for that phase. Packages
+without a hooks file behave identically to before.
+
+Unknown phase keys in the YAML cause a `ValueError` (fail-fast).
+
+### Environment variables
+
+Every hook receives these environment variables:
+
+| Variable | Example |
+|---|---|
+| `UPDATE_PACKAGE` | `nodejs25` |
+| `UPDATE_OLD_VERSION` | `25.6.1` |
+| `UPDATE_NEW_VERSION` | `25.8.2` |
+| `UPDATE_SPEC_FILE` | `/home/rpms/rpms/nodejs25/nodejs25.spec` |
+| `UPDATE_PACKAGE_DIR` | `/home/rpms/rpms/nodejs25` |
+| `UPDATE_SOURCES_FILE` | `/home/rpms/rpms/nodejs25/sources` |
+| `UPDATE_ROOT_DIR` | `/home/rpms` |
+
+### Example: nodejs25
+
+```yaml
+# metadata/nodejs25.update-hooks.yaml
+
+update_spec: >-
+  sed -Ei
+  '/^%nodejs_define_version\s+node\>/s|:[0-9]+\.[0-9]+\.[0-9]+-|:'"${UPDATE_NEW_VERSION}"'-|'
+  "${UPDATE_SPEC_FILE}"
+
+download_sources: |
+  packaging/make-nodejs-tarball.sh "${UPDATE_NEW_VERSION}" >&2
+  echo "node-v${UPDATE_NEW_VERSION}-stripped.tar.gz"
+
+post_update: |
+  packaging/fill-versions.sh "${UPDATE_SPEC_FILE}" "node-v${UPDATE_NEW_VERSION}-stripped.tar.gz"
+  rm -rf "node-v${UPDATE_NEW_VERSION}"
+```
+
+- `update_spec` patches the `%nodejs_define_version` macro line directly
+  because the specfile library cannot trace through this custom macro.
+- `download_sources` runs a script that downloads and strips the upstream
+  tarball, then prints the resulting filename. The script's own output is
+  redirected to stderr so only the filename reaches stdout.
+- `post_update` fills in component versions in the spec and cleans up the
+  unpacked source tree.
+
+### Error handling
+
+A non-zero exit from any hook raises a `RuntimeError` that propagates to
+the caller and aborts the update for that package.
+
 ## How Auto-Updates Work
 
 The `./ci/dist_git.py update` command (used by automation) checks modification
