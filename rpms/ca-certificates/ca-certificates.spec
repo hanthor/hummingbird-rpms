@@ -36,7 +36,7 @@ Name: ca-certificates
 Version: 2025.2.80_v9.0.304
 # for Rawhide, please always use release >= 2
 # for Fedora release branches, please use release < 2 (1.0, 1.1, ...)
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 License: MIT AND GPL-2.0-or-later
 
 URL: https://fedoraproject.org/wiki/CA-Certificates
@@ -82,10 +82,35 @@ BuildRequires: python3
 BuildRequires: openssl
 BuildRequires: asciidoc
 BuildRequires: xmlto
+# p11-kit is required at build time for trust extract
+BuildRequires: p11-kit-trust
 
 %description
 This package contains the set of CA certificates chosen by the
 Mozilla Foundation for use with the Internet PKI.
+
+%package bundle
+Summary: Pre-extracted CA certificate bundle for minimal/container images
+BuildArch: noarch
+Provides: ca-certificates = %{version}-%{release}
+Conflicts: %{name}
+# p11-kit-trust requires the .p11-kit format trust source files that only the
+# full ca-certificates package ships. The bundle only has pre-extracted PEM
+# output, so p11-kit-trust (and by extension GnuTLS) would find zero certs.
+Conflicts: p11-kit-trust
+
+%description bundle
+This package contains the pre-extracted Mozilla CA root certificate bundle
+in PEM format. It is designed for minimal container images that do not need
+the dynamic certificate update infrastructure provided by the main
+ca-certificates package.
+
+Unlike the main ca-certificates package, this package:
+- Does NOT require p11-kit, bash, grep, sed, or findutils
+- Ships pre-extracted PEM bundles and directory-hash certs ready for use
+- Has no post-install scripts
+
+Use this package for distroless or minimal container images.
 
 %prep
 rm -rf %{name}
@@ -240,6 +265,10 @@ chmod 444 $RPM_BUILD_ROOT%{catrustdir}/extracted/%{java_bundle}
 touch $RPM_BUILD_ROOT%{catrustdir}/extracted/edk2/cacerts.bin
 chmod 444 $RPM_BUILD_ROOT%{catrustdir}/extracted/edk2/cacerts.bin
 
+# For ca-certificates-bundle: create directory with pre-extracted PEM bundles
+# This allows the bundle package to ship actual files without requiring p11-kit at runtime
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem
+
 # Populate %%{catrustdir}/extracted/pem/directory-hash.
 #
 # First direct p11-kit-trust.so to the generated bundle (not the one
@@ -274,6 +303,21 @@ trust extract --format=pem-directory-hash --filter=ca-anchors --overwrite \
               --purpose server-auth \
               $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash
 
+# For ca-certificates-bundle: extract PEM bundles and directory-hash certs
+# using the same trust module config that was set up above.
+trust extract --format=pem-bundle --filter=ca-anchors --overwrite --comment \
+              --purpose server-auth \
+              $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/tls-ca-bundle.pem
+trust extract --format=pem-bundle --filter=ca-anchors --overwrite --comment \
+              --purpose email \
+              $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/email-ca-bundle.pem
+trust extract --format=pem-bundle --filter=ca-anchors --overwrite --comment \
+              --purpose code-signing \
+              $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/objsign-ca-bundle.pem
+trust extract --format=pem-directory-hash --filter=ca-anchors --overwrite \
+              --purpose server-auth \
+              $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash
+
 # Clean up the temporary module config.
 rm -f "$trust_module_config"
 
@@ -286,6 +330,54 @@ find $RPM_BUILD_ROOT%{pkidir}/tls/certs -type l -regextype posix-extended \
      -regex '.*/[0-9a-f]{8}\.[0-9]+' >> .files.txt
 
 sed -i "s|^$RPM_BUILD_ROOT|%ghost /|" .files.txt
+
+# For ca-certificates-bundle: overwrite the ghost placeholder files with
+# symlinks to the pre-extracted bundle files. The main package marks these
+# paths as %%ghost (populated at runtime by update-ca-trust), while the bundle
+# subpackage owns them as real symlinks. Since the packages Conflict, only one
+# is ever installed. RPM doesn't care about buildroot content for %%ghost entries.
+ln -sf %{_datadir}/pki/ca-certificates-bundle/extracted/pem/tls-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/tls-ca-bundle.pem
+ln -sf %{_datadir}/pki/ca-certificates-bundle/extracted/pem/email-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/email-ca-bundle.pem
+ln -sf %{_datadir}/pki/ca-certificates-bundle/extracted/pem/objsign-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/objsign-ca-bundle.pem
+
+# Create directory-hash symlinks from standard locations to the bundle files
+# The directory-hash dir has mode 555; make it writable temporarily
+chmod u+w $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash
+for f in $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash/*; do
+    [ -e "$f" ] || continue
+    bn=$(basename "$f")
+    ln -sf %{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash/"$bn" \
+           $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash/"$bn"
+    # Only copy hash symlinks (not .pem files) to /etc/pki/tls/certs/, matching
+    # the main package's behavior
+    if echo "$bn" | grep -qE '^[0-9a-f]{8}\.[0-9]+$'; then
+        ln -sf %{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash/"$bn" \
+               $RPM_BUILD_ROOT%{pkidir}/tls/certs/"$bn"
+    fi
+done
+
+# Create compatibility symlinks that update-ca-trust normally creates at runtime.
+# These are needed for OpenSSL, curl, git, Python, etc. to find CA certificates.
+# OpenSSL's compiled-in OPENSSLDIR on Fedora is /etc/pki/tls, so it looks for
+# /etc/pki/tls/cert.pem by default.
+ln -sf %{catrustdir}/extracted/pem/tls-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{pkidir}/tls/cert.pem
+ln -sf %{catrustdir}/extracted/pem/tls-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{pkidir}/tls/certs/ca-bundle.crt
+ln -sf %{catrustdir}/extracted/pem/tls-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{pkidir}/tls/certs/ca-certificates.crt
+ln -sf %{catrustdir}/extracted/pem/tls-ca-bundle.pem \
+       $RPM_BUILD_ROOT%{_sysconfdir}/ssl/cert.pem
+
+# Generate the file list for the bundle subpackage's directory-hash symlinks
+find $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash -type f,l > .bundle-files.txt
+find $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash -type l >> .bundle-files.txt
+find $RPM_BUILD_ROOT%{pkidir}/tls/certs -type l -regextype posix-extended \
+     -regex '.*/[0-9a-f]{8}\.[0-9]+' >> .bundle-files.txt
+sed -i "s|^$RPM_BUILD_ROOT||" .bundle-files.txt
 
 # /etc/ssl is provided in a Debian compatible form for (bad) code that
 # expects it: https://bugzilla.redhat.com/show_bug.cgi?id=1053882
@@ -300,7 +392,8 @@ ln -s %{catrustdir}/extracted/%{java_bundle} \
     $RPM_BUILD_ROOT%{pkidir}/%{java_bundle}
 
 %clean
-/usr/bin/chmod u+w $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash
+/usr/bin/chmod u+w $RPM_BUILD_ROOT%{catrustdir}/extracted/pem/directory-hash || true
+/usr/bin/chmod -R u+w $RPM_BUILD_ROOT%{_datadir}/pki/ca-certificates-bundle/extracted/pem/directory-hash || true
 rm -rf $RPM_BUILD_ROOT
 
 %pre
@@ -417,6 +510,33 @@ fi
 %ghost %{catrustdir}/extracted/pem/objsign-ca-bundle.pem
 %ghost %{catrustdir}/extracted/%{java_bundle}
 %ghost %{catrustdir}/extracted/edk2/cacerts.bin
+
+%files bundle -f .bundle-files.txt
+# Pre-extracted PEM certificate bundles
+%dir %{_datadir}/pki
+%dir %{_datadir}/pki/ca-certificates-bundle
+%dir %{_datadir}/pki/ca-certificates-bundle/extracted
+%dir %{_datadir}/pki/ca-certificates-bundle/extracted/pem
+%{_datadir}/pki/ca-certificates-bundle/extracted/pem/tls-ca-bundle.pem
+%{_datadir}/pki/ca-certificates-bundle/extracted/pem/email-ca-bundle.pem
+%{_datadir}/pki/ca-certificates-bundle/extracted/pem/objsign-ca-bundle.pem
+# Standard directory structure with symlinks to bundle files
+%dir %{pkidir}
+%dir %{pkidir}/tls
+%dir %{pkidir}/tls/certs
+%dir %{catrustdir}
+%dir %{catrustdir}/extracted
+%dir %{catrustdir}/extracted/pem
+%dir %{catrustdir}/extracted/pem/directory-hash
+%{catrustdir}/extracted/pem/tls-ca-bundle.pem
+%{catrustdir}/extracted/pem/email-ca-bundle.pem
+%{catrustdir}/extracted/pem/objsign-ca-bundle.pem
+# Compatibility symlinks for OpenSSL, curl, git, Python, etc.
+%{pkidir}/tls/cert.pem
+%{pkidir}/tls/certs/ca-bundle.crt
+%{pkidir}/tls/certs/ca-certificates.crt
+%dir %{_sysconfdir}/ssl
+%{_sysconfdir}/ssl/cert.pem
 
 %changelog
 * Tue Jan 20 2026 Frantisek Krenzelok <fkrenzel@redhat.com> - 2025.2.80_v9.0.304-6
