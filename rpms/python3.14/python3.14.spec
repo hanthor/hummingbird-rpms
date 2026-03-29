@@ -424,13 +424,12 @@ Patch475: 00475-cve-2025-15367.patch
 # direct call to the check function.
 Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
 
-<<<<<<< HEAD
 # 00478 # d9d794656850591a4e6aeddcf853505aeea08028
 # CVE-2026-4519
 #
 # Reject leading dashes in webbrowser URLs (GH-146214)
 Patch478: 00478-cve-2026-4519.patch
-=======
+
 # 00329 #
 # Support OpenSSL FIPS mode
 # - In FIPS mode, OpenSSL wrappers are always used in hashlib
@@ -445,7 +444,6 @@ Patch478: 00478-cve-2026-4519.patch
 #   or a string with OpenSSL hash name as the "digestmod" argument.
 #   The argument must be specified (instead of defaulting to 'md5').
 Patch329: 00329-fips.patch
->>>>>>> hummingbird-local
 
 # (New patches go here ^^^)
 #
