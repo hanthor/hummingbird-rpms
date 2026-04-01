@@ -2597,15 +2597,15 @@ def test_rebuild_requires_package_or_all(workdir: Path, upstream_repos: dict[str
     assert 'Must specify either package name or --all' in result.stderr
 
 
-def test_rebuild_rejects_macro_based_release(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """Test that rebuild rejects packages with macro-based Release fields."""
+def test_rebuild_rejects_macro_without_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild rejects macros that don't end with %{?dist}."""
     # Import vanilla
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
     )
 
-    # Modify spec to use a macro in Release field
+    # Modify spec to use a macro in Release field WITHOUT %{?dist}
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
     spec_content = vanilla_spec.read_text()
     modified_content = re.sub(
@@ -2624,8 +2624,52 @@ def test_rebuild_rejects_macro_based_release(workdir: Path, upstream_repos: dict
         cwd=workdir, capture_output=True, text=True
     )
     assert result.returncode != 0
-    assert 'uses macros in Release field' in result.stderr
+    assert 'uses macros in Release field without' in result.stderr
     assert 'requires manual rebuild' in result.stderr
+
+
+def test_rebuild_macro_with_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild handles macro-based Release that ends with %{?dist}."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec to use a macro in Release field WITH %{?dist}
+    # Simulates packages like rpm (%{baserelease}%{?dist}) or gcc (%{gcc_release}%{?dist})
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: %{my_macro}%{?dist}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Use macro with dist'], cwd=workdir, check=True)
+
+    # First rebuild: should add .1
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'first rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was updated correctly
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: %{my_macro}.1%{?dist}' in spec_content
+
+    # Second rebuild: should increment to .2
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'second rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was incremented
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: %{my_macro}.2%{?dist}' in spec_content
 
 
 def test_rebuild_all_continues_on_failure(workdir: Path, upstream_repos: dict[str, Path]) -> None:

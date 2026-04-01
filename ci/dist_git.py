@@ -879,9 +879,11 @@ def bump_release(current_release: str) -> str:
 def update_release_in_spec(package_dir: Path, new_release: str) -> None:
     """Update Release: line in spec file.
 
+    Handles both simple numeric releases and macro-based releases that end with %{?dist}.
+
     Args:
         package_dir: Package directory containing spec file
-        new_release: New release value (without %{?dist})
+        new_release: New release value (without %{?dist}) - only used for non-macro releases
     """
     spec_files = list(package_dir.glob('*.spec'))
     if len(spec_files) != 1:
@@ -890,16 +892,53 @@ def update_release_in_spec(package_dir: Path, new_release: str) -> None:
     spec_file = spec_files[0]
     content = spec_file.read_text()
 
-    # Check if Release uses macros (e.g., Release: %{node_release})
-    # These packages need manual handling
-    release_match = re.search(r'^Release:\s+%\{[^}]+\}', content, flags=re.MULTILINE)
+    # Check if Release ends with %{?dist} or %{dist}
+    release_match = re.search(r'^Release:\s+(.*)%\{\??dist\}\s*$', content, flags=re.MULTILINE)
+
     if release_match:
+        release_before_dist = release_match.group(1)
+
+        # Check if it contains macros (e.g., %{baserelease})
+        if '%{' in release_before_dist:
+            # Macro-based release - add/increment .N suffix before %{?dist}
+            # Don't expand macros, just manipulate the string directly
+            # Examples:
+            #   %{baserelease} -> %{baserelease}.1
+            #   %{?snapver:0.%{snapver}.}%{baserelease} -> %{?snapver:0.%{snapver}.}%{baserelease}.1
+            #   %{baserelease}.1 -> %{baserelease}.2
+
+            # Check if there's already a .N suffix
+            suffix_match = re.match(r'^(.*)\.(\d+)$', release_before_dist)
+            if suffix_match:
+                # Already has .N suffix, increment it
+                base = suffix_match.group(1)
+                num = int(suffix_match.group(2))
+                new_release_line = f'{base}.{num + 1}'
+            else:
+                # No .N suffix yet, add .1
+                new_release_line = f'{release_before_dist}.1'
+
+            # Replace the line
+            new_content = re.sub(
+                r'^Release:\s+.*%\{\??dist\}',
+                f'Release: {new_release_line}%{{?dist}}',
+                content,
+                flags=re.MULTILINE
+            )
+            spec_file.write_text(new_content)
+            logging.info("Updated Release: to %s%%{?dist} in %s (macro-based)", new_release_line, spec_file.name)
+            return
+
+    # Check if Release uses macros but does NOT end with dist
+    # These packages need manual handling (e.g., nodejs25 with %{node_release})
+    release_match_no_dist = re.search(r'^Release:\s+.*%\{[^}]+\}', content, flags=re.MULTILINE)
+    if release_match_no_dist and not release_match:
         sys.exit(
-            f"ERROR: {spec_file.name} uses macros in Release field: {release_match.group(0)}\n"
+            f"ERROR: {spec_file.name} uses macros in Release field without %%{{?dist}}: {release_match_no_dist.group(0)}\n"
             f"This package requires manual rebuild - the simple rebuild command cannot handle complex macro systems."
         )
 
-    # Replace Release: line, adding %{?dist} if not present
+    # Standard case: no macros (except possibly %{?dist})
     # Try with %{?dist} first (most common case)
     new_content = re.sub(
         r'^Release:\s+.*%\{\?dist\}',
