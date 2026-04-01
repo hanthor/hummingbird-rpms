@@ -2672,6 +2672,49 @@ def test_rebuild_macro_with_dist(workdir: Path, upstream_repos: dict[str, Path])
     assert 'Release: %{my_macro}.2%{?dist}' in spec_content
 
 
+def test_rebuild_with_content_after_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild preserves content after %{?dist}."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec to have content after %{?dist} (like unbound)
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: 5%{?dist} %{?extra_version:-e %{extra_version}}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Add extra_version'], cwd=workdir, check=True)
+
+    # Rebuild
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'first rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was updated and content after dist was preserved
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 5.1%{?dist} %{?extra_version:-e %{extra_version}}' in spec_content
+
+    # Second rebuild
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'second rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify increment and preservation
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 5.2%{?dist} %{?extra_version:-e %{extra_version}}' in spec_content
+
+
 def test_rebuild_all_continues_on_failure(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild --all continues processing when some packages fail."""
     # Import two packages

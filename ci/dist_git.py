@@ -892,20 +892,23 @@ def update_release_in_spec(package_dir: Path, new_release: str) -> None:
     spec_file = spec_files[0]
     content = spec_file.read_text()
 
-    # Check if Release ends with %{?dist} or %{dist}
-    release_match = re.search(r'^Release:\s+(.*)%\{\??dist\}\s*$', content, flags=re.MULTILINE)
+    # Check if Release contains %{?dist} or %{dist}
+    # May have content after dist (e.g., unbound: "11.1%{?dist} %{?extra_version:-e %{extra_version}}")
+    release_match = re.search(r'^Release:\s+(.*)%\{\??dist\}(.*)$', content, flags=re.MULTILINE)
 
     if release_match:
         release_before_dist = release_match.group(1)
+        release_after_dist = release_match.group(2)  # May be empty string
 
         # Check if it contains macros (e.g., %{baserelease})
         if '%{' in release_before_dist:
             # Macro-based release - add/increment .N suffix before %{?dist}
             # Don't expand macros, just manipulate the string directly
             # Examples:
-            #   %{baserelease} -> %{baserelease}.1
-            #   %{?snapver:0.%{snapver}.}%{baserelease} -> %{?snapver:0.%{snapver}.}%{baserelease}.1
-            #   %{baserelease}.1 -> %{baserelease}.2
+            #   %{baserelease}%{?dist} -> %{baserelease}.1%{?dist}
+            #   %{?snapver:0.%{snapver}.}%{baserelease}%{?dist} -> %{?snapver:0.%{snapver}.}%{baserelease}.1%{?dist}
+            #   %{baserelease}.1%{?dist} -> %{baserelease}.2%{?dist}
+            #   11.1%{?dist} %{?extra:-e %{extra}} -> 11.2%{?dist} %{?extra:-e %{extra}}
 
             # Check if there's already a .N suffix
             suffix_match = re.match(r'^(.*)\.(\d+)$', release_before_dist)
@@ -918,15 +921,16 @@ def update_release_in_spec(package_dir: Path, new_release: str) -> None:
                 # No .N suffix yet, add .1
                 new_release_line = f'{release_before_dist}.1'
 
-            # Replace the line
+            # Reconstruct the full Release line with anything after dist preserved
             new_content = re.sub(
-                r'^Release:\s+.*%\{\??dist\}',
-                f'Release: {new_release_line}%{{?dist}}',
+                r'^Release:\s+.*%\{\??dist\}.*$',
+                f'Release: {new_release_line}%{{?dist}}{release_after_dist}',
                 content,
                 flags=re.MULTILINE
             )
             spec_file.write_text(new_content)
-            logging.info("Updated Release: to %s%%{?dist} in %s (macro-based)", new_release_line, spec_file.name)
+            logging.info("Updated Release: to %s%%{?dist}%s in %s (macro-based)",
+                        new_release_line, release_after_dist, spec_file.name)
             return
 
     # Check if Release uses macros but does NOT end with dist
