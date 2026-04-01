@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -2332,3 +2333,178 @@ def test_update_proceeds_when_track_version_matches(workdir: Path, upstream_repo
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.5'
+
+
+def test_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test rebuild command bumps Release field correctly."""
+    # Import vanilla package
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Rebuild the package
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'test rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was bumped
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 1.1%{?dist}' in spec_content
+
+    # Verify commit message
+    subject, body = get_last_commit_info(workdir)
+    assert subject == 'Rebuild vanilla: test rebuild'
+
+    # Verify git status is clean
+    status_result = subprocess.run(
+        ['git', 'status', '--porcelain'],
+        cwd=workdir, capture_output=True, check=True, text=True
+    )
+    assert status_result.stdout == ''
+
+    # Verify metadata was NOT changed (rebuilds don't affect modification_status)
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    assert metadata['modification_status'] == 'clean'
+    assert metadata['version'] == '1.0'
+    assert metadata['release'] == '1'
+
+
+def test_rebuild_already_bumped(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test rebuild increments existing .N suffix."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify to have Release: 2.1%{?dist}
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    # After import, the file has %{?dist} added, so replace the whole line
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: 2.1%{?dist}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Bump to 2.1'], cwd=workdir, check=True)
+
+    # Rebuild again
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'second rebuild'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was bumped to 2.2
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 2.2%{?dist}' in spec_content
+
+    # Verify commit message
+    subject, _ = get_last_commit_info(workdir)
+    assert subject == 'Rebuild vanilla: second rebuild'
+
+
+def test_rebuild_dry_run(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test --dry-run prevents commit."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    initial_subject, _ = get_last_commit_info(workdir)
+
+    # Rebuild with --dry-run
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'rebuild', 'vanilla',
+         '--reason', 'test'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify spec was modified
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 1.1%{?dist}' in spec_content
+
+    # Verify no new commit
+    subject, _ = get_last_commit_info(workdir)
+    assert subject == initial_subject
+
+    # Verify git status shows modified files
+    status_result = subprocess.run(
+        ['git', 'status', '--porcelain'],
+        cwd=workdir, capture_output=True, check=True, text=True
+    )
+    assert 'vanilla.spec' in status_result.stdout
+
+
+def test_rebuild_preserves_macros(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test rebuild preserves macros in Release field."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify to have Release with macro: 8.%{revision}%{?dist}
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    # After import, the file has %{?dist} added, so replace the whole line
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: 8.%{revision}%{?dist}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Use macro in Release'], cwd=workdir, check=True)
+
+    # Rebuild
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'test macro preservation'],
+        cwd=workdir, check=True,
+    )
+
+    # Verify Release was bumped but macro preserved
+    spec_content = vanilla_spec.read_text()
+    assert 'Release: 8.%{revision}.1%{?dist}' in spec_content
+
+
+def test_rebuild_nonexistent_package(workdir: Path) -> None:
+    """Test rebuild fails gracefully for nonexistent package."""
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'nonexistent',
+         '--reason', 'test'],
+        cwd=workdir, capture_output=True, text=True
+    )
+
+    assert result.returncode != 0
+    assert "Package 'nonexistent' not found" in result.stderr
+
+
+def test_bump_release_helper(dist_git_module) -> None:
+    """Test bump_release helper function logic."""
+    bump = dist_git_module.bump_release
+
+    # Basic bump
+    assert bump('3') == '3.1'
+    assert bump('1') == '1.1'
+
+    # Already bumped
+    assert bump('3.1') == '3.2'
+    assert bump('3.2') == '3.3'
+    assert bump('1.99') == '1.100'
+
+    # With macros
+    assert bump('8.%{revision}') == '8.%{revision}.1'
+    assert bump('8.%{revision}.1') == '8.%{revision}.2'
+
+    # Complex release strings
+    assert bump('10') == '10.1'
+    assert bump('0') == '0.1'

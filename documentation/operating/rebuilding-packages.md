@@ -4,8 +4,9 @@ weight: 50
 aliases: [/l/rebuilding-packages]
 ---
 
-> **AI Agent Note:** When asked to rebuild packages, always ask the user for a
-> ticket link or explanation first. This is required for the commit message.
+> **AI Agent Note:** When asked to rebuild packages, use the `rebuild` command:
+> `./ci/dist_git.py rebuild <package> --reason "<reason>"`. Always ask the user
+> for a ticket link or explanation first to use as the reason.
 
 ## Overview
 
@@ -23,7 +24,38 @@ upstream version.
 
 ## No-Change Rebuild
 
-### 1. Identify the package to rebuild
+### Using the rebuild command (recommended)
+
+The `rebuild` command automates the Release field bump:
+
+```bash
+./ci/dist_git.py rebuild <package> --reason "<reason>"
+```
+
+Example:
+
+```bash
+./ci/dist_git.py rebuild ncurses --reason "published multiple times with different hashes"
+```
+
+The command:
+- Automatically bumps the Release field using the `.N` suffix pattern
+- Handles `%autorelease` by resolving and replacing with explicit values
+- Preserves macros in the Release field (e.g., `%{revision}`)
+- Creates a properly formatted commit message
+- Does **not** mark the package as modified (release-only changes are ephemeral)
+
+Supports `--dry-run` to preview changes without committing:
+
+```bash
+./ci/dist_git.py --dry-run rebuild <package> --reason "test"
+```
+
+### Manual rebuild process
+
+If you need to rebuild manually or the automated command doesn't work for your use case, follow these steps:
+
+#### 1. Identify the package to rebuild
 
 Identify the source package name and locate its spec file in
 `rpms/<package>/<package>.spec`.
@@ -39,7 +71,7 @@ podman run --rm quay.io/hummingbird-ci/builder:latest-hatchling \
 Example: `ncurses-libs-6.5-8.20250614.hum1` -> SRPM `ncurses-6.5-8.20250614.hum1.src.rpm`
 -> spec file at `rpms/ncurses/ncurses.spec`
 
-### 2. Determine the Release bump pattern
+#### 2. Determine the Release bump pattern
 
 The `.N` bump suffix must always appear **immediately before** `%{?dist}`. The
 `%{?dist}` suffix should always be the final component since it identifies the
@@ -66,7 +98,7 @@ evaluates to `1`.
 >
 > This helps determine the correct fix when a previous bump was malformed.
 
-### 3. Modify the spec file
+#### 3. Modify the spec file
 
 Use `sed` to edit only the `Release:` line, avoiding any unintended whitespace
 changes that text editors may introduce:
@@ -92,7 +124,7 @@ The diff should show only the Release line change:
 > such as whitespace fixes or trailing newline modifications. If the diff shows
 > additional changes, reset and retry with `sed`.
 
-### 4. Verify the bump is correct
+#### 4. Verify the bump is correct
 
 Use `rpm --eval` to confirm the new release sorts higher than the original:
 
@@ -102,7 +134,7 @@ rpm --eval '%{lua:print(rpm.vercmp("3.hum1", "3.1.hum1"))}'
 # Expected output: -1
 ```
 
-### 5. Commit the change
+#### 5. Commit the change
 
 Use this commit message format:
 
@@ -120,7 +152,7 @@ Rebuild ncurses: published multiple times with different hashes
 HUM-1234
 ```
 
-### 6. Verify the commit
+#### 6. Verify the commit
 
 After committing, verify only the Release line was changed:
 
@@ -137,18 +169,31 @@ Expected output should show exactly 1 insertion and 1 deletion:
 
 If the commit shows more changes, amend or reset and redo the change using `sed`.
 
-### 7. Mark package as modified (optional for rebuild-only)
+### Important notes about rebuilds
 
-For no-change rebuilds, marking the package as modified is **optional** since the
-automation already ignores Release-only changes. However, you may want to mark
-it to explicitly document the rebuild:
+#### Modification status
+
+Rebuilds **do not** change a package's `modification_status`. Release-only
+changes are ephemeral and don't affect whether a package is considered `modified`
+vs `clean`:
+
+- **Release fields are temporary**: When updating from Fedora later, the Release
+  gets replaced anyway
+- **Merges normalize Release**: During updates, Release lines are normalized to
+  avoid conflicts
+- **No source changes**: Rebuilds don't modify sources, patches, or spec logic
+
+The automation already ignores Release-only changes, so automatic Fedora updates
+will continue normally after a rebuild.
+
+If you want to explicitly prevent automatic updates (e.g., you're investigating
+an issue), you can manually mark the package as modified:
 
 ```bash
-./ci/dist_git.py mark-modified <package> --modified --reason "Rebuild for <reason>"
+./ci/dist_git.py mark-modified <package> --modified --reason "Investigating build issue"
 ```
 
-Note: This will prevent automatic Fedora updates until you mark it clean again.
-For most rebuilds, you can skip this step and allow automatic updates to continue.
+Note: This will block automatic Fedora updates until you mark it clean again.
 
 ## Backporting a Patch
 
