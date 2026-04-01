@@ -1256,6 +1256,8 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
     # Handle %autorelease if present (only for non-native packages)
     if uses_autorelease(package_dir):
         metadata = load_package_metadata(package_name)
+        if not metadata:
+            sys.exit(f"ERROR: Could not load metadata for {package_name}")
         # Native packages don't have 'source' field and can't query MDAPI
         if 'source' not in metadata:
             logging.warning("Package %s is native and uses %%autorelease - cannot resolve via MDAPI", package_name)
