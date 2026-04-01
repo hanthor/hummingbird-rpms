@@ -29,20 +29,28 @@ upstream version.
 The `rebuild` command automates the Release field bump:
 
 ```bash
+# Rebuild a single package
 ./ci/dist_git.py rebuild <package> --reason "<reason>"
+
+# Rebuild all packages (one commit per package)
+./ci/dist_git.py rebuild --all --reason "<reason>"
 ```
 
-Example:
+Examples:
 
 ```bash
+# Single package
 ./ci/dist_git.py rebuild ncurses --reason "published multiple times with different hashes"
+
+# All packages (useful after toolchain updates)
+./ci/dist_git.py rebuild --all --reason "toolchain update: GCC 15"
 ```
 
 The command:
 - Automatically bumps the Release field using the `.N` suffix pattern
 - Handles `%autorelease` by resolving and replacing with explicit values
 - Preserves macros in the Release field (e.g., `%{revision}`)
-- Creates a properly formatted commit message
+- Creates a properly formatted commit message (one per package with `--all`)
 - Does **not** mark the package as modified (release-only changes are ephemeral)
 
 Supports `--dry-run` to preview changes without committing:

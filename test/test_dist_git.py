@@ -2508,3 +2508,90 @@ def test_bump_release_helper(dist_git_module) -> None:
     # Complex release strings
     assert bump('10') == '10.1'
     assert bump('0') == '0.1'
+
+
+def test_rebuild_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test rebuild --all rebuilds all packages with one commit per package."""
+    # Import two packages
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Get commit count before rebuild
+    result = subprocess.run(
+        ['git', 'rev-list', '--count', 'HEAD'],
+        cwd=workdir, capture_output=True, check=True, text=True
+    )
+    commits_before = int(result.stdout.strip())
+
+    # Rebuild all packages
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', '--all',
+         '--reason', 'test rebuild all'],
+        cwd=workdir, check=True,
+    )
+
+    # Get commit count after rebuild
+    result = subprocess.run(
+        ['git', 'rev-list', '--count', 'HEAD'],
+        cwd=workdir, capture_output=True, check=True, text=True
+    )
+    commits_after = int(result.stdout.strip())
+
+    # Should have created 2 commits (one per package)
+    assert commits_after - commits_before == 2
+
+    # Verify both spec files were updated
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    assert 'Release: 1.1%{?dist}' in vanilla_spec.read_text()
+
+    chocolate_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    assert 'Release: 1.1%{?dist}' in chocolate_spec.read_text()
+
+    # Verify commit messages
+    result = subprocess.run(
+        ['git', 'log', '--format=%s', '-2'],
+        cwd=workdir, capture_output=True, check=True, text=True
+    )
+    commit_subjects = result.stdout.strip().split('\n')
+    # Commits are in reverse order (newest first)
+    assert 'Rebuild chocolate: test rebuild all' in commit_subjects or 'Rebuild vanilla: test rebuild all' in commit_subjects
+    assert len([s for s in commit_subjects if 'Rebuild' in s and 'test rebuild all' in s]) == 2
+
+
+def test_rebuild_all_vs_package_mutually_exclusive(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that --all and package name are mutually exclusive."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Should fail when both --all and package name are specified
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla', '--all',
+         '--reason', 'test'],
+        cwd=workdir, capture_output=True, text=True
+    )
+    assert result.returncode != 0
+    assert 'Cannot specify both package name and --all' in result.stderr
+
+
+def test_rebuild_requires_package_or_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild requires either package name or --all."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Should fail when neither --all nor package name is specified
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', '--reason', 'test'],
+        cwd=workdir, capture_output=True, text=True
+    )
+    assert result.returncode != 0
+    assert 'Must specify either package name or --all' in result.stderr

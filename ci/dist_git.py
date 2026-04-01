@@ -1588,7 +1588,10 @@ Examples:
     # rebuild command
     rebuild_parser = subparsers.add_parser('rebuild',
                                            help='Rebuild a package (bump Release field)')
-    rebuild_parser.add_argument('package', help='Package name to rebuild')
+    rebuild_parser.add_argument('package', nargs='?', default=None,
+                               help='Package name to rebuild (mutually exclusive with --all)')
+    rebuild_parser.add_argument('--all', action='store_true',
+                               help='Rebuild all packages (one commit per package)')
     rebuild_parser.add_argument('--reason', required=True,
                                help='Reason for rebuild (e.g., "fix faulty build", "toolchain update")')
 
@@ -1683,7 +1686,16 @@ Examples:
         case 'sync':
             update(args.package, sync=True, dry_run=args.dry_run, mark=args.mark, ref=args.ref)
         case 'rebuild':
-            rebuild_package(args.package, args.reason, dry_run=args.dry_run)
+            # Validate mutually exclusive options
+            if args.all and args.package:
+                sys.exit("ERROR: Cannot specify both package name and --all")
+            if not args.all and not args.package:
+                sys.exit("ERROR: Must specify either package name or --all")
+
+            # Rebuild all packages or just one
+            packages = list(imports.keys()) if args.all else [args.package]
+            for pkg in packages:
+                rebuild_package(pkg, args.reason, dry_run=args.dry_run)
         case 'update-releases':
             update_releases()
         case 'rename':
