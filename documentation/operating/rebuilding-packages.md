@@ -6,7 +6,9 @@ aliases: [/l/rebuilding-packages]
 
 > **AI Agent Note:** When asked to rebuild packages, use the `rebuild` command:
 > `./ci/dist_git.py rebuild <package> --reason "<reason>"`. Always ask the user
-> for a ticket link or explanation first to use as the reason.
+> for a ticket link or explanation first to use as the reason. If the command
+> fails with "uses macros in Release field", see the "Packages requiring manual
+> rebuild" section below for instructions.
 
 ## Overview
 
@@ -58,6 +60,78 @@ Supports `--dry-run` to preview changes without committing:
 ```bash
 ./ci/dist_git.py --dry-run rebuild <package> --reason "test"
 ```
+
+### Packages requiring manual rebuild
+
+Some packages use complex macro systems that the automated rebuild command cannot
+handle. These require manual editing of the spec file.
+
+#### Macro indirection patterns
+
+These packages define the Release field using a macro, where the macro itself
+contains `%{?dist}`. The rebuild command cannot detect or manipulate these
+without expanding all macros, which would break the macro system.
+
+**nodejs packages (nodejs20, nodejs22, nodejs24, nodejs25):**
+
+```spec
+%{load:%{_sourcedir}/nodejs.srpm.macros}
+%nodejs_define_version node 1:25.8.2-%{autorelease} -p
+...
+Release: %{node_release}
+```
+
+The `%{node_release}` macro is defined by an external macro system loaded from
+`nodejs.srpm.macros`. The release component is embedded in the version definition.
+
+**How to rebuild:** Edit the `%nodejs_define_version node` line to bump the release
+component (e.g., change `-%{autorelease}` to `-1.1` or increment existing `.N`).
+
+**kernel-headers:**
+
+```spec
+%define specrelease 59%{?buildid}%{?dist}
+...
+Release: %{specrelease}
+```
+
+**How to rebuild:** Edit the `%define specrelease` line to add/increment the `.N`
+suffix before `%{?buildid}`:
+
+```spec
+%define specrelease 59.1%{?buildid}%{?dist}
+```
+
+**krb5:**
+
+```spec
+%global krb5_release 4%{?dist}
+...
+Release: %{krb5_release}
+```
+
+**How to rebuild:** Edit the `%global krb5_release` line to add/increment the `.N`
+suffix:
+
+```spec
+%global krb5_release 4.1%{?dist}
+```
+
+#### Why these can't be automated
+
+The rebuild command can handle:
+- ✅ Simple numeric: `Release: 5%{?dist}`
+- ✅ Macros ending with dist: `Release: %{baserelease}%{?dist}` (e.g., rpm, gcc)
+- ✅ Complex macros with dist: `Release: %{?snapver:0.%{snapver}.}%{baserelease}%{?dist}`
+- ✅ Content after dist: `Release: 11.1%{?dist} %{?extra_version:-e %{extra_version}}` (e.g., unbound)
+
+The rebuild command **cannot** handle:
+- ❌ Macros without `%{?dist}`: `Release: %{node_release}`
+- ❌ Macros where dist is inside the macro definition: `%{krb5_release}` contains `%{?dist}`
+
+This is because detecting and manipulating macros that contain dist internally
+would require expanding all macros (which changes the spec file semantically)
+or implementing RPM's full macro parser.
 
 ### Manual rebuild process
 
