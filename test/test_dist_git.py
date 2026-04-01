@@ -2595,3 +2595,87 @@ def test_rebuild_requires_package_or_all(workdir: Path, upstream_repos: dict[str
     )
     assert result.returncode != 0
     assert 'Must specify either package name or --all' in result.stderr
+
+
+def test_rebuild_rejects_macro_based_release(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild rejects packages with macro-based Release fields."""
+    # Import vanilla
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Modify spec to use a macro in Release field
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: %{some_macro}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Use macro in Release'], cwd=workdir, check=True)
+
+    # Rebuild should fail with clear error
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', 'vanilla',
+         '--reason', 'test'],
+        cwd=workdir, capture_output=True, text=True
+    )
+    assert result.returncode != 0
+    assert 'uses macros in Release field' in result.stderr
+    assert 'requires manual rebuild' in result.stderr
+
+
+def test_rebuild_all_continues_on_failure(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that rebuild --all continues processing when some packages fail."""
+    # Import two packages
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Break vanilla by using a macro in Release
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_content = vanilla_spec.read_text()
+    modified_content = re.sub(
+        r'^Release:.*$',
+        'Release: %{broken_macro}',
+        spec_content,
+        flags=re.MULTILINE
+    )
+    vanilla_spec.write_text(modified_content)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Break vanilla'], cwd=workdir, check=True)
+
+    # Rebuild all with --dry-run
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'rebuild', '--all',
+         '--reason', 'test all'],
+        cwd=workdir, capture_output=True, text=True
+    )
+
+    # Should succeed overall (exit 0) even though one package failed
+    assert result.returncode == 0
+
+    # Should show failure for vanilla
+    assert 'Failed to rebuild vanilla' in result.stderr
+    assert 'uses macros in Release field' in result.stderr
+
+    # Should show success for chocolate
+    assert 'Rebuilding chocolate' in result.stderr
+    assert 'Updated Release: to 1.1%{?dist} in chocolate.spec' in result.stderr
+
+    # Should show summary of failures
+    assert 'Failed to rebuild 1 package(s): vanilla' in result.stderr
+
+    # chocolate should be modified (in dry-run), vanilla should not
+    chocolate_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    assert 'Release: 1.1%{?dist}' in chocolate_spec.read_text()
+
+    # vanilla should still have the broken macro
+    assert 'Release: %{broken_macro}' in vanilla_spec.read_text()

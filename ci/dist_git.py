@@ -890,6 +890,15 @@ def update_release_in_spec(package_dir: Path, new_release: str) -> None:
     spec_file = spec_files[0]
     content = spec_file.read_text()
 
+    # Check if Release uses macros (e.g., Release: %{node_release})
+    # These packages need manual handling
+    release_match = re.search(r'^Release:\s+%\{[^}]+\}', content, flags=re.MULTILINE)
+    if release_match:
+        sys.exit(
+            f"ERROR: {spec_file.name} uses macros in Release field: {release_match.group(0)}\n"
+            f"This package requires manual rebuild - the simple rebuild command cannot handle complex macro systems."
+        )
+
     # Replace Release: line, adding %{?dist} if not present
     # Try with %{?dist} first (most common case)
     new_content = re.sub(
@@ -1201,14 +1210,19 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
 
     logging.info("Rebuilding %s: %s", package_name, reason)
 
-    # Handle %autorelease if present
+    # Handle %autorelease if present (only for non-native packages)
     if uses_autorelease(package_dir):
         metadata = load_package_metadata(package_name)
-        branch = metadata.get('branch', 'rawhide')
-        release = query_autorelease_from_mdapi(package_name, branch, '1')
-        if not release:
-            sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
-        replace_autorelease_in_spec(package_dir, release)
+        # Native packages don't have 'source' field and can't query MDAPI
+        if 'source' not in metadata:
+            logging.warning("Package %s is native and uses %%autorelease - cannot resolve via MDAPI", package_name)
+            logging.warning("Skipping %%autorelease resolution - you may need to handle this manually")
+        else:
+            branch = metadata.get('branch', 'rawhide')
+            release = query_autorelease_from_mdapi(package_name, branch, '1')
+            if not release:
+                sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
+            replace_autorelease_in_spec(package_dir, release)
 
     # Parse current version and release
     version, current_release = parse_spec_version(package_dir)
@@ -1694,8 +1708,24 @@ Examples:
 
             # Rebuild all packages or just one
             packages = list(imports.keys()) if args.all else [args.package]
+            failed_packages = []
             for pkg in packages:
-                rebuild_package(pkg, args.reason, dry_run=args.dry_run)
+                try:
+                    rebuild_package(pkg, args.reason, dry_run=args.dry_run)
+                except SystemExit as e:
+                    if args.all:
+                        # In --all mode, track failures and continue
+                        logging.error("Failed to rebuild %s: %s", pkg, e.code if isinstance(e.code, str) else "error")
+                        failed_packages.append(pkg)
+                    else:
+                        # In single-package mode, re-raise to exit
+                        raise
+
+            # Report failures at the end
+            if failed_packages:
+                logging.warning("Failed to rebuild %d package(s): %s", len(failed_packages), ', '.join(failed_packages))
+                if not args.all:
+                    sys.exit(1)
         case 'update-releases':
             update_releases()
         case 'rename':
