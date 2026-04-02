@@ -852,6 +852,121 @@ def normalize_release_in_specs(directory: Path) -> None:
         spec_file.write_text(normalized)
 
 
+def bump_release(current_release: str) -> str:
+    """Bump release number using .N suffix pattern.
+
+    Examples:
+        "3" -> "3.1"
+        "3.1" -> "3.2"
+        "8.%{revision}" -> "8.%{revision}.1"
+
+    Args:
+        current_release: Current release string (without %{?dist})
+
+    Returns:
+        Bumped release string
+    """
+    # Pattern: if ends with .N where N is a digit, increment N
+    # Otherwise, append .1
+    match = re.match(r'^(.+)\.(\d+)$', current_release)
+    if match:
+        base, num = match.groups()
+        return f"{base}.{int(num) + 1}"
+    else:
+        return f"{current_release}.1"
+
+
+def update_release_in_spec(package_dir: Path, new_release: str) -> None:
+    """Update Release: line in spec file.
+
+    Handles both simple numeric releases and macro-based releases that end with %{?dist}.
+
+    Args:
+        package_dir: Package directory containing spec file
+        new_release: New release value (without %{?dist}) - only used for non-macro releases
+    """
+    spec_files = list(package_dir.glob('*.spec'))
+    if len(spec_files) != 1:
+        sys.exit(f"ERROR: Expected exactly one .spec file in {package_dir}")
+
+    spec_file = spec_files[0]
+    content = spec_file.read_text()
+
+    # Check if Release contains %{?dist} or %{dist}
+    # May have content after dist (e.g., unbound: "11.1%{?dist} %{?extra_version:-e %{extra_version}}")
+    release_match = re.search(r'^Release:\s+(.*)%\{\??dist\}(.*)$', content, flags=re.MULTILINE)
+
+    if release_match:
+        release_before_dist = release_match.group(1)
+        release_after_dist = release_match.group(2)  # May be empty string
+
+        # Check if it contains macros (e.g., %{baserelease})
+        if '%{' in release_before_dist:
+            # Macro-based release - add/increment .N suffix before %{?dist}
+            # Don't expand macros, just manipulate the string directly
+            # Examples:
+            #   %{baserelease}%{?dist} -> %{baserelease}.1%{?dist}
+            #   %{?snapver:0.%{snapver}.}%{baserelease}%{?dist} -> %{?snapver:0.%{snapver}.}%{baserelease}.1%{?dist}
+            #   %{baserelease}.1%{?dist} -> %{baserelease}.2%{?dist}
+            #   11.1%{?dist} %{?extra:-e %{extra}} -> 11.2%{?dist} %{?extra:-e %{extra}}
+
+            # Check if there's already a .N suffix
+            suffix_match = re.match(r'^(.*)\.(\d+)$', release_before_dist)
+            if suffix_match:
+                # Already has .N suffix, increment it
+                base = suffix_match.group(1)
+                num = int(suffix_match.group(2))
+                new_release_line = f'{base}.{num + 1}'
+            else:
+                # No .N suffix yet, add .1
+                new_release_line = f'{release_before_dist}.1'
+
+            # Reconstruct the full Release line with anything after dist preserved
+            new_content = re.sub(
+                r'^Release:\s+.*%\{\??dist\}.*$',
+                f'Release: {new_release_line}%{{?dist}}{release_after_dist}',
+                content,
+                flags=re.MULTILINE
+            )
+            spec_file.write_text(new_content)
+            logging.info("Updated Release: to %s%%{?dist}%s in %s (macro-based)",
+                        new_release_line, release_after_dist, spec_file.name)
+            return
+
+    # Check if Release uses macros but does NOT end with dist
+    # These packages need manual handling (e.g., nodejs25 with %{node_release})
+    release_match_no_dist = re.search(r'^Release:\s+.*%\{[^}]+\}', content, flags=re.MULTILINE)
+    if release_match_no_dist and not release_match:
+        sys.exit(
+            f"ERROR: {spec_file.name} uses macros in Release field without %%{{?dist}}: {release_match_no_dist.group(0)}\n"
+            f"This package requires manual rebuild - the simple rebuild command cannot handle complex macro systems."
+        )
+
+    # Standard case: no macros (except possibly %{?dist})
+    # Try with %{?dist} first (most common case)
+    new_content = re.sub(
+        r'^Release:\s+.*%\{\?dist\}',
+        f'Release: {new_release}%{{?dist}}',
+        content,
+        flags=re.MULTILINE
+    )
+
+    # If no match, try without %{?dist} and add it
+    if new_content == content:
+        new_content = re.sub(
+            r'^Release:\s+(.*)$',
+            f'Release: {new_release}%{{?dist}}',
+            content,
+            flags=re.MULTILINE
+        )
+
+    if new_content == content:
+        sys.exit(f"ERROR: Failed to update Release: in {spec_file.name}")
+
+    spec_file.write_text(new_content)
+    logging.info("Updated Release: to %s%%{?dist} in %s", new_release, spec_file.name)
+
+
 def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path,
                               metadata: PackageMetadata, upstream_dir: Path,
                               new_sha: str) -> bool:
@@ -1108,6 +1223,70 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             # Exit with code 2 for conflicts (success but needs manual resolution)
             if has_conflicts:
                 sys.exit(2)
+
+
+def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> None:
+    """Rebuild a package by bumping its Release field.
+
+    This operation does NOT change the package's modification_status. Release-only
+    changes are ephemeral and don't affect whether a package is considered modified
+    vs clean. The modification_status tracks source-level changes (patches, spec
+    modifications), not Release field bumps.
+
+    Args:
+        package_name: Package name to rebuild
+        reason: Reason for rebuild (for commit message)
+        dry_run: If True, modify files but don't commit
+
+    Raises:
+        SystemExit: If package not found or rebuild fails
+    """
+    # Validate package exists
+    package_dir = RPMS_DIR / package_name
+    metadata_file = METADATA_DIR / f'{package_name}.json'
+
+    if not metadata_file.exists():
+        sys.exit(f"ERROR: Package '{package_name}' not found (missing {metadata_file})")
+
+    if not package_dir.exists():
+        sys.exit(f"ERROR: Package directory '{package_dir}' not found")
+
+    logging.info("Rebuilding %s: %s", package_name, reason)
+
+    # Handle %autorelease if present (only for non-native packages)
+    if uses_autorelease(package_dir):
+        metadata = load_package_metadata(package_name)
+        if not metadata:
+            sys.exit(f"ERROR: Could not load metadata for {package_name}")
+        # Native packages don't have 'source' field and can't query MDAPI
+        if 'source' not in metadata:
+            logging.warning("Package %s is native and uses %%autorelease - cannot resolve via MDAPI", package_name)
+            logging.warning("Skipping %%autorelease resolution - you may need to handle this manually")
+        else:
+            branch = metadata.get('branch', 'rawhide')
+            release = query_autorelease_from_mdapi(package_name, branch, '1')
+            if not release:
+                sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
+            replace_autorelease_in_spec(package_dir, release)
+
+    # Parse current version and release
+    version, current_release = parse_spec_version(package_dir)
+
+    # Bump release
+    new_release = bump_release(current_release)
+    logging.info("Bumping release: %s -> %s", current_release, new_release)
+
+    # Update spec file
+    update_release_in_spec(package_dir, new_release)
+
+    # Commit the changes
+    if not dry_run:
+        run_git('add', '-f', f'rpms/{package_name}', cwd=ROOT_DIR)
+        commit_msg = f"Rebuild {package_name}: {reason}"
+        run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
+        logging.info("Committed rebuild for %s", package_name)
+    else:
+        logging.info("Dry-run mode: spec file modified but not committed")
 
 
 def check_git_config() -> None:
@@ -1465,6 +1644,16 @@ Examples:
     sync_parser.add_argument('--ref', type=str,
                             help='Sync to specific commit/tag/ref instead of latest')
 
+    # rebuild command
+    rebuild_parser = subparsers.add_parser('rebuild',
+                                           help='Rebuild a package (bump Release field)')
+    rebuild_parser.add_argument('package', nargs='?', default=None,
+                               help='Package name to rebuild (mutually exclusive with --all)')
+    rebuild_parser.add_argument('--all', action='store_true',
+                               help='Rebuild all packages (one commit per package)')
+    rebuild_parser.add_argument('--reason', required=True,
+                               help='Reason for rebuild (e.g., "fix faulty build", "toolchain update")')
+
     # update-releases command
     subparsers.add_parser('update-releases',
                           help='Update upstream-releases.json from Bodhi API (rawhide auto-resolves to highest version)')
@@ -1555,6 +1744,33 @@ Examples:
                        allow_prerelease=args.allow_prerelease, ref=args.ref)
         case 'sync':
             update(args.package, sync=True, dry_run=args.dry_run, mark=args.mark, ref=args.ref)
+        case 'rebuild':
+            # Validate mutually exclusive options
+            if args.all and args.package:
+                sys.exit("ERROR: Cannot specify both package name and --all")
+            if not args.all and not args.package:
+                sys.exit("ERROR: Must specify either package name or --all")
+
+            # Rebuild all packages or just one
+            packages = list(imports.keys()) if args.all else [args.package]
+            failed_packages = []
+            for pkg in packages:
+                try:
+                    rebuild_package(pkg, args.reason, dry_run=args.dry_run)
+                except SystemExit as e:
+                    if args.all:
+                        # In --all mode, track failures and continue
+                        logging.error("Failed to rebuild %s: %s", pkg, e.code if isinstance(e.code, str) else "error")
+                        failed_packages.append(pkg)
+                    else:
+                        # In single-package mode, re-raise to exit
+                        raise
+
+            # Report failures at the end
+            if failed_packages:
+                logging.warning("Failed to rebuild %d package(s): %s", len(failed_packages), ', '.join(failed_packages))
+                if not args.all:
+                    sys.exit(1)
         case 'update-releases':
             update_releases()
         case 'rename':
