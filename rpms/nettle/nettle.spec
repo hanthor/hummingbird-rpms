@@ -14,7 +14,7 @@
 # * In RHEL nettle is included in the gnutls FIPS module boundary,
 #   and HMAC is calculated there with its own tool.
 # * In RHEL gmp is statically linked to ensure zeroization of CSP.
-%if %{defined rhel}
+%if %{defined rhel} || 0%{?hummingbird}
 %bcond_with fipshmac
 %bcond_without bundle_gmp
 %else
@@ -24,7 +24,7 @@
 
 Name:           nettle
 Version:        3.10.1
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        A low-level cryptographic library
 
 License:        LGPL-3.0-or-later OR GPL-2.0-or-later
