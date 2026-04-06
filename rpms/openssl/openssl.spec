@@ -33,8 +33,8 @@ print(string.sub(hash, 0, 16))
 
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl
-Version: 3.5.5
-Release: 1%{?dist}
+Version: 3.6.1
+Release: 0.1%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -495,6 +495,9 @@ install -m 644 %{SOURCE11} $RPM_BUILD_ROOT%{_sysconfdir}/pki/tls/openssl.d/fips-
 %{_sysconfdir}/pki/tls/openssl.d/fips-provider-enable.cnf
 
 %changelog
+* Tue Mar 24 2026 Hummingbird <hummingbird@redhat.com> - 1:3.6.1-0.1
+Update to 3.6.1
+
 * Wed Jan 28 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 1:3.5.5-1
 - Rebase to OpenSSL 3.5.5, resolving CVE-2025-15467, CVE-2025-15468,
   CVE-2025-15469, CVE-2025-66199, CVE-2025-68160, CVE-2025-69418, CVE-2025-69420,

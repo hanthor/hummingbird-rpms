@@ -104,6 +104,10 @@ nodejs25:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+openssl:
+  # Use hummingbird lookaside cache instead of Fedora (openssl testing)
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 openssl-fips-provider:
   # Use hummingbird lookaside cache instead of Fedora
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
