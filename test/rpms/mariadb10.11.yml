@@ -1,0 +1,12 @@
+---
+# Tests specific to the mariadb10.11 package
+
+versioned-package-name:
+  summary: Ensure all subpackages use versioned names (mariadb10.11-*), not unversioned (mariadb-*)
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+
+    # All binary RPMs from this SRPM must start with "mariadb10.11"
+    if [[ "${rpm_name}" != mariadb10.11* ]]; then
+      TEST_FAIL "Package name '${rpm_name}' does not use versioned prefix 'mariadb10.11'"
+    fi

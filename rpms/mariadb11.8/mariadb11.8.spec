@@ -4,7 +4,7 @@
 %global majorversion %(echo %{package_version} | cut -d'.' -f1-2 )
 
 # Set if this package will be the default one in distribution
-%{!?mariadb_default:%global mariadb_default 1}
+%{!?mariadb_default:%global mariadb_default 0}
 
 # Regression tests may take a long time (many cores recommended), skip them by
 %{!?runselftest:%global runselftest 1}
@@ -160,7 +160,7 @@
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          2%{?with_debug:.debug}%{?dist}
+Release:          2.1%{?with_debug:.debug}%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
