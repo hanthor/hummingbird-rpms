@@ -4,8 +4,7 @@ Release:        0.1%{?dist}
 Summary:        Library providing XML and HTML support
 
 # list.c, dict.c and few others use ISC-Veillard
-# the conformance and test suite data in
-# Source1, Source2 and Source3 is covered by W3C
+# the conformance test suite data in Source1 is covered by W3C
 License:        MIT AND ISC-Veillard AND W3C
 URL:            https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home
 Source0:        https://download.gnome.org/sources/%{name}/2.15/%{name}-%{version}.tar.xz
@@ -114,6 +113,7 @@ rm -rf xmlconf
 # As the directory is copied to the devel subpackage, remove any build
 # artifacts.
 make -C example clean
+rm -rf example/.deps example/Makefile
 
 %ldconfig_scriptlets
 
