@@ -38,9 +38,18 @@ to select sub nodes or ranges. A flexible Input/Output mechanism is
 available, with existing HTTP and FTP modules and combined to an
 URI library.
 
+%package -n libxml2-16
+Summary:        XML parsing shared library
+# Do not Obsolete old libxml2 - allow co-installation during the soname
+# transition so that buildroot packages linked against .so.2 keep working
+# while new builds link against .so.16.
+
+%description -n libxml2-16
+Shared library for libxml2 with soname version 16.
+
 %package devel
 Summary:        Libraries, includes, etc. to develop XML and HTML applications
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       libxml2-16%{?_isa} = %{version}-%{release}
 Requires:       zlib-devel%{?_isa}
 Requires:       xz-devel%{?_isa}
 
@@ -66,7 +75,7 @@ microseconds when parsing, do not link to them for generic purpose packages.
 %package -n python3-%{name}
 Summary:        Python 3 bindings for the libxml2 library
 BuildRequires:  python3-devel
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       libxml2-16%{?_isa} = %{version}-%{release}
 Obsoletes:      %{name}-python3 < %{version}-%{release}
 Provides:       %{name}-python3 = %{version}-%{release}
 
@@ -115,16 +124,19 @@ rm -rf xmlconf
 make -C example clean
 rm -rf example/.deps example/Makefile
 
-%ldconfig_scriptlets
+%ldconfig_scriptlets -n libxml2-16
 
 %files
 %license Copyright
 %doc NEWS README.md
-%{_libdir}/libxml2.so.16*
 %{_bindir}/xmlcatalog
 %{_bindir}/xmllint
 %{_mandir}/man1/xmlcatalog.1*
 %{_mandir}/man1/xmllint.1*
+
+%files -n libxml2-16
+%license Copyright
+%{_libdir}/libxml2.so.16*
 
 %files devel
 %doc example
