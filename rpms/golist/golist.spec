@@ -15,7 +15,7 @@ A tool to analyse the properties of a Go (Golang) codebase.}
 %global golicenses      LICENSE
 
 Name:           golist
-Release:        11%{?dist}
+Release:        11.1%{?dist}
 Summary:        A tool to analyse the properties of a Go (Golang) codebase
 
 License:        BSD-3-Clause
