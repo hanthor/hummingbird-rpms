@@ -5,5 +5,5 @@
   "release": "1",
   "sha": "170a5b7e084ecbc9ef79a914bfc39938bc077d00",
   "source": "https://gitlab.com/redhat/centos-stream/rpms/golang.git",
-  "version": "1.25.7"
+  "version": "1.25.8"
 }
