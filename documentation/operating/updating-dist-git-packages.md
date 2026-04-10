@@ -1,6 +1,11 @@
-# Updating Dist-git Packages
+---
+title: Updating Dist-git Packages
+description: How packages are automatically updated from Fedora dist-git
+weight: 40
+---
 
-Packages are automatically updated from Fedora dist-git. Each update creates a separate MR that is automatically approved and merged when CI passes.
+Packages are automatically updated from Fedora dist-git. Each update creates a
+separate MR that is automatically approved and merged when CI passes.
 
 ## Testing Locally
 

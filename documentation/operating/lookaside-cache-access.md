@@ -1,4 +1,8 @@
-# Lookaside Cache Access
+---
+title: Lookaside Cache Access
+description: How to access the S3-based lookaside cache for RPM source tarballs
+weight: 60
+---
 
 ## Overview
 

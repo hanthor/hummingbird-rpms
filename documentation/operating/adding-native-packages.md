@@ -1,6 +1,11 @@
-# Adding Native Packages
+---
+title: Adding Native Packages
+description: How to add packages that originate in the Hummingbird repository
+weight: 45
+---
 
-Native packages are packages that originate in the Hummingbird repository rather than being imported from Fedora dist-git.
+Native packages are packages that originate in the Hummingbird repository
+rather than being imported from Fedora dist-git.
 
 ## Steps to Add a Native Package
 
