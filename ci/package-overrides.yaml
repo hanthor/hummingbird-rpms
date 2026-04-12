@@ -136,6 +136,9 @@ ruff:
     - "linux-d160-c8xlarge/amd64"
 
 # Required to prevent running out of storage
+rust-rpm-sequoia:
+  forked_from: "https://gitlab.com/redhat/centos-stream/rpms"
+
 rust:
   timeout_hours: 12
   build_platforms:
