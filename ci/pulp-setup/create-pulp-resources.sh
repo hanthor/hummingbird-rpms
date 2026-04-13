@@ -2,21 +2,72 @@
 
 set -e
 
-PULP_DOMAIN=$1
+DEFAULT_REPOSITORIES="source,x86_64,s390x,ppc64le,aarch64"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") --domain <domain> [OPTIONS]
+
+Create Pulp domain, repositories, and distributions.
+
+Required:
+  --domain <name>      Pulp domain name to create/use
+
+Optional:
+  --repos <list>       Comma-separated repository names
+                       Default: ${DEFAULT_REPOSITORIES}
+  --config <path>      Path to pulp CLI config file (e.g., ci.toml)
+  --help               Show this help message
+
+Examples:
+  $(basename "$0") --domain my-domain
+  $(basename "$0") --domain my-domain --repos "repo1,repo2"
+  $(basename "$0") --domain my-domain --config /path/to/config.toml
+  $(basename "$0") --domain my-domain --repos "repo1,repo2" --config /path/to/config.toml
+EOF
+  exit "${1:-0}"
+}
+
+PULP_DOMAIN=""
+PULP_REPOSITORIES_STRING=""
+PULP_CONFIG_FILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --domain)
+      PULP_DOMAIN="$2"
+      shift 2
+      ;;
+    --repos)
+      PULP_REPOSITORIES_STRING="$2"
+      shift 2
+      ;;
+    --config)
+      PULP_CONFIG_FILE="$2"
+      shift 2
+      ;;
+    --help)
+      usage 0
+      ;;
+    *)
+      echo "🔴 Unknown option: $1"
+      usage 1
+      ;;
+  esac
+done
 
 if [[ -z "${PULP_DOMAIN}" ]]; then
-  echo "🔴 error: missing parameter PULP_DOMAIN"
-  exit 1
+  echo "🔴 error: --domain is required"
+  usage 1
 fi
 
-PULP_REPOSITORIES_STRING=$2
-if [[ -z "${PULP_REPOSITORIES_STRING}" ]]; then
-  echo "🔴 error: missing parameter PULP_REPOSITORIES (provide comma-delimited repository names)"
-  exit 1
+if [[ -n "${PULP_REPOSITORIES_STRING}" ]]; then
+  echo "ℹ️ Using provided repositories: ${PULP_REPOSITORIES_STRING}"
+else
+  PULP_REPOSITORIES_STRING="${DEFAULT_REPOSITORIES}"
+  echo "ℹ️ Using default repositories: ${PULP_REPOSITORIES_STRING}"
 fi
 
-# Optional third argument: path to pulp CLI config (e.g., ci.toml)
-PULP_CONFIG_FILE=$3
 PULP_CONFIG_OPT=()
 if [[ -n "${PULP_CONFIG_FILE}" ]]; then
   PULP_CONFIG_OPT=(--config "${PULP_CONFIG_FILE}")
