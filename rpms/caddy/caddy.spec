@@ -40,7 +40,7 @@ ExclusiveArch:  %{golang_arches_future}
 %endif
 
 BuildRequires:  systemd-rpm-macros
-%{?systemd_requires}
+%{?systemd_ordering}
 %{?sysusers_requires_compat}
 
 Requires:       system-logos-httpd
