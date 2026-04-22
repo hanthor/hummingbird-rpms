@@ -1,7 +1,7 @@
 {
   "branch": "rawhide",
+  "modification_reason": "HUM-1378: CVE-2026-32285 backport jsonparser v1.1.2 fix for DoS via malformed JSON",
   "modification_status": "modified",
-  "modification_reason": "Waiting for code to be accepted upstream",
   "release": "1",
   "sha": "1741a090d7d41332bef492d4d294226992a9e4ed",
   "source": "https://src.fedoraproject.org/rpms/trivy.git",
