@@ -421,6 +421,18 @@ Patch475: 00475-cve-2025-15367.patch
 # direct call to the check function.
 Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
 
+# 00480 # 858691f36890b33e713f330d24c6670329695c2e
+# CVE-2026-4786
+#
+# Fix webbrowser `%%action` substitution bypass of dash-prefix check
+Patch480: 00480-cve-2026-4786.patch
+
+# 00482 # 69f14bc306fc62400d45565faa980b77858b9151
+# CVE-2026-6100
+#
+# Fix a possible UAF in {LZMA,BZ2,_Zlib}Decompressor
+Patch482: 00482-cve-2026-6100.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
