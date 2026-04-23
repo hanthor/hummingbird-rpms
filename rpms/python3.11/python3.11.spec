@@ -424,6 +424,24 @@ Patch484: 00484-cve-2026-3644.patch
 # Stack overflow parsing XML with deeply nested DTD content models
 Patch485: 00485-cve-2026-4224.patch
 
+# 00486 # 1f9958f909c1b41a4ffc0b613ef8ec8fa5e7c474
+# CVE-2026-3446
+#
+# gh-145264: Do not ignore excess Base64 data after the first padded quad
+Patch486: 00486-cve-2026-3446.patch
+
+# 00487 # ae99fe3a33b43e303a05f012815cef60b611a9c7
+# CVE-2025-13462
+#
+# gh-141707: Skip TarInfo DIRTYPE normalization during GNU long name handling
+Patch487: 00487-cve-2025-13462.patch
+
+# 00488 # d786d59a8f7196bb630100a869f28ad13436b59c
+# CVE-2026-3479
+#
+# gh-146121: Clarify security model of pkgutil.getdata
+Patch488: 00488-cve-2026-3479.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
