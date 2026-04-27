@@ -4,5 +4,6 @@
   "release": "1",
   "sha": "2f7b7d5e1c38495287cc755c4121cc9c43979165",
   "source": "https://src.fedoraproject.org/rpms/python-pathspec.git",
+  "upstream_repo": "https://github.com/cpburnz/python-pathspec",
   "version": "1.1.0"
 }
