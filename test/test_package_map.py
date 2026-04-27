@@ -33,6 +33,8 @@ If no upstream git repository exists, use the Fedora DistGit URL as a fallback:
 
 def _rpm_package_names() -> list[str]:
     """Return sorted list of RPM package directory names."""
+    if not RPMS_DIR.is_dir():
+        pytest.skip(f"rpms/ directory not found at {RPMS_DIR}")
     return sorted(d.name for d in RPMS_DIR.iterdir() if d.is_dir())
 
 
@@ -41,8 +43,11 @@ def _load_metadata(package: str) -> dict | None:
     path = METADATA_DIR / f"{package}.json"
     if not path.exists():
         return None
-    with open(path) as f:
-        return json.load(f)
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        pytest.fail(f"metadata/{package}.json contains invalid JSON: {e}")
 
 
 @pytest.mark.parametrize("package", _rpm_package_names())
@@ -55,4 +60,11 @@ def test_upstream_repo_exists(package: str) -> None:
         f'{{"upstream_repo": "https://github.com/example/project", '
         f'"version": "...", "release": "...", "modification_status": "native"}}'
     )
-    assert metadata.get("upstream_repo"), MISSING_FIELD_MESSAGE.format(package=package)
+    val = metadata.get("upstream_repo")
+    assert val is not None, MISSING_FIELD_MESSAGE.format(package=package)
+    assert val != "", (
+        f"Package '{package}' has an empty 'upstream_repo' value in "
+        f"metadata/{package}.json. Set it to the canonical upstream git "
+        f"repository URL, or use "
+        f"'https://src.fedoraproject.org/rpms/{package}' as a fallback."
+    )

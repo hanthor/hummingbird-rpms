@@ -31,7 +31,7 @@ When no upstream repo exists, use the Fedora DistGit URL
 ### Step 1: Find packages missing upstream_repo
 
 ```bash
-cd /home/prarit/hummingbird/rpms
+cd "$(git rev-parse --show-toplevel)"
 python3 -c "
 import json
 from pathlib import Path
@@ -99,7 +99,7 @@ directly instead of whatever web search returns:
 | `iproute`           | `https://git.kernel.org/pub/scm/network/iproute2/iproute2.git` | GitHub is a mirror                 |
 | `libcap`            | `https://git.kernel.org/pub/scm/libs/libcap/libcap.git`        | GitHub is a mirror                 |
 | `libidn2`           | `https://gitlab.com/libidn/libidn2`                            | GitHub is a mirror                 |
-| `libtirpc`          | `git://git.linux-nfs.org/projects/steved/libtirpc.git`         | gitweb URL is not a repo URL       |
+| `libtirpc`          | `https://src.fedoraproject.org/rpms/libtirpc`                  | No HTTPS git endpoint available    |
 | `openldap`          | `https://git.openldap.org/openldap/openldap`                   | GitHub is a mirror                 |
 | `svt-av1`           | `https://gitlab.com/AOMediaCodec/SVT-AV1`                      | Not on GitHub                      |
 
@@ -165,10 +165,10 @@ These packages have `cve_product` set to resolve multi-product CVEs.
 The value can be `Vendor / Product` for an exact match, or just `Vendor`
 for a vendor-only partial match:
 
-| Package   | `cve_product`            | Reason                                                   |
-| --------- | ------------------------ | -------------------------------------------------------- |
-| `nginx`   | `F5 / NGINX Open Source` | CVE also lists NGINX Plus with incompatible R-versioning |
-| `golang*` | `Go`                     | Vendor prefix match; vendor varies                       |
+| Package   | `cve_product`                     | Reason                                                              |
+| --------- | --------------------------------- | ------------------------------------------------------------------- |
+| `nginx`   | `F5 / NGINX Open Source`          | CVE also lists NGINX Plus with incompatible R-versioning            |
+| `golang*` | `` `Go ` `` (note trailing space) | Vendor prefix match; trailing space prevents matching "Google" etc. |
 
 ## Adding a single new package
 

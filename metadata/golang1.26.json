@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "cve_product": "Go",
+  "cve_product": "Go ",
   "modification_reason": "Carry hummingbird path along",
   "modification_status": "modified",
   "release": "1",
