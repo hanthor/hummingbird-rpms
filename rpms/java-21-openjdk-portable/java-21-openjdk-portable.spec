@@ -406,7 +406,7 @@ exit 1
 # New Version-String scheme-style defines
 %global featurever 21
 %global interimver 0
-%global updatever 10
+%global updatever 11
 %global patchver 0
 # buildjdkver is usually same as %%{featurever},
 # but in time of bootstrap of next jdk, it is featurever-1,
@@ -446,7 +446,7 @@ exit 1
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      6.0.0pre00-c848b93a8598
 # Define current Git revision for the FIPS support patches
-%global fipsver a0fd6e8ed6e
+%global fipsver feef2dc3ca7
 # Define JDK versions
 %global newjavaver %{featurever}.%{interimver}.%{updatever}.%{patchver}
 %global javaver         %{featurever}
@@ -460,8 +460,8 @@ exit 1
 %global origin_nice     OpenJDK
 %global top_level_dir_name   %{vcstag}
 %global top_level_dir_name_backup %{top_level_dir_name}-backup
-%global buildver        7
-%global rpmrelease      2
+%global buildver        10
+%global rpmrelease      0.1
 #%%global tagsuffix     %%{nil}
 # Priority must be 8 digits in total; up to openjdk 1.8, we were using 18..... so when we moved to 11, we had to add another digit
 %if %is_system_jdk
@@ -782,6 +782,9 @@ Patch1001: fips-%{featurever}u-%{fipsver}.patch
 #
 #############################################
 
+# JDK-8375294: Files.copy can fail with EOPNOTSUPP when copy_file_range not supported
+Patch1002: jdk8375294-handle-EOPNOTSUPP-in-copying.patch
+
 # Currently empty
 
 #############################################
@@ -1084,6 +1087,7 @@ sh %{SOURCE12} %{top_level_dir_name}
 pushd %{top_level_dir_name}
 # Add crypto policy and FIPS support
 %patch -P1001 -p1
+%patch -P1002 -p1
 popd # openjdk
 
 echo "Generating %{alt_java_name} man page"
