@@ -50,7 +50,6 @@ BuildRequires: brotli-devel
 BuildRequires: coreutils
 BuildRequires: gcc
 BuildRequires: groff
-BuildRequires: krb5-devel
 BuildRequires: libidn2-devel
 BuildRequires: libnghttp2-devel
 %if %{with http3}
@@ -283,7 +282,6 @@ export common_configure_opts="          \
     --enable-symbol-hiding              \
     --enable-threaded-resolver          \
     --without-zstd                      \
-    --with-gssapi                       \
     --with-libidn2                      \
     --with-nghttp2                      \
     --with-ssl --with-ca-bundle=%{_sysconfdir}/pki/ca-trust/extracted/pem/tls-ca-bundle.pem \
