@@ -674,11 +674,32 @@ def get_mdapi_latest_build(package_name: str, branch: str) -> MdapiPackageInfo |
         return None
 
 
+def _get_fallback_dist_tags(dist_tag: str) -> list[str]:
+    """Get all active Fedora dist tags except the given one, in descending order."""
+    current_match = re.match(r'^f(\d+)$', dist_tag)
+    if not current_match:
+        return []
+
+    current_num = int(current_match.group(1))
+    fedora_releases = releases.get('fedora', {})
+    other_nums = []
+    for release_dist_tag in fedora_releases.values():
+        if match := re.match(r'^f(\d+)$', release_dist_tag):
+            num = int(match.group(1))
+            if num != current_num:
+                other_nums.append(num)
+
+    other_nums.sort(reverse=True)
+    return [f'f{n}' for n in other_nums]
+
+
 def check_koji_build(package_name: str, version: str, release: str, expected_commit: str,
                      dist_tag: str, branch: str) -> bool:
     """Check if a build exists in Koji and matches the expected commit.
 
-    If not found with current dist tag, tries the previous Fedora release as a fallback.
+    If not found with current dist tag, tries all active Fedora releases in
+    descending order as fallback. This handles packages like OpenJDK portables
+    that are built once for the earliest active release and reused across all.
     """
     # Transform dist_tag for Koji: Bodhi uses f41, f42, etc. but Koji uses fc41, fc42
     koji_dist_tag = dist_tag
@@ -694,22 +715,24 @@ def check_koji_build(package_name: str, version: str, release: str, expected_com
         method_name=f"Koji getBuild({nvr})"
     )
 
-    # If build not found, try previous release as fallback
-    # (packages are rebuilt once per release, so may still have old dist tag)
+    # If build not found, try all active Fedora releases in descending order
+    # Some packages (e.g. OpenJDK portables) are built for one release and reused
     if not build_result:
-        previous_release = get_previous_fedora_release(dist_tag)
-        if previous_release:
-            previous_koji_dist_tag = previous_release
-            if match := re.match(r'^f(\d+)$', previous_release):
-                previous_koji_dist_tag = f'fc{match.group(1)}'
+        fallback_dist_tags = _get_fallback_dist_tags(dist_tag)
+        for fallback_tag in fallback_dist_tags:
+            fallback_koji_tag = fallback_tag
+            if match := re.match(r'^f(\d+)$', fallback_tag):
+                fallback_koji_tag = f'fc{match.group(1)}'
 
-            fallback_nvr = f'{package_name}-{version}-{release}.{previous_koji_dist_tag}'
+            fallback_nvr = f'{package_name}-{version}-{release}.{fallback_koji_tag}'
             logging.info("Build %s not found in Koji, trying %s", nvr, fallback_nvr)
-            nvr = fallback_nvr  # Use fallback NVR for subsequent logging
+            nvr = fallback_nvr
             build_result = call_koji_with_retry(
                 server.getBuild, fallback_nvr,
                 method_name=f"Koji getBuild({fallback_nvr})"
             )
+            if build_result:
+                break
 
     if not build_result:
         logging.info("Build %s not found in Koji", nvr)
