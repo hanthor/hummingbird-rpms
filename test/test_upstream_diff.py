@@ -230,8 +230,8 @@ class TestCmdSave:
             upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         rec = cache['packages']['automake']['recommendation']
-        assert 'Could be revisited' in rec
-        assert 'refactored to avoid the hummingbird macro' in rec
+        assert 'Revisit if Fedora packaging guidelines' in rec
+        assert 'refactor to avoid the hummingbird macro' in rec
 
     def test_hummingbird_suffix_idempotent(self, upstream_diff_module, sample_metadata):
         suffix = upstream_diff_module.HUMMINGBIRD_RECOMMENDATION_SUFFIX.strip()
@@ -246,7 +246,7 @@ class TestCmdSave:
             upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         rec = cache['packages']['automake']['recommendation']
-        assert rec.count('Could be revisited') == 1
+        assert rec.count('Revisit if Fedora packaging guidelines') == 1
 
     def test_no_diff_recommendation(self, upstream_diff_module, sample_metadata):
         args = self._make_args(
