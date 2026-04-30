@@ -27,7 +27,6 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent))
 from dist_git import (
     METADATA_DIR,
-    RPMS_DIR,
     ROOT_DIR,
     diff_package,
     load_package_metadata,
@@ -210,7 +209,7 @@ def cmd_prepare(args: argparse.Namespace) -> None:
     bi: dict[str, str] = info['batch_info']
     stale = sum(1 for s in bi.values() if s == 'stale')
     new = sum(1 for s in bi.values() if s != 'stale')
-    print(f'=== UPSTREAM DIFF ANALYSIS: PREPARE ===')
+    print('=== UPSTREAM DIFF ANALYSIS: PREPARE ===')
     print(f'Batch: {len(batch)} packages ({stale} stale, {new} new)')
     print(f'Progress: {info["cached_count"]}/{info["total_modified"]} cached')
     print()
