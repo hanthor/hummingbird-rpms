@@ -18,6 +18,7 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -83,7 +84,9 @@ Note which parts could be upstreamed independently.
 
 ### No-diff packages
 
-Package marked modified but diff is empty. Use category: "no-diff".\
+Package marked modified but diff is empty. Use category: "no-diff".
+This is distinct from "clean" (a metadata state meaning the package
+was never modified). A no-diff package should be unmarked as modified.\
 """
 
 
@@ -163,6 +166,87 @@ def get_diff_output(package_name: str) -> str | None:
     if isinstance(result, str):
         return result
     return ''
+
+
+PAGURE_API_BASE = 'https://src.fedoraproject.org/api/0/rpms'
+PAGURE_WEB_BASE = 'https://src.fedoraproject.org/rpms'
+
+
+MERGED_PR_MAX_AGE_DAYS = 90
+
+
+def _fetch_pagure_prs(package_name: str, status: str) -> list[dict] | None:
+    """Fetch PRs from Pagure API. Returns None on failure."""
+    url = f'{PAGURE_API_BASE}/{package_name}/pull-requests?status={status}'
+    if status == 'Merged':
+        url += '&per_page=10'
+    try:
+        output = subprocess.check_output(
+            ['curl', '--silent', '--show-error', '--fail', '--retry', '3', '--max-time', '10', url],
+            text=True, stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        return None
+    try:
+        return json.loads(output).get('requests', [])
+    except json.JSONDecodeError:
+        return None
+
+
+def get_upstream_prs(package_name: str, source_url: str) -> list[dict]:
+    """Fetch open and recently merged PRs from upstream Fedora dist-git.
+
+    Returns a list of PR dicts with keys: id, title, status, user, branch, url.
+    Merged PRs are limited to those closed within the last 90 days.
+    Returns [] on any failure (network, non-Fedora source, bad JSON).
+    """
+    if 'src.fedoraproject.org' not in source_url:
+        return []
+
+    prs = []
+    cutoff = datetime.now(timezone.utc).timestamp() - (MERGED_PR_MAX_AGE_DAYS * 86400)
+
+    for status in ('Open', 'Merged'):
+        raw = _fetch_pagure_prs(package_name, status)
+        if raw is None:
+            logging.warning('Failed to fetch %s PRs for %s', status.lower(), package_name)
+            continue
+        for pr in raw:
+            if status == 'Merged':
+                closed_at = pr.get('closed_at')
+                if closed_at is None or float(closed_at) < cutoff:
+                    continue
+            prs.append({
+                'id': pr['id'],
+                'title': pr['title'],
+                'status': pr.get('status', status),
+                'user': pr.get('user', {}).get('name', '?'),
+                'branch': pr.get('branch', '?'),
+                'url': f'{PAGURE_WEB_BASE}/{package_name}/pull-request/{pr["id"]}',
+            })
+    return prs
+
+
+def format_upstream_prs(prs: list[dict], *, markdown: bool = False) -> str:
+    if not prs:
+        return '(no open or recently merged PRs)'
+    open_prs = [p for p in prs if p.get('status') == 'Open']
+    merged_prs = [p for p in prs if p.get('status') == 'Merged']
+    lines = []
+    for label, group in [('Open:', open_prs), ('Recently merged:', merged_prs)]:
+        if not group:
+            continue
+        lines.append(label)
+        for pr in group:
+            if markdown:
+                lines.append(
+                    f'- [PR #{pr["id"]}: {pr["title"]}]({pr["url"]})'
+                    f' (by {pr["user"]}, -> {pr["branch"]})'
+                )
+            else:
+                lines.append(f'  PR #{pr["id"]}: {pr["title"]} (by {pr["user"]}, -> {pr["branch"]})')
+                lines.append(f'    {pr["url"]}')
+    return '\n'.join(lines)
 
 
 # --- Subcommands ---
@@ -246,7 +330,24 @@ def cmd_prepare(args: argparse.Namespace) -> None:
             print(diff_text)
         print()
 
+        source = data.get('source', '')
+        if source:
+            prs = get_upstream_prs(pkg, source)
+            print('UPSTREAM PRs:')
+            print(format_upstream_prs(prs))
+            print()
+
     print('=== END PREPARE ===')
+
+
+def _resolve_upstream_prs(package: str, pr_ids: list[int]) -> list[dict]:
+    """Fetch full PR metadata from upstream and filter to the given IDs."""
+    md = load_package_metadata(package)
+    source = md.get('source', '') if md else ''
+    if not source:
+        return []
+    all_prs = get_upstream_prs(package, source)
+    return [p for p in all_prs if p['id'] in pr_ids]
 
 
 def cmd_save(args: argparse.Namespace) -> None:
@@ -259,6 +360,22 @@ def cmd_save(args: argparse.Namespace) -> None:
         cache['packages'][pkg]['jira_issue'] = key
         save_cache(cache)
         print(f'Updated: {pkg} -> jira_issue={key}', file=sys.stderr)
+        return
+
+    if args.set_upstream_prs:
+        pkg = args.set_upstream_prs[0]
+        cache = load_cache()
+        if pkg not in cache.get('packages', {}):
+            print(f'ERROR: Package {pkg} not found in cache. Analyze it first.', file=sys.stderr)
+            sys.exit(1)
+        pr_ids = [int(x) for x in args.set_upstream_prs[1:]]
+        if pr_ids:
+            related = _resolve_upstream_prs(pkg, pr_ids)
+        else:
+            related = []
+        cache['packages'][pkg]['upstream_prs'] = related
+        save_cache(cache)
+        print(f'Updated: {pkg} -> upstream_prs={[p["id"] for p in related]}', file=sys.stderr)
         return
 
     package = args.package
@@ -277,6 +394,16 @@ def cmd_save(args: argparse.Namespace) -> None:
     if args.category == 'no-diff' and not recommendation:
         recommendation = 'Consider unmarking as modified'
 
+    pr_ids = []
+    for val in (args.upstream_prs or []):
+        val = val.strip()
+        if val:
+            pr_ids.append(int(val))
+    if pr_ids:
+        upstream_prs = _resolve_upstream_prs(package, pr_ids)
+    else:
+        upstream_prs = []
+
     entry = {
         'analyzed_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'metadata_sha': sha,
@@ -287,6 +414,7 @@ def cmd_save(args: argparse.Namespace) -> None:
         'hummingbird_macros': args.hummingbird_macros,
         'jira_issue': args.jira_issue,
         'fedora_bug': args.fedora_bug,
+        'upstream_prs': upstream_prs,
     }
 
     cache = load_cache()
@@ -301,22 +429,32 @@ def cmd_save(args: argparse.Namespace) -> None:
     print(f'Saved: {package} -> {args.category}', file=sys.stderr)
 
 
+def _format_jira_link(jira: str | None, markdown: bool) -> str:
+    if not jira:
+        return '—'
+    if markdown:
+        return f'[{jira}]({JIRA_BASE_URL}{jira})'
+    return jira
+
+
 def cmd_view(args: argparse.Namespace) -> None:
     cache = load_cache()
     packages = cache.get('packages', {})
+    md = getattr(args, 'markdown', False)
 
-    if args.package:
-        entry = packages.get(args.package)
+    if len(args.package) == 1:
+        pkg_name = args.package[0]
+        entry = packages.get(pkg_name)
         if not entry:
-            print(f'Package {args.package} not found in cache.', file=sys.stderr)
+            print(f'Package {pkg_name} not found in cache.', file=sys.stderr)
             sys.exit(1)
         if args.json:
-            json.dump({args.package: entry}, sys.stdout, indent=2)
+            json.dump({pkg_name: entry}, sys.stdout, indent=2)
             print()
             return
         jira = entry.get('jira_issue')
-        jira_str = f'[{jira}]({JIRA_BASE_URL}{jira})' if jira else '—'
-        print(f'**{args.package}**')
+        jira_str = _format_jira_link(jira, md)
+        print(f'**{pkg_name}**')
         print(f'- Category: {entry.get("category", "N/A")}')
         print(f'- Summary: {entry.get("changes_summary", "N/A")}')
         print(f'- Reasoning: {entry.get("reasoning", "N/A")}')
@@ -324,8 +462,40 @@ def cmd_view(args: argparse.Namespace) -> None:
         print(f'- Hummingbird macros: {entry.get("hummingbird_macros", False)}')
         print(f'- JIRA: {jira_str}')
         print(f'- Fedora bug: {entry.get("fedora_bug") or "—"}')
+        cached_prs = entry.get('upstream_prs', [])
+        if cached_prs:
+            print('- Related upstream PRs:')
+            for pr in cached_prs:
+                if md:
+                    print(f'  - [PR #{pr["id"]}: {pr["title"]}]({pr["url"]}) ({pr.get("status", "?")})')
+                else:
+                    print(f'  - PR #{pr["id"]}: {pr["title"]} ({pr.get("status", "?")}) — {pr["url"]}')
+        else:
+            print('- Related upstream PRs: —')
         print(f'- Analyzed: {entry.get("analyzed_at", "N/A")}')
         print(f'- Metadata SHA: {entry.get("metadata_sha", "N/A")}')
+        return
+
+    if len(args.package) > 1:
+        missing = [p for p in args.package if p not in packages]
+        if missing:
+            print(f'Packages not found in cache: {", ".join(missing)}', file=sys.stderr)
+            sys.exit(1)
+        if args.json:
+            json.dump({p: packages[p] for p in args.package}, sys.stdout, indent=2)
+            print()
+            return
+        print(f'**Showing {len(args.package)} packages**')
+        print('| Package | Category | JIRA | PRs | Summary |')
+        print('|---------|----------|------|-----|---------|')
+        for pkg_name in sorted(args.package):
+            entry = packages[pkg_name]
+            jira = entry.get('jira_issue')
+            jira_str = _format_jira_link(jira, md)
+            pr_count = len(entry.get('upstream_prs', []))
+            pr_str = str(pr_count) if pr_count else '—'
+            summary = entry.get('changes_summary', '')
+            print(f'| {pkg_name} | {entry.get("category", "?")} | {jira_str} | {pr_str} | {summary} |')
         return
 
     if args.json:
@@ -372,16 +542,15 @@ def cmd_view(args: argparse.Namespace) -> None:
         if not pkgs:
             print('(none)')
             continue
-        print('| Package | JIRA | Summary |')
-        print('|---------|------|---------|')
+        print('| Package | JIRA | PRs | Summary |')
+        print('|---------|------|-----|---------|')
         for pkg, entry in pkgs:
             jira = entry.get('jira_issue')
-            if jira:
-                jira_str = f'[{jira}]({JIRA_BASE_URL}{jira})'
-            else:
-                jira_str = '—'
+            jira_str = _format_jira_link(jira, md)
+            pr_count = len(entry.get('upstream_prs', []))
+            pr_str = str(pr_count) if pr_count else '—'
             summary = entry.get('changes_summary', '')
-            print(f'| {pkg} | {jira_str} | {summary} |')
+            print(f'| {pkg} | {jira_str} | {pr_str} | {summary} |')
 
     if getattr(args, 'all', False):
         all_modified = get_all_modified_metadata()
@@ -439,6 +608,29 @@ def cmd_jira_template(args: argparse.Namespace) -> None:
     print(f'**Recommendation:** {entry.get("recommendation", "N/A")}')
     print('=== END COMMENT ===')
 
+    cached_prs = entry.get('upstream_prs', [])
+    if cached_prs:
+        print()
+        print('=== JIRA PR COMMENT ===')
+        print('## Related Upstream PRs')
+        print()
+        print(format_upstream_prs(cached_prs, markdown=True))
+        print('=== END PR COMMENT ===')
+
+
+def cmd_check_prs(args: argparse.Namespace) -> None:
+    for pkg in args.packages:
+        md = load_package_metadata(pkg)
+        if not md:
+            print(f'ERROR: Package {pkg} not found', file=sys.stderr)
+            sys.exit(1)
+        source = md.get('source', '')
+        prs = get_upstream_prs(pkg, source)
+        print(f'=== UPSTREAM PRs: {pkg} ===')
+        print(format_upstream_prs(prs))
+        print()
+
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -455,18 +647,29 @@ Usage from agent skills:
   ./ci/upstream_diff.py prepare <package1> <package2>
   ./ci/upstream_diff.py prepare --batch 10
 
-  # Save LLM classification results
+  # Save LLM classification results (--upstream-prs required)
   ./ci/upstream_diff.py save <package> --category upstreamable \\
-    --changes-summary "..." --reasoning "..." --recommendation "..."
+    --changes-summary "..." --reasoning "..." --recommendation "..." \\
+    --upstream-prs 4 13
+
+  # Save with no related PRs
+  ./ci/upstream_diff.py save <package> --category complex \\
+    --changes-summary "..." --reasoning "..." --upstream-prs ""
 
   # Update JIRA issue key on existing entry
   ./ci/upstream_diff.py save --set-jira <package> HUM-XXXX
+
+  # Update related upstream PRs on existing entry
+  ./ci/upstream_diff.py save --set-upstream-prs <package> 118 13
 
   # View cached results
   ./ci/upstream_diff.py view
 
   # Generate pre-filled JIRA templates
   ./ci/upstream_diff.py jira-template <package>
+
+  # Check for open and recently merged upstream PRs
+  ./ci/upstream_diff.py check-prs <package1> <package2>
 """,
     )
 
@@ -499,20 +702,26 @@ Usage from agent skills:
                       help='JIRA issue key (e.g., HUM-1234)')
     save.add_argument('--fedora-bug',
                       help='Fedora bug URL')
+    save.add_argument('--upstream-prs', nargs='*', metavar='PR_ID',
+                      help='Related upstream PR IDs (or "" for none)')
     save.add_argument('--set-jira', nargs=2, metavar=('PACKAGE', 'KEY'),
                       help='Update only the JIRA issue key on an existing entry')
+    save.add_argument('--set-upstream-prs', nargs='+', metavar='PKG_AND_IDS',
+                      help='Update only upstream PRs on an existing entry: --set-upstream-prs PACKAGE [PR_ID ...]')
 
     # view
     view = subparsers.add_parser('view',
                                  help='Display cached analysis results')
-    view.add_argument('package', nargs='?',
-                      help='Show details for a single package')
+    view.add_argument('package', nargs='*',
+                      help='Show details for one package, or filtered table for multiple')
     view.add_argument('--json', action='store_true',
                       help='Output raw JSON instead of formatted tables')
     view.add_argument('--category', choices=VALID_CATEGORIES,
                       help='Show only packages in this category')
     view.add_argument('--all', action='store_true',
                       help='Include unanalyzed modified packages')
+    view.add_argument('--markdown', action='store_true',
+                      help='Format links as Markdown (for JIRA/rendered output)')
 
     # jira-template
     jira = subparsers.add_parser('jira-template',
@@ -522,20 +731,28 @@ Usage from agent skills:
     jira.add_argument('--epic', default='HUM-1613',
                       help='Parent epic key (default: HUM-1613)')
 
+    # check-prs
+    check = subparsers.add_parser('check-prs',
+                                   help='Check for open upstream PRs in Fedora dist-git')
+    check.add_argument('packages', nargs='+',
+                       help='Package names to check')
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
         sys.exit(0)
 
     # Validate save subcommand arguments
-    if args.command == 'save' and not args.set_jira:
+    if args.command == 'save' and not args.set_jira and not args.set_upstream_prs:
         if not args.package:
-            parser.error('save requires a package name (or --set-jira)')
+            parser.error('save requires a package name (or --set-jira / --set-upstream-prs)')
         for field in ('category', 'changes_summary', 'reasoning'):
             if not getattr(args, field.replace('-', '_'), None):
                 parser.error(f'save requires --{field.replace("_", "-")}')
         if args.recommendation is None:
             args.recommendation = ''
+        if args.upstream_prs is None:
+            parser.error('save requires --upstream-prs (pass "" for no related PRs)')
 
     match args.command:
         case 'prepare':
@@ -546,6 +763,8 @@ Usage from agent skills:
             cmd_view(args)
         case 'jira-template':
             cmd_jira_template(args)
+        case 'check-prs':
+            cmd_check_prs(args)
 
 
 if __name__ == '__main__':

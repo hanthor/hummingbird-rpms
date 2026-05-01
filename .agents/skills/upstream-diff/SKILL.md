@@ -31,7 +31,7 @@ If invoked with **no arguments**, ask the user:
 ```
 
 The output contains everything needed: package metadata, diffs,
-category definitions, and the classification schema.
+upstream PR status, category definitions, and the classification schema.
 
 ### Step 2: Classify
 
@@ -39,11 +39,24 @@ For each package in the prepare output, apply the classification
 schema using the embedded category definitions. The only judgment
 needed is selecting the category and writing the reasoning fields.
 
+Factor in **upstream PRs** shown in the prepare output:
+
+- If a merged PR already covers the local change, note it in the
+  recommendation (e.g., "Already merged upstream as PR #N —
+  update local package and unmark as modified").
+- If an open PR already covers the local change, note it in the
+  recommendation (e.g., "Already submitted upstream as PR #N —
+  monitor for merge").
+- If a PR covers part of the change, mention which parts are
+  already in flight.
+
 Packages with empty diffs should be classified as `no-diff`.
 
 ### Step 3: Save
 
-For each classified package, save the results:
+For each classified package, save the results. Include the IDs of
+any upstream PRs that are **related** to our local changes (determined
+during Step 2). Pass `""` if no PRs are related.
 
 ```bash
 ./ci/upstream_diff.py save <package> \
@@ -51,7 +64,15 @@ For each classified package, save the results:
   --changes-summary "<summary>" \
   --reasoning "<reasoning>" \
   --recommendation "<recommendation>" \
+  --upstream-prs <pr_id1> <pr_id2> ... \
   [--hummingbird-macros]
+
+# No related PRs:
+./ci/upstream_diff.py save <package> \
+  --category <category> \
+  --changes-summary "<summary>" \
+  --reasoning "<reasoning>" \
+  --upstream-prs ""
 ```
 
 The script enforces template requirements (e.g., appending standard
@@ -66,19 +87,46 @@ show the output to the user.
 
 ```bash
 # All packages:
-./ci/upstream_diff.py view
+./ci/upstream_diff.py view --markdown
 
 # Single package detail:
-./ci/upstream_diff.py view <package>
+./ci/upstream_diff.py view --markdown <package>
 
 # Filter by category:
-./ci/upstream_diff.py view --category <category>
+./ci/upstream_diff.py view --markdown --category <category>
 
 # Include unanalyzed packages:
-./ci/upstream_diff.py view --all
+./ci/upstream_diff.py view --markdown --all
 ```
 
 Run the appropriate command and show the output to the user.
+
+## Check Upstream PRs
+
+```bash
+./ci/upstream_diff.py check-prs <package1> <package2> ...
+```
+
+Shows open and recently merged (last 90 days) pull requests in
+the upstream Fedora dist-git repo. Use this to check whether
+local changes have already been submitted or merged upstream.
+
+## Update Related PRs
+
+To update which PRs are related after the initial analysis,
+use `check-prs` to see all current PRs, then update the
+stored related PRs:
+
+```bash
+# See all current upstream PRs:
+./ci/upstream_diff.py check-prs <package>
+
+# Update related PRs on existing entry:
+./ci/upstream_diff.py save --set-upstream-prs <package> <pr_id1> <pr_id2> ...
+
+# Clear related PRs (none are related):
+./ci/upstream_diff.py save --set-upstream-prs <package>
+```
 
 ## JIRA
 
@@ -86,12 +134,17 @@ The package must already be analyzed (cached). If not, run analysis first.
 
 ### Step 1: Generate templates
 
+If the package has no related PRs stored but should, run
+`check-prs` then `save --set-upstream-prs` first to populate
+the cached PR data.
+
 ```bash
 ./ci/upstream_diff.py jira-template <package> [--epic HUM-1613]
 ```
 
-This outputs pre-filled JIRA description and analysis comment
-with all fields populated from the cache.
+This outputs pre-filled JIRA description, analysis comment, and
+(if upstream PRs exist) a separate PR comment — all populated
+from the cache.
 
 ### Step 2: Search for existing issues
 
@@ -106,7 +159,9 @@ project = HUM AND summary ~ "<package>" AND summary ~ "upstream"
 **No existing issue:** Preview the description and comment from
 Step 1 to the user. Wait for explicit confirmation. Create with
 `jira_create_issue` (project HUM, type Story, parent from template).
-Add the analysis as a comment with `jira_add_comment`.
+Add the analysis as a comment with `jira_add_comment`. If the
+template includes a PR comment section, add it as a **second**
+`jira_add_comment` call.
 
 Record the issue key:
 
@@ -116,4 +171,6 @@ Record the issue key:
 
 **Existing issue:** Compare template output against existing content.
 If diverged, preview updates and wait for explicit confirmation.
-Update with `jira_update_issue` and/or `jira_edit_comment`.
+Update with `jira_update_issue` and/or `jira_edit_comment`. If
+upstream PRs have changed since the last update, add a **new**
+comment with the PR data (do not edit the analysis comment).
