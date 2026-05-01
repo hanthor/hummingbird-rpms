@@ -11,8 +11,8 @@
 
 Summary: A utility for getting files from remote servers (FTP, HTTP, and others)
 Name: curl
-Version: 8.19.0
-Release: 3.1%{?dist}
+Version: 8.20.0
+Release: 0.1%{?dist}
 License: curl
 Source0: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz
 Source1: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz.asc
@@ -452,6 +452,9 @@ rm -f ${RPM_BUILD_ROOT}%{_mandir}/man1/wcurl.1*
 %{_libdir}/libcurl.so.4.[0-9].[0-9].minimal
 
 %changelog
+* Fri May 01 2026 Hummingbird <hummingbird@redhat.com> - 8.20.0-0.1
+- Update to 8.20.0
+
 * Tue Mar 24 2026 Rob Crittenden <rcritten@redhat.com> - 8.19.0-3
 - openssl channel_binding: lookup digest algorithm without NID
 
