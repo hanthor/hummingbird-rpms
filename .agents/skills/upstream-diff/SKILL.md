@@ -97,7 +97,7 @@ with all fields populated from the cache.
 
 Use the JIRA MCP to search:
 
-```
+```jql
 project = HUM AND summary ~ "<package>" AND summary ~ "upstream"
 ```
 
