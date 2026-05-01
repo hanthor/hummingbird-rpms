@@ -531,9 +531,11 @@ Usage from agent skills:
     if args.command == 'save' and not args.set_jira:
         if not args.package:
             parser.error('save requires a package name (or --set-jira)')
-        for field in ('category', 'changes_summary', 'reasoning', 'recommendation'):
+        for field in ('category', 'changes_summary', 'reasoning'):
             if not getattr(args, field.replace('-', '_'), None):
                 parser.error(f'save requires --{field.replace("_", "-")}')
+        if args.recommendation is None:
+            args.recommendation = ''
 
     match args.command:
         case 'prepare':

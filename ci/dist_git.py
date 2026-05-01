@@ -1438,6 +1438,9 @@ def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False
         When capture=False: True if differences exist, False if clean, None if native
         When capture=True: diff string if differences exist, '' if clean, None if native
     """
+    if capture and output_mode != 'full':
+        raise ValueError(f"capture=True is only supported with output_mode='full', got {output_mode!r}")
+
     metadata = load_package_metadata(package_name)
     if not metadata:
         sys.exit(f"ERROR: Package {package_name} not found")

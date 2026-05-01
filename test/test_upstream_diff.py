@@ -259,6 +259,20 @@ class TestCmdSave:
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['recommendation'] == 'Consider unmarking as modified'
 
+    def test_no_diff_recommendation_from_cli(self, upstream_diff_module, sample_metadata, capsys):
+        """Verify the CLI accepts a no-diff save without an explicit --recommendation."""
+        with patch.object(upstream_diff_module, 'load_package_metadata',
+                          return_value=sample_metadata['caddy']):
+            with patch('sys.argv', [
+                'upstream_diff.py', 'save', 'caddy',
+                '--category', 'no-diff',
+                '--changes-summary', 'No diff found',
+                '--reasoning', 'Empty diff',
+            ]):
+                upstream_diff_module.main()
+        cache = upstream_diff_module.load_cache()
+        assert cache['packages']['caddy']['recommendation'] == 'Consider unmarking as modified'
+
     def test_preserves_jira_issue(self, upstream_diff_module, sample_metadata, sample_cache):
         args = self._make_args(jira_issue=None)
         with patch.object(upstream_diff_module, 'load_package_metadata',
