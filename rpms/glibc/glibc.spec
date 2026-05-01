@@ -152,7 +152,7 @@ Version: %{glibcversion}
 # - It allows using the Release number without the %%dist tag in the dependency
 #   generator to make the generated requires interchangeable between Rawhide
 #   and ELN (.elnYY < .fcXX).
-%global baserelease 12
+%global baserelease 13
 Release: %{baserelease}%{?dist}
 
 # Licenses:
@@ -346,6 +346,7 @@ Patch27: glibc-RHEL-172425-2.patch
 Patch28: glibc-RHEL-172425-3.patch
 Patch29: glibc-RHEL-172425-4.patch
 Patch30: glibc-RHEL-172420.patch
+Patch31: glibc-open-tree-clone-sync-with-kernel-headers.patch
 # https://bugs.winehq.org/show_bug.cgi?id=58523
 # revert 3d3572f59059e2b19b8541ea648a6172136ec42e to fix wine build
 # applied with PP powers as we really need to build wine to fix scriptlet problems
@@ -2394,6 +2395,10 @@ update_gconv_modules_cache ()
 %endif
 
 %changelog
+* Thu May 01 2026 Valentin Rothberg <rothberg@redhat.com> - 2.42-13
+- Sync OPEN_TREE_CLONE definition in sys/mount.h with kernel headers to fix
+  build failure on x86-64 and aarch64 (redefinition conflict with -Werror).
+
 * Thu Apr 30 2026 Florian Weimer <fweimer@redhat.com> - 2.42-12
 - Add downstream patches with fixes for vulnerabilities.
 - Fix buffer overflow in scanf %%mc (CVE-2026-5450)

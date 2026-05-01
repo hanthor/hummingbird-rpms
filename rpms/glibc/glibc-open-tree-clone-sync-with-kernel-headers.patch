@@ -1,0 +1,17 @@
+Sync OPEN_TREE_CLONE definition in sys/mount.h with kernel headers.
+
+The kernel headers (<linux/mount.h>) define OPEN_TREE_CLONE as (1 << 0)
+while glibc used the literal 1.  Both values are numerically identical
+but the textually different macro bodies cause a -Werror=macro-redefinition
+failure when compiling umount.c/umount2.c on x86-64 and aarch64.
+
+diff --git a/sysdeps/unix/sysv/linux/sys/mount.h b/sysdeps/unix/sysv/linux/sys/mount.h
+--- a/sysdeps/unix/sysv/linux/sys/mount.h
++++ b/sysdeps/unix/sysv/linux/sys/mount.h
+@@ -265,7 +265,7 @@ enum fsconfig_command
+ #endif
+
+ /* open_tree flags.  */
+-#define OPEN_TREE_CLONE    1         /* Clone the target tree and attach the clone */
++#define OPEN_TREE_CLONE    (1 << 0)  /* Clone the target tree and attach the clone */
+ #define OPEN_TREE_CLOEXEC  O_CLOEXEC /* Close the file on execve() */
