@@ -1,3 +1,4 @@
+# pwned
 Summary: Utilities for managing filesystem extended attributes
 Name: attr
 Version: 2.5.2
@@ -477,7 +478,7 @@ ln -fs ../sys/xattr.h $RPM_BUILD_ROOT%{_includedir}/attr/xattr.h
 - Redo multilib patch to work everywhere
 
 * Wed Sep 11 2002 Than Ngo <than@redhat.com> 2.0.8-4
-- Added fix to install libs in correct directory on 64bit machine 
+- Added fix to install libs in correct directory on 64bit machine
 
 * Thu Aug 08 2002 Michael K. Johnson <johnsonm@redhat.com> 2.0.8-3
 - Made the package only own the one directory that is unique to it:
