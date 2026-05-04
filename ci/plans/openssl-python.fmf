@@ -1,0 +1,20 @@
+summary: Python self-test for openssl (Fedora imported - POC)
+contact: python maintainers <python-maint@redhat.com>
+
+enabled: false
+
+adjust:
+  - enabled: true
+    when: IMAGE_NAME == "openssl-main"
+
+discover:
+  - name: python-selftest
+    how: fmf
+    url: https://src.fedoraproject.org/tests/python.git
+    filter: 'test: ./parallel.sh'
+
+environment:
+    X: "test_ssl test_asyncio test_hashlib test_ftplib test_httplib test_imaplib test_logging test_poplib test_urllib2_localnet test_urllib test_xmlrpc"
+
+execute:
+    how: tmt
