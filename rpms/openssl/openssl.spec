@@ -1,4 +1,5 @@
 # For the curious:
+# pwned
 # 0.9.8jk + EAP-FAST soversion = 8
 # 1.0.0 soversion = 10
 # 1.1.0 soversion = 1.1 (same as upstream although presence of some symbols
