@@ -1,0 +1,42 @@
+{%- macro upstream_integration_test_scenario(rpm) -%}
+---
+# IntegrationTestScenario for running upstream/Fedora tests from rpms/{{ rpm.name }}/plans/
+apiVersion: appstudio.redhat.com/v1beta2
+kind: IntegrationTestScenario
+metadata:
+  name: {{ application_name }}-testing-farm-upstream-{{ rpm.name }}
+  annotations:
+    test.appstudio.openshift.io/pipeline_timeout: 10h
+    test.appstudio.openshift.io/tasks_timeout: 9h
+    test.appstudio.openshift.io/finally_timeout: 1h
+    test.appstudio.openshift.io/snapshot-param-as-name: "true"
+spec:
+  application: {{ application_name }}
+  contexts:
+    # Only run for this specific package component
+    - {name: component_{{ rpm.component_name }}}
+  params:
+    - {name: COMPOSE, value: RHEL-9-Nightly}
+    - {name: PIPELINE_MODE, value: rpm}
+    - {name: ARCH, value: "x86_64,aarch64"}
+    - {name: PASS_SNAPSHOT_TO_TF, value: "false"}
+    # Point to package subdirectory with upstream/Fedora tests
+    - {name: TMT_PATH, value: "rpms/{{ rpm.name }}"}
+    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
+    - {name: IMAGE_TAG, value: v3.20}
+  resolverRef:
+    # TESTING: Use git resolver to test TMT_PATH feature from fork
+    # https://gitlab.com/testing-farm/integrations-konflux/-/merge_requests/68
+    resolver: git
+    params:
+      - {name: url, value: https://gitlab.com/martinpitt/tf-integrations-konflux.git}
+      - {name: revision, value: context-dir}
+      - {name: pathInRepo, value: pipeline/tmt-via-testing-farm/tmt-via-testing-farm.yaml}
+    # TODO: Once the above TMT_PATH support MR is merged, switch back to bundles resolver:
+    # resolver: bundles
+    # params:
+    #   - {name: bundle, value: quay.io/testing-farm/tmt-via-testing-farm:$(params.IMAGE_TAG)}
+    #   - {name: name, value: tmt-via-testing-farm}
+    #   - {name: kind, value: pipeline}
+    #   - {name: url, value: quay.io/testing-farm/tmt-via-testing-farm:$(params.IMAGE_TAG)}
+{%- endmacro -%}
