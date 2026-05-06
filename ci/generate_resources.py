@@ -195,10 +195,6 @@ def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
                 if properties:
                     rpm_data.update(properties)
 
-            # Check if package has its own .fmf tree (upstream/Fedora tests)
-            fmf_version_file = ROOT_DIR / "rpms" / name / ".fmf" / "version"
-            rpm_data["has_upstream_tests"] = fmf_version_file.exists()
-
         rpms.append(rpm_data)
 
     return {
