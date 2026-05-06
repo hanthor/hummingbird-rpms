@@ -3,9 +3,6 @@
 {%- if rpm.imported %}
 {{ component(rpm) }}
 {{ image_repository(rpm) }}
-{%- if rpm.has_upstream_tests %}
-{{ upstream_integration_test_scenario(rpm) }}
-{%- endif %}
 {%- else %}
 # PENDING
 {%- endif %}
