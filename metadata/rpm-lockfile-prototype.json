@@ -1,0 +1,9 @@
+{
+  "modification_status": "new",
+  "release": "1",
+  "release_monitoring_project_id": 389884,
+  "source": "https://gitlab.com/redhat/hummingbird/rpms/rpm-lockfile-prototype.git",
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/konflux-ci/rpm-lockfile-prototype",
+  "version": "0.21.0"
+}
