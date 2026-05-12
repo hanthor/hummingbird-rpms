@@ -426,8 +426,6 @@ Patch475: 00475-cve-2025-15367.patch
 # direct call to the check function.
 Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
 
-<<<<<<< HEAD
-=======
 # 00329 #
 # Support OpenSSL FIPS mode
 # - In FIPS mode, OpenSSL wrappers are always used in hashlib
@@ -443,31 +441,6 @@ Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-diff
 #   The argument must be specified (instead of defaulting to 'md5').
 Patch329: 00329-fips.patch
 
-# 00479 # 97404b2cf62e545c2d41be7ccfed4e74da9ee665
-# CVE-2026-1502
-#
-# Reject CR/LF in HTTP tunnel request headers
-Patch479: 00479-cve-2026-1502.patch
-
-# 00480 # 858691f36890b33e713f330d24c6670329695c2e
-# CVE-2026-4786
-#
-# Fix webbrowser `%%action` substitution bypass of dash-prefix check
-Patch480: 00480-cve-2026-4786.patch
-
-# 00481 # 4c1fd39918651c4559a4835d42b86639a192c2c5
-# CVE-2026-5713
-#
-# Validate remote debug offset tables on load
-Patch481: 00481-cve-2026-5713.patch
-
-# 00482 # 69f14bc306fc62400d45565faa980b77858b9151
-# CVE-2026-6100
-#
-# Fix a possible UAF in {LZMA,BZ2,_Zlib}Decompressor
-Patch482: 00482-cve-2026-6100.patch
-
->>>>>>> hummingbird-local
 # 00486 # 5ae0b81b3135319f8d75a886fb7a11fa40ac11f4
 # gh-148646: Add --enable-prebuilt-jit-stencils configure flag
 Patch486: 00486-gh-148646-add---enable-prebuilt-jit-stencils-configure-flag.patch
