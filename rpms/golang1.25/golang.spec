@@ -167,6 +167,10 @@ Patch5:         0005-Skip-TestCrashDumpsAllThreads.patch
 Patch8:         fix_cgo_panic-with-gcc15-in-368.patch
 # TestTerminalSignal hangs in mock (podman --init)
 Patch10:        0010-Skip-TestTerminalSignal.patch
+# Embed CMVP #5247 certified FIPS module by default with host-auto detection.
+# FIPS activates automatically on FIPS-enabled hosts, stays off otherwise.
+# Users can override with GODEBUG=fips140=on or godebug fips140=auto in go.mod.
+Patch15:        0015-Default-GOFIPS140-certified-fips-auto.patch
 
 # Having documentation separate was broken
 Obsoletes:      %{name}-docs < 1.1-4
