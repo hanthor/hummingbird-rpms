@@ -1,0 +1,165 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <robert@hummingbird.dev>
+Date: Mon, 12 May 2026 00:00:00 +0000
+Subject: [PATCH] Default GOFIPS140 to certified with host-auto FIPS detection
+
+Embed the CMVP #5247 certified FIPS 140-3 module in every binary by
+default and enable host-auto detection: binaries check
+/proc/sys/crypto/fips_enabled at startup and activate FIPS mode only
+when the host kernel has FIPS enabled.
+
+This gives Hummingbird a single-binary story: every Go binary ships
+with certified crypto, and FIPS activates automatically on FIPS hosts.
+Users can also force FIPS with GODEBUG=fips140=on or opt into auto
+detection explicitly with godebug fips140=auto in go.mod.
+
+Based on golang-fips/go 001-host-fips-auto.patch, adapted for Go 1.26.
+
+Upstream: N/A (Hummingbird-specific; auto is not an upstream GODEBUG value)
+---
+ src/cmd/dist/build.go                                |  5 +++--
+ src/cmd/go/internal/load/godebug.go                  |  4 ++--
+ src/crypto/internal/fips140deps/godebug/godebug.go   | 12 +++++++++++-
+ src/crypto/internal/fips140deps/hostfips/hostfips.go  | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/run.bash                                         |  4 ++++
+ 5 files changed, 66 insertions(+), 5 deletions(-)
+ create mode 100644 src/crypto/internal/fips140deps/hostfips/hostfips.go
+
+diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
+--- a/src/cmd/dist/build.go
++++ b/src/cmd/dist/build.go
+@@ -179,7 +179,7 @@
+
+ 	b = os.Getenv("GOFIPS140")
+ 	if b == "" {
+-		b = "off"
++		b = "certified"
+ 	}
+ 	gofips140 = b
+
+@@ -245,7 +245,8 @@
+ 	os.Setenv("GOPPC64", goppc64)
+ 	os.Setenv("GORISCV64", goriscv64)
+ 	os.Setenv("GOROOT", goroot)
+-	os.Setenv("GOFIPS140", gofips140)
++	// Don't propagate GOFIPS140 to the bootstrap Go; it can't handle it.
++	os.Setenv("GOFIPS140", "off")
+
+ 	// Set GOBIN to GOROOT/bin. The meaning of GOBIN has drifted over time
+ 	// (see https://go.dev/issue/3269, https://go.dev/cl/183058,
+@@ -1544,6 +1545,7 @@
+ 	os.Setenv("CC", compilerEnvLookup("CC", defaultcc, goos, goarch))
+ 	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
+ 	os.Setenv("GOEXPERIMENT", goexperiment)
++	os.Setenv("GOFIPS140", gofips140)
+ 	// No need to enable PGO for toolchain2.
+ 	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
+ 	if debug {
+diff --git a/src/cmd/go/internal/load/godebug.go b/src/cmd/go/internal/load/godebug.go
+--- a/src/cmd/go/internal/load/godebug.go
++++ b/src/cmd/go/internal/load/godebug.go
+@@ -64,11 +64,11 @@
+ 	var m map[string]string
+
+ 	// If GOFIPS140 is set to anything but "off",
+-	// default to GODEBUG=fips140=on.
++	// default to GODEBUG=fips140=auto.
+ 	if fips140.Enabled() {
+ 		if m == nil {
+ 			m = make(map[string]string)
+ 		}
+-		m["fips140"] = "on"
++		m["fips140"] = "auto"
+ 	}
+
+diff --git a/src/crypto/internal/fips140deps/godebug/godebug.go b/src/crypto/internal/fips140deps/godebug/godebug.go
+--- a/src/crypto/internal/fips140deps/godebug/godebug.go
++++ b/src/crypto/internal/fips140deps/godebug/godebug.go
+@@ -5,6 +5,7 @@
+ package godebug
+
+ import (
++	"crypto/internal/fips140deps/hostfips"
+ 	"internal/godebug"
+ )
+
+@@ -19,5 +20,14 @@
+ }
+
+ func Value(name string) string {
+-	return godebug.New(name).Value()
++	v := godebug.New(name).Value()
++	// When fips140=auto is set, check host FIPS mode and resolve to
++	// "on" if enabled, or "" (off) if not.
++	if name == "#fips140" && v == "auto" {
++		if hostfips.Enabled() {
++			return "on"
++		}
++		return ""
++	}
++	return v
+ }
+diff --git a/src/crypto/internal/fips140deps/hostfips/hostfips.go b/src/crypto/internal/fips140deps/hostfips/hostfips.go
+new file mode 100644
+--- /dev/null
++++ b/src/crypto/internal/fips140deps/hostfips/hostfips.go
+@@ -0,0 +1,46 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package hostfips
++
++import (
++	"os"
++	"sync"
++)
++
++var (
++	enabled     bool
++	enabledOnce sync.Once
++)
++
++// Enabled returns true if the host system has FIPS mode enabled,
++// or if GOLANG_NATIVE_HOSTFIPS_OVERRIDE=1 is set for testing.
++// It checks /proc/sys/crypto/fips_enabled on Linux.
++// The result is cached after the first call.
++func Enabled() bool {
++	enabledOnce.Do(func() {
++		if os.Getenv("GOLANG_NATIVE_HOSTFIPS_OVERRIDE") == "1" {
++			enabled = true
++			return
++		}
++		enabled = checkHostFIPS()
++	})
++	return enabled
++}
++
++func checkHostFIPS() bool {
++	data, err := os.ReadFile("/proc/sys/crypto/fips_enabled")
++	if err != nil {
++		if os.IsNotExist(err) {
++			return false
++		}
++		os.Stderr.WriteString("error reading /proc/sys/crypto/fips_enabled: " + err.Error() + "\n")
++		os.Exit(1)
++	}
++	return len(data) > 0 && data[0] == '1'
++}
+diff --git a/src/run.bash b/src/run.bash
+--- a/src/run.bash
++++ b/src/run.bash
+@@ -32,6 +32,10 @@
+ fi
+
+ export GOENV=off
++# Prevent the go binary from trying to extract a FIPS snapshot into GOPATH,
++# which will be set to /nonexist-gopath below. FIPS-specific tests set
++# GOFIPS140 and GOMODCACHE explicitly in their own environments.
++export GOFIPS140=off
+ eval $(../bin/go tool dist env)
+
+ unset CDPATH	# in case user has it set
+--
+2.50.1
+
