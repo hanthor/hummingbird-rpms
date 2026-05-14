@@ -34,7 +34,7 @@ images and filesystems.
 
 %build
 %global gomodulesmode GO111MODULE=on
-%global goldflags -X main.version=%{version} -X main.gitDescription=v%{version}
+%global goldflags -X main.version=%{version}
 for cmd in cmd/* ; do
   %gobuild -o %{gobuilddir}/bin/$(basename $cmd) %{goipath}/$cmd
 done
