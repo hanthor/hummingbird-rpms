@@ -371,7 +371,7 @@ Requires: libgcc%{_isa}
 # Preserve the historic installation order.
 Requires(pre): libgcc%{_isa}
 
-Requires: glibc-common = %{version}-%{release}
+Recommends: glibc-common = %{version}-%{release}
 
 # Various components (regex, glob) have been imported from gnulib.
 Provides: bundled(gnulib)
@@ -598,6 +598,7 @@ which is highly discouraged.
 %package common
 Summary: Common binaries and locale data for glibc
 Requires: %{name} = %{version}-%{release}
+Requires: %{name}-locale-posix = %{version}-%{release}
 Recommends: tzdata >= 2003a
 
 %if "%{_sbindir}" == "%{_bindir}"
@@ -633,6 +634,18 @@ call_ldconfig()
 %undefine __brp_ldconfig
 
 ######################################################################
+
+##############################################################################
+# glibc "locale-posix" sub-package
+##############################################################################
+%package locale-posix
+Summary: C, POSIX, and C.UTF-8 locale data for %{name}
+Requires: %{name} = %{version}-%{release}
+
+%description locale-posix
+Minimal locale data providing C, POSIX, and C.UTF-8 locales.
+Required by most glibc-linked applications. Install this for
+language-neutral locale support without full glibc-common.
 
 %package locale-source
 Summary: The sources for the locales
@@ -1029,7 +1042,7 @@ Provides: %{name}-langpack = %{version}-%{release}
 Summary: Minimal language packs for %{name}.
 Provides: glibc-langpack = %{version}-%{release}
 Requires: %{name} = %{version}-%{release}
-Requires: %{name}-common = %{version}-%{release}
+Requires: %{name}-locale-posix = %{version}-%{release}
 %description minimal-langpack
 This is a Meta package that is used to install minimal language packs.
 This package ensures you can use C, POSIX, or C.UTF-8 locales, but
@@ -2274,8 +2287,10 @@ update_gconv_modules_cache ()
 %dir %{_datarootdir}/i18n
 %dir %{_datarootdir}/i18n/locales
 %dir %{_datarootdir}/i18n/charmaps
-%dir %{_prefix}/lib/locale
 %{_datarootdir}/locale/locale.alias
+
+%files locale-posix
+%dir %{_prefix}/lib/locale
 %{_prefix}/lib/locale/C.utf8
 
 %files all-langpacks
