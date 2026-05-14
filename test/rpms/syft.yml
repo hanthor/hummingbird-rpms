@@ -19,7 +19,7 @@ syft-version:
         dnf install -y /tmp/test.rpm
 
         # Verify version is embedded via ldflags (not "[not provided]")
-        version=$(syft version | grep "^Version:" | awk "{print \$2}")
+        version=$(syft version | grep "^Version:" | cut -d" " -f2)
         rpm_version=$(rpm -q --queryformat "%{VERSION}" syft)
         if [[ "${version}" != "${rpm_version}" ]]; then
           echo "Error: syft reports version \"${version}\", expected \"${rpm_version}\""
