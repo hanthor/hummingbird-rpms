@@ -114,7 +114,7 @@
 
 Name:           %{basepackagename}1.26
 Version:        %{go_version}
-Release:        2.1%{?dist}
+Release:        2.2%{?dist}
 Summary:        The Go Programming Language
 # source tree includes several copies of Mark.Twain-Tom.Sawyer.txt under Public Domain
 License:        BSD-3-Clause AND LicenseRef-Fedora-Public-Domain
@@ -168,6 +168,10 @@ Patch10:        0010-Skip-TestTerminalSignal.patch
 # FIPS activates automatically on FIPS-enabled hosts, stays off otherwise.
 # Users can override with GODEBUG=fips140=on or godebug fips140=auto in go.mod.
 Patch15:        0015-Default-GOFIPS140-certified-fips-auto.patch
+# Backport of https://github.com/golang/go/commit/be193f3a97dce50bad1cf6100aa662c2f6ba57f7
+# go get fails when GOFIPS140 is set to a snapshot version (e.g. certified).
+# IsStandardPackage uses os.ReadDir which can't see fsys.Bind overlays.
+Patch20:        0020-Fix-go-get-with-GOFIPS140-snapshot.patch
 
 # Having documentation separate was broken
 Obsoletes:      %{name}-docs < 1.1-4
@@ -363,6 +367,7 @@ mkdir -p $RPM_BUILD_ROOT%{goroot}
 # https://code.google.com/p/go/issues/detail?id=5830
 cp -apv api bin doc lib pkg src misc test go.env VERSION \
    $RPM_BUILD_ROOT%{goroot}
+
 echo "== 2 =="
 # bz1099206
 find $RPM_BUILD_ROOT%{goroot}/src -exec touch -r $RPM_BUILD_ROOT%{goroot}/VERSION "{}" \;
