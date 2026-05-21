@@ -28875,6 +28875,8 @@ spec:
       value: '{{revision}}'
     - name: image-expires-after
       value: 5d
+    - name: syft-image
+      value: quay.io/hummingbird-community/syft:latest-builder
     - name: ociStorage
       value: quay.io/redhat-user-workloads/hummingbird-tenant/syft-main:on-mr-{{pull_request_number}}-{{revision}}
     - name: package-name
