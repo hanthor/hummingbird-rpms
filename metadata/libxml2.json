@@ -2,11 +2,11 @@
   "branch": "rawhide",
   "modification_reason": "Update to 2.15.3 (ahead of Fedora)",
   "modification_status": "modified",
-  "release": "0.1",
-  "sha": "93d41c31ba576bf339d17ba20537fffd45c0af46",
-  "source": "https://src.fedoraproject.org/rpms/libxml2.git",
+  "release": "1",
   "release_monitoring_project_id": 1783,
+  "sha": "1db139421303d8ff73c7eff0fd6230999632341a",
+  "source": "https://src.fedoraproject.org/rpms/libxml2.git",
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.gnome.org/GNOME/libxml2",
-  "version": "2.15.3"
+  "version": "2.13.9"
 }

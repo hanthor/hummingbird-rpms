@@ -2,15 +2,24 @@
 %global majorminor %(echo %{version} | cut -d. -f1-2)
 
 Name:           libxml2
+<<<<<<< HEAD
+Version:        2.13.9
+Release:        1%{?dist}
+=======
 Version:        2.15.3
 Release:        0.1%{?dist}
+>>>>>>> hummingbird-local
 Summary:        Library providing XML and HTML support
 
 # list.c, dict.c and few others use ISC-Veillard
 # the conformance test suite data in Source1 is covered by W3C
 License:        MIT AND ISC-Veillard AND W3C
 URL:            https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home
+<<<<<<< HEAD
+Source0:        https://download.gnome.org/sources/%{name}/2.13/%{name}-%{version}.tar.xz
+=======
 Source0:        https://download.gnome.org/sources/%{name}/%{majorminor}/%{name}-%{version}.tar.xz
+>>>>>>> hummingbird-local
 # https://www.w3.org/XML/Test/xmlconf-20080827.html
 Source1:        https://www.w3.org/XML/Test/xmlts20080827.tar.gz
 Patch0:         libxml2-multilib.patch
@@ -119,10 +128,19 @@ rm -vrf %{buildroot}%{_datadir}/doc/
 tar -xzvf %{SOURCE1}
 %make_build check
 rm -rf xmlconf
+<<<<<<< HEAD
+# Schema tests use the schema test suite.
+cp %{SOURCE2} %{SOURCE3} xstc/
+pushd xstc
+mkdir Tests
+%make_build tests
+popd
+=======
 # As the directory is copied to the devel subpackage, remove any build
 # artifacts.
 make -C example clean
 rm -rf example/.deps example/Makefile
+>>>>>>> hummingbird-local
 
 %ldconfig_scriptlets -n libxml2-%{soversion}
 
@@ -139,7 +157,16 @@ rm -rf example/.deps example/Makefile
 %{_libdir}/libxml2.so.%{soversion}*
 
 %files devel
+<<<<<<< HEAD
+%doc doc/*.html
+%doc doc/libxml2-api.xml.gz
+%dir %{_datadir}/gtk-doc
+%dir %{_datadir}/gtk-doc/html
+%{_datadir}/aclocal/libxml.m4
+%{_datadir}/gtk-doc/html/libxml2/
+=======
 %doc example
+>>>>>>> hummingbird-local
 %{_includedir}/libxml2/
 %{_libdir}/libxml2.so
 %{_libdir}/pkgconfig/libxml-2.0.pc
@@ -159,6 +186,9 @@ rm -rf example/.deps example/Makefile
 %{python3_sitelib}/__pycache__/drv_libxml2.*
 
 %changelog
+* Sun May 24 2026 David King <amigadave@amigadave.com> - 2.13.9-1
+- Update to 2.13.9 (#2459431)
+
 * Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 2.12.10-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
 
