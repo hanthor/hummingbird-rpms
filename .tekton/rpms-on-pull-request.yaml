@@ -24658,7 +24658,7 @@ spec:
         value: pipeline
       - name: bundle
         # renovate: datasource=docker depName=quay.io/hummingbird-ci/rpmbuild-pipeline
-        value: "quay.io/hummingbird-ci/rpmbuild-pipeline@sha256:b9ce8a02047f0d27361c0172fe6c1eb4f2c7a196be133d19d6d67edd20b13de7"
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline@sha256:c2a5cff5145786d931222644c3baa9814c57f8e3e249af750bfc0352fe4c8d31"
   taskRunTemplate:
     serviceAccountName: build-pipeline-postgresql17-main
   timeouts:
