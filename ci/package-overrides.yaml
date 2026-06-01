@@ -203,6 +203,10 @@ rust-rpm-sequoia:
   # Tracked from CentOS Stream c10s instead of Fedora
   forked_from: "https://gitlab.com/redhat/centos-stream/rpms"
 
+setup:
+  extra_params:
+    pulp-target-arch-repo: "true"
+
 scap-security-guide:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
