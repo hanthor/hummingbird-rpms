@@ -7,7 +7,7 @@
 %endif
 
 Name:           caddy
-Version:        2.11.3
+Version:        2.11.4
 Release:        0.1%{?dist}
 Summary:        Web server with automatic HTTPS
 URL:            https://caddyserver.com
