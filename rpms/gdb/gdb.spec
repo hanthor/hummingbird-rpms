@@ -157,7 +157,7 @@ BuildRequires: zlib-devel%{buildisa} libselinux-devel%{buildisa}
   %global __python %{__python3}
 BuildRequires: python3-devel%{buildisa}
 %endif
-# PDF docs disabled: texlive-xetex requires libicuuc.so.77, conflicts with libicu-78 in Hummingbird
+# PDF docs not required in Hummingbird
 # BuildRequires: texinfo-tex
 # BuildRequires: texlive-collection-latexrecommended
 # Permit rebuilding *.[0-9] files even if they are distributed in gdb-*.tar:
