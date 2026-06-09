@@ -628,6 +628,8 @@ spec:
           contentType: rpm
         - name: openssl-fips-provider-main
           contentType: rpm
+        - name: opentelemetry-collector-contrib-main
+          contentType: rpm
         - name: oras-main
           contentType: rpm
         - name: ostree-main
