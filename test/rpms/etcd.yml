@@ -1,0 +1,130 @@
+etcd-binaries:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "etcd" ]]; then
+      echo "Skipping: only runs on etcd (got: ${rpm_name})"
+      exit 0
+    fi
+    "${TEST_ENGINE}" run --rm \
+      -v "${TEST_RPM}:/tmp/test.rpm:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        dnf install -y /tmp/test.rpm
+        for binary in etcd etcdctl etcdutl; do
+          if ! command -v "${binary}" &>/dev/null; then
+            echo "FAIL: ${binary} not found in PATH"
+            exit 1
+          fi
+          echo "PASS: ${binary} installed at $(command -v ${binary})"
+        done
+      '
+
+etcd-versions:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "etcd" ]]; then
+      echo "Skipping: only runs on etcd (got: ${rpm_name})"
+      exit 0
+    fi
+    "${TEST_ENGINE}" run --rm \
+      -v "${TEST_RPM}:/tmp/test.rpm:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        dnf install -y /tmp/test.rpm
+        rpm_version=$(rpm -q --queryformat "%{VERSION}" etcd)
+        failed=0
+
+        etcd_ver=$(etcd --version 2>&1 | grep "^etcd Version:" | sed "s/.*: //")
+        if [[ -z "${etcd_ver}" ]]; then
+          echo "FAIL: etcd --version produced no parseable output"
+          failed=1
+        elif [[ "${etcd_ver}" == "${rpm_version}" ]]; then
+          echo "PASS: etcd version ${etcd_ver}"
+        else
+          echo "FAIL: etcd reports \"${etcd_ver}\", expected \"${rpm_version}\""
+          failed=1
+        fi
+
+        etcdctl_ver=$(etcdctl version 2>&1 | grep "^etcdctl version:" | sed "s/.*: //")
+        if [[ -z "${etcdctl_ver}" ]]; then
+          echo "FAIL: etcdctl version produced no parseable output"
+          failed=1
+        elif [[ "${etcdctl_ver}" == "${rpm_version}" ]]; then
+          echo "PASS: etcdctl version ${etcdctl_ver}"
+        else
+          echo "FAIL: etcdctl reports \"${etcdctl_ver}\", expected \"${rpm_version}\""
+          failed=1
+        fi
+
+        etcdutl_ver=$(etcdutl version 2>&1 | grep "^etcdutl version:" | sed "s/.*: //")
+        if [[ -z "${etcdutl_ver}" ]]; then
+          echo "FAIL: etcdutl version produced no parseable output"
+          failed=1
+        elif [[ "${etcdutl_ver}" == "${rpm_version}" ]]; then
+          echo "PASS: etcdutl version ${etcdutl_ver}"
+        else
+          echo "FAIL: etcdutl reports \"${etcdutl_ver}\", expected \"${rpm_version}\""
+          failed=1
+        fi
+
+        exit "${failed}"
+      '
+
+etcd-kv-operations:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "etcd" ]]; then
+      echo "Skipping: only runs on etcd (got: ${rpm_name})"
+      exit 0
+    fi
+    "${TEST_ENGINE}" run --rm \
+      -v "${TEST_RPM}:/tmp/test.rpm:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        dnf install -y /tmp/test.rpm
+
+        etcd --data-dir=/tmp/etcd-data >/tmp/etcd.log 2>&1 &
+        ETCD_PID=$!
+        trap "kill ${ETCD_PID} 2>/dev/null || true" EXIT
+
+        ready=0
+        for i in {1..30}; do
+          if etcdctl endpoint health 2>/dev/null; then
+            ready=1
+            break
+          fi
+          sleep 1
+        done
+
+        if [[ "${ready}" -eq 0 ]]; then
+          echo "FAIL: etcd did not become healthy within 30s"
+          cat /tmp/etcd.log
+          exit 1
+        fi
+        echo "PASS: etcd healthy"
+
+        failed=0
+
+        etcdctl put testkey "hello-etcd" >/dev/null
+        val=$(etcdctl get testkey --print-value-only)
+        if [[ "${val}" == "hello-etcd" ]]; then
+          echo "PASS: put/get"
+        else
+          echo "FAIL: expected \"hello-etcd\", got \"${val}\""
+          failed=1
+        fi
+
+        etcdctl del testkey >/dev/null
+        val=$(etcdctl get testkey --print-value-only)
+        if [[ -z "${val}" ]]; then
+          echo "PASS: delete"
+        else
+          echo "FAIL: key still present after delete"
+          failed=1
+        fi
+
+        exit "${failed}"
+      '
