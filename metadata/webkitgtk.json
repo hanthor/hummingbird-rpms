@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "2",
+  "sha": "e100ee7a17fa483c4993662c82978c958b4d96bc",
+  "source": "https://src.fedoraproject.org/rpms/webkitgtk.git",
+  "upstream_source": "https://github.com/WebKit/WebKit",
+  "version": "2.53.3"
+}

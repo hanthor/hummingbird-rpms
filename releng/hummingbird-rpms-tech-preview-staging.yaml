@@ -968,6 +968,8 @@ spec:
           contentType: rpm
         - name: vmaf-main
           contentType: rpm
+        - name: webkitgtk-main
+          contentType: rpm
         - name: which-main
           contentType: rpm
         - name: xcaddy-main
