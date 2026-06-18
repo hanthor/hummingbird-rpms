@@ -1,0 +1,12 @@
+# Download the main source tarball, regenerate the Go vendor tarball,
+# download the upstream Jaeger UI asset bundle, and print the resulting
+# filenames for lookaside upload.
+download_sources: |
+  curl -fSL -o "jaeger-${UPDATE_NEW_VERSION}.tar.gz" \
+    "https://github.com/jaegertracing/jaeger/archive/v${UPDATE_NEW_VERSION}/jaeger-${UPDATE_NEW_VERSION}.tar.gz" >&2
+  bash ./create-vendor-tarball.sh "${UPDATE_NEW_VERSION}" >&2
+  curl -fSL -o "jaeger-ui-assets-${UPDATE_NEW_VERSION}.tar.gz" \
+    "https://github.com/jaegertracing/jaeger-ui/releases/download/v${UPDATE_NEW_VERSION}/assets.tar.gz" >&2
+  echo "jaeger-${UPDATE_NEW_VERSION}.tar.gz"
+  echo "jaeger-${UPDATE_NEW_VERSION}-vendor.tar.bz2"
+  echo "jaeger-ui-assets-${UPDATE_NEW_VERSION}.tar.gz"
