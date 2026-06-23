@@ -96,6 +96,13 @@ httpd:
 jaeger:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+kafka4.3:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  timeout_hours: 8
+  build_platforms:
+    - "linux-d160-c8xlarge/amd64"
+    - "linux-d160-c8xlarge/arm64"
+
 java-21-openjdk-portable:
   timeout_hours: 8
   build_platforms:
