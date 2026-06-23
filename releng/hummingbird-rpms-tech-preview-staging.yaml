@@ -374,6 +374,8 @@ spec:
           contentType: rpm
         - name: json-c-main
           contentType: rpm
+        - name: kafka4-3-main
+          contentType: rpm
         - name: kbd-main
           contentType: rpm
         - name: kernel-headers-main

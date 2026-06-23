@@ -1,0 +1,44 @@
+---
+# Tests specific to the kafka package
+
+kafka-files-installed:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "kafka4.3" ]]; then
+      echo "Skipping: This test only runs on kafka (got: ${rpm_name})"
+      exit 0
+    fi
+
+    file_list=$(rpm -qlp "${TEST_RPM}")
+
+    for expected in \
+      /usr/lib/kafka4.3/bin/kafka-server-start.sh \
+      /usr/lib/kafka4.3/bin/kafka-topics.sh \
+      /usr/lib/kafka4.3/bin/kafka-console-producer.sh \
+      /usr/lib/kafka4.3/bin/kafka-console-consumer.sh \
+      /usr/lib/kafka4.3/bin/kafka-storage.sh \
+      /usr/lib/kafka4.3/config/server.properties; do
+      if ! echo "${file_list}" | grep -qF "${expected}"; then
+        TEST_FAIL "Expected file not found in RPM: ${expected}"
+      fi
+    done
+
+    echo "PASS: All expected Kafka files present in RPM"
+
+no-windows-files:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "kafka4.3" ]]; then
+      echo "Skipping: This test only runs on kafka (got: ${rpm_name})"
+      exit 0
+    fi
+
+    file_list=$(rpm -qlp "${TEST_RPM}")
+    if echo "${file_list}" | grep -q '\.bat$'; then
+      TEST_FAIL "Windows .bat files found in RPM"
+    fi
+    if echo "${file_list}" | grep -q '/windows/'; then
+      TEST_FAIL "Windows directory found in RPM"
+    fi
+
+    echo "PASS: No Windows files in RPM"
