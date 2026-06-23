@@ -1,0 +1,8 @@
+{
+  "cve_product": "Apache Software Foundation / Apache Kafka",
+  "modification_status": "native",
+  "release": "1",
+  "track_upstream": "4.3",
+  "upstream_repo": "https://github.com/apache/kafka",
+  "version": "4.3.0"
+}
