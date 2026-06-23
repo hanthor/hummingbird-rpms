@@ -1,0 +1,7 @@
+{
+  "modification_status": "native",
+  "release": "1",
+  "track_upstream": "4",
+  "upstream_repo": "https://github.com/apache/kafka",
+  "version": "4.3.0"
+}
