@@ -3,3 +3,5 @@ addFilter(r" spelling-error \('((lint|formatt)er|isort|py(docstyle|upgrade)|auto
 # We *could* add a man page, perhaps. There are a number of subcommands, and it
 # would not be easy to keep it up to date.
 addFilter(r" no-manual-page-for-binary ruff$")
+# Indeed, the Python subpackage naturally has no documentation of its own.
+addFilter(r"python3-ruff\.noarch: W: no-documentation$")

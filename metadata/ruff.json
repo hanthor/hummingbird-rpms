@@ -3,8 +3,8 @@
   "modification_reason": "Pre-existing modification - requires review",
   "modification_status": "modified",
   "release": "2",
-  "sha": "3b2500d06c9c0f2b7c608dec4f8a16956dfbb6bc",
+  "sha": "c5e4323acd626d2621e03e6e834e967c7b4bfcc5",
   "source": "https://src.fedoraproject.org/rpms/ruff.git",
   "upstream_repo": "https://github.com/astral-sh/ruff",
-  "version": "0.15.16"
+  "version": "0.15.12"
 }
