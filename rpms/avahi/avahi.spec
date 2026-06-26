@@ -60,7 +60,7 @@
 
 Name:             avahi
 Version:          0.9%{?rc:~%{rc}}
-Release:          0.1%{?dist}
+Release:          0.2%{?dist}
 Summary:          Local network service discovery
 License:          LGPL-2.1-or-later AND LGPL-2.0-or-later AND BSD-2-Clause-Views AND MIT
 URL:              http://avahi.org
@@ -138,6 +138,13 @@ Source0:          https://github.com/avahi/avahi/releases/download/v%{version_no
 %endif
 
 ## upstream patches
+# CVE-2025-59529: simple protocol server accepts unlimited connections (local DoS)
+# Backport of https://github.com/avahi/avahi/pull/808 targeted for v0.9.1.
+# Upstream PR still has open review issues related to FreeBSD/NetBSD portability
+# (Valgrind warnings on FreeBSD, struct xucred handling, NetBSD build failures).
+# Those issues do not affect Hummingbird which targets Linux exclusively; on Linux
+# the patch uses SO_PEERCRED which is well-established (same approach as dbus-daemon).
+Patch1: avahi-0.9-CVE-2025-59529-simple-client-limits.patch
 
 ## downstream patches
 Patch100: avahi-0.6.30-mono-libdir.patch
