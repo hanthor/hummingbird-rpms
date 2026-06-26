@@ -1,11 +1,13 @@
 Summary: X.Org X11 libXpm runtime library
 Name: libXpm
 Version: 3.5.17
-Release: 7.1%{?dist}
+Release: 7.2%{?dist}
 License: MIT AND X11-distribute-modifications-variant
 URL: http://www.x.org
 
 Source0: https://www.x.org/pub/individual/lib/%{name}-%{version}.tar.xz
+
+Patch0: CVE-2026-4367.patch
 
 BuildRequires: xorg-x11-util-macros
 BuildRequires: autoconf automake libtool make
@@ -25,6 +27,7 @@ X.Org X11 libXpm development package
 
 %prep
 %setup -q
+%patch -P0 -p1
 
 %build
 autoreconf -v --install --force
@@ -57,6 +60,9 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_mandir}/man3/*.3*
 
 %changelog
+* Fri Jun 26 2026 Prarit Bhargava <prarit@redhat.com> - 3.5.17-7.2
+- Fix CVE-2026-4367: out-of-bounds read in xpmNextWord() (rhbz#2448984)
+
 * Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 3.5.17-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
 
