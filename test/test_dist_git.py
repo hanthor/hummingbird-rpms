@@ -1284,6 +1284,8 @@ def test_update_merge_conflict(workdir: Path, upstream_repos: dict[str, Path]) -
         state = json.load(f)
     assert state['package'] == 'chocolate'
     assert 'Update chocolate' in state['commit_msg']
+    assert 'metadata' in state, "State file should contain updated metadata for --continue"
+    assert state['metadata']['version'] == '11'
 
     # Verify NO new commit was created (conflicts left in working tree)
     commits_after = subprocess.run(
@@ -1293,12 +1295,17 @@ def test_update_merge_conflict(workdir: Path, upstream_repos: dict[str, Path]) -
     # Initial commit, Import, Local modification — no Update commit
     assert commits_after == "3"
 
-    # Verify metadata was staged (updated to new version)
+    # Verify metadata was NOT staged (HUM-2672: prevents leak into subsequent commits)
     metadata_status = subprocess.run(
         ['git', 'diff', '--cached', '--name-only'],
         cwd=workdir, capture_output=True, text=True, check=True
     ).stdout.strip()
-    assert 'metadata/chocolate.json' in metadata_status
+    assert 'metadata/chocolate.json' not in metadata_status
+
+    # Verify metadata on disk was not modified (HUM-2672: never written on conflict path)
+    with open(workdir / 'metadata' / 'chocolate.json') as f:
+        disk_metadata = json.load(f)
+    assert disk_metadata['version'] == '10', "Metadata on disk should remain at pre-update version"
 
     # Verify spec file has conflict markers in working tree
     spec_content = chocolate_spec.read_text()
@@ -3597,6 +3604,12 @@ def test_update_continue(workdir: Path, upstream_repos: dict[str, Path]) -> None
     committed_spec = chocolate_spec.read_text()
     assert '<<<<<<' not in committed_spec
     assert 'License: MIT' in committed_spec
+
+    # Verify metadata was restored to the updated version (HUM-2672)
+    with open(workdir / 'metadata' / 'chocolate.json') as f:
+        committed_metadata = json.load(f)
+    assert committed_metadata['version'] == '11', \
+        "Metadata committed by --continue should contain the updated version"
 
 
 def test_update_continue_no_state(workdir: Path, upstream_repos: dict[str, Path]) -> None:
