@@ -7905,7 +7905,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang-fips1.25/***, test/rpms/golang-fips1.25.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang-fips1.25/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -7936,15 +7936,11 @@ spec:
         - "linux/x86_64"
         - "linux/arm64"
     - name: specfile
-      value: "golang.spec"
+      value: "golang-fips1.25.spec"
     - name: monorepo-subdir
       value: "rpms/golang-fips1.25"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
-    - name: dist-git-client-configdir
-      value: "mock/"
-    - name: forked-from
-      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
