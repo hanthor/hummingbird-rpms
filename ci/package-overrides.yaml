@@ -64,6 +64,12 @@ dotnet9.0:
 dotnet10.0:
   timeout_hours: 12
 
+duckdb1.4:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+duckdb1.5:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 expat:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
