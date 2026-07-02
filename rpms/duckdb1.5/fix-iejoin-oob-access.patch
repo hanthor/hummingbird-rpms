@@ -1,0 +1,12 @@
+--- a/src/execution/operator/join/physical_iejoin.cpp	2026-07-09 05:23:03.797395967 -0400
++++ b/src/execution/operator/join/physical_iejoin.cpp	2026-07-09 05:23:14.637274872 -0400
+@@ -1367,6 +1367,9 @@
+ 
+ bool IEJoinGlobalSourceState::TryPrepareNextStage() {
+ 	//	Inside lock
++	if (stage >= IEJoinSourceStage::DONE) {
++		return false;
++	}
+ 	const auto stage_count = GetStageCount(stage);
+ 	const auto stage_next = GetStageNext(stage).load();
+ 	if (stage_next >= stage_count) {
