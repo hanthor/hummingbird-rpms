@@ -5178,7 +5178,7 @@ metadata:
     test.appstudio.openshift.io/comment_strategy: disable_all
   name: hello-main
 spec:
-  application: private-example-rpms-main
+  application: rpms-main
   componentName: hello-main
   containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/hello-main
   source:
@@ -5191,7 +5191,7 @@ apiVersion: appstudio.redhat.com/v1alpha1
 kind: ImageRepository
 metadata:
   labels:
-    appstudio.redhat.com/application: private-example-rpms-main
+    appstudio.redhat.com/application: rpms-main
     appstudio.redhat.com/component: hello-main
   name: hello-main
 spec:
