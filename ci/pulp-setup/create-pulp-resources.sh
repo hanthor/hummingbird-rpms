@@ -183,9 +183,7 @@ for PULP_REPOSITORY in "${PULP_REPOSITORIES[@]}"; do
       echo "🆕 Repository '${PULP_REPOSITORY}' not found. Creating..."
       pulp "${PULP_CONFIG_OPT[@]}" --domain "${PULP_DOMAIN}" "${PULP_TYPE}" repository create --name "${PULP_REPOSITORY}"
       repo_created=true
-      if [[ "${PULP_TYPE}" == "rpm" ]]; then
-        pulp "${PULP_CONFIG_OPT[@]}" --domain "${PULP_DOMAIN}" "${PULP_TYPE}" repository update --name "${PULP_REPOSITORY}" --autopublish
-      fi
+      pulp "${PULP_CONFIG_OPT[@]}" --domain "${PULP_DOMAIN}" "${PULP_TYPE}" repository update --name "${PULP_REPOSITORY}" --autopublish
     fi
     if [[ "${PULP_TYPE}" == "file" && -n "${PULP_FILE_RETAIN_REPO_VERSIONS}" ]]; then
       if [[ "${repo_created}" == true ]]; then
