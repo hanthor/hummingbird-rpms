@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Disable libssh2 for FIPS compliance, following RHEL",
+  "modification_reason": "Disable libssh2 for FIPS compliance, following RHEL; backport fixes for CVE-2026-58494, CVE-2026-59869, CVE-2026-59887",
   "modification_status": "modified",
   "release": "1",
   "sha": "045fc99692a6653c1bd092c0be866a1770dc06da",

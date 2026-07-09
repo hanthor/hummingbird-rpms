@@ -1,6 +1,6 @@
 Name:           rust
 Version:        1.96.1
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        The Rust Programming Language
 License:        (Apache-2.0 OR MIT) AND (Artistic-2.0 AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0)
 # ^ written as: (rust itself) and (bundled libraries)
@@ -148,6 +148,9 @@ Source103:      cargo_vendor.prov
 
 # Disable cargo->libgit2->libssh2 on RHEL, as it's not approved for FIPS (rhbz1732949)
 Patch100:       rustc-1.96.1-disable-libssh2.patch
+
+# Update vendored lockfiles to fixed dependency versions for CVE tracking.
+Patch101:       0001-Update-vendored-lockfiles-for-CVE-fixes.patch
 
 # Get the Rust triple for any architecture and ABI.
 %{lua: function rust_triple(arch, abi)
@@ -721,6 +724,7 @@ test "$(cut -d' ' -f1 ./version)" = "%{lua: print((rpm.expand('%version'):gsub('
 %if %with disabled_libssh2
 %patch -P100 -p1
 %endif
+%patch -P101 -p1
 
 # Use our explicit python3 first
 sed -i.try-python -e '/^try python3 /i try "%{__python3}" "$@"' ./configure
