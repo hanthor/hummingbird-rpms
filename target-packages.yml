@@ -134,6 +134,7 @@ packages:
   - dotnet9.0
   - doxygen
   - drpm
+  - duckdb1.5
   - dwz
   - e2fsprogs
   - ecj
