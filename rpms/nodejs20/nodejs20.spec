@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:20.20.2-%{autorelease} -p
+%nodejs_define_version node 1:20.20.2-3.1%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -159,6 +159,7 @@ Source101:      nodejs.srpm.macros
 0002-Disable-FIPS-options.patch
 0003-Fix-missing-cstdint-include.patch
 0004-deps-update-nghttp2-to-1.68.1.patch
+CVE-2026-59869-js-yaml-merge-keys.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
