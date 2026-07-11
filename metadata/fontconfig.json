@@ -2,9 +2,9 @@
   "branch": "rawhide",
   "modification_reason": "Update to 2.17.1 to fix CVE-2026-34085 (off-by-one OOB write in FcFontCapabilities)",
   "modification_status": "modified",
-  "release": "4",
-  "sha": "29c72e43b9bfe294d0c52f5030610e5c3e914b8c",
+  "release": "2",
+  "sha": "79246433fc337426d6ef47fef887362f6623902b",
   "source": "https://src.fedoraproject.org/rpms/fontconfig.git",
   "upstream_repo": "https://gitlab.freedesktop.org/fontconfig/fontconfig",
-  "version": "2.17.1"
+  "version": "2.18.2"
 }
