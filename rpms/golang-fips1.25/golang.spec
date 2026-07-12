@@ -115,11 +115,11 @@
 %global go_api 1.25
 # Use only for prerelease versions
 #global go_prerelease rc3
-%global go_patch 9
+%global go_patch 12
 %global go_version %{go_api}%{?go_patch:.%{go_patch}}%{?go_prerelease:~%{go_prerelease}}
 %global go_source %{go_api}%{?go_patch:.%{go_patch}}%{?go_prerelease}
 # Go FIPS package release
-%global pkg_release 2
+%global pkg_release 1
 
 # For rpmdev-bumpspec and releng automation.
 %global baserelease 1
@@ -222,8 +222,6 @@ Patch6:         0006-Default-to-ld.bfd-on-ARM64.patch
 Patch7:         revert_dwarf5.patch
 # Skip TestTerminalSignal in podman containers - wait4() hangs with --init
 Patch10:        0010-Skip-TestTerminalSignal.patch
-# CVE-2026-42501: reject sumdb response lacking module hash
-Patch11:        0011-cmd-go-reject-sumdb-response-lacking-module-hash.patch
 
 # Having documentation separate was broken
 Obsoletes:      %{name}-docs < 1.1-4

@@ -1,12 +1,12 @@
 {
   "branch": "c10s",
   "cve_product": "Go ",
-  "modification_reason": "Exclude go-toolset meta-package; backport CVE-2026-42501 fix",
+  "modification_reason": "Exclude go-toolset meta-package; update to 1.25.12 for CVE-2026-42505, CVE-2026-39822",
   "modification_status": "modified",
   "release": "0.1",
   "sha": "170a5b7e084ecbc9ef79a914bfc39938bc077d00",
   "source": "https://gitlab.com/redhat/centos-stream/rpms/golang.git",
   "upstream_branch": "release-branch.go1.25",
   "upstream_repo": "https://github.com/golang/go",
-  "version": "1.25.9"
+  "version": "1.25.12"
 }
