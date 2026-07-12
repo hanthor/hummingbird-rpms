@@ -4,13 +4,8 @@
 
 Summary:	Font configuration and customization library
 Name:		fontconfig
-<<<<<<< HEAD
 Version:	2.18.2
 Release:	2%{?dist}
-=======
-Version:	2.17.1
-Release:	0.1%{?dist}
->>>>>>> hummingbird-local
 # src/ftglue.[ch] is in Public Domain
 # src/fccache.c contains Public Domain code
 ## https://gitlab.com/fedora/legal/fedora-license-data/-/issues/177
@@ -26,13 +21,8 @@ Source2:	fc-cache
 Patch0:		%{name}-sleep-less.patch
 Patch4:		%{name}-drop-lang-from-pkgkit-format.patch
 Patch6:		%{name}-lower-nonlatin-conf.patch
-<<<<<<< HEAD
 # Fedora specific
 Patch7:		%{name}-update-fcgenericfamily.patch
-=======
-# Disable bwrap test - requires user namespaces not available in container builds
-Patch7:		%{name}-disable-bwrap-test.patch
->>>>>>> hummingbird-local
 
 BuildRequires:	libxml2-devel
 BuildRequires:	freetype-devel >= %{freetype_version}
@@ -90,6 +80,7 @@ mv conf.d/65-nonlatin.conf conf.d/69-nonlatin.conf
        -Dadditional-fonts-dirs=/usr/share/X11/fonts/Type1,/usr/share/X11/fonts/TTF,/usr/local/share/fonts \
        -Dcache-dir=/usr/lib/fontconfig/cache \
        -Dtests-external-fonts=disabled \
+       -Dtests-bwrap=disabled \
        --default-library=shared
 %meson_build
 
