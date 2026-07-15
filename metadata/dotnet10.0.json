@@ -1,12 +1,13 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 10.0",
-  "modification_status": "clean",
+  "modification_reason": "update to SDK 10.0.110 / Runtime 10.0.10 for July 2026 security fixes (CVE-2026-47304 and 16 others)",
+  "modification_status": "modified",
   "release": "1",
   "sha": "df8fad955dea2255896931fc21e0ab6bab376764",
   "source": "https://src.fedoraproject.org/rpms/dotnet10.0.git",
   "upstream_branch": "release/10.0",
   "upstream_repo": "https://github.com/dotnet/runtime",
-  "version": "10.0.109",
+  "version": "10.0.110",
   "version_transform": "dotnet_sdk_to_runtime"
 }
