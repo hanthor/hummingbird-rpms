@@ -1,7 +1,7 @@
 Summary:       Library of functions for manipulating TIFF format image files
 Name:          libtiff
-Version:       4.7.1
-Release:       2.4%{?dist}
+Version:       4.7.2
+Release:       1%{?dist}
 License:       libtiff
 URL:           http://www.simplesystems.org/libtiff/
 
@@ -176,8 +176,13 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+<<<<<<< HEAD
+* Mon Jul 13 2026 Michal Hlavinka <mhlavink@redhat.com> - 4.7.2-1
+- updated to 4.7.2 (#2496751)
+=======
 * Fri Jun 26 2026 Prarit Bhargava <prarit@redhat.com> - 4.7.1-2.2
 - Fix CVE-2026-4775: signed integer overflow in YCbCr tile decoding (rhbz#2450768)
+>>>>>>> hummingbird-local
 
 * Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 4.7.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
