@@ -66,6 +66,7 @@ dotnet9.0:
   timeout_hours: 12
 
 dotnet10.0:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 12
 
 etcd:
