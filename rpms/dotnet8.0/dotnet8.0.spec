@@ -50,7 +50,7 @@
 
 Name:           dotnet%{dotnetver}
 Version:        %{sdk_rpm_version}
-Release:        1.2%{?dist}
+Release:        1.3%{?dist}
 Summary:        .NET Runtime and SDK
 License:        0BSD AND Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND APSL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause AND BSL-1.0 AND bzip2-1.0.6 AND CC0-1.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC-PDDC AND CNRI-Python AND EPL-1.0 AND GPL-2.0-only AND (GPL-2.0-only WITH GCC-exception-2.0) AND GPL-2.0-or-later AND GPL-3.0-only AND ICU AND ISC AND LGPL-2.1-only AND LGPL-2.1-or-later AND LicenseRef-Fedora-Public-Domain AND LicenseRef-ISO-8879 AND MIT AND MIT-Wu AND MS-PL AND MS-RL AND NCSA AND OFL-1.1 AND OpenSSL AND Unicode-DFS-2015 AND Unicode-DFS-2016 AND W3C-19980720 AND X11 AND Zlib
 
@@ -101,6 +101,8 @@ Patch7:         runtime-clang-20-support.patch
 Patch8:         CVE-2026-59725-59869-lockfile-updates.patch
 # CVE-2026-53486 local patched decompress vendor override for FunctionalTests
 Patch9:         CVE-2026-53486-decompress-vendor-override.patch
+# CVE-2026-62389 and CVE-2026-53550 lockfile dependency updates
+Patch10:        CVE-2026-62389-53550-lockfile-updates.patch
 
 
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
