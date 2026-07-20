@@ -899,6 +899,35 @@ def test_download_new_sources_refuses_empty_source_discovery(
     assert (pkg_dir / 'sources').read_text() == original_sources
 
 
+def test_download_new_sources_allows_local_only_sources(
+    cuv_module, workdir: Path
+) -> None:
+    """Preserves lookaside entries declared as local-only spec sources."""
+    pkg_dir = _create_package(
+        workdir, 'pkg', '2.0',
+        sources={'local-data.tar.gz': 'oldhash'},
+    )
+    (pkg_dir / 'pkg.spec').write_text('''Name: pkg
+Version: 2.0
+Release: 1
+Summary: Local source test
+License: MIT
+Source0: local-data.tar.gz
+
+%description
+Local source test
+
+%files
+''')
+    original_sources = (pkg_dir / 'sources').read_text()
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    downloaded = cuv_module.download_new_sources('pkg', '1.0', '2.0')
+
+    assert downloaded == []
+    assert (pkg_dir / 'sources').read_text() == original_sources
+
+
 def test_download_new_sources_no_version_in_filename(cuv_module, workdir: Path) -> None:
     """Skips sources whose filename already appears in the sources file."""
     _create_package(
