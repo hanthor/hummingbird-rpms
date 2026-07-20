@@ -54,7 +54,7 @@
 
 Name:		busybox
 Version:	1.37.0
-Release:	7.4%{?dist}
+Release:	8.2%{?dist}
 Epoch:		1
 Summary:	Statically linked binary providing simplified versions of system commands
 License:	GPL-2.0-only
@@ -86,6 +86,14 @@ Patch3:		busybox-1.37.0-CVE-2026-26157-CVE-2026-26158.patch
 # Upstream commits 42202bfb1e6a, d368f3f7836d
 Patch4:		busybox-1.37.0-CVE-2026-29004-fix-buffer-overflow.patch
 Patch5:		busybox-1.37.0-CVE-2026-29004-check-IAPREFIX-size.patch
+# CVE-2026-38753: use-after-free in awk_sub()
+Patch6:		busybox-1.37.0-CVE-2026-38753-awk_sub-use-after-free.patch
+# CVE-2026-38754: out-of-bounds read in ifsbreakup()
+Patch7:		busybox-1.37.0-CVE-2026-38754-ifsbreakup-bounds.patch
+# CVE-2026-38752: stack overflow in awk evaluate()
+Patch8:		busybox-1.37.0-CVE-2026-38752-awk-evaluate-recursion-limit.patch
+# CVE-2026-38755: stack overflow in ash evalfun()
+Patch9:		busybox-1.37.0-CVE-2026-38755-ash-evalfun-recursion-limit.patch
 BuildRequires:	gcc
 BuildRequires:	libselinux-devel >= 1.27.7-2
 BuildRequires:	libsepol-devel
@@ -145,6 +153,10 @@ package is build against shared libraries, most notably glibc.
 %patch -P3 -p1 -b .tar-hardlink-fix
 %patch -P4 -p1 -b .dhcpv6-overflow-fix
 %patch -P5 -p1 -b .dhcpv6-iaprefix-fix
+%patch -P6 -p1 -b .awk-sub-uaf-fix
+%patch -P7 -p1 -b .ifsbreakup-bounds-fix
+%patch -P8 -p1 -b .awk-evaluate-recursion-fix
+%patch -P9 -p1 -b .ash-evalfun-recursion-fix
 
 %build
 # Fix architecture name maps
@@ -369,6 +381,9 @@ ln -s ./busybox %{buildroot}%{_sbindir}/udhcpc
 %{_mandir}/man1/busybox.shared.1.gz
 
 %changelog
+* Wed Jul 15 2026 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.37.0-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
 * Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.37.0-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
 

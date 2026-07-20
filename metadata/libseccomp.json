@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "3",
-  "sha": "fa5ec89b71f49dbb6fb2136df5b74a6518f5f6d0",
+  "release": "2",
+  "sha": "3b1016331b667cb3d925b9896e18e0ad02e5a9c9",
   "source": "https://src.fedoraproject.org/rpms/libseccomp.git",
   "upstream_repo": "https://github.com/seccomp/libseccomp",
-  "version": "2.6.0"
+  "version": "2.6.1"
 }

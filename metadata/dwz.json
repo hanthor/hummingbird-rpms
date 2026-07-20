@@ -1,8 +1,8 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "1",
-  "sha": "560ddfc634dbfd30e17bde3bf3fe556684bb6d0d",
+  "release": "3",
+  "sha": "a5acbbc80674cbf9c0cd564ea15b82576f3fe1df",
   "source": "https://src.fedoraproject.org/rpms/dwz.git",
   "upstream_repo": "https://sourceware.org/git/dwz.git",
   "version": "0.17"
