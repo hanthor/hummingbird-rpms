@@ -464,7 +464,7 @@ contains the fix:
    ./ci/build_rpms.sh <package>
    ```
 
-   Push the branch and create a draft MR. The MR description
+   Push the branch and create an MR. The MR description
    must include:
    - A 1-3 sentence summary of what was changed and why
    - `Closes: HUM-YYYY` (the task ticket -- **never** the CVE
@@ -477,8 +477,18 @@ contains the fix:
    Use `-F` with a file because `-m` does not support multiple
    paragraphs:
 
+   Determine the user's fork remote (do not hardcode `origin` --
+   check `git remote -v` and pick the remote pointing to the
+   user's fork):
+
    ```bash
-   git push -u origin HUM-YYYY
+   FORK_REMOTE=$(git remote -v | grep -i "$(git config user.name | tr ' ' '-'\\|head -c5)" | head -1 | awk '{print $1}')
+   git push -u "$FORK_REMOTE" HUM-YYYY
+   ```
+
+   Then create the MR using `glab`:
+
+   ```bash
    cat > /tmp/mr-description.txt << 'EOF'
    HUM-YYYY: <package>: <short title>
 
@@ -489,7 +499,13 @@ contains the fix:
    Ref: HUM-XXXX, HUM-ZZZZ
    CVE: CVE-YYYY-NNNNN, CVE-YYYY-MMMMM
    EOF
-   lab mr create --draft -F /tmp/mr-description.txt
+   glab mr create \
+     --source-branch HUM-YYYY \
+     --target-branch main \
+     --head <user-fork-project> \
+     --repo redhat/hummingbird/rpms \
+     --title "HUM-YYYY: <package>: <short title>" \
+     --description "$(cat /tmp/mr-description.txt | tail -n +2)"
    ```
 
    Add the MR link as a comment on the HUM task ticket so
@@ -504,13 +520,13 @@ contains the fix:
    review. Check the pipeline status first:
 
    ```bash
-   lab ci status !NNNN
+   glab ci status --branch HUM-YYYY --repo redhat/hummingbird/rpms
    ```
 
    Once the pipeline is running, trigger the review:
 
    ```bash
-   lab mr comment !NNNN -m "/hummingbird code-review"
+   glab mr note NNNN --repo redhat/hummingbird/rpms -m "/hummingbird code-review"
    ```
 
 10. **Close the task ticket.** After the MR is created (do not
