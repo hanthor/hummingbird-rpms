@@ -369,6 +369,11 @@ Patch474: 00474-cve-2025-15366.patch
 # (cherry-picked from commit b234a2b67539f787e191d2ef19a7cbdce32874e7)
 Patch475: 00475-cve-2025-15367.patch
 
+# 00329 # 6d5e87b40fb758de5490f78d6874fb01ec2c222c
+# FIPS compliance patch
+# See https://fedoraproject.org/wiki/Changes/PythonFIPSMode
+Patch329: 00329-fips.patch
+
 # 00489 # 008af720a5f6f98ed3feb8ebdbf88ab9dea4db22
 # Use BIO_eof to detect EOF for SSL_FILETYPE_ASN1
 #
