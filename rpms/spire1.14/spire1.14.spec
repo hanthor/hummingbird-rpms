@@ -72,7 +72,7 @@ document.
 
 
 %prep
-%goprep -p0
+%goprep -p1
 tar -xf %{S:1}
 patch -p1 < %{SOURCE20}
 
