@@ -98,6 +98,9 @@ fontconfig:
 git-sync:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+go-fdo-client:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 gcc:
   # Larger builders are required for the build to complete in a reasonable time
   timeout_hours: 12
