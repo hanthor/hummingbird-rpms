@@ -10,6 +10,7 @@ post_commands = [
 
 [archive.dependency_overrides]
 "golang.org/x/text" = "v0.39.0"
+
 [licensing]
 detector = "askalono"
 
