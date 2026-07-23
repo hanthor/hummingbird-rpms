@@ -2,8 +2,8 @@
   "branch": "rawhide",
   "modification_reason": "Hummingbird-specific build configuration",
   "modification_status": "modified",
-  "release": "3",
-  "sha": "57bd9e21b7cdddc96c0ef888968f5a8866d479cd",
+  "release": "4",
+  "sha": "94f0c3839fa6d42e9e62fd355ccb50d611c5f04a",
   "source": "https://src.fedoraproject.org/rpms/python-cryptography.git",
   "upstream_repo": "https://github.com/pyca/cryptography",
   "version": "48.0.0"
