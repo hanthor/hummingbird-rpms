@@ -657,7 +657,7 @@ ExclusiveArch:  %{exclusive_arches}
 
 Name:    java-25-%{origin}-portable%{?pkgos:-%{pkgos}}
 Version: %{newjavaver}.%{buildver}
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}.2%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1307,11 +1307,27 @@ function buildjdk() {
     || ( pwd; cat $(find | grep config.log) && false )
 
     cat spec.gmk
+%ifarch x86_64
+    # JDK-8385169: the "newboot" JVM built in this same debuglevel crashes
+    # with a C2 SuperWord (auto-vectorization) segfault while JIT-compiling
+    # itself during the CreateSymbols/gensrc bootstrap step, but only in
+    # fastdebug builds on GCC 16 (i.e. only since the F44 buildroot move;
+    # release and slowdebug builds are unaffected). Upstream already fixed
+    # this in JDK 26 (JDK-8324751) but it is not yet backported to 25u.
+    # Disable SuperWord for just this build-time bootstrap self-compilation
+    # step; this has no effect on the shipped JVM's runtime configuration.
+    if [ "${debuglevel}" = "fastdebug" ]; then
+        export JAVA_TOOL_OPTIONS="-XX:-UseSuperWord"
+    fi
+%endif
     LD_LIBRARY_PATH=${LIBPATH} \
     %{?dts_command} make LOG=trace \
       WARNINGS_ARE_ERRORS="-Wno-error" \
       CFLAGS_WARNINGS_ARE_ERRORS="-Wno-error" $maketargets ||\
         ( pwd; find ${top_dir_abs_src_path} ${top_dir_abs_build_path} -name \"hs_err_pid*.log\" | xargs cat && false )
+%ifarch x86_64
+    unset JAVA_TOOL_OPTIONS
+%endif
     popd
 }
 
