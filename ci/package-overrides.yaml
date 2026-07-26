@@ -121,6 +121,12 @@ gorget:
   # Native Hummingbird package -- no Fedora dist-git history to fall back to.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+grafana12.4:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+grafana13.1:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 grype:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
