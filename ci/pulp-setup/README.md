@@ -64,7 +64,7 @@ Usage:
 | `--repos <list>` | Comma-separated repository names. Defaults: RPM `source,x86_64,s390x,ppc64le,aarch64`; file `metadata,rpm-catalog`. |
 | `--type <type>` | Repository plugin type (e.g. `rpm`, `file`). Default: `rpm`. |
 | `--config <path>` | Path to the Pulp CLI config (e.g. `cli.toml`). If omitted, the CLI default (e.g. `~/.config/pulp/cli.toml`) is used. |
-| `--retain-repo-versions <n>` | **File repositories only.** Sets Pulp `retain_repo_versions` to a non-negative integer. If `--type file` and this flag is omitted, the default is **1**. For **existing** repositories, the script calls `repository update` **only when** the current value differs from `<n>` (reads the live repo with `repository show --format json`). Newly created file repositories get `retain_repo_versions` set directly after creation. |
+| `--retain-repo-versions <n>` | Sets Pulp `retain_repo_versions` to a non-negative integer. File repositories default to **1** if omitted. RPM repositories have no default; an explicit value is applied only when creating a new RPM repository. For an existing RPM repository with a different limit, setup stops to avoid unbounded pruning. |
 
 > **Note:** If you re-run with `--type file` and omit
 > `--retain-repo-versions`, the script applies the default **1**
@@ -99,12 +99,23 @@ file repository (updated only if the server value is different):
 ./create-pulp-resources.sh --domain public-hummingbird --type file
 ```
 
-Explicit retention (file type only), for example keeping **10** repository versions:
+Explicit file retention, for example keeping **10** repository versions:
 
 ```bash
 ./create-pulp-resources.sh --domain public-hummingbird \
   --type file --retain-repo-versions 10
 ```
+
+For a new RPM repository, set a limit explicitly:
+
+```bash
+./create-pulp-resources.sh --domain example-domain \
+  --repos new-repository --retain-repo-versions 100
+```
+
+For an existing RPM repository, changing the retention limit can prune many
+versions during the update and hold the repository lock. Make that change in
+bounded steps outside this setup script.
 
 Using a specific config file:
 
