@@ -47,6 +47,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -92,9 +93,27 @@ def run_git(
     *args: str, cwd: Path | str | None = None
 ) -> subprocess.CompletedProcess[str]:
     """Run a git command and return the result."""
-    return subprocess.run(
-        ["git", *args], cwd=cwd, check=True, stdout=subprocess.PIPE, text=True
+    command = ["git", *args]
+    display_command = shlex.join(command)
+    logger.info("Running command: %s", display_command)
+    started_at = time.monotonic()
+    try:
+        result = subprocess.run(
+            command, cwd=cwd, check=True, stdout=subprocess.PIPE, text=True
+        )
+    except subprocess.CalledProcessError:
+        logger.error(
+            "Command failed after %.1fs: %s",
+            time.monotonic() - started_at,
+            display_command,
+        )
+        raise
+    logger.info(
+        "Command completed after %.1fs: %s",
+        time.monotonic() - started_at,
+        display_command,
     )
+    return result
 
 
 def run_git_commit(
@@ -719,14 +738,25 @@ def _run_hook(
     Raises ``RuntimeError`` on non-zero exit.
     """
     package_dir = RPMS_DIR / package
-    logger.info(f"{package}: running {hook_name} hook")
-    result = subprocess.run(
-        ["bash", "-eo", "pipefail", "-c", command],
-        cwd=str(package_dir),
-        env=env,
-        capture_output=True,
-        text=True,
+    logger.info(
+        "%s: running %s hook command:\n%s", package, hook_name, command.rstrip()
     )
+    started_at = time.monotonic()
+    try:
+        result = subprocess.run(
+            ["bash", "-eo", "pipefail", "-c", command],
+            cwd=str(package_dir),
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        logger.info(
+            "%s: %s hook completed after %.1fs",
+            package,
+            hook_name,
+            time.monotonic() - started_at,
+        )
     if result.returncode != 0:
         stderr = result.stderr.strip() or result.stdout.strip()
         raise RuntimeError(
