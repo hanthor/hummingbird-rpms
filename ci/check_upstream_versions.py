@@ -828,15 +828,19 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
         _run_hook("update_spec", hooks.update_spec, package, env)
     else:
         # Default specfile-library path
+        logger.info("%s: loading spec with specfile", package)
         spec = Specfile(str(spec_file), sourcedir=str(package_dir))
         old_version = spec.expanded_version
 
+        logger.info("%s: updating spec version", package)
         spec.update_version(new_version)
         if not spec.has_autorelease:
+            logger.info("%s: updating spec release", package)
             # Use Release 0.1 so that when the same version is later
             # imported from Fedora (with Release >= 1), it sorts higher
             # and replaces this locally-built version.
             spec.update_tag("Release", "0.1%{?dist}")
+        logger.info("%s: saving updated spec", package)
         spec.save()
 
     logger.info(f"{package}: updated spec {old_version} -> {new_version}")
@@ -1265,6 +1269,12 @@ def run_check(args: argparse.Namespace) -> None:
         for result in results:
             if not result.has_update or not result.upstream_version:
                 continue
+            logger.info(
+                "%s: applying upstream update %s -> %s",
+                result.package,
+                result.current_version,
+                result.upstream_version,
+            )
             try:
                 downloaded = update_spec_version(
                     result.package, result.upstream_version
