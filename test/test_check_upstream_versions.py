@@ -1362,6 +1362,21 @@ def test_run_hook_receives_env(cuv_module, workdir: Path) -> None:
     assert '9.9.9' in result.stdout
 
 
+def test_run_hook_streams_stderr(cuv_module, workdir: Path, capfd) -> None:
+    """Hook diagnostics on stderr are emitted while stdout remains captured."""
+    _create_package(workdir, 'pkg', '1.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    import os
+    env = {**os.environ, 'UPDATE_PACKAGE': 'pkg'}
+
+    result = cuv_module._run_hook(
+        'test', 'echo source.tar.gz; echo progress >&2', 'pkg', env,
+    )
+
+    assert result.stdout.strip() == 'source.tar.gz'
+    assert 'progress' in capfd.readouterr().err
+
+
 #
 # Tests — update_spec_version with hooks
 #

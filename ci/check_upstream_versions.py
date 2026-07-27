@@ -747,7 +747,7 @@ def _run_hook(
             ["bash", "-eo", "pipefail", "-c", command],
             cwd=str(package_dir),
             env=env,
-            capture_output=True,
+            stdout=subprocess.PIPE,
             text=True,
         )
     finally:
@@ -758,10 +758,11 @@ def _run_hook(
             time.monotonic() - started_at,
         )
     if result.returncode != 0:
-        stderr = result.stderr.strip() or result.stdout.strip()
+        details = result.stdout.strip()
+        suffix = f": {details}" if details else ""
         raise RuntimeError(
             f"{package}: {hook_name} hook failed "
-            f"(exit {result.returncode}): {stderr}"
+            f"(exit {result.returncode}){suffix}"
         )
     logger.debug(f"{package}: {hook_name} hook stdout: {result.stdout.strip()}")
     return result
