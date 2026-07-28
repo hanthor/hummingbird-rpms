@@ -1,0 +1,10 @@
+{
+  "modification_status": "native",
+  "release": "1",
+  "release_monitoring_project_id": 389953,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/adoptium/temurin11-binaries",
+  "upstream_version_compare_transform": "temurin_to_rpm",
+  "upstream_version_exclude_regex": "-ga$",
+  "version": "11.0.31.0.0.11"
+}

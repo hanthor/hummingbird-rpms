@@ -517,6 +517,80 @@ def test_check_package_version_track_version_filters_stable(cuv_module, workdir:
     assert result.has_update is True
 
 
+def test_check_package_version_excludes_matching_versions(cuv_module, workdir: Path) -> None:
+    """Ignored aliases do not hide the newest concrete stable version."""
+    _create_package(
+        workdir, 'temurin', '11.0.31.0.0.11',
+        metadata={'version': '11.0.31.0.0.11', 'release': '1',
+                  'upstream_version_exclude_regex': r'-ga$',
+                  'upstream_version_compare_transform': 'temurin_to_rpm'},
+    )
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    mock_response = {
+        'version': '11.0.32-ga',
+        'stable_versions': ['11.0.32-ga', '11.0.31+11', '11.0.30+7'],
+        'id': 389953,
+    }
+
+    with patch.object(cuv_module, 'query_anitya', return_value=mock_response):
+        result = cuv_module.check_package_version('temurin')
+
+    assert result.upstream_version == '11.0.31+11'
+    assert result.has_update is False
+
+
+def test_check_package_version_detects_temurin_build_respin(cuv_module, workdir: Path) -> None:
+    """Compare a newer Temurin build in the upstream version scheme."""
+    _create_package(
+        workdir, 'temurin', '11.0.31.0.0.11',
+        metadata={'version': '11.0.31.0.0.11', 'release': '1',
+                  'upstream_version_compare_transform': 'temurin_to_rpm'},
+    )
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(
+        cuv_module, 'query_anitya',
+        return_value={'version': '11.0.31+12', 'stable_versions': ['11.0.31+12']},
+    ):
+        result = cuv_module.check_package_version('temurin')
+
+    assert result.has_update is True
+
+
+@pytest.mark.parametrize(
+    ('upstream', 'rpm_version'),
+    [('21.0.11+10', '21.0.11.0.0.10'), ('8u492-b09', '8.0.492.0.0.9')],
+)
+def test_transform_temurin_version_for_comparison(
+    cuv_module, upstream: str, rpm_version: str,
+) -> None:
+    """Convert supported Temurin tag formats to their RPM versions."""
+    assert cuv_module.transform_upstream_version_for_comparison(
+        upstream, 'temurin_to_rpm',
+    ) == rpm_version
+
+
+def test_check_package_version_invalid_exclude_regex(cuv_module, workdir: Path) -> None:
+    """An invalid exclusion expression produces an actionable package error."""
+    _create_package(workdir, 'pkg', '1.0',
+                    metadata={'version': '1.0', 'release': '1',
+                              'upstream_version_exclude_regex': '['})
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    mock_response = {'version': '2.0', 'stable_versions': ['2.0'], 'id': 42}
+
+    with patch.object(cuv_module, 'query_anitya', return_value=mock_response):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.upstream_version is None
+    assert result.has_update is False
+    assert result.error.startswith('Invalid upstream_version_exclude_regex:')
+
+
 def test_check_package_version_track_version_no_match(cuv_module, workdir: Path) -> None:
     """Reports no upstream version when no stable versions match track_version."""
     _create_package(workdir, 'pkg', '1.24.0',

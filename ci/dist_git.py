@@ -79,6 +79,8 @@ class PackageMetadata(TypedDict):
     modification_reason: NotRequired[str]  # Only for 'modified'
     track_upstream: NotRequired[str]  # "latest" or version prefix (e.g., "1.26")
     release_monitoring_project_id: NotRequired[int | str]  # Anitya project ID (int) or upstream name (str)
+    upstream_version_exclude_regex: NotRequired[str]  # Ignore matching Anitya versions
+    upstream_version_compare_transform: NotRequired[str]  # Named upstream-to-RPM mapping
     upstream_repo: NotRequired[str]  # Canonical upstream git repository URL
     upstream_branch: NotRequired[str]  # Upstream branch (versioned packages sharing a repo)
     cve_product: NotRequired[str]  # CVE vendor/product override (e.g., "F5 / NGINX Open Source")
@@ -1660,6 +1662,7 @@ def set_upstream(
     package_name: str,
     track_version=_UNSET,
     project_id=_UNSET,
+    exclude_version_regex=_UNSET,
 ) -> None:
     """Configure upstream tracking settings for a package.
 
@@ -1674,6 +1677,8 @@ def set_upstream(
         project_id: int sets Anitya project ID for direct lookup,
             str sets upstream package name for name-based lookup,
             None removes the setting (reverts to RPM name)
+        exclude_version_regex: regex for upstream versions to ignore,
+            None removes the exclusion
     """
     if package_name not in imports:
         sys.exit(f"ERROR: Package {package_name} not found (missing metadata/{package_name}.json)")
@@ -1695,6 +1700,21 @@ def set_upstream(
         else:
             metadata['release_monitoring_project_id'] = project_id
             logging.info("Set release_monitoring_project_id=%s for %s", project_id, package_name)
+
+    if exclude_version_regex is not _UNSET:
+        if exclude_version_regex is None:
+            metadata.pop('upstream_version_exclude_regex', None)
+            logging.info("Removed upstream version exclusion for %s", package_name)
+        else:
+            try:
+                re.compile(exclude_version_regex)
+            except re.error as e:
+                sys.exit(f"ERROR: Invalid upstream version exclusion regex: {e}")
+            metadata['upstream_version_exclude_regex'] = exclude_version_regex
+            logging.info(
+                "Set upstream_version_exclude_regex=%s for %s",
+                exclude_version_regex, package_name,
+            )
 
     save_package_metadata(package_name, metadata)
     imports[package_name] = metadata
@@ -2346,6 +2366,11 @@ Examples:
                                 'package name (string) for release-monitoring.org lookup')
     pid_group.add_argument('--no-project-id', action='store_true',
                            help='Remove project ID (revert to RPM name lookup)')
+    exclude_group = upstream_parser.add_mutually_exclusive_group()
+    exclude_group.add_argument('--exclude-version-regex', type=str, default=None,
+                               help='Regular expression matching upstream versions to ignore')
+    exclude_group.add_argument('--no-exclude-version-regex', action='store_true',
+                               help='Remove the upstream version exclusion')
 
     # list command
     list_parser = subparsers.add_parser('list',
@@ -2487,13 +2512,21 @@ Examples:
             elif args.no_project_id:
                 project_id = None
 
-            if track_version is _UNSET and project_id is _UNSET:
+            exclude_version_regex = _UNSET
+            if args.exclude_version_regex is not None:
+                exclude_version_regex = args.exclude_version_regex
+            elif args.no_exclude_version_regex:
+                exclude_version_regex = None
+
+            if (track_version is _UNSET and project_id is _UNSET
+                    and exclude_version_regex is _UNSET):
                 sys.exit("ERROR: set-upstream requires at least one flag "
                          "(e.g. --track-version, --project-id)")
             set_upstream(
                 args.package,
                 track_version=track_version,
                 project_id=project_id,
+                exclude_version_regex=exclude_version_regex,
             )
         case 'list':
             # Determine filter based on flags

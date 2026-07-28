@@ -2456,6 +2456,52 @@ def test_set_upstream_combined(workdir: Path, upstream_repos: dict[str, Path]) -
     assert metadata['release_monitoring_project_id'] == 13254
 
 
+def test_set_upstream_exclude_version_regex(
+    workdir: Path, upstream_repos: dict[str, Path]
+) -> None:
+    """set-upstream stores and clears an upstream version exclusion regex."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--exclude-version-regex=-ga$'],
+        cwd=workdir, check=True,
+    )
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    assert metadata['upstream_version_exclude_regex'] == '-ga$'
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--no-exclude-version-regex'],
+        cwd=workdir, check=True,
+    )
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    assert 'upstream_version_exclude_regex' not in metadata
+
+
+def test_set_upstream_rejects_invalid_exclude_regex(
+    workdir: Path, upstream_repos: dict[str, Path]
+) -> None:
+    """set-upstream rejects invalid upstream version exclusion regexes."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--exclude-version-regex', '['],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert 'Invalid upstream version exclusion regex' in result.stderr
+
+
 def test_list_prerelease_packages(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Test list --prerelease shows only packages with pre-release versions."""
     # Import vanilla and chocolate

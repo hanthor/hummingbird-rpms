@@ -19,7 +19,7 @@ dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
 | `./ci/dist_git.py rename <pkg>` | Rename a package (reads new name from spec) |
 | `./ci/dist_git.py mark-modified <pkg> --modified --reason "..."` | Mark a package as locally modified so it isn't auto-updated |
 | `./ci/dist_git.py mark-modified <pkg> --clean` | Clear the modified flag to allow auto-updates again |
-| `./ci/dist_git.py set-upstream <pkg> --track-version <prefix>` | Pin a versioned package to a version line (e.g., `1.26`) |
+| `./ci/dist_git.py set-upstream <pkg> [tracking flags]` | Configure version line, Release Monitoring project, or excluded versions |
 | `./ci/dist_git.py list [--clean\|--modified\|--native\|--prerelease]` | List packages by status |
 | `./ci/dist_git.py diff [<pkg>…\|--all]` | Show what changed locally vs Fedora upstream |
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
@@ -47,7 +47,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Configure metadata fields    | _(edit `metadata/<pkg>.json`)_                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)             | Understand `release` and `modification_status` configuration |
 | Debug build failures         | _(see docs)_                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)           | Investigate and fix failed package builds                    |
 | Mark package modified        | `mark-modified <pkg> --modified --reason "..."` | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | Track local changes; prevent automatic Fedora updates        |
-| Set package basename         | `set-upstream <pkg> --track-version <prefix>`   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | Set basename/track_version for versioned packages            |
+| Configure upstream filter    | `set-upstream <pkg> [tracking flags]`           | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | Set version line, project ID, or excluded version regex      |
 | Track upstream versions      | `set-upstream <pkg>`                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | Enable/disable upstream version checking for a package       |
 | List upstream version status | `list`                                          | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | See all packages with upstream version and tracking info     |
 | View package differences     | `diff <pkg>`                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md) | See what changed in modified packages vs Fedora              |
