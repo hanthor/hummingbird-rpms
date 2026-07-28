@@ -16,6 +16,7 @@ Source1:        openssl-engine-compat.h
 Patch0:         allow-build-flags.patch
 Patch1:         use-system-openssl.patch
 Patch2:         use-system-libpq.patch
+Patch3:         no-aarch64-sve-stringzilla.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake

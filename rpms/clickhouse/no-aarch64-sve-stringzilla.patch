@@ -1,0 +1,38 @@
+Honor ClickHouse's compatibility CPU profile in StringZilla. Keep mandatory
+AArch64 NEON and its runtime-dispatched crypto implementations available, but
+do not compile SVE variants when NO_ARMV81_OR_HIGHER selects the ARMv8 baseline.
+
+diff --git a/contrib/StringZilla-cmake/CMakeLists.txt b/contrib/StringZilla-cmake/CMakeLists.txt
+index 17845ec..9dfab8b 100644
+--- a/contrib/StringZilla-cmake/CMakeLists.txt
++++ b/contrib/StringZilla-cmake/CMakeLists.txt
+@@ -35,6 +35,12 @@ if (ARCH_AMD64)
+             "SZ_USE_SVE2_AES=0"
+     )
+ elseif (ARCH_AARCH64)
++    if (NO_ARMV81_OR_HIGHER)
++        set(STRINGZILLA_USE_SVE 0)
++    else()
++        set(STRINGZILLA_USE_SVE 1)
++    endif()
++
+     target_compile_definitions(
+             _stringzilla PRIVATE
+             "SZ_USE_WESTMERE=0"
+@@ -46,12 +52,12 @@ elseif (ARCH_AARCH64)
+             "SZ_USE_NEON=1"
+             "SZ_USE_NEON_AES=1"
+             "SZ_USE_NEON_SHA=1"
+-            "SZ_USE_SVE=1"
+-            "SZ_USE_SVE2=1"
+-            "SZ_USE_SVE2_AES=1"
++            "SZ_USE_SVE=${STRINGZILLA_USE_SVE}"
++            "SZ_USE_SVE2=${STRINGZILLA_USE_SVE}"
++            "SZ_USE_SVE2_AES=${STRINGZILLA_USE_SVE}"
+     )
+ endif ()
+-
++# SVE variants follow ClickHouse's selected aarch64 compatibility profile.
+ # We need SZ_DYNAMIC_DISPATCH=1 to be public because otherwise the headers will redefine the API (sz_find for example)
+ # again and avoid dynamic dispatch.
+ target_compile_definitions(_stringzilla PUBLIC "SZ_DYNAMIC_DISPATCH=1")
