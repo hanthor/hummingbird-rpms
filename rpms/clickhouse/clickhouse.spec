@@ -96,6 +96,8 @@ sed -i \
 # contrib/. Use the distro toolchain, hardening flags, OpenSSL, and libpq while
 # retaining bundled libraries where upstream has no supported system-library
 # switch. Rust crates come from the complete source archive and build offline.
+# XRay's bundled compiler-rt sources require obsolete kernel UAPI headers such
+# as linux/scc.h that are no longer shipped by the distro kernel headers.
 export CFLAGS="${CFLAGS} -I$PWD/openssl-compat"
 export CXXFLAGS="${CXXFLAGS} -I$PWD/openssl-compat"
 cmake -S . -B build -G Ninja \
@@ -111,6 +113,7 @@ cmake -S . -B build -G Ninja \
     -DENABLE_RUST=ON \
     -DENABLE_TESTS=ON \
     -DENABLE_THINLTO=OFF \
+    -DENABLE_XRAY=OFF \
     -DGLIBC_COMPATIBILITY=OFF \
     -DUSE_SYSTEM_OPENSSL=ON \
 %ifarch aarch64
