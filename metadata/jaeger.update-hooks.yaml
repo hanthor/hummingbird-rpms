@@ -1,0 +1,38 @@
+# Generate Jaeger backend/UI sources, Go vendor archive, and offline pnpm cache.
+download_sources: |
+  set -euo pipefail
+  version="${UPDATE_NEW_VERSION}"
+  package_dir="${UPDATE_PACKAGE_DIR}"
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "${workdir}"' EXIT
+  cd "${package_dir}"
+
+  archive="jaeger-${version}.tar.gz"
+  ui_archive="jaeger-ui-${version}.tar.gz"
+  vendor="jaeger-${version}-vendor.tar.bz2"
+  pnpm_cache="jaeger-ui-pnpm-cache-${version}.tar.bz2"
+
+  curl -fSL -o "${archive}" \
+    "https://github.com/jaegertracing/jaeger/archive/v${version}/${archive}" >&2
+  curl -fSL -o "${ui_archive}" \
+    "https://github.com/jaegertracing/jaeger-ui/archive/v${version}/${ui_archive}" >&2
+
+  go_vendor_archive create \
+    -c go-vendor-tools.toml \
+    -O "${vendor}" \
+    "${UPDATE_SPEC_FILE}" >&2
+
+  mkdir "${workdir}/jaeger-ui"
+  tar -xzf "${ui_archive}" -C "${workdir}/jaeger-ui" --strip-components=1
+  patch -d "${workdir}/jaeger-ui" -p1 < jaeger-ui-pnpm-cache.patch >&2
+  npm install --prefix "${workdir}/.pnpm" --ignore-scripts pnpm@10.5.0 >&2
+  pnpm="${workdir}/.pnpm/node_modules/.bin/pnpm"
+  pnpm_store="${workdir}/.pnpm-store"
+  (cd "${workdir}/jaeger-ui" && \
+    ${pnpm} fetch --frozen-lockfile --store-dir "${pnpm_store}") >&2
+  tar -cjf "${package_dir}/${pnpm_cache}" -C "${workdir}" .pnpm .pnpm-store >&2
+
+  echo "${archive}"
+  echo "${ui_archive}"
+  echo "${vendor}"
+  echo "${pnpm_cache}"
