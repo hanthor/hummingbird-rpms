@@ -15,7 +15,6 @@ Patch0:         allow-build-flags.patch
 Patch1:         use-system-openssl.patch
 Patch2:         no-aarch64-sve-stringzilla.patch
 Patch3:         use-system-libpq.patch
-Patch4:         use-system-openat2-header.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake
@@ -80,9 +79,13 @@ rm -rf contrib/openssl/include/openssl
 ln -s %{_includedir}/openssl contrib/openssl/include/openssl
 install -Dpm 0644 %{SOURCE1} openssl-compat/openssl/engine.h
 # ClickHouse's custom sysroot causes CMake to discard /usr/include as an
-# implicit path. Route it through a non-default name for the system-libpq
-# interface target only.
-ln -s %{_includedir} system-libpq-include
+# implicit path. Expose only libpq's public headers through a non-default
+# include directory; exposing all system headers would mix Fedora's kernel
+# UAPI with ClickHouse's bundled sysroot.
+mkdir system-libpq-include
+for header in libpq-events.h libpq-fe.h pg_config_ext.h postgres_ext.h; do
+    ln -s %{_includedir}/${header} system-libpq-include/${header}
+done
 # Upstream's generated file contains a shortened build number even on the
 # release tag. Preserve the complete RPM version in the binary metadata.
 sed -i \
