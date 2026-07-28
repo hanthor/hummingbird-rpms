@@ -3121,6 +3121,28 @@ def test_rebuild_exclude_duplicates(workdir: Path, upstream_repos: dict[str, Pat
     assert 'Release: 1%{?dist}' in chocolate_spec.read_text()
 
 
+def test_rebuild_exclude_empty_value(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Test that an --exclude value with only whitespace/commas is rejected instead of
+    silently being treated as a no-op."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    for exclude_value in [',', ' , ', '  ']:
+        result = subprocess.run(
+            [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', '--all',
+             '--exclude', exclude_value, '--reason', 'test'],
+            cwd=workdir, capture_output=True, text=True
+        )
+        assert result.returncode != 0, f"expected failure for --exclude {exclude_value!r}"
+        assert '--exclude value is empty or contains only whitespace/commas' in result.stderr
+
+    # vanilla should not have been touched by any of the failed attempts
+    vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    assert 'Release: 1%{?dist}' in vanilla_spec.read_text()
+
+
 def test_rebuild_all_vs_package_mutually_exclusive(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Test that --all and package name are mutually exclusive."""
     subprocess.run(

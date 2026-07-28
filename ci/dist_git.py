@@ -2455,6 +2455,8 @@ Examples:
 
             if args.exclude:
                 exclude_names = {p.strip() for p in args.exclude.split(',') if p.strip()}
+                if not exclude_names:
+                    sys.exit("ERROR: --exclude value is empty or contains only whitespace/commas")
                 unknown = exclude_names - set(imports.keys())
                 if unknown:
                     sys.exit(f"ERROR: --exclude package(s) not found: {', '.join(sorted(unknown))}")
