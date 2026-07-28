@@ -132,12 +132,13 @@ untouched.
 ./ci/dist_git.py set-upstream <package> [flags]
 ```
 
-| Flag                     | Sets field                            | Clears with          |
-| ------------------------ | ------------------------------------- | -------------------- |
-| `--track-version latest` | `track_upstream: "latest"`            | `--no-track-version` |
-| `--track-version VER`    | `track_upstream: "VER"`               | `--no-track-version` |
-| `--project-id ID`        | `release_monitoring_project_id` (int) | `--no-project-id`    |
-| `--project-id NAME`      | `release_monitoring_project_id` (str) | `--no-project-id`    |
+| Flag                            | Sets field                            | Clears with                    |
+| ------------------------------- | ------------------------------------- | ------------------------------ |
+| `--track-version latest`        | `track_upstream: "latest"`            | `--no-track-version`           |
+| `--track-version VER`           | `track_upstream: "VER"`               | `--no-track-version`           |
+| `--project-id ID`               | `release_monitoring_project_id` (int) | `--no-project-id`              |
+| `--project-id NAME`             | `release_monitoring_project_id` (str) | `--no-project-id`              |
+| `--exclude-version-regex REGEX` | `upstream_version_exclude_regex`      | `--no-exclude-version-regex`   |
 
 Each set/clear pair is mutually exclusive (can't pass `--track-version` and `--no-track-version`
 together).
@@ -160,6 +161,9 @@ together).
 # Remove project ID (reverts to RPM name lookup)
 ./ci/dist_git.py set-upstream python3.11 --no-project-id
 
+# Ignore temporary GA aliases while accepting concrete numbered builds
+./ci/dist_git.py set-upstream temurin-11-jdk --exclude-version-regex=-ga$
+
 # Combine multiple flags in one call
 ./ci/dist_git.py set-upstream golang1.26 \
   --track-version 1.26 --project-id 13254
@@ -167,11 +171,13 @@ together).
 
 **Metadata fields:**
 
-| Field                           | Description                                       | Example                |
-| ------------------------------- | ------------------------------------------------- | ---------------------- |
-| `track_upstream`                | `"latest"` or version prefix to constrain updates | `"latest"`, `"1.26"`   |
-| `release_monitoring_project_id` | Anitya project ID (int) or upstream name (str)    | `13254`, `"golang"`    |
-| `version_suffix_strip`          | Suffix to strip from Anitya-reported versions     | `"-RELEASE"`           |
+| Field                                    | Description                                                          | Example              |
+| ---------------------------------------- | -------------------------------------------------------------------- | -------------------- |
+| `track_upstream`                         | `"latest"` or version prefix to constrain updates                    | `"latest"`, `"1.26"` |
+| `release_monitoring_project_id`          | Anitya project ID (int) or upstream name (str)                       | `13254`, `"golang"`  |
+| `version_suffix_strip`                   | Suffix to strip from Anitya-reported versions                        | `"-RELEASE"`         |
+| `upstream_version_exclude_regex`         | Regular expression for versions to ignore                            | `"-ga$"`             |
+| `upstream_version_compare_transform`     | Named transform applied before comparing with the RPM version        | `"temurin_to_rpm"`   |
 
 These fields affect two systems:
 
@@ -184,6 +190,17 @@ These fields affect two systems:
   absent, uses the RPM package name. When `track_upstream` is a version prefix, filters the reported
   upstream versions to only those matching the prefix. Only packages with `track_upstream` set are
   checked by `check_upstream_versions.py check` when no explicit package arguments are given.
+
+Use `upstream_version_exclude_regex` when a Release Monitoring project reports aliases or other
+entries that must not trigger packaging. Matching entries are removed before the newest stable
+version is selected, allowing the next concrete version in the feed to be considered. For example,
+Temurin projects publish temporary `11.0.32-ga` records before the concrete `11.0.32+9` binary
+release; `"-ga$"` ignores the temporary marker without hiding the numbered release behind it.
+
+Use `upstream_version_compare_transform` when upstream and RPM versions use different schemes.
+The `temurin_to_rpm` transform maps Temurin tags such as `21.0.11+10` to
+`21.0.11.0.0.10` and `8u492-b09` to `8.0.492.0.0.9` for comparison only. Update hooks
+continue to receive the original upstream version.
 
 Find release-monitoring.org project IDs by searching on <https://release-monitoring.org>.
 

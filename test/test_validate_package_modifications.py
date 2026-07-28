@@ -172,3 +172,53 @@ def test_track_upstream_integer_rejected(validator) -> None:
     assert not valid
     assert 'track_upstream' in error
     assert 'int' in error
+
+
+def test_upstream_version_exclude_regex_valid_for_native(validator) -> None:
+    """Native packages may exclude non-packageable Release Monitoring aliases."""
+    root = validator._tmp_path
+    _create_package(root, 'pkg', {
+        'modification_status': 'native',
+        'upstream_version_exclude_regex': r'-ga$',
+    })
+
+    valid, error = validator.validate_package('pkg', check_actual_state=False)
+    assert valid, f"Expected valid but got: {error}"
+
+
+def test_upstream_version_exclude_regex_rejects_invalid_regex(validator) -> None:
+    """Invalid exclusion expressions fail metadata validation."""
+    root = validator._tmp_path
+    _create_package(root, 'pkg', {
+        'modification_status': 'native',
+        'upstream_version_exclude_regex': '[',
+    })
+
+    valid, error = validator.validate_package('pkg', check_actual_state=False)
+    assert not valid
+    assert 'invalid upstream_version_exclude_regex' in error
+
+
+def test_upstream_version_compare_transform_valid_for_native(validator) -> None:
+    """Native packages may select a supported comparison transform."""
+    root = validator._tmp_path
+    _create_package(root, 'pkg', {
+        'modification_status': 'native',
+        'upstream_version_compare_transform': 'temurin_to_rpm',
+    })
+
+    valid, error = validator.validate_package('pkg', check_actual_state=False)
+    assert valid, f"Expected valid but got: {error}"
+
+
+def test_upstream_version_compare_transform_rejects_unknown(validator) -> None:
+    """Unknown comparison transforms fail metadata validation."""
+    root = validator._tmp_path
+    _create_package(root, 'pkg', {
+        'modification_status': 'native',
+        'upstream_version_compare_transform': 'unknown',
+    })
+
+    valid, error = validator.validate_package('pkg', check_actual_state=False)
+    assert not valid
+    assert 'unsupported upstream_version_compare_transform' in error

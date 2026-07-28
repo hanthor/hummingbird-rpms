@@ -1,0 +1,9 @@
+{
+  "modification_status": "native",
+  "release": "1",
+  "release_monitoring_project_id": 391422,
+  "upstream_repo": "https://github.com/adoptium/temurin25-binaries",
+  "upstream_version_compare_transform": "temurin_to_rpm",
+  "upstream_version_exclude_regex": "-ga$",
+  "version": "25.0.3.0.0.9"
+}

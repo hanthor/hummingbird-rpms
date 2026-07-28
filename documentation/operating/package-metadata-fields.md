@@ -41,6 +41,11 @@ Imports set the status automatically (`clean` for Fedora imports, `native` for H
 imports). After local source changes, set status with `dist_git.py mark-modified` — see
 [Package Modification Tracking](package-modification-tracking.md).
 
+Release Monitoring configuration, including `track_upstream`,
+`release_monitoring_project_id`, `upstream_version_exclude_regex`, and
+`upstream_version_compare_transform`, is documented in
+[Package Modification Tracking](package-modification-tracking.md#configure-upstream-tracking).
+
 Rebuilds that only bump the spec `Release:` line do **not** change `modification_status`.
 Release-only changes are ephemeral and are ignored when deciding whether a package is modified
 versus clean.

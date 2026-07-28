@@ -367,6 +367,18 @@ tempo2.10:
 tempo3.0:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+temurin-11-jdk:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+temurin-17-jdk:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+temurin-21-jdk:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+temurin-25-jdk:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 tomcat11:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

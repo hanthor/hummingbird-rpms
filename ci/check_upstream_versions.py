@@ -161,6 +161,30 @@ def compare_versions(current: str, upstream: str) -> int:
                 return -1
 
 
+def _transform_temurin_to_rpm(version: str) -> str:
+    """Convert an Adoptium release tag to the Temurin RPM Version scheme."""
+    if match := re.fullmatch(r"8u(\d+)-b(\d+)", version):
+        update, build = match.groups()
+        return f"8.0.{int(update)}.0.0.{int(build)}"
+    if match := re.fullmatch(r"(\d+(?:\.\d+)+)\+(\d+)", version):
+        base, build = match.groups()
+        return f"{base}.0.0.{int(build)}"
+    raise ValueError(f"version {version!r} is not a supported Temurin version")
+
+
+UPSTREAM_VERSION_COMPARISON_TRANSFORMS = {
+    "temurin_to_rpm": _transform_temurin_to_rpm,
+}
+
+
+def transform_upstream_version_for_comparison(version: str, transform: str) -> str:
+    """Apply a named upstream-to-RPM version transform."""
+    transform_fn = UPSTREAM_VERSION_COMPARISON_TRANSFORMS.get(transform)
+    if transform_fn is None:
+        raise ValueError(f"unknown upstream version comparison transform {transform!r}")
+    return transform_fn(version)
+
+
 def parse_spec_version(package_dir: Path) -> Optional[str]:
     """Extract version from package's spec file using rpmspec."""
     result = parse_spec_version_release(package_dir)
@@ -985,12 +1009,16 @@ def check_package_version(
     track_version = None
     project_id = None
     version_suffix_strip = None
+    version_exclude_regex = None
+    version_compare_transform = None
     if meta:
         track_upstream = meta.get("track_upstream")
         if track_upstream and track_upstream != "latest":
             track_version = track_upstream
         project_id = meta.get("release_monitoring_project_id")
         version_suffix_strip = meta.get("version_suffix_strip")
+        version_exclude_regex = meta.get("upstream_version_exclude_regex")
+        version_compare_transform = meta.get("upstream_version_compare_transform")
 
     # Query release-monitoring.org
     try:
@@ -1020,6 +1048,28 @@ def check_package_version(
             ]
         if anitya_data.get("version"):
             anitya_data["version"] = _strip_suffix(anitya_data["version"])
+
+    # Ignore upstream aliases or other versions that are not packageable.
+    # Apply this before selecting stable_versions[0], otherwise an ignored
+    # newest entry can hide the newest concrete release behind it.
+    if version_exclude_regex:
+        try:
+            exclude_pattern = re.compile(version_exclude_regex)
+        except re.error as e:
+            return VersionCheckResult(
+                package=package,
+                current_version=current_version,
+                upstream_version=None,
+                has_update=False,
+                error=f"Invalid upstream_version_exclude_regex: {e}",
+            )
+        if anitya_data.get("stable_versions"):
+            anitya_data["stable_versions"] = [
+                version for version in anitya_data["stable_versions"]
+                if not exclude_pattern.search(version)
+            ]
+        if anitya_data.get("version") and exclude_pattern.search(anitya_data["version"]):
+            anitya_data["version"] = None
 
     # Prefer stable_versions[0] over version field, as version can sometimes
     # contain incorrect data (e.g., development tags that aren't real releases)
@@ -1057,8 +1107,21 @@ def check_package_version(
             anitya_project_id=anitya_data.get("id"),
         )
 
-    # Compare versions
-    comparison = compare_versions(current_version, upstream_version)
+    comparison_upstream_version = upstream_version
+    if version_compare_transform:
+        try:
+            comparison_upstream_version = transform_upstream_version_for_comparison(
+                upstream_version, version_compare_transform,
+            )
+        except ValueError as e:
+            return VersionCheckResult(
+                package=package,
+                current_version=current_version,
+                upstream_version=upstream_version,
+                has_update=False,
+                error=str(e),
+            )
+    comparison = compare_versions(current_version, comparison_upstream_version)
     has_update = comparison > 0
 
     return VersionCheckResult(

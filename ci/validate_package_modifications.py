@@ -10,6 +10,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -400,6 +401,27 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     # Check 2: Must be valid value
     if status not in ['clean', 'modified', 'native']:
         return False, f"{package_name}: Invalid modification_status '{status}'"
+
+    # Version exclusions apply to native and Fedora-derived packages alike.
+    exclude_regex = metadata.get('upstream_version_exclude_regex')
+    if exclude_regex is not None:
+        if not isinstance(exclude_regex, str):
+            return False, (
+                f"{package_name}: upstream_version_exclude_regex must be a string, "
+                f"got {type(exclude_regex).__name__}"
+            )
+        try:
+            re.compile(exclude_regex)
+        except re.error as e:
+            return False, f"{package_name}: invalid upstream_version_exclude_regex: {e}"
+
+    compare_transform = metadata.get('upstream_version_compare_transform')
+    if compare_transform is not None:
+        if compare_transform != 'temurin_to_rpm':
+            return False, (
+                f"{package_name}: unsupported upstream_version_compare_transform "
+                f"'{compare_transform}'"
+            )
 
     # Check 3: Native packages should not have source/branch/sha fields
     if status == 'native':

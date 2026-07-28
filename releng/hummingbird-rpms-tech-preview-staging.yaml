@@ -996,6 +996,14 @@ spec:
           contentType: rpm
         - name: tempo3-0-main
           contentType: rpm
+        - name: temurin-11-jdk-main
+          contentType: rpm
+        - name: temurin-17-jdk-main
+          contentType: rpm
+        - name: temurin-21-jdk-main
+          contentType: rpm
+        - name: temurin-25-jdk-main
+          contentType: rpm
         - name: tinysparql-main
           contentType: rpm
         - name: tk-main
