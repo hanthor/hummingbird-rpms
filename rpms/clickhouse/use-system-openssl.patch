@@ -2,13 +2,17 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 8bdb240cb..790f99294 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -631,6 +631,10 @@ enable_testing() # Enable for tests without binary
+@@ -631,6 +631,14 @@ enable_testing() # Enable for tests without binary
  
  set(ENABLE_OPENSSL_DYNAMIC_DEFAULT OFF)
  option(ENABLE_OPENSSL_DYNAMIC "This option removes SSL from ClickHouse and will link to the OpenSSL version supplied by OS." ${ENABLE_OPENSSL_DYNAMIC_DEFAULT})
 +if (ENABLE_OPENSSL_DYNAMIC)
 +    find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 +    message(STATUS "Using system OpenSSL ${OPENSSL_VERSION}")
++    # System OpenSSL uses the runtime glibc, while ClickHouse builds its own
++    # objects against an older portability sysroot. The loader resolves the
++    # system shared library's glibc references at runtime.
++    add_link_options("LINKER:--allow-shlib-undefined")
 +endif ()
  
  # when installing to /usr - place configs to /etc but for /usr/local place to /usr/local/etc

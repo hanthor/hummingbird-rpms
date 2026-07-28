@@ -162,7 +162,11 @@ install -d %{buildroot}%{_sysconfdir}/clickhouse-keeper/keeper_config.d
 
 
 %check
-build/programs/clickhouse --version | grep -F '%{version}'
+# System shared libraries are linked against Hummingbird's runtime glibc,
+# whereas ClickHouse's own objects use its older portability sysroot. Resolve
+# every dynamic relocation now so missing transitive symbols fail the build.
+ldd -r build/programs/clickhouse
+LD_BIND_NOW=1 build/programs/clickhouse --version | grep -F '%{version}'
 build/programs/clickhouse local \
     --query 'SELECT sum(number) FROM numbers(100)' | grep -Fx 4950
 build/src/unit_tests_dbms
