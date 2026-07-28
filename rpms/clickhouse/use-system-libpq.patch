@@ -5,7 +5,7 @@ diff --git a/contrib/CMakeLists.txt b/contrib/CMakeLists.txt
 index a7286a0934..1e23b4020b 100644
 --- a/contrib/CMakeLists.txt
 +++ b/contrib/CMakeLists.txt
-@@ -175,7 +175,11 @@ add_contrib (cppkafka-cmake cppkafka)
+@@ -175,7 +175,10 @@ add_contrib (cppkafka-cmake cppkafka)
  
  option(ENABLE_LIBPQXX "Enable PostgreSQL" ${ENABLE_LIBRARIES})
  if (ENABLE_LIBPQXX)
@@ -13,7 +13,6 @@ index a7286a0934..1e23b4020b 100644
 +    find_package(PostgreSQL REQUIRED)
 +    add_library(_libpq INTERFACE)
 +    target_link_libraries(_libpq INTERFACE PostgreSQL::PostgreSQL)
-+    target_include_directories(_libpq SYSTEM INTERFACE "${ClickHouse_SOURCE_DIR}/system-libpq-include")
 +    add_library(ch_contrib::libpq ALIAS _libpq)
      add_contrib (libpqxx-cmake libpqxx)
  endif()

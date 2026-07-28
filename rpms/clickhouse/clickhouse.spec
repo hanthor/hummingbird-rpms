@@ -1,3 +1,5 @@
+%global toolchain clang
+
 Name:           clickhouse
 Version:        26.7.1.1315
 Release:        1%{?dist}
@@ -13,12 +15,10 @@ Source0:        %{name}-%{version}.tar.zst
 Source1:        openssl-engine-compat.h
 Patch0:         allow-build-flags.patch
 Patch1:         use-system-openssl.patch
-Patch2:         no-aarch64-sve-stringzilla.patch
-Patch3:         use-system-libpq.patch
+Patch2:         use-system-libpq.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake
-BuildRequires:  compiler-rt
 BuildRequires:  gawk
 BuildRequires:  lld
 BuildRequires:  make
@@ -72,20 +72,10 @@ replication and distributed DDL queries.
 
 %prep
 %autosetup -p1
-# ClickHouse uses a custom sysroot, so expose Fedora's OpenSSL headers at a
-# non-default path. A narrow compatibility header handles bundled consumers
-# which include the removed ENGINE header despite OPENSSL_NO_ENGINE.
-rm -rf contrib/openssl/include/openssl
-ln -s %{_includedir}/openssl contrib/openssl/include/openssl
+# Some bundled consumers include the removed ENGINE header despite
+# OPENSSL_NO_ENGINE. Provide a narrow compatibility header ahead of the system
+# OpenSSL include directory.
 install -Dpm 0644 %{SOURCE1} openssl-compat/openssl/engine.h
-# ClickHouse's custom sysroot causes CMake to discard /usr/include as an
-# implicit path. Expose only libpq's public headers through a non-default
-# include directory; exposing all system headers would mix Fedora's kernel
-# UAPI with ClickHouse's bundled sysroot.
-mkdir system-libpq-include
-for header in libpq-events.h libpq-fe.h pg_config_ext.h postgres_ext.h; do
-    ln -s %{_includedir}/${header} system-libpq-include/${header}
-done
 # Upstream's generated file contains a shortened build number even on the
 # release tag. Preserve the complete RPM version in the binary metadata.
 sed -i \
@@ -102,29 +92,26 @@ sed -i \
 
 %build
 # ClickHouse carries patched copies of tightly integrated dependencies in
-# contrib/. Prefer system OpenSSL, while retaining bundled libraries where
-# upstream does not provide a supported system-library switch. Rust crates are
-# supplied by the complete upstream submodule archive and built offline.
-unset CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS
-export CC=clang
-export CXX=clang++
+# contrib/. Use the distro toolchain, hardening flags, OpenSSL, and libpq while
+# retaining bundled libraries where upstream has no supported system-library
+# switch. Rust crates come from the complete source archive and build offline.
+export CFLAGS="${CFLAGS} -I$PWD/openssl-compat"
+export CXXFLAGS="${CXXFLAGS} -I$PWD/openssl-compat"
 cmake -S . -B build -G Ninja \
-    -DCLICKHOUSE_OFFICIAL_BUILD=ON \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DALLOW_CUSTOM_BUILD_FLAGS=ON \
+    -DCLICKHOUSE_OFFICIAL_BUILD=OFF \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_INSTALL_LIBDIR=%{_lib} \
     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
     -DCMAKE_SKIP_RPATH=ON \
     -DCOMPILER_CACHE=disabled \
-    -DCMAKE_C_FLAGS="-I$PWD/openssl-compat" \
-    -DCMAKE_CXX_FLAGS="-I$PWD/openssl-compat" \
-    -DENABLE_OPENSSL_DYNAMIC=ON \
+    -DDISABLE_HERMETIC_BUILD=ON \
     -DENABLE_SSL=ON \
     -DENABLE_RUST=ON \
     -DENABLE_TESTS=ON \
     -DENABLE_THINLTO=OFF \
-    -DOPENSSL_INCLUDE_DIR="$PWD/contrib/openssl/include" \
-    -DOPENSSL_ROOT_DIR=%{_prefix} \
-    -DUSE_SYSTEM_COMPILER_RT=ON \
+    -DGLIBC_COMPATIBILITY=OFF \
+    -DUSE_SYSTEM_OPENSSL=ON \
 %ifarch aarch64
     -DNO_ARMV81_OR_HIGHER=ON \
 %endif
@@ -162,9 +149,7 @@ install -d %{buildroot}%{_sysconfdir}/clickhouse-keeper/keeper_config.d
 
 
 %check
-# System shared libraries are linked against Hummingbird's runtime glibc,
-# whereas ClickHouse's own objects use its older portability sysroot. Resolve
-# every dynamic relocation now so missing transitive symbols fail the build.
+# Resolve every dynamic relocation so missing transitive symbols fail the build.
 ldd -r build/programs/clickhouse
 LD_BIND_NOW=1 build/programs/clickhouse --version | grep -F '%{version}'
 build/programs/clickhouse local \
