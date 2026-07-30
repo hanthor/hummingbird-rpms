@@ -21,6 +21,7 @@ Source3:        go-vendor-tools.toml
 Patch0:         0001-Disable-pprof-debug-endpoints.patch
 Patch1:         0002-cve-2026-56852-update-golang.org-x-text-to-v0.39.0.patch
 Patch2:         0003-pnpm-cache-both-rpm-architectures.patch
+Patch3:         0004-cve-2026-53669-bump-react-router-to-7.18.0.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25
@@ -220,9 +221,9 @@ Provides:       bundled(npm(react-remove-scroll)) = 2.7.2
 Provides:       bundled(npm(react-remove-scroll-bar)) = 2.3.8
 Provides:       bundled(npm(react-resize-detector)) = 7.1.2
 Provides:       bundled(npm(react-router)) = 5.3.4
-Provides:       bundled(npm(react-router)) = 7.17.0
+Provides:       bundled(npm(react-router)) = 7.18.0
 Provides:       bundled(npm(react-router-dom)) = 5.3.4
-Provides:       bundled(npm(react-router-dom)) = 7.17.0
+Provides:       bundled(npm(react-router-dom)) = 7.18.0
 Provides:       bundled(npm(react-shallow-renderer)) = 16.15.0
 Provides:       bundled(npm(react-style-singleton)) = 2.2.3
 Provides:       bundled(npm(react-test-renderer)) = 17.0.2
