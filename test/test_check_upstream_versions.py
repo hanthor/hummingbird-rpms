@@ -562,7 +562,11 @@ def test_check_package_version_detects_temurin_build_respin(cuv_module, workdir:
 
 @pytest.mark.parametrize(
     ('upstream', 'rpm_version'),
-    [('21.0.11+10', '21.0.11.0.0.10'), ('8u492-b09', '8.0.492.0.0.9')],
+    [
+        ('21.0.11+10', '21.0.11.0.0.10'),
+        ('8u492-b09', '8.0.492.0.0.9'),
+        ('8u422-b05.1', '8.0.422.0.0.5'),
+    ],
 )
 def test_transform_temurin_version_for_comparison(
     cuv_module, upstream: str, rpm_version: str,

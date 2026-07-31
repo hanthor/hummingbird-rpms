@@ -163,7 +163,7 @@ def compare_versions(current: str, upstream: str) -> int:
 
 def _transform_temurin_to_rpm(version: str) -> str:
     """Convert an Adoptium release tag to the Temurin RPM Version scheme."""
-    if match := re.fullmatch(r"8u(\d+)-b(\d+)", version):
+    if match := re.fullmatch(r"8u(\d+)-b(\d+)(?:\.\d+)?", version):
         update, build = match.groups()
         return f"8.0.{int(update)}.0.0.{int(build)}"
     if match := re.fullmatch(r"(\d+(?:\.\d+)+)\+(\d+)", version):
