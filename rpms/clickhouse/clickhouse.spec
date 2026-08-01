@@ -120,6 +120,7 @@ cmake -S . -B build -G Ninja \
 %ifarch aarch64
     -DNO_ARMV81_OR_HIGHER=ON \
 %endif
+    -DCHECK_LARGE_OBJECT_SIZES=0 \
     -DWERROR=OFF
 cmake --build build --parallel %{_smp_build_ncpus} \
     --target clickhouse unit_tests_dbms
