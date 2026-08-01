@@ -6,9 +6,9 @@ if the syscall is blocked (e.g. by container seccomp policies).  Probe
 io_uring availability first and GTEST_SKIP the environment when it
 cannot be initialized.
 
---- a/src/IO/tests/gtest_silk_fiber_stream_socket.cpp
-+++ b/src/IO/tests/gtest_silk_fiber_stream_socket.cpp
-@@ -14,6 +14,8 @@
+--- a/src/IO/tests/gtest_silk_fiber_stream_socket.cpp	2026-08-01 22:09:08.783811173 +0100
++++ b/src/IO/tests/gtest_silk_fiber_stream_socket.cpp	2026-08-01 22:09:39.914683137 +0100
+@@ -15,6 +15,8 @@
  #include <silk/fibers/future.h>
  #include <silk/util/init.h>
  
@@ -17,7 +17,7 @@ cannot be initialized.
  #include <Poco/Exception.h>
  #include <Poco/Net/Context.h>
  #include <Poco/Net/NetException.h>
-@@ -38,6 +40,16 @@ class SilkEnvironment : public ::testing::Environment
+@@ -39,6 +41,15 @@
  public:
      void SetUp() override
      {
