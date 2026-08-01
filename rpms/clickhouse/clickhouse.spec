@@ -1,4 +1,7 @@
 %global toolchain clang
+# ClickHouse uses -ffile-prefix-map and LTO which strip debug source
+# references, leaving the auto-generated debugsource package empty.
+%undefine _debugsource_packages
 
 Name:           clickhouse
 Version:        26.7.1.1315
