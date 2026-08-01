@@ -17,6 +17,7 @@ Patch0:         allow-build-flags.patch
 Patch1:         use-system-openssl.patch
 Patch2:         use-system-libpq.patch
 Patch3:         no-aarch64-sve-stringzilla.patch
+Patch4:         liburing-openat2-compat.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake

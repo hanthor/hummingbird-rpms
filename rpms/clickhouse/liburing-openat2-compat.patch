@@ -1,0 +1,28 @@
+Guard bundled liburing's struct open_how against system linux/openat2.h.
+
+ClickHouse's custom sysroot hides /usr/include from CMake feature
+checks, so LIBURING_CONFIG_HAS_OPEN_HOW is never set and compat.h.in
+unconditionally defines struct open_how.  At compile time the real
+kernel header is still reachable through the default search path,
+causing a redefinition error.
+
+Wrap the fallback definition with the kernel header's own include
+guard so both paths coexist.
+
+--- a/contrib/liburing-cmake/compat.h.in
++++ b/contrib/liburing-cmake/compat.h.in
+@@ -34,11 +34,14 @@ struct __kernel_timespec {
+ #if !defined(LIBURING_CONFIG_HAS_OPEN_HOW)
+ #include <inttypes.h>
+
++#ifndef _LINUX_OPENAT2_H
+ struct open_how {
+ 	uint64_t	flags;
+ 	uint64_t	mode;
+ 	uint64_t	resolve;
+ };
++#define _LINUX_OPENAT2_H
++#endif
+ #else
+ #include <linux/openat2.h>
+ #endif
