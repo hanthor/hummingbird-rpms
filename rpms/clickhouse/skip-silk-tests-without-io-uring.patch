@@ -4,10 +4,11 @@ The Silk test suite registers a global gtest environment that
 unconditionally initializes io_uring, aborting the entire test binary
 if the syscall is blocked (e.g. by container seccomp policies).  Probe
 io_uring availability first and GTEST_SKIP the environment when it
-cannot be initialized.
+cannot be initialized.  Guard TearDown so it does not call destroy on
+a scheduler that was never started.
 
 --- a/src/IO/tests/gtest_silk_fiber_stream_socket.cpp	2026-08-01 22:09:08.783811173 +0100
-+++ b/src/IO/tests/gtest_silk_fiber_stream_socket.cpp	2026-08-01 22:09:39.914683137 +0100
++++ b/src/IO/tests/gtest_silk_fiber_stream_socket.cpp	2026-08-01 23:15:27.344980611 +0100
 @@ -15,6 +15,8 @@
  #include <silk/fibers/future.h>
  #include <silk/util/init.h>
@@ -17,7 +18,12 @@ cannot be initialized.
  #include <Poco/Exception.h>
  #include <Poco/Net/Context.h>
  #include <Poco/Net/NetException.h>
-@@ -39,6 +41,15 @@
+@@ -36,19 +38,33 @@
+ 
+ class SilkEnvironment : public ::testing::Environment
+ {
++    bool initialized = false;
++
  public:
      void SetUp() override
      {
@@ -33,3 +39,16 @@ cannot be initialized.
          /// TODO(mstetsyuk): Silk::initializeFiberScheduler and Silk::destroyFiberScheduler are coming in another PR.
          silk::initialize();
          silk::FiberScheduler::Options options;
+         /// OpenSSL handshakes run on fiber stacks and need more room than the silk default.
+         options.fiberStackSize = 320 * 1024;
+         silk::FiberScheduler::initialize(&options);
++        initialized = true;
+     }
+ 
+     void TearDown() override
+     {
++        if (!initialized)
++            return;
+         silk::FiberScheduler::destroy();
+         silk::destroy();
+     }
