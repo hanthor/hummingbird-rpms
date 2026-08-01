@@ -1,6 +1,8 @@
 %global toolchain clang
-# ClickHouse uses -ffile-prefix-map and LTO which strip debug source
-# references, leaving the auto-generated debugsource package empty.
+# The debugsource package pulls in the entire source tarball (384k files
+# including bundled LLVM tests, Rust vendor crates, docs, and images)
+# rather than just compiled sources. Disable it on both arches — on
+# aarch64 it is also empty due to debugedit/LTO interaction.
 %undefine _debugsource_packages
 
 Name:           clickhouse
