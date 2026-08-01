@@ -34,12 +34,19 @@ Patch1:         use-system-openssl.patch
 # coupled to ClickHouse internals. Avoids carrying a second libpq that
 # would need independent CVE tracking.
 Patch2:         use-system-libpq.patch
+# ClickHouse unconditionally loads the OpenSSL legacy provider at
+# startup via OSSL_PROVIDER_load. With bundled OpenSSL the provider is
+# compiled in (-DSTATIC_LEGACY). With system OpenSSL it lives in a
+# separate .so that requires dlopen, which ClickHouse forbids. Make
+# the load non-fatal since legacy algorithms (MD4, RC4, DES) are not
+# needed for core operation.
+Patch3:         system-openssl-skip-legacy-provider.patch
 # ClickHouse's custom sysroot hides /usr/include from CMake feature
 # checks, so the bundled liburing's compat.h unconditionally defines
 # struct open_how. At compile time the system linux/openat2.h is still
 # reachable, causing a redefinition error. Wrap with the kernel header's
 # include guard.
-Patch3:         liburing-openat2-compat.patch
+Patch4:         liburing-openat2-compat.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake

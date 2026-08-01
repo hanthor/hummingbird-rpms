@@ -1,0 +1,37 @@
+Skip loading the OpenSSL legacy provider when using system OpenSSL.
+
+ClickHouse unconditionally calls OSSL_PROVIDER_load(NULL, "legacy") at
+startup.  With the bundled OpenSSL this works because -DSTATIC_LEGACY
+compiles the provider directly into the binary.  With system OpenSSL the
+legacy provider lives in a separate shared object
+(/usr/lib64/ossl-modules/legacy.so) that must be dlopen'd, but ClickHouse
+intercepts dlopen and refuses all dynamic library loading for security.
+
+The legacy provider supplies only deprecated algorithms (MD4, RC2, RC4,
+DES, Blowfish, SEED, etc.) that ClickHouse does not require for its core
+operation.  Make the load non-fatal: log a warning instead of aborting.
+
+--- a/src/Common/Crypto/OpenSSLInitializer.cpp
++++ b/src/Common/Crypto/OpenSSLInitializer.cpp
+@@ -4,6 +4,7 @@
+
+ #include <Common/Exception.h>
+ #include <Common/OpenSSLHelpers.h>
++#include <Common/logger_useful.h>
+
+ #if USE_SSL
+ #    include <openssl/crypto.h>
+@@ -65,9 +66,12 @@ void OpenSSLInitializer::initialize()
+         if (!default_provider)
+             throw std::runtime_error(fmt::format("Failed to load OpenSSL 'default' provider. {}", getOpenSSLErrors()));
+
++        /// With system OpenSSL the legacy provider is a separate .so that
++        /// requires dlopen, which ClickHouse forbids.  The legacy algorithms
++        /// (MD4, RC4, DES, etc.) are not required for core operation.
+         legacy_provider = OSSL_PROVIDER_load(nullptr, "legacy");
+         if (!legacy_provider)
+-            throw std::runtime_error(fmt::format("Failed to load OpenSSL 'legacy' provider. {}", getOpenSSLErrors()));
++            LOG_WARNING(&Poco::Logger::get("OpenSSLInitializer"), "Could not load OpenSSL 'legacy' provider ({}); legacy algorithms will be unavailable", getOpenSSLErrors());
+     }
+ #endif
+ }
