@@ -12,12 +12,34 @@ URL:            https://clickhouse.com/
 # Generated from the matching signed upstream tag with all submodules checked
 # out. See SOURCE.md for the reproducible archive procedure.
 Source0:        %{name}-%{version}.tar.zst
+# Stub openssl/engine.h — Fedora's OpenSSL 3.x removed the deprecated
+# ENGINE API, but some bundled ClickHouse deps include the header
+# unconditionally. This shim defines OPENSSL_NO_ENGINE so those
+# includes compile until upstream deps drop the legacy include.
 Source1:        openssl-engine-compat.h
+# Upstream hard-errors on any CFLAGS/CXXFLAGS/LDFLAGS to prevent
+# "environment pollution." Add an opt-in gate so distro hardening,
+# LTO, and debug-info flags are accepted.
 Patch0:         allow-build-flags.patch
+# Link against the operating system's OpenSSL instead of the bundled
+# fork (3.5.x). Upstream's ENABLE_OPENSSL_DYNAMIC only changes static
+# vs shared linkage of the same bundled source — it does NOT use system
+# OpenSSL. This patch adds USE_SYSTEM_OPENSSL which skips the bundled
+# build entirely, enabling system crypto policies, FIPS provider access,
+# and distro CVE patches. Also wires system OpenSSL into the Rust
+# delta-kernel-rs crate.
 Patch1:         use-system-openssl.patch
+# Replace the bundled libpq (PostgreSQL C client) with the system copy
+# from libpq-devel. Keeps bundled libpqxx (C++ wrapper) which is tightly
+# coupled to ClickHouse internals. Avoids carrying a second libpq that
+# would need independent CVE tracking.
 Patch2:         use-system-libpq.patch
-Patch3:         no-aarch64-sve-stringzilla.patch
-Patch4:         liburing-openat2-compat.patch
+# ClickHouse's custom sysroot hides /usr/include from CMake feature
+# checks, so the bundled liburing's compat.h unconditionally defines
+# struct open_how. At compile time the system linux/openat2.h is still
+# reachable, causing a redefinition error. Wrap with the kernel header's
+# include guard.
+Patch3:         liburing-openat2-compat.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake
@@ -103,24 +125,16 @@ export CFLAGS="${CFLAGS} -I$PWD/openssl-compat"
 export CXXFLAGS="${CXXFLAGS} -I$PWD/openssl-compat"
 cmake -S . -B build -G Ninja \
     -DALLOW_CUSTOM_BUILD_FLAGS=ON \
-    -DCLICKHOUSE_OFFICIAL_BUILD=OFF \
+    -DCHECK_LARGE_OBJECT_SIZES=0 \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_LIBDIR=%{_lib} \
     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
     -DCMAKE_SKIP_RPATH=ON \
     -DCOMPILER_CACHE=disabled \
     -DDISABLE_HERMETIC_BUILD=ON \
-    -DENABLE_SSL=ON \
-    -DENABLE_RUST=ON \
-    -DENABLE_TESTS=ON \
-    -DENABLE_THINLTO=OFF \
     -DENABLE_XRAY=OFF \
     -DGLIBC_COMPATIBILITY=OFF \
     -DUSE_SYSTEM_OPENSSL=ON \
-%ifarch aarch64
-    -DNO_ARMV81_OR_HIGHER=ON \
-%endif
-    -DCHECK_LARGE_OBJECT_SIZES=0 \
     -DWERROR=OFF
 cmake --build build --parallel %{_smp_build_ncpus} \
     --target clickhouse unit_tests_dbms
