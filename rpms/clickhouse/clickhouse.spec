@@ -47,6 +47,11 @@ Patch3:         system-openssl-skip-legacy-provider.patch
 # reachable, causing a redefinition error. Wrap with the kernel header's
 # include guard.
 Patch4:         liburing-openat2-compat.patch
+# Silk's gtest global environment unconditionally initializes io_uring,
+# aborting the entire test binary when the syscall is blocked by
+# container seccomp policies. Probe io_uring before silk init and
+# GTEST_SKIP when unavailable so all other tests still run.
+Patch5:         skip-silk-tests-without-io-uring.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake
@@ -99,6 +104,16 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 %description keeper
 ClickHouse Keeper is a ZooKeeper-compatible coordination service used for
 replication and distributed DDL queries.
+
+
+%package tests
+Summary:        Unit tests for ClickHouse
+Requires:       %{name}%{?_isa} = %{version}-%{release}
+
+%description tests
+This package provides the ClickHouse unit test binary. Run on a host
+(not in a container) for full coverage including Silk fiber/io_uring
+tests.
 
 
 %prep
@@ -175,13 +190,50 @@ install -d %{buildroot}%{_sysconfdir}/clickhouse-server/config.d
 install -d %{buildroot}%{_sysconfdir}/clickhouse-server/users.d
 install -d %{buildroot}%{_sysconfdir}/clickhouse-keeper/keeper_config.d
 
+install -Dpm 0755 build/src/unit_tests_dbms \
+    %{buildroot}%{_libexecdir}/clickhouse-tests/unit_tests_dbms
+
 
 %check
-# Resolve every dynamic relocation so missing transitive symbols fail the build.
+# Linking integrity — resolve every dynamic relocation.
 ldd -r build/programs/clickhouse
+
+# Version string must match the RPM.
 LD_BIND_NOW=1 build/programs/clickhouse --version | grep -F '%{version}'
+
+# Basic SQL — arithmetic, aggregation, array functions.
 build/programs/clickhouse local \
     --query 'SELECT sum(number) FROM numbers(100)' | grep -Fx 4950
+build/programs/clickhouse local \
+    --query "SELECT count(), min(number), max(number) FROM numbers(1000) WHERE number %% 3 = 0" \
+    | grep -Fx $'334\t0\t999'
+build/programs/clickhouse local \
+    --query "SELECT arraySort(groupArray(x)) FROM (SELECT number %% 5 AS x FROM numbers(10) GROUP BY x)" \
+    | grep -Fx '[0,1,2,3,4]'
+
+# Table DDL — create, insert, select, drop.
+build/programs/clickhouse local --multiquery "
+    CREATE TABLE test_tbl (id UInt32, name String) ENGINE = Memory;
+    INSERT INTO test_tbl VALUES (1, 'alice'), (2, 'bob'), (3, 'charlie');
+    SELECT count() FROM test_tbl;
+    DROP TABLE test_tbl;
+" | grep -Fx 3
+
+# String and date functions.
+build/programs/clickhouse local \
+    --query "SELECT length('hello'), upper('hello'), toYYYYMM(toDate('2026-08-01'))" \
+    | grep -Fx $'5\tHELLO\t202608'
+
+# System tables are accessible.
+build/programs/clickhouse local \
+    --query "SELECT count() > 0 FROM system.functions WHERE name = 'sum'" \
+    | grep -Fx 1
+
+# Compression round-trip.
+echo 'hello clickhouse' | build/programs/clickhouse compressor | \
+    build/programs/clickhouse compressor --decompress | grep -Fx 'hello clickhouse'
+
+# Unit tests (silk tests auto-skip when io_uring is unavailable).
 build/src/unit_tests_dbms
 
 
@@ -219,6 +271,11 @@ build/src/unit_tests_dbms
 %dir %{_sysconfdir}/clickhouse-keeper
 %dir %{_sysconfdir}/clickhouse-keeper/keeper_config.d
 %config(noreplace) %{_sysconfdir}/clickhouse-keeper/keeper_config.xml
+
+
+%files tests
+%dir %{_libexecdir}/clickhouse-tests
+%{_libexecdir}/clickhouse-tests/unit_tests_dbms
 
 
 %changelog

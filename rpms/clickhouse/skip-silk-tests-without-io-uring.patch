@@ -1,0 +1,35 @@
+Skip Silk fiber tests when io_uring is unavailable.
+
+The Silk test suite registers a global gtest environment that
+unconditionally initializes io_uring, aborting the entire test binary
+if the syscall is blocked (e.g. by container seccomp policies).  Probe
+io_uring availability first and GTEST_SKIP the environment when it
+cannot be initialized.
+
+--- a/src/IO/tests/gtest_silk_fiber_stream_socket.cpp
++++ b/src/IO/tests/gtest_silk_fiber_stream_socket.cpp
+@@ -14,6 +14,8 @@
+ #include <silk/fibers/future.h>
+ #include <silk/util/init.h>
+
++#include <liburing.h>
++
+ #include <Poco/Exception.h>
+ #include <Poco/Net/Context.h>
+ #include <Poco/Net/NetException.h>
+@@ -38,6 +40,16 @@ class SilkEnvironment : public ::testing::Environment
+ public:
+     void SetUp() override
+     {
++        struct io_uring probe_ring;
++        int r = io_uring_queue_init(1, &probe_ring, 0);
++        if (r < 0)
++        {
++            GTEST_SKIP() << "io_uring unavailable (blocked by seccomp or unsupported kernel)";
++            return;
++        }
++        io_uring_queue_exit(&probe_ring);
++
+         /// TODO(mstetsyuk): Silk::initializeFiberScheduler and Silk::destroyFiberScheduler are coming in another PR.
+         silk::initialize();
+         silk::FiberScheduler::Options options;
