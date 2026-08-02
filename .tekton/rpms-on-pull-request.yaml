@@ -2904,7 +2904,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[pull_request]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/clickhouse/***]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/clickhouse/***, test/rpms/clickhouse.yml]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -2972,6 +2972,14 @@ spec:
               memory: 10Gi
             limits:
               memory: 10Gi
+    - pipelineTaskName: show-sbom
+      stepSpecs:
+        - name: show-sbom
+          computeResources:
+            requests:
+              memory: 2Gi
+            limits:
+              memory: 2Gi
   taskRunTemplate:
     serviceAccountName: build-pipeline-clickhouse-main
   timeouts:

@@ -66,6 +66,14 @@ clickhouse:
               memory: 10Gi
             limits:
               memory: 10Gi
+    - pipelineTaskName: show-sbom
+      stepSpecs:
+        - name: show-sbom
+          computeResources:
+            requests:
+              memory: 2Gi
+            limits:
+              memory: 2Gi
 
 cloud-init:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"

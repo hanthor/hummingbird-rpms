@@ -1,0 +1,210 @@
+---
+# Tests for clickhouse: verify binaries, version, basic SQL, and unit tests.
+
+clickhouse-version:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "clickhouse" ]]; then
+      echo "Skipping: only runs on clickhouse (got: ${rpm_name})"
+      exit 0
+    fi
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+    createrepo_c "${build_dir}/local-repo" || \
+      "${TEST_ENGINE}" run --rm --user 0 -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/hummingbird-builder:latest createrepo_c /repo
+
+    repo_root=$(git rev-parse --show-toplevel)
+
+    "${TEST_ENGINE}" run --rm \
+      -v "${repo_root}/ci/repos:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        cp /tmp/repos/*.repo /etc/yum.repos.d/
+        printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
+          > /etc/yum.repos.d/local.repo
+        dnf install -y clickhouse
+
+        rpm_version=$(rpm -q --queryformat "%{VERSION}" clickhouse)
+        version=$(clickhouse --version 2>&1 | grep -oP "ClickHouse \w+ version \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
+
+        if [[ -z "${version}" ]]; then
+          echo "FAIL: could not parse version from clickhouse --version"
+          clickhouse --version
+          exit 1
+        fi
+
+        if [[ "${version}" != "${rpm_version}" ]]; then
+          echo "FAIL: clickhouse reports \"${version}\", expected \"${rpm_version}\""
+          exit 1
+        fi
+
+        echo "PASS: clickhouse version ${version}"
+      '
+
+clickhouse-local-sql:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "clickhouse-client" ]]; then
+      echo "Skipping: only runs on clickhouse-client (got: ${rpm_name})"
+      exit 0
+    fi
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+    createrepo_c "${build_dir}/local-repo" || \
+      "${TEST_ENGINE}" run --rm --user 0 -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/hummingbird-builder:latest createrepo_c /repo
+
+    repo_root=$(git rev-parse --show-toplevel)
+
+    "${TEST_ENGINE}" run --rm \
+      -v "${repo_root}/ci/repos:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        cp /tmp/repos/*.repo /etc/yum.repos.d/
+        printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
+          > /etc/yum.repos.d/local.repo
+        dnf install -y clickhouse-client
+
+        # Arithmetic
+        result=$(clickhouse local --query "SELECT sum(number) FROM numbers(100)")
+        if [[ "${result}" != "4950" ]]; then
+          echo "FAIL: sum(numbers(100)) = ${result}, expected 4950"
+          exit 1
+        fi
+        echo "PASS: arithmetic query"
+
+        # Table DDL round-trip
+        count=$(clickhouse local --multiquery "
+          CREATE TABLE test_tbl (id UInt32, name String) ENGINE = Memory;
+          INSERT INTO test_tbl VALUES (1, '\''alice'\''), (2, '\''bob'\''), (3, '\''charlie'\'');
+          SELECT count() FROM test_tbl;
+          DROP TABLE test_tbl;
+        ")
+        if [[ "${count}" != "3" ]]; then
+          echo "FAIL: table round-trip count = ${count}, expected 3"
+          exit 1
+        fi
+        echo "PASS: table DDL round-trip"
+
+        # System tables accessible
+        result=$(clickhouse local --query "SELECT count() > 0 FROM system.functions WHERE name = '\''sum'\''")
+        if [[ "${result}" != "1" ]]; then
+          echo "FAIL: system.functions query returned ${result}"
+          exit 1
+        fi
+        echo "PASS: system tables accessible"
+      '
+
+clickhouse-compressor:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "clickhouse-client" ]]; then
+      echo "Skipping: only runs on clickhouse-client (got: ${rpm_name})"
+      exit 0
+    fi
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+    createrepo_c "${build_dir}/local-repo" || \
+      "${TEST_ENGINE}" run --rm --user 0 -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/hummingbird-builder:latest createrepo_c /repo
+
+    repo_root=$(git rev-parse --show-toplevel)
+
+    "${TEST_ENGINE}" run --rm \
+      -v "${repo_root}/ci/repos:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        cp /tmp/repos/*.repo /etc/yum.repos.d/
+        printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
+          > /etc/yum.repos.d/local.repo
+        dnf install -y clickhouse-client
+
+        result=$(echo "hello clickhouse" | clickhouse compressor | clickhouse compressor --decompress)
+        if [[ "${result}" != "hello clickhouse" ]]; then
+          echo "FAIL: compression round-trip got \"${result}\""
+          exit 1
+        fi
+        echo "PASS: compression round-trip"
+      '
+
+clickhouse-unit-tests:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "clickhouse-tests" ]]; then
+      echo "Skipping: only runs on clickhouse-tests (got: ${rpm_name})"
+      exit 0
+    fi
+
+    build_dir=$(mktemp -d)
+    cleanup() { rm -rf "${build_dir}"; }
+    trap cleanup EXIT
+
+    mkdir -p "${build_dir}/local-repo"
+    if [[ -n ${TEST_REPO_DIR:-} ]]; then
+      cp "${TEST_REPO_DIR}"/*.rpm "${build_dir}/local-repo/"
+    else
+      cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    fi
+    createrepo_c "${build_dir}/local-repo" || \
+      "${TEST_ENGINE}" run --rm --user 0 -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/hummingbird-builder:latest createrepo_c /repo
+
+    repo_root=$(git rev-parse --show-toplevel)
+
+    # Run privileged so io_uring syscalls are available.  seccomp=unconfined
+    # alone is not enough — rootless podman user-namespace restrictions also
+    # block io_uring_setup.  ClickHouse's Silk fiber scheduler needs io_uring.
+    #
+    # Only run the Silk fiber tests here — the full unit_tests_dbms suite
+    # already runs during %check in the RPM build.  This test exists to
+    # verify io_uring-dependent Silk tests pass (they are skipped in %check
+    # because mock's seccomp profile blocks io_uring).
+    "${TEST_ENGINE}" run --rm \
+      --privileged \
+      -v "${repo_root}/ci/repos:/tmp/repos:ro,z" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        cp /tmp/repos/*.repo /etc/yum.repos.d/
+        printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
+          > /etc/yum.repos.d/local.repo
+        dnf install -y clickhouse-tests
+
+        /usr/libexec/clickhouse-tests/unit_tests_dbms --gtest_filter="SilkFiberSocketTest/*"
+        echo "PASS: Silk fiber io_uring tests completed"
+      '
