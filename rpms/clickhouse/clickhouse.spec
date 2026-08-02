@@ -78,6 +78,90 @@ BuildRequires:  zstd
 # architectures are experimental and are not covered by upstream binaries.
 ExclusiveArch:  x86_64 aarch64
 
+# ClickHouse bundles ~120 libraries in contrib/ and builds them statically.
+# Upstream explicitly refuses to support system libraries for most of these;
+# their build philosophy is "bundle everything" for reproducibility.
+# Per Fedora Bundling Guidelines, declare the major bundled components.
+#
+# LLVM components (C++ stdlib, unwinder, compiler builtins)
+Provides:       bundled(libc++)
+Provides:       bundled(libc++abi)
+Provides:       bundled(libunwind)
+Provides:       bundled(compiler-rt)
+# Data structures and algorithms
+Provides:       bundled(abseil-cpp)
+Provides:       bundled(boost)
+Provides:       bundled(re2)
+Provides:       bundled(simdjson)
+Provides:       bundled(simdutf)
+Provides:       bundled(pdqsort)
+Provides:       bundled(cityhash)
+Provides:       bundled(xxHash)
+Provides:       bundled(croaring)
+# Compression
+Provides:       bundled(lz4)
+Provides:       bundled(zstd)
+Provides:       bundled(zlib-ng)
+Provides:       bundled(brotli)
+Provides:       bundled(bzip2)
+Provides:       bundled(snappy)
+Provides:       bundled(xz)
+Provides:       bundled(libdeflate)
+# Networking and RPC
+Provides:       bundled(grpc)
+Provides:       bundled(protobuf)
+Provides:       bundled(c-ares)
+Provides:       bundled(thrift)
+Provides:       bundled(librdkafka)
+Provides:       bundled(AMQP-CPP)
+Provides:       bundled(nats-io)
+# Database clients
+Provides:       bundled(libpqxx)
+Provides:       bundled(mariadb-connector-c)
+Provides:       bundled(mongo-c-driver)
+Provides:       bundled(mongo-cxx-driver)
+Provides:       bundled(rocksdb)
+Provides:       bundled(sqlite)
+Provides:       bundled(cassandra)
+# Cloud SDKs
+Provides:       bundled(aws-sdk-cpp)
+Provides:       bundled(azure-sdk-cpp)
+Provides:       bundled(google-cloud-cpp)
+# Security and auth
+Provides:       bundled(krb5)
+Provides:       bundled(cyrus-sasl)
+Provides:       bundled(libssh)
+Provides:       bundled(openldap)
+Provides:       bundled(libgsasl)
+# I/O and runtime
+Provides:       bundled(liburing)
+Provides:       bundled(jemalloc)
+Provides:       bundled(libuv)
+Provides:       bundled(libevent)
+# Serialization and formats
+Provides:       bundled(arrow)
+Provides:       bundled(avro)
+Provides:       bundled(capnproto)
+Provides:       bundled(msgpack-c)
+Provides:       bundled(rapidjson)
+Provides:       bundled(yaml-cpp)
+Provides:       bundled(libxml2)
+Provides:       bundled(fmtlib)
+# Text and encoding
+Provides:       bundled(icu)
+Provides:       bundled(idna)
+Provides:       bundled(cld2)
+Provides:       bundled(vectorscan)
+# Geospatial
+Provides:       bundled(h3)
+Provides:       bundled(s2geometry)
+# Misc
+Provides:       bundled(libarchive)
+Provides:       bundled(double-conversion)
+Provides:       bundled(fast_float)
+Provides:       bundled(magic_enum)
+Provides:       bundled(nlohmann-json)
+
 %description
 ClickHouse is a column-oriented database management system for online
 analytical processing. It can answer analytical queries in real time using
