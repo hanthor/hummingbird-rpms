@@ -21,32 +21,38 @@ Source0:        %{name}-%{version}.tar.zst
 # unconditionally. This shim defines OPENSSL_NO_ENGINE so those
 # includes compile until upstream deps drop the legacy include.
 Source1:        openssl-engine-compat.h
+# PreLoad.cmake hard-errors on ANY non-empty compiler/linker flags —
+# both environment variables and CMAKE_C/CXX_FLAGS. This gate lets us
+# inject hardening flags via -DCMAKE_C/CXX_FLAGS while keeping the
+# upstream protection against accidental environment pollution.
+# Wolfi carries an equivalent allow_cflags.patch.
+Patch0:         allow-build-flags.patch
 # Wire system OpenSSL into the Rust delta-kernel-rs crate so it
 # finds system headers and libraries instead of the bundled copy.
-Patch0:         use-system-openssl.patch
+Patch1:         use-system-openssl.patch
 # Replace the bundled libpq (PostgreSQL C client) with the system copy
 # from libpq-devel. Keeps bundled libpqxx (C++ wrapper) which is tightly
 # coupled to ClickHouse internals. Avoids carrying a second libpq that
 # would need independent CVE tracking.
-Patch1:         use-system-libpq.patch
+Patch2:         use-system-libpq.patch
 # ClickHouse unconditionally loads the OpenSSL legacy provider at
 # startup via OSSL_PROVIDER_load. With bundled OpenSSL the provider is
 # compiled in (-DSTATIC_LEGACY). With system OpenSSL it lives in a
 # separate .so that requires dlopen, which ClickHouse forbids. Make
 # the load non-fatal since legacy algorithms (MD4, RC4, DES) are not
 # needed for core operation.
-Patch2:         system-openssl-skip-legacy-provider.patch
+Patch3:         system-openssl-skip-legacy-provider.patch
 # ClickHouse's custom sysroot hides /usr/include from CMake feature
 # checks, so the bundled liburing's compat.h unconditionally defines
 # struct open_how. At compile time the system linux/openat2.h is still
 # reachable, causing a redefinition error. Wrap with the kernel header's
 # include guard.
-Patch3:         liburing-openat2-compat.patch
+Patch4:         liburing-openat2-compat.patch
 # Silk's gtest global environment unconditionally initializes io_uring,
 # aborting the entire test binary when the syscall is blocked by
 # container seccomp policies. Probe io_uring before silk init and
 # GTEST_SKIP when unavailable so all other tests still run.
-Patch4:         skip-silk-tests-without-io-uring.patch
+Patch5:         skip-silk-tests-without-io-uring.patch
 
 BuildRequires:  clang >= 21
 BuildRequires:  cmake
@@ -238,6 +244,7 @@ sed -i \
 # CFLAGS/CXXFLAGS/LDFLAGS. Our hardening flags go through CMAKE_C/CXX_FLAGS.
 unset CFLAGS CXXFLAGS LDFLAGS
 cmake -S . -B build -G Ninja \
+    -DALLOW_CUSTOM_BUILD_FLAGS=ON \
     -DCHECK_LARGE_OBJECT_SIZES=0 \
     -DCLICKHOUSE_OFFICIAL_BUILD=1 \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
