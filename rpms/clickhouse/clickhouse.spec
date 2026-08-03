@@ -263,6 +263,7 @@ cmake -S . -B build -G Ninja \
     -DENABLE_XRAY=OFF \
     -DOPENSSL_INCLUDE_DIR=$PWD/contrib/openssl/include \
     -DOPENSSL_ROOT_DIR=/usr \
+    -DUSE_SYSTEM_OPENSSL=ON \
     -DWERROR=OFF
 cmake --build build --parallel %{_smp_build_ncpus} \
     --target clickhouse unit_tests_dbms
