@@ -355,6 +355,22 @@ def _compute_file_hash(filepath: Path, algo: str = "SHA512") -> str:
     return h.hexdigest()
 
 
+def _check_source_exists(url: str) -> bool:
+    """HEAD-probe a URL and return True if it exists (HTTP 200)."""
+    req = urllib.request.Request(
+        url,
+        method="HEAD",
+        headers={"User-Agent": "hummingbird-rpms-version-checker/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            return True
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return False
+        raise
+
+
 def _download_file(url: str, dest: Path) -> None:
     """Download a file from a URL to a local path."""
     req = urllib.request.Request(
@@ -1235,6 +1251,7 @@ def check_package_version(
     project_id = None
     version_suffix_strip = None
     version_transform = None
+    source_check_url = None
     if meta:
         track_upstream = meta.get("track_upstream")
         if track_upstream and track_upstream != "latest":
@@ -1242,6 +1259,7 @@ def check_package_version(
         project_id = meta.get("release_monitoring_project_id")
         version_suffix_strip = meta.get("version_suffix_strip")
         version_transform = meta.get("upstream_version_transform")
+        source_check_url = meta.get("source_check_url")
 
     # Query release-monitoring.org
     try:
@@ -1271,6 +1289,32 @@ def check_package_version(
             ]
         if anitya_data.get("version"):
             anitya_data["version"] = _strip_suffix(anitya_data["version"])
+
+    # Filter out leading versions whose source tarball is not yet published.
+    # Probes only until a published version is found; keeps all versions
+    # after the first hit (they are older and assumed available).
+    if source_check_url:
+        raw_stable = anitya_data.get("stable_versions", [])
+        skip = 0
+        for v in raw_stable:
+            url = source_check_url.format(
+                version=v, feature=track_version or "",
+            )
+            try:
+                if _check_source_exists(url):
+                    break
+                logger.info(
+                    "%s: skipping %s (source not published: %s)",
+                    package, v, url,
+                )
+                skip += 1
+            except urllib.error.URLError as e:
+                logger.warning(
+                    "%s: error probing source for %s: %s", package, v, e,
+                )
+                break
+        if skip:
+            anitya_data["stable_versions"] = raw_stable[skip:]
 
     # Apply a named version transform if configured
     # (e.g., OpenJDK reports "21.0.12+8" from Anitya, RPM uses "21.0.12.0.8").

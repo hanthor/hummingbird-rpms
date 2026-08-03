@@ -3,6 +3,8 @@
 import json
 import subprocess
 import types
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from unittest.mock import call, patch
 
@@ -882,6 +884,106 @@ def test_check_package_version_transform_skips_unparseable(
 
     assert result.has_update is True
     assert result.upstream_version == '21.0.12.0.8'
+
+
+def test_check_source_exists(cuv_module) -> None:
+    """_check_source_exists returns True on 200, False on 404."""
+
+    with patch.object(cuv_module.urllib.request, 'urlopen'):
+        assert cuv_module._check_source_exists('https://example.com/a.tar.xz') is True
+
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://example.com/a.tar.xz', 404, 'Not Found', Message(), None,
+        ),
+    ):
+        assert cuv_module._check_source_exists('https://example.com/a.tar.xz') is False
+
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://example.com/a.tar.xz', 500, 'Server Error', Message(), None,
+        ),
+    ):
+        with pytest.raises(urllib.error.HTTPError):
+            cuv_module._check_source_exists('https://example.com/a.tar.xz')
+
+
+def test_check_package_version_skips_unavailable_source(
+    cuv_module, workdir: Path,
+) -> None:
+    """source_check_url filters out versions whose tarball is not published."""
+    _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
+                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                              'release_monitoring_project_id': 369281,
+                              'track_upstream': '21',
+                              'upstream_version_transform': 'openjdk_to_rpm',
+                              'source_check_url':
+                                  'https://osci.example/openjdk{feature}/'
+                                  'openjdk-{version}.tar.xz'})
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    mock_response = {
+        'stable_versions': ['21.0.12.1+0', '21.0.12+8', '21.0.11+10'],
+    }
+
+    def fake_check(url: str) -> bool:
+        if '21.0.12.1+0' in url:
+            return False
+        return True
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id',
+                      return_value=mock_response),
+        patch.object(cuv_module, '_check_source_exists',
+                      side_effect=fake_check),
+    ):
+        result = cuv_module.check_package_version('java-21-openjdk-portable')
+
+    assert result.has_update is True
+    assert result.upstream_version == '21.0.12.0.8'
+
+
+def test_check_package_version_source_check_url_formats_correctly(
+    cuv_module, workdir: Path,
+) -> None:
+    """source_check_url template substitutes {version} and {feature}."""
+    _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
+                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                              'release_monitoring_project_id': 369281,
+                              'track_upstream': '21',
+                              'upstream_version_transform': 'openjdk_to_rpm',
+                              'source_check_url':
+                                  'https://osci.example/openjdk{feature}/'
+                                  'openjdk-{version}.tar.xz'})
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    mock_response = {
+        'stable_versions': ['21.0.12+8'],
+    }
+
+    checked_urls = []
+
+    def capture_check(url: str) -> bool:
+        checked_urls.append(url)
+        return True
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id',
+                      return_value=mock_response),
+        patch.object(cuv_module, '_check_source_exists',
+                      side_effect=capture_check),
+    ):
+        cuv_module.check_package_version('java-21-openjdk-portable')
+
+    assert checked_urls == [
+        'https://osci.example/openjdk21/openjdk-21.0.12+8.tar.xz',
+    ]
 
 
 def test_matches_track_version(cuv_module) -> None:

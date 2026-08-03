@@ -172,6 +172,8 @@ together).
 | `track_upstream`                | `"latest"` or version prefix to constrain updates | `"latest"`, `"1.26"`   |
 | `release_monitoring_project_id` | Anitya project ID (int) or upstream name (str)    | `13254`, `"golang"`    |
 | `version_suffix_strip`          | Suffix to strip from Anitya-reported versions     | `"-RELEASE"`           |
+| `upstream_version_transform`    | Named transform from Anitya version to RPM scheme | `"openjdk_to_rpm"`     |
+| `source_check_url`              | URL template to HEAD-probe before selecting a version (see below) | `"https://example.com/{version}.tar.xz"` |
 
 These fields affect two systems:
 
@@ -206,6 +208,21 @@ allowed). Use `version_suffix_strip` to remove it before comparison and update:
 {
   "release_monitoring_project_id": 21267,
   "version_suffix_strip": "-RELEASE"
+}
+```
+
+Some upstream projects publish source tarballs independently of tag creation, and Anitya may report
+a version before the tarball is available. Use `source_check_url` to probe the source URL with an
+HTTP HEAD request before selecting a version. Versions whose source returns 404 are skipped in
+favour of the next available version. The template supports `{version}` (raw Anitya version) and
+`{feature}` (value of `track_upstream`):
+
+```json
+{
+  "release_monitoring_project_id": 369281,
+  "track_upstream": "21",
+  "upstream_version_transform": "openjdk_to_rpm",
+  "source_check_url": "https://openjdk-sources.osci.io/openjdk{feature}/openjdk-{version}.tar.xz"
 }
 ```
 
