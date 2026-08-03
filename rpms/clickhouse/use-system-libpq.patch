@@ -3,11 +3,9 @@ is tightly coupled to the ClickHouse sources. Non-SYSTEM include directories
 are used so that -I (not -isystem) is generated, bypassing the hermetic
 build's --sysroot remapping of system include paths.
 
-diff --git a/contrib/CMakeLists.txt b/contrib/CMakeLists.txt
-index a7286a0934..1e23b4020b 100644
 --- a/contrib/CMakeLists.txt
 +++ b/contrib/CMakeLists.txt
-@@ -175,7 +175,12 @@ add_contrib (cppkafka-cmake cppkafka)
+@@ -173,7 +173,13 @@
  
  option(ENABLE_LIBPQXX "Enable PostgreSQL" ${ENABLE_LIBRARIES})
  if (ENABLE_LIBPQXX)
