@@ -234,6 +234,9 @@ sed -i \
 # Hardening flags are injected via CMAKE_C/CXX_FLAGS since the hermetic build
 # ignores environment CFLAGS. XRay is disabled because its bundled compiler-rt
 # sources require obsolete kernel UAPI headers (linux/scc.h).
+# Clear RPM-injected env flags — PreLoad.cmake hard-errors on any non-empty
+# CFLAGS/CXXFLAGS/LDFLAGS. Our hardening flags go through CMAKE_C/CXX_FLAGS.
+unset CFLAGS CXXFLAGS LDFLAGS
 cmake -S . -B build -G Ninja \
     -DCHECK_LARGE_OBJECT_SIZES=0 \
     -DCLICKHOUSE_OFFICIAL_BUILD=1 \
