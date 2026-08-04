@@ -167,7 +167,10 @@ def run(workers: int, scratch: Path) -> None:
     if scratch.exists():
         for line in scratch.read_text().splitlines():
             if line.strip():
-                already_done.add(json.loads(line)["package"])
+                try:
+                    already_done.add(json.loads(line)["package"])
+                except (json.JSONDecodeError, KeyError):
+                    logger.warning(f"Skipping malformed scratch line: {line[:80]!r}")
         logger.info(f"Resuming: {len(already_done)} package(s) already audited")
 
     packages = [p for p in enumerate_packages() if p not in already_done]
@@ -207,11 +210,14 @@ def _annotate_no_upstream_url(result: dict) -> dict:
     if result["category"] != "no_upstream_url":
         return result
     sources_path = RPMS_DIR / result["package"] / "sources"
-    result["needs_pipeline"] = sources_path.is_file() and sources_path.stat().st_size > 0
+    result["needs_pipeline"] = bool(_parse_sources_file_with_legacy_fallback(sources_path))
     return result
 
 
 def aggregate(scratch: Path, output: Path) -> None:
+    if not scratch.exists():
+        logger.error(f"Scratch file {scratch} not found -- run 'run' first")
+        sys.exit(1)
     results = [
         _annotate_no_upstream_url(json.loads(line))
         for line in scratch.read_text().splitlines()
@@ -252,10 +258,14 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if args.command == "run":
-        run(args.workers, args.scratch)
-    elif args.command == "aggregate":
-        aggregate(args.scratch, args.output)
+    try:
+        if args.command == "run":
+            run(args.workers, args.scratch)
+        elif args.command == "aggregate":
+            aggregate(args.scratch, args.output)
+    except Exception as exc:
+        logger.error(f"Fatal: {exc}")
+        return 1
 
     return 0
 
