@@ -48,6 +48,9 @@ cp LICENSE _build/LICENSE
 pushd _build
 tar -xf %{S:1}
 tar -xf %{S:2}
+# go mod vendor creates both hamba/avro/v2 (original) and iskorotkov/avro/v2
+# (replacement) dirs; only the original gets the LICENCE file copied in.
+cp vendor/github.com/hamba/avro/v2/LICENCE vendor/github.com/iskorotkov/avro/v2/LICENCE
 popd
 
 
