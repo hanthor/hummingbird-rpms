@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "1",
+  "sha": "2bdd6b569b2277d237ba516a9c301576144bea83",
+  "source": "https://src.fedoraproject.org/rpms/fapolicyd.git",
+  "upstream_repo": "https://github.com/linux-application-whitelisting/fapolicyd",
+  "version": "2.0"
+}
