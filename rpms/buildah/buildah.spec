@@ -164,11 +164,8 @@ export BUILDTAGS+=" containers_image_sequoia"
 %gobuild -o bin/crash ./tests/crash
 %gobuild -o bin/wait ./tests/wait
 %gobuild -o bin/grpcnoop ./tests/rpc/noop
-<<<<<<< HEAD
 %gobuild -o bin/pipeloop ./tests/pipeloop/pipeloop.go
-=======
 %endif
->>>>>>> hummingbird-local
 %{__make} docs
 
 %install
