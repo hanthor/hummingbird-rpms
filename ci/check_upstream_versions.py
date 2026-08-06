@@ -160,6 +160,7 @@ class VersionCheckResult:
     updated: bool = False
     update_error: Optional[str] = None
     downloaded_sources: Optional[list[str]] = None
+    version_source: Optional[str] = None
 
 
 def compare_versions(current: str, upstream: str) -> int:
@@ -1218,7 +1219,15 @@ def query_gitlab_tags(
                 next_page = response.headers.get("x-next-page")
                 if not next_page:
                     break
-                page = int(next_page)
+                try:
+                    page = int(next_page)
+                except ValueError:
+                    logging.warning(
+                        "Non-numeric x-next-page header %r from GitLab, "
+                        "stopping pagination",
+                        next_page,
+                    )
+                    break
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 raise ValueError(
@@ -1488,6 +1497,7 @@ def check_package_version(
                 + ("GitLab tags" if version_source == "gitlab_tags" else "Anitya")
             ),
             anitya_project_id=anitya_data.get("id"),
+            version_source=version_source,
         )
 
     # Compare versions
@@ -1500,6 +1510,7 @@ def check_package_version(
         upstream_version=upstream_version,
         has_update=has_update,
         anitya_project_id=anitya_data.get("id"),
+        version_source=version_source,
     )
 
 
@@ -1693,10 +1704,8 @@ def run_check(args: argparse.Namespace) -> None:
                     f"metadata/{result.package}.json",
                     cwd=ROOT_DIR,
                 )
-                pkg_meta = get_package_metadata(result.package)
-                vs = (pkg_meta or {}).get("version_source")
                 source_label = (
-                    "GitLab tags API" if vs == "gitlab_tags"
+                    "GitLab tags API" if result.version_source == "gitlab_tags"
                     else "release-monitoring.org"
                 )
                 commit_msg = (
