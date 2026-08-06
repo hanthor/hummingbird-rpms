@@ -106,6 +106,32 @@ def enumerate_packages() -> list[str]:
     )
 
 
+_GNU_FTP_RE = re.compile(r"^(?:https?|ftp)://ftp\.gnu\.org/(?:pub/)?gnu/(.*)$")
+
+
+def _prefer_gnu_mirror(url: str) -> str:
+    """ftp.gnu.org has a well-documented history of unreliability -- outages,
+    IPv6 slowness, and multi-minute hangs reported against it for years across
+    unrelated projects (Spack, Guix, Conan Center), not specific to any one
+    network. GNU's own guidance recommends ftpmirror.gnu.org instead, which
+    redirects to a current, nearby mirror. Confirmed empirically 2026-08-06:
+    ftp.gnu.org was unreachable from two independent networks investigating
+    bash's "transformed" result, while ftpmirror.gnu.org fetched the same
+    package cleanly and reproducibly.
+
+    Matches all three URL shapes seen across specs in this repo:
+    http/https/ftp scheme, and an optional "/pub/" before "/gnu/" (e.g.
+    bash uses https://ftp.gnu.org/gnu/..., grep uses
+    https://ftp.gnu.org/pub/gnu/..., automake uses
+    ftp://ftp.gnu.org/gnu/...). ftpmirror.gnu.org's own URL scheme drops
+    both the scheme-specific quirks and the "/gnu/"+"/pub/" prefix entirely.
+    """
+    match = _GNU_FTP_RE.match(url)
+    if match:
+        return f"https://ftpmirror.gnu.org/{match.group(1)}"
+    return url
+
+
 def classify_package(package: str) -> dict:
     result: dict = {"package": package}
 
@@ -136,7 +162,7 @@ def classify_package(package: str) -> dict:
         result["category"] = "no_upstream_url"
         return result
 
-    url = fetchable[0]
+    url = _prefer_gnu_mirror(fetchable[0])
     recorded_entries = _parse_sources_file_with_legacy_fallback(package_dir / "sources")
     filename = url.rsplit("/", 1)[-1]
     recorded = next((e for e in recorded_entries if e["filename"] == filename), None)
