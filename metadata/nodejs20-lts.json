@@ -1,0 +1,9 @@
+{
+  "modification_status": "native",
+  "track_upstream": "20",
+  "upstream_branch": "v20.x",
+  "upstream_repo": "https://gitlab.com/redhat/hummingbird/src/nodejs-lts",
+  "version": "20.20.2",
+  "version_source": "gitlab_tags",
+  "tag_strip_prefix": "v"
+}
