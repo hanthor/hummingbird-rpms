@@ -1173,7 +1173,7 @@ def query_anitya_by_project_id(project_id: int) -> dict:
     }
 
 
-_PRERELEASE_RE = re.compile(r"(alpha|beta|rc\d*|nightly|dev|pre)", re.IGNORECASE)
+_PRERELEASE_RE = re.compile(r"\b(alpha|beta|rc\d*|nightly|dev|pre)\b", re.IGNORECASE)
 
 
 def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
