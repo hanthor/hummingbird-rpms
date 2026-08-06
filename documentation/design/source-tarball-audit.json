@@ -87,9 +87,10 @@
       "source0": "https://salsa.debian.org/apt-team/apt/-/archive/3.3.1/apt-3.3.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 502: Bad Gateway",
+      "category": "trivial",
+      "computed_hash": "870d0c34fbaa7520aad058ecd6509fe8eddd17430781a16d1e80484d4947307a7c641f0449183cbac1da611a85f82c9bee2d2d7bff76170fc2195b123100d22e",
       "package": "attr",
+      "recorded_hash": "870d0c34fbaa7520aad058ecd6509fe8eddd17430781a16d1e80484d4947307a7c641f0449183cbac1da611a85f82c9bee2d2d7bff76170fc2195b123100d22e",
       "source0": "https://download.savannah.nongnu.org/releases/attr/attr-2.6.0.tar.xz"
     },
     {
@@ -292,10 +293,8 @@
       "source0": "https://github.com/containers/composefs/releases/download/v1.0.8/composefs-1.0.8.tar.xz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "composer",
-      "source0": "composer-2.10.2.tgz"
+      "category": "already_migrated",
+      "package": "composer"
     },
     {
       "category": "trivial",
@@ -494,9 +493,10 @@
       "source0": "https://download.eclipse.org/eclipse/downloads/drops4/R-4.23-202203080310/ecjsrc-4.23.jar"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 502: Bad Gateway",
+      "category": "trivial",
+      "computed_hash": "5f879be3819b6e989cdf9e415b6ad65f24275cc7a6c63f81fb849c92cd97beac088b1dfef37e9eb3f2c1a3e84ffaa553f611a1e7bdd9c1cb5646283f814637b1",
       "package": "ed",
+      "recorded_hash": "5f879be3819b6e989cdf9e415b6ad65f24275cc7a6c63f81fb849c92cd97beac088b1dfef37e9eb3f2c1a3e84ffaa553f611a1e7bdd9c1cb5646283f814637b1",
       "source0": "https://ftpmirror.gnu.org/ed/ed-1.22.5.tar.lz"
     },
     {
@@ -617,9 +617,10 @@
       "source0": "macros.fpc-srpm"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 502: Bad Gateway",
+      "category": "trivial",
+      "computed_hash": "43de86ea70b4b47f6efaae67f3440f65a24ffac29dc6d11203a9764e4f1a749ce1ba7645acd23525220b3ba12ddad8687b962b9f1254e2c0a86070854e85d5a0",
       "package": "freetype",
+      "recorded_hash": "43de86ea70b4b47f6efaae67f3440f65a24ffac29dc6d11203a9764e4f1a749ce1ba7645acd23525220b3ba12ddad8687b962b9f1254e2c0a86070854e85d5a0",
       "source0": "http://download.savannah.gnu.org/releases/freetype/freetype-2.14.3.tar.xz"
     },
     {
@@ -684,9 +685,10 @@
       "source0": "http://ftp.gnu.org/gnu/gdbm/gdbm-1.23.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: The read operation timed out",
+      "category": "trivial",
+      "computed_hash": "664c3b1985cb7d1e7ed443e036a6c7f8c1f47354720d13c2db2c2cf8a85136d0ffc2cc920dce1240d688f706653f647749ce29f69eb0bb659e043b499f9c47eb",
       "package": "gettext",
+      "recorded_hash": "664c3b1985cb7d1e7ed443e036a6c7f8c1f47354720d13c2db2c2cf8a85136d0ffc2cc920dce1240d688f706653f647749ce29f69eb0bb659e043b499f9c47eb",
       "source0": "https://ftp.gnu.org/pub/gnu/gettext/gettext-1.0.tar.gz"
     },
     {
@@ -823,9 +825,10 @@
       "source0": "gpgverify"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 502: Bad Gateway",
+      "category": "trivial",
+      "computed_hash": "14b5eb2ba8158b8b62ffa7fb142100a0af1de0f0c45b2673801b636714a106b46fcd423b05c722d963c9543fafcf10fec811975308211a54f20a3ba322d7b295",
       "package": "graphite2",
+      "recorded_hash": "14b5eb2ba8158b8b62ffa7fb142100a0af1de0f0c45b2673801b636714a106b46fcd423b05c722d963c9543fafcf10fec811975308211a54f20a3ba322d7b295",
       "source0": "https://downloads.sourceforge.net/project/silgraphite/graphite2//graphite2-1.3.14.tgz"
     },
     {
@@ -836,21 +839,24 @@
       "source0": "https://gitlab.com/api/v4/projects/graphviz%2Fgraphviz/packages/generic/graphviz-releases/15.1.1/graphviz-15.1.1.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "c54b4db5a8b9afe098c088decd94977746305284d716666a60bac82b4edc0fae4acf828970b5b6fc7d58ecd549f638e17e6958f33a71fedcc7d7415b9228b161",
       "package": "grep",
+      "recorded_hash": "c54b4db5a8b9afe098c088decd94977746305284d716666a60bac82b4edc0fae4acf828970b5b6fc7d58ecd549f638e17e6958f33a71fedcc7d7415b9228b161",
       "source0": "https://ftp.gnu.org/pub/gnu/grep/grep-3.12.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "86545c67042ad034a464a371d0587f8f0b449070c82fb1cfbcd0368c2e249624778d43e95d6cacd79cbe5b441142db96fdc3ab6222638337702f05a71c0990be",
       "package": "groff",
+      "recorded_hash": "86545c67042ad034a464a371d0587f8f0b449070c82fb1cfbcd0368c2e249624778d43e95d6cacd79cbe5b441142db96fdc3ab6222638337702f05a71c0990be",
       "source0": "https://ftp.gnu.org/gnu/groff/groff-1.24.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "82aef53188b3e69b51b7ddab5b8c44a11a5b73c0039b22a315a0c7d244694feab0146748add4265901eb1b4c0cee8a9eb69594995f098830d964091af97079c5",
       "package": "gzip",
+      "recorded_hash": "82aef53188b3e69b51b7ddab5b8c44a11a5b73c0039b22a315a0c7d244694feab0146748add4265901eb1b4c0cee8a9eb69594995f098830d964091af97079c5",
       "source0": "https://ftp.gnu.org/gnu/gzip/gzip-1.14.tar.xz"
     },
     {
@@ -875,9 +881,10 @@
       "source0": "https://github.com/HDFGroup/hdf5/archive/2.2.0/hdf5-2.2.0.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "8505a6d1c52c72bff28d45d7f2e35d50f210a0730c0961eab4d128ae0b07fe94c08133b5508f1a2a5bd076bb2a14e7986800d71624e562fbd687cace05a35189",
       "package": "hello",
+      "recorded_hash": "8505a6d1c52c72bff28d45d7f2e35d50f210a0730c0961eab4d128ae0b07fe94c08133b5508f1a2a5bd076bb2a14e7986800d71624e562fbd687cace05a35189",
       "source0": "https://ftp.gnu.org/gnu/hello/hello-2.12.3.tar.gz"
     },
     {
@@ -1286,9 +1293,10 @@
       "source0": "https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.61.tar.bz2"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "4d8427c0f115268132f7544e80a808c883ab1406338f6c529b1a586b016d57aedb0857f66166eb8d9f37d70efc9dccf907b673b43b17bcf258c8797db1e829ce",
       "package": "libidn2",
+      "recorded_hash": "4d8427c0f115268132f7544e80a808c883ab1406338f6c529b1a586b016d57aedb0857f66166eb8d9f37d70efc9dccf907b673b43b17bcf258c8797db1e829ce",
       "source0": "https://ftp.gnu.org/gnu/libidn/libidn2-2.3.8.tar.gz"
     },
     {
@@ -1348,9 +1356,10 @@
       "source0": "https://github.com/fedora-modularity/libmodulemd/releases/download/2.15.3/modulemd-2.15.3.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "cdfbe64e80e30df64dbd536e8104a6bb10471582415d5b45a1dd30eb2a312781b38389a9531243413c14e0f88866a35159b20e77900718f28c1030253a1305b9",
       "package": "libmpc",
+      "recorded_hash": "cdfbe64e80e30df64dbd536e8104a6bb10471582415d5b45a1dd30eb2a312781b38389a9531243413c14e0f88866a35159b20e77900718f28c1030253a1305b9",
       "source0": "https://ftp.gnu.org/gnu/mpc/mpc-1.4.1.tar.xz"
     },
     {
@@ -1368,9 +1377,10 @@
       "source0": "https://github.com/thkukuk/libnsl/archive/v2.0.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 502: Bad Gateway",
+      "category": "trivial",
+      "computed_hash": "0ae94df4bd508f0e664fa5430687d64904c60d69d9565c18cacb70251f8653cb7c571325d1406c859fdd149048adce8c4b3bf028573064496d7da3436e27b9b0",
       "package": "libpipeline",
+      "recorded_hash": "0ae94df4bd508f0e664fa5430687d64904c60d69d9565c18cacb70251f8653cb7c571325d1406c859fdd149048adce8c4b3bf028573064496d7da3436e27b9b0",
       "source0": "http://download.savannah.gnu.org/releases/libpipeline/libpipeline-1.5.8.tar.gz"
     },
     {
@@ -1465,9 +1475,10 @@
       "source0": "https://libssh2.org/download/libssh2-1.11.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "6a581c4c072b168bf29a0dec7e59a9329a798e392b7d1033791d0e3166a5d1164e2a7065373a84018d500a01563657900c318b1fd437c227c3174b754f9998d3",
       "package": "libtasn1",
+      "recorded_hash": "6a581c4c072b168bf29a0dec7e59a9329a798e392b7d1033791d0e3166a5d1164e2a7065373a84018d500a01563657900c318b1fd437c227c3174b754f9998d3",
       "source0": "http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.21.0.tar.gz"
     },
     {
@@ -1492,15 +1503,17 @@
       "source0": "https://github.com/libtom/libtommath/archive/v1.3.0.tar.gz#/libtommath-1.3.0.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "eed207094bcc444f4bfbb13710e395e062e3f1d312ca8b186ab0cbd22dc92ddef176a0b3ecd43e02676e37bd9e328791c59a38ef15846d4eae15da4f20315724",
       "package": "libtool",
+      "recorded_hash": "eed207094bcc444f4bfbb13710e395e062e3f1d312ca8b186ab0cbd22dc92ddef176a0b3ecd43e02676e37bd9e328791c59a38ef15846d4eae15da4f20315724",
       "source0": "http://ftp.gnu.org/gnu/libtool/libtool-2.5.4.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "01a4267bbd301ea5c389b17ee918ae5b7d645da8b2c6c6f0f004ff2dead9f8e50cda2c6047358890a5fceadc8820ffc5154879193b9bb8970f3fb1fea1f411d6",
       "package": "libunistring",
+      "recorded_hash": "01a4267bbd301ea5c389b17ee918ae5b7d645da8b2c6c6f0f004ff2dead9f8e50cda2c6047358890a5fceadc8820ffc5154879193b9bb8970f3fb1fea1f411d6",
       "source0": "https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz"
     },
     {
@@ -1667,9 +1680,10 @@
       "source0": "http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "efe5ec212f6431129a79667f098b2efe2e824122112f73a675deccb9c0d8c9b0bc9e3bf50c9cd5c0b894dc0af1b3f02253e5e67893fb9548a6a9d3bed7c829f7",
       "package": "m4",
+      "recorded_hash": "efe5ec212f6431129a79667f098b2efe2e824122112f73a675deccb9c0d8c9b0bc9e3bf50c9cd5c0b894dc0af1b3f02253e5e67893fb9548a6a9d3bed7c829f7",
       "source0": "https://ftp.gnu.org/gnu/m4/m4-1.4.21.tar.xz"
     },
     {
@@ -1680,9 +1694,10 @@
       "source0": "https://pagure.io/releases/mailcap/mailcap-2.1.54.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "145260cbd6a8226cef3dfef0c8baba31847beaebc7e6b65d39d02715fd4f4cab9b139b6c3772e550088d4f9ae80c6d3ed20b9a7664c693644dfb96b4cb60e67c",
       "package": "make",
+      "recorded_hash": "145260cbd6a8226cef3dfef0c8baba31847beaebc7e6b65d39d02715fd4f4cab9b139b6c3772e550088d4f9ae80c6d3ed20b9a7664c693644dfb96b4cb60e67c",
       "source0": "https://ftp.gnu.org/gnu/make/make-4.4.1.tar.gz"
     },
     {
@@ -1984,9 +1999,10 @@
       "source0": "https://github.com/linux-pam/linux-pam/releases/download/v1.7.2/Linux-PAM-1.7.2.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "d689d696660a662753e8660792733c3be0a94c76abfe7a28b0f9f70300c3a42d6437d081553a59bfde6e1b0d5ee13ed89be48d0b00b6da2cadbfc14a15ada603",
       "package": "patch",
+      "recorded_hash": "d689d696660a662753e8660792733c3be0a94c76abfe7a28b0f9f70300c3a42d6437d081553a59bfde6e1b0d5ee13ed89be48d0b00b6da2cadbfc14a15ada603",
       "source0": "https://ftp.gnu.org/gnu/patch/patch-2.8.tar.xz"
     },
     {
@@ -2362,10 +2378,9 @@
       "source0": "https://ftp.postgresql.org/pub/source/v18.4/postgresql-18.4.tar.bz2"
     },
     {
-      "category": "trivial",
-      "computed_hash": "c499aa14b6c94eda3a455bfe0d2d3c74c79dd718bffbd20207bd0831cb87725b83a76e4ee537a49ddf112bd1248a156d35da00035cbcd4c22037a20dcb4bdc9c",
+      "category": "error",
+      "error": "download failed: <urlopen error timed out>",
       "package": "procps-ng",
-      "recorded_hash": "c499aa14b6c94eda3a455bfe0d2d3c74c79dd718bffbd20207bd0831cb87725b83a76e4ee537a49ddf112bd1248a156d35da00035cbcd4c22037a20dcb4bdc9c",
       "source0": "https://downloads.sourceforge.net/procps-ng/procps-ng-4.0.6.tar.xz"
     },
     {
@@ -2754,9 +2769,10 @@
       "source0": "https://github.com/google/re2/archive/2025-11-05/re2-2025-11-05.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error ftp error: timed out>",
+      "category": "transformed",
+      "computed_hash": "513002753dcf5db9213dbbb61d51217245f6a40d33b1dd45238e8062dfa8eef0c890b87a5548e11db959e842724fb572c4d3d7fb433773762a63c30efe808344",
       "package": "readline",
+      "recorded_hash": "4896c40756038c97a4fc1d8fc424bcc908783283ca15948e0ee7fd7d2df420e2ec8843ea23cfbd941f2e0256d824331b2ad3b262d6c6cf99418f16c4e47ac7d5",
       "source0": "ftp://ftp.gnu.org/gnu/readline/readline-8.3.tar.gz"
     },
     {
@@ -2880,9 +2896,10 @@
       "source0": "https://github.com/Kistler-Group/sdbus-cpp/archive/v2.3.1/sdbus-cpp-2.3.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error ftp error: timed out>",
+      "category": "trivial",
+      "computed_hash": "20224df834b363ca1357024234bb93df3929c252c40c7ef3d23e78fc05177c7986e3145a5049d63db746a4dc2c97befb0324a87ea081507292ff6cd5383ee9db",
       "package": "sed",
+      "recorded_hash": "20224df834b363ca1357024234bb93df3929c252c40c7ef3d23e78fc05177c7986e3145a5049d63db746a4dc2c97befb0324a87ea081507292ff6cd5383ee9db",
       "source0": "ftp://ftp.gnu.org/pub/gnu/sed/sed-4.10.tar.xz"
     },
     {
@@ -2926,9 +2943,10 @@
       "source0": "https://github.com/google/snappy/releases/download/1.2.2/snappy-1.2.2.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error ftp error: timed out>",
+      "category": "trivial",
+      "computed_hash": "d8e154e9a5d62c77807e4e5d36c0faed5ce2964291be5f8b83e2968a6de52229503689a4ca2109a717ae2632a14b63ec937ca0430c91684c72063f6bc0294195",
       "package": "source-highlight",
+      "recorded_hash": "d8e154e9a5d62c77807e4e5d36c0faed5ce2964291be5f8b83e2968a6de52229503689a4ca2109a717ae2632a14b63ec937ca0430c91684c72063f6bc0294195",
       "source0": "ftp://ftp.gnu.org/gnu/src-highlite/source-highlight-3.1.9.tar.gz"
     },
     {
@@ -2987,9 +3005,10 @@
       "source0": null
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "8b84ed661e6c878fa33eb5c1808d20351e6f40551ac63f96014fb0d0b9c72d5d94d8865d39e36bcb184fd250f84778a3b271bbd8bd2ceb69eece0c3568577510",
       "package": "tar",
+      "recorded_hash": "8b84ed661e6c878fa33eb5c1808d20351e6f40551ac63f96014fb0d0b9c72d5d94d8865d39e36bcb184fd250f84778a3b271bbd8bd2ceb69eece0c3568577510",
       "source0": "https://ftp.gnu.org/gnu/tar/tar-1.35.tar.xz"
     },
     {
@@ -3065,7 +3084,7 @@
     },
     {
       "category": "error",
-      "error": "spec parsing failed: /tmp/tmpn3bixxo7: line 120: No patch number 0",
+      "error": "spec parsing failed: /tmp/tmpwiis7bng: line 120: No patch number 0",
       "package": "ucx"
     },
     {
@@ -3129,9 +3148,10 @@
       "source0": "https://github.com/netflix/vmaf/archive/v3.2.0/vmaf-3.2.0.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "0c3dfa54858bd0ff6f9567f8224e0ea2b165ab585724adcce63df042703427c813c71fc0affe45950e45c0aa280f038eb9d1a7218df8372b214f99885ba5f2aa",
       "package": "which",
+      "recorded_hash": "0c3dfa54858bd0ff6f9567f8224e0ea2b165ab585724adcce63df042703427c813c71fc0affe45950e45c0aa280f038eb9d1a7218df8372b214f99885ba5f2aa",
       "source0": "http://ftp.gnu.org/gnu/which/which-2.25.tar.gz"
     },
     {
@@ -3209,12 +3229,12 @@
     }
   ],
   "summary": {
-    "already_migrated": 22,
-    "error": 45,
-    "no_upstream_url": 40,
-    "no_upstream_url_needs_pipeline": 13,
+    "already_migrated": 23,
+    "error": 23,
+    "no_upstream_url": 39,
+    "no_upstream_url_needs_pipeline": 12,
     "no_upstream_url_no_work_needed": 27,
-    "transformed": 3,
-    "trivial": 370
+    "transformed": 4,
+    "trivial": 391
   }
 }
