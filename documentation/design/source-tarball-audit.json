@@ -63,11 +63,8 @@
       "source0": "ansible-generator"
     },
     {
-      "category": "transformed",
-      "computed_hash": "8c69075e1297d8d4ff33cc8012a7d704179e23112700e6ff586cda0e436737ee15c9908a3e4790efb09bb2bbcc2ccb4cba38c14354c0ee4fbcee5d4991967243",
-      "package": "aom",
-      "recorded_hash": "910592dbafcc66375399acf07abac7671564bbb7be9e963e5caf21975d0e6825411f46257a434d00d03a85c18c27cc6403d7c9927b73d86437930dec8f2eac10",
-      "source0": "https://aomedia.googlesource.com/aom/+archive/v3.14.0.tar.gz#/aom-3.14.0.tar.gz"
+      "category": "already_migrated",
+      "package": "aom"
     },
     {
       "category": "trivial",
@@ -77,10 +74,9 @@
       "source0": "https://www.apache.org/dist/apr/apr-1.7.6.tar.bz2"
     },
     {
-      "category": "trivial",
-      "computed_hash": "8050a481eeda7532ef3751dbd8a5aa6c48354d52904a856ef9709484f4b0cc2e022661c49ddf55ec58253db22708ee0607dfa7705d9270e8fee117ae4f06a0fe",
+      "category": "error",
+      "error": "download failed: HTTP Error 404: Not Found",
       "package": "apr-util",
-      "recorded_hash": "8050a481eeda7532ef3751dbd8a5aa6c48354d52904a856ef9709484f4b0cc2e022661c49ddf55ec58253db22708ee0607dfa7705d9270e8fee117ae4f06a0fe",
       "source0": "https://www.apache.org/dist/apr/apr-util-1.6.3.tar.bz2"
     },
     {
@@ -91,17 +87,14 @@
       "source0": "https://salsa.debian.org/apt-team/apt/-/archive/3.3.1/apt-3.3.1.tar.gz"
     },
     {
-      "category": "trivial",
-      "computed_hash": "870d0c34fbaa7520aad058ecd6509fe8eddd17430781a16d1e80484d4947307a7c641f0449183cbac1da611a85f82c9bee2d2d7bff76170fc2195b123100d22e",
+      "category": "error",
+      "error": "download failed: HTTP Error 502: Bad Gateway",
       "package": "attr",
-      "recorded_hash": "870d0c34fbaa7520aad058ecd6509fe8eddd17430781a16d1e80484d4947307a7c641f0449183cbac1da611a85f82c9bee2d2d7bff76170fc2195b123100d22e",
       "source0": "https://download.savannah.nongnu.org/releases/attr/attr-2.6.0.tar.xz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "audit",
-      "source0": "audit-userspace-4.2.1.tar.gz"
+      "category": "already_migrated",
+      "package": "audit"
     },
     {
       "category": "trivial",
@@ -111,15 +104,17 @@
       "source0": "https://github.com/authselect/authselect/archive/1.7.1/authselect-1.7.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "be051d542f9bd93752eccbdc9b1f3cf1fa4069a153ef34edd5303bfdf162e24d56e33e70df1b978cebb8d1139a82417bb8299cfe6c38cff8613040a829cc624f",
       "package": "autoconf",
+      "recorded_hash": "be051d542f9bd93752eccbdc9b1f3cf1fa4069a153ef34edd5303bfdf162e24d56e33e70df1b978cebb8d1139a82417bb8299cfe6c38cff8613040a829cc624f",
       "source0": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.73.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error ftp error: timed out>",
+      "category": "trivial",
+      "computed_hash": "8baa16831416a953a743f4e3c0f55cea5ebefe0f5a7a0e390581981d4461d02dc9038415124e974b2ec390c40daaa241802cd7d42c6fafb793f87cf355db2a61",
       "package": "automake",
+      "recorded_hash": "8baa16831416a953a743f4e3c0f55cea5ebefe0f5a7a0e390581981d4461d02dc9038415124e974b2ec390c40daaa241802cd7d42c6fafb793f87cf355db2a61",
       "source0": "ftp://ftp.gnu.org/gnu/automake/automake-1.18.1.tar.xz"
     },
     {
@@ -137,9 +132,10 @@
       "source0": "https://www.efficios.com/files/babeltrace/babeltrace-1.5.11.tar.bz2"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "transformed",
+      "computed_hash": "426702c8b0fb9e0c9956259973ce5b657890fd47f4f807a64febf20077bb48d0b91474ed6e843d2ef277186b46c5fffa79b808da9b48d4ec027d5e2de1b28ed8",
       "package": "bash",
+      "recorded_hash": "05ef640e8ba011d10f858a270c626daa42ed5a75789d0298ae0ced9b2ebaf93d94d8ed5a211ac30cd34e82af8865e50024144c88a3c979bee7c38e449350e02e",
       "source0": "https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz"
     },
     {
@@ -157,9 +153,10 @@
       "source0": "https://downloads.isc.org/isc/bind9/9.18.50/bind-9.18.50.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "c47c0382a77133391556a9ac48586cd3ed101bfeea81e500a97e69b4056dd515351078ae78d026a1c1906648770bf828628dc39fd4cd86f84f1c9ec273d87280",
       "package": "binutils",
+      "recorded_hash": "c47c0382a77133391556a9ac48586cd3ed101bfeea81e500a97e69b4056dd515351078ae78d026a1c1906648770bf828628dc39fd4cd86f84f1c9ec273d87280",
       "source0": "https://ftp.gnu.org/gnu/binutils/binutils-with-gold-2.46.1.tar.xz"
     },
     {
@@ -171,10 +168,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "4e54ecd4f45d9e91f43da20104dc32342b550986b562a0e40a297f9663e98ac0194cdadaa72f25d919fb58dca928787a5f1e6c526cf1da3d669d27ab99d43351",
+      "computed_hash": "d9b86afed0109cd911dec4808f46a0d0d7bc4bc7b91019649b7b4b47685a5e4a336747444a1e3a96d535a610b69fa3eba3e220b42018229dfb700f02be5191e1",
       "package": "bootc",
-      "recorded_hash": "4e54ecd4f45d9e91f43da20104dc32342b550986b562a0e40a297f9663e98ac0194cdadaa72f25d919fb58dca928787a5f1e6c526cf1da3d669d27ab99d43351",
-      "source0": "https://github.com/bootc-dev/bootc/releases/download/v1.16.6/bootc-1.16.6.tar.zstd"
+      "recorded_hash": "d9b86afed0109cd911dec4808f46a0d0d7bc4bc7b91019649b7b4b47685a5e4a336747444a1e3a96d535a610b69fa3eba3e220b42018229dfb700f02be5191e1",
+      "source0": "https://github.com/bootc-dev/bootc/releases/download/v1.16.7/bootc-1.16.7.tar.zstd"
     },
     {
       "category": "trivial",
@@ -192,10 +189,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "660f29ff9b8c8f7f3776e96391bb803feb54622c92aaf78f5ac37783bdc77573353acd5f692502b61169ad58f6b89a8e8268ec41c0cb080dfec3f8466dd6419e",
+      "computed_hash": "570b68c0b6791e2e832b6e39906373da058308c017f6b460a658466e281d3b9eac5b5b842488e658438bb41c9926c160a90c956ba12ba57afcef88f523354ffe",
       "package": "buildah",
-      "recorded_hash": "660f29ff9b8c8f7f3776e96391bb803feb54622c92aaf78f5ac37783bdc77573353acd5f692502b61169ad58f6b89a8e8268ec41c0cb080dfec3f8466dd6419e",
-      "source0": "https://github.com/containers/buildah/archive/v1.44.0.tar.gz"
+      "recorded_hash": "570b68c0b6791e2e832b6e39906373da058308c017f6b460a658466e281d3b9eac5b5b842488e658438bb41c9926c160a90c956ba12ba57afcef88f523354ffe",
+      "source0": "https://github.com/containers/buildah/archive/v1.45.0.tar.gz"
     },
     {
       "category": "trivial",
@@ -309,21 +306,23 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "b633b352ff90f7f090343de05baffa1a78bfca86eb70fe8201028b027849f3e6f45f9ae42993ced013406b24571498f016c607ca2cc96feb5e5df315e95c1ea8",
+      "computed_hash": "db2a199a702291b035826c0a27eacdfe2aa6d8a75de52d1c4c76718b1843b5960980ad9735d5d9e18f7f5ca0a5159a54316e8c74f0f17395ef94fd59f43dcaa6",
       "package": "containers-common",
-      "recorded_hash": "b633b352ff90f7f090343de05baffa1a78bfca86eb70fe8201028b027849f3e6f45f9ae42993ced013406b24571498f016c607ca2cc96feb5e5df315e95c1ea8",
-      "source0": "https://github.com/containers/container-libs/archive/refs/tags/common/v0.68.1.tar.gz"
+      "recorded_hash": "db2a199a702291b035826c0a27eacdfe2aa6d8a75de52d1c4c76718b1843b5960980ad9735d5d9e18f7f5ca0a5159a54316e8c74f0f17395ef94fd59f43dcaa6",
+      "source0": "https://github.com/containers/container-libs/archive/refs/tags/common/v0.69.0.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "73f4192747ab793fd29cccafeda35c499a11800830227ea4d26b00afb2c496dd69cb493005691d0f62a168beea6b55c1e28e82b6cf795e7370f9d53d13555410",
       "package": "coreutils",
+      "recorded_hash": "73f4192747ab793fd29cccafeda35c499a11800830227ea4d26b00afb2c496dd69cb493005691d0f62a168beea6b55c1e28e82b6cf795e7370f9d53d13555410",
       "source0": "https://ftp.gnu.org/gnu/coreutils/coreutils-9.11.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "e3c3d0344d13d540887198ee5d6209a9254ed34b87c3b3cabe6dc3ce22ef94d3f380bb60d3395eee44e4b0ec8460b957032c6251f101b4a9fbc5951a701aadff",
       "package": "cpio",
+      "recorded_hash": "e3c3d0344d13d540887198ee5d6209a9254ed34b87c3b3cabe6dc3ce22ef94d3f380bb60d3395eee44e4b0ec8460b957032c6251f101b4a9fbc5951a701aadff",
       "source0": "https://ftp.gnu.org/gnu/cpio/cpio-2.15.tar.bz2"
     },
     {
@@ -376,10 +375,8 @@
       "source0": "https://curl.se/download/curl-8.21.0.tar.xz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "cyrus-sasl",
-      "source0": "cyrus-sasl-2.1.28-nodlcompatorsrp.tar.gz"
+      "category": "already_migrated",
+      "package": "cyrus-sasl"
     },
     {
       "category": "trivial",
@@ -410,9 +407,10 @@
       "source0": "https://sourceware.org/pub/debugedit/5.3/debugedit-5.3.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "10b17cf1dcdfa9ca0e5db91d62c4a079ebe9fd7eafa3aaebd4eb7e6206e4d753f348496622aa281e1bd7f7fcde65ce4a886dcc4acbb59332ef980f224197b4e4",
       "package": "diffutils",
+      "recorded_hash": "10b17cf1dcdfa9ca0e5db91d62c4a079ebe9fd7eafa3aaebd4eb7e6206e4d753f348496622aa281e1bd7f7fcde65ce4a886dcc4acbb59332ef980f224197b4e4",
       "source0": "https://ftp.gnu.org/gnu/diffutils/diffutils-3.12.tar.xz"
     },
     {
@@ -465,11 +463,8 @@
       "source0": "https://www.doxygen.nl/files/doxygen-1.17.0.src.tar.gz"
     },
     {
-      "category": "transformed",
-      "computed_hash": "4bd846fb67a0af698a34f02b6b5594e547257d9904b2173e23298623a47295e589fe6b2dcd83f32b8721b50b94e8f7a0cf41d19d17b847238d7bfd9195c3061d",
-      "package": "dracut",
-      "recorded_hash": "c1fb0191911b3b3eac4f568db1cbc8184e2b518a70a0567777b72ef8a5af70a8bdb1b3f8acce2d92eb2dc807e056d5b75aed93292cd05bc8c333efe5d4b98adc",
-      "source0": "https://github.com/dracut-ng/dracut-ng/archive/refs/tags/109.tar.gz"
+      "category": "already_migrated",
+      "package": "dracut"
     },
     {
       "category": "error",
@@ -499,10 +494,9 @@
       "source0": "https://download.eclipse.org/eclipse/downloads/drops4/R-4.23-202203080310/ecjsrc-4.23.jar"
     },
     {
-      "category": "trivial",
-      "computed_hash": "5f879be3819b6e989cdf9e415b6ad65f24275cc7a6c63f81fb849c92cd97beac088b1dfef37e9eb3f2c1a3e84ffaa553f611a1e7bdd9c1cb5646283f814637b1",
+      "category": "error",
+      "error": "download failed: HTTP Error 502: Bad Gateway",
       "package": "ed",
-      "recorded_hash": "5f879be3819b6e989cdf9e415b6ad65f24275cc7a6c63f81fb849c92cd97beac088b1dfef37e9eb3f2c1a3e84ffaa553f611a1e7bdd9c1cb5646283f814637b1",
       "source0": "https://ftpmirror.gnu.org/ed/ed-1.22.5.tar.lz"
     },
     {
@@ -523,6 +517,13 @@
       "needs_pipeline": false,
       "package": "emacs-filesystem",
       "source0": null
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "ec953891423d70e213ffade6aac8113e56a9ba3a8a754b0eb1d2f79c5d50dcb4671d3ca75836a3e05aae11476e27c3c5463f5cb58ee62f4ed459fb93bcf34c1c",
+      "package": "environment-modules",
+      "recorded_hash": "ec953891423d70e213ffade6aac8113e56a9ba3a8a754b0eb1d2f79c5d50dcb4671d3ca75836a3e05aae11476e27c3c5463f5cb58ee62f4ed459fb93bcf34c1c",
+      "source0": "http://downloads.sourceforge.net/modules/modules-5.6.1.tar.bz2"
     },
     {
       "category": "trivial",
@@ -557,6 +558,13 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "ca1bf80490dc6955a0ab49b1af05d6658c2ecc0968b3bde5b4af22271e47d30cd38f6f8347e8e6124091b6a17717447942bee95f94ca29574ba71c4d167af351",
+      "package": "fftw",
+      "recorded_hash": "ca1bf80490dc6955a0ab49b1af05d6658c2ecc0968b3bde5b4af22271e47d30cd38f6f8347e8e6124091b6a17717447942bee95f94ca29574ba71c4d167af351",
+      "source0": "http://www.fftw.org/fftw-3.3.11.tar.gz"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "9672504f9473e41ed047bb019f1a003965b3f12e16b77d090e819e094805e42d66d07582402eb9df6be98932161ee6a014a549dbcca9cef10c236b0a3a71a642",
       "package": "file",
       "recorded_hash": "9672504f9473e41ed047bb019f1a003965b3f12e16b77d090e819e094805e42d66d07582402eb9df6be98932161ee6a014a549dbcca9cef10c236b0a3a71a642",
@@ -569,9 +577,10 @@
       "source0": null
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "1b667c5363b599135ceabab6b4b5388dbee6de4e7fa301f5dfefc854473e442fbfe7dda93a28a70505c026987acd375d13169f76d18da49d29c1fb2e09c83fef",
       "package": "findutils",
+      "recorded_hash": "1b667c5363b599135ceabab6b4b5388dbee6de4e7fa301f5dfefc854473e442fbfe7dda93a28a70505c026987acd375d13169f76d18da49d29c1fb2e09c83fef",
       "source0": "https://ftp.gnu.org/gnu/findutils/findutils-4.11.0.tar.xz"
     },
     {
@@ -608,10 +617,9 @@
       "source0": "macros.fpc-srpm"
     },
     {
-      "category": "trivial",
-      "computed_hash": "43de86ea70b4b47f6efaae67f3440f65a24ffac29dc6d11203a9764e4f1a749ce1ba7645acd23525220b3ba12ddad8687b962b9f1254e2c0a86070854e85d5a0",
+      "category": "error",
+      "error": "download failed: HTTP Error 502: Bad Gateway",
       "package": "freetype",
-      "recorded_hash": "43de86ea70b4b47f6efaae67f3440f65a24ffac29dc6d11203a9764e4f1a749ce1ba7645acd23525220b3ba12ddad8687b962b9f1254e2c0a86070854e85d5a0",
       "source0": "http://download.savannah.gnu.org/releases/freetype/freetype-2.14.3.tar.xz"
     },
     {
@@ -642,10 +650,11 @@
       "source0": "macros.gap-srpm"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "a1e79b71e13ce7d5487f89fb62125ec873dc89e0a3ff37ebdff017fdd6dfd38b1eaa95fedcf773c037ae84c95f0ea0817d53bc1c14b4284568f87606da6aa152",
       "package": "gawk",
-      "source0": "https://ftp.gnu.org/gnu/gawk/gawk-5.4.0.tar.xz"
+      "recorded_hash": "a1e79b71e13ce7d5487f89fb62125ec873dc89e0a3ff37ebdff017fdd6dfd38b1eaa95fedcf773c037ae84c95f0ea0817d53bc1c14b4284568f87606da6aa152",
+      "source0": "https://ftp.gnu.org/gnu/gawk/gawk-5.4.1.tar.xz"
     },
     {
       "category": "no_upstream_url",
@@ -668,14 +677,15 @@
       "source0": "ftp://sourceware.org/pub/gdb/releases/gdb-17.2.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "918080cb0225b221c11eb7339634a95e00c526072395f7a3d46ccf42ef020dea7c4c5bec34aff2c4f16033e1fff6583252b7e978f68b8d7f8736b0e025838e10",
       "package": "gdbm",
+      "recorded_hash": "918080cb0225b221c11eb7339634a95e00c526072395f7a3d46ccf42ef020dea7c4c5bec34aff2c4f16033e1fff6583252b7e978f68b8d7f8736b0e025838e10",
       "source0": "http://ftp.gnu.org/gnu/gdbm/gdbm-1.23.tar.gz"
     },
     {
       "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "error": "download failed: The read operation timed out",
       "package": "gettext",
       "source0": "https://ftp.gnu.org/pub/gnu/gettext/gettext-1.0.tar.gz"
     },
@@ -694,23 +704,20 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "5fffc076934e5825e1003f30c337c706145ac8e6e5ee4f541c47805cc148a030c80fc7b9bb4114ae7c33359da3f8dc8f943dcdf0f4fbde2dd7ee66c0bbe4975e",
+      "computed_hash": "af6ba2f0832916e92338b809b7f4b34e0b02d58d68f216c2dfe9cb0e7b8944d70116a81e1e58fc0f18abceff168d2367817fd4d2ee3e0674dcbb83edc430ed6e",
       "package": "glib2",
-      "recorded_hash": "5fffc076934e5825e1003f30c337c706145ac8e6e5ee4f541c47805cc148a030c80fc7b9bb4114ae7c33359da3f8dc8f943dcdf0f4fbde2dd7ee66c0bbe4975e",
-      "source0": "https://download.gnome.org/sources/glib/2.89/glib-2.89.2.tar.xz"
+      "recorded_hash": "af6ba2f0832916e92338b809b7f4b34e0b02d58d68f216c2dfe9cb0e7b8944d70116a81e1e58fc0f18abceff168d2367817fd4d2ee3e0674dcbb83edc430ed6e",
+      "source0": "https://download.gnome.org/sources/glib/2.89/glib-2.89.3.tar.xz"
     },
     {
       "category": "no_upstream_url",
       "needs_pipeline": true,
       "package": "glibc",
-      "source0": "glibc-2.43-45-gdae425b554.tar.xz"
+      "source0": "glibc-2.43-47-gbc95068f5f.tar.xz"
     },
     {
-      "category": "transformed",
-      "computed_hash": "9bcaca295bf42befaeb4e559db406d0f69e87c2dbd8067dd3158165b6c1ade6cff1256a6fe9b9d348fb09f0fd8e92b3ea2eb64e54563aff153fbcdbde975b826",
-      "package": "gmp",
-      "recorded_hash": "e85a0dab5195889948a3462189f0e0598d331d3457612e2d3350799dba2e244316d256f8161df5219538eb003e4b5343f989aaa00f96321559063ed8c8f29fd2",
-      "source0": "https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz"
+      "category": "already_migrated",
+      "package": "gmp"
     },
     {
       "category": "no_upstream_url",
@@ -719,9 +726,10 @@
       "source0": null
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "0c5858f6068226afd9b3744020a3826a1236b62f90b6eff30ad17657a194017eaab9f8e090eb744902f47b997f63277b20509a27d1945c42ad9597bb734cad73",
       "package": "gnulib-l10n",
+      "recorded_hash": "0c5858f6068226afd9b3744020a3826a1236b62f90b6eff30ad17657a194017eaab9f8e090eb744902f47b997f63277b20509a27d1945c42ad9597bb734cad73",
       "source0": "https://ftp.gnu.org/gnu/gnulib/gnulib-l10n-20241231.tar.gz"
     },
     {
@@ -815,18 +823,17 @@
       "source0": "gpgverify"
     },
     {
-      "category": "trivial",
-      "computed_hash": "14b5eb2ba8158b8b62ffa7fb142100a0af1de0f0c45b2673801b636714a106b46fcd423b05c722d963c9543fafcf10fec811975308211a54f20a3ba322d7b295",
+      "category": "error",
+      "error": "download failed: HTTP Error 502: Bad Gateway",
       "package": "graphite2",
-      "recorded_hash": "14b5eb2ba8158b8b62ffa7fb142100a0af1de0f0c45b2673801b636714a106b46fcd423b05c722d963c9543fafcf10fec811975308211a54f20a3ba322d7b295",
       "source0": "https://downloads.sourceforge.net/project/silgraphite/graphite2//graphite2-1.3.14.tgz"
     },
     {
       "category": "trivial",
-      "computed_hash": "bfa96be1b1ce5b2e2639e080c32beb5e72c8180e8150497eb13f9e2377b85bf61098f000b3532235d66b01fc0ca05fdd775b0f0f8d77c110d32d280da50f3092",
+      "computed_hash": "af3335e30270994b9402e79a2f317ec7fc31374e612f8a58ece9a40eb7799a5f792dd12eea1d54d2e8b8f622ac3046f8be47ccebf135ffba357b1fa09da3108a",
       "package": "graphviz",
-      "recorded_hash": "bfa96be1b1ce5b2e2639e080c32beb5e72c8180e8150497eb13f9e2377b85bf61098f000b3532235d66b01fc0ca05fdd775b0f0f8d77c110d32d280da50f3092",
-      "source0": "https://gitlab.com/api/v4/projects/graphviz%2Fgraphviz/packages/generic/graphviz-releases/15.1.0/graphviz-15.1.0.tar.xz"
+      "recorded_hash": "af3335e30270994b9402e79a2f317ec7fc31374e612f8a58ece9a40eb7799a5f792dd12eea1d54d2e8b8f622ac3046f8be47ccebf135ffba357b1fa09da3108a",
+      "source0": "https://gitlab.com/api/v4/projects/graphviz%2Fgraphviz/packages/generic/graphviz-releases/15.1.1/graphviz-15.1.1.tar.xz"
     },
     {
       "category": "error",
@@ -855,10 +862,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "481dca68900e57895d3671baf0595c2d3a26f4f08d0db5662e83089f0d0ff6dc0c28c64c2811eb0f812b0525ed428e90db44f091a88bef47ace2f97d8285b013",
+      "computed_hash": "ec65064fae210a0d67e7a48cd3d075919e8e6891adff85a2ae8cf2dbe6b422c6764e236f3251c9f7ea37b4231469e54118bdc8c5be7a6e0aa17b58bd5b427d75",
       "package": "harfbuzz",
-      "recorded_hash": "481dca68900e57895d3671baf0595c2d3a26f4f08d0db5662e83089f0d0ff6dc0c28c64c2811eb0f812b0525ed428e90db44f091a88bef47ace2f97d8285b013",
-      "source0": "https://github.com/harfbuzz/harfbuzz/releases/download/14.2.1/harfbuzz-14.2.1.tar.xz"
+      "recorded_hash": "ec65064fae210a0d67e7a48cd3d075919e8e6891adff85a2ae8cf2dbe6b422c6764e236f3251c9f7ea37b4231469e54118bdc8c5be7a6e0aa17b58bd5b427d75",
+      "source0": "https://github.com/harfbuzz/harfbuzz/releases/download/14.3.0/harfbuzz-14.3.0.tar.xz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "b009572b70eba02fa0963119f202da202cdcf20a3b4c01a94c5618e8b612033c0b8dc23664ccb0c2a2ebbdab427ad96ba8163ff8eb0356bb093617d37a9932f8",
+      "package": "hdf5",
+      "recorded_hash": "b009572b70eba02fa0963119f202da202cdcf20a3b4c01a94c5618e8b612033c0b8dc23664ccb0c2a2ebbdab427ad96ba8163ff8eb0356bb093617d37a9932f8",
+      "source0": "https://github.com/HDFGroup/hdf5/archive/2.2.0/hdf5-2.2.0.tar.gz"
     },
     {
       "category": "error",
@@ -901,6 +915,13 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "547a9ed3c6af399de9617fe675bd6d16db300cc98213d6c71b2f1b41dd4a1706c7f2cf0dd1feb0d9f8a546b1976740c7a959dca0c23a4f52eac0b25cc403d087",
+      "package": "hwloc",
+      "recorded_hash": "547a9ed3c6af399de9617fe675bd6d16db300cc98213d6c71b2f1b41dd4a1706c7f2cf0dd1feb0d9f8a546b1976740c7a959dca0c23a4f52eac0b25cc403d087",
+      "source0": "https://download.open-mpi.org/release/hwloc/v2.14/hwloc-2.14.0.tar.bz2"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "bdf82a46ed150fca6ff4620a20281d03560b5b1a392b1c609fd052c1e1ed2925bd49ce63c9d72c0d54fe597157de970e331693b9447e6ed685cd0cf620f9efd7",
       "package": "icu",
       "recorded_hash": "bdf82a46ed150fca6ff4620a20281d03560b5b1a392b1c609fd052c1e1ed2925bd49ce63c9d72c0d54fe597157de970e331693b9447e6ed685cd0cf620f9efd7",
@@ -939,10 +960,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "65f20c20040a146d5c7477536d7f479d79459fc676b0ed2df2aa42704e9c12e455e748704ee1dac60ef97014cb91136265f8fd4ee10d4673368db99b18dec61f",
+      "computed_hash": "6a17226771bf33c4ccd79a42da5f1e2448d5360806353b9741eb49c5ce024f5993dc5ad851f65e9800984b0aa3f7ff508ede619af444ac39ec73ac187fe1b2c7",
       "package": "java-21-openjdk-portable",
-      "recorded_hash": "65f20c20040a146d5c7477536d7f479d79459fc676b0ed2df2aa42704e9c12e455e748704ee1dac60ef97014cb91136265f8fd4ee10d4673368db99b18dec61f",
-      "source0": "https://openjdk-sources.osci.io/openjdk21/openjdk-21.0.11+10.tar.xz"
+      "recorded_hash": "6a17226771bf33c4ccd79a42da5f1e2448d5360806353b9741eb49c5ce024f5993dc5ad851f65e9800984b0aa3f7ff508ede619af444ac39ec73ac187fe1b2c7",
+      "source0": "https://openjdk-sources.osci.io/openjdk21/openjdk-21.0.12+8.tar.xz"
     },
     {
       "category": "no_upstream_url",
@@ -1171,10 +1192,8 @@
       "source0": "https://mirrors.edge.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.78.tar.gz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "libcap-ng",
-      "source0": "libcap-ng-0.9.3.tar.gz"
+      "category": "already_migrated",
+      "package": "libcap-ng"
     },
     {
       "category": "trivial",
@@ -1216,6 +1235,13 @@
       "package": "libevent",
       "recorded_hash": "88d8944cd75cbe78bc4e56a6741ca67c017a3686d5349100f1c74f8a68ac0b6410ce64dff160be4a4ba0696ee29540dfed59aaf3c9a02f0c164b00307fcfe84f",
       "source0": "https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "4aa70dfad7d38c142c6758ce00a23fc0f2f919cb3a4acf9ea294c6bc1db182fc402e4e6578148b34a37b9bd0dad09045cf0284d118c6a5e47eea8b766c051c37",
+      "package": "libfabric",
+      "recorded_hash": "4aa70dfad7d38c142c6758ce00a23fc0f2f919cb3a4acf9ea294c6bc1db182fc402e4e6578148b34a37b9bd0dad09045cf0284d118c6a5e47eea8b766c051c37",
+      "source0": "https://github.com/ofiwg/libfabric/releases/download/v2.6.0/libfabric-2.6.0.tar.bz2"
     },
     {
       "category": "trivial",
@@ -1342,10 +1368,9 @@
       "source0": "https://github.com/thkukuk/libnsl/archive/v2.0.1.tar.gz"
     },
     {
-      "category": "trivial",
-      "computed_hash": "0ae94df4bd508f0e664fa5430687d64904c60d69d9565c18cacb70251f8653cb7c571325d1406c859fdd149048adce8c4b3bf028573064496d7da3436e27b9b0",
+      "category": "error",
+      "error": "download failed: HTTP Error 502: Bad Gateway",
       "package": "libpipeline",
-      "recorded_hash": "0ae94df4bd508f0e664fa5430687d64904c60d69d9565c18cacb70251f8653cb7c571325d1406c859fdd149048adce8c4b3bf028573064496d7da3436e27b9b0",
       "source0": "http://download.savannah.gnu.org/releases/libpipeline/libpipeline-1.5.8.tar.gz"
     },
     {
@@ -1357,10 +1382,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "012bddb91100eb8943aa4f14f207edb5570424e14aa1c3e1ee1984402b92de415d1fd9a6dbf4402deca48f2a3b603ce4ad7067d12dbad597afef952c21836521",
+      "computed_hash": "9c2f72ac366eee28eda6663712f7147babdcd49b2f63267bd5e2aba79809a3dd8bc46016c65550bab209ed65324475baec7cd293f1ca137110ac05a307c5bb6a",
       "package": "libpsl",
-      "recorded_hash": "012bddb91100eb8943aa4f14f207edb5570424e14aa1c3e1ee1984402b92de415d1fd9a6dbf4402deca48f2a3b603ce4ad7067d12dbad597afef952c21836521",
-      "source0": "https://github.com/rockdaboot/libpsl/releases/download/0.23.0/libpsl-0.23.0.tar.gz"
+      "recorded_hash": "9c2f72ac366eee28eda6663712f7147babdcd49b2f63267bd5e2aba79809a3dd8bc46016c65550bab209ed65324475baec7cd293f1ca137110ac05a307c5bb6a",
+      "source0": "https://github.com/rockdaboot/libpsl/releases/download/0.23.1/libpsl-0.23.1.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "d2d7ad487adee84ce0408a931892895dcbc5fe4dd36db8431f940a693eb0989e3b434f3684a86699824b5f0cd609ec2f8fb84989cb2a22b95b9547824ee980dc",
+      "package": "libpsm2",
+      "recorded_hash": "d2d7ad487adee84ce0408a931892895dcbc5fe4dd36db8431f940a693eb0989e3b434f3684a86699824b5f0cd609ec2f8fb84989cb2a22b95b9547824ee980dc",
+      "source0": "https://github.com/cornelisnetworks/opa-psm2/archive/refs/tags/PSM2_12.0.1.tar.gz"
     },
     {
       "category": "trivial",
@@ -1541,11 +1573,8 @@
       "source0": "https://github.com/yaml/libyaml/releases/download/0.2.5/yaml-0.2.5.tar.gz"
     },
     {
-      "category": "transformed",
-      "computed_hash": "c11a5f44f6c69efdb50ea45fafbc5ef3b7992b82286b9bffc7beaaf6569c69ac342344608d310039a3adb12b3d2966aa9b5a3ab460781eca0bd5c01edaa7ac02",
-      "package": "libyuv",
-      "recorded_hash": "aba3df6ccdf06cb0aff14d67fab7cb39bfd3de4626dbd00be8bd50b52a28c29ab75b84a13084f67c3b565aa0a48e6e380a60d4a421748587ada760108d85e01c",
-      "source0": "https://chromium.googlesource.com/libyuv/libyuv/+archive/afff0cf68bdd2d713c81040a4bd1b7c7fe69e39c.tar.gz"
+      "category": "already_migrated",
+      "package": "libyuv"
     },
     {
       "category": "trivial",
@@ -1728,6 +1757,13 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "b7f0badfcde54786e330c8bc3fe625c99818cd154654a111f3a05462b0002394ee7581e7005eae4849bac98f4287650bf38050720bd522aa0a445d118b65bc29",
+      "package": "munge",
+      "recorded_hash": "b7f0badfcde54786e330c8bc3fe625c99818cd154654a111f3a05462b0002394ee7581e7005eae4849bac98f4287650bf38050720bd522aa0a445d118b65bc29",
+      "source0": "https://github.com/dun/munge/releases/download/munge-0.5.18/munge-0.5.18.tar.xz"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "02647baae53abc844fbadee5b0a2187ad073125c4e8950df6d1c4feb781cb74ba64fb838cedfee2c246c39932187f6775b1df124f18b99a4233f0d98c72191de",
       "package": "ncurses",
       "recorded_hash": "02647baae53abc844fbadee5b0a2187ad073125c4e8950df6d1c4feb781cb74ba64fb838cedfee2c246c39932187f6775b1df124f18b99a4233f0d98c72191de",
@@ -1756,10 +1792,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "71c0cac6c55f90acd41c128f2250dd2e84ddd31ab0246eedf61d49dea6654d88a3a1e60210669365100f9d77ed520972e3cdee5a5dec9c4be72a674c53d9707d",
+      "computed_hash": "51ed27cb600219b13f3be44f7543b04df956180015ca027245e7aab968283720918c5fbe191265b02d9c90ebd5b6649599005b904b300ca844381b88ecea3274",
       "package": "nghttp3",
-      "recorded_hash": "71c0cac6c55f90acd41c128f2250dd2e84ddd31ab0246eedf61d49dea6654d88a3a1e60210669365100f9d77ed520972e3cdee5a5dec9c4be72a674c53d9707d",
-      "source0": "https://github.com/ngtcp2/nghttp3/releases/download/v1.17.0/nghttp3-1.17.0.tar.xz"
+      "recorded_hash": "51ed27cb600219b13f3be44f7543b04df956180015ca027245e7aab968283720918c5fbe191265b02d9c90ebd5b6649599005b904b300ca844381b88ecea3274",
+      "source0": "https://github.com/ngtcp2/nghttp3/releases/download/v1.18.0/nghttp3-1.18.0.tar.xz"
     },
     {
       "category": "trivial",
@@ -1810,7 +1846,7 @@
       "category": "no_upstream_url",
       "needs_pipeline": true,
       "package": "nodejs26",
-      "source0": "node-v26.5.1-stripped.tar.gz"
+      "source0": "node-v26.7.0-stripped.tar.gz"
     },
     {
       "category": "trivial",
@@ -1821,10 +1857,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "383929a735dc49f7a75547f83f6cfd8047ed5f20e78b936bc2f34d7c2fc6a036b1c37a9c2c335a49809d702c0fcd8e2b07f5e224dee82b7b152ce53ab9c3f705",
+      "computed_hash": "521f5dd5e09d66f0bd946e0ea90502d7bf4de4f26d67f993c0dc82c881b3f5758a218bd58941d2423a729342bc8d73d404c8fb92f0d0bb7d136095954641a860",
       "package": "nss",
-      "recorded_hash": "383929a735dc49f7a75547f83f6cfd8047ed5f20e78b936bc2f34d7c2fc6a036b1c37a9c2c335a49809d702c0fcd8e2b07f5e224dee82b7b152ce53ab9c3f705",
-      "source0": "https://ftp.mozilla.org/pub/security/nss/releases/NSS_3_125_RTM/src/nss-3.125-with-nspr-4.39.tar.gz"
+      "recorded_hash": "521f5dd5e09d66f0bd946e0ea90502d7bf4de4f26d67f993c0dc82c881b3f5758a218bd58941d2423a729342bc8d73d404c8fb92f0d0bb7d136095954641a860",
+      "source0": "https://ftp.mozilla.org/pub/security/nss/releases/NSS_3_126_RTM/src/nss-3.126-with-nspr-4.39.tar.gz"
     },
     {
       "category": "trivial",
@@ -1897,10 +1933,8 @@
       "source0": "ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "openssl",
-      "source0": "openssl-3.5.6.tar.gz"
+      "category": "already_migrated",
+      "package": "openssl"
     },
     {
       "category": "already_migrated",
@@ -1913,6 +1947,13 @@
     {
       "category": "already_migrated",
       "package": "opentofu1.12"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "1607ed0487b452bdc145321b5eba53b22b8140e08baa5a0068c5ad5441bc10d68a0368577370fccb78a950dda498ca489f1a2bd5cb989bd029ee2e7ae5b31316",
+      "package": "orangefs",
+      "recorded_hash": "1607ed0487b452bdc145321b5eba53b22b8140e08baa5a0068c5ad5441bc10d68a0368577370fccb78a950dda498ca489f1a2bd5cb989bd029ee2e7ae5b31316",
+      "source0": "https://github.com/waltligon/orangefs/archive/refs/tags/2.10.1.tar.gz"
     },
     {
       "category": "trivial",
@@ -2254,10 +2295,8 @@
       "source0": "https://www.php.net/distributions/php-8.5.9.tar.xz"
     },
     {
-      "category": "no_upstream_url",
-      "needs_pipeline": true,
-      "package": "php-patchwork-jsqueeze",
-      "source0": "php-patchwork-jsqueeze-2.0.5-693d64850eab2ce6a7c8f7cf547e1ab46e69d542.tar.gz"
+      "category": "already_migrated",
+      "package": "php-patchwork-jsqueeze"
     },
     {
       "category": "trivial",
@@ -2272,6 +2311,13 @@
       "package": "pkgconf",
       "recorded_hash": "e654c3a460e5f0f801e8ac43ad9086f397d1da0553186ff05f5f0e18ffdac99fb652fd9b6c0379db4bc8307699699d69bc66d13cc85a4a6b0cd36462f5948a1d",
       "source0": "https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "84ced151871996f68b95f372b88879e51804fb04cfbad839962fe26e1b246515076c7d25b79bcc9382ff6eb4013f2c11d13d078e9547f8a381aa4a1b3fa5322c",
+      "package": "pmix",
+      "recorded_hash": "84ced151871996f68b95f372b88879e51804fb04cfbad839962fe26e1b246515076c7d25b79bcc9382ff6eb4013f2c11d13d078e9547f8a381aa4a1b3fa5322c",
+      "source0": "https://github.com/openpmix/openpmix/releases/download/v6.1.0/pmix-6.1.0.tar.bz2"
     },
     {
       "category": "trivial",
@@ -2324,10 +2370,24 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "e718c23d3c1f9fb4f2a438dec13cb3f3f09d6ffcaaab71c0059426cc5e130525ad2d7a231ec436d1d910b44837c585a401feebb806a2f28945e26fd96c0451cc",
+      "package": "protobuf",
+      "recorded_hash": "e718c23d3c1f9fb4f2a438dec13cb3f3f09d6ffcaaab71c0059426cc5e130525ad2d7a231ec436d1d910b44837c585a401feebb806a2f28945e26fd96c0451cc",
+      "source0": "https://github.com/protocolbuffers/protobuf/archive/v35.1/protobuf-35.1.tar.gz"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "78dc72988d7e8232c1b967849aa00939bc05ab7d39b86a8e2af005e38aa4ef4c9b03920d51fb5337399d980e65f35d11bd4742bea745a893ecc909f56a51c9ac",
       "package": "protobuf-c",
       "recorded_hash": "78dc72988d7e8232c1b967849aa00939bc05ab7d39b86a8e2af005e38aa4ef4c9b03920d51fb5337399d980e65f35d11bd4742bea745a893ecc909f56a51c9ac",
       "source0": "https://github.com/protobuf-c/protobuf-c/releases/download/v1.5.2/protobuf-c-1.5.2.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "4a205257bd7fd764fb8bcbd835ebbf30c15ec9dae04fc57b469a2db70e6c62f66c6bc31c5c096eecae34e62dd4f47e82b657ebfd7fa1aea6f676e42a47b778b1",
+      "package": "prrte",
+      "recorded_hash": "4a205257bd7fd764fb8bcbd835ebbf30c15ec9dae04fc57b469a2db70e6c62f66c6bc31c5c096eecae34e62dd4f47e82b657ebfd7fa1aea6f676e42a47b778b1",
+      "source0": "https://github.com/openpmix/prrte/releases/download/v4.1.0/prrte-4.1.0.tar.bz2"
     },
     {
       "category": "error",
@@ -2687,6 +2747,13 @@
       "source0": "https://github.com/linux-rdma/rdma-core/releases/download/v64.0/rdma-core-64.0.tar.gz"
     },
     {
+      "category": "trivial",
+      "computed_hash": "d47f2507500ca7e004db49e30318f8713164cc3b8f28b0bdf5cdd6028985e7da4c9d0133c19fcd8f800bc666b86feb80a5c56e11fa962db72d561fb627272670",
+      "package": "re2",
+      "recorded_hash": "d47f2507500ca7e004db49e30318f8713164cc3b8f28b0bdf5cdd6028985e7da4c9d0133c19fcd8f800bc666b86feb80a5c56e11fa962db72d561fb627272670",
+      "source0": "https://github.com/google/re2/archive/2025-11-05/re2-2025-11-05.tar.gz"
+    },
+    {
       "category": "error",
       "error": "download failed: <urlopen error ftp error: timed out>",
       "package": "readline",
@@ -2820,10 +2887,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "5617b97155c44a39d911975259e8561c12d91649b407f6d916a73d329562436a95ce5feb737e7f337d453555f7f4f0502cbf6ba2d9cf8b67a94a8e9eab083126",
+      "computed_hash": "f53334d855ac67cbfa79cfdb42b2d394903b52e8597080a9de8f1aa33ff0689cfb8d6a832e9c93fb1c3697b86180ac595fd74692fda633e03da70d23c51a477d",
       "package": "selinux-policy",
-      "recorded_hash": "5617b97155c44a39d911975259e8561c12d91649b407f6d916a73d329562436a95ce5feb737e7f337d453555f7f4f0502cbf6ba2d9cf8b67a94a8e9eab083126",
-      "source0": "https://github.com/fedora-selinux/selinux-policy/archive/a6cb5e7368c729688512249c9d6ca77f2ca28a89/selinux-policy-a6cb5e7.tar.gz"
+      "recorded_hash": "f53334d855ac67cbfa79cfdb42b2d394903b52e8597080a9de8f1aa33ff0689cfb8d6a832e9c93fb1c3697b86180ac595fd74692fda633e03da70d23c51a477d",
+      "source0": "https://github.com/fedora-selinux/selinux-policy/archive/1251f736a15ec7dc48df69dc404f6dc1656a80aa/selinux-policy-1251f73.tar.gz"
     },
     {
       "category": "no_upstream_url",
@@ -2927,10 +2994,24 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "c8e9b9100873d6f8514da18ca700165466a9c042d24a6ce9e8901c8996c348f2e58f0251b1eca47d33cc5f382783bfc7693bc6c451716540d4caa57339b3b535",
+      "package": "tbb",
+      "recorded_hash": "c8e9b9100873d6f8514da18ca700165466a9c042d24a6ce9e8901c8996c348f2e58f0251b1eca47d33cc5f382783bfc7693bc6c451716540d4caa57339b3b535",
+      "source0": "https://github.com/uxlfoundation/oneTBB/archive/v2023.1.0/tbb-2023.1.0.tar.gz"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "9d2b8eee54e27ee9c7a951ac799ba1b08bc3cc11d957d65a1d78c3d42a234304ea09677e84af85e41dd9a32c91a77b82483805bf0a822288af1ab15e18c494d1",
       "package": "tcl",
       "recorded_hash": "9d2b8eee54e27ee9c7a951ac799ba1b08bc3cc11d957d65a1d78c3d42a234304ea09677e84af85e41dd9a32c91a77b82483805bf0a822288af1ab15e18c494d1",
       "source0": "http://downloads.sourceforge.net/sourceforge/tcl/tcl-core9.0.3-src.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "843ae8358b76eab1c37996e9693040115c26a0fdb1e6f8f6ade190d2f431ac5554492b0a5c7dc66c9ce6eb7c5db086d6e260e191a39b2706fe736d9e1f09cdbe",
+      "package": "thrift",
+      "recorded_hash": "843ae8358b76eab1c37996e9693040115c26a0fdb1e6f8f6ade190d2f431ac5554492b0a5c7dc66c9ce6eb7c5db086d6e260e191a39b2706fe736d9e1f09cdbe",
+      "source0": "https://archive.apache.org/dist/thrift/0.24.0/thrift-0.24.0.tar.gz"
     },
     {
       "category": "trivial",
@@ -2940,10 +3021,9 @@
       "source0": "https://download.gnome.org/sources/tinysparql/3.11/tinysparql-3.11.1.tar.xz"
     },
     {
-      "category": "trivial",
-      "computed_hash": "8055e6c200b80c57d11b08d38683ab2f5b28fe335bfe9218207616670035aa46d0334255f82d1155a5aea0fbc38839e036406f8d6af2aa42730df12c6448e16d",
+      "category": "error",
+      "error": "download failed: <urlopen error timed out>",
       "package": "tk",
-      "recorded_hash": "8055e6c200b80c57d11b08d38683ab2f5b28fe335bfe9218207616670035aa46d0334255f82d1155a5aea0fbc38839e036406f8d6af2aa42730df12c6448e16d",
       "source0": "http://download.sourceforge.net/sourceforge/tcl/tk9.0.3-src.tar.gz"
     },
     {
@@ -2984,6 +3064,11 @@
       "source0": "ftp://ftp.iana.org/tz/releases/tzdata2026b.tar.gz"
     },
     {
+      "category": "error",
+      "error": "spec parsing failed: /tmp/tmpn3bixxo7: line 120: No patch number 0",
+      "package": "ucx"
+    },
+    {
       "category": "trivial",
       "computed_hash": "f442105849db8d6f7bfb2d8130cd6772e3850ca36c9275fda99c659d0851f7ae3aee0c927bad756bdf5fbe83379e8a058f00fd5c50eedfe5fbe73b4d3ae0e222",
       "package": "unbound",
@@ -3003,6 +3088,13 @@
       "package": "uriparser",
       "recorded_hash": "23cf062e10b70e3cababbbb52e20a7e3ca17ae2cba21125ab0587a3dbee562d12d727703567ce14cba90151712f2c4c9e911eda92245292ea3a1138f88dd09fd",
       "source0": "https://github.com/uriparser/uriparser/releases/download/uriparser-1.0.2/uriparser-1.0.2.tar.bz2"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "148701fce506d076f03497b6d085f1993eff743debad4a2f6d3cbac91e19a5c22d9938245bdb460c1b22b51842c7416c42124db7416c684ee63d622490baac0e",
+      "package": "utf8proc",
+      "recorded_hash": "148701fce506d076f03497b6d085f1993eff743debad4a2f6d3cbac91e19a5c22d9938245bdb460c1b22b51842c7416c42124db7416c684ee63d622490baac0e",
+      "source0": "https://github.com/JuliaLang/utf8proc/archive/v2.11.3.tar.gz#/utf8proc-v2.11.3.tar.gz"
     },
     {
       "category": "error",
@@ -3079,10 +3171,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "3df33b5cceb1d992dafbadabc334798e8182181c2c30c826365945af4ea245115cbaa0c95080efdcd47f14819fa0ceded03c87a5a64de284d037864bf5b9f639",
+      "computed_hash": "132a20719fc1d83cf2bda1d0edd49e602f12ecd8081c71f22c1d6f294d52cad2d94e5fde18ad9f4149fd2e0f8c87e587fc92ac1f9278bd348776bae0f58c62e1",
       "package": "zchunk",
-      "recorded_hash": "3df33b5cceb1d992dafbadabc334798e8182181c2c30c826365945af4ea245115cbaa0c95080efdcd47f14819fa0ceded03c87a5a64de284d037864bf5b9f639",
-      "source0": "https://github.com/zchunk/zchunk/archive/1.5.3/zchunk-1.5.3.tar.gz"
+      "recorded_hash": "132a20719fc1d83cf2bda1d0edd49e602f12ecd8081c71f22c1d6f294d52cad2d94e5fde18ad9f4149fd2e0f8c87e587fc92ac1f9278bd348776bae0f58c62e1",
+      "source0": "https://github.com/zchunk/zchunk/archive/1.5.4/zchunk-1.5.4.tar.gz"
+    },
+    {
+      "category": "transformed",
+      "computed_hash": "108d9c5fa761c111585c30f9c651ed92942dda0ac661155bca52cc7b6dbeb3d27b0dd994abde206eacfc3bc88d19ed24e45b291050c38469e34dca5f8c9a037d",
+      "package": "zeromq",
+      "recorded_hash": "a71d48aa977ad8941c1609947d8db2679fc7a951e4cd0c3a1127ae026d883c11bd4203cf315de87f95f5031aec459a731aec34e5ce5b667b8d0559b157952541",
+      "source0": "https://github.com/zeromq/libzmq/archive/v4.3.5/zeromq-4.3.5.tar.gz"
     },
     {
       "category": "no_upstream_url",
@@ -3105,20 +3204,17 @@
       "source0": "https://github.com/zlib-ng/zlib-ng/archive/2.3.3/zlib-ng-2.3.3.tar.gz"
     },
     {
-      "category": "transformed",
-      "computed_hash": "26e441267305f6e58080460f96ab98645219a90d290a533410b1b0b1d2f870721c95f8384e342ee647c5e968385a5b7e30c2d04340c37f59b3e6d86762c3260c",
-      "package": "zstd",
-      "recorded_hash": "b4de208f179b68d4c6454139ca60d66ed3ef3893a560d6159a056640f83d3ee67cdf6ffb88971cdba35449dba4b597eaa8b4ae908127ef7fd58c89f40bf9a705",
-      "source0": "https://github.com/facebook/zstd/archive/v1.5.7.tar.gz#/zstd-1.5.7.tar.gz"
+      "category": "already_migrated",
+      "package": "zstd"
     }
   ],
   "summary": {
-    "already_migrated": 12,
-    "error": 48,
-    "no_upstream_url": 45,
-    "no_upstream_url_needs_pipeline": 18,
+    "already_migrated": 22,
+    "error": 45,
+    "no_upstream_url": 40,
+    "no_upstream_url_needs_pipeline": 13,
     "no_upstream_url_no_work_needed": 27,
-    "transformed": 6,
-    "trivial": 352
+    "transformed": 3,
+    "trivial": 370
   }
 }
