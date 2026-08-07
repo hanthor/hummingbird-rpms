@@ -2611,3 +2611,293 @@ def test_check_subcommand_with_packages(cuv_module, workdir: Path) -> None:
         cuv_module.main()
 
     assert exc_info.value.code == 1
+
+
+#
+# _parse_gitlab_upstream_url
+#
+
+
+def test_parse_gitlab_upstream_url_simple(cuv_module) -> None:
+    """Standard GitLab URL is split into API base and encoded project path."""
+    api_base, project_path = cuv_module._parse_gitlab_upstream_url(
+        "https://gitlab.com/redhat/hummingbird/src/nodejs-lts"
+    )
+    assert api_base == "https://gitlab.com/api/v4"
+    assert project_path == "redhat%2Fhummingbird%2Fsrc%2Fnodejs-lts"
+
+
+def test_parse_gitlab_upstream_url_trailing_slash(cuv_module) -> None:
+    """Trailing slash on the URL is stripped before parsing."""
+    api_base, project_path = cuv_module._parse_gitlab_upstream_url(
+        "https://gitlab.example.org/group/project/"
+    )
+    assert api_base == "https://gitlab.example.org/api/v4"
+    assert project_path == "group%2Fproject"
+
+
+#
+# _PRERELEASE_RE filtering
+#
+
+
+def test_prerelease_re_filters_known_labels(cuv_module) -> None:
+    """Pre-release tags (alpha, beta, rc, nightly, dev, pre) are filtered."""
+    for label in ("alpha", "beta", "rc1", "rc", "nightly", "dev", "pre"):
+        assert cuv_module._PRERELEASE_RE.search(f"1.0.0-{label}"), \
+            f"Expected {label!r} to match as pre-release"
+
+
+def test_prerelease_re_allows_similar_words(cuv_module) -> None:
+    """Words containing pre-release substrings but not matching as whole words pass."""
+    for label in ("prebuilt", "preview", "developer", "betamax", "rcfile"):
+        assert not cuv_module._PRERELEASE_RE.search(f"1.0.0-{label}"), \
+            f"Expected {label!r} to NOT match as pre-release"
+
+
+#
+# query_gitlab_tags
+#
+
+
+def _make_gitlab_response(tags_json, next_page=None):
+    """Build a mock context-manager response for urlopen."""
+    from io import BytesIO
+    body = BytesIO(json.dumps(tags_json).encode("utf-8"))
+    headers = Message()
+    if next_page is not None:
+        headers["x-next-page"] = str(next_page)
+    response = type("FakeResponse", (), {
+        "read": body.read,
+        "headers": headers,
+        "__enter__": lambda self: self,
+        "__exit__": lambda self, *a: None,
+    })()
+    return response
+
+
+def test_query_gitlab_tags_basic(cuv_module) -> None:
+    """Returns sorted versions with prefix stripped."""
+    tags = [
+        {"name": "v2.0.0"},
+        {"name": "v1.5.0"},
+        {"name": "v1.0.0"},
+    ]
+    mock_resp = _make_gitlab_response(tags)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "test-token"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project", tag_strip_prefix="v"
+        )
+
+    assert result["version"] == "2.0.0"
+    assert result["stable_versions"] == ["2.0.0", "1.5.0", "1.0.0"]
+
+
+def test_query_gitlab_tags_filters_prereleases(cuv_module) -> None:
+    """Pre-release tags are excluded from results."""
+    tags = [
+        {"name": "v3.0.0-rc1"},
+        {"name": "v2.0.0"},
+        {"name": "v2.0.0-beta"},
+        {"name": "v1.0.0-alpha"},
+        {"name": "v1.0.0"},
+    ]
+    mock_resp = _make_gitlab_response(tags)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "test-token"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert result["stable_versions"] == ["2.0.0", "1.0.0"]
+    assert result["version"] == "2.0.0"
+
+
+def test_query_gitlab_tags_skips_non_version_tags(cuv_module) -> None:
+    """Tags that don't start with a digit after prefix stripping are skipped."""
+    tags = [
+        {"name": "latest"},
+        {"name": "v2.0.0"},
+        {"name": "release-candidate"},
+    ]
+    mock_resp = _make_gitlab_response(tags)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "test-token"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert result["stable_versions"] == ["2.0.0"]
+
+
+def test_query_gitlab_tags_404_raises_valueerror(cuv_module) -> None:
+    """404 from GitLab raises ValueError with a clear message."""
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://gitlab.com/api/v4/projects/x/repository/tags',
+            404, 'Not Found', Message(), None,
+        ),
+    ), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        with pytest.raises(ValueError, match="project not found"):
+            cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
+
+
+def test_query_gitlab_tags_401_raises_valueerror(cuv_module) -> None:
+    """401 from GitLab raises ValueError mentioning auth token."""
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://gitlab.com/api/v4/projects/x/repository/tags',
+            401, 'Unauthorized', Message(), None,
+        ),
+    ), \
+         patch.dict('os.environ', {}), \
+         patch.object(cuv_module.time, 'sleep'):
+        with pytest.raises(ValueError, match="authentication failed.*CHORE_MR_GITLAB_TOKEN"):
+            cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
+
+
+def test_query_gitlab_tags_403_raises_valueerror(cuv_module) -> None:
+    """403 from GitLab raises ValueError mentioning auth token."""
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://gitlab.com/api/v4/projects/x/repository/tags',
+            403, 'Forbidden', Message(), None,
+        ),
+    ), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        with pytest.raises(ValueError, match="authentication failed"):
+            cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
+
+
+def test_query_gitlab_tags_pagination(cuv_module) -> None:
+    """Multiple pages are fetched when x-next-page header is present."""
+    page1 = _make_gitlab_response([{"name": "v2.0.0"}], next_page="2")
+    page2 = _make_gitlab_response([{"name": "v1.0.0"}])
+
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen', side_effect=[page1, page2]
+    ), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert result["stable_versions"] == ["2.0.0", "1.0.0"]
+
+
+def test_query_gitlab_tags_non_numeric_next_page(cuv_module, caplog) -> None:
+    """Non-numeric x-next-page header stops pagination with a warning."""
+    resp = _make_gitlab_response([{"name": "v1.0.0"}], next_page="invalid")
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'), \
+         caplog.at_level('WARNING'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert result["stable_versions"] == ["1.0.0"]
+    assert "Non-numeric x-next-page" in caplog.text
+
+
+def test_query_gitlab_tags_empty_result(cuv_module) -> None:
+    """No tags returns None version and empty stable_versions list."""
+    mock_resp = _make_gitlab_response([])
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert result["version"] is None
+    assert result["stable_versions"] == []
+
+
+def test_query_gitlab_tags_no_prefix_strip(cuv_module) -> None:
+    """Tags without a prefix are returned as-is when tag_strip_prefix is empty."""
+    tags = [{"name": "2.0.0"}, {"name": "1.0.0"}]
+    mock_resp = _make_gitlab_response(tags)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project", tag_strip_prefix=""
+        )
+
+    assert result["stable_versions"] == ["2.0.0", "1.0.0"]
+
+
+#
+# version_source in VersionCheckResult
+#
+
+
+def test_check_package_version_gitlab_tags_sets_version_source(
+    cuv_module, workdir: Path,
+) -> None:
+    """version_source field is populated in VersionCheckResult for gitlab_tags."""
+    _create_package(workdir, 'mypackage', '1.0.0',
+                    metadata={
+                        'version': '1.0.0',
+                        'version_source': 'gitlab_tags',
+                        'upstream_repo': 'https://gitlab.com/group/project',
+                        'tag_strip_prefix': 'v',
+                    })
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    mock_response = {
+        'version': '2.0.0',
+        'stable_versions': ['2.0.0', '1.0.0'],
+    }
+
+    with patch.object(cuv_module, 'query_gitlab_tags', return_value=mock_response):
+        result = cuv_module.check_package_version('mypackage')
+
+    assert result.version_source == "gitlab_tags"
+    assert result.has_update is True
+    assert result.upstream_version == '2.0.0'
+
+
+def test_check_package_version_anitya_version_source_is_none(
+    cuv_module, workdir: Path,
+) -> None:
+    """version_source field is None for standard Anitya-based lookups."""
+    _create_package(workdir, 'mypackage', '1.0.0',
+                    metadata={
+                        'version': '1.0.0',
+                        'release_monitoring_project_id': 42,
+                    })
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    mock_response = {
+        'version': '2.0.0',
+        'stable_versions': ['2.0.0', '1.0.0'],
+        'id': 42,
+    }
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value=mock_response):
+        result = cuv_module.check_package_version('mypackage')
+
+    assert result.version_source is None
