@@ -1193,6 +1193,9 @@ def query_gitlab_tags(
 
     Returns a dict with 'stable_versions' and 'version' fields,
     matching the format returned by query_anitya_by_project_id().
+
+    Auth: CHORE_MR_GITLAB_TOKEN must have read_api scope (not just
+    read_repository) since this calls the REST API, not git-over-HTTP.
     """
     api_base, project_path = _parse_gitlab_upstream_url(upstream_repo)
     token = os.environ.get("CHORE_MR_GITLAB_TOKEN")
@@ -1241,10 +1244,12 @@ def query_gitlab_tags(
                     raise ValueError(
                         f"GitLab returned 404 for {upstream_repo}. "
                         f"If this is a private repo, set "
-                        f"CHORE_MR_GITLAB_TOKEN."
+                        f"CHORE_MR_GITLAB_TOKEN with read_api scope."
                     )
                 raise ValueError(
-                    f"GitLab project not found: {upstream_repo}"
+                    f"GitLab returned 404 for {upstream_repo}. "
+                    f"Verify the URL is correct and that "
+                    f"CHORE_MR_GITLAB_TOKEN has read_api scope."
                 )
             if e.code in (401, 403):
                 raise ValueError(

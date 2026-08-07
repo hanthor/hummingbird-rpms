@@ -2744,8 +2744,8 @@ def test_query_gitlab_tags_skips_non_version_tags(cuv_module) -> None:
     assert result["stable_versions"] == ["2.0.0"]
 
 
-def test_query_gitlab_tags_404_with_token_raises_not_found(cuv_module) -> None:
-    """404 with a token set reports project not found."""
+def test_query_gitlab_tags_404_with_token_suggests_scope(cuv_module) -> None:
+    """404 with a token set hints at incorrect URL or insufficient scope."""
     with patch.object(
         cuv_module.urllib.request, 'urlopen',
         side_effect=urllib.error.HTTPError(
@@ -2755,7 +2755,7 @@ def test_query_gitlab_tags_404_with_token_raises_not_found(cuv_module) -> None:
     ), \
          patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
          patch.object(cuv_module.time, 'sleep'):
-        with pytest.raises(ValueError, match="project not found"):
+        with pytest.raises(ValueError, match="read_api scope"):
             cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
 
 
