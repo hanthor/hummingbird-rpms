@@ -2821,6 +2821,25 @@ def test_query_gitlab_tags_pagination(cuv_module) -> None:
     assert result["stable_versions"] == ["2.0.0", "1.0.0"]
 
 
+def test_query_gitlab_tags_pagination_cap_warning(cuv_module, caplog) -> None:
+    """Fetching 5 full pages with a next-page header triggers a cap warning."""
+    pages = [
+        _make_gitlab_response([{"name": f"v1.0.{i}"}], next_page=str(i + 2))
+        for i in range(5)
+    ]
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', side_effect=pages), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'), \
+         caplog.at_level('WARNING'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project"
+        )
+
+    assert len(result["stable_versions"]) == 5
+    assert "pagination reached" in caplog.text
+
+
 def test_query_gitlab_tags_non_numeric_next_page(cuv_module, caplog) -> None:
     """Non-numeric x-next-page header stops pagination with a warning."""
     resp = _make_gitlab_response([{"name": "v1.0.0"}], next_page="invalid")
