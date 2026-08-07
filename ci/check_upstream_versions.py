@@ -1173,7 +1173,7 @@ def query_anitya_by_project_id(project_id: int) -> dict:
     }
 
 
-_PRERELEASE_RE = re.compile(r"\b(alpha|beta|rc\d*|nightly|dev|pre)\b", re.IGNORECASE)
+_PRERELEASE_RE = re.compile(r"(?<![a-zA-Z])(alpha|beta|rc\d*|nightly|dev|pre)(?![a-zA-Z])", re.IGNORECASE)
 
 
 def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
@@ -1187,6 +1187,7 @@ def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
 def query_gitlab_tags(
     upstream_repo: str,
     tag_strip_prefix: str = "v",
+    track_version: Optional[str] = None,
 ) -> dict:
     """Query GitLab tags API for version information.
 
@@ -1201,6 +1202,11 @@ def query_gitlab_tags(
     if token:
         headers["PRIVATE-TOKEN"] = token
 
+    search_param = ""
+    if track_version:
+        search_prefix = f"{tag_strip_prefix}{track_version}"
+        search_param = f"&search={urllib.parse.quote(search_prefix)}"
+
     all_tags: list[dict] = []
     page = 1
     max_pages = 5
@@ -1208,6 +1214,7 @@ def query_gitlab_tags(
         url = (
             f"{api_base}/projects/{project_path}/repository/tags"
             f"?per_page=100&page={page}&order_by=version&sort=desc"
+            f"{search_param}"
         )
         try:
             req = urllib.request.Request(url, headers=headers)
@@ -1230,6 +1237,12 @@ def query_gitlab_tags(
                     break
         except urllib.error.HTTPError as e:
             if e.code == 404:
+                if not token:
+                    raise ValueError(
+                        f"GitLab returned 404 for {upstream_repo}. "
+                        f"If this is a private repo, set "
+                        f"CHORE_MR_GITLAB_TOKEN."
+                    )
                 raise ValueError(
                     f"GitLab project not found: {upstream_repo}"
                 )
@@ -1244,6 +1257,14 @@ def query_gitlab_tags(
                 f"Failed to connect to GitLab: {e}"
             )
         time.sleep(API_DELAY)
+
+    if page > max_pages:
+        logging.warning(
+            "GitLab tags pagination reached %d-page cap (%d tags fetched). "
+            "Older tags may be missing — if track_upstream targets an older "
+            "major version, results could be incomplete.",
+            max_pages, len(all_tags),
+        )
 
     versions: list[str] = []
     for tag in all_tags:
@@ -1389,7 +1410,9 @@ def check_package_version(
                     f"{package}: version_source is 'gitlab_tags' but "
                     f"upstream_repo is not set in metadata"
                 )
-            anitya_data = query_gitlab_tags(upstream_repo, tag_strip_prefix)
+            anitya_data = query_gitlab_tags(
+                upstream_repo, tag_strip_prefix, track_version
+            )
         elif isinstance(project_id, int):
             anitya_data = query_anitya_by_project_id(project_id)
         else:

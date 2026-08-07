@@ -2648,6 +2648,13 @@ def test_prerelease_re_filters_known_labels(cuv_module) -> None:
             f"Expected {label!r} to match as pre-release"
 
 
+def test_prerelease_re_filters_without_separator(cuv_module) -> None:
+    """Pre-release labels directly after a digit (no hyphen) are still caught."""
+    for tag in ("20.20.3rc1", "1.0.0alpha", "2.5beta2", "3.0.0pre"):
+        assert cuv_module._PRERELEASE_RE.search(tag), \
+            f"Expected {tag!r} to match as pre-release"
+
+
 def test_prerelease_re_allows_similar_words(cuv_module) -> None:
     """Words containing pre-release substrings but not matching as whole words pass."""
     for label in ("prebuilt", "preview", "developer", "betamax", "rcfile"):
@@ -2737,8 +2744,8 @@ def test_query_gitlab_tags_skips_non_version_tags(cuv_module) -> None:
     assert result["stable_versions"] == ["2.0.0"]
 
 
-def test_query_gitlab_tags_404_raises_valueerror(cuv_module) -> None:
-    """404 from GitLab raises ValueError with a clear message."""
+def test_query_gitlab_tags_404_with_token_raises_not_found(cuv_module) -> None:
+    """404 with a token set reports project not found."""
     with patch.object(
         cuv_module.urllib.request, 'urlopen',
         side_effect=urllib.error.HTTPError(
@@ -2749,6 +2756,21 @@ def test_query_gitlab_tags_404_raises_valueerror(cuv_module) -> None:
          patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
          patch.object(cuv_module.time, 'sleep'):
         with pytest.raises(ValueError, match="project not found"):
+            cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
+
+
+def test_query_gitlab_tags_404_without_token_suggests_auth(cuv_module) -> None:
+    """404 without a token hints at missing authentication."""
+    with patch.object(
+        cuv_module.urllib.request, 'urlopen',
+        side_effect=urllib.error.HTTPError(
+            'https://gitlab.com/api/v4/projects/x/repository/tags',
+            404, 'Not Found', Message(), None,
+        ),
+    ), \
+         patch.dict('os.environ', {}, clear=True), \
+         patch.object(cuv_module.time, 'sleep'):
+        with pytest.raises(ValueError, match="CHORE_MR_GITLAB_TOKEN"):
             cuv_module.query_gitlab_tags("https://gitlab.com/group/project")
 
 
@@ -2828,6 +2850,56 @@ def test_query_gitlab_tags_empty_result(cuv_module) -> None:
 
     assert result["version"] is None
     assert result["stable_versions"] == []
+
+
+def test_query_gitlab_tags_search_scoped_by_track_version(cuv_module) -> None:
+    """When track_version is set, the API URL includes a search parameter."""
+    tags = [{"name": "v20.20.2"}, {"name": "v20.20.1"}]
+    mock_resp = _make_gitlab_response(tags)
+
+    calls = []
+    original_Request = cuv_module.urllib.request.Request
+
+    def capture_request(url, **kwargs):
+        calls.append(url)
+        return original_Request(url, **kwargs)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.object(cuv_module.urllib.request, 'Request', side_effect=capture_request), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        result = cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project",
+            tag_strip_prefix="v",
+            track_version="20",
+        )
+
+    assert result["stable_versions"] == ["20.20.2", "20.20.1"]
+    assert "search=v20" in calls[0]
+
+
+def test_query_gitlab_tags_no_search_without_track_version(cuv_module) -> None:
+    """Without track_version, no search parameter is added to the URL."""
+    tags = [{"name": "v2.0.0"}]
+    mock_resp = _make_gitlab_response(tags)
+
+    calls = []
+    original_Request = cuv_module.urllib.request.Request
+
+    def capture_request(url, **kwargs):
+        calls.append(url)
+        return original_Request(url, **kwargs)
+
+    with patch.object(cuv_module.urllib.request, 'urlopen', return_value=mock_resp), \
+         patch.object(cuv_module.urllib.request, 'Request', side_effect=capture_request), \
+         patch.dict('os.environ', {"CHORE_MR_GITLAB_TOKEN": "tok"}), \
+         patch.object(cuv_module.time, 'sleep'):
+        cuv_module.query_gitlab_tags(
+            "https://gitlab.com/group/project",
+            tag_strip_prefix="v",
+        )
+
+    assert "search=" not in calls[0]
 
 
 def test_query_gitlab_tags_no_prefix_strip(cuv_module) -> None:
