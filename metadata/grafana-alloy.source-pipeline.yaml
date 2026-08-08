@@ -1,0 +1,47 @@
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "v${VERSION}"
+    archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+  - type: vendor
+    ecosystem: go
+    archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+  - type: vendor
+    ecosystem: go
+    archive_name: "${PACKAGE}-collector-${VERSION}-vendor.tar.bz2"
+    modules:
+      - path: collector
+
+transform:
+  - type: run
+    path: "."
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        cd internal/web/ui
+        npm ci --cache ./npm-cache 2>&1 | tail -3 >&2
+
+        # Add cross-arch native deps to cache
+        for pkg in \
+            @esbuild/linux-arm64 \
+            @esbuild/linux-x64 \
+            @rollup/rollup-linux-arm64-gnu \
+            @rollup/rollup-linux-arm64-musl \
+            @rollup/rollup-linux-x64-gnu \
+            @rollup/rollup-linux-x64-musl; do
+            ver=$(python3 -c "
+        import json
+        lock = json.load(open('package-lock.json'))
+        info = lock['packages'].get('node_modules/${pkg}', {})
+        print(info.get('version', ''))" 2>/dev/null)
+            if [ -n "$ver" ]; then
+                npm cache add "${pkg}@${ver}" --cache ./npm-cache 2>/dev/null || true
+            fi
+        done
+
+        tar -cjf "../../../${PACKAGE}-npm-cache-${VERSION}.tar.bz2" npm-cache/
+        cd ../../..
+    outputs:
+      - "${PACKAGE}-npm-cache-${VERSION}.tar.bz2"

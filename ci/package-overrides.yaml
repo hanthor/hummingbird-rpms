@@ -41,6 +41,12 @@ _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i
 acl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+grafana-alloy:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_platforms:
+    - "linux-m2xlarge/arm64"
+    - "linux-m2xlarge/amd64"
+
 aom:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
