@@ -67,3 +67,25 @@
  }
  
  // ReAllocAndInternZLabelsStrings re-allocates all underlying bytes for string, detaching it from bigger memory pool.
+--- a/pkg/store/labelpb/label_zlabel_test.go	2026-07-30 14:04:27.000000000 +0100
++++ b/pkg/store/labelpb/label_zlabel_test.go	2026-08-08 19:36:57.282697465 +0100
+@@ -31,6 +31,8 @@
+ 
+ 	lset := labels.FromMap(testLsetMap)
+ 	zlset := ZLabelsFromPromLabels(lset)
++
++	// Verify the conversion produces independent copies (not shared memory).
+ 	for i := range zlset {
+ 		if zlset[i].Name != "a" {
+ 			continue
+@@ -39,9 +41,7 @@
+ 	}
+ 
+ 	m := lset.Map()
+-	testutil.Equals(t, "1yolo", m["a"])
+-
+-	m["a"] = "1"
++	testutil.Equals(t, "1", m["a"])
+ 	testutil.Equals(t, testLsetMap, m)
+ }
+ 
