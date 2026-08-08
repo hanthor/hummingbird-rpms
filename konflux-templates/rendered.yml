@@ -5151,6 +5151,45 @@ spec:
     title: SBOM-event-to-Bombino
 # --- gpm ---
 # PENDING
+# --- grafana-alloy ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: grafana-alloy-main
+spec:
+  application: rpms-main
+  componentName: grafana-alloy-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/grafana-alloy-main
+  source:
+    git:
+      context: rpms/grafana-alloy
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: grafana-alloy-main
+  name: grafana-alloy-main
+spec:
+  image:
+    name: hummingbird-tenant/grafana-alloy-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- grafana12.4 ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
