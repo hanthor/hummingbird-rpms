@@ -1,0 +1,8 @@
+{
+  "modification_status": "native",
+  "release": "0.1",
+  "release_monitoring_project_id": 318373,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/thanos-io/thanos",
+  "version": "0.42.4"
+}

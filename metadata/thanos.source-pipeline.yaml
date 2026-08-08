@@ -1,0 +1,26 @@
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "v${VERSION}"
+    archive_name: "thanos-${VERSION}.tar.gz"
+  - type: vendor
+    ecosystem: go
+    archive_name: "thanos-${VERSION}-vendor.tar.bz2"
+
+transform:
+  - type: run
+    path: "."
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        root="$(pwd)"
+        mkdir "${root}/.npm-cache"
+        for arch in x64 arm64; do
+          (cd pkg/ui/react-app && npm ci --ignore-scripts \
+            --cache "${root}/.npm-cache" --cpu "${arch}" --os linux --libc glibc)
+        done
+        tar -cjf "thanos-npm-cache-${VERSION}.tar.bz2" -C "${root}" .npm-cache
+    outputs:
+      - "thanos-npm-cache-${VERSION}.tar.bz2"

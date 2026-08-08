@@ -1,0 +1,91 @@
+--- a/internal/cortex/cortexpb/compat.go	2026-07-30 14:04:27.000000000 +0100
++++ b/internal/cortex/cortexpb/compat.go	2026-08-08 18:55:36.709085753 +0100
+@@ -19,21 +19,22 @@
+ 	"github.com/thanos-io/thanos/internal/cortex/util"
+ )
+ 
+-// FromLabelAdaptersToLabels casts []LabelAdapter to labels.Labels.
+-// It uses unsafe, but as LabelAdapter == labels.Label this should be safe.
+-// This allows us to use labels.Labels directly in protos.
+-//
+-// Note: while resulting labels.Labels is supposedly sorted, this function
+-// doesn't enforce that. If input is not sorted, output will be wrong.
++// FromLabelAdaptersToLabels converts []LabelAdapter to labels.Labels.
+ func FromLabelAdaptersToLabels(ls []LabelAdapter) labels.Labels {
+-	return *(*labels.Labels)(unsafe.Pointer(&ls))
++	lbls := make([]labels.Label, len(ls))
++	for i, l := range ls {
++		lbls[i] = labels.Label{Name: l.Name, Value: l.Value}
++	}
++	return labels.New(lbls...)
+ }
+ 
+-// FromLabelsToLabelAdapters casts labels.Labels to []LabelAdapter.
+-// It uses unsafe, but as LabelAdapter == labels.Label this should be safe.
+-// This allows us to use labels.Labels directly in protos.
++// FromLabelsToLabelAdapters converts labels.Labels to []LabelAdapter.
+ func FromLabelsToLabelAdapters(ls labels.Labels) []LabelAdapter {
+-	return *(*[]LabelAdapter)(unsafe.Pointer(&ls))
++	result := make([]LabelAdapter, 0, ls.Len())
++	ls.Range(func(l labels.Label) {
++		result = append(result, LabelAdapter{Name: l.Name, Value: l.Value})
++	})
++	return result
+ }
+ 
+ // FromLabelAdaptersToMetric converts []LabelAdapter to a model.Metric.
+--- a/pkg/store/labelpb/label.go	2026-07-30 14:04:27.000000000 +0100
++++ b/pkg/store/labelpb/label.go	2026-08-08 18:56:16.935925953 +0100
+@@ -38,18 +38,22 @@
+ 	return *(*[]byte)(unsafe.Pointer(&buf))
+ }
+ 
+-// ZLabelsFromPromLabels converts Prometheus labels to slice of labelpb.ZLabel in type unsafe manner.
+-// It reuses the same memory. Caller should abort using passed labels.Labels.
++// ZLabelsFromPromLabels converts Prometheus labels to slice of labelpb.ZLabel.
+ func ZLabelsFromPromLabels(lset labels.Labels) []ZLabel {
+-	return *(*[]ZLabel)(unsafe.Pointer(&lset))
++	result := make([]ZLabel, 0, lset.Len())
++	lset.Range(func(l labels.Label) {
++		result = append(result, ZLabel{Name: l.Name, Value: l.Value})
++	})
++	return result
+ }
+ 
+-// ZLabelsToPromLabels convert slice of labelpb.ZLabel to Prometheus labels in type unsafe manner.
+-// It reuses the same memory. Caller should abort using passed []ZLabel.
+-// NOTE: Use with care. ZLabels holds memory from the whole protobuf unmarshal, so the returned
+-// Prometheus Labels will hold this memory as well.
++// ZLabelsToPromLabels converts slice of labelpb.ZLabel to Prometheus labels.
+ func ZLabelsToPromLabels(lset []ZLabel) labels.Labels {
+-	return *(*labels.Labels)(unsafe.Pointer(&lset))
++	lbls := make([]labels.Label, len(lset))
++	for i, l := range lset {
++		lbls[i] = labels.Label{Name: l.Name, Value: l.Value}
++	}
++	return labels.New(lbls...)
+ }
+ 
+ // ReAllocAndInternZLabelsStrings re-allocates all underlying bytes for string, detaching it from bigger memory pool.
+--- a/pkg/store/labelpb/label_zlabel_test.go	2026-07-30 14:04:27.000000000 +0100
++++ b/pkg/store/labelpb/label_zlabel_test.go	2026-08-08 19:36:57.282697465 +0100
+@@ -31,6 +31,8 @@
+ 
+ 	lset := labels.FromMap(testLsetMap)
+ 	zlset := ZLabelsFromPromLabels(lset)
++
++	// Verify the conversion produces independent copies (not shared memory).
+ 	for i := range zlset {
+ 		if zlset[i].Name != "a" {
+ 			continue
+@@ -39,9 +41,7 @@
+ 	}
+ 
+ 	m := lset.Map()
+-	testutil.Equals(t, "1yolo", m["a"])
+-
+-	m["a"] = "1"
++	testutil.Equals(t, "1", m["a"])
+ 	testutil.Equals(t, testLsetMap, m)
+ }
+ 

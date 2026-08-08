@@ -1,0 +1,67 @@
+[archive]
+
+[licensing]
+detector = "askalono"
+exclude_files = [
+  "pkg/ui/static/react/static/js/main.83209ede.js.LICENSE.txt",
+]
+
+[[licensing.licenses]]
+path = "vendor/github.com/clbanning/mxj/LICENSE"
+sha256sum = "b8eff858879438dbaefa6f153553230337c4776a861b8d658f295636a88050ec"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/efficientgo/core/COPYRIGHT"
+sha256sum = "e32bd42e3ae91caf3eb5cfee2d65ce27456ec78a5b2b8b74c4eaf91c5173f908"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/efficientgo/e2e/COPYRIGHT"
+sha256sum = "e32bd42e3ae91caf3eb5cfee2d65ce27456ec78a5b2b8b74c4eaf91c5173f908"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/fatih/structtag/LICENSE"
+sha256sum = "38429b7e92ee587cdc897fe7a0ca85ff2cd4475e4fe672e5a01b77d374971ffe"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/grpc-ecosystem/go-grpc-middleware/v2/COPYRIGHT"
+sha256sum = "8befb41eac649775143c81fddaf84b7d7e1197899d968b8b51cfec405f2ff72f"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/miekg/dns/COPYRIGHT"
+sha256sum = "66550c0ad5ca7ec1e08683e5f872cc45c741f311eee3b8ee484206ecbf9c740d"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/thanos-io/objstore/COPYRIGHT"
+sha256sum = "c40d671057607ff59039a681ac1cd02a2965c689b95a1a73ca495cb3d40ddaed"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/thanos-io/promql-engine/COPYRIGHT"
+sha256sum = "55d44d129b74a5365f39962d4d271499b83bfcadfcd452c4a2e54e4d92005978"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/weaveworks/common/COPYING.LGPL-3"
+sha256sum = "f47bfded8298223f67719893d328c6b8326d8aea0f18ddf8f32a7e8f11c2132d"
+expression = "LGPL-3.0-only"
+
+[[licensing.licenses]]
+path = "vendor/go.yaml.in/yaml/v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "MIT AND (MIT AND Apache-2.0)"
+
+[[licensing.licenses]]
+path = "vendor/gopkg.in/yaml.v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "MIT AND (MIT AND Apache-2.0)"
+
+[[licensing.licenses]]
+path = "vendor/howett.net/plist/LICENSE"
+sha256sum = "20d9b7d9372369484ecadae229d3e3efee8029b259e11c9a1b07d2e0a3c82e39"
+expression = "BSD-3-Clause"

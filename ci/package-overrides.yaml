@@ -447,6 +447,9 @@ tbb:
 tempo2.10:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+thanos:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 tempo3.0:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

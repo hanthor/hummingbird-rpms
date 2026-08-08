@@ -1034,6 +1034,8 @@ spec:
           contentType: rpm
         - name: tempo3-0-main
           contentType: rpm
+        - name: thanos-main
+          contentType: rpm
         - name: thrift-main
           contentType: rpm
         - name: tinysparql-main
