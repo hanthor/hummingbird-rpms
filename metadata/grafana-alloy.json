@@ -1,0 +1,7 @@
+{
+  "modification_status": "native",
+  "release": "0.1",
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/grafana/alloy",
+  "version": "1.18.1"
+}
