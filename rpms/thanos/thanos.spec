@@ -56,7 +56,7 @@ install -D -p -m 0755 thanos %{buildroot}%{_bindir}/thanos
 # e2e tests require Docker; objstore tests require cloud credentials
 %global gocheck2_skips %{shrink:
     -t test/e2e
-    -t pkg/store
+    -d pkg/store
     -d pkg/api/query
     -d pkg/compact
     -d pkg/promclient
