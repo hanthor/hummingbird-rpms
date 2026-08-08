@@ -1,0 +1,115 @@
+[archive]
+post_commands = [
+  # go-localereader declares MIT in README.md but ships no LICENSE file
+  ["cp", "-p", "vendor/github.com/mattn/go-localereader/README.md", "vendor/github.com/mattn/go-localereader/LICENSE"],
+  # dennwc/ioctl has LICENSE on master branch but go mod vendor doesn't include it
+  ["curl", "-fSL", "-o", "vendor/github.com/dennwc/ioctl/LICENSE", "https://raw.githubusercontent.com/dennwc/ioctl/master/LICENSE"],
+]
+
+[licensing]
+detector = "askalono"
+exclude_files = [
+  "vendor/github.com/efficientgo/core/COPYRIGHT",
+  # infinityworks/go-common repo deleted from GitHub; module ships no LICENSE file
+  "vendor/github.com/infinityworks/go-common",
+]
+
+[[licensing.licenses]]
+path = "vendor/github.com/cloudflare/circl/LICENSE"
+sha256sum = "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/digitalocean/godo/LICENSE.txt"
+sha256sum = "946d0e939f736a9d7061ea06591818107fb12d3cddad70ee81667b85f7f24c22"
+expression = "MIT AND BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/emirpasic/gods/LICENSE"
+sha256sum = "871b440e9b348d6b2485c72e15f1d18f4cf8ee7bb424cbcd854b6a4a772b61d8"
+expression = "BSD-2-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/godror/godror/LICENSE.md"
+sha256sum = "d9aaed9658d65355cb2288ccbf2f7ab886cdfad9cea01c765ea48e5343e2f3f4"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/gosnmp/gosnmp/LICENSE"
+sha256sum = "28b63cdfceda72f7b8c9a8db2d7ab07661eb4d6bb9fc020077925b6b4faf84fa"
+expression = "BSD-2-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/hashicorp/vic/LICENSE"
+sha256sum = "5f3a0d498b727d0ea3efc91deb6601e904ab5d52a160b5c4530a217c9e0dce6e"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/kevinburke/ssh_config/LICENSE"
+sha256sum = "a15a6f732df3a033a71853ce1d255bd671f00fbc537fa629b78d71baecda0ace"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/miekg/dns/COPYRIGHT"
+sha256sum = "66550c0ad5ca7ec1e08683e5f872cc45c741f311eee3b8ee484206ecbf9c740d"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/oracle/oracle-db-appdev-monitoring/LICENSE.txt"
+sha256sum = "f588517704172eae8bcc4bc191da596cf820615944d7666f00294cd4d18afa51"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/ory/dockertest/v3/docker/DOCKER-LICENSE"
+sha256sum = "3045137e75f75e66e80775b0e969fbc4184074f315e869bb5bf7ae8c99d8c52a"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/outcaste-io/ristretto/z/LICENSE"
+sha256sum = "349fec2711443e0da8f36e388931fdfe2f874fdd4df307b9a379d01bb9764dc8"
+expression = "MIT AND Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/packethost/packngo/LICENSE.txt"
+sha256sum = "a8199b0150b9c55ad57022e5f76a9d8e140fc2ef94827dbe7ca764c12391e8bc"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/sean-/seed/LICENSE"
+sha256sum = "a9acefe76ede3dc382f2b449f968571f796a3bedc8eb0ef53dd4ef41083f3fd3"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/shirou/gopsutil/v3/LICENSE"
+sha256sum = "ad1e64b82c04fb2ee6bfe521bff01266971ffaa70500024d4ac767c6033aafb9"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/shirou/gopsutil/v4/LICENSE"
+sha256sum = "ad1e64b82c04fb2ee6bfe521bff01266971ffaa70500024d4ac767c6033aafb9"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/shopspring/decimal/LICENSE"
+sha256sum = "b92ba0f6ee02f2309628bfdadb123668a17c016e475ba477b857d33470d9d625"
+expression = "MIT"
+
+[[licensing.licenses]]
+path = "vendor/github.com/twmb/murmur3/LICENSE"
+sha256sum = "4228ef1819124b490d2e6a88e8c5e1348bedf32ff05b8fb5deed49921600e503"
+expression = "BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/go.yaml.in/yaml/v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "Apache-2.0 AND MIT"
+
+[[licensing.licenses]]
+path = "vendor/gopkg.in/yaml.v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "Apache-2.0 AND MIT"
+
+[[licensing.licenses]]
+path = "vendor/howett.net/plist/LICENSE"
+sha256sum = "20d9b7d9372369484ecadae229d3e3efee8029b259e11c9a1b07d2e0a3c82e39"
+expression = "BSD-2-Clause"
