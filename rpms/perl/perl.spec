@@ -5317,7 +5317,7 @@ rm %{buildroot}%{_mandir}/man3/version::Internals.3*
 # lib/perl5db.t will fail if Term::ReadLine::Gnu is available
 %check
 %if %{with test}
-%{new_perl} -I/lib regen/lib_cleanup.pl
+%{new_perl} -Ilib regen/lib_cleanup.pl
 pushd t
 %{new_perl} -I../lib porting/customized.t --regen
 popd
