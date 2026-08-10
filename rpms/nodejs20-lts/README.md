@@ -1,4 +1,4 @@
-# nodejs24
+# nodejs20-lts
 
 Node.js is a platform built on Chrome's JavaScript runtime
 for easily building fast, scalable network applications.
