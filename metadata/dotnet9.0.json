@@ -1,7 +1,8 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 9.0",
-  "modification_status": "clean",
+  "modification_reason": "Replace the Fedora fedora>=45 openssl guard with (openssl-devel < 1:4 or openssl3-devel) for both BuildRequires and the dotnet-sdk-aot runtime Requires, so dotnet uses base openssl while it is < 4 instead of pulling the conflicting openssl3 stack",
+  "modification_status": "modified",
   "release": "2",
   "sha": "1a9f8800e932757725244ea369bc98b15c3da1ca",
   "source": "https://src.fedoraproject.org/rpms/dotnet9.0.git",
