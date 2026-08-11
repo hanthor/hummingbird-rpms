@@ -1,5 +1,5 @@
 #!/bin/bash
-	
+
 NODE_BIN="$1"
 PARENT_TEST_FOLDER="$2"
 TEST_LIST_FILE="$3"
@@ -7,7 +7,7 @@ TEST_LIST_FILE="$3"
 # At most 10 min per test
 TIMEOUT_DURATION=600
 # Exit code
-FINAL_RESULT=0 	
+FINAL_RESULT=0
 ARCH=$(uname -m)
 PARALLEL_TEST_RERUN=""
 echo "Started test run:"
@@ -44,7 +44,7 @@ while IFS= read -r test_line; do
   # Handle test result
   if [ $TEST_RESULT -ne 0 ]; then
     if [[ "$TEST_PATH" == */parallel/* ]]; then
-      PARALLEL_TEST_RERUN+="$TEST_SCRIPT"
+      PARALLEL_TEST_RERUN+=" $TEST_SCRIPT"
       echo "Parallel test failed, marking for rerun: $TEST_SCRIPT"
       continue
     elif [ $TEST_RESULT -eq 124 ]; then
