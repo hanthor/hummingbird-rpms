@@ -652,6 +652,8 @@ spec:
           contentType: rpm
         - name: nodejs20-main
           contentType: rpm
+        - name: nodejs20-lts-main
+          contentType: rpm
         - name: nodejs22-main
           contentType: rpm
         - name: nodejs24-main
