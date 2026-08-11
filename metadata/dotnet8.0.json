@@ -1,7 +1,7 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 8.0",
-  "modification_reason": "update to SDK 8.0.129 / Runtime 8.0.29 for July 2026 security fixes (CVE-2026-47304 and others)",
+  "modification_reason": "openssl3-devel-buildrequires-fedora-guard-forces-openssl3-conflict-with-base-openssl-3.5",
   "modification_status": "modified",
   "release": "2",
   "sha": "98f01e1fb5ecee89c6c23d02dc91f0e8aa08aeb8",
