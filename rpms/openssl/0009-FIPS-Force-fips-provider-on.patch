@@ -1,7 +1,7 @@
-From b8a5ce1fbad62e0f7b023aab827d2888413d5ced Mon Sep 17 00:00:00 2001
+From aa5a6ee75a04e286ab7e7dbeac37cd3b68c2b506 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 19/57] FIPS: Force fips provider on
+Subject: [PATCH 09/16] FIPS: Force fips provider on
 
 Patch-name: 0032-Force-fips.patch
 Patch-id: 32
@@ -75,5 +75,5 @@ index f2e76ac402..a2a8a9942c 100644
  }
  
 -- 
-2.52.0
+2.54.0
 

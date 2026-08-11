@@ -1,7 +1,7 @@
-From 2cda3e9adf5534d6be689cff5eeb81459061f52b Mon Sep 17 00:00:00 2001
+From 48ae07d536f94e4fb5db3033ddcb915b1f13deac Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Fri, 7 Mar 2025 18:06:36 -0500
-Subject: [PATCH 42/57] FIPS: EC: disable weak curves
+Subject: [PATCH 14/16] FIPS: EC: disable weak curves
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Simo Sorce <simo@redhat.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/apps/ecparam.c b/apps/ecparam.c
-index 017dc7568d..596c31a925 100644
+index cbb2ec8d50..8a8e318583 100644
 --- a/apps/ecparam.c
 +++ b/apps/ecparam.c
-@@ -90,6 +90,13 @@ static int list_builtin_curves(BIO *out)
+@@ -86,6 +86,13 @@ static int list_builtin_curves(BIO *out)
          const char *comment = curves[n].comment;
          const char *sname = OBJ_nid2sn(curves[n].nid);
  
@@ -27,5 +27,5 @@ index 017dc7568d..596c31a925 100644
              comment = "CURVE DESCRIPTION NOT AVAILABLE";
          if (sname == NULL)
 -- 
-2.52.0
+2.54.0
 
