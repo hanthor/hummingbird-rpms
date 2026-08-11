@@ -126,13 +126,25 @@ For each package, **in the dependency order from Step 1**:
    from the Fedora repos, and a broken import should never be built on top
    of).
 
+   Most fixes only require editing files already in the working tree (spec,
+   sources, patches) and rebuilding — no need to touch the auto-created
+   `Import <pkg>-<ver>-<rel>` commit for those. Only if the fix requires
+   re-running `dist_git.py import` itself (e.g. re-cloning with a different
+   `--branch` or `--ref`) should you first reset the previous attempt so you
+   don't accumulate duplicate import commits for the same package:
+
+   ```bash
+   git reset --hard HEAD~1
+   ```
+
 4. Advance to the next package only after a green build.
 
 ## Step 3: Populate `upstream_repo` (batched)
 
 Once all packages in the batch build cleanly, populate `upstream_repo` for
-all of them in one pass using the `/generate-package-map` skill (or its
-rules directly: netfilter.org / canonical-repo mapping, mirror
+all of them in one pass using the
+[/generate-package-map skill](../../../.cursor/skills/generate-package-map/SKILL.md)
+(or its rules directly: netfilter.org / canonical-repo mapping, mirror
 canonicalization, and the Fedora DistGit fallback when no upstream git repo
 exists).
 
@@ -165,14 +177,15 @@ Detect whether you have direct push access to
 `redhat/hummingbird/rpms` or need a fork:
 
 ```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git remote -v
 # If only 'origin' (redhat/hummingbird/rpms) exists and you have
 # Maintainer/Developer access, push directly:
-git push -u origin <branch>
+git push -u origin "$BRANCH"
 
 # Otherwise, detect your fork remote and push there:
 FORK_REMOTE=$(git remote -v | grep '(push)' | grep -v "redhat/hummingbird/rpms" | head -1 | awk '{print $1}')
-git push -u "$FORK_REMOTE" <branch>
+git push -u "$FORK_REMOTE" "$BRANCH"
 ```
 
 Open **one MR** covering the whole batch, targeting `main`:
