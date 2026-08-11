@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "openssl3-libs-conflicts-base-openssl-libs-below-4-to-prevent-so3-file-collision",
+  "modification_status": "modified",
   "release": "2",
   "release_monitoring_project_id": 377610,
   "sha": "8d1c92561b3f6ca1a1bd6e72d71cb3a5fe67ec4d",
