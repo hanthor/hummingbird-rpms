@@ -1,7 +1,8 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 10.0",
-  "modification_status": "clean",
+  "modification_reason": "openssl3-devel-runtime-dep-forces-openssl3-libs-conflict-with-base-openssl-3.5",
+  "modification_status": "modified",
   "release": "2",
   "sha": "6f6d5c35011b5e4281b8fbea64bd593232e121a7",
   "source": "https://src.fedoraproject.org/rpms/dotnet10.0.git",
