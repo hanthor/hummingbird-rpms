@@ -11502,7 +11502,7 @@ metadata:
     test.appstudio.openshift.io/comment_strategy: disable_all
   name: nodejs20-lts-main
 spec:
-  application: rpms-main
+  application: private-nodejs20-rpms-main
   componentName: nodejs20-lts-main
   containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/nodejs20-lts-main
   source:
@@ -11515,7 +11515,7 @@ apiVersion: appstudio.redhat.com/v1alpha1
 kind: ImageRepository
 metadata:
   labels:
-    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/application: private-nodejs20-rpms-main
     appstudio.redhat.com/component: nodejs20-lts-main
   name: nodejs20-lts-main
 spec:
