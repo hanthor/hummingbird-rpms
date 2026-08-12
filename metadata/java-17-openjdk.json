@@ -1,8 +1,0 @@
-{
-  "branch": "f41",
-  "modification_status": "clean",
-  "release": "1",
-  "sha": "6394e711636c7bd500227191b704e89d610f1890",
-  "source": "https://src.fedoraproject.org/rpms/java-17-openjdk.git",
-  "version": "17.0.17.0.10"
-}

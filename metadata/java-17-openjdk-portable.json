@@ -1,9 +1,10 @@
 {
-  "branch": "f41",
-  "modification_status": "clean",
+  "modification_status": "native",
   "release": "1",
   "release_monitoring_project_id": 235001,
-  "sha": "88c4190d0a564fa779cae682d9623f4320e7566f",
-  "source": "https://src.fedoraproject.org/rpms/java-17-openjdk-portable.git",
-  "version": "17.0.17.0.10"
+  "track_upstream": "17",
+  "upstream_repo": "https://github.com/openjdk/jdk17u",
+  "upstream_version_transform": "openjdk_to_rpm",
+  "version": "17.0.20.0.8",
+  "version_transform": "openjdk_to_oracle"
 }

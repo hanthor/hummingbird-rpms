@@ -392,8 +392,6 @@ spec:
           contentType: rpm
         - name: jansson-main
           contentType: rpm
-        - name: java-17-openjdk-main
-          contentType: rpm
         - name: java-17-openjdk-portable-main
           contentType: rpm
         - name: java-21-openjdk-main

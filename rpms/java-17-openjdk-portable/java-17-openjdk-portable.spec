@@ -4,7 +4,7 @@
 %endif
 
 # debug_package %%{nil} is portable-jdks specific
-%define  debug_package %{nil}
+%define debug_package %{nil}
 
 # RPM conditionals so as to be able to dynamically produce
 # slowdebug/release builds. See:
@@ -32,7 +32,7 @@
 # Remove build artifacts by default
 %bcond_with artifacts
 # Build a fresh libjvm.so for use in a copy of the bootstrap JDK
-%bcond_with fresh_libjvm
+%bcond_without fresh_libjvm
 # Build with system libraries
 %bcond_with system_libs
 
@@ -161,6 +161,8 @@
 %else
 %global gdb_arches %{jit_arches} %{zero_arches}
 %endif
+# Architecture on which we run Java-only tests
+%global jdk_test_arch x86_64
 
 # By default, we build a slowdebug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -343,11 +345,12 @@
 # New Version-String scheme-style defines
 %global featurever 17
 %global interimver 0
-%global updatever 17
+%global updatever 20
 %global patchver 0
 # buildjdkver is usually same as %%{featurever},
 # but in time of bootstrap of next jdk, it is featurever-1,
 # and this it is better to change it here, on single place
+# Temurin JDK 17 provides the bootstrap JDK; Fedora no longer ships this package
 %global buildjdkver %{featurever}
 # We don't add any LTS designator for STS packages (Fedora and EPEL).
 # We need to explicitly exclude EPEL as it would have the %%{rhel} macro defined.
@@ -359,7 +362,7 @@
   %global lts_designator_zip ""
 %endif
 # JDK to use for bootstrapping
-%global bootjdk /usr/lib/jvm/java-%{buildjdkver}-openjdk
+%global bootjdk %{_builddir}/temurin17
 # Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
 # This will only work where the bootstrap JDK is the same major version
 # as the JDK being built
@@ -393,7 +396,7 @@
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      6.0.0pre00-c848b93a8598
 # Define current Git revision for the FIPS support patches
-%global fipsver df4c415ac9a
+%global fipsver e1780dd5d390
 # Define JDK versions
 %global newjavaver %{featurever}.%{interimver}.%{updatever}.%{patchver}
 %global javaver         %{featurever}
@@ -407,7 +410,7 @@
 %global origin_nice     OpenJDK
 %global top_level_dir_name   %{vcstag}
 %global top_level_dir_name_backup %{top_level_dir_name}-backup
-%global buildver        10 
+%global buildver        8
 %global rpmrelease      1
 #%%global tagsuffix     %%{nil}
 # Priority must be 8 digits in total; up to openjdk 1.8, we were using 18..... so when we moved to 11, we had to add another digit
@@ -644,6 +647,9 @@ Source16: CheckVendor.java
 # Ensure translations are available for new timezones
 Source18: TestTranslations.java
 
+# Temurin JDK 17 bootstrap binary
+Source20: OpenJDK17U-jdk_x64_linux_hotspot_17.0.20_8.tar.gz
+
 ############################################
 #
 # RPM/distribution specific patches
@@ -771,12 +777,7 @@ BuildRequires: zip
 # to pack portable tarballs
 BuildRequires: tar
 BuildRequires: unzip
-%if (0%{?rhel} > 0 && 0%{?rhel} < 8)
-# No javapackages-filesystem on el7,nor is needed for portables
-%else
-# BuildRequires: javapackages-filesystem
-BuildRequires: java-%{buildjdkver}-openjdk-devel
-%endif
+BuildRequires: javapackages-filesystem
 # Zero-assembler build requirement
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
@@ -995,6 +996,11 @@ echo "Build JDK version is %{buildjdkver}, feature JDK version is %{featurever}"
 %endif
 
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
+
+# Extract Temurin bootstrap JDK. OpenJDK 17 requires JDK 16 or 17 to build.
+mkdir -p %{bootjdk}
+tar -xzf %{SOURCE20} --strip-components=1 -C %{bootjdk}
+%{bootjdk}/bin/java -version
 # https://bugzilla.redhat.com/show_bug.cgi?id=1189084
 prioritylength=`expr length %{priority}`
 if [ $prioritylength -ne 8 ] ; then
@@ -1475,6 +1481,8 @@ export JAVA_HOME=${top_dir_abs_main_build_path}/images/%{jdkimage}
 $JAVA_HOME/bin/java -XX:+UseShenandoahGC -version
 %endif
 
+%ifarch %{jdk_test_arch}
+
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
 $JAVA_HOME/bin/java --add-opens java.base/javax.crypto=ALL-UNNAMED TestCryptoLevel
@@ -1496,6 +1504,13 @@ $JAVA_HOME/bin/java ${SEC_DEBUG} -Djava.security.disableSystemPropertiesFile=tru
 # Check correct vendor values have been set
 $JAVA_HOME/bin/javac -d . %{SOURCE16}
 $JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" "%{oj_vendor_url}" "%{oj_vendor_bug_url}" "%{oj_vendor_version}"
+
+%else
+
+# Just run a basic java -version test on other architectures
+$JAVA_HOME/bin/java -version
+
+%endif
 
 # Check java launcher has no SSB mitigation
 if ! nm $JAVA_HOME/bin/java | grep set_speculation ; then true ; else false; fi

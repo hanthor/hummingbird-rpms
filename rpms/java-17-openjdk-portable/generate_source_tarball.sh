@@ -29,14 +29,14 @@
 #
 # $ OPENJDK_LATEST=1 ./generate_source_tarball.sh
 # [...]
-# Tarball is: temp-generated-source-tarball-ujD/openjdk-17.0.10+6-ea.tar.xz
+# Tarball is: temp-generated-source-tarball-ujD/openjdk-17.0.20+8.tar.xz
 #
 # Unless you use OPENJDK_LATEST, you have to set PROJECT_NAME, REPO_NAME and
 # VERSION, e.g.:
 #
 # PROJECT_NAME=openjdk
 # REPO_NAME=jdk17u
-# VERSION=jdk-17.0.17+10
+# VERSION=jdk-17.0.20+8
 #
 # or to e.g., prepare systemtap, icedtea7's jstack and other tapsets:
 #
