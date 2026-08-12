@@ -1,0 +1,159 @@
+From 5b8a2e55660fe3fa8c42d2b4601f8c61a16b2763 Mon Sep 17 00:00:00 2001
+From: Dan Lutker <dlutker@openjdk.org>
+Date: Tue, 19 Mar 2024 20:35:54 +0000
+Subject: [PATCH] 8325372: Shenandoah: SIGSEGV crash in unnecessary_acquire due
+ to LoadStore split through phi
+
+Backport-of: 5d414da50459b7a1e6f0f537ff3b318854b2c427
+---
+ .../gc/shenandoah/c2/shenandoahSupport.cpp    | 17 +++-
+ .../gc/shenandoah/c2/shenandoahSupport.hpp    |  1 +
+ src/hotspot/share/opto/memnode.cpp            |  1 +
+ ...tUnsafeLoadStoreMergedHeapStableTests.java | 82 +++++++++++++++++++
+ 4 files changed, 100 insertions(+), 1 deletion(-)
+ create mode 100644 test/hotspot/jtreg/gc/shenandoah/compiler/TestUnsafeLoadStoreMergedHeapStableTests.java
+
+diff --git a/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.cpp b/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.cpp
+index ac13cf28608..3222a0262eb 100644
+--- a/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.cpp
++++ b/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.cpp
+@@ -1730,11 +1730,26 @@ bool ShenandoahBarrierC2Support::identical_backtoback_ifs(Node* n, PhaseIdealLoo
+   return true;
+ }
+ 
++bool ShenandoahBarrierC2Support::merge_point_safe(Node* region) {
++  for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
++    Node* n = region->fast_out(i);
++    if (n->is_LoadStore()) {
++      // Splitting a LoadStore node through phi, causes it to lose its SCMemProj: the split if code doesn't have support
++      // for a LoadStore at the region the if is split through because that's not expected to happen (LoadStore nodes
++      // should be between barrier nodes). It does however happen with Shenandoah though because barriers can get
++      // expanded around a LoadStore node.
++      return false;
++    }
++  }
++  return true;
++}
++
++
+ void ShenandoahBarrierC2Support::merge_back_to_back_tests(Node* n, PhaseIdealLoop* phase) {
+   assert(is_heap_stable_test(n), "no other tests");
+   if (identical_backtoback_ifs(n, phase)) {
+     Node* n_ctrl = n->in(0);
+-    if (phase->can_split_if(n_ctrl)) {
++    if (phase->can_split_if(n_ctrl) && merge_point_safe(n_ctrl)) {
+       IfNode* dom_if = phase->idom(n_ctrl)->as_If();
+       if (is_heap_stable_test(n)) {
+         Node* gc_state_load = n->in(1)->in(1)->in(1)->in(1);
+diff --git a/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.hpp b/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.hpp
+index c9404af5ff8..df5fa55e58f 100644
+--- a/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.hpp
++++ b/src/hotspot/share/gc/shenandoah/c2/shenandoahSupport.hpp
+@@ -65,6 +65,7 @@ class ShenandoahBarrierC2Support : public AllStatic {
+   static void test_in_cset(Node*& ctrl, Node*& not_cset_ctrl, Node* val, Node* raw_mem, PhaseIdealLoop* phase);
+   static void move_gc_state_test_out_of_loop(IfNode* iff, PhaseIdealLoop* phase);
+   static void merge_back_to_back_tests(Node* n, PhaseIdealLoop* phase);
++  static bool merge_point_safe(Node* region);
+   static bool identical_backtoback_ifs(Node *n, PhaseIdealLoop* phase);
+   static void fix_ctrl(Node* barrier, Node* region, const MemoryGraphFixer& fixer, Unique_Node_List& uses, Unique_Node_List& uses_to_ignore, uint last, PhaseIdealLoop* phase);
+   static IfNode* find_unswitching_candidate(const IdealLoopTree *loop, PhaseIdealLoop* phase);
+diff --git a/src/hotspot/share/opto/memnode.cpp b/src/hotspot/share/opto/memnode.cpp
+index f81e80fec0e..074b129b059 100644
+--- a/src/hotspot/share/opto/memnode.cpp
++++ b/src/hotspot/share/opto/memnode.cpp
+@@ -3353,6 +3353,7 @@ Node *MemBarNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+           my_mem = load_node;
+         } else {
+           assert(my_mem->unique_out() == this, "sanity");
++          assert(!trailing_load_store(), "load store node can't be eliminated");
+           del_req(Precedent);
+           phase->is_IterGVN()->_worklist.push(my_mem); // remove dead node later
+           my_mem = nullptr;
+diff --git a/test/hotspot/jtreg/gc/shenandoah/compiler/TestUnsafeLoadStoreMergedHeapStableTests.java b/test/hotspot/jtreg/gc/shenandoah/compiler/TestUnsafeLoadStoreMergedHeapStableTests.java
+new file mode 100644
+index 00000000000..e7f9c777ef8
+--- /dev/null
++++ b/test/hotspot/jtreg/gc/shenandoah/compiler/TestUnsafeLoadStoreMergedHeapStableTests.java
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (c) 2024, Red Hat, Inc. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 8325372
++ * @summary fusion of heap stable test causes GetAndSet node to be removed
++ * @requires vm.gc.Shenandoah
++ * @modules java.base/jdk.internal.misc:+open
++ *
++ * @run main/othervm -XX:+UseShenandoahGC -XX:-BackgroundCompilation TestUnsafeLoadStoreMergedHeapStableTests
++ */
++
++import jdk.internal.misc.Unsafe;
++
++import java.lang.reflect.Field;
++
++public class TestUnsafeLoadStoreMergedHeapStableTests {
++
++    static final jdk.internal.misc.Unsafe UNSAFE = Unsafe.getUnsafe();
++    static long F_OFFSET;
++
++    static class A {
++        Object f;
++    }
++
++    static {
++        try {
++            Field fField = A.class.getDeclaredField("f");
++            F_OFFSET = UNSAFE.objectFieldOffset(fField);
++        } catch (Exception e) {
++            throw new RuntimeException(e);
++        }
++    }
++
++    static Object testHelper(boolean flag, Object o, long offset, Object x) {
++        if (flag) {
++            return UNSAFE.getAndSetObject(o, offset, x);
++        }
++        return null;
++    }
++
++    static Object field;
++
++
++    static Object test1(boolean flag, Object o, long offset) {
++        return testHelper(flag, null, offset, field);
++    }
++
++    static Object test2(Object o, long offset) {
++        return UNSAFE.getAndSetObject(o, offset, field);
++    }
++
++    static public void main(String[] args) {
++        A a = new A();
++        for (int i = 0; i < 20_000; i++) {
++            testHelper(true, a, F_OFFSET, null);
++            test1(false, a, F_OFFSET);
++            test2(a, F_OFFSET);
++        }
++    }
++}
