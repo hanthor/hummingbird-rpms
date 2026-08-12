@@ -1184,6 +1184,27 @@ def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
     return api_base, project_path
 
 
+# Which GitLab token env var to use for a given upstream_repo, keyed by URL
+# prefix (first match wins, checked longest-prefix-first isn't needed since
+# entries are expected to be disjoint subgroups). Repos matching no prefix
+# fall back to DEFAULT_GITLAB_TOKEN_ENV. A single group-scoped token can
+# cover every project nested under a subgroup (e.g. hummingbird/src holds
+# multiple private LTS mirrors), so a new mirror added under an
+# already-mapped prefix needs no code change here.
+GITLAB_TOKEN_ENV_BY_REPO_PREFIX: dict[str, str] = {
+    "https://gitlab.com/redhat/hummingbird/src/": "HUMMINGBIRD_SRC_GITLAB_TOKEN",
+}
+DEFAULT_GITLAB_TOKEN_ENV = "CHORE_MR_GITLAB_TOKEN"
+
+
+def _gitlab_token_env_var(upstream_repo: str) -> str:
+    """Return the env var name holding the GitLab token for upstream_repo."""
+    for prefix, env_var in GITLAB_TOKEN_ENV_BY_REPO_PREFIX.items():
+        if upstream_repo.startswith(prefix):
+            return env_var
+    return DEFAULT_GITLAB_TOKEN_ENV
+
+
 def query_gitlab_tags(
     upstream_repo: str,
     tag_strip_prefix: str = "v",
@@ -1194,11 +1215,13 @@ def query_gitlab_tags(
     Returns a dict with 'stable_versions' and 'version' fields,
     matching the format returned by query_anitya_by_project_id().
 
-    Auth: CHORE_MR_GITLAB_TOKEN must have read_api scope (not just
-    read_repository) since this calls the REST API, not git-over-HTTP.
+    Auth: the token env var is chosen via GITLAB_TOKEN_ENV_BY_REPO_PREFIX
+    and must have read_api scope (not just read_repository) since this
+    calls the REST API, not git-over-HTTP.
     """
     api_base, project_path = _parse_gitlab_upstream_url(upstream_repo)
-    token = os.environ.get("CHORE_MR_GITLAB_TOKEN")
+    token_env = _gitlab_token_env_var(upstream_repo)
+    token = os.environ.get(token_env)
     headers: dict[str, str] = {
         "User-Agent": "hummingbird-rpms-version-checker/1.0",
     }
@@ -1244,17 +1267,17 @@ def query_gitlab_tags(
                     raise ValueError(
                         f"GitLab returned 404 for {upstream_repo}. "
                         f"If this is a private repo, set "
-                        f"CHORE_MR_GITLAB_TOKEN with read_api scope."
+                        f"{token_env} with read_api scope."
                     )
                 raise ValueError(
                     f"GitLab returned 404 for {upstream_repo}. "
                     f"Verify the URL is correct and that "
-                    f"CHORE_MR_GITLAB_TOKEN has read_api scope."
+                    f"{token_env} has read_api scope."
                 )
             if e.code in (401, 403):
                 raise ValueError(
                     f"GitLab authentication failed for {upstream_repo} "
-                    f"(HTTP {e.code}). Set CHORE_MR_GITLAB_TOKEN."
+                    f"(HTTP {e.code}). Set {token_env}."
                 )
             raise
         except urllib.error.URLError as e:
