@@ -23,9 +23,8 @@ full repo validation once, and lands everything in a single MR.
 
 ## Prerequisites / environment
 
-- Run `dist_git.py` and `build_rpms.sh` inside `limactl shell fedora` (or an
-  equivalent container) — they need `specfile`, `packaging`, `jinja2`, and
-  `mock`.
+- Run `dist_git.py` and `build_rpms.sh` — they need `specfile`, `packaging`,
+  `jinja2`, and `mock`.
 - **Python interpreter gotcha:** if `which python3` resolves to a non-system
   interpreter (e.g. a linuxbrew shim) that lacks `specfile`, invoke the tool
   explicitly as `/usr/bin/python3 ci/dist_git.py ...`. Verify first with:
