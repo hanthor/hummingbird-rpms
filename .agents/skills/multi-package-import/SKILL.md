@@ -196,11 +196,8 @@ Open **one MR** covering the whole batch, targeting `main`:
   that each package was build-verified locally and `make check` passes;
   `Closes: HUM-XXXX`.
 
-Trigger the automated review once the pipeline starts:
-
-```text
-/hummingbird code-review
-```
+The Hummingbird code review runs automatically once the MR is created and
+marked ready (not draft) — no manual trigger needed.
 
 ## Expected commit shape
 
