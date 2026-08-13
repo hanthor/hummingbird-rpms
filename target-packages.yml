@@ -233,6 +233,7 @@ packages:
   - jansson
   - java-21-openjdk
   - java-25-openjdk
+  - java-17-openjdk
   - java-rpm-macros
   - javapackages-tools
   - jemalloc

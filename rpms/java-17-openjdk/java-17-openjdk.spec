@@ -22,6 +22,15 @@
 # Enable static library builds by default.
 %bcond_without staticlibs
 
+# New Version-String scheme-style defines
+%global featurever 17
+%global interimver 0
+%global updatever 20
+%global patchver 0
+%global buildver 8
+%global portablerelease 0
+%global rpmrelease 1
+
 # Workaround for stripping of debug symbols from static libraries
 %if %{with staticlibs}
 %define __brp_strip_static_archive %{nil}
@@ -95,9 +104,10 @@
 # similarly for other %%{_jvmdir}/{jre,java} and %%{_javadocdir}/{java,java-zip}
 %define is_release_build() %( if [ "%{?1}" == "%{debug_suffix_unquoted}" -o "%{?1}" == "%{fastdebug_suffix_unquoted}" ]; then echo "0" ; else echo "1"; fi )
 
-# while JDK is a techpreview(is_system_jdk=0), some provides are turned off. Once jdk stops to be an techpreview, move it to 1
-# as sytem JDK, we mean any JDK which can run whole system java stack without issues (like bytecode issues, module issues, dependencies...)
-%global is_system_jdk 0
+# Indicates whether this is the default JDK on this version of RHEL.
+# Only the default/system JDK provides unversioned Provides like 'java',
+# 'jre' and 'java-devel'.
+%global is_system_jdk 1
 
 %global aarch64         aarch64 arm64 armv8
 # we need to distinguish between big and little endian PPC64
@@ -285,12 +295,6 @@
 %global with_systemtap 0
 %endif
 
-# New Version-String scheme-style defines
-%global featurever 17
-%global interimver 0
-%global updatever 17
-%global patchver 0
-
 # We don't add any LTS designator for STS packages (Fedora and EPEL).
 # We need to explicitly exclude EPEL as it would have the %%{rhel} macro defined.
 %if 0%{?rhel} && !0%{?epel}
@@ -320,7 +324,7 @@
 %endif
 %endif
 %endif
-%global oj_vendor_version (Red_Hat-%{version}-%{release})
+%global oj_vendor_version (Red_Hat-%{version}-%{portablerelease})
 
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      6.0.0pre00-c848b93a8598
@@ -337,8 +341,6 @@
 %global origin_nice     OpenJDK
 %global top_level_dir_name   %{vcstag}
 %global top_level_dir_name_backup %{top_level_dir_name}-backup
-%global buildver        10
-%global rpmrelease      1
 # Priority must be 8 digits in total; up to openjdk 1.8, we were using 18..... so when we moved to 11, we had to add another digit
 %if %is_system_jdk
 # Using 10 digits may overflow the int used for priority, so we combine the patch and build versions
@@ -373,7 +375,8 @@
 
 # parametrized macros are order-sensitive
 %global compatiblename  java-%{featurever}-%{origin}
-%define fullversion()     %{expand:%{compatiblename}%{?1}-%{version}-%{release}}
+%global portable_compatiblename java-%{featurever}-%{origin}
+%global fullversion     %{compatiblename}-%{version}-%{release}
 # images directories from upstream build
 %global jdkimage                jdk
 %global static_libs_image       static-libs
@@ -504,10 +507,6 @@ alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{orig
 %{alternatives_java_install -- %{?1}}
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-echo %{disable_bash_dnf5}
-echo %{disable_main_jdkjre -- jre %{nil}}
-echo %{disable_url}
-echo %{disable_issues}
 }
 
 %define postun_script() %{expand:
@@ -618,10 +617,6 @@ alternatives --install %{_jvmdir}/java-%{javaver} java_sdk_%{javaver} %{_jvmdir}
 %{alternatives_javac_install -- %{?1}}
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-echo %{disable_bash_dnf5}
-echo %{disable_main_jdkjre -- jdk -devel}
-echo %{disable_url}
-echo %{disable_issues}
 }
 
 %define preun_devel() %{expand:
@@ -703,7 +698,7 @@ fi
 }
 
 %define files_jre_headless() %{expand:
-%doc %{_defaultdocdir}/%{uniquejavadocdir --   %{?1}}/%{fullversion -- %{nil}}.specfile
+%doc %{_defaultdocdir}/%{uniquejavadocdir --   %{?1}}/%{fullversion}.specfile
 %license %{_jvmdir}/%{sdkdir -- %{?1}}/legal
 %doc %{_jvmdir}/%{sdkdir -- %{?1}}/NEWS	
 %doc %{_defaultdocdir}/%{uniquejavadocdir -- %{?1}}/NEWS
@@ -1012,6 +1007,10 @@ OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release
 %if 0%{?rhel} >= 8 || 0%{?fedora} > 0
 Recommends: gtk3%{?_isa}
 %endif
+# Recommend PipeWire for screenshots under Wayland.
+%if 0%{?rhel} >= 9 || 0%{?fedora} > 0
+Recommends: pipewire%{?_isa}
+%endif
 
 Provides: java-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 
@@ -1039,7 +1038,9 @@ Requires: tzdata-java >= 2024a
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
 # for printing support
-Requires: cups-libs
+Recommends: cups-libs
+# for audio support via libjsound.so
+Recommends: alsa-lib
 # for system security properties
 Requires: crypto-policies
 # for FIPS PKCS11 provider
@@ -1155,7 +1156,7 @@ Provides: java-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{newjavaver}.%{buildver}
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1172,12 +1173,6 @@ Summary: %{origin_nice} %{featurever} Runtime Environment
 %if (0%{?rhel} > 0 && 0%{?rhel} <= 8) || (0%{?fedora} >= 0 && 0%{?fedora} < 30)
 Group:   Development/Languages
 %endif
-
-%define disable_bash_dnf5 "dnf 5 is printing bash only to logs"
-%define disable_lua_dnf5 "dnf 5 is printing lua only to stdout, but may skip first and last line"
-%define disable_main_jdkjre() %{expand: "The %{name}%{?2} package is deprecated and may no longer receive updates. Since f42 install adoptium-temurin-java-repository and install temurin-%{featurever}-%{?1}"}
-%define disable_url  "https://fedoraproject.org/wiki/Changes/ThirdPartyLegacyJdks#adoptium-temurin-java-repository"
-%define disable_issues  "It currently lacks rpm-based debuginfo, fastdebugs and slowdebugs and headless subpackage. It also lacks offline javadocs and jdk duplicates jre"
 
 # HotSpot code is licensed under GPLv2
 # JDK library code is licensed under GPLv2 with the Classpath exception
@@ -1196,6 +1191,13 @@ Group:   Development/Languages
 # Automatically converted from old format: ASL 1.1 and ASL 2.0 and BSD and BSD with advertising and GPL+ and GPLv2 and GPLv2 with exceptions and IJG and LGPLv2+ and MIT and MPLv2.0 and Public Domain and W3C and zlib and ISC and FTL and RSA - review is highly recommended.
 License:  Apache-1.1 AND Apache-2.0 AND LicenseRef-Callaway-BSD AND LicenseRef-Callaway-BSD-with-advertising AND GPL-1.0-or-later AND GPL-2.0-only AND LicenseRef-Callaway-GPLv2-with-exceptions AND IJG AND LicenseRef-Callaway-LGPLv2+ AND LicenseRef-Callaway-MIT AND MPL-2.0 AND LicenseRef-Callaway-Public-Domain AND W3C AND Zlib AND ISC AND FTL AND LicenseRef-RSA
 URL:      http://openjdk.java.net/
+
+# Check if pandoc was available to generate docs (including man pages)
+%if 0%{?rhel} == 8 || 0%{?epel} > 0 || 0%{?fedora} > 0
+%global pandoc_available 1
+%else
+%global pandoc_available 0
+%endif
 
 # Use 'icedtea_sync.sh' to update the following
 # They are based on code contained in the IcedTea project (6.x).
@@ -1266,20 +1268,22 @@ BuildRequires: tzdata-java >= 2022g
 BuildRequires: systemtap-sdt-devel
 %endif
 
-# Version in src/java.desktop/share/legal/freetype.md
-Provides: bundled(freetype) = 2.13.2
+# BEGIN generated bundled Provides
+# Version in src/java.desktop/share/native/libfreetype/include/freetype/freetype.h
+Provides: bundled(freetype) = 2.14.3
 # Version in src/java.desktop/share/native/libsplashscreen/giflib/gif_lib.h
-Provides: bundled(giflib) = 5.2.2
+Provides: bundled(giflib) = 6.1.3
 # Version in src/java.desktop/share/native/libharfbuzz/hb-version.h
-Provides: bundled(harfbuzz) = 8.2.2
+Provides: bundled(harfbuzz) = 14.2.0
 # Version in src/java.desktop/share/native/liblcms/lcms2.h
-Provides: bundled(lcms2) = 2.16.0
+Provides: bundled(lcms2) = 2.19.0
 # Version in src/java.desktop/share/native/libjavajpeg/jpeglib.h
 Provides: bundled(libjpeg) = 6b
 # Version in src/java.desktop/share/native/libsplashscreen/libpng/png.h
-Provides: bundled(libpng) = 1.6.43
+Provides: bundled(libpng) = 1.6.58
 # Version in src/java.base/share/native/libzip/zlib/zlib.h
-Provides: bundled(zlib) = 1.3.1
+Provides: bundled(zlib) = 1.3.2
+# END generated bundled Provides
 
 # this is always built, also during debug-only build
 # when it is built in debug-only this package is just placeholder
@@ -1686,7 +1690,7 @@ echo "Used %{version}.*portable:" >> %{repack_file}
 ls -l %{portablejvmdir} | grep "%{version}.*portable" >> %{repack_file} || echo "Not found!" >> %{repack_file}
 echo "Used portable.*%{version}:" >> %{repack_file}
 rpm -qa | grep "portable.*%{version}" >> %{repack_file} || echo "Not found!" >> %{repack_file}
-echo "Where this is %{fullversion %{nil}}" >> %{repack_file}
+echo "Where this is %{fullversion}" >> %{repack_file}
 portableNvr=`rpm -qa | grep %{name}-portable-misc-%{version} | sed "s/-misc-/-/" | sed "s/.%{_arch}.*//"`
 if [ "x${portableNvr}" == x ] ; then
   portableNvr=`rpm -qa | grep %{name}-portable-misc- | sed "s/-misc-/-/" | sed "s/.%{_arch}.*//"`" #incorrect!"
@@ -1957,7 +1961,7 @@ cp -a ${jdk_image} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}
 cp -a ${src_image} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/full_sources
 cp -a ${misc_image}/%{generated_sources_name} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}
 install -d -m 755 $RPM_BUILD_ROOT%{_defaultdocdir}/%{uniquejavadocdir -- $suffix}
-cp %{repack_file} $RPM_BUILD_ROOT%{_defaultdocdir}/%{uniquejavadocdir --  $suffix}/%{fullversion -- %{nil}}.specfile
+cp %{repack_file} $RPM_BUILD_ROOT%{_defaultdocdir}/%{uniquejavadocdir --  $suffix}/%{fullversion}.specfile
 
 pushd ${jdk_image}
 
@@ -2156,11 +2160,6 @@ end
 }
 
 %pretrans headless -p <lua>
-print(%{disable_lua_dnf5})
-print(%{disable_main_jdkjre -- jre %{nil}})
-print(%{disable_url})
-print(%{disable_issues})
-print(%{disable_lua_dnf5})
 %{lua_delete_old_link -- %{_jvmdir}/%{sdkdir -- %{?1}}}
 
 %post headless
