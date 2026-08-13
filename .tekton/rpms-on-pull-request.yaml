@@ -22070,6 +22070,8 @@ spec:
       value: "rpms/nodejs20-lts"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: lookaside-cache-url
+      value: "https://dp9y1t38f72i0.cloudfront.net/"
   pipelineRef:
     resolver: bundles
     params:
@@ -22088,6 +22090,9 @@ spec:
     - name: git-auth
       secret:
         secretName: '{{git_auth_secret}}'
+    - name: cloudfront-signing-key
+      secret:
+        secretName: cloudfront-signing-key
 # --- nodejs22 ---
 ---
 apiVersion: tekton.dev/v1
