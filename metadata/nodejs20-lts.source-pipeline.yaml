@@ -18,6 +18,7 @@ transform:
     paths:
       - "*/deps/openssl/*"
   - type: run
+    artifacts: ["node-v${VERSION}.tar.gz"]
     command: ["mv", "node-v${VERSION}.tar.gz", "node-v${VERSION}-stripped.tar.gz"]
     outputs:
       - "node-v${VERSION}-stripped.tar.gz"
