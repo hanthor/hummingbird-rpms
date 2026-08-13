@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
 Version:        24.18.1
-Release:        0.1%{?dist}
+Release:        0.2.2%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -135,8 +135,8 @@ Recommends: %{name}-npm              >= %{npm_evr}
 Provides:   nodejs(abi) = %{node_soversion}, nodejs(abi%{node_version_major}) = %{node_soversion}
 Provides:   nodejs(engine) = %{node_version}
 
-# Main source tarball; see packaging/make-nodejs-tarball.sh on how it is created
-Source:         node-v%{node_version}-stripped.tar.gz
+# Main source tarball; see metadata/nodejs24.source-pipeline.yaml on how it is created
+Source:         node-v%{node_version}.tar.gz
 # Sources 001-099: reserved for additional sources to be installed
 # - Full ICU database data
 Source001:      https://github.com/unicode-org/icu/releases/download/release-%{icu_version_major}.%{icu_version_minor}/icu4c-%{icu_version_major}.%{icu_version_minor}-data-bin-b.zip
@@ -162,6 +162,7 @@ Source101:      nodejs.srpm.macros
 0002-Disable-FIPS-options.patch
 0003-CVE-2026-13149-brace-expansion-fix-exponential-time.patch
 0004-CVE-2026-14257-brace-expansion-bound-expansion-length.patch
+0005-CVE-2026-69152-brace-expansion-5.0.9.patch
 CVE-2026-59869-js-yaml-merge-keys.patch
 
 %description

@@ -74,6 +74,8 @@ spec:
       defaults:
         pushSourceContainer: true
       components:
+        - name: networkmanager-main
+          contentType: rpm
         - name: pyyaml-main
           contentType: rpm
         - name: r-rpm-macros-main
@@ -130,6 +132,8 @@ spec:
           contentType: rpm
         - name: btrfs-progs-main
           contentType: rpm
+        - name: bubblewrap-main
+          contentType: rpm
         - name: buildah-main
           contentType: rpm
         - name: busybox-main
@@ -157,6 +161,8 @@ spec:
         - name: chunkah-main
           contentType: rpm
         - name: cloud-init-main
+          contentType: rpm
+        - name: cloud-utils-main
           contentType: rpm
         - name: cmake-main
           contentType: rpm
@@ -196,17 +202,23 @@ spec:
           contentType: rpm
         - name: dbus-broker-main
           contentType: rpm
+        - name: dbus-python-main
+          contentType: rpm
         - name: debugedit-main
           contentType: rpm
         - name: dex-main
           contentType: rpm
         - name: diffutils-main
           contentType: rpm
+        - name: distribution-main
+          contentType: rpm
         - name: dnf-main
           contentType: rpm
         - name: dnf5-main
           contentType: rpm
         - name: dns-root-data-main
+          contentType: rpm
+        - name: dosfstools-main
           contentType: rpm
         - name: dotnet10-0-main
           contentType: rpm
@@ -219,6 +231,8 @@ spec:
         - name: dracut-main
           contentType: rpm
         - name: drpm-main
+          contentType: rpm
+        - name: duktape-main
           contentType: rpm
         - name: dwz-main
           contentType: rpm
@@ -256,6 +270,8 @@ spec:
           contentType: rpm
         - name: findutils-main
           contentType: rpm
+        - name: firewalld-main
+          contentType: rpm
         - name: fmt-main
           contentType: rpm
         - name: fontconfig-main
@@ -271,6 +287,8 @@ spec:
         - name: fstrm-main
           contentType: rpm
         - name: fsverity-utils-main
+          contentType: rpm
+        - name: fuse-overlayfs-main
           contentType: rpm
         - name: fuse3-main
           contentType: rpm
@@ -293,6 +311,8 @@ spec:
         - name: ghc-srpm-macros-main
           contentType: rpm
         - name: git-main
+          contentType: rpm
+        - name: git-lfs-main
           contentType: rpm
         - name: git-sync-main
           contentType: rpm
@@ -378,9 +398,13 @@ spec:
           contentType: rpm
         - name: iproute-main
           contentType: rpm
+        - name: iptables-main
+          contentType: rpm
         - name: jaeger-main
           contentType: rpm
         - name: jansson-main
+          contentType: rpm
+        - name: java-17-openjdk-portable-main
           contentType: rpm
         - name: java-21-openjdk-main
           contentType: rpm
@@ -417,6 +441,8 @@ spec:
         - name: kmod-main
           contentType: rpm
         - name: krb5-main
+          contentType: rpm
+        - name: kube-state-metrics-main
           contentType: rpm
         - name: kubernetes1-35-main
           contentType: rpm
@@ -506,6 +532,14 @@ spec:
           contentType: rpm
         - name: libmpc-main
           contentType: rpm
+        - name: libndp-main
+          contentType: rpm
+        - name: libnetfilter-conntrack-main
+          contentType: rpm
+        - name: libnfnetlink-main
+          contentType: rpm
+        - name: libnftnl-main
+          contentType: rpm
         - name: libnl3-main
           contentType: rpm
         - name: libnsl2-main
@@ -563,6 +597,8 @@ spec:
         - name: libxcb-main
           contentType: rpm
         - name: libxcrypt-main
+          contentType: rpm
+        - name: libxkbcommon-main
           contentType: rpm
         - name: libxml2-main
           contentType: rpm
@@ -640,6 +676,8 @@ spec:
           contentType: rpm
         - name: nettle-main
           contentType: rpm
+        - name: nftables-main
+          contentType: rpm
         - name: nghttp2-main
           contentType: rpm
         - name: nghttp3-main
@@ -692,6 +730,8 @@ spec:
           contentType: rpm
         - name: openssl-fips-provider-main
           contentType: rpm
+        - name: openssl3-main
+          contentType: rpm
         - name: opentelemetry-collector-main
           contentType: rpm
         - name: opentelemetry-collector-contrib-main
@@ -715,6 +755,8 @@ spec:
         - name: package-notes-main
           contentType: rpm
         - name: pam-main
+          contentType: rpm
+        - name: passt-main
           contentType: rpm
         - name: patch-main
           contentType: rpm
@@ -818,6 +860,8 @@ spec:
           contentType: rpm
         - name: policycoreutils-main
           contentType: rpm
+        - name: polkit-main
+          contentType: rpm
         - name: poppler-main
           contentType: rpm
         - name: popt-main
@@ -843,6 +887,8 @@ spec:
         - name: publicsuffix-list-main
           contentType: rpm
         - name: pyopenssl-main
+          contentType: rpm
+        - name: pygobject3-main
           contentType: rpm
         - name: pyproject-rpm-macros-main
           contentType: rpm
@@ -1012,6 +1058,8 @@ spec:
           contentType: rpm
         - name: subversion-main
           contentType: rpm
+        - name: sudo-main
+          contentType: rpm
         - name: svt-av1-main
           contentType: rpm
         - name: swift-lang-main
@@ -1062,6 +1110,8 @@ spec:
           contentType: rpm
         - name: uriparser-main
           contentType: rpm
+        - name: userspace-rcu-main
+          contentType: rpm
         - name: utf8proc-main
           contentType: rpm
         - name: util-linux-main
@@ -1077,6 +1127,8 @@ spec:
         - name: which-main
           contentType: rpm
         - name: xcaddy-main
+          contentType: rpm
+        - name: xkeyboard-config-main
           contentType: rpm
         - name: xmlsec1-main
           contentType: rpm

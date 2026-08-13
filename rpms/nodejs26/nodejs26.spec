@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.6.0-1.5%{?dist} -p
+%nodejs_define_version node 1:26.7.0-1.5.2%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -15,46 +15,46 @@
 # expect anything between the markers to be overwritten on any update.
 
 # BEGIN automatic-version-macros  # DO NOT REMOVE THIS LINE!
-# Version from node-v26.6.0/src/node_version.h
+# Version from node-v26.7.0/src/node_version.h
 %global node_soversion 147
 
-# Version from node-v26.6.0/deps/ada/ada.h
-%nodejs_define_version ada 3.4.4
-# Version from node-v26.6.0/deps/brotli/c/common/version.h
+# Version from node-v26.7.0/deps/ada/ada.h
+%nodejs_define_version ada 4.0.0
+# Version from node-v26.7.0/deps/brotli/c/common/version.h
 %nodejs_define_version brotli 1.2.0
-# Version from node-v26.6.0/deps/cares/include/ares_version.h
+# Version from node-v26.7.0/deps/cares/include/ares_version.h
 %nodejs_define_version c_ares 1.34.8
-# Version from node-v26.6.0/deps/histogram/include/hdr/hdr_histogram_version.h
+# Version from node-v26.7.0/deps/histogram/include/hdr/hdr_histogram_version.h
 %nodejs_define_version histogram 0.11.10
-# Version from node-v26.6.0/tools/icu/current_ver.dep
+# Version from node-v26.7.0/tools/icu/current_ver.dep
 %nodejs_define_version icu 78.3 -p
-# Version from node-v26.6.0/deps/uv/include/uv/version.h
+# Version from node-v26.7.0/deps/uv/include/uv/version.h
 %nodejs_define_version libuv 1.52.1
-# Version from node-v26.6.0/deps/llhttp/include/llhttp.h
+# Version from node-v26.7.0/deps/llhttp/include/llhttp.h
 %nodejs_define_version llhttp 9.4.3
-# Version from node-v26.6.0/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
-%nodejs_define_version nghttp2 1.69.0
-# Version from node-v26.6.0/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
-%nodejs_define_version nghttp3 1.17.0
-# Version from node-v26.6.0/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
-%nodejs_define_version ngtcp2 1.24.0
-# Version from node-v26.6.0/deps/merve/merve.h
+# Version from node-v26.7.0/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
+%nodejs_define_version nghttp2 1.70.0
+# Version from node-v26.7.0/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
+%nodejs_define_version nghttp3 1.18.0
+# Version from node-v26.7.0/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
+%nodejs_define_version ngtcp2 1.25.0
+# Version from node-v26.7.0/deps/merve/merve.h
 %nodejs_define_version merve 1.2.2
-# Version from node-v26.6.0/lib/punycode.js
+# Version from node-v26.7.0/lib/punycode.js
 %nodejs_define_version nodejs-punycode 2.1.0
-# Version from node-v26.6.0/deps/undici/src/package.json
+# Version from node-v26.7.0/deps/undici/src/package.json
 %nodejs_define_version nodejs-undici 8.9.0
-# Version from node-v26.6.0/deps/npm/package.json
-%nodejs_define_version npm 1:11.18.0-%{nodejs_subpackage_release}
-# Version from node-v26.6.0/deps/sqlite/sqlite3.h
-%nodejs_define_version sqlite 3.53.3
-# Version from node-v26.6.0/deps/uvwasi/include/uvwasi.h
+# Version from node-v26.7.0/deps/npm/package.json
+%nodejs_define_version npm 1:11.19.0-%{nodejs_subpackage_release}
+# Version from node-v26.7.0/deps/sqlite/sqlite3.h
+%nodejs_define_version sqlite 3.53.4
+# Version from node-v26.7.0/deps/uvwasi/include/uvwasi.h
 %nodejs_define_version uvwasi 0.0.23
-# Version from node-v26.6.0/deps/v8/include/v8-version.h
+# Version from node-v26.7.0/deps/v8/include/v8-version.h
 %nodejs_define_version v8 3:14.6.202.34-%{nodejs_subpackage_release} -p
-# Version from node-v26.6.0/deps/zlib/zlib.h
+# Version from node-v26.7.0/deps/zlib/zlib.h
 %nodejs_define_version zlib 1.3.2.1-motley
-# Version from node-v26.6.0/deps/zstd/lib/zstd.h
+# Version from node-v26.7.0/deps/zstd/lib/zstd.h
 %nodejs_define_version zstd 1.5.7
 # END automatic-version-macros  # DO NOT REMOVE THIS LINE!
 
@@ -135,8 +135,8 @@ Recommends: %{name}-npm-bin          >= %{npm_evr}
 Provides:   nodejs(abi) = %{node_soversion}, nodejs(abi%{node_version_major}) = %{node_soversion}
 Provides:   nodejs(engine) = %{node_version}
 
-# Main source tarball; see packaging/make-nodejs-tarball.sh on how it is created
-Source:         node-v%{node_version}-stripped.tar.gz
+# Main source tarball; see metadata/nodejs26.source-pipeline.yaml on how it is created
+Source:         node-v%{node_version}.tar.gz
 # Sources 001-099: reserved for additional sources to be installed
 # - Full ICU database data
 Source001:      https://github.com/unicode-org/icu/releases/download/release-%{icu_version_major}.%{icu_version_minor}/icu4c-%{icu_version_major}.%{icu_version_minor}-data-bin-b.zip
@@ -161,6 +161,7 @@ Source101:      nodejs.srpm.macros
 0001-Remove-unused-OpenSSL-config.patch
 0001-fips-disable-options.patch
 CVE-2026-14257-brace-expansion-bound-expansion-length.patch
+CVE-2026-69152-brace-expansion-5.0.9.patch
 CVE-2026-59869-js-yaml-merge-keys.patch
 0001-v8-memcopy-include-climits.patch
 
