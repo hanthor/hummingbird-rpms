@@ -1,3 +1,7 @@
+* Thu Aug 13 2026 Avinash Singh <avsingh@redhat.com>
+- Update to Node.js 20.20.3
+- https://gitlab.com/redhat/hummingbird/src/nodejs-lts/-/releases/v20.20.3 
+
 * Fri Jun 17 2022 Stephen Gallagher <sgallagh@redhat.com> - 1:18.4.0-1
 - Update to Node.js 18.4.0
 - https://github.com/nodejs/node/blob/master/doc/changelogs/CHANGELOG_V18.md#18.4.0
