@@ -87,10 +87,20 @@ except ImportError:
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RPMS_DIR = ROOT_DIR / "rpms"
 METADATA_DIR = ROOT_DIR / "metadata"
+PACKAGE_OVERRIDES_YAML = ROOT_DIR / "ci" / "package-overrides.yaml"
 
 # release-monitoring.org API base URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
 UPLOAD_SCRIPT = ROOT_DIR / "ci" / "upload-to-lookaside-cache.sh"
+
+# Maps a package's ci/package-overrides.yaml `lookaside_cache_url` (a CloudFront
+# distribution used for reads at build time) to the S3 bucket backing it, since
+# uploads go straight to S3, not through CloudFront. A package with no
+# lookaside_cache_url override uses DEFAULT_LOOKASIDE_BUCKET (the public one).
+LOOKASIDE_BUCKET_BY_CACHE_URL: dict[str, str] = {
+    "https://dp9y1t38f72i0.cloudfront.net/": "arr-hummingbird-prod-private-dist-git-cache",
+}
+DEFAULT_LOOKASIDE_BUCKET = "arr-hummingbird-prod-dist-git-cache"
 
 # Rate limiting: delay between API requests (in seconds)
 API_DELAY = 0.2
@@ -387,12 +397,40 @@ def _download_file(url: str, dest: Path) -> None:
                 f.write(chunk)
 
 
+def _get_package_lookaside_bucket(package: str) -> str:
+    """Return the S3 bucket to upload package's lookaside cache files to.
+
+    Reads ci/package-overrides.yaml's lookaside_cache_url for this package. No
+    override means the package uses the public DEFAULT_LOOKASIDE_BUCKET. An
+    override that isn't in LOOKASIDE_BUCKET_BY_CACHE_URL raises rather than
+    silently falling back to the public bucket -- a package explicitly routed
+    to a private cache (e.g. a subscription-gated LTS product) must never have
+    its sources uploaded to the public one just because this mapping hasn't
+    been updated yet for a newly-added private cache URL.
+    """
+    overrides = {}
+    if PACKAGE_OVERRIDES_YAML.exists():
+        overrides = yaml.safe_load(PACKAGE_OVERRIDES_YAML.read_text()) or {}
+    cache_url = (overrides.get(package) or {}).get("lookaside_cache_url")
+    if not cache_url:
+        return DEFAULT_LOOKASIDE_BUCKET
+    if cache_url not in LOOKASIDE_BUCKET_BY_CACHE_URL:
+        raise ValueError(
+            f"{package}: lookaside_cache_url {cache_url!r} has no entry in "
+            f"LOOKASIDE_BUCKET_BY_CACHE_URL -- add its backing S3 bucket name "
+            f"there before uploading, so this package's sources can't be "
+            f"published to the public bucket by mistake."
+        )
+    return LOOKASIDE_BUCKET_BY_CACHE_URL[cache_url]
+
+
 def _upload_to_lookaside(
     filepath: Path, package: str, hashtype: str = "sha512"
 ) -> None:
     """Upload a file to the lookaside cache using upload-to-lookaside-cache.sh."""
     if not UPLOAD_SCRIPT.exists():
         raise FileNotFoundError(f"Upload script not found: {UPLOAD_SCRIPT}")
+    bucket = _get_package_lookaside_bucket(package)
     result = subprocess.run(
         [
             str(UPLOAD_SCRIPT),
@@ -402,6 +440,8 @@ def _upload_to_lookaside(
             package,
             "-t",
             hashtype.lower(),
+            "-b",
+            bucket,
         ],
         capture_output=True,
         text=True,
@@ -411,7 +451,7 @@ def _upload_to_lookaside(
         raise RuntimeError(
             f"Lookaside upload failed (exit {result.returncode}): {stderr}"
         )
-    logger.info(f"{package}: uploaded {filepath.name} to lookaside cache")
+    logger.info(f"{package}: uploaded {filepath.name} to lookaside cache ({bucket})")
 
 
 def _regenerate_vendor_archive(
@@ -588,7 +628,12 @@ def _run_gorget_pipeline(
         )
         started_at = time.monotonic()
         try:
-            result = subprocess.run(command, stdout=subprocess.PIPE, text=True)
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                text=True,
+                env=_git_clone_env_for_upstream_repo(upstream_repo),
+            )
         finally:
             logger.info(
                 "%s: gorget pipeline completed after %.1fs",
@@ -1197,12 +1242,64 @@ GITLAB_TOKEN_ENV_BY_REPO_PREFIX: dict[str, str] = {
 DEFAULT_GITLAB_TOKEN_ENV = "CHORE_MR_GITLAB_TOKEN"
 
 
-def _gitlab_token_env_var(upstream_repo: str) -> str:
-    """Return the env var name holding the GitLab token for upstream_repo."""
+def _match_private_repo_prefix(upstream_repo: str) -> Optional[tuple[str, str]]:
+    """Return the (prefix, env_var) entry of GITLAB_TOKEN_ENV_BY_REPO_PREFIX that
+    upstream_repo falls under, or None if it doesn't match any known private prefix.
+    """
     for prefix, env_var in GITLAB_TOKEN_ENV_BY_REPO_PREFIX.items():
         if upstream_repo.startswith(prefix):
-            return env_var
-    return DEFAULT_GITLAB_TOKEN_ENV
+            return prefix, env_var
+    return None
+
+
+def _gitlab_token_env_var(upstream_repo: str) -> str:
+    """Return the env var name holding the GitLab token for upstream_repo."""
+    match = _match_private_repo_prefix(upstream_repo)
+    return match[1] if match else DEFAULT_GITLAB_TOKEN_ENV
+
+
+def _git_clone_env_for_upstream_repo(upstream_repo: Optional[str]) -> dict[str, str]:
+    """Build a subprocess environment that authenticates git-over-HTTPS clones of
+    upstream_repo, when it falls under a known private-repo prefix in
+    GITLAB_TOKEN_ENV_BY_REPO_PREFIX.
+
+    query_gitlab_tags()'s auth (a PRIVATE-TOKEN REST header) only covers the version
+    -check API call, not gorget's own subprocess `git clone` -- that clone has no
+    credentials at all otherwise, and fails closed with "could not read Username"
+    for a private repo. This injects a url.<prefix-with-token>.insteadOf rewrite via
+    GIT_CONFIG_COUNT/GIT_CONFIG_KEY_0/GIT_CONFIG_VALUE_0 (git >= 2.31) scoped to just
+    this subprocess tree (gorget's own git clone inherits the environment the same
+    way it would inherit ~/.gitconfig), rather than mutating the real global git
+    config for the whole job.
+
+    Deliberately narrower than _gitlab_token_env_var(): that function's
+    DEFAULT_GITLAB_TOKEN_ENV fallback (CHORE_MR_GITLAB_TOKEN) authenticates pushes
+    back to *this* repo, not fetches of an arbitrary package's own upstream -- only
+    an explicit prefix match here triggers a URL rewrite, so a public upstream_repo
+    (no match) is cloned anonymously, unchanged.
+    """
+    env = os.environ.copy()
+    if not upstream_repo:
+        return env
+
+    match = _match_private_repo_prefix(upstream_repo)
+    if match is None:
+        return env
+    prefix, token_env = match
+
+    token = os.environ.get(token_env)
+    if not token:
+        raise ValueError(
+            f"{upstream_repo} is under the private prefix {prefix!r}, which "
+            f"requires git credentials, but {token_env} is not set"
+        )
+
+    scheme, _, rest = prefix.partition("://")
+    authenticated_prefix = f"{scheme}://oauth2:{token}@{rest}"
+    env["GIT_CONFIG_COUNT"] = "1"
+    env["GIT_CONFIG_KEY_0"] = f"url.{authenticated_prefix}.insteadOf"
+    env["GIT_CONFIG_VALUE_0"] = prefix
+    return env
 
 
 def query_gitlab_tags(
