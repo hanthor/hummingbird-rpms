@@ -408,7 +408,7 @@ def _get_package_lookaside_bucket(package: str) -> str:
     its sources uploaded to the public one just because this mapping hasn't
     been updated yet for a newly-added private cache URL.
     """
-    overrides = {}
+    overrides: dict[str, dict] = {}
     if PACKAGE_OVERRIDES_YAML.exists():
         overrides = yaml.safe_load(PACKAGE_OVERRIDES_YAML.read_text()) or {}
     cache_url = (overrides.get(package) or {}).get("lookaside_cache_url")
