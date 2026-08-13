@@ -11910,14 +11910,18 @@ spec:
         - x86_64
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-d160-c8xlarge/arm64"
+        - "linux-d160-c8xlarge/amd64"
     - name: specfile
       value: "java-17-openjdk.spec"
     - name: monorepo-subdir
       value: "rpms/java-17-openjdk"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -11930,8 +11934,8 @@ spec:
   taskRunTemplate:
     serviceAccountName: build-pipeline-java-17-openjdk-main
   timeouts:
-    pipeline: 4h
-    tasks: 4h
+    pipeline: 8h
+    tasks: 8h
   workspaces:
     - name: git-auth
       secret:
