@@ -350,11 +350,7 @@
 # buildjdkver is usually same as %%{featurever},
 # but in time of bootstrap of next jdk, it is featurever-1,
 # and this it is better to change it here, on single place
-# Temurin JDK 17 provides the bootstrap JDK; Fedora no longer ships this package
 %global buildjdkver %{featurever}
-# Temporary bootstrap input; remove when native bootstrapping is available.
-%global bootstrap_jdk_version 17.0.20
-%global bootstrap_jdk_build 8
 # We don't add any LTS designator for STS packages (Fedora and EPEL).
 # We need to explicitly exclude EPEL as it would have the %%{rhel} macro defined.
 %if 0%{?rhel} && !0%{?epel}
@@ -365,7 +361,29 @@
   %global lts_designator_zip ""
 %endif
 # JDK to use for bootstrapping
-%global bootjdk %{_builddir}/temurin17
+# Fedora provides the native boot JDK; RHEL/EPEL use the portable boot JDK.
+%if ((0%{?epel}) > 0 || 0%{?fedora} > 8)
+%global use_portable_bootjdk 0
+%else
+%global use_portable_bootjdk 1
+%endif
+
+# Don't require fastdebug for bootstrapping - release JDK works fine
+# and fastdebug variants may not be available in all repos.
+%ifarch %{fastdebug_arches}
+# %%global bootdebugpkg fastdebug
+%endif
+%if %{use_portable_bootjdk}
+%global bootjdkpkg_name java-%{featurever}-%{origin}
+%global bootjdkpkg %{bootjdkpkg_name}-portable-devel%{?bootdebugpkg:-%{bootdebugpkg}} >= %{buildjdkver}
+%global bootjdkzip %{_jvmdir}/%{bootjdkpkg_name}-*.portable%{?bootdebugpkg:.%{bootdebugpkg}}.jdk.%{_arch}.tar.xz
+%global bootjdk %{_builddir}/%{uniquesuffix -- ""}/%{bootjdkpkg_name}.boot
+%else
+%global bootjdkpkg_name java-%{buildjdkver}-openjdk
+%global bootjdkpkg %{bootjdkpkg_name}-devel%{?bootdebugpkg:-%{bootdebugpkg}}
+%global bootjdk /usr/lib/jvm/%{bootjdkpkg_name}%{?bootdebugpkg:-%{bootdebugpkg}}
+%endif
+
 # Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
 # This will only work where the bootstrap JDK is the same major version
 # as the JDK being built
@@ -414,7 +432,7 @@
 %global top_level_dir_name   %{vcstag}
 %global top_level_dir_name_backup %{top_level_dir_name}-backup
 %global buildver        8
-%global rpmrelease      0.1
+%global rpmrelease      0.2
 #%%global tagsuffix     %%{nil}
 # Priority must be 8 digits in total; up to openjdk 1.8, we were using 18..... so when we moved to 11, we had to add another digit
 %if %is_system_jdk
@@ -650,13 +668,6 @@ Source16: CheckVendor.java
 # Ensure translations are available for new timezones
 Source18: TestTranslations.java
 
-# Temurin JDK 17 bootstrap binary
-%ifarch aarch64
-Source20: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-%{bootstrap_jdk_version}+%{bootstrap_jdk_build}/OpenJDK17U-jdk_aarch64_linux_hotspot_%{bootstrap_jdk_version}_%{bootstrap_jdk_build}.tar.gz
-%else
-Source20: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-%{bootstrap_jdk_version}+%{bootstrap_jdk_build}/OpenJDK17U-jdk_x64_linux_hotspot_%{bootstrap_jdk_version}_%{bootstrap_jdk_build}.tar.gz
-%endif
-
 ############################################
 #
 # RPM/distribution specific patches
@@ -785,6 +796,7 @@ BuildRequires: zip
 BuildRequires: tar
 BuildRequires: unzip
 BuildRequires: javapackages-filesystem
+BuildRequires: %{bootjdkpkg}
 # Zero-assembler build requirement
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
@@ -1009,10 +1021,18 @@ echo "Build JDK version is %{buildjdkver}, feature JDK version is %{featurever}"
 
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
 
-# Extract Temurin bootstrap JDK. OpenJDK 17 requires JDK 16 or 17 to build.
-mkdir -p %{bootjdk}
-tar -xzf %{SOURCE20} --strip-components=1 -C %{bootjdk}
-%{bootjdk}/bin/java -version
+%if %{use_portable_bootjdk}
+  # Extract build JDK
+  pushd %{_jvmdir}
+  sha256sum --check %{bootjdkzip}.sha256sum
+  popd
+  tar -xJf %{bootjdkzip}
+  mv java-%{featurever}-openjdk-%{buildjdkver}* %{bootjdk}
+  echo "Installed boot JDK:"
+  cat %{bootjdk}/release
+%else
+  %{bootjdk}/bin/java -version
+%endif
 # https://bugzilla.redhat.com/show_bug.cgi?id=1189084
 prioritylength=`expr length %{priority}`
 if [ $prioritylength -ne 8 ] ; then
