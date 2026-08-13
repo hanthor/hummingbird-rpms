@@ -20667,7 +20667,7 @@ metadata:
     pipelinesascode.tekton.dev/on-path-change: "[rpms/nodejs20-lts/***]"
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/application: private-nodejs20-rpms-main
     appstudio.openshift.io/component: nodejs20-lts-main
     pipelines.appstudio.openshift.io/type: build
   name: nodejs20-lts-main-on-pull-request
