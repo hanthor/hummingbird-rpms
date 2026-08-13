@@ -1,0 +1,70 @@
+fetch:
+  - type: spec-update
+    set-version: false
+    reset-release: "0.1"
+    substitutions:
+      - pattern: "^%global interimver\\s+.*"
+        replacement: "%global interimver %(echo ${VERSION} | cut -d. -f2)"
+      - pattern: "^%global updatever\\s+.*"
+        replacement: "%global updatever ${VERSION_PATCH}"
+      - pattern: "^%global patchver\\s+.*"
+        replacement: "%global patchver %(echo ${VERSION} | cut -d. -f4)"
+      - pattern: "^%global buildver\\s+.*"
+        replacement: "%global buildver %(echo ${VERSION} | cut -d. -f5)"
+
+transform:
+  - type: run
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        archive="tapsets-icedtea-6.0.0pre00-c848b93a8598.tar.xz"
+        expected_sha512="97d026212363b3c83f6a04100ad7f6fdde833d16579717f8756e2b8c2eb70e144a41a330cb9ccde9c3badd37a2d54fdf4650a950ec21d8b686d545ecb2a64d30"
+        test -f "${PACKAGE_DIR}/${archive}"
+        cp "${PACKAGE_DIR}/${archive}" "${archive}"
+        printf '%s  %s\n' "${expected_sha512}" "${archive}" |
+          sha512sum --check --strict -
+    outputs:
+      - tapsets-icedtea-6.0.0pre00-c848b93a8598.tar.xz
+
+  - type: run
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        tmpdir="$(mktemp -d)"
+        trap 'rm -rf "${tmpdir}"' EXIT
+
+        openjdk_version="$(printf '%s\n' "${VERSION}" | awk -F. '{print $1 "." $2 "." $3 "+" $5}')"
+        archive="openjdk-${openjdk_version}.tar.xz"
+        curl --fail --location --retry 3 \
+          --output "${tmpdir}/${archive}" \
+          "https://openjdk-sources.osci.io/openjdk17/${archive}"
+        tar -xJf "${tmpdir}/${archive}" -C "${tmpdir}"
+
+        source_root="$(find "${tmpdir}" -mindepth 1 -maxdepth 1 -type d -name 'jdk-*' -print -quit)"
+        if [ -z "${source_root}" ]; then
+          echo "OpenJDK source root not found" >&2
+          exit 1
+        fi
+
+        "${PACKAGE_DIR}/get_bundle_versions.sh" "${source_root}" |
+          sed -n '/^# Version in /,$p' > java-17-openjdk-bundled-provides.txt
+
+    outputs:
+      - java-17-openjdk-bundled-provides.txt
+
+post:
+  - type: run
+    artifacts:
+      - java-17-openjdk-bundled-provides.txt
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        UPDATE_SPEC_FILE="${SPEC_FILE}" \
+          "${PACKAGE_DIR}/update_bundled_provides.sh" java-17-openjdk-bundled-provides.txt
+        rm -f java-17-openjdk-bundled-provides.txt
