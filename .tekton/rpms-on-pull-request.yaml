@@ -22070,6 +22070,10 @@ spec:
       value: "rpms/nodejs20-lts"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
     - name: lookaside-cache-url
       value: "https://dp9y1t38f72i0.cloudfront.net/"
   pipelineRef:
