@@ -130,7 +130,9 @@ management, agent execution, and inference routing via gRPC.
 tar xf %{SOURCE1}
 %cargo_prep -v vendor
 
-# Patch workspace version from placeholder to actual build identity.
+# Upstream Cargo.toml uses "0.0.0" as a version-agnostic workspace placeholder;
+# actual versioning is applied at release time via git tags and gorget. Patch it
+# here so RPM-installed crate metadata reflects the real package version.
 sed -i 's/^version = "0.0.0"/version = "%{openshell_cargo_version}"/' Cargo.toml
 grep -q 'version = "%{openshell_cargo_version}"' Cargo.toml || (echo "ERROR: Cargo.toml version patch failed" && exit 1)
 
@@ -195,7 +197,7 @@ ExecStartPre=/bin/sh -c 'test -f %%E/openshell/gateway.toml || install -Dm644 /u
 # The default local TLS dir uses %%h because %%S resolves differently across
 # systemd user-manager versions. gateway.env may override this path.
 Environment=OPENSHELL_LOCAL_TLS_DIR=%%h/.local/state/openshell/tls
-ExecStartPre=/bin/sh -c 'test -d "${OPENSHELL_LOCAL_TLS_DIR}" || /usr/bin/openshell-gateway generate-certs --output-dir "${OPENSHELL_LOCAL_TLS_DIR}" --server-san host.openshell.internal'
+ExecStartPre=/bin/sh -c 'test -f "${OPENSHELL_LOCAL_TLS_DIR}/ca.crt" || /usr/bin/openshell-gateway generate-certs --output-dir "${OPENSHELL_LOCAL_TLS_DIR}" --server-san host.openshell.internal'
 
 # gateway.env is honored for backward compatibility with pre-1415 installs.
 # New installs use runtime defaults; create gateway.toml to override.
