@@ -88,10 +88,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "98c94712ffab294efebd25ccabfd0b124d593406c702469719ab77ccf7aceddc416043b9c28674f1fa3c19868b718134382bea0c599960a1be90a30a3ae47b5a",
+      "computed_hash": "7af4590c2705fe8762d841a3260fc3c59ac083c724dbe70d052708f56c0125b4d4e506790dba8c263377daacb462072c31b84fd05d672048094f2d5dd32124b8",
       "package": "apt",
-      "recorded_hash": "98c94712ffab294efebd25ccabfd0b124d593406c702469719ab77ccf7aceddc416043b9c28674f1fa3c19868b718134382bea0c599960a1be90a30a3ae47b5a",
-      "source0": "https://salsa.debian.org/apt-team/apt/-/archive/3.3.2/apt-3.3.2.tar.gz"
+      "recorded_hash": "7af4590c2705fe8762d841a3260fc3c59ac083c724dbe70d052708f56c0125b4d4e506790dba8c263377daacb462072c31b84fd05d672048094f2d5dd32124b8",
+      "source0": "https://salsa.debian.org/apt-team/apt/-/archive/3.3.3/apt-3.3.3.tar.gz"
     },
     {
       "category": "trivial",
@@ -112,10 +112,9 @@
       "source0": "https://github.com/authselect/authselect/archive/1.7.1/authselect-1.7.1.tar.gz"
     },
     {
-      "category": "trivial",
-      "computed_hash": "be051d542f9bd93752eccbdc9b1f3cf1fa4069a153ef34edd5303bfdf162e24d56e33e70df1b978cebb8d1139a82417bb8299cfe6c38cff8613040a829cc624f",
+      "category": "error",
+      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
       "package": "autoconf",
-      "recorded_hash": "be051d542f9bd93752eccbdc9b1f3cf1fa4069a153ef34edd5303bfdf162e24d56e33e70df1b978cebb8d1139a82417bb8299cfe6c38cff8613040a829cc624f",
       "source0": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.73.tar.xz"
     },
     {
@@ -158,9 +157,10 @@
       "source0": "https://downloads.isc.org/isc/bind9/9.20.26/bind-9.20.26.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: <urlopen error [Errno 101] Network is unreachable>",
+      "category": "trivial",
+      "computed_hash": "c47c0382a77133391556a9ac48586cd3ed101bfeea81e500a97e69b4056dd515351078ae78d026a1c1906648770bf828628dc39fd4cd86f84f1c9ec273d87280",
       "package": "binutils",
+      "recorded_hash": "c47c0382a77133391556a9ac48586cd3ed101bfeea81e500a97e69b4056dd515351078ae78d026a1c1906648770bf828628dc39fd4cd86f84f1c9ec273d87280",
       "source0": "https://ftp.gnu.org/gnu/binutils/binutils-with-gold-2.46.1.tar.xz"
     },
     {
@@ -315,10 +315,24 @@
     },
     {
       "category": "trivial",
+      "computed_hash": "52513fc25b0db0b7c9c99aa63f6be4c495add350b9269fad67136f728d3399dbb54c5fa526d52c158c67956ded8980f1cc3624fc531a152b16c09caa3399be3b",
+      "package": "conmon",
+      "recorded_hash": "52513fc25b0db0b7c9c99aa63f6be4c495add350b9269fad67136f728d3399dbb54c5fa526d52c158c67956ded8980f1cc3624fc531a152b16c09caa3399be3b",
+      "source0": "https://github.com/containers/conmon/archive/v2.2.1.tar.gz"
+    },
+    {
+      "category": "trivial",
       "computed_hash": "faf2abfc20c5a0db6525caa3743894bd15f75a5cc7e95d03166e6fdd0079e506a0a6d27633d8867337a63b812206aaef97ab50a9511d3849066a75b5eb86ca4b",
       "package": "container-selinux",
       "recorded_hash": "faf2abfc20c5a0db6525caa3743894bd15f75a5cc7e95d03166e6fdd0079e506a0a6d27633d8867337a63b812206aaef97ab50a9511d3849066a75b5eb86ca4b",
       "source0": "https://github.com/containers/container-selinux/archive/v2.250.0.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "5811fb14786f1f9d9e40741ce337449ce329e14e04213bc660102eb470150f24026e59caec480572e37d0e3e6e6518737f3cc7ac462c47034d0737283ec532f9",
+      "package": "containernetworking-plugins",
+      "recorded_hash": "5811fb14786f1f9d9e40741ce337449ce329e14e04213bc660102eb470150f24026e59caec480572e37d0e3e6e6518737f3cc7ac462c47034d0737283ec532f9",
+      "source0": "https://github.com/containernetworking/plugins/archive/v1.9.1/plugins-1.9.1.tar.gz"
     },
     {
       "category": "trivial",
@@ -354,6 +368,13 @@
       "package": "createrepo_c",
       "recorded_hash": "3acd54e5848ad3995d8b140b9d338fb8588c46d163e029b7203e49b3ff1a9984b55d403c3a5c590be23ebb5c5c74de369883eb51bba6fb51e8b247f9f10ab383",
       "source0": "https://github.com/rpm-software-management/createrepo_c/archive/1.2.1/createrepo_c-1.2.1.tar.gz"
+    },
+    {
+      "category": "trivial",
+      "computed_hash": "9a2ee5c53169e166f415bcd7713b03e0ce8ec007a6ec6409aa72a1339881efa0155338c1147dcf39fbce100888f3217cb6bab51f45d5a2656f7eef34dc4d1eef",
+      "package": "crun",
+      "recorded_hash": "9a2ee5c53169e166f415bcd7713b03e0ce8ec007a6ec6409aa72a1339881efa0155338c1147dcf39fbce100888f3217cb6bab51f45d5a2656f7eef34dc4d1eef",
+      "source0": "https://github.com/containers/crun/releases/download/1.28/crun-1.28.tar.zst"
     },
     {
       "category": "trivial",
@@ -466,17 +487,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "cd830669c4dfd3f3bbf2da67c618f58846032b164eb6194c4306cf56ac02d1cea536908ca12264737f3fdbcc948d84fdadb0208729698c81a0667fc11101ff6f",
+      "computed_hash": "ce1eb3cdc1d5a2b8588a71e6d9b6edd41bfb6ac18ae8937325b34b931c7c3ca8485ab6322c919ea4bf000d5a96e686bb9abfd4092fa7d9518bdb8234be06d0ab",
       "package": "dotnet10.0",
-      "recorded_hash": "cd830669c4dfd3f3bbf2da67c618f58846032b164eb6194c4306cf56ac02d1cea536908ca12264737f3fdbcc948d84fdadb0208729698c81a0667fc11101ff6f",
-      "source0": "https://github.com/dotnet/dotnet/archive/refs/tags/v10.0.110.tar.gz#/dotnet-10.0.110.tar.gz"
+      "recorded_hash": "ce1eb3cdc1d5a2b8588a71e6d9b6edd41bfb6ac18ae8937325b34b931c7c3ca8485ab6322c919ea4bf000d5a96e686bb9abfd4092fa7d9518bdb8234be06d0ab",
+      "source0": "https://github.com/dotnet/dotnet/archive/refs/tags/v10.0.111.tar.gz#/dotnet-10.0.111.tar.gz"
     },
     {
       "category": "trivial",
-      "computed_hash": "4b81d3f9d6d3ce54254dd70bd92e877cce5e044e2a0b362f5b893b5fa21e42141cf5809a03b1c7e4c91486820ebf749b4fbc0c738e4bc37315d7581f152261dc",
+      "computed_hash": "c74abad0cde93fdf51364509f92b10c9f18b5f3cfba78ee3e6065f61ae0176d519024864cb08f631b4650975a06b754132c76b36308538bc0e6eac0a84a2b8e0",
       "package": "dotnet8.0",
-      "recorded_hash": "4b81d3f9d6d3ce54254dd70bd92e877cce5e044e2a0b362f5b893b5fa21e42141cf5809a03b1c7e4c91486820ebf749b4fbc0c738e4bc37315d7581f152261dc",
-      "source0": "https://github.com/dotnet/dotnet/archive/refs/tags/v8.0.129.tar.gz#/dotnet-8.0.129.tar.gz"
+      "recorded_hash": "c74abad0cde93fdf51364509f92b10c9f18b5f3cfba78ee3e6065f61ae0176d519024864cb08f631b4650975a06b754132c76b36308538bc0e6eac0a84a2b8e0",
+      "source0": "https://github.com/dotnet/dotnet/archive/refs/tags/v8.0.130.tar.gz#/dotnet-8.0.130.tar.gz"
     },
     {
       "category": "trivial",
@@ -576,10 +597,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "378fe8b8319d1654dae09e2ce15e0dcff68e735eb9e28728b7bee7f60c81781025c3fccd6b620589529a6e63d94d0812474dc4c09721e5a3ea64dbc1efb623dd",
+      "computed_hash": "7ccf7e9a30cfcba1fc977695447e7fcbbf70b3e659098b9db7d4e317a1ce401362668c0b03ae0fea0e1305d38d540019529940fabd1e581dc90ca79233c14d0b",
       "package": "expat",
-      "recorded_hash": "378fe8b8319d1654dae09e2ce15e0dcff68e735eb9e28728b7bee7f60c81781025c3fccd6b620589529a6e63d94d0812474dc4c09721e5a3ea64dbc1efb623dd",
-      "source0": "https://github.com/libexpat/libexpat/releases/download/R_2_8_2/expat-2.8.2.tar.gz"
+      "recorded_hash": "7ccf7e9a30cfcba1fc977695447e7fcbbf70b3e659098b9db7d4e317a1ce401362668c0b03ae0fea0e1305d38d540019529940fabd1e581dc90ca79233c14d0b",
+      "source0": "https://github.com/libexpat/libexpat/releases/download/R_2_8_3/expat-2.8.3.tar.gz"
     },
     {
       "category": "trivial",
@@ -790,15 +811,17 @@
       "source0": "https://ftp.gnu.org/gnu/gnulib/gnulib-l10n-20241231.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "4638016b390a0024fa0cbe14181c43a81991e4275043855397ef099b927985d175d32452fc15b06485623b9292662dd6da464b2e5def8b77b2e4e48a072ab521",
       "package": "gnupg2",
+      "recorded_hash": "4638016b390a0024fa0cbe14181c43a81991e4275043855397ef099b927985d175d32452fc15b06485623b9292662dd6da464b2e5def8b77b2e4e48a072ab521",
       "source0": "https://gnupg.org/ftp/gcrypt/gnupg/gnupg-2.4.9.tar.bz2"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "71bf189a836fd18d58b9e995d4bfcecdb0aae6129dfd44247b98422b2f127dd868f9905d28fad2ca05afd919a0e6b3c8eebb6b95804067d3a8dab31ebdc72453",
       "package": "gnutls",
+      "recorded_hash": "71bf189a836fd18d58b9e995d4bfcecdb0aae6129dfd44247b98422b2f127dd868f9905d28fad2ca05afd919a0e6b3c8eebb6b95804067d3a8dab31ebdc72453",
       "source0": "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.13.tar.xz"
     },
     {
@@ -859,9 +882,10 @@
       "source0": "https://github.com/gperftools/gperftools/releases/download/gperftools-2.18.1/gperftools-2.18.1.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "ad19169594b6048b11df9311080e179232ff03def08f377e7d7536a3a91e12f722cbae93e80364b73db013152b327bc3457ec9a9ddea9c660d74f389f6ab8837",
       "package": "gpgme",
+      "recorded_hash": "ad19169594b6048b11df9311080e179232ff03def08f377e7d7536a3a91e12f722cbae93e80364b73db013152b327bc3457ec9a9ddea9c660d74f389f6ab8837",
       "source0": "https://gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.1.tar.bz2"
     },
     {
@@ -914,10 +938,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "ec65064fae210a0d67e7a48cd3d075919e8e6891adff85a2ae8cf2dbe6b422c6764e236f3251c9f7ea37b4231469e54118bdc8c5be7a6e0aa17b58bd5b427d75",
+      "computed_hash": "3a01b658c3578a9ab07be4948310c58bffee646b4ce826f7aae78cc647362f50ac5f4f102817aa82cf715ef58bd804274f7520e93ba77258901e686503580eed",
       "package": "harfbuzz",
-      "recorded_hash": "ec65064fae210a0d67e7a48cd3d075919e8e6891adff85a2ae8cf2dbe6b422c6764e236f3251c9f7ea37b4231469e54118bdc8c5be7a6e0aa17b58bd5b427d75",
-      "source0": "https://github.com/harfbuzz/harfbuzz/releases/download/14.3.0/harfbuzz-14.3.0.tar.xz"
+      "recorded_hash": "3a01b658c3578a9ab07be4948310c58bffee646b4ce826f7aae78cc647362f50ac5f4f102817aa82cf715ef58bd804274f7520e93ba77258901e686503580eed",
+      "source0": "https://github.com/harfbuzz/harfbuzz/releases/download/14.3.1/harfbuzz-14.3.1.tar.xz"
     },
     {
       "category": "trivial",
@@ -1089,7 +1113,7 @@
       "category": "no_upstream_url",
       "needs_pipeline": true,
       "package": "kernel-headers",
-      "source0": "kernel-headers-7.1.tar.xz"
+      "source0": "kernel-headers-7.2.tar.xz"
     },
     {
       "category": "no_upstream_url",
@@ -1217,9 +1241,10 @@
       "source0": "https://libarchive.org/downloads/libarchive-3.8.8.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "ca33bd0325bbebccb63b6a84cc0aa5c85b25c6275a68df83aeb3f3729b2cd38220198a941c3479bd461f16b7ddb6b558c0664697ca3153c7fb430544303d773f",
       "package": "libassuan",
+      "recorded_hash": "ca33bd0325bbebccb63b6a84cc0aa5c85b25c6275a68df83aeb3f3729b2cd38220198a941c3479bd461f16b7ddb6b558c0664697ca3153c7fb430544303d773f",
       "source0": "https://gnupg.org/ftp/gcrypt/libassuan/libassuan-2.5.7.tar.bz2"
     },
     {
@@ -1324,9 +1349,10 @@
       "source0": "https://www.x.org/pub/individual/lib/libfontenc-1.1.8.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "dc1a4a6c00a0d84d90c8d71f4bd121b968c80df74137d6e8867f1f4cc014a539efb5238c1a1429d7cb95e493a40718fc19252edc592ffe0f43057b372896591c",
       "package": "libgcrypt",
+      "recorded_hash": "dc1a4a6c00a0d84d90c8d71f4bd121b968c80df74137d6e8867f1f4cc014a539efb5238c1a1429d7cb95e493a40718fc19252edc592ffe0f43057b372896591c",
       "source0": "https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.12.2.tar.bz2"
     },
     {
@@ -1337,9 +1363,10 @@
       "source0": "https://github.com/libgit2/libgit2/archive/refs/tags/v1.9.4.tar.gz#/libgit2-1.9.4.tar.gz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "3e59eb52d061709fd8dfe56a4b36d2d5b49dd5e0c90c283899669d6a355286cb3a3f851631f8456c78c48b652bb31a4c1f8b081ccdf87e5db64b313d141a7670",
       "package": "libgpg-error",
+      "recorded_hash": "3e59eb52d061709fd8dfe56a4b36d2d5b49dd5e0c90c283899669d6a355286cb3a3f851631f8456c78c48b652bb31a4c1f8b081ccdf87e5db64b313d141a7670",
       "source0": "https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.61.tar.bz2"
     },
     {
@@ -1371,9 +1398,10 @@
       "source0": "https://www.chronox.de/libkcapi/releases/1.5.0/libkcapi-1.5.0.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "d0cfb14131c12e3dbce4b9e5e6026a44570c8f5412099f95180b77a944d4705a2f897cda94764e04ffd9c0aad3772b5e40c81b8e032ff58fbc82e5ad6e2978e9",
       "package": "libksba",
+      "recorded_hash": "d0cfb14131c12e3dbce4b9e5e6026a44570c8f5412099f95180b77a944d4705a2f897cda94764e04ffd9c0aad3772b5e40c81b8e032ff58fbc82e5ad6e2978e9",
       "source0": "https://www.gnupg.org/ftp/gcrypt/libksba/libksba-1.8.0.tar.bz2"
     },
     {
@@ -1709,9 +1737,10 @@
       "source0": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/llvm-project-21.1.8.src.tar.xz"
     },
     {
-      "category": "error",
-      "error": "download failed: The read operation timed out",
+      "category": "trivial",
+      "computed_hash": "e1ac2696e9d1d216e049144c36def0ae1218bb9f434428081f26b8a2310ee6a9dfc354ee7e1932fcacaabf15d6bb8193a05e806c59dc52d974e206c1299c1fc1",
       "package": "lmdb",
+      "recorded_hash": "e1ac2696e9d1d216e049144c36def0ae1218bb9f434428081f26b8a2310ee6a9dfc354ee7e1932fcacaabf15d6bb8193a05e806c59dc52d974e206c1299c1fc1",
       "source0": "https://git.openldap.org/openldap/openldap/-/archive/LMDB_0.9.34/openldap-LMDB_0.9.34.tar.gz"
     },
     {
@@ -1827,10 +1856,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "b6e1fecb3502dfdae6ab7859531cf3db9ce4e2b205cbef3493feb38a44c91bd5ad5d062ab10e8127867a673dd66ef4cd28c4fbdc19fc305010d042fd16dbcfb3",
+      "computed_hash": "544ded6f311f22f2a499d82903a45f7dc81f1e86b7bfa0a2effe12b5cbcc8cf8f707d566dd47f4f151cab5ceff84822a4cd16cf1ea55dc9a05667f0ea9094f11",
       "package": "meson",
-      "recorded_hash": "b6e1fecb3502dfdae6ab7859531cf3db9ce4e2b205cbef3493feb38a44c91bd5ad5d062ab10e8127867a673dd66ef4cd28c4fbdc19fc305010d042fd16dbcfb3",
-      "source0": "https://github.com/mesonbuild/meson/archive/1.11.2/meson-1.11.2.tar.gz"
+      "recorded_hash": "544ded6f311f22f2a499d82903a45f7dc81f1e86b7bfa0a2effe12b5cbcc8cf8f707d566dd47f4f151cab5ceff84822a4cd16cf1ea55dc9a05667f0ea9094f11",
+      "source0": "https://github.com/mesonbuild/meson/archive/1.12.0/meson-1.12.0.tar.gz"
     },
     {
       "category": "trivial",
@@ -1940,9 +1969,10 @@
       "package": "nodejs26"
     },
     {
-      "category": "error",
-      "error": "download failed: HTTP Error 403: Forbidden",
+      "category": "trivial",
+      "computed_hash": "34fdeea3d8a7a594d8fdbcc6d5d389b5c8e282e8e84c1491b1e51960c0fa007df6a1d62543f0107f0772f3215557d4b25c2a9c7067cb0ae2f8de7b4d63d09fb4",
       "package": "npth",
+      "recorded_hash": "34fdeea3d8a7a594d8fdbcc6d5d389b5c8e282e8e84c1491b1e51960c0fa007df6a1d62543f0107f0772f3215557d4b25c2a9c7067cb0ae2f8de7b4d63d09fb4",
       "source0": "https://gnupg.org/ftp/gcrypt/npth/npth-1.8.tar.bz2"
     },
     {
@@ -2460,17 +2490,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "1a7ea39efe5d42acd5f4edda50c418515b6c9032d92cd38c55181106ca5808b17f66ffe673f97002698c93cfb555a47ee450f9e471cb245c5ca44bc742a6a081",
+      "computed_hash": "caf6acf22d21856d95899cf6f2b7bd2ad8018e6d32d59fe28b3010edb1faf259124fee4a163f8d0a9e5307e12b98287266e040ff6cfc0b1f60e65b96e10458b2",
       "package": "postgresql17",
-      "recorded_hash": "1a7ea39efe5d42acd5f4edda50c418515b6c9032d92cd38c55181106ca5808b17f66ffe673f97002698c93cfb555a47ee450f9e471cb245c5ca44bc742a6a081",
-      "source0": "https://ftp.postgresql.org/pub/source/v17.10/postgresql-17.10.tar.bz2"
+      "recorded_hash": "caf6acf22d21856d95899cf6f2b7bd2ad8018e6d32d59fe28b3010edb1faf259124fee4a163f8d0a9e5307e12b98287266e040ff6cfc0b1f60e65b96e10458b2",
+      "source0": "https://ftp.postgresql.org/pub/source/v17.11/postgresql-17.11.tar.bz2"
     },
     {
       "category": "trivial",
-      "computed_hash": "1a7606b5b2460a4fc817d491e1e03262df17ece6869fa3d2b80647baffcfb790fbcfa019c3b10fab9f9a14218651b6a358864e40a5d8c5ddc796db2d6e5b469c",
+      "computed_hash": "5855d11be61a594e4dcdfa4ab4de1432caa86a8d50e1b1334ea2989439b46139612c53d00ba6330cba4d7d8b78a9e2176e1a2b6c5454814b5fa49dd54de72eb1",
       "package": "postgresql18",
-      "recorded_hash": "1a7606b5b2460a4fc817d491e1e03262df17ece6869fa3d2b80647baffcfb790fbcfa019c3b10fab9f9a14218651b6a358864e40a5d8c5ddc796db2d6e5b469c",
-      "source0": "https://ftp.postgresql.org/pub/source/v18.4/postgresql-18.4.tar.bz2"
+      "recorded_hash": "5855d11be61a594e4dcdfa4ab4de1432caa86a8d50e1b1334ea2989439b46139612c53d00ba6330cba4d7d8b78a9e2176e1a2b6c5454814b5fa49dd54de72eb1",
+      "source0": "https://ftp.postgresql.org/pub/source/v18.6/postgresql-18.6.tar.bz2"
     },
     {
       "category": "trivial",
@@ -2514,10 +2544,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "b3f98a1d2b7ad85606dc38a85449b89660049384b4914b0c66465f0bceafa5b26316223bf41dd2929cd36091e871d2226d06d0d84c969835bc199632c882b484",
+      "computed_hash": "6e7a05575b3089e231cfe65664d2ed8c03306983873ed3f75c16fa08950b6b1ecced04d17b8f343665b58d5ba677b48de6f36ff65b1af7f188cdfa38cbef902b",
       "package": "pyOpenSSL",
-      "recorded_hash": "b3f98a1d2b7ad85606dc38a85449b89660049384b4914b0c66465f0bceafa5b26316223bf41dd2929cd36091e871d2226d06d0d84c969835bc199632c882b484",
-      "source0": "https://files.pythonhosted.org/packages/source/p/pyopenssl/pyopenssl-26.3.0.tar.gz"
+      "recorded_hash": "6e7a05575b3089e231cfe65664d2ed8c03306983873ed3f75c16fa08950b6b1ecced04d17b8f343665b58d5ba677b48de6f36ff65b1af7f188cdfa38cbef902b",
+      "source0": "https://files.pythonhosted.org/packages/source/p/pyopenssl/pyopenssl-26.4.0.tar.gz"
     },
     {
       "category": "trivial",
@@ -2555,10 +2585,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "a71b74e642e11eb50e9bb4ae0e7116bdb3c4a7c9622a3766d84506fa7994c02e09644b41b439b95ca99b0303e91891897cff38018d498eb087e0961f0ad4fb8b",
+      "computed_hash": "86af9771c4f8f0bfb129e63cb263dbaf2f32bb755e056fa04bc4cdd32eee4392634a866dd930263e6eeb011f81ee2bd90f9e6602adf016c80e124bdbfbb62c38",
       "package": "python-cffi",
-      "recorded_hash": "a71b74e642e11eb50e9bb4ae0e7116bdb3c4a7c9622a3766d84506fa7994c02e09644b41b439b95ca99b0303e91891897cff38018d498eb087e0961f0ad4fb8b",
-      "source0": "https://github.com/python-cffi/cffi/archive/v2.0.0/cffi-2.0.0.tar.gz"
+      "recorded_hash": "86af9771c4f8f0bfb129e63cb263dbaf2f32bb755e056fa04bc4cdd32eee4392634a866dd930263e6eeb011f81ee2bd90f9e6602adf016c80e124bdbfbb62c38",
+      "source0": "https://github.com/python-cffi/cffi/archive/v2.1.1/cffi-2.1.1.tar.gz"
     },
     {
       "category": "trivial",
@@ -2569,10 +2599,10 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "6a4435e90b981dfe1cc90479846041f800d618b8a673351ae55e308eeb7c152959ee56cb7a7188a7b46ae3228577192c651bc9801796f62fed55e7f8c3258f33",
+      "computed_hash": "b5aac296f5f1d36747c47e82d7678840dc9ad30c185872dc7113d02799e50e28135d7863e6d0c25065b071b2e96d45a61b4ea07d824c5acf54b8734468e6f733",
       "package": "python-cryptography",
-      "recorded_hash": "6a4435e90b981dfe1cc90479846041f800d618b8a673351ae55e308eeb7c152959ee56cb7a7188a7b46ae3228577192c651bc9801796f62fed55e7f8c3258f33",
-      "source0": "https://github.com/pyca/cryptography/archive/49.0.0/cryptography-49.0.0.tar.gz"
+      "recorded_hash": "b5aac296f5f1d36747c47e82d7678840dc9ad30c185872dc7113d02799e50e28135d7863e6d0c25065b071b2e96d45a61b4ea07d824c5acf54b8734468e6f733",
+      "source0": "https://github.com/pyca/cryptography/archive/50.0.0/cryptography-50.0.0.tar.gz"
     },
     {
       "category": "trivial",
@@ -2806,17 +2836,17 @@
     },
     {
       "category": "trivial",
-      "computed_hash": "0790da65f8ce88a13b06d3b287ace5a1f36b0a8f630a3af00fbbdf93b6ef0944dea05173a20c9e1336d280ef9a97ae2b95a44a4b487a7bbb71fda53b6331c0eb",
+      "computed_hash": "b0ab766a3de0b4cfdbf0b93300d7330c734d3f7057577bb03e95e39da4cdade81993e769c7fa6dfdcc13b9d43a3b399d9cd89b5477b413662e9e691c1b7886b8",
       "package": "python3.13",
-      "recorded_hash": "0790da65f8ce88a13b06d3b287ace5a1f36b0a8f630a3af00fbbdf93b6ef0944dea05173a20c9e1336d280ef9a97ae2b95a44a4b487a7bbb71fda53b6331c0eb",
-      "source0": "https://www.python.org/ftp/python/3.13.14/Python-3.13.14.tar.xz"
+      "recorded_hash": "b0ab766a3de0b4cfdbf0b93300d7330c734d3f7057577bb03e95e39da4cdade81993e769c7fa6dfdcc13b9d43a3b399d9cd89b5477b413662e9e691c1b7886b8",
+      "source0": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz"
     },
     {
       "category": "trivial",
-      "computed_hash": "90a82f46c28f0fca613b67358fdc57c145ab05d20fb56bf3bc0c9e4e54947c7d30fbaa6856c41a41909237a9e601d1a7d19579d4b25c7a784ebcfe9012defc41",
+      "computed_hash": "3d4e2e2f983b320dec47005c408d7178d3656a6de0c4430ce21514797174b972f461200898b25d3dfac2a455019ef87e45d0fb2bb6ec2ca887124d10037a2a07",
       "package": "python3.14",
-      "recorded_hash": "90a82f46c28f0fca613b67358fdc57c145ab05d20fb56bf3bc0c9e4e54947c7d30fbaa6856c41a41909237a9e601d1a7d19579d4b25c7a784ebcfe9012defc41",
-      "source0": "https://www.python.org/ftp/python/3.14.6/Python-3.14.6.tar.xz"
+      "recorded_hash": "3d4e2e2f983b320dec47005c408d7178d3656a6de0c4430ce21514797174b972f461200898b25d3dfac2a455019ef87e45d0fb2bb6ec2ca887124d10037a2a07",
+      "source0": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz"
     },
     {
       "category": "no_upstream_url",
@@ -3192,7 +3222,7 @@
     },
     {
       "category": "error",
-      "error": "spec parsing failed: /tmp/tmple8i4__l: line 120: No patch number 0",
+      "error": "spec parsing failed: /tmp/tmp338od46j: line 120: No patch number 0",
       "package": "ucx"
     },
     {
@@ -3349,11 +3379,11 @@
   ],
   "summary": {
     "already_migrated": 34,
-    "error": 31,
+    "error": 22,
     "no_upstream_url": 33,
     "no_upstream_url_needs_pipeline": 6,
     "no_upstream_url_no_work_needed": 27,
     "transformed": 1,
-    "trivial": 403
+    "trivial": 415
   }
 }
