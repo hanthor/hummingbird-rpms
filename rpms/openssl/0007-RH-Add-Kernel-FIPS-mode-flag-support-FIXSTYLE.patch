@@ -1,7 +1,7 @@
-From 5aa108caf01f482d35aba7acae6b5a8fa1577410 Mon Sep 17 00:00:00 2001
+From caed2aca9c327a84716ab769f2060e8d74c407f4 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 08/57] RH: Add Kernel FIPS mode flag support - FIXSTYLE
+Subject: [PATCH 07/16] RH: Add Kernel FIPS mode flag support - FIXSTYLE
 
 Patch-name: 0009-Add-Kernel-FIPS-mode-flag-support.patch
 Patch-id: 9
@@ -9,23 +9,15 @@ Patch-status: |
     # # Add check to see if fips flag is enabled in kernel
 From-dist-git-commit: 4334bc837fbc64d14890fdc51679a80770d498ce
 ---
- crypto/context.c            | 35 +++++++++++++++++++++++++++++++++++
+ crypto/context.c            | 34 ++++++++++++++++++++++++++++++++++
  include/internal/provider.h |  5 ++++-
- 2 files changed, 39 insertions(+), 1 deletion(-)
+ 2 files changed, 38 insertions(+), 1 deletion(-)
 
 diff --git a/crypto/context.c b/crypto/context.c
-index 1ae88e42aa..62e60f3620 100644
+index 3596c0e068..22b5d72455 100644
 --- a/crypto/context.c
 +++ b/crypto/context.c
-@@ -7,6 +7,7 @@
-  * https://www.openssl.org/source/license.html
-  */
- 
-+#define _GNU_SOURCE /* needed for secure_getenv */
- #include "crypto/cryptlib.h"
- #include <openssl/conf.h>
- #include <openssl/trace.h>
-@@ -19,6 +20,38 @@
+@@ -20,6 +20,38 @@
  #include "crypto/decoder.h"
  #include "crypto/context.h"
  
@@ -64,15 +56,15 @@ index 1ae88e42aa..62e60f3620 100644
  struct ossl_lib_ctx_st {
      CRYPTO_RWLOCK *lock;
      OSSL_EX_DATA_GLOBAL global;
-@@ -391,6 +424,8 @@ static int default_context_inited = 0;
+@@ -412,6 +444,8 @@ static int default_context_inited = 0;
  
- DEFINE_RUN_ONCE_STATIC(default_context_do_init)
+ DEFINE_RUN_ONCE_STATIC(default_context_do_thread_key_init)
  {
 +    read_kernel_fips_flag();
 +
      if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
-         goto err;
- 
+         return 0;
+     return 1;
 diff --git a/include/internal/provider.h b/include/internal/provider.h
 index 1b4050a81f..eb7f409af0 100644
 --- a/include/internal/provider.h
@@ -90,5 +82,5 @@ index 1b4050a81f..eb7f409af0 100644
  #endif
  
 -- 
-2.52.0
+2.54.0
 
