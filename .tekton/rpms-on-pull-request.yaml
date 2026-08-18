@@ -23608,6 +23608,23 @@ spec:
         value: pipeline
       - name: bundle
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:bf43eccaf6669073b4ef441555c004a7ae263a1ec027530decdba2f3714f23ae"
+  taskRunSpecs:
+    - pipelineTaskName: rpmbuild-x86-64
+      stepSpecs:
+        - name: run-syft
+          computeResources:
+            requests:
+              memory: 10Gi
+            limits:
+              memory: 10Gi
+    - pipelineTaskName: rpmbuild-aarch64
+      stepSpecs:
+        - name: run-syft
+          computeResources:
+            requests:
+              memory: 10Gi
+            limits:
+              memory: 10Gi
   taskRunTemplate:
     serviceAccountName: build-pipeline-openshell-main
   timeouts:
