@@ -282,6 +282,10 @@ loki3.7:
 memcached:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+nodejs20-lts:
+  private_product: nodejs20
+  lookaside_cache_url: *private_lookaside_cache_url
+
 nats-server2.12:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
