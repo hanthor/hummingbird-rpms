@@ -14,9 +14,15 @@
 #
 # So this pipeline does a real (if temporary) meson build with docs
 # enabled purely to produce those generated files, copies them into
-# doc/, then repacks the whole tree as the final archive -- PDF output is
-# skipped (docbook2pdf fails in a minimal environment and %files never
-# references any .pdf anyway).
+# doc/, then repacks the whole tree as the final archive. Real PDF
+# generation is skipped -- docbook2pdf can't resolve meson's
+# generated .sgml includes (confdir.sgml, version.sgml, etc.) through its
+# own jade search path in this environment, a toolchain quirk unrelated
+# to fontconfig itself -- but %install's `for f in doc/*.txt doc/*.pdf
+# doc/*.html` loop has no nullglob guard, so it still needs *some* file
+# matching doc/*.pdf to exist or the literal unexpanded pattern breaks
+# the install command. %files never references the .pdf output, so a
+# placeholder is safe.
 fetch:
   - type: git
     repo: "${UPSTREAM_REPO}"
@@ -42,6 +48,10 @@ transform:
           cp build/doc/*.1 build/doc/*.3 build/doc/*.5 doc/
           cp build/doc/fontconfig-user.txt build/doc/fontconfig-user.html doc/
           cp build/doc/fontconfig-devel.txt build/doc/fontconfig-devel.html doc/
+          # Placeholder only -- see comment above. Not packaged (%files
+          # never references *.pdf).
+          : > doc/fontconfig-user.pdf
+          : > doc/fontconfig-devel.pdf
           rm -rf build
           # meson wrap-fetches full subproject checkouts (freetype2, libpng,
           # libxml2, zlib) plus a download cache purely to configure this
@@ -65,7 +75,7 @@ transform:
 
 accepted-checksums:
   - file: "fontconfig-2.17.1.tar.xz"
-    checksum: "e29172fa4e14d755130cdf85cb3651371444afa8c6cb2daa05989d8a0e76347bbf1fb4b59c83f8d6cacd31f35967308951b6320e26424bf764e1df7f7a8f1f1d"
+    checksum: "e0f2d355dfcca53a5f946446ed4e81aff1dec131be4626b8a621264a4f483791cba5a477410580950065e89fd78b654f171885043fb5f04feb9d3c544105e4d7"
     reason: >-
       One-time transition: 2.17.1 was never published as an official dist
       tarball (freedesktop.org's release mirror stops at 2.16.0), so the
