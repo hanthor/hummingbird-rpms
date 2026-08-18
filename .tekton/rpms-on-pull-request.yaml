@@ -23595,8 +23595,10 @@ spec:
       value: "rpms/openshell"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
-    - name: lookaside-cache-url
-      value: "https://dp9y1t38f72i0.cloudfront.net/"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -23615,9 +23617,6 @@ spec:
     - name: git-auth
       secret:
         secretName: '{{git_auth_secret}}'
-    - name: cloudfront-signing-key
-      secret:
-        secretName: cloudfront-signing-key
 # --- openssh ---
 ---
 apiVersion: tekton.dev/v1
