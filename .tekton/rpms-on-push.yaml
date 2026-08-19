@@ -22632,6 +22632,14 @@ spec:
               memory: 10Gi
             limits:
               memory: 10Gi
+    - pipelineTaskName: show-sbom
+      stepSpecs:
+        - name: show-sbom
+          computeResources:
+            requests:
+              memory: 1Gi
+            limits:
+              memory: 1Gi
   taskRunTemplate:
     serviceAccountName: build-pipeline-openshell-main
   timeouts:
