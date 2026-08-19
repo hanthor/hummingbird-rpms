@@ -1,0 +1,23 @@
+fetch:
+  - type: spec-update
+    set-version: "${VERSION}"
+    reset-release: "1"
+  - type: git
+    repo: "https://gitlab.com/redhat/hummingbird/src/nodejs-lts.git"
+    ref: "v${VERSION}"
+    shallow: true
+    archive_name: "node-v${VERSION}.tar.gz"
+  - type: spec-source
+    index: 1
+  - type: spec-source
+    index: 2
+
+transform:
+  - type: strip-tarball
+    target: "node-v${VERSION}.tar.gz"
+    paths:
+      - "*/deps/openssl/*"
+  - type: run
+    command: ["mv", "node-v${VERSION}.tar.gz", "node-v${VERSION}-stripped.tar.gz"]
+    outputs:
+      - "node-v${VERSION}-stripped.tar.gz"
