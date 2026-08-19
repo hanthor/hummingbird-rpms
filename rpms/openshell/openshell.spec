@@ -265,7 +265,14 @@ skip="${skip-} --skip compute::lease::tests::concurrent_steal_exactly_one_wins"
 skip="${skip-} --skip proxy::tests::test_forward_public_ip_allowed_without_allowed_ips"
 skip="${skip-} --skip proxy::tests::test_resolve_check_allowed_ips_rejects_outside_allowlist"
 skip="${skip-} --skip runtime::tests::gvproxy_socket_base_is_per_sandbox_overlay_path"
+# aarch64: fork()-based socket-identity tests inherit open descriptors across
+# concurrent test threads, enlarging the inode-reuse race window. Serialize to
+# avoid false policy_denied failures. x86-64 passes by scheduling luck.
+%ifarch aarch64
+%cargo_test -- -- ${skip-} --test-threads=1
+%else
 %cargo_test -- -- ${skip-}
+%endif
 
 # Smoke-test the CLI binary
 %{buildroot}%{_bindir}/%{name} --version
