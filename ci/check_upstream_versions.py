@@ -67,6 +67,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -159,6 +160,7 @@ class VersionCheckResult:
     updated: bool = False
     update_error: Optional[str] = None
     downloaded_sources: Optional[list[str]] = None
+    version_source: Optional[str] = None
 
 
 def compare_versions(current: str, upstream: str) -> int:
@@ -1171,6 +1173,146 @@ def query_anitya_by_project_id(project_id: int) -> dict:
     }
 
 
+_PRERELEASE_RE = re.compile(r"(?<![a-zA-Z])(alpha|beta|rc\d*|nightly|dev|pre)(?![a-zA-Z])", re.IGNORECASE)
+
+
+def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
+    """Parse a GitLab upstream_repo URL into (api_base, encoded_project_path)."""
+    parsed = urllib.parse.urlparse(upstream_repo.rstrip("/"))
+    api_base = f"{parsed.scheme}://{parsed.netloc}/api/v4"
+    project_path = urllib.parse.quote(parsed.path.lstrip("/"), safe="")
+    return api_base, project_path
+
+
+# Which GitLab token env var to use for a given upstream_repo, keyed by URL
+# prefix (first match wins, checked longest-prefix-first isn't needed since
+# entries are expected to be disjoint subgroups). Repos matching no prefix
+# fall back to DEFAULT_GITLAB_TOKEN_ENV. A single group-scoped token can
+# cover every project nested under a subgroup (e.g. hummingbird/src holds
+# multiple private LTS mirrors), so a new mirror added under an
+# already-mapped prefix needs no code change here.
+GITLAB_TOKEN_ENV_BY_REPO_PREFIX: dict[str, str] = {
+    "https://gitlab.com/redhat/hummingbird/src/": "HUMMINGBIRD_SRC_GITLAB_TOKEN",
+}
+DEFAULT_GITLAB_TOKEN_ENV = "CHORE_MR_GITLAB_TOKEN"
+
+
+def _gitlab_token_env_var(upstream_repo: str) -> str:
+    """Return the env var name holding the GitLab token for upstream_repo."""
+    for prefix, env_var in GITLAB_TOKEN_ENV_BY_REPO_PREFIX.items():
+        if upstream_repo.startswith(prefix):
+            return env_var
+    return DEFAULT_GITLAB_TOKEN_ENV
+
+
+def query_gitlab_tags(
+    upstream_repo: str,
+    tag_strip_prefix: str = "v",
+    track_version: Optional[str] = None,
+) -> dict:
+    """Query GitLab tags API for version information.
+
+    Returns a dict with 'stable_versions' and 'version' fields,
+    matching the format returned by query_anitya_by_project_id().
+
+    Auth: the token env var is chosen via GITLAB_TOKEN_ENV_BY_REPO_PREFIX
+    and must have read_api scope (not just read_repository) since this
+    calls the REST API, not git-over-HTTP.
+    """
+    api_base, project_path = _parse_gitlab_upstream_url(upstream_repo)
+    token_env = _gitlab_token_env_var(upstream_repo)
+    token = os.environ.get(token_env)
+    headers: dict[str, str] = {
+        "User-Agent": "hummingbird-rpms-version-checker/1.0",
+    }
+    if token:
+        headers["PRIVATE-TOKEN"] = token
+
+    search_param = ""
+    if track_version:
+        search_prefix = f"{tag_strip_prefix}{track_version}"
+        search_param = f"&search={urllib.parse.quote(search_prefix)}"
+
+    all_tags: list[dict] = []
+    page = 1
+    max_pages = 5
+    while page <= max_pages:
+        url = (
+            f"{api_base}/projects/{project_path}/repository/tags"
+            f"?per_page=100&page={page}&order_by=version&sort=desc"
+            f"{search_param}"
+        )
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=30) as response:
+                tags = json.loads(response.read().decode("utf-8"))
+                if not tags:
+                    break
+                all_tags.extend(tags)
+                next_page = response.headers.get("x-next-page")
+                if not next_page:
+                    break
+                try:
+                    page = int(next_page)
+                except ValueError:
+                    logging.warning(
+                        "Non-numeric x-next-page header %r from GitLab, "
+                        "stopping pagination",
+                        next_page,
+                    )
+                    break
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                if not token:
+                    raise ValueError(
+                        f"GitLab returned 404 for {upstream_repo}. "
+                        f"If this is a private repo, set "
+                        f"{token_env} with read_api scope."
+                    )
+                raise ValueError(
+                    f"GitLab returned 404 for {upstream_repo}. "
+                    f"Verify the URL is correct and that "
+                    f"{token_env} has read_api scope."
+                )
+            if e.code in (401, 403):
+                raise ValueError(
+                    f"GitLab authentication failed for {upstream_repo} "
+                    f"(HTTP {e.code}). Set {token_env}."
+                )
+            raise
+        except urllib.error.URLError as e:
+            raise ConnectionError(
+                f"Failed to connect to GitLab: {e}"
+            )
+        time.sleep(API_DELAY)
+
+    if page > max_pages:
+        logging.warning(
+            "GitLab tags pagination reached %d-page cap (%d tags fetched). "
+            "Older tags may be missing — if track_upstream targets an older "
+            "major version, results could be incomplete.",
+            max_pages, len(all_tags),
+        )
+
+    versions: list[str] = []
+    for tag in all_tags:
+        name = tag["name"]
+        if tag_strip_prefix and name.startswith(tag_strip_prefix):
+            version = name[len(tag_strip_prefix):]
+        else:
+            version = name
+        if not version or not version[0].isdigit():
+            continue
+        if _PRERELEASE_RE.search(version):
+            continue
+        versions.append(version)
+
+    return {
+        "version": versions[0] if versions else None,
+        "stable_versions": versions,
+    }
+
+
 def _matches_track_version(version: str, track_version: str) -> bool:
     """Check if a version matches a track_version prefix.
 
@@ -1267,13 +1409,15 @@ def check_package_version(
             error="Could not determine current version",
         )
 
-    # Use metadata for Anitya lookup if available
+    # Use metadata for Anitya/GitLab lookup if available
     meta = get_package_metadata(package)
     track_version = None
     project_id = None
     version_suffix_strip = None
     version_transform = None
     source_checker = None
+    version_source = None
+    tag_strip_prefix = "v"
     if meta:
         track_upstream = meta.get("track_upstream")
         if track_upstream and track_upstream != "latest":
@@ -1282,10 +1426,22 @@ def check_package_version(
         version_suffix_strip = meta.get("version_suffix_strip")
         version_transform = meta.get("upstream_version_transform")
         source_checker = meta.get("source_availability_check")
+        version_source = meta.get("version_source")
+        tag_strip_prefix = meta.get("tag_strip_prefix", "v")
 
-    # Query release-monitoring.org
+    # Query upstream version source
     try:
-        if isinstance(project_id, int):
+        if version_source == "gitlab_tags":
+            upstream_repo = meta.get("upstream_repo") if meta else None
+            if not upstream_repo:
+                raise ValueError(
+                    f"{package}: version_source is 'gitlab_tags' but "
+                    f"upstream_repo is not set in metadata"
+                )
+            anitya_data = query_gitlab_tags(
+                upstream_repo, tag_strip_prefix, track_version
+            )
+        elif isinstance(project_id, int):
             anitya_data = query_anitya_by_project_id(project_id)
         else:
             lookup_name = project_id if isinstance(project_id, str) else package
@@ -1387,8 +1543,12 @@ def check_package_version(
             current_version=current_version,
             upstream_version=None,
             has_update=False,
-            error="No upstream version reported by Anitya",
+            error=(
+                "No upstream version reported by "
+                + ("GitLab tags" if version_source == "gitlab_tags" else "Anitya")
+            ),
             anitya_project_id=anitya_data.get("id"),
+            version_source=version_source,
         )
 
     # Compare versions
@@ -1401,6 +1561,7 @@ def check_package_version(
         upstream_version=upstream_version,
         has_update=has_update,
         anitya_project_id=anitya_data.get("id"),
+        version_source=version_source,
     )
 
 
@@ -1594,11 +1755,15 @@ def run_check(args: argparse.Namespace) -> None:
                     f"metadata/{result.package}.json",
                     cwd=ROOT_DIR,
                 )
+                source_label = (
+                    "GitLab tags API" if result.version_source == "gitlab_tags"
+                    else "release-monitoring.org"
+                )
                 commit_msg = (
                     f"Update {result.package} to"
                     f" {result.upstream_version}\n\n"
                     f"Upstream version detected via"
-                    f" release-monitoring.org"
+                    f" {source_label}"
                 )
                 run_git_commit("-m", commit_msg, cwd=ROOT_DIR)
             except (
