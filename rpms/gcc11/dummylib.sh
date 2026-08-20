@@ -24,17 +24,24 @@ case "$F" in
 esac
 cp $3 $TMPDIR/lib.map
 ( readelf -Ws $1; echo @@@@@@END@@@@@@; readelf -Ws $4 ) | sed 's/ \[[^]]*\] //g' | awk '
+BEGIN {
+  mapfile="'$TMPDIR/lib.map'"
+  while ((getline line < mapfile) > 0)
+    if (match(line, /^[[:space:]]*([A-Za-z_][A-Za-z0-9_.]*)[[:space:]]*\{/, match_data))
+      versions[match_data[1]]=1
+  close(mapfile)
+}
 /@@@@@@END@@@@@@/ { start=0; new=1 }
 /\.dynsym.* contains/ { start=1 }
 /^$/ { start=0 }
 /  UND / { next }
 /@/ { if (start) {
-  fn=$8
+  fn=gensub(/@@/,"@",1,$8)
   if (new)
     {
-      if (seen[fn])
+      if (seen[fn] || emitted[fn])
 	next
-      fn=gensub(/@@/,"@",1,fn)
+      emitted[fn]=1
       ver=gensub(/^.*@/,"",1,fn)
       sym=gensub(/@.*$/,"",1,fn)
       syms[ver]=syms[ver] "    " sym ";\n"
@@ -59,9 +66,9 @@ cp $3 $TMPDIR/lib.map
   if ($5 ~ /UNIQUE/) print ".type \"" fn "\",@gnu_unique_object"
 } }
 END {
-  mapfile="'$TMPDIR/lib.map'"
   for (ver in syms) {
-    printf "%s {\n%s};\n", ver, syms[ver] >> mapfile
+    if (!versions[ver])
+      printf "%s {\n%s};\n", ver, syms[ver] >> mapfile
   }
 }
 ' > $TMPDIR/lib.s || exit
