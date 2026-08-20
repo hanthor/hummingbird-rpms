@@ -12046,8 +12046,6 @@ spec:
       value: "mock/mock.cfg"
     - name: dist-git-client-configdir
       value: "mock/"
-    - name: forked-from
-      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
