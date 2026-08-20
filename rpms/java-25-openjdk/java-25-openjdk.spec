@@ -1287,7 +1287,7 @@ Provides: java-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 
 %global portable_name %{name}-portable
 # the version must match, but sometmes we need to more precise, so including release
-%global portable_version %{version}-1
+%global portable_version %{version}-0.1
 
 
 # Use 'icedtea_sync.sh' to update the following
