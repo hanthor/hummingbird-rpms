@@ -12572,8 +12572,6 @@ spec:
       value: "rpms/java-25-openjdk-portable"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
-    - name: dist-git-client-configdir
-      value: "mock/"
   pipelineRef:
     resolver: bundles
     params:
