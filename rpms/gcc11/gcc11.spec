@@ -428,41 +428,41 @@ ln -sf /%{_lib}/libgcc_s.so.1 gcc/libgcc.so.1
 
 mv -f %{buildroot}%{_prefix}/%{_lib}/libgomp.spec $FULLPATH/
 
-sh %{SOURCE1} %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so.6.* $FULLPATH/libstdc++.so \
+sh %{SOURCE1} %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so.6 $FULLPATH/libstdc++.so \
   %{gcc_target_platform}/libstdc++-v3/src/libstdc++-symbols.ver %{_prefix}/%{_lib}/libstdc++.so.6
 rm -f %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so
 cp -a $FULLPATH/libstdc++.so %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so
-ln -sf %{_prefix}/%{_lib}/libstdc++.so.6 %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so.6.*
-sh %{SOURCE1} %{gcc_target_platform}/libgfortran/.libs/libgfortran.so.5.* $FULLPATH/libgfortran.so \
+ln -sf %{_prefix}/%{_lib}/libstdc++.so.6 %{gcc_target_platform}/libstdc++-v3/src/.libs/libstdc++.so.6
+sh %{SOURCE1} %{gcc_target_platform}/libgfortran/.libs/libgfortran.so.5 $FULLPATH/libgfortran.so \
   %{gcc_target_platform}/libgfortran/gfortran.ver %{_prefix}/%{_lib}/libgfortran.so.5
 rm -f %{gcc_target_platform}/libgfortran/.libs/libgfortran.so
 cp -a $FULLPATH/libgfortran.so %{gcc_target_platform}/libgfortran/.libs/libgfortran.so
-ln -sf %{_prefix}/%{_lib}/libgfortran.so.5 %{gcc_target_platform}/libgfortran/.libs/libgfortran.so.5.*
-sh %{SOURCE1} %{gcc_target_platform}/libgomp/.libs/libgomp.so.1.* $FULLPATH/libgomp.so \
+ln -sf %{_prefix}/%{_lib}/libgfortran.so.5 %{gcc_target_platform}/libgfortran/.libs/libgfortran.so.5
+sh %{SOURCE1} %{gcc_target_platform}/libgomp/.libs/libgomp.so.1 $FULLPATH/libgomp.so \
   %{gcc_target_platform}/libgomp/libgomp.ver %{_prefix}/%{_lib}/libgomp.so.1
 rm -f %{gcc_target_platform}/libgomp/.libs/libgomp.so
 cp -a $FULLPATH/libgomp.so %{gcc_target_platform}/libgomp/.libs/libgomp.so
-ln -sf %{_prefix}/%{_lib}/libgomp.so.1 %{gcc_target_platform}/libgomp/.libs/libgomp.so.1.*
+ln -sf %{_prefix}/%{_lib}/libgomp.so.1 %{gcc_target_platform}/libgomp/.libs/libgomp.so.1
 %if %{build_libquadmath}
-sh %{SOURCE1} %{gcc_target_platform}/libquadmath/.libs/libquadmath.so.0.* $FULLPATH/libquadmath.so \
+sh %{SOURCE1} %{gcc_target_platform}/libquadmath/.libs/libquadmath.so.0 $FULLPATH/libquadmath.so \
   ../libquadmath/quadmath.map %{_prefix}/%{_lib}/libquadmath.so.0
 rm -f %{gcc_target_platform}/libquadmath/.libs/libquadmath.so
 cp -a $FULLPATH/libquadmath.so %{gcc_target_platform}/libquadmath/.libs/libquadmath.so
-ln -sf %{_prefix}/%{_lib}/libquadmath.so.0 %{gcc_target_platform}/libquadmath/.libs/libquadmath.so.0.*
+ln -sf %{_prefix}/%{_lib}/libquadmath.so.0 %{gcc_target_platform}/libquadmath/.libs/libquadmath.so.0
 %endif
 %if %{build_libitm}
-sh %{SOURCE1} %{gcc_target_platform}/libitm/.libs/libitm.so.1.* $FULLPATH/libitm.so \
+sh %{SOURCE1} %{gcc_target_platform}/libitm/.libs/libitm.so.1 $FULLPATH/libitm.so \
   ../libitm/libitm.map %{_prefix}/%{_lib}/libitm.so.1
 rm -f %{gcc_target_platform}/libitm/.libs/libitm.so
 cp -a $FULLPATH/libitm.so %{gcc_target_platform}/libitm/.libs/libitm.so
-ln -sf %{_prefix}/%{_lib}/libitm.so.1 %{gcc_target_platform}/libitm/.libs/libitm.so.1.*
+ln -sf %{_prefix}/%{_lib}/libitm.so.1 %{gcc_target_platform}/libitm/.libs/libitm.so.1
 %endif
 %if %{build_libatomic}
-sh %{SOURCE1} %{gcc_target_platform}/libatomic/.libs/libatomic.so.1.* $FULLPATH/libatomic.so \
+sh %{SOURCE1} %{gcc_target_platform}/libatomic/.libs/libatomic.so.1 $FULLPATH/libatomic.so \
   ../libatomic/libatomic.map %{_prefix}/%{_lib}/libatomic.so.1
 rm -f %{gcc_target_platform}/libatomic/.libs/libatomic.so
 cp -a $FULLPATH/libatomic.so %{gcc_target_platform}/libatomic/.libs/libatomic.so
-ln -sf %{_prefix}/%{_lib}/libatomic.so.1 %{gcc_target_platform}/libatomic/.libs/libatomic.so.1.*
+ln -sf %{_prefix}/%{_lib}/libatomic.so.1 %{gcc_target_platform}/libatomic/.libs/libatomic.so.1
 %endif
 
 pushd $FULLPATH
