@@ -1,0 +1,61 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 2GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - python3.14
+          - python3.14-libs
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - python3.14
+            - python3.14-libs
+      - uses: rpm/assert-file
+        with:
+          package: python3.14
+          path: /usr/bin/python3.14
+          executable: true
+      - runs:
+          - /usr/bin/python3.14
+          - -c
+          - "import sys; assert sys.version_info[:2] == (3, 14)"
+  - name: standard-library-and-bytecode
+    environment:
+      contents:
+        packages:
+          - python3.14
+    fixtures:
+      - from: test_runtime.py
+        to: /workspace/test_runtime.py
+      - from: invalid.py
+        to: /workspace/invalid.py
+    pipeline:
+      - runs:
+          - /usr/bin/python3.14
+          - -I
+          - /workspace/test_runtime.py
+        expect:
+          stdout: "rpmtest Python works: 42\n"
+      - runs:
+          - /usr/bin/python3.14
+          - -m
+          - py_compile
+          - /workspace/test_runtime.py
+      - runs:
+          - /usr/bin/python3.14
+          - -m
+          - py_compile
+          - /workspace/invalid.py
+        expect:
+          exit-code: 1
+          stderr-contains: "SyntaxError"

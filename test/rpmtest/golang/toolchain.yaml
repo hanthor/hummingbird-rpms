@@ -1,0 +1,130 @@
+parameters:
+  package: string
+  version: string
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - "${{ parameters.package }}"
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - "${{ parameters.package }}"
+            - "${{ parameters.package }}-bin"
+            - "${{ parameters.package }}-src"
+      - uses: rpm/assert-file
+        with:
+          package: "${{ parameters.package }}-bin"
+          path: /usr/lib/golang/bin/go
+          executable: true
+      - uses: rpm/assert-metadata
+        with:
+          package: "${{ parameters.package }}"
+          query: requires
+          contains: "${{ parameters.package }}-bin"
+      - runs:
+          - /usr/bin/go
+          - env
+          - GOVERSION
+        expect:
+          stdout-contains: "${{ parameters.version }}"
+      - runs:
+          - /usr/bin/go
+          - env
+          - GOFIPS140
+        expect:
+          stdout: "certified\n"
+      - runs:
+          - /usr/bin/go
+          - env
+          - GOROOT
+        expect:
+          stdout: "/usr/lib/golang\n"
+      - runs:
+          - /usr/bin/go
+          - env
+          - GOOS
+        expect:
+          stdout: "linux\n"
+  - name: pure-and-module-builds
+    environment:
+      contents:
+        packages:
+          - "${{ parameters.package }}"
+    fixtures:
+      - from: fixtures/hello.go
+        to: /workspace/pure/hello.go
+      - from: fixtures/module
+        to: /workspace/module
+    pipeline:
+      - runs:
+          - /usr/bin/gofmt
+          - -d
+          - /workspace/pure/hello.go
+          - /workspace/module/calc.go
+          - /workspace/module/calc_test.go
+        expect:
+          stdout: ""
+      - runs:
+          - /usr/bin/go
+          - build
+          - -trimpath
+          - -o
+          - /workspace/hello
+          - /workspace/pure/hello.go
+        environment:
+          CGO_ENABLED: "0"
+          GOPROXY: "off"
+          GOSUMDB: "off"
+      - runs:
+          - /workspace/hello
+        expect:
+          stdout: "rpmtest Go toolchain works\n"
+      - runs:
+          - /usr/bin/go
+          - -C
+          - /workspace/module
+          - test
+          - -count=1
+          - ./...
+        environment:
+          GOPROXY: "off"
+          GOSUMDB: "off"
+        expect:
+          stdout-contains: "ok"
+      - runs:
+          - /usr/bin/go
+          - -C
+          - /workspace/module
+          - vet
+          - ./...
+        environment:
+          GOPROXY: "off"
+          GOSUMDB: "off"
+  - name: cgo-build
+    environment:
+      contents:
+        packages:
+          - "${{ parameters.package }}"
+          - gcc
+    fixtures:
+      - from: fixtures/cgo.go
+        to: /workspace/cgo.go
+    pipeline:
+      - runs:
+          - /usr/bin/go
+          - build
+          - -trimpath
+          - -o
+          - /workspace/cgo
+          - /workspace/cgo.go
+        environment:
+          CGO_ENABLED: "1"
+          GOPROXY: "off"
+          GOSUMDB: "off"
+      - runs:
+          - /workspace/cgo
+        expect:
+          stdout: "rpmtest CGO works: 42\n"

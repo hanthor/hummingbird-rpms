@@ -1,0 +1,68 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 2GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - ruby4.0
+          - ruby4.0-libs
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - ruby4.0
+            - ruby4.0-libs
+      - uses: rpm/assert-metadata
+        with:
+          package: ruby4.0
+          query: provides
+          contains: ruby
+      - uses: rpm/assert-file
+        with:
+          package: ruby4.0
+          path: /usr/bin/ruby4.0-mri
+          executable: true
+      - runs:
+          - /usr/bin/ruby4.0-mri
+          - --version
+        expect:
+          stdout-contains: "ruby 4.0"
+  - name: language-and-standard-library
+    environment:
+      contents:
+        packages:
+          - ruby4.0
+          - rubygem4.0-json
+    fixtures:
+      - from: runtime.rb
+        to: /workspace/runtime.rb
+      - from: invalid.rb
+        to: /workspace/invalid.rb
+    pipeline:
+      - runs:
+          - /usr/bin/ruby4.0-mri
+          - --disable-gems
+          - /workspace/runtime.rb
+        expect:
+          stdout: "rpmtest Ruby works: 42\n"
+      - runs:
+          - /usr/bin/ruby4.0-mri
+          - -c
+          - /workspace/runtime.rb
+        expect:
+          stdout-contains: "Syntax OK"
+      - runs:
+          - /usr/bin/ruby4.0-mri
+          - -c
+          - /workspace/invalid.rb
+        expect:
+          exit-code: 1
+          stderr-contains: "syntax error"

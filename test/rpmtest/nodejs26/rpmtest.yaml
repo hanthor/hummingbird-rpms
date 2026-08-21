@@ -1,0 +1,70 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 2GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - nodejs26
+          - nodejs26-libs
+          - nodejs26-npm
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - nodejs26
+            - nodejs26-libs
+            - nodejs26-npm
+      - uses: rpm/assert-file
+        with:
+          package: nodejs26
+          path: /usr/bin/node-26
+          executable: true
+      - uses: rpm/assert-file
+        with:
+          package: nodejs26-npm
+          path: /usr/bin/npm-26
+          executable: true
+      - runs:
+          - /usr/bin/node-26
+          - --version
+        expect:
+          stdout-contains: "v26."
+      - runs:
+          - /usr/bin/npm-26
+          - --version
+  - name: javascript-and-security-policy
+    environment:
+      contents:
+        packages:
+          - nodejs26
+    fixtures:
+      - from: runtime.mjs
+        to: /workspace/runtime.mjs
+    pipeline:
+      - runs:
+          - /usr/bin/node-26
+          - /workspace/runtime.mjs
+        expect:
+          stdout: "rpmtest Node.js works: 42\n"
+      - runs:
+          - /usr/bin/node-26
+          - --check
+          - /workspace/runtime.mjs
+      - runs: |
+          if node-26 --enable-fips -e 'process.exit(0)'; then
+            echo '--enable-fips unexpectedly succeeded' >&2
+            exit 1
+          fi
+        shell: /bin/sh
+      - runs:
+          - /usr/bin/node-26
+          - -e
+          - "const c=require('crypto');try{c.setFips(c.getFips()?0:1);process.exit(1)}catch(e){if(e.code!=='ERR_CRYPTO_FIPS_SYSTEM_CONTROLLED')throw e}"

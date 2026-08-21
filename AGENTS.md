@@ -25,6 +25,7 @@ dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
+| `.cache/rpmtest test --spec test/rpmtest/<pkg>/rpmtest.yaml` | Test built or published RPMs in fresh environments |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -46,6 +47,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Backport a patch               | `mark-modified` then edit spec                                  | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
 | Configure metadata fields      | _(edit `metadata/<pkg>.json`)_                                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)                   | Understand `release` and `modification_status` configuration           |
 | Debug build failures           | _(see docs)_                                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Investigate and fix failed package builds                              |
+| Test RPMs with rpmtest         | `.cache/rpmtest test --spec test/rpmtest/<pkg>/rpmtest.yaml`    | [Testing RPMs with rpmtest](documentation/operating/testing-rpms-with-rpmtest.md)               | Run pilot tests in fresh, minimal environments                         |
 | Mark package modified          | `mark-modified <pkg> --modified --reason "..."`                 | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Track local changes; prevent automatic Fedora updates                  |
 | Set package basename           | `set-upstream <pkg> --track-version <prefix>`                   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Set basename/track_version for versioned packages                      |
 | Track upstream versions        | `set-upstream <pkg>`                                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Enable/disable upstream version checking for a package                 |

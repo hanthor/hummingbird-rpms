@@ -1,0 +1,80 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 2GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - rust
+          - cargo
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - rust
+            - cargo
+      - uses: rpm/assert-file
+        with:
+          package: rust
+          path: /usr/bin/rustc
+          executable: true
+      - uses: rpm/assert-file
+        with:
+          package: cargo
+          path: /usr/bin/cargo
+          executable: true
+      - runs:
+          - /usr/bin/rustc
+          - --version
+        expect:
+          stdout-contains: "rustc "
+  - name: compiler-and-cargo-offline
+    environment:
+      contents:
+        packages:
+          - rust
+          - cargo
+          - gcc
+    fixtures:
+      - from: project
+        to: /workspace/project
+      - from: invalid.rs
+        to: /workspace/invalid.rs
+    pipeline:
+      - runs:
+          - /usr/bin/cargo
+          - test
+          - --offline
+          - --locked
+          - --manifest-path
+          - /workspace/project/Cargo.toml
+        environment:
+          CARGO_HOME: /workspace/cargo-home
+        expect:
+          stdout-contains: "test result: ok"
+      - runs:
+          - /usr/bin/cargo
+          - run
+          - --quiet
+          - --offline
+          - --locked
+          - --manifest-path
+          - /workspace/project/Cargo.toml
+        environment:
+          CARGO_HOME: /workspace/cargo-home
+        expect:
+          stdout: "rpmtest Rust works: 42\n"
+      - runs:
+          - /usr/bin/rustc
+          - --edition=2024
+          - /workspace/invalid.rs
+        expect:
+          exit-code: 1
+          stderr-contains: "error"
