@@ -6,8 +6,8 @@ weight: 65
 
 `rpmtest` installs RPMs in fresh, minimal Podman environments and runs the
 checks declared in a YAML specification. The pilot specifications live under
-`test/rpmtest/` and cover `curl`, `gcc`, Go 1.26 and 1.27, Rust, Python 3.14,
-Node.js 26, Ruby 4.0, Java 25, and .NET 10.
+`test/rpmtest/` and cover GNU Hello, `curl`, `gcc`, Go 1.26 and 1.27, Rust,
+Python 3.14, Node.js 26, Ruby 4.0, Java 25, and .NET 10.
 
 ## Build rpmtest
 
@@ -43,8 +43,8 @@ Hummingbird repository.
 
 ```console
 .cache/rpmtest test \
-  --spec test/rpmtest/curl/rpmtest.yaml \
-  builds/curl/RPMS/*.rpm
+  --spec test/rpmtest/hello/rpmtest.yaml \
+  builds/hello/RPMS/hello-[0-9]*.rpm
 ```
 
 Omit the RPM arguments to test the package already published in the public
