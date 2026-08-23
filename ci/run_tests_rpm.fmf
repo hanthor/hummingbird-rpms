@@ -7,6 +7,30 @@ prepare:
     package: rpmlint
   - how: install
     package: podman
+  - how: install
+    package: slirp4netns
+  - how: shell
+    script: |
+      #!/bin/bash
+      set -euo pipefail
+
+      mkdir -p ~/.local/bin
+      rpmtest_src=$(mktemp -d)
+      trap 'rm -rf "${rpmtest_src}"' EXIT
+
+      git clone --depth 1 \
+        https://gitlab.com/redhat/hummingbird/experimental/rpmtest.git \
+        "${rpmtest_src}"
+      podman run --rm \
+        --volume "${rpmtest_src}:/workspace:ro,z" \
+        --volume "${HOME}/.local/bin:/output:z" \
+        --workdir /workspace \
+        --env CGO_ENABLED=0 \
+        quay.io/hummingbird/go:1.27 \
+        go build -buildvcs=false -o /output/rpmtest ./cmd/rpmtest
+
+      podman pull \
+        quay.io/hummingbird-rawhide/builder@sha256:766cf050ed9ef2afadc380cf066fca0f6ef25241bfe788de9c5181053cc01b72
   - how: shell
     script: |
       #!/bin/bash
@@ -120,6 +144,16 @@ discover:
           # Get source RPM path
           src_rpm_file=$(ls -1 "${srpms_dir}/"*.src.rpm)
 
-          # Run tests with --repo-dir pointing to binary RPMs directory
-          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}"
+          test_status=0
+          rpmtest_spec="test/rpmtest/${package_name}/rpmtest.yaml"
+          if [[ -f ${rpmtest_spec} ]]; then
+            rpmtest test \
+              --parallelism "$(nproc)" \
+              --spec "${rpmtest_spec}" \
+              "${rpm_files[@]}" || test_status=$?
+          fi
+
+          # Run the existing tests for every package, including packages with rpmtest coverage.
+          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}" || test_status=$?
+          exit "${test_status}"
         fi

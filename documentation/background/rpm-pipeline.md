@@ -265,8 +265,12 @@ CI][integrations-konflux] and is parameterized as follows:
 
 The root folder of the `rpms` repository is marked with a `.fmf` directory to
 identify it as an FMF metadata tree for tmt. The test plan in
-`ci/run_tests_rpm.fmf` sets up the test instance and runs default and
-package-specific tests via `ci/run_tests_rpm.sh`.
+`ci/run_tests_rpm.fmf` installs Podman, builds rpmtest from its public Git
+repository, and downloads the candidate RPMs from the Konflux artifact. It
+runs `test/rpmtest/<package>/rpmtest.yaml` when that specification exists.
+Every package also runs the default and package-specific tests in
+`ci/run_tests_rpm.sh`. A failure in either runner fails the Testing Farm job,
+but does not prevent the other runner from completing.
 
 #### Test environment
 

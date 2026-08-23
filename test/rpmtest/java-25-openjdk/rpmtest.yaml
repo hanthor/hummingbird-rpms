@@ -1,0 +1,86 @@
+schema-version: 1
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - java-25-openjdk-headless
+          - java-25-openjdk-devel
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - java-25-openjdk-headless
+            - java-25-openjdk-devel
+      - uses: rpm/assert-file
+        with:
+          package: java-25-openjdk-headless
+          path: /usr/bin/java
+          executable: true
+      - uses: rpm/assert-file
+        with:
+          package: java-25-openjdk-devel
+          path: /usr/bin/javac
+          executable: true
+      - uses: rpm/assert-metadata
+        with:
+          package: java-25-openjdk-headless
+          query: requires
+          not-contains: alsa-lib
+      - runs:
+          - /usr/bin/java
+          - -version
+        expect:
+          exit-code: 0
+          stderr-contains: "openjdk version \"25"
+      - runs:
+          - /usr/bin/javac
+          - -version
+        expect:
+          stdout-contains: "javac 25"
+  - name: compile-package-and-run
+    environment:
+      contents:
+        packages:
+          - java-25-openjdk-devel
+    fixtures:
+      - from: Main.java
+        to: /workspace/Main.java
+      - from: Invalid.java
+        to: /workspace/Invalid.java
+    pipeline:
+      - runs:
+          - /usr/bin/javac
+          - -Xlint:all
+          - -Werror
+          - -d
+          - /workspace/classes
+          - /workspace/Main.java
+      - runs:
+          - /usr/bin/jar
+          - --create
+          - --file
+          - /workspace/app.jar
+          - --main-class
+          - Main
+          - -C
+          - /workspace/classes
+          - .
+      - runs:
+          - /usr/bin/java
+          - -jar
+          - /workspace/app.jar
+        expect:
+          stdout: "rpmtest Java works: 42\n"
+      - runs:
+          - /usr/bin/javac
+          - -Xlint:all
+          - -Werror
+          - /workspace/Invalid.java
+        expect:
+          exit-code: 1
+          stderr-contains: "error:"

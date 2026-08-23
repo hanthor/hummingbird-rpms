@@ -1,0 +1,52 @@
+schema-version: 1
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - hello
+    pipeline:
+      - uses: rpm/verify
+        with:
+          package: hello
+      - uses: rpm/assert-file
+        with:
+          package: hello
+          path: /usr/bin/hello
+          type: regular
+          executable: true
+      - uses: rpm/assert-metadata
+        with:
+          package: hello
+          query: provides
+          contains: hello
+      - runs:
+          - /usr/bin/hello
+          - --version
+        environment:
+          LC_ALL: C
+        expect:
+          stdout-contains: hello
+  - name: greeting-behavior
+    environment:
+      contents:
+        packages:
+          - hello
+    pipeline:
+      - runs:
+          - /usr/bin/hello
+        environment:
+          LC_ALL: C
+        expect:
+          stdout: "Hello, world!\n"
+      - runs:
+          - /usr/bin/hello
+          - --greeting=rpmtest
+        environment:
+          LC_ALL: C
+        expect:
+          stdout: "rpmtest\n"

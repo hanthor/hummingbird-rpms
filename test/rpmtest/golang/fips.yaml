@@ -1,0 +1,35 @@
+parameters:
+  package: string
+  archive-sha256: string
+suites:
+  - name: certified-fips-contract
+    environment:
+      contents:
+        packages:
+          - "${{ parameters.package }}"
+    fixtures:
+      - from: fixtures/fips_approved.go
+        to: /workspace/approved.go
+      - from: fixtures/fips_nonapproved.go
+        to: /workspace/nonapproved.go
+    pipeline:
+      - runs: |
+          set -eu
+          go env GOFIPS140 | grep -Fx certified
+          archive=$(find "$(go env GOROOT)/lib/fips140" -maxdepth 1 -name 'v1.0.0-*.zip')
+          test "$(printf '%s\n' "$archive" | wc -l)" -eq 1
+          test "$(sha256sum "$archive" | cut -d' ' -f1)" = "${{ parameters.archive-sha256 }}"
+          cd /workspace
+          go mod init rpmtest/fips
+          GOFIPS140=certified go build -trimpath -o approved approved.go
+          GODEBUG=fips140=on ./approved
+          go build -trimpath -o nonapproved nonapproved.go
+          ./nonapproved
+          if GODEBUG=fips140=only ./nonapproved; then
+            echo 'non-approved MD5 unexpectedly succeeded in strict mode' >&2
+            exit 1
+          fi
+        shell: /bin/sh
+        environment:
+          GOPROXY: "off"
+          GOSUMDB: "off"
