@@ -1,0 +1,103 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 2GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - curl
+          - libcurl
+          - libcurl-devel
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - curl
+            - libcurl
+            - libcurl-devel
+      - uses: rpm/assert-file
+        with:
+          package: curl
+          path: /usr/bin/curl
+          executable: true
+      - uses: rpm/assert-file
+        with:
+          package: libcurl
+          path: /usr/lib64/libcurl.so.4
+      - uses: rpm/assert-file
+        with:
+          package: libcurl-devel
+          path: /usr/include/curl/curl.h
+          type: regular
+      - runs: |
+          set -eu
+          curl --version > /tmp/version
+          grep -Eq '^curl [0-9]+\.[0-9]+' /tmp/version
+          grep -Eq '^Protocols:.* file( |$)' /tmp/version
+          grep -Eq '^Protocols:.* http( |$)' /tmp/version
+          grep -Eq '^Protocols:.* https( |$)' /tmp/version
+          grep -Eq '^Features:.* SSL( |$)' /tmp/version
+        shell: /bin/sh
+  - name: offline-cli-transfers
+    environment:
+      contents:
+        packages:
+          - curl
+          - diffutils
+    fixtures:
+      - from: payload.txt
+        to: /workspace/fixtures/payload.txt
+    pipeline:
+      - runs: |
+          set -eu
+          curl --fail --silent --show-error file:///workspace/fixtures/payload.txt --output /tmp/copied
+          cmp /workspace/fixtures/payload.txt /tmp/copied
+        shell: /bin/sh
+      - runs:
+          - /usr/bin/curl
+          - --fail
+          - --silent
+          - file:///workspace/fixtures/missing
+        expect:
+          exit-code: 37
+      - runs:
+          - /usr/bin/curl
+          - --proto
+          - =https
+          - file:///workspace/fixtures/payload.txt
+        expect:
+          exit-code: 1
+  - name: libcurl-development-contract
+    environment:
+      contents:
+        packages:
+          - libcurl-devel
+          - gcc
+    fixtures:
+      - from: libcurl_probe.c
+        to: /workspace/libcurl_probe.c
+      - from: payload.txt
+        to: /workspace/fixtures/payload.txt
+    pipeline:
+      - runs:
+          - /usr/bin/gcc
+          - -std=c17
+          - -Wall
+          - -Wextra
+          - -Werror
+          - -o
+          - /workspace/libcurl_probe
+          - /workspace/libcurl_probe.c
+          - -lcurl
+      - runs:
+          - /workspace/libcurl_probe
+          - file:///workspace/fixtures/payload.txt
+        expect:
+          stdout: "rpmtest curl payload\n"

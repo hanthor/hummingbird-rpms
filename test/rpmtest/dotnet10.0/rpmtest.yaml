@@ -1,0 +1,77 @@
+schema-version: 1
+resources:
+  cpus: 2
+  memory: 3GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - dotnet-host
+          - dotnet-runtime-10.0
+          - dotnet-sdk-10.0
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - dotnet-host
+            - dotnet-runtime-10.0
+            - dotnet-sdk-10.0
+      - uses: rpm/assert-file
+        with:
+          package: dotnet-host
+          path: /usr/bin/dotnet
+          executable: true
+      - runs:
+          - /usr/bin/dotnet
+          - --list-runtimes
+        expect:
+          stdout-contains: "Microsoft.NETCore.App 10."
+      - runs:
+          - /usr/bin/dotnet
+          - --list-sdks
+        expect:
+          stdout-contains: "10."
+  - name: restore-build-and-run-offline
+    environment:
+      contents:
+        packages:
+          - dotnet-sdk-10.0
+    fixtures:
+      - from: project
+        to: /workspace/project
+    pipeline:
+      - runs:
+          - /usr/bin/dotnet
+          - restore
+          - --ignore-failed-sources
+          - /workspace/project/Rpmtest.csproj
+        environment:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+          DOTNET_CLI_HOME: /workspace
+      - runs:
+          - /usr/bin/dotnet
+          - build
+          - --no-restore
+          - --configuration
+          - Release
+          - /workspace/project/Rpmtest.csproj
+        environment:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+          DOTNET_CLI_HOME: /workspace
+      - runs:
+          - /usr/bin/dotnet
+          - /workspace/project/bin/Release/net10.0/Rpmtest.dll
+        environment:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+          DOTNET_CLI_HOME: /workspace
+        expect:
+          stdout: "rpmtest .NET works: 42\n"

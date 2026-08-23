@@ -1,0 +1,19 @@
+schema-version: 1
+include-root: ..
+resources:
+  cpus: 2
+  memory: 3GiB
+  pids: 1024
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+include:
+  - path: golang/toolchain.yaml
+    with:
+      package: golang1.26
+      version: go1.26
+  - path: golang/fips.yaml
+    with:
+      package: golang1.26
+      archive-sha256: daf3614e0406f67ae6323c902db3f953a1effb199142362a039e7526dfb9368b
