@@ -1,0 +1,15 @@
+schema-version: 1
+include-root: ..
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+include:
+  - path: golang/toolchain.yaml
+    with:
+      package: golang1.27
+      version: go1.27
+  - path: golang/fips.yaml
+    with:
+      package: golang1.27
+      archive-sha256: daf3614e0406f67ae6323c902db3f953a1effb199142362a039e7526dfb9368b

@@ -1,0 +1,111 @@
+schema-version: 1
+environment:
+  contents:
+    repositories:
+      - https://packages.redhat.com/api/pulp-content/public-hummingbird/
+suites:
+  - name: package-contract
+    environment:
+      contents:
+        packages:
+          - gcc
+          - cpp
+          - libgcc
+    pipeline:
+      - uses: rpm/verify
+        with:
+          packages:
+            - gcc
+            - cpp
+            - libgcc
+      - uses: rpm/assert-file
+        with:
+          package: gcc
+          path: /usr/bin/gcc
+          executable: true
+      - uses: rpm/assert-file
+        with:
+          package: cpp
+          path: /usr/bin/cpp
+          executable: true
+      - runs: |
+          set -eu
+          gcc --version | grep -Eq '^gcc .+ [0-9]+\.[0-9]+'
+          test "$(printf '' | gcc -dM -E - | grep -c '^#define __GNUC__ ')" -eq 1
+        shell: /bin/sh
+  - name: compile-link-and-diagnostics
+    environment:
+      contents:
+        packages:
+          - gcc
+    fixtures:
+      - from: hello.c
+        to: /workspace/hello.c
+      - from: invalid.c
+        to: /workspace/invalid.c
+    pipeline:
+      - runs:
+          - /usr/bin/gcc
+          - -std=c17
+          - -O2
+          - -Wall
+          - -Wextra
+          - -Werror
+          - -fstack-protector-strong
+          - -o
+          - /workspace/hello
+          - /workspace/hello.c
+      - runs:
+          - /workspace/hello
+        expect:
+          stdout: "rpmtest toolchain works\n"
+      - runs:
+          - /usr/bin/gcc
+          - -std=c17
+          - -Wall
+          - -Werror
+          - -c
+          - /workspace/invalid.c
+        expect:
+          exit-code: 1
+          stderr-contains: "error:"
+  - name: shared-library-and-openmp
+    environment:
+      contents:
+        packages:
+          - gcc
+          - libgomp
+    fixtures:
+      - from: answer.c
+        to: /workspace/answer.c
+      - from: shared_main.c
+        to: /workspace/shared_main.c
+      - from: openmp.c
+        to: /workspace/openmp.c
+    pipeline:
+      - runs: |
+          set -eu
+          gcc -std=c17 -Wall -Wextra -Werror -fPIC -shared -Wl,-soname,libanswer.so.1 -o /workspace/libanswer.so.1 /workspace/answer.c
+          ln -s libanswer.so.1 /workspace/libanswer.so
+          gcc -std=c17 -Wall -Wextra -Werror -L/workspace -Wl,-rpath,/workspace -o /workspace/shared_main /workspace/shared_main.c -lanswer
+          /workspace/shared_main
+        shell: /bin/sh
+        expect:
+          stdout: "42\n"
+      - runs:
+          - /usr/bin/gcc
+          - -std=c17
+          - -Wall
+          - -Wextra
+          - -Werror
+          - -fopenmp
+          - -o
+          - /workspace/openmp
+          - /workspace/openmp.c
+      - runs:
+          - /workspace/openmp
+        environment:
+          OMP_NUM_THREADS: "4"
+          OMP_DYNAMIC: "FALSE"
+        expect:
+          stdout: "499500\n"
