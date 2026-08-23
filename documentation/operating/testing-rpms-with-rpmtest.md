@@ -54,6 +54,12 @@ repository.
 .cache/rpmtest test --spec test/rpmtest/gcc/rpmtest.yaml
 ```
 
+On merge requests, Testing Farm builds rpmtest with
+`quay.io/hummingbird/go:1.27` and passes the candidate RPMs from the Konflux
+artifact to the matching package specification. Testing Farm also runs
+`ci/run_tests_rpm.sh` for every package. A failure in one runner does not stop
+the other runner, and a failure in either fails the job.
+
 Use `list` to inspect the concrete suites produced by parameterized fragments
 without resolving repositories or starting containers.
 
