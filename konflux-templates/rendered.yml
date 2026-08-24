@@ -20528,6 +20528,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- spatialindex ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: spatialindex-main
+spec:
+  application: rpms-main
+  componentName: spatialindex-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/spatialindex-main
+  source:
+    git:
+      context: rpms/spatialindex
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: spatialindex-main
+  name: spatialindex-main
+spec:
+  image:
+    name: hummingbird-tenant/spatialindex-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- spdlog ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
