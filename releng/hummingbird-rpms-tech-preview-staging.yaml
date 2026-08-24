@@ -330,6 +330,8 @@ spec:
           contentType: rpm
         - name: gdbm-main
           contentType: rpm
+        - name: geos-main
+          contentType: rpm
         - name: gettext-main
           contentType: rpm
         - name: ghc-srpm-macros-main

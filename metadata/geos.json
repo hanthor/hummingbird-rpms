@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "4",
+  "release_monitoring_project_id": 13493,
+  "sha": "caefa1744925f56a6af8360f7b269ba2040110e5",
+  "source": "https://src.fedoraproject.org/rpms/geos.git",
+  "version": "3.14.1"
+}
