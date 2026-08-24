@@ -514,6 +514,8 @@ spec:
           contentType: rpm
         - name: libcomps-main
           contentType: rpm
+        - name: libdap-main
+          contentType: rpm
         - name: libdeflate-main
           contentType: rpm
         - name: libdnf-main
