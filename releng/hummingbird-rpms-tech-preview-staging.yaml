@@ -104,6 +104,8 @@ spec:
           contentType: rpm
         - name: apt-main
           contentType: rpm
+        - name: armadillo-main
+          contentType: rpm
         - name: attr-main
           contentType: rpm
         - name: audit-main
