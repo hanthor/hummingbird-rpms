@@ -5,5 +5,6 @@
   "release_monitoring_project_id": 881,
   "sha": "1f1847db14124b48000dc3a0c231290c38a89984",
   "source": "https://src.fedoraproject.org/rpms/gdal.git",
+  "upstream_repo": "https://github.com/OSGeo/gdal",
   "version": "3.13.3"
 }
