@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "13",
+  "release_monitoring_project_id": 1723,
+  "sha": "b3c9b60cd965d589d238a1e87d88e1b52aca4af9",
+  "source": "https://src.fedoraproject.org/rpms/libspatialite.git",
+  "version": "5.1.0"
+}
