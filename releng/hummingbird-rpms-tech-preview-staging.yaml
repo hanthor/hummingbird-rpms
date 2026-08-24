@@ -484,6 +484,8 @@ spec:
           contentType: rpm
         - name: libxtst-main
           contentType: rpm
+        - name: libaec-main
+          contentType: rpm
         - name: libaio-main
           contentType: rpm
         - name: libarchive-main
