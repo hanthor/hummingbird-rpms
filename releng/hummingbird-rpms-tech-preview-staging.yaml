@@ -324,6 +324,8 @@ spec:
           contentType: rpm
         - name: gd-main
           contentType: rpm
+        - name: gdal-main
+          contentType: rpm
         - name: gdb-main
           contentType: rpm
         - name: gdbm-main
