@@ -1180,6 +1180,8 @@ spec:
           contentType: rpm
         - name: xcaddy-main
           contentType: rpm
+        - name: xerces-c-main
+          contentType: rpm
         - name: xkeyboard-config-main
           contentType: rpm
         - name: xmlsec1-main
