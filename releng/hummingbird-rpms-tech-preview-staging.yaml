@@ -254,6 +254,8 @@ spec:
           contentType: rpm
         - name: e2fsprogs-main
           contentType: rpm
+        - name: eccodes-main
+          contentType: rpm
         - name: ecj-main
           contentType: rpm
         - name: ed-main
