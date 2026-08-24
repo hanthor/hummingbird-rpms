@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "10",
+  "release_monitoring_project_id": 111,
+  "sha": "d322c01c014bebfbad99863073af814a599447f5",
+  "source": "https://src.fedoraproject.org/rpms/arpack.git",
+  "version": "3.9.1"
+}

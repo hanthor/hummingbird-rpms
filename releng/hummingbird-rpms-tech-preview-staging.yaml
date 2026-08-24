@@ -106,6 +106,8 @@ spec:
           contentType: rpm
         - name: armadillo-main
           contentType: rpm
+        - name: arpack-main
+          contentType: rpm
         - name: attr-main
           contentType: rpm
         - name: audit-main
