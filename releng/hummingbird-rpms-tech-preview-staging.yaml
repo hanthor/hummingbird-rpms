@@ -612,6 +612,8 @@ spec:
           contentType: rpm
         - name: libsolv-main
           contentType: rpm
+        - name: libspatialite-main
+          contentType: rpm
         - name: libssh-main
           contentType: rpm
         - name: libssh2-main
