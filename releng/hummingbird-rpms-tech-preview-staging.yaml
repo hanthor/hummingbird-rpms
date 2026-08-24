@@ -1108,6 +1108,8 @@ spec:
           contentType: rpm
         - name: source-highlight-main
           contentType: rpm
+        - name: spatialindex-main
+          contentType: rpm
         - name: spdlog-main
           contentType: rpm
         - name: spire1-14-main
