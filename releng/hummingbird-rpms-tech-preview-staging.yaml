@@ -546,6 +546,8 @@ spec:
           contentType: rpm
         - name: libkcapi-main
           contentType: rpm
+        - name: libkml-main
+          contentType: rpm
         - name: libksba-main
           contentType: rpm
         - name: liblerc-main
