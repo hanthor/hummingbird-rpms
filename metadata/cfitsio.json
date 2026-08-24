@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "3",
+  "release_monitoring_project_id": 270,
+  "sha": "6f232c22d09b3a532dd4f79a2512b56295d90b82",
+  "source": "https://src.fedoraproject.org/rpms/cfitsio.git",
+  "version": "4.6.4"
+}
