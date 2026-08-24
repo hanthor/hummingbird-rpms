@@ -5,5 +5,6 @@
   "release_monitoring_project_id": 20164,
   "sha": "0492b672df74c4316e4aa1fec3a5d4bb016b8c1b",
   "source": "https://src.fedoraproject.org/rpms/hdf.git",
+  "upstream_repo": "https://github.com/HDFGroup/hdf4",
   "version": "4.3.0"
 }
