@@ -1,0 +1,23 @@
+--- eccodes-2.48.0-Source.unchanged/fortran/CMakeLists.txt	2026-07-15 13:22:02.000000000 +0200
++++ eccodes-2.48.0-Source/fortran/CMakeLists.txt	2026-07-20 13:54:42.355327707 +0200
+@@ -74,7 +74,8 @@ if( HAVE_FORTRAN )
+                          GENERATED       grib_f90.f90 eccodes_f90.f90
+                          PUBLIC_INCLUDES $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+                                          $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
+-                         PRIVATE_LIBS    eccodes ${ECCODES_PTHREADS_LIBRARIES} )
++                         PRIVATE_LIBS    eccodes ${ECCODES_PTHREADS_LIBRARIES}
++                         SOVERSION       ${ECCODES_SOVERSION_F90})
+ 
+     add_custom_command( TARGET     eccodes_f90 POST_BUILD
+                         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_Fortran_MODULE_DIRECTORY} ${CMAKE_BINARY_DIR}/include )
+--- eccodes-2.48.0-Source.unchanged/src/eccodes/CMakeLists.txt	2026-07-15 13:22:02.000000000 +0200
++++ eccodes-2.48.0-Source/src/eccodes/CMakeLists.txt	2026-07-20 13:54:42.355915512 +0200
+@@ -452,6 +452,8 @@ ecbuild_add_library(
+         ${CMATH_LIBRARIES}
+         ${THREADS_LIBRARIES}
+     TEMPLATES ${eccodes_extra_src_files}
++    SOVERSION ${ECCODES_SOVERSION}
++
+     INSTALL_HEADERS_LIST
+         grib_api.h
+         eccodes.h
