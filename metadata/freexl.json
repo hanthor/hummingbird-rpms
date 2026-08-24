@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "22",
+  "release_monitoring_project_id": 855,
+  "sha": "72c9ac8e9acb1de81448232786e9b05445e62d41",
+  "source": "https://src.fedoraproject.org/rpms/freexl.git",
+  "version": "2.0.0"
+}

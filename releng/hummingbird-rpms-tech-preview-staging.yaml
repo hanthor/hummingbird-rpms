@@ -296,6 +296,8 @@ spec:
           contentType: rpm
         - name: freetype-main
           contentType: rpm
+        - name: freexl-main
+          contentType: rpm
         - name: fstrm-main
           contentType: rpm
         - name: fsverity-utils-main
