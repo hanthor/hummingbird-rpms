@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "2",
+  "release_monitoring_project_id": 9463,
+  "sha": "bab6ee1d7dab48b0680a0468c9ce7c1c9c6be4b6",
+  "source": "https://src.fedoraproject.org/rpms/proj.git",
+  "version": "9.8.1"
+}
