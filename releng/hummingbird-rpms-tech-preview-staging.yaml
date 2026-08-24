@@ -702,6 +702,8 @@ spec:
           contentType: rpm
         - name: meson-main
           contentType: rpm
+        - name: metis-main
+          contentType: rpm
         - name: mkfontscale-main
           contentType: rpm
         - name: mokutil-main
