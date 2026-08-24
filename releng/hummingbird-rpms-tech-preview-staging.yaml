@@ -404,6 +404,8 @@ spec:
           contentType: rpm
         - name: harfbuzz-main
           contentType: rpm
+        - name: hdf-main
+          contentType: rpm
         - name: hdf5-main
           contentType: rpm
         - name: helm3-main
