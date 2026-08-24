@@ -1,4 +1,43 @@
 
+# --- CharLS ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: charls-main
+spec:
+  application: rpms-main
+  componentName: charls-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/charls-main
+  source:
+    git:
+      context: rpms/CharLS
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: charls-main
+  name: charls-main
+spec:
+  image:
+    name: hummingbird-tenant/charls-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- NetworkManager ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
