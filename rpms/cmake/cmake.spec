@@ -16,8 +16,14 @@
 # Run git tests
 %bcond_without git_test
 
-# Set to bcond_with or use --without gui to disable qt gui build
-%bcond_without gui
+# Upstream Fedora enables the Qt GUI by default (%%bcond_without gui).
+# We disable it because qt6-rpm-macros requires cmake >= 3, which creates
+# a circular build dependency when cmake's jsoncpp soversion doesn't match
+# the jsoncpp package in the repo. Builder images don't need cmake-gui
+# or ccmake anyway.
+# To re-enable: switch to %%bcond_without gui once the jsoncpp soversions
+# are aligned and the circular dep is resolved.
+%bcond_with gui
 
 # Use ncurses for colorful output
 %bcond_without ncurses
@@ -38,7 +44,10 @@
 %bcond_with bundled_jsoncpp
 %bcond_with bundled_rhash
 %else
-%bcond_without bundled_jsoncpp
+# Upstream Fedora bundles jsoncpp on RHEL (%%bcond_without bundled_jsoncpp).
+# We use system jsoncpp instead so the cmake binary links against the
+# jsoncpp package we ship, keeping soversions aligned.
+%bcond_with bundled_jsoncpp
 %bcond_without bundled_rhash
 %endif
 
@@ -93,7 +102,7 @@
 
 Name:           %{orig_name}%{?name_suffix}
 Version:        %{pkg_version}
-Release:        %{baserelease}.1%{?dist}
+Release:        %{baserelease}.2%{?dist}
 Summary:        Cross-platform make system
 
 # most sources are BSD
