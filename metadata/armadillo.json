@@ -5,5 +5,6 @@
   "release_monitoring_project_id": 7006,
   "sha": "0d9a84a1c9045f9c3ca8749521dbe2db019a341c",
   "source": "https://src.fedoraproject.org/rpms/armadillo.git",
+  "upstream_repo": "https://gitlab.com/conradsnicta/armadillo-code",
   "version": "12.8.1"
 }
