@@ -506,6 +506,8 @@ spec:
           contentType: rpm
         - name: libcomps-main
           contentType: rpm
+        - name: libdeflate-main
+          contentType: rpm
         - name: libdnf-main
           contentType: rpm
         - name: libeconf-main
