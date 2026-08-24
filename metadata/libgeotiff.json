@@ -1,0 +1,8 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "6",
+  "sha": "8808db5b0d3ca0f08e0bb5c9583bb7acad1754ac",
+  "source": "https://src.fedoraproject.org/rpms/libgeotiff.git",
+  "version": "1.7.4"
+}
