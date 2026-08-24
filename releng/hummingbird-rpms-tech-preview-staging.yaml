@@ -750,6 +750,8 @@ spec:
           contentType: rpm
         - name: ocaml-srpm-macros-main
           contentType: rpm
+        - name: ogdi-main
+          contentType: rpm
         - name: oniguruma-main
           contentType: rpm
         - name: openblas-main
