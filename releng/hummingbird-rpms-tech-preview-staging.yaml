@@ -74,6 +74,8 @@ spec:
       defaults:
         pushSourceContainer: true
       components:
+        - name: charls-main
+          contentType: rpm
         - name: networkmanager-main
           contentType: rpm
         - name: pyyaml-main
