@@ -1,0 +1,34 @@
+# We want to use the following Packit functions in the man-pages-l10n package:
+# koji_build, bodhi_update and pull_from_upstream
+ 
+# See the documentation for more information:
+# https://packit.dev/docs/configuration/
+ 
+specfile_path: minizip-ng.spec
+ 
+# name in upstream package repository or registry (e.g. in PyPI)
+upstream_package_name: minizip-ng
+upstream_project_url: https://github.com/zlib-ng/minizip-ng
+# downstream (Fedora) RPM package name
+downstream_package_name: minizip-ng
+issue_repository: https://github.com/ljavorsk/Packit-issues
+ 
+jobs:
+  - job: pull_from_upstream
+    trigger: release
+    dist_git_branches:
+      - fedora-latest
+      - fedora-rawhide
+ 
+  - job: koji_build
+    trigger: commit
+    allowed_pr_authors: ["packit", "ljavorsk", "tuliom"]
+    allowed_committers: ["packit", "ljavorsk", "tuliom"]
+    dist_git_branches:
+      - fedora-latest
+      - fedora-rawhide
+ 
+  - job: bodhi_update
+    trigger: commit
+    dist_git_branches:
+      - fedora-latest # rawhide updates are created automatically

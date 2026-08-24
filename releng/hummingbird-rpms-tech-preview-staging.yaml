@@ -700,6 +700,8 @@ spec:
           contentType: rpm
         - name: metis-main
           contentType: rpm
+        - name: minizip-ng-main
+          contentType: rpm
         - name: mkfontscale-main
           contentType: rpm
         - name: mpdecimal-main
