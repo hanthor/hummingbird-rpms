@@ -1,0 +1,8 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "13",
+  "sha": "547398ddebd0925503edd23c55cb60c2063bf51e",
+  "source": "https://src.fedoraproject.org/rpms/metis.git",
+  "version": "5.1.0.3"
+}
