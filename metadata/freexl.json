@@ -5,5 +5,6 @@
   "release_monitoring_project_id": 855,
   "sha": "72c9ac8e9acb1de81448232786e9b05445e62d41",
   "source": "https://src.fedoraproject.org/rpms/freexl.git",
+  "upstream_repo": "https://src.fedoraproject.org/rpms/freexl",
   "version": "2.0.0"
 }

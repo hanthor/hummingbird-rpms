@@ -4,5 +4,6 @@
   "release": "6",
   "sha": "8808db5b0d3ca0f08e0bb5c9583bb7acad1754ac",
   "source": "https://src.fedoraproject.org/rpms/libgeotiff.git",
+  "upstream_repo": "https://github.com/OSGeo/libgeotiff",
   "version": "1.7.4"
 }

@@ -5,5 +5,6 @@
   "release_monitoring_project_id": 242778,
   "sha": "bdc4138c4313bfbd18dc1c63cc1cd6c6bc162449",
   "source": "https://src.fedoraproject.org/rpms/libdeflate.git",
+  "upstream_repo": "https://github.com/ebiggers/libdeflate",
   "version": "1.26"
 }
