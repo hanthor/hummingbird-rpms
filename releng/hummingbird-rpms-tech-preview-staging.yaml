@@ -580,6 +580,8 @@ spec:
           contentType: rpm
         - name: librepo-main
           contentType: rpm
+        - name: librttopo-main
+          contentType: rpm
         - name: libseccomp-main
           contentType: rpm
         - name: libselinux-main
