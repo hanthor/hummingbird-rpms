@@ -536,6 +536,8 @@ spec:
           contentType: rpm
         - name: libgpg-error-main
           contentType: rpm
+        - name: libgta-main
+          contentType: rpm
         - name: libidn2-main
           contentType: rpm
         - name: libipt-main

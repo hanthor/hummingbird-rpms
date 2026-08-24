@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "18",
+  "release_monitoring_project_id": 1564,
+  "sha": "e91d4469bfe88d744dfa469867bb935ba0e8889e",
+  "source": "https://src.fedoraproject.org/rpms/libgta.git",
+  "version": "1.2.1"
+}
