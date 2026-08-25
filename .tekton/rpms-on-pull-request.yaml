@@ -21286,7 +21286,7 @@ spec:
     - name: git-auth
       secret:
         secretName: '{{git_auth_secret}}'
-# --- maven ---
+# --- maven3.9 ---
 ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -21300,13 +21300,13 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[pull_request]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/maven/***, test/rpms/maven.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/maven3.9/***, test/rpms/maven3.9.yml]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
-    appstudio.openshift.io/component: maven-main
+    appstudio.openshift.io/component: maven3-9-main
     pipelines.appstudio.openshift.io/type: build
-  name: maven-main-on-pull-request
+  name: maven3-9-main-on-pull-request
   namespace: hummingbird-tenant
 spec:
   params:
@@ -21319,9 +21319,9 @@ spec:
     - name: image-expires-after
       value: "5d"
     - name: ociStorage
-      value: quay.io/redhat-user-workloads/hummingbird-tenant/maven-main:on-mr-{{pull_request_number}}-{{revision}}
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/maven3-9-main:on-mr-{{pull_request_number}}-{{revision}}
     - name: package-name
-      value: maven
+      value: maven3.9
     - name: target-branch
       value: '{{target_branch}}'
     - name: build-architectures
@@ -21335,7 +21335,7 @@ spec:
     - name: specfile
       value: "maven.spec"
     - name: monorepo-subdir
-      value: "rpms/maven"
+      value: "rpms/maven3.9"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
     - name: dist-git-client-configdir
@@ -21352,7 +21352,7 @@ spec:
       - name: bundle
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:bf43eccaf6669073b4ef441555c004a7ae263a1ec027530decdba2f3714f23ae"
   taskRunTemplate:
-    serviceAccountName: build-pipeline-maven-main
+    serviceAccountName: build-pipeline-maven3-9-main
   timeouts:
     pipeline: 4h
     tasks: 4h

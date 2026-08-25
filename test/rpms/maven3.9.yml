@@ -1,5 +1,5 @@
 ---
-# Tests specific to the independent Maven package.
+# Tests specific to the independent Maven 3.9 package.
 
 built-from-source:
   command: |

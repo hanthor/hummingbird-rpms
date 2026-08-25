@@ -1,4 +1,4 @@
-Name:           maven
+Name:           maven3.9
 Version:        3.9.16
 Release:        1%{?dist}
 Summary:        Java project management and comprehension tool
@@ -20,6 +20,7 @@ BuildRequires:  tar
 BuildRequires:  zstd
 Requires:       java-25-openjdk-headless
 Requires:       bash
+Provides:       maven = %{version}-%{release}
 
 # Third-party libraries shipped in lib/ and boot/. Maven modules built by
 # this package are not listed as bundled dependencies.

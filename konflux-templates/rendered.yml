@@ -11782,7 +11782,7 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
-# --- maven ---
+# --- maven3.9 ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
 kind: Component
@@ -11793,14 +11793,14 @@ metadata:
     git-provider-url: https://gitlab.com
     mintmaker.appstudio.redhat.com/disabled: "true"
     test.appstudio.openshift.io/comment_strategy: disable_all
-  name: maven-main
+  name: maven3-9-main
 spec:
   application: rpms-main
-  componentName: maven-main
-  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/maven-main
+  componentName: maven3-9-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/maven3-9-main
   source:
     git:
-      context: rpms/maven
+      context: rpms/maven3.9
       revision: main
       url: https://gitlab.com/redhat/hummingbird/rpms.git
 ---
@@ -11809,11 +11809,11 @@ kind: ImageRepository
 metadata:
   labels:
     appstudio.redhat.com/application: rpms-main
-    appstudio.redhat.com/component: maven-main
-  name: maven-main
+    appstudio.redhat.com/component: maven3-9-main
+  name: maven3-9-main
 spec:
   image:
-    name: hummingbird-tenant/maven-main
+    name: hummingbird-tenant/maven3-9-main
     visibility: public
   notifications:
   - config:
