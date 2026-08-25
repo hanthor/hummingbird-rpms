@@ -53,24 +53,15 @@ index eaf0dbbb42..21864ad319 100644
  use OpenSSL::Test::Utils;
  
  BEGIN {
-@@ -39,20 +39,26 @@ SKIP: {
+@@ -39,14 +39,17 @@ SKIP: {
  SKIP: {
-     skip "Skip EC test because of no ec in this build", 2
+     skip "Skip EC test because of no ec in this build", 1
          if disabled("ec");
 +    with({ exit_checker => sub {my $val = shift; return $val == 134; } },
 +    sub {
      ok(run(test(["pairwise_fail_test", "-config", $provconf,
                   "-pairwise", "ec"])),
         "fips provider ec keygen pairwise failure test");
-+    });
- 
-     skip "FIPS provider version is too old", 1
-         if !$fips_exit;
-+    with({ exit_checker => sub {my $val = shift; return $val == 134; } },
-+    sub {
-     ok(run(test(["pairwise_fail_test", "-config", $provconf,
-                  "-pairwise", "eckat"])),
-        "fips provider ec keygen kat failure test");
 +    });
  }
  
@@ -83,4 +74,3 @@ index eaf0dbbb42..21864ad319 100644
         "fips provider dsa keygen pairwise failure test");
 -- 
 2.52.0
-
