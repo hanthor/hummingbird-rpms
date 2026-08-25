@@ -17,7 +17,7 @@ BuildRequires:  java-25-openjdk-devel
 BuildRequires:  maven
 BuildRequires:  tar
 BuildRequires:  zstd
-Requires:       java-25-openjdk-headless
+Requires:       java-headless >= 1:1.8
 Requires:       bash
 Provides:       maven = %{version}-%{release}
 
