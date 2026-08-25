@@ -1,7 +1,7 @@
-From 7afd41a086ff9d3c39ff592e26d006c769e2a6d7 Mon Sep 17 00:00:00 2001
+From ff3f1879f1a60a64ce5d2b80f22b40f77dead1a9 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Fri, 7 Mar 2025 18:22:07 -0500
-Subject: [PATCH 45/57] FIPS: NO Kmac
+Subject: [PATCH] FIPS: NO Kmac
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
@@ -15,10 +15,10 @@ Signed-off-by: Simo Sorce <simo@redhat.com>
  7 files changed, 39 insertions(+), 86 deletions(-)
 
 diff --git a/providers/fips/fipsprov.c b/providers/fips/fipsprov.c
-index 33e1a179cf..7930cf3241 100644
+index 16ed6a4..f2d1132 100644
 --- a/providers/fips/fipsprov.c
 +++ b/providers/fips/fipsprov.c
-@@ -294,10 +294,10 @@ static const OSSL_ALGORITHM fips_digests[] = {
+@@ -293,10 +293,10 @@ static const OSSL_ALGORITHM fips_digests[] = {
       * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
       * KMAC128 and KMAC256.
       */
@@ -31,7 +31,7 @@ index 33e1a179cf..7930cf3241 100644
      { NULL, NULL, NULL }
  };
  
-@@ -365,8 +365,9 @@ static const OSSL_ALGORITHM fips_macs[] = {
+@@ -364,8 +364,9 @@ static const OSSL_ALGORITHM fips_macs[] = {
  #endif
      { PROV_NAMES_GMAC, FIPS_DEFAULT_PROPERTIES, ossl_gmac_functions },
      { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_hmac_functions },
@@ -44,7 +44,7 @@ index 33e1a179cf..7930cf3241 100644
  };
  
 diff --git a/providers/fips/self_test_data.inc b/providers/fips/self_test_data.inc
-index d8d23e6f90..43f7c89fd6 100644
+index c92e854..675789a 100644
 --- a/providers/fips/self_test_data.inc
 +++ b/providers/fips/self_test_data.inc
 @@ -533,6 +533,7 @@ static const ST_KAT_PARAM kbkdf_params[] = {
@@ -79,7 +79,7 @@ index d8d23e6f90..43f7c89fd6 100644
          OSSL_SELF_TEST_DESC_KDF_HKDF,
          OSSL_KDF_NAME_HKDF,
 diff --git a/test/recipes/30-test_evp.t b/test/recipes/30-test_evp.t
-index 05a61c8abe..4f2e8277b5 100755
+index 05a61c8..4f2e827 100755
 --- a/test/recipes/30-test_evp.t
 +++ b/test/recipes/30-test_evp.t
 @@ -52,7 +52,6 @@ my @files = qw(
@@ -99,7 +99,7 @@ index 05a61c8abe..4f2e8277b5 100755
                       evpmac_poly1305.txt
                       evpmac_siphash.txt
 diff --git a/test/recipes/30-test_evp_data/evpkdf_hkdf.txt b/test/recipes/30-test_evp_data/evpkdf_hkdf.txt
-index c617f2cc44..c5cbaf5840 100644
+index c617f2c..c5cbaf5 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_hkdf.txt
 +++ b/test/recipes/30-test_evp_data/evpkdf_hkdf.txt
 @@ -244,7 +244,7 @@ Ctrl.digest = digest:SHA1
@@ -112,7 +112,7 @@ index c617f2cc44..c5cbaf5840 100644
  
  # Test that the key whose length is shorter than 112 bits is reported as
 diff --git a/test/recipes/30-test_evp_data/evpkdf_kbkdf_counter.txt b/test/recipes/30-test_evp_data/evpkdf_kbkdf_counter.txt
-index 67090f2112..bc87975449 100644
+index 67090f2..bc87975 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_kbkdf_counter.txt
 +++ b/test/recipes/30-test_evp_data/evpkdf_kbkdf_counter.txt
 @@ -1869,7 +1869,7 @@ Ctrl.use-separator = use-separator:0
@@ -125,7 +125,7 @@ index 67090f2112..bc87975449 100644
  
  Availablein = fips
 diff --git a/test/recipes/30-test_evp_data/evpkdf_ss.txt b/test/recipes/30-test_evp_data/evpkdf_ss.txt
-index 07691ccf57..4503af711f 100644
+index 07691cc..4503af7 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_ss.txt
 +++ b/test/recipes/30-test_evp_data/evpkdf_ss.txt
 @@ -1171,6 +1171,7 @@ Ctrl.hexsecret = hexsecret:40B6E03711EBEBA14011ACE96CB056DEBAEB6E5E706F99435257C
@@ -163,7 +163,7 @@ index 07691ccf57..4503af711f 100644
  Ctrl.mac = mac:KMAC-128
  Ctrl.hexsalt = hexsalt:00000000
 diff --git a/test/recipes/30-test_evp_data/evpmac_common.txt b/test/recipes/30-test_evp_data/evpmac_common.txt
-index 831eecbac9..af92ceea98 100644
+index 831eecb..af92cee 100644
 --- a/test/recipes/30-test_evp_data/evpmac_common.txt
 +++ b/test/recipes/30-test_evp_data/evpmac_common.txt
 @@ -399,6 +399,7 @@ Input = 68F2E77696CE7AE8E2CA4EC588E541002E58495C08000F101112131415161718191A1B1C
@@ -421,5 +421,5 @@ index 831eecbac9..af92ceea98 100644
 -Custom = ""
 -Output = 75358CF39E41494E949707927CEE0AF20A3FF553904C86B08F21CC414BCFD691589D27CF5E15369CBBFF8B9A4C2EB17800855D0235FF635DA82533EC6B759B69
 -- 
-2.52.0
+2.55.0
 

@@ -1,7 +1,7 @@
-From 4191527585ab1e8923249885cbf87d2f91b8804f Mon Sep 17 00:00:00 2001
+From 2ff906789d1307b31cb8f439af1f02c31e2b34d9 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Fri, 7 Mar 2025 18:20:30 -0500
-Subject: [PATCH 27/57] FIPS: RSA: size/mode restrictions
+Subject: [PATCH] FIPS: RSA: size/mode restrictions
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
@@ -12,7 +12,7 @@ Signed-off-by: Simo Sorce <simo@redhat.com>
  4 files changed, 86 insertions(+), 4 deletions(-)
 
 diff --git a/providers/implementations/signature/rsa_sig.c b/providers/implementations/signature/rsa_sig.c
-index 4e0744eeba..f38431fd60 100644
+index f5a04a3..0c9cc8e 100644
 --- a/providers/implementations/signature/rsa_sig.c
 +++ b/providers/implementations/signature/rsa_sig.c
 @@ -935,6 +935,19 @@ static int rsa_verify_recover(void *vprsactx,
@@ -35,7 +35,7 @@ index 4e0744eeba..f38431fd60 100644
  
      if (!ossl_prov_is_running())
          return 0;
-@@ -1027,6 +1040,19 @@ static int rsa_verify_directly(PROV_RSA_CTX *prsactx,
+@@ -1052,6 +1065,19 @@ static int rsa_verify_directly(PROV_RSA_CTX *prsactx,
      const unsigned char *tbs, size_t tbslen)
  {
      size_t rslen;
@@ -56,7 +56,7 @@ index 4e0744eeba..f38431fd60 100644
      if (!ossl_prov_is_running())
          return 0;
 diff --git a/ssl/ssl_ciph.c b/ssl/ssl_ciph.c
-index 15be7e8067..823ad48e02 100644
+index cce1dde..d3712d5 100644
 --- a/ssl/ssl_ciph.c
 +++ b/ssl/ssl_ciph.c
 @@ -350,6 +350,9 @@ int ssl_load_ciphers(SSL_CTX *ctx)
@@ -70,7 +70,7 @@ index 15be7e8067..823ad48e02 100644
       * We ignore any errors from the fetches below. They are expected to fail
       * if these algorithms are not available.
 diff --git a/test/recipes/30-test_evp_data/evppkey_rsa.txt b/test/recipes/30-test_evp_data/evppkey_rsa.txt
-index 42819f7c41..65a75469f9 100644
+index 42819f7..65a7546 100644
 --- a/test/recipes/30-test_evp_data/evppkey_rsa.txt
 +++ b/test/recipes/30-test_evp_data/evppkey_rsa.txt
 @@ -268,8 +268,19 @@ TwIDAQAB
@@ -397,7 +397,7 @@ index 42819f7c41..65a75469f9 100644
  Ctrl = rsa_padding_mode:pss
  Ctrl = rsa_mgf1_md:sha1
 diff --git a/test/recipes/30-test_evp_data/evppkey_rsa_common.txt b/test/recipes/30-test_evp_data/evppkey_rsa_common.txt
-index 17ceb59148..972e90f32f 100644
+index 17ceb59..972e90f 100644
 --- a/test/recipes/30-test_evp_data/evppkey_rsa_common.txt
 +++ b/test/recipes/30-test_evp_data/evppkey_rsa_common.txt
 @@ -285,7 +285,7 @@ FIPSversion = >=3.4.0
@@ -437,5 +437,5 @@ index 17ceb59148..972e90f32f 100644
  # Signing with SHA1 is not allowed in fips mode
  Availablein = fips
 -- 
-2.52.0
+2.55.0
 
