@@ -16,9 +16,6 @@ License:	LicenseRef-Callaway-BSD
 URL:		https://github.com/opencollab/arpack-ng
 Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/arpack-ng-%{version}.tar.gz
 
-%if 0%{?__isa_bits} == 64
-BuildRequires:	eigen3-devel
-%endif
 BuildRequires:	gcc-c++
 BuildRequires:	gcc-gfortran
 BuildRequires:	pkgconfig(flexiblas)
@@ -88,9 +85,6 @@ pushd src
 %configure --enable-shared --enable-static \
     --with-blas=-lflexiblas \
     --with-lapack=-lflexiblas \
-%if 0%{?__isa_bits} == 64
-    --enable-eigen \
-%endif
     --enable-icb
 %make_build
 popd
@@ -101,7 +95,6 @@ pushd src64
     INTERFACE64=1 \
     --with-blas=-lflexiblas64 \
     --with-lapack=-lflexiblas64 \
-    --enable-eigen \
     --enable-icb
 %make_build
 popd
