@@ -8,14 +8,13 @@ Summary:        Java project management and comprehension tool
 License:        Apache-2.0 AND BSD-3-Clause AND EPL-2.0 AND MIT AND LicenseRef-Fedora-Public-Domain AND (CDDL-1.0 OR GPL-2.0-only WITH Classpath-exception-2.0)
 URL:            https://maven.apache.org/
 Source0:        https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/%{version}/apache-maven-%{version}-src.tar.gz
-# Source1 bootstraps the source build. Nothing from this archive is installed.
-Source1:        https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/%{version}/apache-maven-%{version}-bin.tar.gz
-# Source2 contains the Maven Central artifacts needed for a network-free build.
+# Source1 contains the Maven Central artifacts needed for a network-free build.
 # Run generate-vendor.sh to reproduce it.
-Source2:        maven-%{version}-repository.tar.zst
+Source1:        maven-%{version}-repository.tar.zst
 
 BuildArch:      noarch
 BuildRequires:  java-25-openjdk-devel
+BuildRequires:  maven
 BuildRequires:  tar
 BuildRequires:  zstd
 Requires:       java-25-openjdk-headless
@@ -72,13 +71,12 @@ repository of build dependencies from Maven Central.
 
 %prep
 %setup -q -n apache-maven-%{version}
-mkdir ../bootstrap ../repository
-tar -xzf %{SOURCE1} -C ../bootstrap
-tar --zstd -xf %{SOURCE2} -C ../repository
+mkdir ../repository
+tar --zstd -xf %{SOURCE1} -C ../repository
 
 
 %build
-../bootstrap/apache-maven-%{version}/bin/mvn \
+mvn \
     --batch-mode \
     --no-transfer-progress \
     --offline \
