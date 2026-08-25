@@ -1,0 +1,12 @@
+diff -up libspatialite-5.1.0/src/wfs/wfs_in.c.orig libspatialite-5.1.0/src/wfs/wfs_in.c
+--- libspatialite-5.1.0/src/wfs/wfs_in.c.orig
++++ libspatialite-5.1.0/src/wfs/wfs_in.c
+@@ -4637,7 +4637,9 @@ reset_wfs_http_connection (void)
+ {
+ /* Resets the libxml2 "nano HTTP": useful when changing the HTTP_PROXY settings */
++#ifdef LIBXML_HTTP_ENABLED
+     xmlNanoHTTPCleanup ();
++#endif
+ }
+
+ #else /* LIBXML2 isn't enabled */
