@@ -21,6 +21,8 @@ Patch1:        libspatialite_mingw.patch
 Patch2:        libspatialite_geos.patch
 # Fix incompatibile pointer types
 Patch3:        libspatialite_incompat-ptrs.patch
+# Fix build with libxml2 >= 2.14 (xmlNanoHTTPCleanup removed)
+Patch4:        libspatialite-libxml2-2.14.patch
 
 BuildRequires: autoconf automake libtool
 BuildRequires: freexl-devel

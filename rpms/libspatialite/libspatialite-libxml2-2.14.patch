@@ -1,0 +1,12 @@
+diff -up libspatialite-5.1.0/src/wfs/wfs_in.c.orig libspatialite-5.1.0/src/wfs/wfs_in.c
+--- libspatialite-5.1.0/src/wfs/wfs_in.c.orig
++++ libspatialite-5.1.0/src/wfs/wfs_in.c
+@@ -4637,7 +4637,9 @@ reset_wfs_http_connection (struct wfs_ht
+ {
+ /* resetting the WFS HTTP connection */
++#ifdef LIBXML_HTTP_ENABLED
+     xmlNanoHTTPCleanup ();
++#endif
+     conn->http_status = 0;
+     if (conn->http_url != NULL)
+ 	free (conn->http_url);
