@@ -1,0 +1,10 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "3",
+  "release_monitoring_project_id": 9349,
+  "sha": "0de47d6e87d7beac7b34dc4416ceaaaf5c8fe437",
+  "source": "https://src.fedoraproject.org/rpms/CharLS.git",
+  "upstream_repo": "https://github.com/team-charls/charls",
+  "version": "2.4.3"
+}

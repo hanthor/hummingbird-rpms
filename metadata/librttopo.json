@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "20",
+  "sha": "e594c0547dbbe67ae4f62547f8ee5393408d497e",
+  "source": "https://src.fedoraproject.org/rpms/librttopo.git",
+  "upstream_repo": "https://git.osgeo.org/gitea/rttopo/librttopo",
+  "version": "1.1.0"
+}

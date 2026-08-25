@@ -1,0 +1,10 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "5",
+  "release_monitoring_project_id": 4864,
+  "sha": "4235ea897c1cb62e6873a1832312d0f52f12c479",
+  "source": "https://src.fedoraproject.org/rpms/spatialindex.git",
+  "upstream_repo": "https://github.com/libspatialindex/libspatialindex",
+  "version": "2.1.0"
+}

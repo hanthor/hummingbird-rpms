@@ -74,6 +74,8 @@ spec:
       defaults:
         pushSourceContainer: true
       components:
+        - name: charls-main
+          contentType: rpm
         - name: networkmanager-main
           contentType: rpm
         - name: pyyaml-main
@@ -81,6 +83,8 @@ spec:
         - name: r-rpm-macros-main
           contentType: rpm
         - name: shellcheck-main
+          contentType: rpm
+        - name: superlu-main
           contentType: rpm
         - name: aardvark-dns-main
           contentType: rpm
@@ -101,6 +105,10 @@ spec:
         - name: apr-util-main
           contentType: rpm
         - name: apt-main
+          contentType: rpm
+        - name: armadillo-main
+          contentType: rpm
+        - name: arpack-main
           contentType: rpm
         - name: attr-main
           contentType: rpm
@@ -153,6 +161,8 @@ spec:
         - name: cargo2rpm-main
           contentType: rpm
         - name: catatonit-main
+          contentType: rpm
+        - name: cfitsio-main
           contentType: rpm
         - name: checkpolicy-main
           contentType: rpm
@@ -244,6 +254,8 @@ spec:
           contentType: rpm
         - name: e2fsprogs-main
           contentType: rpm
+        - name: eccodes-main
+          contentType: rpm
         - name: ecj-main
           contentType: rpm
         - name: ed-main
@@ -294,6 +306,8 @@ spec:
           contentType: rpm
         - name: freetype-main
           contentType: rpm
+        - name: freexl-main
+          contentType: rpm
         - name: fstrm-main
           contentType: rpm
         - name: fsverity-utils-main
@@ -314,9 +328,13 @@ spec:
           contentType: rpm
         - name: gd-main
           contentType: rpm
+        - name: gdal-main
+          contentType: rpm
         - name: gdb-main
           contentType: rpm
         - name: gdbm-main
+          contentType: rpm
+        - name: geos-main
           contentType: rpm
         - name: gettext-main
           contentType: rpm
@@ -389,6 +407,8 @@ spec:
         - name: haproxy-main
           contentType: rpm
         - name: harfbuzz-main
+          contentType: rpm
+        - name: hdf-main
           contentType: rpm
         - name: hdf5-main
           contentType: rpm
@@ -488,6 +508,8 @@ spec:
           contentType: rpm
         - name: libxtst-main
           contentType: rpm
+        - name: libaec-main
+          contentType: rpm
         - name: libaio-main
           contentType: rpm
         - name: libarchive-main
@@ -508,6 +530,10 @@ spec:
           contentType: rpm
         - name: libcomps-main
           contentType: rpm
+        - name: libdap-main
+          contentType: rpm
+        - name: libdeflate-main
+          contentType: rpm
         - name: libdnf-main
           contentType: rpm
         - name: libeconf-main
@@ -526,9 +552,13 @@ spec:
           contentType: rpm
         - name: libgcrypt-main
           contentType: rpm
+        - name: libgeotiff-main
+          contentType: rpm
         - name: libgit2-main
           contentType: rpm
         - name: libgpg-error-main
+          contentType: rpm
+        - name: libgta-main
           contentType: rpm
         - name: libidn2-main
           contentType: rpm
@@ -537,6 +567,8 @@ spec:
         - name: libjpeg-turbo-main
           contentType: rpm
         - name: libkcapi-main
+          contentType: rpm
+        - name: libkml-main
           contentType: rpm
         - name: libksba-main
           contentType: rpm
@@ -574,6 +606,8 @@ spec:
           contentType: rpm
         - name: librepo-main
           contentType: rpm
+        - name: librttopo-main
+          contentType: rpm
         - name: libseccomp-main
           contentType: rpm
         - name: libselinux-main
@@ -585,6 +619,8 @@ spec:
         - name: libsodium-main
           contentType: rpm
         - name: libsolv-main
+          contentType: rpm
+        - name: libspatialite-main
           contentType: rpm
         - name: libssh-main
           contentType: rpm
@@ -678,6 +714,10 @@ spec:
           contentType: rpm
         - name: meson-main
           contentType: rpm
+        - name: metis-main
+          contentType: rpm
+        - name: minizip-ng-main
+          contentType: rpm
         - name: mkfontscale-main
           contentType: rpm
         - name: mokutil-main
@@ -695,6 +735,8 @@ spec:
         - name: ncurses-main
           contentType: rpm
         - name: netavark-main
+          contentType: rpm
+        - name: netcdf-main
           contentType: rpm
         - name: nettle-main
           contentType: rpm
@@ -731,6 +773,8 @@ spec:
         - name: oauth2-proxy-main
           contentType: rpm
         - name: ocaml-srpm-macros-main
+          contentType: rpm
+        - name: ogdi-main
           contentType: rpm
         - name: oniguruma-main
           contentType: rpm
@@ -895,6 +939,8 @@ spec:
         - name: postgresql18-main
           contentType: rpm
         - name: procps-ng-main
+          contentType: rpm
+        - name: proj-main
           contentType: rpm
         - name: prometheus3-13-main
           contentType: rpm
@@ -1080,6 +1126,8 @@ spec:
           contentType: rpm
         - name: source-highlight-main
           contentType: rpm
+        - name: spatialindex-main
+          contentType: rpm
         - name: spdlog-main
           contentType: rpm
         - name: spire1-14-main
@@ -1159,6 +1207,8 @@ spec:
         - name: which-main
           contentType: rpm
         - name: xcaddy-main
+          contentType: rpm
+        - name: xerces-c-main
           contentType: rpm
         - name: xkeyboard-config-main
           contentType: rpm
