@@ -1,0 +1,23 @@
+---
+# Tests specific to the independent Maven package.
+
+built-from-source:
+  command: |
+    if ! rpm -qp --provides "${TEST_RPM}" | grep -qxF 'bundled(mvn(com.google.guava:guava)) = 33.6.0-jre'; then
+      TEST_FAIL "Maven does not report its bundled Guava library"
+    fi
+
+    if rpm -qpl "${TEST_RPM}" | grep -Eq '\.(dll|dylib|so)$'; then
+      TEST_FAIL "The noarch Maven RPM contains a native library"
+    fi
+
+    echo "PASS: Maven records bundled libraries and contains no native binaries"
+
+reports-version:
+  command: |
+    rpm -i "${TEST_RPM}"
+    if ! mvn --version | grep -qF 'Apache Maven 3.9.16'; then
+      TEST_FAIL "mvn did not report Apache Maven 3.9.16"
+    fi
+
+    echo "PASS: mvn reports the packaged version"
