@@ -1,4 +1,4 @@
-From 598a99c275b5cf06d901fbc86cedaba07b46fa0f Mon Sep 17 00:00:00 2001
+From ab218e8735911357146e80fb0707bab15dc9d03f Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 26 Jan 2026 15:28:24 +0100
 Subject: [PATCH] Add the sovesion as a part to the MODULESDIR
@@ -18,10 +18,10 @@ version resolves this problem.
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/Configurations/descrip.mms.tmpl b/Configurations/descrip.mms.tmpl
-index adfd448f9f239..4a9d0ef3df60d 100644
+index bc7fc36..4d5725f 100644
 --- a/Configurations/descrip.mms.tmpl
 +++ b/Configurations/descrip.mms.tmpl
-@@ -381,7 +381,7 @@ OPENSSLDIR={- catdir($config{openssldir}) or
+@@ -390,7 +390,7 @@ OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
  # Where installed ENGINE modules reside, for C
  ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
  # Where modules reside, for C
@@ -31,10 +31,10 @@ index adfd448f9f239..4a9d0ef3df60d 100644
  ##### User defined commands and flags ################################
  
 diff --git a/Configurations/unix-Makefile.tmpl b/Configurations/unix-Makefile.tmpl
-index 155aa46955abd..97c951343d8b6 100644
+index f905313..28d2ad0 100644
 --- a/Configurations/unix-Makefile.tmpl
 +++ b/Configurations/unix-Makefile.tmpl
-@@ -324,7 +324,7 @@ LIBDIR={- our $libdir = $config{libdir};
+@@ -335,7 +335,7 @@ LIBDIR={- our $libdir = $config{libdir};
  libdir={- file_name_is_absolute($libdir)
            ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
  ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
@@ -44,10 +44,10 @@ index 155aa46955abd..97c951343d8b6 100644
  # Convenience variable for those who want to set the rpath in shared
  # libraries and applications
 diff --git a/Configurations/windows-makefile.tmpl b/Configurations/windows-makefile.tmpl
-index e9f985f855164..a21f20b61447d 100644
+index f5ec2a7..0a08c34 100644
 --- a/Configurations/windows-makefile.tmpl
 +++ b/Configurations/windows-makefile.tmpl
-@@ -214,7 +214,7 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
+@@ -229,7 +229,7 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
                        splitpath($modulesprefix, 1);
                    our $modulesdir_dev = $modulesprefix_dev;
                    our $modulesdir_dir =
@@ -56,3 +56,6 @@ index e9f985f855164..a21f20b61447d 100644
                    our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
                    our $enginesdir_dev = $modulesprefix_dev;
                    our $enginesdir_dir =
+-- 
+2.55.0
+
