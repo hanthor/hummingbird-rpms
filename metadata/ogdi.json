@@ -1,0 +1,9 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "8",
+  "sha": "cc3a6a30a812269777cd5c36c89cdf5d1b0d1486",
+  "source": "https://src.fedoraproject.org/rpms/ogdi.git",
+  "upstream_repo": "https://github.com/libogdi/ogdi",
+  "version": "4.1.1"
+}

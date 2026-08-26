@@ -1,0 +1,10 @@
+{
+  "branch": "rawhide",
+  "modification_status": "clean",
+  "release": "4",
+  "release_monitoring_project_id": 8147,
+  "sha": "ed445d6a84d722a53a8729c0c5fecf98adef16ed",
+  "source": "https://src.fedoraproject.org/rpms/libdap.git",
+  "upstream_repo": "https://github.com/OPENDAP/libdap4",
+  "version": "3.21.1"
+}
