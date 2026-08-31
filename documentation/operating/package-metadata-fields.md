@@ -12,7 +12,7 @@ Hummingbird treats local changes and rebuilds relative to Fedora:
 | Field | Purpose |
 | ----- | ------- |
 | `modification_status` | Whether the package may be auto-updated from Fedora |
-| `release` | Fedora release for the version currently shipped, without the dist tag |
+| `release` | Fedora release from which this package was imported |
 
 This page is the canonical reference for configuring those fields. For day-to-day workflows
 (marking packages, rebuilding, importing), see the related docs at the end.
@@ -57,12 +57,12 @@ packages — see [When not to update these fields](#when-not-to-update-these-fie
 ## `release`
 
 The `release` field in metadata is **not** the same as the `Release:` line in the package spec. It
-records the upstream Fedora release for the version currently shipped, without a dist tag
-such as `.fc42` or `.hum1`. It is present only when Hummingbird ships Fedora's release.
+records the Fedora release from which the package was imported, without a dist tag such as `.fc42`
+or `.hum1`. It is present only when Hummingbird ships Fedora's release.
 
 | Location | What it represents |
 | -------- | ------------------ |
-| `metadata/<package>.json` → `release` | Fedora release for the version currently shipped, without its dist tag |
+| `metadata/<package>.json` → `release` | Fedora release from which the package was imported, without its dist tag |
 | Spec `Release:` | The release used for the Hummingbird build (includes `%{?dist}` / `.hum1`, and may include local `.N` rebuild suffixes) |
 
 ### Who writes metadata `release`
