@@ -515,6 +515,42 @@ def test_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert "mango" not in result.stderr
 
 
+def test_sync_restores_release_when_fedora_catches_up(
+    workdir: Path, upstream_repos: dict[str, Path],
+) -> None:
+    """Sync returns an upstream-version package to Fedora's release."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    spec_file = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_file.write_text(spec_file.read_text().replace(
+        'Version: 1.0\nRelease: 1%{?dist}',
+        'Version: 2.0\nRelease: 0.1%{?dist}',
+    ))
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata = json.loads(metadata_file.read_text())
+    metadata.pop('release')
+    metadata['version'] = '2.0'
+    metadata['modification_status'] = 'modified'
+    metadata['modification_reason'] = 'Update to upstream version 2.0'
+    metadata_file.write_text(json.dumps(metadata, indent=2) + '\n')
+    subprocess.run(['git', 'commit', '-am', 'Update vanilla ahead of Fedora'], cwd=workdir, check=True)
+
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'sync', 'vanilla'],
+        cwd=workdir, check=True,
+    )
+
+    metadata = json.loads(metadata_file.read_text())
+    assert metadata['version'] == '2.0'
+    assert metadata['release'] == '1'
+    assert metadata['modification_status'] == 'clean'
+    assert 'modification_reason' not in metadata
+
+
 def test_update_uses_ls_remote(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """update uses ls-remote optimization for up-to-date packages."""
     # Import vanilla
