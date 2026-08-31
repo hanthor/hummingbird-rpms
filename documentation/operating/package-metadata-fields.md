@@ -100,9 +100,10 @@ For Hummingbird-independent packages (`modification_status: "independent"`, no `
 ### Spec `Release:` vs metadata `release`
 
 No-change rebuilds and reverse-dependency rebuilds change the **spec** `Release:` only. See
-[Rebuilding Packages](rebuilding-packages.md). When a Fedora update for the same version lands
-later, `dist_git.py update` / `sync` replaces the spec `Release:` from upstream and restores
-metadata `release` to the new Fedora/rawhide baseline.
+[Rebuilding Packages](rebuilding-packages.md). When `dist_git.py update` or `sync` imports a
+Fedora version, it records that Fedora release in metadata. Local patches merged onto that version
+retain the Fedora release baseline. When `check_upstream_versions.py` moves a package to an
+upstream version ahead of Fedora, it removes metadata `release`.
 
 ## When not to update these fields
 
