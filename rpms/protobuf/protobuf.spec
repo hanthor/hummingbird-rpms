@@ -16,7 +16,7 @@ Name:           protobuf
 # NOTE: perl-Alien-ProtoBuf has an exact-version dependency on the version of
 # protobuf with which it was built; it therefore needs to be rebuilt even for
 # “patch” updates of protobuf.
-Version:        36.0
+Version:        36.1
 %global so_version 36
 Release:        0.1%{?dist}
 
