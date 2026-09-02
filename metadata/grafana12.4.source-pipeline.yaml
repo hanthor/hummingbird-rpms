@@ -62,9 +62,6 @@ transform:
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
   - file: "grafana-yarn-cache-12.4.9.tar.bz2"
-    checksum: "a4d4978ddad8a26a690b3ff1d6e2f34ab4c8fd0e57136ae569ce8dd04f864a56816651f8fb431c37f6571590f6970f815461d9d0e6967eba239bf0c1a53da804"
-    reason: "grafana-js-yaml-cve.patch bumps js-yaml to 3.15.2 and 4.3.2 for CVE-2026-84375; yarn cache regenerated to include patched dependencies"
-  - file: "grafana-yarn-cache-12.4.9.tar.bz2"
     checksum: "a11fdff03b7f86d7e6b35439ec85b6ee647604c5efbcd800128b0e28a22236c694903702f28ffc4c703f92eef128ce93023e10f942ddb2482160f024df386277"
     reason: "grafana-fast-uri-cve.patch bumps fast-uri 3.1.5->3.1.6 for CVE-2026-76172/75975/75931/75899; yarn cache regenerated to include the patched dependency"
   - file: "grafana-12.4.9-vendor.tar.bz2"
