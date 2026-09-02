@@ -32,11 +32,13 @@ transform:
         patch -p1 < "${PACKAGE_DIR}/grafana-ip-address-cve.patch"
         patch -p1 < "${PACKAGE_DIR}/grafana-browserslist-nanoid-cve.patch"
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
         # Must apply after the CVE patches above: pins compressionLevel and
         # carries the resulting full yarn.lock checksum regeneration (see
         # grafana-yarn-cache-compression.patch's own header comment).
         patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression.patch"
+        # Generated against the post-compression lockfile, so this comes after
+        # grafana-yarn-cache-compression.patch (same order as Patch9 in the spec).
+        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
