@@ -30,10 +30,11 @@ Patch4:         grafana-npm-cve-brace-postcss.patch
 Patch5:         grafana-ip-address-cve.patch
 Patch6:         grafana-browserslist-nanoid-cve.patch
 Patch7:         grafana-dompurify-cve.patch
+Patch8:         grafana-js-yaml-cve.patch
 # Must apply after the CVE patches above: pins compressionLevel (was
 # upstream's non-deterministic "mixed") and carries the full yarn.lock
 # checksum regeneration that requires, reflecting their yarn.lock changes.
-Patch8:         grafana-yarn-cache-compression.patch
+Patch9:         grafana-yarn-cache-compression.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.5
@@ -1321,8 +1322,8 @@ Provides:       bundled(npm(js-cookie)) = 2.2.1
 Provides:       bundled(npm(js-cookie)) = 3.0.8
 Provides:       bundled(npm(js-file-download)) = 0.4.12
 Provides:       bundled(npm(js-tokens)) = 4.0.0
-Provides:       bundled(npm(js-yaml)) = 3.14.2
-Provides:       bundled(npm(js-yaml)) = 4.1.1
+Provides:       bundled(npm(js-yaml)) = 3.15.2
+Provides:       bundled(npm(js-yaml)) = 4.3.2
 Provides:       bundled(npm(jsdoc-type-pratt-parser)) = 4.1.0
 Provides:       bundled(npm(jsesc)) = 3.0.2
 Provides:       bundled(npm(json-buffer)) = 3.0.1

@@ -3,13 +3,14 @@ Subject: [PATCH] Pin yarn compressionLevel for reproducible offline cache
 
 Must apply after the CVE patches (grafana-fast-uri-cve.patch,
 grafana-npm-cve-brace-postcss.patch, grafana-ip-address-cve.patch,
-grafana-browserslist-nanoid-cve.patch, grafana-dompurify-cve.patch):
+grafana-browserslist-nanoid-cve.patch, grafana-dompurify-cve.patch,
+grafana-js-yaml-cve.patch):
 those patches also bump entries in yarn.lock, and this patch's checksum
 regeneration below must reflect their post-patch checksums, not the
 pristine ones.
 
 diff --git a/.yarnrc.yml b/.yarnrc.yml
-index a78ae05937c4..60645a35d5aa 100644
+index a78ae059..60645a35 100644
 --- a/.yarnrc.yml
 +++ b/.yarnrc.yml
 @@ -1,4 +1,12 @@
@@ -27,7 +28,7 @@ index a78ae05937c4..60645a35d5aa 100644
  enableGlobalCache: false
  
 diff --git a/yarn.lock b/yarn.lock
-index c5e206258060..ffd4430bd6b0 100644
+index facf8f19..8bf9ee8b 100644
 --- a/yarn.lock
 +++ b/yarn.lock
 @@ -3,19 +3,19 @@
@@ -17090,21 +17091,21 @@ index c5e206258060..ffd4430bd6b0 100644
    languageName: node
    linkType: hard
  
-@@ -23867,7 +23867,7 @@ __metadata:
-     argparse: "npm:^2.0.1"
+@@ -23868,7 +23868,7 @@ __metadata:
+     esprima: "npm:^4.0.0"
    bin:
      js-yaml: bin/js-yaml.js
--  checksum: 10/a52d0519f0f4ef5b4adc1cde466cb54c50d56e2b4a983b9d5c9c0f2f99462047007a6274d7e95617a21d3c91fde3ee6115536ed70991cd645ba8521058b78f77
-+  checksum: 10c0/561c7d7088c40a9bb53cc75becbfb1df6ae49b34b5e6e5a81744b14ae8667ec564ad2527709d1a6e7d5e5fa6d483aa0f373a50ad98d42fde368ec4a190d4fae7
+-  checksum: 10/320b5471c1b7309a15d9c0068ba273e2da7382a369038a9746c92ef649087c3d6d2a5c676810154efb4eb2ca9584179c8ae14e2fc2e4bd558d964e6bf4fafd3d
++  checksum: 10c0/e341df211dece9d4b784849647ad7568b5b6a58a9ee58ead750482316d83276387343649fe4b71522705dc6c76acf97718588f23dc19443833ef3e75033af967
    languageName: node
    linkType: hard
  
 @@ -23879,21 +23879,21 @@ __metadata:
-     esprima: "npm:^4.0.0"
+     argparse: "npm:^2.0.1"
    bin:
      js-yaml: bin/js-yaml.js
--  checksum: 10/172e0b6007b0bf0fc8d2469c94424f7dd765c64a047d2b790831fecef2204a4054eabf4d911eb73ab8c9a3256ab8ba1ee8d655b789bf24bf059c772acc2075a1
-+  checksum: 10c0/3261f25912f5dd76605e5993d0a126c2b6c346311885d3c483706cd722efe34f697ea0331f654ce27c00a42b426e524518ec89d65ed02ea47df8ad26dcc8ce69
+-  checksum: 10/05c44b9c73e4901d92703b155e76518df64bf01ac62e4c036b47de4b391e19b72e32656e8954d51b436307f08cc9d0c0d4ec617d061cf2f65fffee9f3114bee7
++  checksum: 10c0/dedd34c2e8fef1d504687f1bc94ed0ee1311a1f78770fa2800352c6d59c635ccf555009d74e9afe529ae62199da2b1ccef30e53dc84dcd8d2d8187c22574bc97
    languageName: node
    linkType: hard
  
