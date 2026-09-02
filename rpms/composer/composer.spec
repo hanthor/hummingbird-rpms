@@ -14,7 +14,7 @@
 %global api_version      2.9.0
 %global run_version      2.2.2
 
-%global upstream_version 2.10.2
+%global upstream_version 2.10.3
 #global upstream_prever  RC2
 
 %global _phpunit         %{_bindir}/phpunit9
@@ -24,7 +24,7 @@
 
 Name:           composer
 Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
-Release:        2.1%{?dist}
+Release:        0.1%{?dist}
 Summary:        Dependency Manager for PHP
 
 # SPDX: composer and all dependencies are MIT
