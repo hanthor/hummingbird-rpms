@@ -55,6 +55,7 @@ sed -i 's|_ "modernc.org/sqlite"|_ "github.com/mattn/go-sqlite3"|' \
 %global our_goldflags %{shrink:
     -X github.com/aquasecurity/trivy/pkg/version/app.ver=%{version}
     -X github.com/mattn/go-sqlite3.driverName=sqlite
+    -linkmode=external
     -s -w
 }
 export GO_LDFLAGS=%{shescape:%our_goldflags}
@@ -66,10 +67,10 @@ export GOEXPERIMENT="nodwarf5,jsonv2"
 # effect, and even the largest compute-optimized runner pool in this repo
 # only bought marginal headroom. Dropping only DWARF with -w also wasn't
 # enough: the build compiles every package and dies silently at final link.
-# Omit the Go symbol table too (-s), start GC earlier, and cap the Go toolchain
-# heap so cmd/link trades build time for lower peak RSS.
-export GOGC=20
-export GOMEMLIMIT=1500MiB
+# Omit the Go symbol table too (-s) and use external linking so cmd/link does
+# not have to construct the final ELF image itself. Cap the Go toolchain heap
+# so it trades build time for lower peak RSS.
+export GOMEMLIMIT=2500MiB
 # Do not use the bundled sqlite
 export CGO_CFLAGS="-D USE_LIBSQLITE3=1 %{build_cflags}" CGO_LDFLAGS="-lsqlite3 %{build_ldflags}"
 # This package does not build without go modules enabled
