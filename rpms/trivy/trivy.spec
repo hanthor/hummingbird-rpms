@@ -55,7 +55,7 @@ sed -i 's|_ "modernc.org/sqlite"|_ "github.com/mattn/go-sqlite3"|' \
 %global our_goldflags %{shrink:
     -X github.com/aquasecurity/trivy/pkg/version/app.ver=%{version}
     -X github.com/mattn/go-sqlite3.driverName=sqlite
-    -w
+    -s -w
 }
 export GO_LDFLAGS=%{shescape:%our_goldflags}
 export GOEXPERIMENT="nodwarf5,jsonv2"
@@ -64,14 +64,12 @@ export GOEXPERIMENT="nodwarf5,jsonv2"
 # host during the final go link, not during parallel package compilation --
 # confirmed live: GOFLAGS="-p=2" (limits compile parallelism only) had zero
 # effect, and even the largest compute-optimized runner pool in this repo
-# only bought marginal headroom (more CPUs/RAM don't help a single serial
-# link step whose live heap is the bottleneck). Adding -w to our_goldflags
-# (drops the DWARF symbol table) also wasn't enough on its own -- the build
-# now compiles every package and dies silently right at the final link.
-# cmd/link is itself a Go program subject to the Go GC, so cap its (and the
-# compiler's) live heap directly with GOMEMLIMIT to force more aggressive
-# collection instead of letting RSS balloon until the host kills it.
-export GOMEMLIMIT=2500MiB
+# only bought marginal headroom. Dropping only DWARF with -w also wasn't
+# enough: the build compiles every package and dies silently at final link.
+# Omit the Go symbol table too (-s), start GC earlier, and cap the Go toolchain
+# heap so cmd/link trades build time for lower peak RSS.
+export GOGC=20
+export GOMEMLIMIT=1500MiB
 # Do not use the bundled sqlite
 export CGO_CFLAGS="-D USE_LIBSQLITE3=1 %{build_cflags}" CGO_LDFLAGS="-lsqlite3 %{build_ldflags}"
 # This package does not build without go modules enabled
