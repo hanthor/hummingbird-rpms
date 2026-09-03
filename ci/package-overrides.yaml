@@ -562,8 +562,8 @@ tomcat11:
 trivy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
-    - "linux-m2xlarge/arm64"
-    - "linux-m2xlarge/amd64"
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
 
 ucx:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"

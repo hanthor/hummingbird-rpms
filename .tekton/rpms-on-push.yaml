@@ -36952,8 +36952,8 @@ spec:
         - x86_64
     - name: build-platforms
       value:
-        - "linux-m2xlarge/arm64"
-        - "linux-m2xlarge/amd64"
+        - "linux-d160-c8xlarge/arm64"
+        - "linux-d160-c8xlarge/amd64"
     - name: specfile
       value: "trivy.spec"
     - name: monorepo-subdir
