@@ -71,6 +71,14 @@ export GOEXPERIMENT="nodwarf5,jsonv2"
 # not have to construct the final ELF image itself. Cap the Go toolchain heap
 # so it trades build time for lower peak RSS.
 export GOMEMLIMIT=2500MiB
+# Temporary diagnostics for the remote mock container: Tekton only sees a
+# generic rpmbuild failure when the remote host or its cgroup kills cmd/link.
+echo "Go build memory environment:"
+grep -E '^(MemTotal|MemAvailable|SwapTotal):' /proc/meminfo
+if test -r /sys/fs/cgroup/memory.max; then
+    echo -n "cgroup memory.max: "
+    cat /sys/fs/cgroup/memory.max
+fi
 # Do not use the bundled sqlite
 export CGO_CFLAGS="-D USE_LIBSQLITE3=1 %{build_cflags}" CGO_LDFLAGS="-lsqlite3 %{build_ldflags}"
 # This package does not build without go modules enabled
