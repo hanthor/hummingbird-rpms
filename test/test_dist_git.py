@@ -5316,3 +5316,317 @@ def test_update_merge_clean_custom_release_macro(workdir: Path, upstream_repos: 
     assert '<<<<<<' not in merged, "Unexpected conflict markers in merged spec"
     assert '%global baserelease 2' in merged, "Upstream baserelease bump not applied"
     assert '# Local change' in merged, "Local modification lost after merge"
+
+
+#
+# Stale patch detection tests
+#
+
+def test_get_spec_patches(tmp_path: Path, dist_git_module) -> None:
+    """get_spec_patches parses Patch<N>: declarations from a spec file."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: fix-build.patch
+# CVE-2026-12345: security fix
+Patch1: CVE-2026-12345.patch
+Patch100: test-i18n.patch
+
+%description
+Test
+
+%prep
+%autosetup -p1
+
+%files
+""")
+    patches = dist_git_module.get_spec_patches(spec)
+    assert patches == [(0, 'fix-build.patch'), (1, 'CVE-2026-12345.patch'), (100, 'test-i18n.patch')]
+
+
+def test_drop_patches_from_spec_autosetup(tmp_path: Path, dist_git_module) -> None:
+    """drop_patches_from_spec removes Patch declarations and preceding comments (%autosetup)."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: keep-this.patch
+# CVE-2026-12345: security fix
+# Upstream commit abc123
+Patch1: CVE-2026-12345.patch
+Patch2: also-keep.patch
+
+%description
+Test
+
+%prep
+%autosetup -p1
+
+%files
+""")
+    dist_git_module.drop_patches_from_spec(spec, {1})
+    result = spec.read_text()
+    assert 'Patch0: keep-this.patch' in result
+    assert 'Patch2: also-keep.patch' in result
+    assert 'CVE-2026-12345' not in result
+    assert 'Upstream commit abc123' not in result
+    assert 'Patch1' not in result
+
+
+def test_drop_patches_from_spec_explicit_patch(tmp_path: Path, dist_git_module) -> None:
+    """drop_patches_from_spec removes %patch -P<N> lines for explicit-apply specs."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: keep-this.patch
+Patch1: drop-this.patch
+Patch2: also-keep.patch
+
+%description
+Test
+
+%prep
+%setup -q
+%patch -P0 -p1 -b .keep
+%patch -P1 -p1 -b .drop
+%patch -P2 -p1 -b .alsokeep
+
+%files
+""")
+    dist_git_module.drop_patches_from_spec(spec, {1})
+    result = spec.read_text()
+    assert '%patch -P0 -p1 -b .keep' in result
+    assert '%patch -P2 -p1 -b .alsokeep' in result
+    assert 'Patch1' not in result
+    assert '%patch -P1' not in result
+
+
+def test_drop_patches_from_spec_old_style_patch(tmp_path: Path, dist_git_module) -> None:
+    """drop_patches_from_spec removes old-style %patch<N> apply lines."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: keep-this.patch
+Patch1: drop-this.patch
+Patch2: also-keep.patch
+
+%description
+Test
+
+%prep
+%setup -q
+%patch0 -p1 -b .keep
+%patch1 -p1 -b .drop
+%patch2 -p1 -b .alsokeep
+
+%files
+""")
+    dist_git_module.drop_patches_from_spec(spec, {1})
+    result = spec.read_text()
+    assert 'Patch0: keep-this.patch' in result
+    assert 'Patch2: also-keep.patch' in result
+    assert '%patch0 -p1 -b .keep' in result
+    assert '%patch2 -p1 -b .alsokeep' in result
+    assert 'Patch1' not in result
+    assert '%patch1' not in result
+
+
+def test_drop_patches_partial_multi(tmp_path: Path, dist_git_module) -> None:
+    """Dropping patch 1 and 3 keeps patch 0 and 2 intact."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: keep0.patch
+Patch1: drop1.patch
+Patch2: keep2.patch
+# Comment for patch3
+Patch3: drop3.patch
+
+%description
+Test
+
+%prep
+%setup -q
+%patch -P0 -p1
+%patch -P1 -p1
+%patch -P2 -p1
+%patch -P3 -p1
+
+%files
+""")
+    dist_git_module.drop_patches_from_spec(spec, {1, 3})
+    result = spec.read_text()
+    assert 'Patch0: keep0.patch' in result
+    assert 'Patch2: keep2.patch' in result
+    assert '%patch -P0 -p1' in result
+    assert '%patch -P2 -p1' in result
+    assert 'Patch1' not in result
+    assert 'Patch3' not in result
+    assert '%patch -P1' not in result
+    assert '%patch -P3' not in result
+    assert 'Comment for patch3' not in result
+
+
+def _make_source_tarball(tmp_path: Path, name: str, files: dict[str, str]) -> Path:
+    """Create a .tar.gz archive with the given files inside a top-level directory."""
+    import tarfile
+    source_dir = tmp_path / name
+    source_dir.mkdir(parents=True)
+    for fname, content in files.items():
+        (source_dir / fname).write_text(content)
+    tarball = tmp_path / f'{name}.tar.gz'
+    with tarfile.open(tarball, 'w:gz') as tar:
+        tar.add(source_dir, arcname=name)
+    return tarball
+
+
+def test_detect_stale_patches(tmp_path: Path, dist_git_module) -> None:
+    """detect_stale_patches identifies patches already present in upstream sources."""
+    # Create a "new upstream" source tree with the fix already applied
+    tarball = _make_source_tarball(tmp_path / 'src', 'test-1.0', {
+        'main.c': '#include <stdio.h>\nint main() { return 0; }\n',
+    })
+
+    # Set up a package dir with a spec and a patch that reverses cleanly
+    pkg_dir = tmp_path / 'pkg'
+    pkg_dir.mkdir()
+
+    # Patch that adds the line "int main() { return 0; }" — already in upstream
+    patch_content = """\
+--- a/main.c
++++ b/main.c
+@@ -1 +1,2 @@
+ #include <stdio.h>
++int main() { return 0; }
+"""
+    (pkg_dir / 'fix.patch').write_text(patch_content)
+    (pkg_dir / 'unrelated.patch').write_text("""\
+--- a/other.c
++++ b/other.c
+@@ -0,0 +1 @@
++/* new file */
+""")
+
+    spec = pkg_dir / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: fix.patch
+Patch1: unrelated.patch
+
+%description
+Test
+%files
+""")
+
+    # Copy tarball into package dir (simulating gorget download)
+    shutil.copy(tarball, pkg_dir / 'test-1.0.tar.gz')
+
+    stale = dist_git_module.detect_stale_patches(pkg_dir, ['test-1.0.tar.gz'])
+
+    # fix.patch should be stale (reverse-applies cleanly), unrelated.patch should not
+    stale_nums = [num for num, _ in stale]
+    assert 0 in stale_nums, "fix.patch should be detected as stale"
+    assert 1 not in stale_nums, "unrelated.patch should NOT be detected as stale"
+
+
+def test_drop_stale_patches_deletes_files(tmp_path: Path, dist_git_module) -> None:
+    """drop_stale_patches removes patch files and updates spec."""
+    pkg_dir = tmp_path / 'pkg'
+    pkg_dir.mkdir()
+    (pkg_dir / 'keep.patch').write_text('keep')
+    (pkg_dir / 'drop.patch').write_text('drop')
+    spec = pkg_dir / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 1.0
+Release: 1%{?dist}
+Patch0: keep.patch
+# CVE comment
+Patch1: drop.patch
+
+%description
+Test
+
+%prep
+%setup -q
+%patch -P0 -p1
+%patch -P1 -p1
+
+%files
+""")
+
+    dist_git_module.drop_stale_patches(pkg_dir, [(1, 'drop.patch')])
+
+    assert (pkg_dir / 'keep.patch').exists()
+    assert not (pkg_dir / 'drop.patch').exists()
+    result = spec.read_text()
+    assert 'Patch0: keep.patch' in result
+    assert 'Patch1' not in result
+    assert 'CVE comment' not in result
+    assert '%patch -P0 -p1' in result
+    assert '%patch -P1' not in result
+
+
+def test_fetch_sources_for_stale_check_success(tmp_path: Path, dist_git_module) -> None:
+    """Sources file is copied into tmpdir, dist-git-client runs there, filenames returned."""
+    pkg_dir = tmp_path / 'pkg'
+    pkg_dir.mkdir()
+    (pkg_dir / 'sources').write_text(
+        'SHA512 (test-1.0.tar.gz) = abc123\nSHA512 (extra.tar.xz) = def456\n')
+    fetch_dir = tmp_path / 'fetch'
+    fetch_dir.mkdir()
+
+    with patch.object(dist_git_module.subprocess, 'run',
+                      return_value=subprocess.CompletedProcess([], 0, '', '')) as run:
+        result = dist_git_module._fetch_sources_for_stale_check(
+            pkg_dir, 'https://example.com/pkg', fetch_dir)
+
+    assert result == ['test-1.0.tar.gz', 'extra.tar.xz']
+    # sources must be copied into tmpdir, not left only in package_dir -- otherwise
+    # dist-git-client has nothing to download from.
+    assert (fetch_dir / 'sources').exists()
+    # and it must run in tmpdir, so tarballs don't land in package_dir
+    assert run.call_args.kwargs['cwd'] == str(fetch_dir)
+    assert 'dist-git-client' in run.call_args.args[0]
+
+
+def test_fetch_sources_for_stale_check_download_failure(tmp_path: Path, dist_git_module) -> None:
+    """A dist-git-client failure returns [] so detection is skipped, not crashed."""
+    pkg_dir = tmp_path / 'pkg'
+    pkg_dir.mkdir()
+    (pkg_dir / 'sources').write_text('SHA512 (test-1.0.tar.gz) = abc123\n')
+    fetch_dir = tmp_path / 'fetch'
+    fetch_dir.mkdir()
+
+    with patch.object(dist_git_module.subprocess, 'run',
+                      return_value=subprocess.CompletedProcess([], 1, '', 'network error')):
+        result = dist_git_module._fetch_sources_for_stale_check(
+            pkg_dir, 'https://example.com/pkg', fetch_dir)
+
+    assert result == []
+
+
+def test_fetch_sources_for_stale_check_no_sources_file(tmp_path: Path, dist_git_module) -> None:
+    """A package with no sources file returns [] without invoking dist-git-client."""
+    pkg_dir = tmp_path / 'pkg'
+    pkg_dir.mkdir()
+    fetch_dir = tmp_path / 'fetch'
+    fetch_dir.mkdir()
+
+    with patch.object(dist_git_module.subprocess, 'run') as run:
+        result = dist_git_module._fetch_sources_for_stale_check(
+            pkg_dir, 'https://example.com/pkg', fetch_dir)
+
+    assert result == []
+    run.assert_not_called()
