@@ -1,0 +1,5 @@
+--- a/tests/stackprof-subr.sh
++++ b/tests/stackprof-subr.sh
+@@ -24,1 +24,1 @@ check_perf_event_open() {
+-        if grep -q "perf_event_open.*failed\|Operation not permitted\|Permission denied" perf-test.out; then
++        if grep -Eq "unable to open perf fd|perf_event_open.*failed|Operation not permitted|Permission denied" perf-test.out; then
