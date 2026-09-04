@@ -169,6 +169,9 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_libdir}/girepository-1.0/*.typelib
 
 %changelog
+* Fri Sep 04 2026 Hummingbird Security <security@hummingbird.example.com> - 127-5.1
+- CVE-2026-85498: fix size_t underflow in read_cookie() when first stdin byte is NUL
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 127-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
