@@ -1,0 +1,51 @@
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "v${VERSION}"
+    archive_name: "prometheus-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor-bump
+    ecosystem: pnpm
+    modules:
+      - path: "web/ui/react-app"
+    pins:
+      - dependency: postcss
+        version: "8.5.19"
+  - type: vendor
+    ecosystem: go
+    archive_name: "prometheus-${VERSION}-vendor.tar.bz2"
+    modules:
+      - path: "."
+        use_workspace: false
+  - type: vendor
+    ecosystem: pnpm
+    archive_name: "prometheus-pnpm-cache-${VERSION}.tar.bz2"
+    modules:
+      - path: "web/ui"
+      - path: "web/ui/react-app"
+  # TODO: Remove this step once gorget cleans pnpm workspace artifacts itself.
+  # The cleanup prevents temporary dependencies from entering repacked Source0.
+  - type: run
+    command:
+      - sh
+      - -c
+      - |
+        find web/ui -type d -name node_modules -prune -exec rm -rf -- {} +
+        rm -rf web/ui/.pnpm-store web/ui/react-app/.pnpm-store
+
+policy:
+  vendor-constraints:
+    - package: postcss
+      ecosystem: pnpm
+      version: "8.5.19"
+      reason: "CVE-2026-69153"
+
+post:
+  - type: bundled-provides
+    ecosystem: pnpm
+    modules:
+      - path: "web/ui"
+      - path: "web/ui/react-app"
+    scope: all
+    output: bundled-npm-provides.inc

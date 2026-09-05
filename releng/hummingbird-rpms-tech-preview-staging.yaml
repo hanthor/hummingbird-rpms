@@ -917,6 +917,8 @@ spec:
           contentType: rpm
         - name: prometheus3-13-main
           contentType: rpm
+        - name: prometheus3-14-main
+          contentType: rpm
         - name: prometheus3-5-main
           contentType: rpm
         - name: protobuf-main
