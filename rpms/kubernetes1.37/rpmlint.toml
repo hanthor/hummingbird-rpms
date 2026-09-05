@@ -1,0 +1,15 @@
+Filters = [
+	
+    # drop postun related warning
+    'one-line-command-in-%postun',
+
+    # unversioned provides needed
+    'unversioned-explicit-provides',
+
+    # kubeadm, kubelet and kubectl spelled correctly
+    'spelling-error',
+
+    # source urls correct
+    'invalid-url',
+]
+

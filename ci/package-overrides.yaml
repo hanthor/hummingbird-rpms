@@ -333,6 +333,9 @@ kubernetes1.35:
 kubernetes1.36:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+kubernetes1.37:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 lcms2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

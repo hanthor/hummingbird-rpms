@@ -477,6 +477,8 @@ spec:
           contentType: rpm
         - name: kubernetes1-36-main
           contentType: rpm
+        - name: kubernetes1-37-main
+          contentType: rpm
         - name: langpacks-main
           contentType: rpm
         - name: lcms2-main
