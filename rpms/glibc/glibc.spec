@@ -153,7 +153,7 @@ Version: %{glibcversion}
 #   generator to make the generated requires interchangeable between Rawhide
 #   and ELN (.elnYY < .fcXX).
 %global baserelease 8
-Release: %{baserelease}.4%{?dist}
+Release: %{baserelease}.5%{?dist}
 
 # Licenses:
 #
