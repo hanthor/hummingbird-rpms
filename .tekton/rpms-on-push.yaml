@@ -15397,11 +15397,16 @@ metadata:
     build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    pipelinesascode.tekton.dev/on-target-branch: "[main]"
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/kubernetes1.37/***]"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/kubernetes1\\.37/")
+          )
+        )
+      )
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -15427,10 +15432,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "kubernetes1.37.spec"
     - name: monorepo-subdir
@@ -15449,7 +15456,7 @@ spec:
       - name: kind
         value: pipeline
       - name: bundle
-        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:bf43eccaf6669073b4ef441555c004a7ae263a1ec027530decdba2f3714f23ae"
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-kubernetes1-37-main
   timeouts:

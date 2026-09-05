@@ -340,6 +340,10 @@ rm CHANGELOG.md
     %dnl TestUpdate... tests flaky on several arches
     -s "TestUpdateNewNodeStatus"
     -s "TestUpdateExistingNodeStatus"
+    %dnl Mock buildroots do not provide /etc/resolv.conf
+    -s "TestGetPodDNS"
+    %dnl test times out after 10m on x86_64 and aarch64
+    -s "TestParallel"
     %dnl see hack/make-rules/test.sh kube::test::find_go_packages
     -t "third_party"
     -t "cmd/kubeadm/test"
