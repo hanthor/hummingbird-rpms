@@ -1,0 +1,13 @@
+{
+  "branch": "rawhide",
+  "modification_reason": "Skip tests that fail in the Mock buildroot",
+  "modification_status": "modified",
+  "release": "3",
+  "release_monitoring_project_id": 10954,
+  "sha": "06e1c9d7dfa1211acc22073fb470dd530481da11",
+  "source": "https://src.fedoraproject.org/rpms/kubernetes1.37.git",
+  "track_upstream": "1.37",
+  "upstream_branch": "release-1.37",
+  "upstream_repo": "https://github.com/kubernetes/kubernetes",
+  "version": "1.37.0"
+}
