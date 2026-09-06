@@ -344,6 +344,12 @@ readonly -a configure_flags=(
 %if %{without bundled_nodejs_undici}
     --shared-builtin-undici/undici-path=%{nodejs_common_sitelib}/undici/loader.js
 %endif
+    # The startup snapshot and code cache abort with "free(): invalid pointer"
+    # in the shared-library build; disable both until the upstream fix lands.
+    # See the exact build failure:
+    # https://github.com/nodejs/node/issues/65110#issuecomment-5224669364
+    # Introduced by https://github.com/nodejs/node/pull/63626.
+    --without-node-snapshot --without-node-code-cache
     # Enable LTO where possible
     --enable-lto
     # Compile with small icu, extendable via full-i18n subpackage
