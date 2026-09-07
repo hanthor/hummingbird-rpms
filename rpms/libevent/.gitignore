@@ -1,4 +1,8 @@
 /libevent-2.1.8-stable.tar.gz
 libevent-2.1.8-stable/
 /libevent-2.1.12-stable.tar.gz
+<<<<<<< HEAD
+/libevent-2.1.13-stable.tar.gz
+=======
 libevent-2.1.13-stable.tar.gz
+>>>>>>> hummingbird-local
