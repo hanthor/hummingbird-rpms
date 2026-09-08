@@ -117,8 +117,6 @@ For each package backport:
    Fedora-imported package. Preserve existing reasons. Do not mark independent packages modified.
 5. Make one commit per package. Include the patch, spec, and metadata in that commit. Use
    `Backport CVE-ID fix to PKG` as the subject. Do not create a separate metadata commit.
-6. Run the upstream regression tests and build the RPM. `make check` validates the repository but
-   does not build the package. If a build cannot run, state that gap before opening the MR.
 
 If `dist_git.py update` reports *"upstream branch rawhide is retired"*,
 retry with `--branch f44` (or `--branch f43`). The `--dry-run` flag is

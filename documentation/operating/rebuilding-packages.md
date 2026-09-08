@@ -570,16 +570,9 @@ Backport: https://github.com/rpm-software-management/dnf5/pull/2522
 Include the patch, spec file, and metadata file in the same package commit. Do not use
 `dist_git.py rebuild` for this step. That command describes and commits a no-change rebuild.
 
-### 8. Test the patch and build
+### 8. Verify patch application
 
-Apply the patch to the exact packaged source release. Run the upstream regression tests for the
-changed behavior. For a security patch, also build the package locally:
-
-```bash
-./ci/build_rpms.sh <package>
-```
-
-Built RPMs will be in `builds/<package>/RPMS/`.
+Apply the patch to the exact packaged source release.
 
 ## Related Operations
 
