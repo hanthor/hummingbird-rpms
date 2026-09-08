@@ -20,7 +20,7 @@ bot's `{noformat}` comment; write through `cve_helper.py`.
 ## Helper
 
 ```bash
-python .cursor/skills/cve/cve_helper.py deps
+python .agents/skills/cve/cve_helper.py deps
 export HUMMINGBIRD_TOOLS_ROOT=/path/to/hummingbird/tools   # if not pip-installed
 ```
 
@@ -33,7 +33,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | `investigate HUM-XXXX only` | Named tickets only (`--no-find-related`) |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
-| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Fork push + `glab` MR (not `advisory_handler`); `--title` and `--message` are required |
+| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Push the branch and open a `glab` MR; `--title` and `--message` are required. |
 | `lookaside-cmd -f FILE -p PKG` | Print upload commands; do not upload |
 | `version-check PKG` | Local NVR vs CVE range / FIB / analysis NVR |
 | `upstream-fix-age` | Fix-commit date vs upstream tag/release date |
@@ -54,8 +54,8 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    `rename_chat` with the printed `Suggested chat title`.
 3. **Read the recap.** It leads with assignee (user vs bot), labels, and
    FIB. User-named tickets are in-scope. Discovered same-CVE siblings
-   are context until the user says so. A "Yes please" on the named set
-   is not approval for extras. Each ticket line ends with a
+   require a scope choice. Ask whether to include all related tickets or
+   only the named tickets. Each ticket line ends with a
    `resolution_hint` tag and a `recommended_next` command — a suggestion,
    not a decision; still gather evidence and still ask before closing.
    If FIB and a task/MR already exist, leave for advisory automation. If
@@ -105,13 +105,31 @@ do not change metadata
 copy/upload commands and waits. `open-mr` uses `Closes:` for the **task**,
 `Ref:` for trackers, `CVE:` for IDs. Chat prefix `!${MR_IID}`.
 
+For each package backport:
+
+1. Put provenance in the patch header. Use `Upstream: <direct commit URL>`. Add
+   `Origin: <original commit URL>` only when the direct commit is a backport or adaptation.
+2. Apply the patch to the exact packaged source release. Confirm that any adaptation changes only
+   context, not the security fix or its tests.
+3. Run `release-bump PKG --apply`. Do not use `dist_git.py rebuild`; its commit message describes a
+   no-change rebuild.
+4. Run `make dist-git ARGS='mark-modified PKG --modified --reason "... CVE-ID ..."'` for a
+   Fedora-imported package. Preserve existing reasons. Do not mark independent packages modified.
+5. Make one commit per package. Include the patch, spec, and metadata in that commit. Use
+   `Backport CVE-ID fix to PKG` as the subject. Do not create a separate metadata commit.
+6. Run the upstream regression tests and build the RPM. `make check` validates the repository but
+   does not build the package. If a build cannot run, state that gap before opening the MR.
+
 If `dist_git.py update` reports *"upstream branch rawhide is retired"*,
 retry with `--branch f44` (or `--branch f43`). The `--dry-run` flag is
 top-level: `./ci/dist_git.py --dry-run update PKG`.
 
 Always invoke `open-mr` from the **main repo**'s helper even when the
 agent is inside a worktree:
-`python /path/to/rpms/.cursor/skills/cve/cve_helper.py open-mr …`
+`python /path/to/rpms/.agents/skills/cve/cve_helper.py open-mr …`
+
+`open-mr` uses the current branch's upstream remote, then `origin` if the branch has no upstream.
+Use `--push-remote NAME` to override this choice. Do not create or add a remote.
 
 **Multi-CVE same-package pattern:** when multiple CVEs share the same
 package and fix version, use **one task and one MR** for all of them.
@@ -119,6 +137,9 @@ Pass the first tracker to `create-task --blocks`, then link the rest
 with `rhjira edit TASK --blocks HUM-XXXX --noeditor`. Pass all tracker
 keys and CVE IDs to `open-mr --tracker` and `--cve`. Attach conversation logs
 at the end to each tracker using `cve_helper.py log-message HUM-XXXX /path/to/log`.
+
+**One CVE across versioned packages:** use one task and one MR. Link every tracker to the task.
+Create one commit per package so each release bump, patch, and metadata update stay together.
 
 **No upstream fix (3f):** `next-release HUM-XXXX --package PKG` (or
 `--kind next-release` with `--cve` / `-m`). Leaves In Progress.

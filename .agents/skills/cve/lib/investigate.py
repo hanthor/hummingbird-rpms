@@ -220,10 +220,7 @@ def recap_lines(gathered: GatheredTickets) -> list[str]:
         lines.append(
             "Related: "
             + ", ".join(related)
-            + ". Apply this to all, or only the tickets you named?"
-        )
-        lines.append(
-            'A "Yes please" on the named set is not approval for discovered siblings.'
+            + ". Include all related tickets, or only the tickets you named?"
         )
     return lines
 

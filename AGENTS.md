@@ -4,10 +4,17 @@
 
 **All package operations must go through `ci/dist_git.py`.** Do not manually edit spec
 files, metadata JSON, or Konflux/Tekton resources to perform operations that the script
-handles — it coordinates all of those changes atomically and commits them.
+handles. Some commands commit their changes. `mark-modified` only updates metadata, so include
+that metadata file in the package commit that needs it.
 
-Run the script inside `limactl shell fedora` (or a container) because it needs Python
-dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
+Use the repository container target because the script needs Python dependencies that are not
+available on all hosts:
+
+```bash
+make dist-git ARGS='<command and arguments>'
+```
+
+Use `limactl shell fedora` only when the Makefile container is unavailable.
 
 | Command | When to use |
 | ------- | ----------- |
@@ -43,7 +50,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Import dist-git package        | `import fedora/<pkg>`                                           | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Add a new package from Fedora dist-git                                 |
 | Add independent package        | _(manual — not from Fedora)_                                    | [Adding Independent Packages](documentation/operating/adding-independent-packages.md)           | Add new package not imported from Fedora                               |
 | Rebuild package (no-change)    | `rebuild <pkg> --reason "..."` (or `--all --exclude pkg1,pkg2`) | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Faulty RPM published; need to bump Release for rebuild                 |
-| Backport a patch               | `mark-modified` then edit spec                                  | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
+| Backport a patch               | Add patch, bump Release, run `mark-modified`                    | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
 | Configure metadata fields      | _(edit `metadata/<pkg>.json`)_                                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)                   | Understand `release` and `modification_status` configuration           |
 | Debug build failures           | _(see docs)_                                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Investigate and fix failed package builds                              |
 | Mark package modified          | `mark-modified <pkg> --modified --reason "..."`                 | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Track local changes; prevent automatic Fedora updates                  |
@@ -71,7 +78,7 @@ import` command does not set this field automatically.
 
 To populate it:
 
-1. Use the `/generate-package-map` Cursor skill (`.cursor/skills/generate-package-map/SKILL.md`),
+1. Use the `/generate-package-map` skill (`.agents/skills/generate-package-map/SKILL.md`),
    which searches for the canonical upstream git repository and handles mirror canonicalization,
    known overrides, and versioned-package branches.
 2. Or manually add the field to `metadata/<package>.json`:

@@ -1,1 +1,1 @@
-../../.cursor/commands/analyze-failures.md
+../../.agents/commands/analyze-failures.md
