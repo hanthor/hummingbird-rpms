@@ -28,6 +28,10 @@ Patch0:         0001-feat-redhat-Add-Red-Hat-Hummingbird-support.patch
 # see this patch's own header comment for why it exists as a static patch
 # rather than replicating the pre_commands' `go get` calls in %prep.
 Patch1:         0002-sync-go-mod-with-go-vendor-tools-pre-commands.patch
+# Fix build with Go 1.27: encoding/json/v2 removed the SkipFunc sentinel
+# (golang/go#74324). Backport of the relevant hunk from trivy's own
+# upstream Go 1.27 migration commit.
+Patch2:         0003-pkg-x-json-fix-build-with-Go-1.27.patch
 
 BuildRequires:  git-core
 BuildRequires:  go-vendor-tools
