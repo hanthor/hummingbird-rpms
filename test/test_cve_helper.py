@@ -131,6 +131,43 @@ def test_probe_spec_deps_bundled_and_component(tmp_path: Path, monkeypatch) -> N
     assert bundled.bundled_version == "0.21.0"
 
 
+def test_spec_path_versioned_package(tmp_path: Path, monkeypatch) -> None:
+    # Versioned packages keep the base project name for the spec file
+    # itself, e.g. maven3.9/maven.spec, golang1.25/golang.spec.
+    pkg = "maven3.9"
+    pkg_dir = tmp_path / "rpms" / pkg
+    pkg_dir.mkdir(parents=True)
+    spec_file = pkg_dir / "maven.spec"
+    spec_file.write_text(
+        "\n".join(
+            [
+                "Name: maven",
+                "Provides: bundled(mvn(com.google.guava:guava)) = 33.6.0",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    assert lib_utils.spec_path(pkg) == spec_file
+    hits = helper.probe_spec_deps(pkg, "com.github.luben/zstd-jni")
+    assert hits == []
+    hits = helper.probe_spec_deps(pkg, "guava")
+    assert hits and "guava" in hits[0].bundled_name
+
+
+def test_spec_path_ambiguous_falls_back_to_named(tmp_path: Path, monkeypatch) -> None:
+    # No exact match and more than one *.spec candidate: keep the old
+    # (deterministic) "not found" behavior instead of guessing.
+    pkg = "confusingpkg"
+    pkg_dir = tmp_path / "rpms" / pkg
+    pkg_dir.mkdir(parents=True)
+    (pkg_dir / "one.spec").write_text("Name: one\n", encoding="utf-8")
+    (pkg_dir / "two.spec").write_text("Name: two\n", encoding="utf-8")
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    assert lib_utils.spec_path(pkg) == pkg_dir / f"{pkg}.spec"
+
+
 def test_run_rhjira_retries_transient_errors(monkeypatch) -> None:
     calls: list[list[str]] = []
     sleeps: list[int] = []

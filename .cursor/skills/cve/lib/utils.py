@@ -27,6 +27,25 @@ def _pkg_dir(package: str) -> Path:
     return repo_root() / "rpms" / package
 
 
+def spec_path(package: str) -> Path:
+    """Resolve the spec file for a package directory.
+
+    The spec filename usually matches the package directory name, but
+    versioned packages (e.g. maven3.9, golang1.25, ruby3.4, tomcat10) keep
+    the base project name for the spec itself (maven.spec, golang.spec,
+    ruby.spec, tomcat.spec). Mirrors the `glob('*.spec')` convention used in
+    ci/dist_git.py.
+    """
+    pkg_dir = _pkg_dir(package)
+    named = pkg_dir / f"{package}.spec"
+    if named.is_file():
+        return named
+    spec_files = sorted(pkg_dir.glob("*.spec")) if pkg_dir.is_dir() else []
+    if len(spec_files) == 1:
+        return spec_files[0]
+    return named
+
+
 # ---- Subprocess ----
 
 

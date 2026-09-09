@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 from lib.models import SpecDepHit
-from lib.utils import repo_root, _pkg_dir, normalize_nvr, extract_vendor_field
+from lib.utils import repo_root, _pkg_dir, normalize_nvr, extract_vendor_field, spec_path
 
 
 # ---- Constants ----
@@ -48,10 +48,10 @@ def _expand_macros(value: str, macros: dict[str, str]) -> str:
 
 
 def read_local_spec_nvr(package: str) -> str:
-    spec_path = _pkg_dir(package) / f"{package}.spec"
-    if not spec_path.is_file():
+    spec_file = spec_path(package)
+    if not spec_file.is_file():
         return ""
-    text = spec_path.read_text(encoding="utf-8", errors="replace")
+    text = spec_file.read_text(encoding="utf-8", errors="replace")
     # Only read the preamble — stop at the first section header
     preamble = re.split(
         r"^%(?:description|package|prep|build|install|files|changelog)\b",
@@ -80,10 +80,10 @@ def read_local_spec_nvr(package: str) -> str:
 
 def read_spec_release_before_dist(package: str) -> tuple[str, bool]:
     """Return (Release value before %{?dist}, uses_autorelease)."""
-    spec_path = _pkg_dir(package) / f"{package}.spec"
-    if not spec_path.is_file():
-        raise RuntimeError(f"Spec not found: {spec_path}")
-    text = spec_path.read_text(encoding="utf-8", errors="replace")
+    spec_file = spec_path(package)
+    if not spec_file.is_file():
+        raise RuntimeError(f"Spec not found: {spec_file}")
+    text = spec_file.read_text(encoding="utf-8", errors="replace")
     preamble = re.split(
         r"^%(?:description|package|prep|build|install|files|changelog)\b",
         text,
@@ -108,7 +108,7 @@ def search_cve_in_spec_and_patches(package: str, cve_ids: list[str]) -> bool:
     if not pkg_dir.is_dir() or not cve_ids:
         return False
     pattern = re.compile("|".join(re.escape(c) for c in cve_ids), re.IGNORECASE)
-    files = [pkg_dir / f"{package}.spec"] + sorted(pkg_dir.glob("*.patch"))
+    files = [spec_path(package)] + sorted(pkg_dir.glob("*.patch"))
     for path in files:
         if path.is_file() and pattern.search(
             path.read_text(encoding="utf-8", errors="replace")
@@ -121,11 +121,11 @@ def search_cve_in_spec_and_patches(package: str, cve_ids: list[str]) -> bool:
 
 
 def probe_spec_deps(package: str, component: str = "") -> list[SpecDepHit]:
-    spec_path = _pkg_dir(package) / f"{package}.spec"
-    if not spec_path.is_file():
-        raise RuntimeError(f"Spec not found: {spec_path}")
+    spec_file = spec_path(package)
+    if not spec_file.is_file():
+        raise RuntimeError(f"Spec not found: {spec_file}")
     hits: list[SpecDepHit] = []
-    lines = spec_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    lines = spec_file.read_text(encoding="utf-8", errors="replace").splitlines()
     component_re = (
         re.compile(re.escape(component), re.IGNORECASE) if component else None
     )
@@ -160,8 +160,7 @@ def probe_spec_deps(package: str, component: str = "") -> list[SpecDepHit]:
 
 
 def print_spec_deps(package: str, component: str, hits: list[SpecDepHit]) -> None:
-    spec_path = _pkg_dir(package) / f"{package}.spec"
-    print(f"Spec: {spec_path}")
+    print(f"Spec: {spec_path(package)}")
     if component:
         print(f"Component: {component}")
     print(f"Hits: {len(hits)}")
@@ -593,10 +592,10 @@ def apply_release_bump(package: str) -> dict[str, Any]:
     proposed = payload.get("proposed_spec_release")
     if not proposed or payload.get("uses_autorelease"):
         return payload
-    spec_path = _pkg_dir(package) / f"{package}.spec"
-    if not spec_path.is_file():
+    spec_file = spec_path(package)
+    if not spec_file.is_file():
         return payload
-    text = spec_path.read_text(encoding="utf-8")
+    text = spec_file.read_text(encoding="utf-8")
 
     def replace_release(m: re.Match) -> str:
         line = m.group(0)
@@ -610,8 +609,8 @@ def apply_release_bump(package: str) -> dict[str, Any]:
         r"^Release:\s*.+$", replace_release, text, count=1, flags=re.MULTILINE | re.IGNORECASE
     )
     if count:
-        spec_path.write_text(new_text, encoding="utf-8")
+        spec_file.write_text(new_text, encoding="utf-8")
         payload["writes"] = True
-        payload["hint"] = f"updated {spec_path.name} Release to {proposed}"
+        payload["hint"] = f"updated {spec_file.name} Release to {proposed}"
     return payload
 
