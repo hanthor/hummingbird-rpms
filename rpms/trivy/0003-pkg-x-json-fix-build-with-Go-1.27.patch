@@ -13,9 +13,11 @@ breaking the build with:
     pkg/x/json/json.go:109:16: undefined: json.SkipFunc
 
 Backported from the upstream fix that shipped in trivy's own Go 1.27
-migration, restricted to the pkg/x/json/json.go hunk (the go.mod
+migration, restricted to the two json.SkipFunc call sites that exist
+in v0.74.0 (verified via a full source-tree grep for "json.SkipFunc"
+against the v0.74.0 tag; no other occurrences exist). The go.mod
 `go 1.27.0` directive bump from that commit is not needed here since
-the hermetic build already resolves the correct toolchain):
+the hermetic build already resolves the correct toolchain:
 https://github.com/aquasecurity/trivy/commit/dc3c56eed58ab21c7e08d26757c517bc946a86c5
 
 diff --git a/pkg/x/json/json.go b/pkg/x/json/json.go
@@ -40,6 +42,20 @@ index e0d5e7df29..85cf59a23a 100644
  		}
  		visited.Append(start)
  
+diff --git a/pkg/iac/scanners/cloudformation/parser/parameter.go b/pkg/iac/scanners/cloudformation/parser/parameter.go
+index 10b1368e6c..1baa2b0302 100644
+--- a/pkg/iac/scanners/cloudformation/parser/parameter.go
++++ b/pkg/iac/scanners/cloudformation/parser/parameter.go
+@@ -54,7 +54,8 @@ func unmarshalIntFirst(dec *jsontext.Decoder, v *any) error {
+ 		}
+ 		return nil
+ 	}
+-	return json.SkipFunc
++	// Fall back to the default decoding.
++	return errors.ErrUnsupported
+ }
+ 
+ func (p *Parameter) Type() cftypes.CfType {
 -- 
 2.51.0
 
