@@ -93,6 +93,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -111,6 +112,8 @@ DEFAULT_BASE_URLS = {
 BINARY_ARCHES = ('x86_64', 'aarch64')
 DEBUGINFO_SUFFIXES = ('-debuginfo', '-debugsource')
 DEFAULT_DNF_TIMEOUT_SECS = 30
+PULP_QUERY_ATTEMPTS = 3
+PULP_QUERY_INITIAL_RETRY_DELAY_SECS = 2
 # Used for both rpmspec (spec mode) and rpm -qp (built-RPM mode) subprocess
 # calls; 20s is generous for either -- rpmspec parses a local spec file and
 # rpm -qp reads a local RPM header, neither touches the network.
@@ -384,25 +387,37 @@ def query_pulp_evrs(base_url: str, names: set[str], timeout: int) -> dict[str, s
         'repoquery', '--qf', f'%{{name}}\t{DNF_EVR_QUERYFORMAT}\n',
         *sorted(names),
     ]
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        logging.error("Timed out querying %s for: %s", base_url, ', '.join(sorted(names)))
-        return None
-    except FileNotFoundError:
-        raise NevrCheckError("dnf is required but not found in PATH")
+    retry_delay = PULP_QUERY_INITIAL_RETRY_DELAY_SECS
+    for attempt in range(PULP_QUERY_ATTEMPTS):
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            message = f"Timed out querying {base_url} for: {', '.join(sorted(names))}"
+        except FileNotFoundError:
+            raise NevrCheckError("dnf is required but not found in PATH")
+        else:
+            if result.returncode == 0:
+                break
+            # Treat any non-zero exit as a failure, even if some stdout was
+            # produced (e.g. a partial result before a timeout/network drop).
+            # Trusting partial output here would silently treat any name
+            # missing from it as "not published" (OK) -- a false negative for
+            # exactly the case this tool exists to catch.
+            message = (
+                f"dnf repoquery against {base_url} failed (rc={result.returncode}): "
+                f"{result.stderr.strip()}"
+            )
 
-    if result.returncode != 0:
-        # Treat any non-zero exit as a failure, even if some stdout was
-        # produced (e.g. a partial result before a timeout/network drop).
-        # Trusting partial output here would silently treat any name
-        # missing from it as "not published" (OK) -- a false negative for
-        # exactly the case this tool exists to catch.
-        logging.error(
-            "dnf repoquery against %s failed (rc=%d): %s",
-            base_url, result.returncode, result.stderr.strip(),
+        if attempt == PULP_QUERY_ATTEMPTS - 1:
+            logging.error("%s", message)
+            return None
+
+        logging.warning(
+            "%s; retrying in %d seconds (attempt %d/%d)",
+            message, retry_delay, attempt + 1, PULP_QUERY_ATTEMPTS,
         )
-        return None
+        time.sleep(retry_delay)
+        retry_delay *= 2
 
     evrs: dict[str, set[str]] = {}
     for line in result.stdout.strip().splitlines():

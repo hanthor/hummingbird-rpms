@@ -487,10 +487,51 @@ def test_query_pulp_evrs_nonzero_exit_with_partial_stdout_is_failure(
     treat any missing name as OK, a false negative for a real conflict."""
     fake_dnf({PUBLIC_BASE_URLS['x86_64']: {'widget': ['1.0-3.hum1']}})
     monkeypatch.setenv('FAKE_DNF_EXIT_CODE', '1')
+    monkeypatch.setattr(checker.time, 'sleep', lambda _: None)
 
     result = checker.query_pulp_evrs(PUBLIC_BASE_URLS['x86_64'], {'widget'}, timeout=5)
 
     assert result is None
+
+
+def test_query_pulp_evrs_retries_timeout_then_succeeds(checker, monkeypatch):
+    calls = 0
+    delays = []
+
+    def run(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise subprocess.TimeoutExpired(args[0], kwargs['timeout'])
+        return subprocess.CompletedProcess(args[0], 0, 'widget\t1.0-3.hum1\n', '')
+
+    monkeypatch.setattr(checker.subprocess, 'run', run)
+    monkeypatch.setattr(checker.time, 'sleep', delays.append)
+
+    result = checker.query_pulp_evrs(PUBLIC_BASE_URLS['x86_64'], {'widget'}, timeout=5)
+
+    assert result == {'widget': {'1.0-3.hum1'}}
+    assert calls == 2
+    assert delays == [2]
+
+
+def test_query_pulp_evrs_retries_nonzero_exit_until_exhausted(checker, monkeypatch):
+    calls = 0
+    delays = []
+
+    def run(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return subprocess.CompletedProcess(args[0], 1, '', 'temporary failure')
+
+    monkeypatch.setattr(checker.subprocess, 'run', run)
+    monkeypatch.setattr(checker.time, 'sleep', delays.append)
+
+    result = checker.query_pulp_evrs(PUBLIC_BASE_URLS['x86_64'], {'widget'}, timeout=5)
+
+    assert result is None
+    assert calls == 3
+    assert delays == [2, 4]
 
 
 def test_check_candidates_partial_dnf_failure_is_cannot_determine_not_ok(
