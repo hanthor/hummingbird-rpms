@@ -15,11 +15,28 @@ breaking the build with:
 Backported from the upstream fix that shipped in trivy's own Go 1.27
 migration, restricted to the two json.SkipFunc call sites that exist
 in v0.74.0 (verified via a full source-tree grep for "json.SkipFunc"
-against the v0.74.0 tag; no other occurrences exist). The go.mod
-`go 1.27.0` directive bump from that commit is not needed here since
-the hermetic build already resolves the correct toolchain:
+against the v0.74.0 tag; no other occurrences exist), plus the go.mod
+`go` directive bump. The directive bump turned out to be required
+after all: Go gates use of go1.27-only encoding/json/v2 and jsontext
+APIs on the go.mod `go` line regardless of which toolchain is
+installed, so leaving it at 1.26.3 makes `go test ./...` in %check
+fail across several packages with "requires go1.27 or later (file is
+go1.26)" even though the golang1.27 toolchain is what actually builds
+the package.
 https://github.com/aquasecurity/trivy/commit/dc3c56eed58ab21c7e08d26757c517bc946a86c5
 
+diff --git a/go.mod b/go.mod
+index 666e9e0cf2..f9cdd5c6ed 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,6 +1,6 @@
+ module github.com/aquasecurity/trivy
+ 
+-go 1.26.3
++go 1.27.0
+ 
+ require (
+ 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
 diff --git a/pkg/x/json/json.go b/pkg/x/json/json.go
 index e0d5e7df29..85cf59a23a 100644
 --- a/pkg/x/json/json.go
