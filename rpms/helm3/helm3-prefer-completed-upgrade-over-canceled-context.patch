@@ -1,0 +1,28 @@
+From: Hummingbird Project <hummingbird@redhat.com>
+Subject: [PATCH] Prefer a completed upgrade over context cancellation
+
+RunWithContext closes done before it returns. If the caller cancels the
+context immediately after a successful return, both channels can be ready
+when handleContext runs. Check done again before treating the operation as
+canceled so a completed upgrade cannot be changed to failed.
+
+diff --git a/pkg/action/upgrade.go b/pkg/action/upgrade.go
+index 62a4af67..f9c8aa33 100644
+--- a/pkg/action/upgrade.go
++++ b/pkg/action/upgrade.go
+@@ -406,6 +406,12 @@ func (u *Upgrade) reportToPerformUpgrade(c chan<- resultMessage, rel *release.Rel
+ func (u *Upgrade) handleContext(ctx context.Context, done chan interface{}, c chan<- resultMessage, upgradedRelease *release.Release) {
+ 	select {
+ 	case <-ctx.Done():
++		select {
++		case <-done:
++			return
++		default:
++		}
++
+ 		err := ctx.Err()
+ 
+ 		// when the atomic flag is set the ongoing release finish first and doesn't give time for the rollback happens.
+-- 
+2.51.0
+
