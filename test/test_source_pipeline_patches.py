@@ -25,6 +25,7 @@ METADATA_DIR = ROOT_DIR / "metadata"
 PIPELINE_SUFFIX = ".source-pipeline.yaml"
 PATCH_DECL_RE = re.compile(r"^Patch\d*:\s+(\S+)", re.MULTILINE)
 PATCH_APPLY_RE = re.compile(r'patch\b[^<\n]*-p1\b[^<\n]*<\s*"?\$\{PACKAGE_DIR\}/([^"\s]+\.patch)"?')
+SPEC_VERSION_RE = re.compile(r"^Version:\s+(\S+)", re.MULTILINE)
 DIFF_TARGET_RE = re.compile(r"^\+\+\+ b/(.+)$", re.MULTILINE)
 
 # Commands that resolve dependencies against a lockfile/manifest -- if a transform
@@ -80,6 +81,19 @@ def _applied_patches(scripts: list[str]) -> list[str]:
     return applied
 
 
+def _spec_version(spec_path: Path) -> str:
+    """Return the package version used to expand patch filename templates."""
+    match = SPEC_VERSION_RE.search(spec_path.read_text())
+    if match is None:
+        raise ValueError(f"No Version declaration found in {spec_path}")
+    return match.group(1)
+
+
+def _expand_version_template(name: str, version: str) -> str:
+    """Resolve the version placeholders used by specs and source pipelines."""
+    return name.replace("%{version}", version).replace("${VERSION}", version)
+
+
 def _patch_touched_basenames(patch_path: Path) -> set[str]:
     """Return the basenames of files a patch modifies, from its `+++ b/...` lines.
 
@@ -123,7 +137,10 @@ def test_transform_patches_cover_files_they_touch(package: str) -> None:
     spec_path = _spec_path(package)
     if spec_path is None:
         pytest.skip(f"{package}: no spec file found under rpms/{package}/")
-    declared = PATCH_DECL_RE.findall(spec_path.read_text())
+    version = _spec_version(spec_path)
+    declared = [_expand_version_template(name, version)
+                for name in PATCH_DECL_RE.findall(spec_path.read_text())]
+    applied = [_expand_version_template(name, version) for name in applied]
 
     package_dir = RPMS_DIR / package
     applied_basenames: set[str] = set()
