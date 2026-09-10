@@ -41,7 +41,7 @@
 %global rubygems_net_http_version 0.6.0
 %global rubygems_net_protocol_version 0.2.2
 %global rubygems_optparse_version 0.6.0
-%global rubygems_resolv_version 0.6.0
+%global rubygems_resolv_version 0.7.2
 %global rubygems_securerandom_version 0.4.1
 %global rubygems_timeout_version 0.4.3
 %global rubygems_tsort_version 0.2.0
@@ -192,7 +192,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 31.7%{?dist}
+Release: 32%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -296,6 +296,12 @@ Patch9: ruby-3.3.0-Disable-syntax-suggest-test-case.patch
 # Fix the tests using SHA-1 Probabilistic Signature Scheme (PSS) parameters.
 # https://github.com/ruby/openssl/pull/879
 Patch10: ruby-3.4.2-openssl-Fix-SHA-1-PSS-tests.patch
+<<<<<<< HEAD
+# Backport from ruby_3_4 branch to update resolv to 0.7.2 (fixes CVE-2026-80212 CVE-2026-80213)
+# https://github.com/ruby/ruby/pull/18529
+# Also copied the patch to apply the fix also for vendored resolv
+Patch11: ruby-3_4-pr18529-update-resolv-0_7_2.patch
+=======
 # Skip Socket#connect timeout test in isolated CI environments.
 # The test expects IO::TimeoutError but gets Errno::ENETUNREACH when network
 # is unreachable.
@@ -306,6 +312,7 @@ Patch12: ruby-3.4.10-json-CVE-2026-54696-fbuffer-capa.patch
 # Bump default gem resolv to 0.7.2 (CVE-2026-80212, CVE-2026-80213).
 # https://github.com/ruby/ruby/pull/18529
 Patch13: ruby-3.4.10-resolv-0.7.2-CVE-2026-80212-80213.patch
+>>>>>>> hummingbird-local
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
@@ -827,8 +834,11 @@ analysis result in RBS format, a standard type description format for Ruby
 %patch 9 -p1
 %patch 10 -p1
 %patch 11 -p1
+<<<<<<< HEAD
+=======
 %patch 12 -p1
 %patch 13 -p1
+>>>>>>> hummingbird-local
 
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE3} .
@@ -1949,6 +1959,11 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
+* Fri Sep 04 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-32
+- Backport upstream patch to update resolv to 0.7.2
+- Resolves: CVE-2026-80212 (rhbz#2527308)
+- Resolves: CVE-2026-80213 (rhbz#2527310)
+
 * Wed Jul 08 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-31
 - Update to Ruby 3.4.10
 - Resolves: CVE-2026-41316 (rhbz#2463216)
