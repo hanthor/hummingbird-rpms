@@ -4,8 +4,6 @@ fetch:
     substitutions:
       - pattern: "^%global go_api\\s+[^\\s]+"
         replacement: "%global go_api ${VERSION_MAJOR}.${VERSION_MINOR}"
-      - pattern: "^%global go_prerelease\\s+[^\\s]+"
-        replacement: "#global go_prerelease rc2"
       - pattern: "^%global go_patch\\s+[^\\s]+"
         replacement: "%global go_patch ${VERSION_PATCH}"
   - type: spec-source
