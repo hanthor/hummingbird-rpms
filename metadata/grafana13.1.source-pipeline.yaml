@@ -34,7 +34,7 @@ transform:
         # version-specific compression patch's own header comment).
         patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression-${VERSION}.patch"
         # Generated against the post-compression lockfile, so this comes after
-        # grafana-yarn-cache-compression-${VERSION}.patch (same order as Patch8 in
+        # grafana-yarn-cache-compression-${VERSION}.patch (same order as Patch7 in
         # the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
         # Generated against the post-DOMPurify-bump lockfile, so this comes
