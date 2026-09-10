@@ -1338,6 +1338,11 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
 # Git's own default abbreviated-SHA length.
 _FIXED_REF_SHORT_SHA_LEN = 7
 
+# A git ref may use any gorget VERSION-derived substitution, such as
+# ${VERSION_BUILD}, and still advance with the package version rather than be
+# a fixed pin.
+_VERSION_TEMPLATE_TOKEN_RE = re.compile(r"\$\{VERSION(?:_[A-Z]+)?\}")
+
 _SPEC_CHANGELOG_RE = re.compile(r"^%changelog\b", re.MULTILINE)
 
 # Captures the argument of a %setup/%autosetup -n override, tolerating
@@ -1364,7 +1369,7 @@ def _fixed_pipeline_git_refs(pipeline: dict) -> list[str]:
         if isinstance(step, dict)
         and step.get("type") == "git"
         and step.get("ref")
-        and "${VERSION}" not in step["ref"]
+        and not _VERSION_TEMPLATE_TOKEN_RE.search(step["ref"])
     ]
 
 
