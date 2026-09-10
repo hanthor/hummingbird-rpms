@@ -1,9 +1,10 @@
 """Cross-checks that a `fetch: type: git` step's fixed, non-version-tracked
 `ref:` stays in sync with the spec.
 
-A `type: git` fetch step whose `ref:` contains a `${VERSION}` token (e.g.
-`v${VERSION}`) moves automatically with the package's version -- normal tag
-tracking, no drift risk. A `ref:` with no `${VERSION}` token is a *fixed
+A `type: git` fetch step whose `ref:` contains a `${VERSION}`-derived token
+(e.g. `v${VERSION}` or `jdk-${VERSION_MAJOR}+${VERSION_BUILD}`) moves
+automatically with the package's version -- normal tag tracking, no drift risk.
+A `ref:` with no `${VERSION}`-derived token is a *fixed
 pin* independent of version bumps: a development snapshot with no tagged
 release (glibc, HUM-5619; php-patchwork-jsqueeze) or a fork point pinned for
 some other reason.
@@ -70,6 +71,8 @@ _SETUP_N_RE = re.compile(r"%(?:auto)?setup\b.*?-\w*n\s*(\S+)")
 # drift out of sync with a pinned ref.
 _DEFAULT_N_VALUES = {"%{name}-%{version}", "%{name}%{version}"}
 
+_VERSION_TEMPLATE_TOKEN_RE = re.compile(r"\$\{VERSION(?:_[A-Z]+)?\}")
+
 
 def _pipeline_packages() -> list[str]:
     """Return sorted package names that have a metadata/<package>.source-pipeline.yaml."""
@@ -94,7 +97,7 @@ def _fixed_git_refs(pipeline: dict) -> list[str]:
         if isinstance(step, dict)
         and step.get("type") == "git"
         and step.get("ref")
-        and "${VERSION}" not in step["ref"]
+        and not _VERSION_TEMPLATE_TOKEN_RE.search(step["ref"])
     ]
 
 

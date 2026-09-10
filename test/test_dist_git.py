@@ -1492,6 +1492,8 @@ def test_fixed_pipeline_git_refs_filters_version_templated(dist_git_module) -> N
     pipeline = {
         'fetch': [
             {'type': 'git', 'repo': '${UPSTREAM_REPO}', 'ref': 'v${VERSION}'},
+            {'type': 'git', 'repo': '${UPSTREAM_REPO}',
+             'ref': 'jdk-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}+${VERSION_BUILD}'},
             {'type': 'git', 'repo': '${UPSTREAM_REPO}', 'ref': 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'},
             {'type': 'url', 'url': 'https://example.com/x-${VERSION}.tar.gz'},
         ],

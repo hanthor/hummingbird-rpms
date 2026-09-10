@@ -11,8 +11,10 @@ fetch:
         replacement: "%global patchver %(echo ${VERSION} | cut -d. -f4)"
       - pattern: "^%global buildver\\s+.*"
         replacement: "%global buildver %(echo ${VERSION} | cut -d. -f5)"
-  - type: spec-source
-    index: 0
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "jdk-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}+${VERSION_BUILD}"
+    archive_name: "jdk-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}+${VERSION_BUILD}.tar.gz"
 
 transform:
   - type: run
@@ -24,13 +26,15 @@ transform:
 
         source_root="$(find . -mindepth 1 -maxdepth 1 -type d -name 'jdk-*' -print -quit)"
         if [ -z "${source_root}" ]; then
-          echo "OpenJDK source root not found" >&2
+          echo "OpenJDK source root not found; git archive layout may have changed" >&2
           exit 1
         fi
 
         "${PACKAGE_DIR}/get_bundle_versions.sh" "${source_root}" |
           sed -n '/^# Version in /,$p' > java-17-openjdk-portable-bundled-provides.txt
 
+        # OpenJDK 17 sources are bootstrapped with this available Temurin 17
+        # release; it is not required to match the source release tag.
         temurin_version="17.0.20"
         temurin_build="8"
         : > gorget-discovered.tsv
@@ -54,6 +58,11 @@ post:
       - "-c"
       - |
         set -euo pipefail
+        grep -qE '^Source0:' "${SPEC_FILE}" || {
+          echo "ERROR: Source0: not found in ${SPEC_FILE}; cannot rewrite source URL" >&2
+          exit 1
+        }
+        sed -i -E 's|^Source0:.*$|Source0: %{vcstag}.tar.gz|' "${SPEC_FILE}"
         UPDATE_SPEC_FILE="${SPEC_FILE}" \
           ./update_bundled_provides.sh java-17-openjdk-portable-bundled-provides.txt
         rm -f java-17-openjdk-portable-bundled-provides.txt
