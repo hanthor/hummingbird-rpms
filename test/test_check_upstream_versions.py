@@ -1045,6 +1045,107 @@ def test_openjdk_source_check_url_construction(cuv_module) -> None:
     ]
 
 
+def test_tomcat_source_check_requires_published_source_and_signature(cuv_module) -> None:
+    """Tomcat 10 waits for both the source and its required signature."""
+    checked_urls = []
+
+    def capture_check(url: str) -> bool:
+        checked_urls.append(url)
+        return True
+
+    with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
+        assert cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+
+    assert checked_urls == [
+        'https://downloads.apache.org/tomcat/tomcat-10/v10.1.60/src/'
+        'apache-tomcat-10.1.60-src.tar.gz',
+        'https://downloads.apache.org/tomcat/tomcat-10/v10.1.60/src/'
+        'apache-tomcat-10.1.60-src.tar.gz.asc',
+    ]
+
+    with patch.object(cuv_module, '_check_source_exists', return_value=False):
+        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+
+    with patch.object(cuv_module, '_check_source_exists', side_effect=[True, False]):
+        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+
+
+def test_tomcat11_source_check_does_not_require_signature(cuv_module) -> None:
+    """Tomcat 11 has no detached-signature Source, so only its tarball is probed."""
+    checked_urls = []
+
+    def capture_check(url: str) -> bool:
+        checked_urls.append(url)
+        return True
+
+    with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
+        assert cuv_module._tomcat_source_check('11.0.26', {'track_upstream': '11'})
+
+    assert checked_urls == [
+        'https://downloads.apache.org/tomcat/tomcat-11/v11.0.26/src/'
+        'apache-tomcat-11.0.26-src.tar.gz',
+    ]
+
+
+def test_tomcat_source_check_ignores_missing_track_upstream(cuv_module) -> None:
+    """A malformed metadata value must not produce a tomcat-None probe."""
+    with patch.object(cuv_module, '_check_source_exists') as check_exists:
+        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': None})
+
+    check_exists.assert_not_called()
+
+
+def test_source_check_uses_only_tracked_versions(cuv_module, workdir: Path) -> None:
+    """Availability checks do not probe a different line of a shared project."""
+    _create_package(workdir, 'tomcat10', '10.1.59',
+                    metadata={'version': '10.1.59', 'release': '0.1',
+                              'release_monitoring_project_id': 148939,
+                              'track_upstream': '10.1',
+                              'source_availability_check': 'tomcat_apache'})
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    checked_versions = []
+
+    def source_available(version: str, _checker: str, _meta: dict) -> bool:
+        checked_versions.append(version)
+        return version == '10.1.59'
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+            'stable_versions': ['11.0.26', '10.1.60', '10.1.59'],
+        }),
+        patch.object(cuv_module, 'check_source_available', side_effect=source_available),
+    ):
+        result = cuv_module.check_package_version('tomcat10')
+
+    assert checked_versions == ['10.1.60', '10.1.59']
+    assert result.upstream_version == '10.1.59'
+    assert result.has_update is False
+
+
+def test_source_check_preserves_other_version_lines(cuv_module, workdir: Path) -> None:
+    """Rejecting a tracked candidate must not discard other Anitya versions."""
+    _create_package(workdir, 'tomcat10', '10.1.59',
+                    metadata={'version': '10.1.59', 'release': '0.1',
+                              'release_monitoring_project_id': 148939,
+                              'track_upstream': '10.1',
+                              'source_availability_check': 'tomcat_apache'})
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    anitya_data = {'stable_versions': ['11.0.26', '10.1.60', '10.1.59']}
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id', return_value=anitya_data),
+        patch.object(cuv_module, 'check_source_available',
+                     side_effect=lambda version, _checker, _meta: version == '10.1.59'),
+    ):
+        result = cuv_module.check_package_version('tomcat10')
+
+    assert anitya_data['stable_versions'] == ['11.0.26', '10.1.59']
+    assert result.upstream_version == '10.1.59'
+    assert result.has_update is False
+
+
 def test_check_package_version_source_checker_dispatches_correctly(
     cuv_module, workdir: Path,
 ) -> None:

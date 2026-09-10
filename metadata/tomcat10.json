@@ -6,6 +6,7 @@
   "release_monitoring_project_id": 148939,
   "sha": "c864b5c4695bbe8bc9fb4d67dbf7eca2b7ea9fd5",
   "source": "https://src.fedoraproject.org/rpms/tomcat.git",
+  "source_availability_check": "tomcat_apache",
   "track_upstream": "10.1",
   "upstream_branch": "10.1.x",
   "upstream_repo": "https://github.com/apache/tomcat",

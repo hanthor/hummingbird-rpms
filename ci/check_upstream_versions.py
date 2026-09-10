@@ -1461,8 +1461,33 @@ def _openjdk_source_check(version: str, metadata: dict[str, object]) -> bool:
     return _check_source_exists(url)
 
 
+def _tomcat_source_check(version: str, metadata: dict[str, object]) -> bool:
+    """Check that the Apache Tomcat source (and required signature) is published.
+
+    Apache creates an upstream Git tag before the corresponding release files
+    reach downloads.apache.org.  Packages must not be updated in that window:
+    their Source0 download would fail, and Tomcat 10 also requires its detached
+    signature in %prep.
+    """
+    track_upstream = str(metadata.get("track_upstream") or "")
+    major = track_upstream.split(".", 1)[0]
+    if not major:
+        return False
+
+    base_url = (
+        f"https://downloads.apache.org/tomcat/tomcat-{major}/v{version}/src/"
+        f"apache-tomcat-{version}-src.tar.gz"
+    )
+    if not _check_source_exists(base_url):
+        return False
+
+    # tomcat10 verifies the upstream detached signature during %prep.
+    return major != "10" or _check_source_exists(f"{base_url}.asc")
+
+
 SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]] = {
     "openjdk_osci": _openjdk_source_check,
+    "tomcat_apache": _tomcat_source_check,
 }
 
 
@@ -1570,13 +1595,25 @@ def check_package_version(
         if anitya_data.get("version"):
             anitya_data["version"] = _strip_suffix(anitya_data["version"])
 
+    # Filter source availability probes to the package's version line. Several
+    # packages can share one release-monitoring project (Tomcat 10 and 11,
+    # for example), but their release files live under different URLs. The
+    # usual track-version filtering below still owns the final version choice;
+    # this only avoids probing unrelated candidate releases first.
+    source_candidates = anitya_data.get("stable_versions", [])
+    if track_version and source_candidates:
+        tracked_candidates = [
+            v for v in source_candidates if _matches_track_version(v, track_version)
+        ]
+        if tracked_candidates:
+            source_candidates = tracked_candidates
+
     # Filter out leading versions whose source tarball is not yet published.
     # Probes only until a published version is found; older versions are
     # assumed available.
     if source_checker and meta is not None:
-        raw_stable = anitya_data.get("stable_versions", [])
         skip = 0
-        for v in raw_stable:
+        for v in source_candidates:
             try:
                 if check_source_available(v, source_checker, meta):
                     break
@@ -1591,8 +1628,12 @@ def check_package_version(
                 )
                 break
         if skip:
-            anitya_data["stable_versions"] = raw_stable[skip:]
-            if not raw_stable[skip:]:
+            unavailable_sources = set(source_candidates[:skip])
+            anitya_data["stable_versions"] = [
+                version for version in anitya_data["stable_versions"]
+                if version not in unavailable_sources
+            ]
+            if skip == len(source_candidates):
                 anitya_data["version"] = None
 
     # Apply a named version transform if configured

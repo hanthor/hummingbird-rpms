@@ -36,7 +36,7 @@ Summary:       Apache Tomcat - Servlet and JSP engine for system-wide deployment
 # Automatically converted from old format: ASL 2.0 - review is highly recommended.
 License:       Apache-2.0
 URL:           http://tomcat.apache.org/
-Source0:       http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
+Source0:       https://downloads.apache.org/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
 Source1:       tomcat-%{major_version}.%{minor_version}.conf
 Source2:       tomcat-%{major_version}.%{minor_version}.service
 Source3:       tomcat-%{major_version}.%{minor_version}-locate-java.sh
