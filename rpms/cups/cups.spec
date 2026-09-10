@@ -82,9 +82,6 @@ Patch1001: 0001-Fixed-Coverity-issues.patch
 # CVE-2026-87875: heap out-of-bounds read in cupsUTF32ToUTF8() on 64-bit systems
 # https://github.com/OpenPrinting/cups/commit/0c6842fc615e8afa284136a092da8178abf5f142
 Patch1002: 0001-Fix-CVE-2026-87875-cupsUTF32ToUTF8-heap-oob-read.patch
-# CVE-2026-87875: CHANGES.md follow-up (transcode.h hunk already applied by Patch1002)
-# https://github.com/OpenPrinting/cups/commit/2b1dc178a2d2325135b855142e384f4e8c42d8e4
-Patch1003: 0002-Fix-CVE-2026-87875-changes-md-followup.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -315,7 +312,6 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1000 -p1 -b .fix-filter-ppd-keyword
 %patch -P 1001 -p1 -b .fix-coverity-issues
 %patch -P 1002 -p1 -b .fix-cve-2026-87875-utf32
-%patch -P 1003 -p1 -b .fix-cve-2026-87875-changes
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
