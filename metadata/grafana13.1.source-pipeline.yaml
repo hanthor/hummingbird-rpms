@@ -31,10 +31,11 @@ transform:
         patch -p1 < "${PACKAGE_DIR}/grafana-browserslist-cve.patch"
         # Must apply after the CVE patches above: pins compressionLevel and
         # carries the resulting full yarn.lock checksum regeneration (see
-        # grafana-yarn-cache-compression.patch's own header comment).
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression.patch"
+        # version-specific compression patch's own header comment).
+        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression-${VERSION}.patch"
         # Generated against the post-compression lockfile, so this comes after
-        # grafana-yarn-cache-compression.patch (same order as Patch8 in the spec).
+        # grafana-yarn-cache-compression-${VERSION}.patch (same order as Patch7 in
+        # the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
         # Generated against the post-DOMPurify-bump lockfile, so this comes
         # after grafana-dompurify-cve.patch (same order as Patch10 in the spec).
