@@ -168,6 +168,15 @@ def test_spec_path_ambiguous_falls_back_to_named(tmp_path: Path, monkeypatch) ->
     assert lib_utils.spec_path(pkg) == pkg_dir / f"{pkg}.spec"
 
 
+def test_spec_path_missing_dir_returns_named(tmp_path: Path, monkeypatch) -> None:
+    # When the package directory does not exist at all, spec_path() must
+    # return the conventional <pkg>/<pkg>.spec path without raising.
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    result = lib_utils.spec_path("ghostpkg")
+    assert result == tmp_path / "rpms" / "ghostpkg" / "ghostpkg.spec"
+    assert not result.is_file()
+
+
 def test_run_rhjira_retries_transient_errors(monkeypatch) -> None:
     calls: list[list[str]] = []
     sleeps: list[int] = []
