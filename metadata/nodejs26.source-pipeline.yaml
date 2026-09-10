@@ -63,6 +63,9 @@ transform:
       - "--owner=0"
       - "--group=0"
       - "--numeric-owner"
+      # GitLab's checkout volume may make Git's 0644/0755 files 0666/0777.
+      # Store canonical modes so this source archive is reproducible.
+      - "--mode=go-w"
       - "-czf"
       - "packaging-scripts.tar.gz"
       - "-C"
@@ -87,4 +90,3 @@ accepted-checksums:
   - file: "packaging-scripts.tar.gz"
     checksum: "47103841f7bf45704a13e0db216881ab157bbd73ec76d35f86bb9c7aa3855cf5204e212a2392a099694672da649c92d325f63bde6bf67ac351f6e1da918111ae"
     reason: "One-time transition: now regenerated deterministically by gorget's own pipeline from packaging/*.sh + Makefile (already in git), instead of a manually maintained lookaside blob. Content is identical; only tar/gzip metadata differs."
-
