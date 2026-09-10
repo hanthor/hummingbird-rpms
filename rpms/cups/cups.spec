@@ -83,7 +83,7 @@ Patch1001: 0001-Fixed-Coverity-issues.patch
 # https://github.com/OpenPrinting/cups/commit/0c6842fc615e8afa284136a092da8178abf5f142
 Patch1002: 0001-Fix-CVE-2026-87875-cupsUTF32ToUTF8-heap-oob-read.patch
 # https://github.com/OpenPrinting/cups/commit/2b1dc178a2d2325135b855142e384f4e8c42d8e4
-Patch1003: 0002-Fix-CVE-2026-87875-snmp-supplies-bounds.patch
+Patch1003: 0002-Fix-CVE-2026-87875-changes-md-followup.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
