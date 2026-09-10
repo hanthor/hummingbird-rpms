@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "Backport fix for CVE-2026-87875",
+  "modification_status": "modified",
   "release": "4",
   "sha": "38f5984a61ed64fdf1cf7ba56a4dbae16bfac788",
   "source": "https://src.fedoraproject.org/rpms/cups.git",
