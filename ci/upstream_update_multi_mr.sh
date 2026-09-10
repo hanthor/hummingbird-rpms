@@ -151,6 +151,7 @@ fi
 PACKAGES_UPDATED=0
 MR_FAILURES=0
 EXISTING_UPDATES=0
+CHECK_FAILURES=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
 
@@ -191,14 +192,34 @@ START_COMMIT=$(git rev-parse HEAD)
 echo "Running check_upstream_versions.py check --update --sign-off ..."
 echo ""
 
-CHECK_ARGS=(./ci/check_upstream_versions.py check --update --sign-off)
+# Request JSON so this wrapper can reliably distinguish update failures from
+# successful updates.  The checker exits 1 for both cases when at least one
+# update is available, so its exit status alone cannot drive the scheduled
+# job's final status.
+CHECK_ARGS=(./ci/check_upstream_versions.py check --update --sign-off --json)
 
 if [[ -n "${ONLY_PACKAGE}" ]]; then
     CHECK_ARGS+=("${ONLY_PACKAGE}")
 fi
 
+CHECK_OUTPUT=$(mktemp)
 CHECK_EXIT_CODE=0
-"${CHECK_ARGS[@]}" 2>&1 || CHECK_EXIT_CODE=$?
+# Capture only stdout (JSON) for parsing; stderr remains visible in CI logs.
+"${CHECK_ARGS[@]}" > "${CHECK_OUTPUT}" || CHECK_EXIT_CODE=$?
+
+if ! CHECK_FAILURES=$(jq '[.results[] | select(.error != null or .update_error != null)] | length' "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not parse check_upstream_versions.py JSON output"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable JSON output"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+
+jq . "${CHECK_OUTPUT}"
+rm -f "${CHECK_OUTPUT}"
 
 echo ""
 
@@ -223,6 +244,7 @@ COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..HEAD" 2>/dev/null || ec
 if [[ ${COMMITS_CREATED} -eq 0 ]]; then
     echo "No commits were created despite updates being reported."
     echo "This may indicate all updates failed."
+    echo "  Update/check failures: ${CHECK_FAILURES}"
     exit 1
 fi
 
@@ -357,6 +379,7 @@ fi
 echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
+echo "  Update/check failures:   ${CHECK_FAILURES}"
 echo "  MR failures:             ${MR_FAILURES}"
 
 if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
@@ -376,10 +399,14 @@ if [[ ${#CREATED_MR_URLS[@]} -gt 0 ]]; then
 fi
 echo "========================================"
 
-# Exit with error if any failures occurred
-if [[ ${MR_FAILURES} -gt 0 ]]; then
+# Exit with error if the version checker or MR creation found failures.  This
+# comes after successful MRs are processed so one bad package does not block
+# the remaining updates, but it lets scheduled CI and its Slack hook surface
+# the failures.
+TOTAL_FAILURES=$((CHECK_FAILURES + MR_FAILURES))
+if [[ ${TOTAL_FAILURES} -gt 0 ]]; then
     echo ""
-    echo "Exiting with error due to ${MR_FAILURES} failure(s)"
+    echo "Exiting with error due to ${TOTAL_FAILURES} failure(s)"
     exit 1
 fi
 
