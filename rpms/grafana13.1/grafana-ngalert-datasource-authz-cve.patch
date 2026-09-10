@@ -1,0 +1,48 @@
+From 1ae288f47c139f78b465e1493143406cd2b143cd Mon Sep 17 00:00:00 2001
+From: "github-actions[bot]" <github-actions[bot]@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 19:00:12 +0000
+Subject: [PATCH] patch(security): Alerting: base eval endpoint auth solely on
+ datasourceUID
+
+GL-CVE: CVE-2026-17183
+---
+ pkg/services/ngalert/accesscontrol/rules.go      | 3 +--
+ pkg/services/ngalert/accesscontrol/rules_test.go | 4 +---
+ 2 files changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/pkg/services/ngalert/accesscontrol/rules.go b/pkg/services/ngalert/accesscontrol/rules.go
+index 46341518b7890..f2dc5467c578d 100644
+--- a/pkg/services/ngalert/accesscontrol/rules.go
++++ b/pkg/services/ngalert/accesscontrol/rules.go
+@@ -65,8 +65,7 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
+ 	evals := make([]accesscontrol.Evaluator, 0, 2)
+ 	for _, rule := range rules {
+ 		for _, query := range rule.Data {
+-			if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
+-				DatasourceUID == expr.OldDatasourceUID {
++			if query.DatasourceUID == expr.DatasourceUID || query.DatasourceUID == expr.OldDatasourceUID {
+ 				continue
+ 			}
+ 			if _, ok := added[query.DatasourceUID]; ok {
+diff --git a/pkg/services/ngalert/accesscontrol/rules_test.go b/pkg/services/ngalert/accesscontrol/rules_test.go
+index 8112f77e885bb..22e9d711ee205 100644
+--- a/pkg/services/ngalert/accesscontrol/rules_test.go
++++ b/pkg/services/ngalert/accesscontrol/rules_test.go
+@@ -592,8 +592,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
+ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
+ 	rule := models.RuleGen.GenerateRef()
+ 
+-	expressionByType := models.GenerateAlertQuery()
+-	expressionByType.QueryType = expr.DatasourceType
+ 	expressionByUID := models.GenerateAlertQuery()
+ 	expressionByUID.DatasourceUID = expr.DatasourceUID
+ 
+@@ -605,7 +603,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
+ 		data = append(data, q)
+ 	}
+ 
+-	data = append(data, expressionByType, expressionByUID)
++	data = append(data, expressionByUID)
+ 	rand.Shuffle(len(data), func(i, j int) {
+ 		data[j], data[i] = data[i], data[j]
+ 	})
