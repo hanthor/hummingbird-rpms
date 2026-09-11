@@ -38,6 +38,6 @@ openshell-python-metadata:
     fi
 
     rpm -qlp "${TEST_RPM}" | grep -Eq '^/usr/lib/python3\.[0-9]+/site-packages/openshell/__init__\.py$'
-    rpm -qlp "${TEST_RPM}" | grep -Eq '^/usr/lib/python3\.[0-9]+/site-packages/openshell-0\.0\.100\.dist-info/METADATA$'
+    rpm -qlp "${TEST_RPM}" | grep -Eq '^/usr/lib/python3\.[0-9]+/site-packages/openshell-[0-9]+\.[0-9]+\.[0-9]+\.dist-info/METADATA$'
 
     echo "openshell Python metadata file layout test passed"
