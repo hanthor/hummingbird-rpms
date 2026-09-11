@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.7.0-1.5.2%{?dist} -p
+%nodejs_define_version node 1:26.8.2-0.1%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -81,8 +81,8 @@
 
 Name:           nodejs%{node_version_major}
 Epoch:          %{node_epoch}
-Version:        26.8.2
-Release:        0.1%{?dist}
+Version:        %{node_version}
+Release:        %{node_release}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
