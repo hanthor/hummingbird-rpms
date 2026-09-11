@@ -24,7 +24,13 @@ transform:
       - |
         set -euo pipefail
 
-        source_root="$(find . -mindepth 1 -maxdepth 1 -type d -name 'jdk-*' -print -quit)"
+        # Gorget's GitStep checks out the OpenJDK source tree directly into
+        # the working directory.  Older archive-based sources used a jdk-*
+        # wrapper directory, so retain that layout as a fallback.
+        source_root="."
+        if [ ! -f "${source_root}/make/conf/version-numbers.conf" ]; then
+          source_root="$(find . -mindepth 1 -maxdepth 1 -type d -name 'jdk-*' -print -quit)"
+        fi
         if [ -z "${source_root}" ]; then
           echo "OpenJDK source root not found; git archive layout may have changed" >&2
           exit 1
