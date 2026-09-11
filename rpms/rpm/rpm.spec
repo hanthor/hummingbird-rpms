@@ -126,8 +126,6 @@ rpm-6.0-rpmformat.patch
 0001-Revert-Add-a-deprecation-warning-for-clamp_mtime_to_.patch
 
 # Patches already upstream:
-# Backport fix for shell injection via archive top-level dir name
-rpm-6.0.1-rpmuncompress-CVE-2026-44604.patch
 # Backport fix for heap buffer overflow in NDB slot table parsing
 rpm-6.0.1-ndb-slottable-CVE-2026-44605.patch
 
@@ -1553,4 +1551,3 @@ fi
 
 * Thu Aug 10 2017 Panu Matilainen <pmatilai@redhat.com> - 4.13.90-0.git14000.1
 - Rebase to rpm 4.13.90 aka 4.14.0-alpha (#1474836)
-
