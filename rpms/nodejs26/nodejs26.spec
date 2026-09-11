@@ -160,9 +160,6 @@ Source101:      nodejs.srpm.macros
 %patchlist
 0001-Remove-unused-OpenSSL-config.patch
 0001-fips-disable-options.patch
-CVE-2026-14257-brace-expansion-bound-expansion-length.patch
-CVE-2026-69152-brace-expansion-5.0.9.patch
-CVE-2026-59869-js-yaml-merge-keys.patch
 0001-v8-memcopy-include-climits.patch
 
 %description
