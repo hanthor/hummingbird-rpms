@@ -1,9 +1,9 @@
 {
-  "modification_reason": "Update to upstream version 26.7.0; CVE-2026-69152",
+  "modification_reason": "Update to upstream version 26.8.2",
   "modification_status": "modified",
   "release_monitoring_project_id": 8251,
   "track_upstream": "26",
   "upstream_branch": "v26.x",
   "upstream_repo": "https://github.com/nodejs/node",
-  "version": "26.7.0"
+  "version": "26.8.2"
 }
