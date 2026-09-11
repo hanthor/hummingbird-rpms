@@ -16,8 +16,8 @@ RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=2226726
 ---
  lib/crypto.js             | 10 ++++++++++
  lib/internal/errors.js    |  6 ++++++
- src/crypto/crypto_util.cc |  2 ++
- 3 files changed, 18 insertions(+)
+ src/crypto/crypto_util.cc | 30 +++++-------------------------
+ 3 files changed, 21 insertions(+), 25 deletions(-)
 
 diff --git a/lib/crypto.js b/lib/crypto.js
 index 41adecc..b2627ac 100644
@@ -66,19 +66,40 @@ index a722360..04d8a53 100644
    function(msg, permission = '', resource = '') {
      this.permission = permission;
 diff --git a/src/crypto/crypto_util.cc b/src/crypto/crypto_util.cc
-index 5734d8f..ef9d1b1 100644
+index 35b18cd..d8b4ce6 100644
 --- a/src/crypto/crypto_util.cc
 +++ b/src/crypto/crypto_util.cc
-@@ -86,6 +86,8 @@ bool ProcessFipsOptions() {
-   /* Override FIPS settings in configuration file, if needed. */
-   if (per_process::cli_options->enable_fips_crypto ||
-       per_process::cli_options->force_fips_crypto) {
-+      fprintf(stderr, "ERROR: Using options related to FIPS is not recommended, configure FIPS in openssl instead. See https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/security_hardening/assembly_installing-the-system-in-fips-mode_security-hardening for more details.\n");
-+      return false;
- #if OPENSSL_VERSION_MAJOR >= 3
-     if (!ncrypto::testFipsEnabled()) return false;
-     return ncrypto::setFipsEnabled(true, nullptr);
+@@ -107,26 +107,6 @@
+-#if OPENSSL_VERSION_MAJOR >= 3
+-  // Whether FIPS-approved implementations are reachable is decided by the
+-  // OpenSSL configuration, not by Node.js. Refuse to start rather than
+-  // restrict the default property query to a provider that is not there,
+-  // which would leave every operation failing as unsupported.
+-  if (!ncrypto::testFipsEnabled()) {
+-    const std::string option = force_fips ? "--force-fips" : "--enable-fips";
+-    return option + " requires an active OpenSSL provider named \"fips\". "
+-                    "FIPS mode is configured through OpenSSL; see "
+-                    "https://nodejs.org/api/crypto.html#fips-mode";
+-  }
+-#endif
+-
+-  CryptoErrorList errors{CryptoErrorList::Option::NONE};
+-  if (!ncrypto::setFipsEnabled(true, &errors)) {
+-    std::string error = "OpenSSL error when trying to enable FIPS";
+-    if (!errors.empty()) error += ':';
+-    for (const auto& openssl_error : errors) {
+-      error += '\n';
+-      error += openssl_error;
+-    }
+-    return error;
+-  }
+-
+-  return std::nullopt;
++  return "Using FIPS command-line options is not supported on RHEL; "
++         "configure FIPS at the system level instead. See "
++         "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/"
++         "html/security_hardening/assembly_installing-the-system-in-fips-mode_"
++         "security-hardening";
+ }
 -- 
 2.43.2
-
-
