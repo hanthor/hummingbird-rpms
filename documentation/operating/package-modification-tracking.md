@@ -218,6 +218,8 @@ HEAD-probes the source URL before selecting a version. Versions whose source ret
 skipped in favour of the next available version. Available checkers:
 
 - `openjdk_osci` — probes `https://openjdk-sources.osci.io/openjdk{feature}/openjdk-{version}.tar.xz`
+- `tomcat_apache` — probes the Tomcat source archive on `downloads.apache.org`, and its
+  detached signature for Tomcat 10 before allowing an update
 
 ```json
 {

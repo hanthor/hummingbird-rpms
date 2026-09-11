@@ -1,0 +1,14 @@
+# Apache publishes the Git tag before the signed release archive reaches its
+# download mirrors.  source_availability_check: tomcat_apache prevents the
+# scheduled update from selecting a version until both fetched files exist.
+fetch:
+  - type: url
+    url: "https://downloads.apache.org/tomcat/tomcat-10/v${VERSION}/src/apache-tomcat-${VERSION}-src.tar.gz"
+  - type: url
+    url: "https://downloads.apache.org/tomcat/tomcat-10/v${VERSION}/src/apache-tomcat-${VERSION}-src.tar.gz.asc"
+
+verify:
+  - type: gpg-signature
+    target: "apache-tomcat-${VERSION}-src.tar.gz"
+    signature: "apache-tomcat-${VERSION}-src.tar.gz.asc"
+    keyring: "tomcat.gpg"

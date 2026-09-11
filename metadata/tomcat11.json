@@ -2,6 +2,7 @@
   "cve_product": "Apache Software Foundation / Apache Tomcat",
   "modification_status": "independent",
   "release_monitoring_project_id": 148939,
+  "source_availability_check": "tomcat_apache",
   "track_upstream": "11",
   "upstream_branch": "main",
   "upstream_repo": "https://github.com/apache/tomcat",

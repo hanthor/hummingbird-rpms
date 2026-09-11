@@ -1,0 +1,6 @@
+# Apache publishes the Git tag before the release archive reaches its download
+# mirrors. source_availability_check: tomcat_apache prevents a premature
+# scheduled update from selecting an unpublished version.
+fetch:
+  - type: url
+    url: "https://downloads.apache.org/tomcat/tomcat-11/v${VERSION}/src/apache-tomcat-${VERSION}-src.tar.gz"
