@@ -15,7 +15,7 @@ Summary: CUPS printing system
 Name: cups
 Epoch: 1
 Version: 2.4.19
-Release: 4%{?dist}
+Release: 4.1%{?dist}
 # backend/failover.c - BSD-3-Clause
 # cups/md5* - Zlib
 # scheduler/colorman.c - Apache-2.0 WITH LLVM-exception AND BSD-2-Clause
@@ -79,6 +79,9 @@ Patch100: cups-lspp.patch
 Patch1000: 0001-Fix-filter-PPD-keyword-processing-Issue-1562.patch
 # https://github.com/OpenPrinting/cups/commit/de63068ba5a7
 Patch1001: 0001-Fixed-Coverity-issues.patch
+# CVE-2026-87875: heap out-of-bounds read in cupsUTF32ToUTF8() on 64-bit systems
+# https://github.com/OpenPrinting/cups/commit/0c6842fc615e8afa284136a092da8178abf5f142
+Patch1002: 0001-Fix-CVE-2026-87875-cupsUTF32ToUTF8-heap-oob-read.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -308,6 +311,7 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 # UPSTREAM PATCHES
 %patch -P 1000 -p1 -b .fix-filter-ppd-keyword
 %patch -P 1001 -p1 -b .fix-coverity-issues
+%patch -P 1002 -p1 -b .fix-cve-2026-87875-utf32
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
