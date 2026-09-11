@@ -3,6 +3,18 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "spire-${VERSION}.tar.gz"
+
+transform:
+  # Keep the source archive and the vendor archive consistent when applying
+  # the two dependency security updates below.
+  - type: vendor-bump
+    ecosystem: go
+    pins:
+      - dependency: golang.org/x/text
+        version: "0.39.0"
+      # CVE-2026-54787
+      - dependency: github.com/sigstore/sigstore-go
+        version: "1.2.1"
   - type: vendor
     ecosystem: go
     archive_name: "spire-${VERSION}-vendor.tar.bz2"
