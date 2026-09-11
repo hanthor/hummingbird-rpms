@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.0.100
+%global openshell_version 0.0.116
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
