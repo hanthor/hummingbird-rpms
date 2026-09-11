@@ -2,9 +2,9 @@
   "branch": "rawhide",
   "modification_reason": "Backport CVE-2026-44604 (rpmuncompress shell injection) and CVE-2026-44605 (NDB slot table heap overflow)",
   "modification_status": "modified",
-  "release": "6",
-  "sha": "d5107250c2845dd4ad400356e70a3ed1354fd3bf",
+  "release": "1",
+  "sha": "7947eaa8915f53a57ba82777b2e168b8c19a66c1",
   "source": "https://src.fedoraproject.org/rpms/rpm.git",
   "upstream_repo": "https://github.com/rpm-software-management/rpm",
-  "version": "6.0.1"
+  "version": "6.1.0"
 }

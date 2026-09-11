@@ -26,9 +26,9 @@
 
 %define rpmhome /usr/lib/rpm
 
-%global rpmver 6.0.1
+%global rpmver 6.1.0
 #global snapver rc1
-%global baserelease 6.2
+%global baserelease 1
 %global sover 10
 
 %global srcver %{rpmver}%{?snapver:-%{snapver}}
@@ -37,7 +37,7 @@
 Summary: The RPM package management system
 Name: rpm
 Version: %{rpmver}
-Release: %{?snapver:0.%{snapver}.}%{baserelease}.1%{?dist}
+Release: %{?snapver:0.%{snapver}.}%{baserelease}%{?dist}
 Url: https://rpm.org/
 License: GPL-2.0-or-later
 Source0: http://ftp.rpm.org/releases/%{srcdir}/rpm-%{srcver}.tar.bz2
@@ -111,7 +111,7 @@ BuildRequires: fsverity-utils-devel
 # Set rpmdb path to /usr/lib/sysimage/rpm
 rpm-4.17.x-rpm_dbpath.patch
 # Disable autoconf config.site processing (#962837)
-rpm-4.18.x-siteconfig.patch
+rpm-6.1.x-siteconfig.patch
 # In current Fedora, man-pages pkg owns all the localized man directories
 rpm-4.9.90-no-man-dirs.patch
 
@@ -126,8 +126,6 @@ rpm-6.0-rpmformat.patch
 0001-Revert-Add-a-deprecation-warning-for-clamp_mtime_to_.patch
 
 # Patches already upstream:
-# Backport fix for shell injection via archive top-level dir name
-rpm-6.0.1-rpmuncompress-CVE-2026-44604.patch
 # Backport fix for heap buffer overflow in NDB slot table parsing
 rpm-6.0.1-ndb-slottable-CVE-2026-44605.patch
 
@@ -470,6 +468,7 @@ fi
 %{_mandir}/man5/rpm-macrofile.5*
 %{_mandir}/man5/rpm-manifest.5*
 %{_mandir}/man5/rpm-rpmrc.5*
+%{_mandir}/man7/rpm-design.7*
 %{_mandir}/man7/rpm-lua.7*
 %{_mandir}/man7/rpm-macros.7*
 %{_mandir}/man7/rpm-payloadflags.7*
@@ -578,7 +577,10 @@ fi
 %{_bindir}/gendiff
 %{_bindir}/rpmspec
 %{_bindir}/rpmlua
+%{_bindir}/rpmuncompress
+%{_bindir}/rpm-setup-autosign
 
+%{_mandir}/man1/elfdeps.1*
 %{_mandir}/man1/gendiff.1*
 %{_mandir}/man1/rpmbuild.1*
 %{_mandir}/man1/rpmdeps.1*
@@ -587,6 +589,10 @@ fi
 %{_mandir}/man1/rpm-setup-autosign.1*
 %{_mandir}/man1/rpmuncompress.1*
 %{_mandir}/man5/rpmbuild-config.5.*
+%{_mandir}/man7/rpm-dependency-generators.7*
+%{_mandir}/man7/rpm-scriptlets.7*
+%{_mandir}/man7/rpm-sysusers.7*
+
 
 %{rpmhome}/brp-*
 %{rpmhome}/check-*
@@ -634,6 +640,28 @@ fi
 %doc %{_defaultdocdir}/rpm/API/
 
 %changelog
+* Thu Aug 20 2026 Michal Domonkos <mdomonko@redhat.com - 6.1.0-1
+- Rebase to 6.1.0 (https://rpm.org/releases/6.1.0)
+
+* Wed Jul 22 2026 Python Maint <python-maint@redhat.com> - 6.0.92-2
+- Rebuilt for Python 3.15.0b4 ABI change
+
+* Mon Jul 20 2026 Michal Domonkos <mdomonko@redhat.com - 6.0.92-1
+- Rebase to 6.1 rc2 (https://fedoraproject.org/wiki/Changes/RPM-6.1)
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.91-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
+* Thu Jun 25 2026 Panu Matilainen <pmatilai@redhat.com - 6.0.91-3
+- Revert file trigger refactor for further investigation (#2492628)
+- Fix a silly thinko causing a %%define regression (#2492483)
+
+* Wed Jun 24 2026 Panu Matilainen <pmatilai@redhat.com - 6.0.91-2
+- Fix rubygem rpmuncompress -x regression (#2492128)
+
+* Mon Jun 22 2026 Panu Matilainen <pmatilai@redhat.com - 6.0.91-1
+- Rebase to 6.1 rc1 (https://fedoraproject.org/wiki/Changes/RPM-6.1)
+
 * Wed Jun 03 2026 Python Maint <python-maint@redhat.com> - 6.0.1-6
 - Rebuilt for Python 3.15
 
@@ -1523,4 +1551,3 @@ fi
 
 * Thu Aug 10 2017 Panu Matilainen <pmatilai@redhat.com> - 4.13.90-0.git14000.1
 - Rebase to rpm 4.13.90 aka 4.14.0-alpha (#1474836)
-
