@@ -1,11 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
-  "release": "6",
+  "modification_reason": "Update to upstream version 5.0.11",
+  "modification_status": "modified",
   "release_monitoring_project_id": 2554,
   "sha": "d46d1d9b6180eed7e96c07be60e6c55d532b588f",
   "source": "https://src.fedoraproject.org/rpms/openmpi.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/open-mpi/ompi",
-  "version": "5.0.10"
+  "version": "5.0.11"
 }
