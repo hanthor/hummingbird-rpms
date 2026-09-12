@@ -1853,6 +1853,35 @@ def test_update_spec_version_sets_release_0_1(cuv_module, workdir: Path) -> None
     assert 'Release: 0.1%{?dist}' in spec_content
 
 
+def test_update_spec_version_preserves_macro_release(
+    cuv_module, workdir: Path,
+) -> None:
+    """A package-specific Release macro is not replaced by a literal value."""
+    package_dir = _create_package(
+        workdir, 'gcc13', '13.4.0',
+        sources={'gcc13-13.4.0.tar.gz': 'oldhash'},
+        metadata={'version': '13.4.0', 'release': '1'},
+    )
+    spec_file = package_dir / 'gcc13.spec'
+    spec_file.write_text(
+        '%global gcc_release 1\n'
+        + spec_file.read_text().replace(
+            'Release: 1%{?dist}', 'Release: %{gcc_release}%{?dist}',
+        )
+    )
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=[]):
+        cuv_module.update_spec_version('gcc13', '13.5.0')
+
+    spec_content = spec_file.read_text()
+    assert '%global gcc_release 1' in spec_content
+    assert 'Release: %{gcc_release}%{?dist}' in spec_content
+
+
 def test_update_spec_version_removes_independent_release(cuv_module, workdir: Path) -> None:
     """Independent packages do not retain a local metadata release."""
     _create_package(workdir, 'pkg', '1.0',
