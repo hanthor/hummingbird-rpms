@@ -1,3 +1,8 @@
 /icu4c-*-data-bin-?.zip
 /node-*-stripped.tar.gz
 /packaging-scripts.tar.gz
+icu4c-78.2-data-bin-b.zip
+icu4c-78.2-data-bin-l.zip
+node-v20.20.99-stripped.tar.gz
+node-v20.20.99.tar.gz
+packaging-scripts.tar.gz
