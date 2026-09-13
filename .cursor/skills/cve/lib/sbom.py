@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,9 @@ from lib.jira import run_rhjira
 PULP_SBOM_BASE = (
     "https://packages.redhat.com/api/pulp-content/public-hummingbird/metadata/sboms"
 )
-SBOM_FILE_RE = re.compile(r"sha256-[a-fA-F0-9]+\.sbom")
+SBOM_ENTRY_RE = re.compile(
+    r"(sha256-[a-fA-F0-9]+\.sbom)\s+(\d{2}-\w{3}-\d{4}\s+\d{2}:\d{2})"
+)
 
 
 # ---- Pulp SBOM discovery ----
@@ -25,14 +28,46 @@ def pulp_sbom_package_dir(package: str) -> str:
     return f"{package.replace('.', '-')}-main"
 
 
+def _parse_sbom_date(entry: tuple[str, str], directory: str) -> datetime:
+    """Parse the timestamp field from a Pulp directory listing entry.
+
+    Raises RuntimeError (not ValueError) so callers get full context about
+    which package URL and date string caused the failure.
+    """
+    filename, date_str = entry
+    try:
+        return datetime.strptime(date_str.strip(), "%d-%b-%Y %H:%M")
+    except ValueError:
+        raise RuntimeError(
+            f"Cannot parse SBOM timestamp {date_str!r} for {filename} under {directory}"
+        )
+
+
 def latest_pulp_sbom_filename(package: str) -> tuple[str, str]:
-    """Return (directory_url, filename) for the latest Pulp SBOM object."""
+    """Return (directory_url, filename) for the latest Pulp SBOM object.
+
+    The directory listing includes a modification timestamp next to each file
+    in DD-Mon-YYYY HH:MM format.  We parse those dates and return the file
+    with the most recent timestamp so that the newest build is always chosen,
+    regardless of how the SHA256 filenames sort lexicographically.
+
+    Note: SBOM_ENTRY_RE assumes a plain-text Pulp autoindex listing with lines
+    of the form:
+        sha256-<hash>.sbom    DD-Mon-YYYY HH:MM    <size>
+    If the endpoint ever switches to an HTML autoindex (nginx-style), the regex
+    will match zero entries and the function will raise RuntimeError.
+    """
     directory = f"{PULP_SBOM_BASE}/{pulp_sbom_package_dir(package)}/"
     listing = http_get_text(directory)
-    files = sorted(set(SBOM_FILE_RE.findall(listing)))
-    if not files:
+    # Pulp returns a plain-text directory listing with lines like:
+    #   sha256-d24ad465.sbom    12-Aug-2026 14:23    7.0 MB
+    # SBOM_ENTRY_RE captures (filename, timestamp) from each such line.
+    entries = SBOM_ENTRY_RE.findall(listing)
+    if not entries:
         raise RuntimeError(f"No SBOM files found under {directory}")
-    return directory, files[-1]
+    # Pick the entry with the most recent modification timestamp.
+    latest_file, _ = max(entries, key=lambda e: _parse_sbom_date(e, directory))
+    return directory, latest_file
 
 
 # ---- Jira attachment SBOM download ----

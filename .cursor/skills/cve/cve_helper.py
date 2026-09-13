@@ -53,8 +53,8 @@ from cve_analysis_bridge import (  # noqa: E402
 # ---- lib imports ----
 
 from lib.utils import (  # noqa: E402
-    _pkg_dir,
     normalize_hum_key,
+    spec_path,
 )
 from lib.jira import (  # noqa: E402
     apply_next_release,
@@ -644,7 +644,7 @@ def cmd_spec_deps(args: argparse.Namespace) -> int:
                 {
                     "package": args.package,
                     "component": args.component,
-                    "spec": str(_pkg_dir(args.package) / f"{args.package}.spec"),
+                    "spec": str(spec_path(args.package)),
                     "hits": [asdict(h) for h in hits],
                 },
                 indent=2,
