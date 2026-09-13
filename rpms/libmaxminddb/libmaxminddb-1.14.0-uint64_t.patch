@@ -1,0 +1,27 @@
+From cd138a624187b8beff2febe57cc407aa652438b9 Mon Sep 17 00:00:00 2001
+From: Robert Scheck <robert-scheck@users.noreply.github.com>
+Date: Sat, 12 Sep 2026 22:14:48 +0200
+Subject: [PATCH] Fix signedness warning in data section size check (fixes
+ #486)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+src/maxminddb.c:370:27: error: comparison of integer expressions of different signedness: ‘ssize_t’ {aka ‘int’} and ‘unsigned int’ [-Werror=sign-compare]
+---
+ src/maxminddb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/maxminddb.c b/src/maxminddb.c
+index 634635b4..d9cc9c56 100644
+--- a/src/maxminddb.c
++++ b/src/maxminddb.c
+@@ -367,7 +367,7 @@ int MMDB_open(const char *const filename, uint32_t flags, MMDB_s *const mmdb) {
+     }
+     ssize_t data_section_size =
+         mmdb->file_size - search_tree_size - MMDB_DATA_SECTION_SEPARATOR;
+-    if (data_section_size > UINT32_MAX || data_section_size <= 0) {
++    if (data_section_size <= 0 || (uint64_t)data_section_size > UINT32_MAX) {
+         status = MMDB_INVALID_METADATA_ERROR;
+         goto cleanup;
+     }
