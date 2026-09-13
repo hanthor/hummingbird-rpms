@@ -3,7 +3,7 @@ Subject: [PATCH] Bump joi to 17.13.8 and 18.2.9 for CVE-2026-90771
 
 diff --git a/package.json b/package.json
 --- a/package.json	2026-09-13 10:44:18.561857862 -0400
-+++ b/package.json	2026-09-13 10:45:04.356697047 -0400
++++ b/package.json	2026-09-13 19:06:06.250906585 -0400
 @@ -460,7 +460,9 @@
      "@opentelemetry/core": "2.8.0",
      "js-yaml@npm:^3.10.0": "3.15.2",
@@ -17,13 +17,15 @@ diff --git a/package.json b/package.json
      "packages": [
 diff --git a/yarn.lock b/yarn.lock
 --- a/yarn.lock	2026-09-13 10:44:18.562049169 -0400
-+++ b/yarn.lock	2026-09-13 10:45:04.358366143 -0400
-@@ -21829,21 +21829,21 @@
++++ b/yarn.lock	2026-09-13 19:06:06.253903836 -0400
+@@ -21828,22 +21828,22 @@
+   languageName: node
    linkType: hard
  
- "joi@npm:^17.11.0":
+-"joi@npm:^17.11.0":
 -  version: 17.13.3
 -  resolution: "joi@npm:17.13.3"
++"joi@npm:17.13.8":
 +  version: 17.13.8
 +  resolution: "joi@npm:17.13.8"
    dependencies:
@@ -37,9 +39,10 @@ diff --git a/yarn.lock b/yarn.lock
    languageName: node
    linkType: hard
  
- "joi@npm:^18.2.1":
+-"joi@npm:^18.2.1":
 -  version: 18.2.1
 -  resolution: "joi@npm:18.2.1"
++"joi@npm:18.2.9":
 +  version: 18.2.9
 +  resolution: "joi@npm:18.2.9"
    dependencies:
