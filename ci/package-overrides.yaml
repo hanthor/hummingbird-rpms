@@ -434,6 +434,9 @@ opentofu1.12:
 oras:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+pcre2:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 pgbouncer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
