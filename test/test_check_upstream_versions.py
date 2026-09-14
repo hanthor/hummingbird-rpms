@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 import types
 import urllib.error
 from email.message import Message
@@ -19,6 +20,9 @@ import pytest
 @pytest.fixture
 def cuv_module():
     """Load check_upstream_versions.py as a Python module."""
+    ci_dir = str(Path(__file__).parent.parent / 'ci')
+    if ci_dir not in sys.path:
+        sys.path.insert(0, ci_dir)
     script_path = Path(__file__).parent.parent / 'ci' / 'check_upstream_versions.py'
     module = types.ModuleType("check_upstream_versions")
     module.__file__ = str(script_path)
