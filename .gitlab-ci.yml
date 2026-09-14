@@ -74,6 +74,12 @@ default:
             MSG="${MSG}"$'\n'"- ${line}"
           done < .ci_upstream_update_failures.txt
         fi
+        if [ -s .ci_upstream_update_draft_mrs.txt ]; then
+          MSG="${MSG}"$'\n'"Draft MRs for failed upstream updates:"
+          while IFS= read -r line; do
+            MSG="${MSG}"$'\n'"- ${line}"
+          done < .ci_upstream_update_draft_mrs.txt
+        fi
         curl -f --show-error -X POST -H 'Content-Type: application/json' \
           --data "$(jq -n --arg text "$MSG" '{text: $text}')" \
           "$SLACK_WEBHOOK_URL"
