@@ -25,6 +25,8 @@ dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
+| `./ci/run_upstream_update_local.sh --profile <profile>` | Run all upstream updates and lookaside uploads locally in a disposable clone, without creating MRs |
+| `./ci/run_dist_git_update_local.sh --profile <profile>` | Run all dist-git updates and Gorget lookaside uploads locally in a disposable clone, without creating MRs |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -53,6 +55,8 @@ Common operational tasks that users or AI agents may need to perform:
 | View package differences       | `diff <pkg>`                                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See what changed in modified packages vs Fedora                        |
 | Add per-package update hooks   | _(edit metadata hooks YAML)_                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Customize spec update, source download, or post-update steps           |
 | Update dist-git packages       | `update [<pkg>]`                                                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Test or trigger automated package updates from Fedora                  |
+| Run upstream updates locally   | `ci/run_upstream_update_local.sh --profile <profile>`           | _(script help)_                                                                                  | Exercise all upstream updates and lookaside uploads without creating MRs |
+| Run dist-git updates locally   | `ci/run_dist_git_update_local.sh --profile <profile>`           | _(script help)_                                                                                  | Exercise all dist-git updates and Gorget lookaside uploads without creating MRs |
 | Lookaside cache access         | _(AWS credentials setup)_                                       | [Lookaside Cache Access](documentation/operating/lookaside-cache-access.md)                     | Set up AWS credentials to upload source tarballs                       |
 | Pulp access                    | _(service account setup)_                                       | [Pulp Access](documentation/operating/pulp-access.md)                                           | Create Pulp service accounts and configure CLI credentials             |
 | Analyze upstream diffs         | `diff --all --stat`                                             | [Upstream Diff Analysis](documentation/operating/upstream-diff-analysis.md)                     | Classify modified packages for upstreaming                             |
