@@ -1290,6 +1290,7 @@ Provides:       bundled(npm(jest-watcher)) = 30.3.0
 Provides:       bundled(npm(jest-worker)) = 27.5.0
 Provides:       bundled(npm(jest-worker)) = 30.3.0
 Provides:       bundled(npm(joi)) = 17.13.8
+Provides:       bundled(npm(joi)) = 18.2.9
 Provides:       bundled(npm(jose)) = 6.2.1
 Provides:       bundled(npm(jquery)) = 3.7.1
 Provides:       bundled(npm(js-cookie)) = 3.0.8
