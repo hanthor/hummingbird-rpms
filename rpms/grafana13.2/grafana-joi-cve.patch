@@ -1,0 +1,59 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump joi to 17.13.8 and 18.2.9 for CVE-2026-90771
+
+diff --git a/package.json b/package.json
+--- a/package.json	2026-09-14 09:13:23.287832488 -0400
++++ b/package.json	2026-09-14 09:13:23.288290153 -0400
+@@ -468,7 +468,9 @@
+     "js-yaml@npm:^3.13.1": "3.15.2",
+     "js-yaml@npm:=4.3.0": "4.3.2",
+     "js-yaml@npm:^4.1.0": "4.3.2",
+-    "js-yaml@npm:^4.2.0": "4.3.2"
++    "js-yaml@npm:^4.2.0": "4.3.2",
++    "joi@npm:^17.11.0": "17.13.8",
++    "joi@npm:^18.2.1": "18.2.9"
+   },
+   "workspaces": {
+     "packages": [
+diff --git a/yarn.lock b/yarn.lock
+--- a/yarn.lock	2026-09-14 09:13:23.287987484 -0400
++++ b/yarn.lock	2026-09-14 09:13:23.291290136 -0400
+@@ -22958,22 +22958,22 @@
+   languageName: node
+   linkType: hard
+ 
+-"joi@npm:^17.11.0":
+-  version: 17.13.3
+-  resolution: "joi@npm:17.13.3"
++"joi@npm:17.13.8":
++  version: 17.13.8
++  resolution: "joi@npm:17.13.8"
+   dependencies:
+     "@hapi/hoek": "npm:^9.3.0"
+     "@hapi/topo": "npm:^5.1.0"
+     "@sideway/address": "npm:^4.1.5"
+     "@sideway/formula": "npm:^3.0.1"
+     "@sideway/pinpoint": "npm:^2.0.0"
+-  checksum: 10c0/9262aef1da3f1bec5b03caf50c46368899fe03b8ff26cbe3d53af4584dd1049079fc97230bbf1500b6149db7cc765b9ee45f0deb24bb6fc3fa06229d7148c17f
++  checksum: 10c0/7fe2b38d26dfcbcf1836892384ba2f42f83058795f32dcb3733de4c3b97cac923a8b9053738f10701663872a994f77af351c71e1428117a20bbfc1f94768f648
+   languageName: node
+   linkType: hard
+ 
+-"joi@npm:^18.2.1":
+-  version: 18.2.1
+-  resolution: "joi@npm:18.2.1"
++"joi@npm:18.2.9":
++  version: 18.2.9
++  resolution: "joi@npm:18.2.9"
+   dependencies:
+     "@hapi/address": "npm:^5.1.1"
+     "@hapi/formula": "npm:^3.0.2"
+@@ -22982,7 +22982,7 @@
+     "@hapi/tlds": "npm:^1.1.1"
+     "@hapi/topo": "npm:^6.0.2"
+     "@standard-schema/spec": "npm:^1.1.0"
+-  checksum: 10c0/d74f8b382de107f8bcc376ed3a2206971760176e167c7b69ff5b1dfe47a0de01e4a171f07bf4783f9bd240fb1e75f7b2d514eed175f3326e681c3572c0990ecc
++  checksum: 10c0/ac4934ea6aa4b3f9f6df28369d6ba9a4d585685822a171b93c0ce2e3c28d2dcf91bad1b3f34f6eb2f9d01165a5f84fe36eecb5a32b45bfa6538a7ce0895b2b4f
+   languageName: node
+   linkType: hard
+ 
