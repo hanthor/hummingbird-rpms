@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -470,6 +470,8 @@ Patch498: 00498-cve-2026-15806.patch
 # CVE-2026-15310
 # gh-156002: bound zipfile bzip2, LZMA, and Zstandard decompression
 Patch499: 00499-cve-2026-15310.patch
+Patch500: 00500-cve-2026-87910.patch
+Patch501: 00501-cve-2026-87910-windows-test-adjustment.patch
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
