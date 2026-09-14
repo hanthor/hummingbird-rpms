@@ -2,11 +2,7 @@
 
 Name:           libevent
 Version:        2.1.13
-<<<<<<< HEAD
 Release:        1%{?dist}
-=======
-Release:        0.1%{?dist}
->>>>>>> hummingbird-local
 Summary:        Abstract asynchronous event notification library
 
 # arc4random.c, which is used in build, is ISC. The rest is BSD-3-Clause.
