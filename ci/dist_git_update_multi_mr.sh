@@ -430,6 +430,11 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
         echo "  ⚠ Needs manual gorget run (no git conflict, but gorget verification failed)"
         MR_TITLE="CONFLICT: chore(rpms): ${COMMIT_MSG#NEEDS MANUAL GORGET RUN: }"
         MR_DESCRIPTION="**Needs a manual gorget run:**\nSee the commit message on this branch for details. gorget must be re-run (and its output uploaded to the lookaside cache) before this can merge."
+    elif [[ "${COMMIT_MSG}" == "NEEDS MANUAL PATCH CLEANUP:"* ]]; then
+        HAS_CONFLICT=true
+        echo "  ⚠ Needs manual patch cleanup (orphaned %patch directive in %prep)"
+        MR_TITLE="CONFLICT: chore(rpms): ${COMMIT_MSG#NEEDS MANUAL PATCH CLEANUP: }"
+        MR_DESCRIPTION="**Needs manual patch cleanup:**\nSee the commit message on this branch. An orphaned %patch directive in %prep has no matching Patch<N>: declaration (upstream dropped the patch but left the invocation). Remove the stale %patch line(s) before this can merge."
     else
         HAS_CONFLICT=false
         MR_TITLE="chore(rpms): ${COMMIT_MSG}"

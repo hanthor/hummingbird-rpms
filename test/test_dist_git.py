@@ -4930,6 +4930,299 @@ def test_normalize_release_in_specs_define(dist_git_module, tmp_path: Path) -> N
     assert '%define baserelease 0' in spec.read_text()
 
 
+def test_strip_orphaned_patch_directives_removes_orphan(dist_git_module, tmp_path: Path) -> None:
+    """Orphaned %patch -P<N> with no Patch<N>: declaration is removed."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%build\nmake\n'
+    )
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == [0]
+    content = spec.read_text()
+    assert '%patch -P0' not in content
+    assert '%setup -q' in content   # rest of %prep untouched
+
+
+def test_strip_orphaned_patch_directives_keeps_valid(dist_git_module, tmp_path: Path) -> None:
+    """%patch directive with a matching Patch<N>: declaration is kept."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Patch0: fix.patch\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%build\nmake\n'
+    )
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == []
+    assert '%patch -P0 -p1' in spec.read_text()
+
+
+def test_strip_orphaned_patch_directives_mixed(dist_git_module, tmp_path: Path) -> None:
+    """Only the orphaned directive is removed; the valid one stays."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Patch1: keep.patch\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n%patch -P1 -p1\n\n'
+        '%build\nmake\n'
+    )
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == [0]
+    content = spec.read_text()
+    assert '%patch -P0' not in content
+    assert '%patch -P1 -p1' in content
+
+
+def test_strip_orphaned_patch_directives_patch_n_style(dist_git_module, tmp_path: Path) -> None:
+    """%patch<N> (without -P flag) with no declaration is also removed."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n\n'
+        '%prep\n%setup -q\n%patch3 -p1\n\n'
+        '%build\nmake\n'
+    )
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == [3]
+    assert '%patch3' not in spec.read_text()
+
+
+def test_strip_orphaned_patch_directives_bare_patch_declaration(dist_git_module, tmp_path: Path) -> None:
+    """Patch: (no number) counts as Patch0 and keeps %patch -P0 alive."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Patch: fix.patch\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%build\nmake\n'
+    )
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == []
+    assert '%patch -P0 -p1' in spec.read_text()
+
+
+def test_strip_orphaned_patch_directives_no_prep(dist_git_module, tmp_path: Path) -> None:
+    """Spec with no %prep section returns empty list."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text('Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n')
+    removed = dist_git_module.strip_orphaned_patch_directives(spec)
+    assert removed == []
+
+
+def test_detect_orphaned_patch_directives_reports_without_modifying(
+    dist_git_module, tmp_path: Path
+) -> None:
+    """detect_orphaned_patch_directives finds orphans but leaves the spec untouched."""
+    spec = tmp_path / 'pkg.spec'
+    original = (
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n\n'
+        '%prep\n%setup -q\n%patch -P2 -p1\n\n'
+        '%build\nmake\n'
+    )
+    spec.write_text(original)
+    assert dist_git_module.detect_orphaned_patch_directives(spec) == [2]
+    assert spec.read_text() == original, "detect must not modify the spec"
+
+
+def test_detect_orphaned_patch_directives_none_when_declared(
+    dist_git_module, tmp_path: Path
+) -> None:
+    """No orphans reported when every %patch has a matching Patch<N>:."""
+    spec = tmp_path / 'pkg.spec'
+    spec.write_text(
+        'Name: pkg\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Patch2: fix.patch\n\n'
+        '%prep\n%setup -q\n%patch -P2 -p1\n\n'
+        '%build\nmake\n'
+    )
+    assert dist_git_module.detect_orphaned_patch_directives(spec) == []
+
+
+def test_update_flags_orphaned_patch_for_clean_package(
+    workdir: Path, upstream_repos: dict[str, Path]
+) -> None:
+    """A CLEAN package with an orphaned %patch is flagged (exit 2), NOT rewritten.
+
+    This is the real HUM-6099/ucx scenario: ucx was clean, so the spec must stay
+    byte-identical to Fedora. We route it to a manual-cleanup draft MR instead of
+    silently diverging from upstream.
+    """
+    vanilla_dir = upstream_repos['vanilla']
+    vanilla_spec_path = vanilla_dir / 'vanilla.spec'
+
+    # Upstream v1.0: has a patch declaration and explicit %patch invocation.
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n'
+        'Patch0: fix.patch\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').write_text('--- a\n+++ b\n')
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add patch'], cwd=vanilla_dir, check=True)
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{vanilla_dir}'],
+        cwd=workdir, check=True,
+    )
+
+    # Upstream v2.0: drops Patch0 declaration and the patch file, but FORGETS
+    # to remove the %patch -P0 invocation from %prep (the bug scenario).
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').unlink()
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Drop patch (forgot %patch invocation)'], cwd=vanilla_dir, check=True)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 2, f"expected flag/exit 2, got {result.returncode}:\n{result.stderr}"
+
+    # The clean spec must NOT have been rewritten (stays identical to Fedora).
+    assert '%patch -P0' in (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+
+    state = json.loads((workdir / '.dist_git_update_state.json').read_text())
+    assert state['commit_msg'].startswith('NEEDS MANUAL PATCH CLEANUP:'), state['commit_msg']
+
+
+def test_update_strips_orphaned_patch_for_modified_package(
+    workdir: Path, upstream_repos: dict[str, Path]
+) -> None:
+    """A MODIFIED package auto-strips an orphaned %patch during a clean 3-way merge."""
+    vanilla_dir = upstream_repos['vanilla']
+    vanilla_spec_path = vanilla_dir / 'vanilla.spec'
+
+    # Upstream v1.0: Patch0 + explicit %patch.
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n'
+        'Patch0: fix.patch\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%build\nmake\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').write_text('--- a\n+++ b\n')
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add patch'], cwd=vanilla_dir, check=True)
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{vanilla_dir}'],
+        cwd=workdir, check=True,
+    )
+
+    # Local modification (in %build) + mark modified.
+    local_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    local_spec.write_text(local_spec.read_text().replace('%build\nmake', '%build\n# Local tweak\nmake'))
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', '--modified',
+         '--reason', 'Local tweak', 'vanilla'], cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Local modification'], cwd=workdir, check=True)
+
+    # Upstream v2.0 drops Patch0 declaration + file, keeps the %patch (the bug).
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%build\nmake\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').unlink()
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Drop patch (forgot %patch invocation)'], cwd=vanilla_dir, check=True)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, f"update failed:\n{result.stderr}"
+
+    updated = local_spec.read_text()
+    assert '%patch -P0' not in updated, "Orphaned %patch -P0 should have been stripped"
+    assert '# Local tweak' in updated, "Local modification lost after merge"
+
+    log = subprocess.run(['git', 'log', '-1', '--format=%B'], cwd=workdir,
+                         capture_output=True, text=True, check=True).stdout
+    assert 'Stripped orphaned' in log, "Commit message should mention stripped directives"
+
+
+def test_update_flags_orphaned_patch_for_modified_but_unchanged_package(
+    workdir: Path, upstream_repos: dict[str, Path]
+) -> None:
+    """A package marked 'modified' but with no actual local diffs is FLAGGED, not stripped.
+
+    modification_status='modified' + has_modifications=False takes the verbatim-copy
+    path (took_merge_path=False) and is reset to clean, so it is byte-identical to
+    Fedora. Stripping it would make it fail validate --thorough as "clean but
+    modified"; it must be flagged for human review instead. (Regression guard for
+    the discriminator: took_merge_path, not modification_status.)
+    """
+    vanilla_dir = upstream_repos['vanilla']
+    vanilla_spec_path = vanilla_dir / 'vanilla.spec'
+
+    # Upstream v1.0: Patch0 + explicit %patch.
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n'
+        'Patch0: fix.patch\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').write_text('--- a\n+++ b\n')
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add patch'], cwd=vanilla_dir, check=True)
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{vanilla_dir}'],
+        cwd=workdir, check=True,
+    )
+
+    # Mark modified WITHOUT changing the spec -> has_modifications stays False.
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'mark-modified', '--modified',
+         '--reason', 'Marked modified but no actual diffs', 'vanilla'], cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-a', '-m', 'Mark modified (no spec change)'], cwd=workdir, check=True)
+
+    # Upstream v2.0 drops Patch0 declaration + file, keeps the %patch (the bug).
+    vanilla_spec_path.write_text(
+        'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
+        'Summary: Test package vanilla\nLicense: MIT\n\n'
+        '%description\nTest package\n\n'
+        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%files\n'
+    )
+    (vanilla_dir / 'fix.patch').unlink()
+    subprocess.run(['git', 'add', '-A'], cwd=vanilla_dir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Drop patch (forgot %patch invocation)'], cwd=vanilla_dir, check=True)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 2, f"expected flag/exit 2, got {result.returncode}:\n{result.stderr}"
+
+    # Must NOT have been rewritten: it is byte-identical to Fedora and reset to clean.
+    assert '%patch -P0' in (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+
+    state = json.loads((workdir / '.dist_git_update_state.json').read_text())
+    assert state['commit_msg'].startswith('NEEDS MANUAL PATCH CLEANUP:'), state['commit_msg']
+    assert state['metadata']['modification_status'] == 'clean', state['metadata']
+
+
 def test_update_merge_clean_custom_release_macro(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Update cleanly merges when upstream bumps a custom release macro like %global baserelease."""
     vanilla_dir = upstream_repos['vanilla']
