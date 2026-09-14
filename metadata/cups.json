@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Backport fix for CVE-2026-87875",
+  "modification_reason": "CVE-2026-87876: backport fix for case-insensitive username matching in scheduler authorization paths",
   "modification_status": "modified",
   "release": "4",
   "sha": "38f5984a61ed64fdf1cf7ba56a4dbae16bfac788",
