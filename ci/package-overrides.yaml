@@ -437,6 +437,9 @@ oras:
 openmpi:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+pcre2:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 pgbouncer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
