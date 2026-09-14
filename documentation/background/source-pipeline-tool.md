@@ -123,9 +123,12 @@ podman run --rm \
 happen without producing artifacts. Useful for validating a new pipeline YAML before committing.
 
 On any non-zero exit, `report.json` is still written with the failure details (stage, error type,
-message). The calling automation uses this to log the failure and skip the package — no commit is
-created, the package stays at its current version, and the automation continues to the next
-package. Transient failures (exit 1) self-heal on the next scheduled run; verification and policy
+message). The calling automation uses this to log the failure and skip the package — no package
+update commit is created, the package stays at its current version, and the automation continues
+to the next package. In the scheduled upstream-version-update job, the wrapper also creates (or
+reuses) a draft diagnostic MR for a per-package update failure. That MR contains the full error
+and no partial package changes, so a maintainer can reproduce and resolve the problem safely.
+Transient failures (exit 1) may self-heal on the next scheduled run; verification and policy
 failures (exit 2) require human intervention.
 
 ## Pipeline Stages
