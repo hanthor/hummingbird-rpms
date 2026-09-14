@@ -154,6 +154,11 @@ EXISTING_UPDATES=0
 CHECK_FAILURES=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
+# Package-level checker failures are written here for the shared scheduled-job
+# Slack notification.  Keep this separate from .ci_conflict_mrs.txt: upstream
+# updates do not create a conflict MR when Gorget or source processing fails.
+UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
+rm -f "${UPSTREAM_FAILURES_FILE}"
 
 echo "========================================"
 echo "Upstream Version Multi-MR Update"
@@ -218,10 +223,33 @@ if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+# Preserve a short, one-line-per-package summary for both the job log and the
+# scheduled-job Slack notification.  The full error (which can contain Gorget
+# JSON and remediation guidance) remains in the job log linked from Slack.
+if ! jq -r '
+    .results[]
+    | select(.error != null or .update_error != null)
+    | "\(.package): \((.update_error // .error) | split("\n")[0])"
+' "${CHECK_OUTPUT}" > "${UPSTREAM_FAILURES_FILE}"; then
+    echo "ERROR: Could not create upstream update failure summary"
+    rm -f "${CHECK_OUTPUT}" "${UPSTREAM_FAILURES_FILE}"
+    exit 1
+fi
+if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
+    rm -f "${UPSTREAM_FAILURES_FILE}"
+fi
+
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
 
 echo ""
+if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
+    echo "Upstream package update/check failures:"
+    while IFS= read -r failure; do
+        echo "  - ${failure}"
+    done < "${UPSTREAM_FAILURES_FILE}"
+    echo ""
+fi
 
 # Exit codes from check_upstream_versions.py:
 #   0 = no updates available
