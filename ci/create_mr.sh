@@ -9,6 +9,7 @@ TARGET_BRANCH=${CI_COMMIT_BRANCH:-main}
 
 # Standing work item for autonomous MRs (HUM-6140 / HUM-6146).
 STANDING_JIRA_NOTE='Jira: [HUM-6146](https://redhat.atlassian.net/browse/HUM-6146)'
+JIRA_NOTE="${STANDING_JIRA_NOTE}"
 
 # Parse arguments
 AUTO_MERGE=
@@ -40,6 +41,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --label)
             MR_LABELS+=("$2")
+            shift 2
+            ;;
+        --jira)
+            if [[ $# -lt 2 || ! $2 =~ ^[A-Z]+-[0-9]+$ ]]; then
+                echo "ERROR: --jira requires a Jira ticket ID (e.g. HUM-6984)" >&2
+                exit 1
+            fi
+            JIRA_NOTE="Jira: [$2](https://redhat.atlassian.net/browse/$2)"
             shift 2
             ;;
         *)
@@ -85,9 +94,9 @@ if [[ "${CURRENT_BRANCH}" != "${BRANCH_NAME}" ]]; then
 fi
 
 if [[ -z "${MR_DESCRIPTION}" ]]; then
-    MR_DESCRIPTION="${STANDING_JIRA_NOTE}"
+    MR_DESCRIPTION="${JIRA_NOTE}"
 else
-    MR_DESCRIPTION="${MR_DESCRIPTION}\\n\\n${STANDING_JIRA_NOTE}"
+    MR_DESCRIPTION="${MR_DESCRIPTION}\\n\\n${JIRA_NOTE}"
 fi
 
 push_options=(
