@@ -1,8 +1,8 @@
-%global gcc_version 13.4.0
+%global gcc_version 13.5.0
 %global gcc_major 13
 # Note, gcc_release must be integer, if you want to add suffixes to
 # %%{release}, append them after %%{gcc_release} on Release: line.
-%global gcc_release 1
+%global gcc_release 0
 %if 0%{?fedora:1}
 %global _performance_build 1
 %endif
@@ -45,7 +45,7 @@
 Summary: Various compatibility compilers (C, C++, Fortran, ...)
 Name: gcc%{gcc_major}
 Version: %{gcc_version}
-Release: %{gcc_release}%{?dist}
+Release: %{gcc_release}.1%{?dist}
 # License notes for some of the less obvious ones:
 #   gcc/doc/cppinternals.texi: Linux-man-pages-copyleft-2-para
 #   isl: MIT, BSD-2-Clause
@@ -115,8 +115,6 @@ Patch4: gcc13-libtool-no-rpath.patch
 Patch8: gcc13-no-add-needed.patch
 Patch9: gcc13-Wno-format-security.patch
 Patch10: gcc13-rh1574936.patch
-Patch11: gcc13-libsanitizer-linux-scc.patch
-Patch12: gcc13-libsanitizer-termio.patch
 
 %global _gnu %{nil}
 %global gcc_target_platform %{_target_platform}
