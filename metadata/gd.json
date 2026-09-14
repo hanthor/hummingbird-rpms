@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "CVE-2026-9672: backport fix for GIF buffer overflow in gd_gif_in.c",
+  "modification_status": "modified",
   "release": "22",
   "sha": "355c1f4505dfc34c372ce79ab12a4dc099bf0e85",
   "source": "https://src.fedoraproject.org/rpms/gd.git",
