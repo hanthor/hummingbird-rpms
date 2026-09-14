@@ -228,6 +228,8 @@ upstream_version_update:
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
+    WORKQUEUE_OIDC_TOKEN:
+      aud: workqueue-service
   allow_failure: true
   before_script:
     - |
@@ -247,7 +249,7 @@ upstream_version_update:
       export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/oidc-token
       export AWS_ROLE_ARN="arn:aws:iam::${LOOKASIDE_UPLOAD_AWS_ACCOUNT_ID}:role/${LOOKASIDE_UPLOAD_AWS_ROLE_NAME}"
       export AWS_ROLE_SESSION_NAME="gitlab-ci-${CI_JOB_ID}"
-      ./ci/upstream_update_multi_mr.sh
+      ./ci/upstream_update_multi_mr.sh --create-mrs=workqueue
   after_script: *notify_schedule_failure
   rules:
     - !reference [.rules, schedule]
