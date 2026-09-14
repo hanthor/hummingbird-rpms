@@ -501,7 +501,9 @@ def _regenerate_vendor_archive(
             break
 
     if vendor_entry is None:
-        logger.debug(f"{package}: go-vendor-tools.toml exists but no vendor entry in sources")
+        logger.debug(
+            f"{package}: go-vendor-tools.toml exists but no vendor entry in sources"
+        )
         return None
 
     old_vendor_filename = vendor_entry["filename"]
@@ -621,12 +623,18 @@ def _run_gorget_pipeline(
 
         command = [
             "gorget",
-            "--version", new_version,
-            "--old-version", old_version,
-            "--package-dir", str(package_dir),
-            "--pipeline-file", str(pipeline_file),
-            "--gpg-keys-dir", str(gpg_keys_dir),
-            "--output-dir", str(output_dir),
+            "--version",
+            new_version,
+            "--old-version",
+            old_version,
+            "--package-dir",
+            str(package_dir),
+            "--pipeline-file",
+            str(pipeline_file),
+            "--gpg-keys-dir",
+            str(gpg_keys_dir),
+            "--output-dir",
+            str(output_dir),
             "--debug",
         ]
         upstream_repo = (get_package_metadata(package) or {}).get("upstream_repo")
@@ -634,7 +642,10 @@ def _run_gorget_pipeline(
             command += ["--upstream-repo", upstream_repo]
         logger.info(
             "%s: running gorget pipeline %s -> %s: %s",
-            package, old_version, new_version, shlex.join(command),
+            package,
+            old_version,
+            new_version,
+            shlex.join(command),
         )
         started_at = time.monotonic()
         try:
@@ -647,7 +658,8 @@ def _run_gorget_pipeline(
         finally:
             logger.info(
                 "%s: gorget pipeline completed after %.1fs",
-                package, time.monotonic() - started_at,
+                package,
+                time.monotonic() - started_at,
             )
 
         if result.returncode != 0:
@@ -740,8 +752,7 @@ def download_new_sources(
 
     if sources_entries and not new_source_urls:
         declared_filenames = {
-            os.path.basename(location)
-            for location in spec_sources.values()
+            os.path.basename(location) for location in spec_sources.values()
         }
         unexplained_entries = sources_filenames - declared_filenames
         if unexplained_entries:
@@ -780,7 +791,10 @@ def download_new_sources(
     # Regenerate vendor archive for go-vendor-tools packages (must run
     # before stale-entry removal so the old vendor entry is still present).
     vendor_file = _regenerate_vendor_archive(
-        package, old_version, new_version, sources_entries,
+        package,
+        old_version,
+        new_version,
+        sources_entries,
     )
     if vendor_file:
         downloaded.append(vendor_file)
@@ -797,9 +811,7 @@ def download_new_sources(
             old_file = package_dir / filename
             if old_file.exists():
                 old_file.unlink()
-        sources_entries = [
-            e for e in sources_entries if e["filename"] not in stale
-        ]
+        sources_entries = [e for e in sources_entries if e["filename"] not in stale]
 
     if downloaded or stale:
         _write_sources_file(sources_path, sources_entries)
@@ -830,8 +842,7 @@ def _update_gitignore(package_dir: Path, filenames: list[str]) -> None:
             for entry in new_entries:
                 f.write(f"{entry}\n")
         logger.info(
-            f"{package_dir.name}: added {len(new_entries)} "
-            f"file(s) to .gitignore"
+            f"{package_dir.name}: added {len(new_entries)} file(s) to .gitignore"
         )
 
 
@@ -935,9 +946,7 @@ def _load_update_hooks(package: str) -> Optional[UpdateHooks]:
     )
 
 
-def _build_hook_env(
-    package: str, old_version: str, new_version: str
-) -> dict[str, str]:
+def _build_hook_env(package: str, old_version: str, new_version: str) -> dict[str, str]:
     """Build the environment dict passed to hook commands."""
     package_dir = RPMS_DIR / package
     spec_files = list(package_dir.glob("*.spec"))
@@ -986,8 +995,7 @@ def _run_hook(
         details = result.stdout.strip()
         suffix = f": {details}" if details else ""
         raise RuntimeError(
-            f"{package}: {hook_name} hook failed "
-            f"(exit {result.returncode}){suffix}"
+            f"{package}: {hook_name} hook failed (exit {result.returncode}){suffix}"
         )
     logger.debug(f"{package}: {hook_name} hook stdout: {result.stdout.strip()}")
     return result
@@ -1042,8 +1050,7 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
     spec_files = list(package_dir.glob("*.spec"))
     if len(spec_files) != 1:
         raise FileNotFoundError(
-            f"Expected exactly one .spec file in {package_dir}, "
-            f"found {len(spec_files)}"
+            f"Expected exactly one .spec file in {package_dir}, found {len(spec_files)}"
         )
 
     spec_file = spec_files[0]
@@ -1085,9 +1092,7 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
             # Use Release 0.1 so that when the same version is later
             # imported from Fedora (with Release >= 1), it sorts higher
             # and replaces this locally-built version.
-            spec.update_tag(
-                "Release", "0.1%{?dist}", protected_entities=".*"
-            )
+            spec.update_tag("Release", "0.1%{?dist}", protected_entities=".*")
         logger.info("%s: saving updated spec", package)
         spec.save()
 
@@ -1097,12 +1102,18 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
     pipeline_file = None if skip_pipeline else _load_source_pipeline(package)
     if pipeline_file:
         downloaded = _run_gorget_pipeline(
-            package, old_version, new_version, pipeline_file,
+            package,
+            old_version,
+            new_version,
+            pipeline_file,
         )
     elif hooks and hooks.download_sources:
         env = _build_hook_env(package, old_version, new_version)
         result = _run_hook(
-            "download_sources", hooks.download_sources, package, env,
+            "download_sources",
+            hooks.download_sources,
+            package,
+            env,
         )
         # Each non-empty stdout line is a filename to upload
         downloaded = []
@@ -1126,7 +1137,11 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
             # version, or update in-place if the filename is unchanged.
             old_filename = filename.replace(new_version, old_version)
             existing = next(
-                (e for e in sources_entries if e["filename"] in (filename, old_filename)),
+                (
+                    e
+                    for e in sources_entries
+                    if e["filename"] in (filename, old_filename)
+                ),
                 None,
             )
             if existing:
@@ -1220,7 +1235,9 @@ def query_anitya_by_project_id(project_id: int) -> dict:
     }
 
 
-_PRERELEASE_RE = re.compile(r"(?<![a-zA-Z])(alpha|beta|rc\d*|nightly|dev|pre)(?![a-zA-Z])", re.IGNORECASE)
+_PRERELEASE_RE = re.compile(
+    r"(?<![a-zA-Z])(alpha|beta|rc\d*|nightly|dev|pre)(?![a-zA-Z])", re.IGNORECASE
+)
 
 
 def _parse_gitlab_upstream_url(upstream_repo: str) -> tuple[str, str]:
@@ -1383,9 +1400,7 @@ def query_gitlab_tags(
                 )
             raise
         except urllib.error.URLError as e:
-            raise ConnectionError(
-                f"Failed to connect to GitLab: {e}"
-            )
+            raise ConnectionError(f"Failed to connect to GitLab: {e}")
         time.sleep(API_DELAY)
 
     if page > max_pages:
@@ -1393,14 +1408,15 @@ def query_gitlab_tags(
             "GitLab tags pagination reached %d-page cap (%d tags fetched). "
             "Older tags may be missing — if track_upstream targets an older "
             "major version, results could be incomplete.",
-            max_pages, len(all_tags),
+            max_pages,
+            len(all_tags),
         )
 
     versions: list[str] = []
     for tag in all_tags:
         name = tag["name"]
         if tag_strip_prefix and name.startswith(tag_strip_prefix):
-            version = name[len(tag_strip_prefix):]
+            version = name[len(tag_strip_prefix) :]
         else:
             version = name
         if not version or not version[0].isdigit():
@@ -1431,12 +1447,12 @@ def _openjdk_to_rpm(version: str) -> str:
     21.0.12+8   -> 21.0.12.0.8
     21.0.12.1+0 -> 21.0.12.1.0
     """
-    m = re.fullmatch(r'(\d+\.\d+\.\d+)(?:\.(\d+))?\+(\d+)', version)
+    m = re.fullmatch(r"(\d+\.\d+\.\d+)(?:\.(\d+))?\+(\d+)", version)
     if not m:
         raise ValueError(f"version {version!r} is not a supported OpenJDK version")
     base, patch, build = m.groups()
-    patch = patch or '0'
-    return f'{base}.{patch}.{int(build)}'
+    patch = patch or "0"
+    return f"{base}.{patch}.{int(build)}"
 
 
 UPSTREAM_VERSION_TRANSFORMS: dict[str, Callable[[str], str]] = {
@@ -1491,7 +1507,9 @@ SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]
 }
 
 
-def check_source_available(version: str, checker_name: str, metadata: dict[str, object]) -> bool:
+def check_source_available(
+    version: str, checker_name: str, metadata: dict[str, object]
+) -> bool:
     """Check if a source tarball is available using a named checker."""
     fn = SOURCE_AVAILABILITY_CHECKERS.get(checker_name)
     if fn is None:
@@ -1585,6 +1603,7 @@ def check_package_version(
     # Strip a known suffix from upstream versions if configured
     # (e.g., swift-lang reports "6.3.3-RELEASE" from Anitya).
     if version_suffix_strip:
+
         def _strip_suffix(v: str) -> str:
             return v.removesuffix(version_suffix_strip) if v else v
 
@@ -1619,18 +1638,23 @@ def check_package_version(
                     break
                 logger.info(
                     "%s: skipping %s (source not published)",
-                    package, v,
+                    package,
+                    v,
                 )
                 skip += 1
             except urllib.error.URLError as e:
                 logger.warning(
-                    "%s: error probing source for %s: %s", package, v, e,
+                    "%s: error probing source for %s: %s",
+                    package,
+                    v,
+                    e,
                 )
                 break
         if skip:
             unavailable_sources = set(source_candidates[:skip])
             anitya_data["stable_versions"] = [
-                version for version in anitya_data["stable_versions"]
+                version
+                for version in anitya_data["stable_versions"]
                 if version not in unavailable_sources
             ]
             if skip == len(source_candidates):
@@ -1639,6 +1663,7 @@ def check_package_version(
     # Apply a named version transform if configured
     # (e.g., OpenJDK reports "21.0.12+8" from Anitya, RPM uses "21.0.12.0.8").
     if version_transform:
+
         def _apply_transform(v: str) -> str | None:
             try:
                 return transform_upstream_version(v, version_transform)
@@ -1648,7 +1673,8 @@ def check_package_version(
 
         if anitya_data.get("stable_versions"):
             anitya_data["stable_versions"] = [
-                tv for v in anitya_data["stable_versions"]
+                tv
+                for v in anitya_data["stable_versions"]
                 if (tv := _apply_transform(v)) is not None
             ]
         if anitya_data.get("version"):
@@ -1660,14 +1686,17 @@ def check_package_version(
 
     # If track_version is set, filter stable_versions to matching prefix
     if track_version and stable_versions:
-        filtered = [v for v in stable_versions if _matches_track_version(v, track_version)]
+        filtered = [
+            v for v in stable_versions if _matches_track_version(v, track_version)
+        ]
         if filtered:
             stable_versions = filtered
         else:
             # No matching versions found in stable_versions
             logger.debug(
                 "%s: no stable versions matching track_version %s",
-                package, track_version,
+                package,
+                track_version,
             )
             stable_versions = []
 
@@ -1809,6 +1838,67 @@ def list_all(args: argparse.Namespace) -> None:
     sys.exit(0)
 
 
+def _build_workqueue_file_actions(
+    package: str,
+    downloaded: list[str],
+) -> list[dict[str, str]]:
+    """Build file_actions for an upstream version update.
+
+    Includes the spec file, sources, .gitignore (if modified), and
+    metadata JSON.  Source archives are excluded — they live in the
+    lookaside cache and are listed in .gitignore.
+    """
+    import workqueue_submit
+
+    package_dir = RPMS_DIR / package
+    actions: list[dict[str, str]] = []
+
+    # Spec file — always modified by update_spec_version()
+    for spec in package_dir.glob("*.spec"):
+        actions.append(
+            workqueue_submit.file_action(
+                "update",
+                f"rpms/{package}/{spec.name}",
+                spec,
+            ),
+        )
+
+    # sources file — rewritten when new sources are downloaded or by gorget
+    sources_path = package_dir / "sources"
+    if sources_path.exists():
+        actions.append(
+            workqueue_submit.file_action(
+                "update",
+                f"rpms/{package}/sources",
+                sources_path,
+            ),
+        )
+
+    # .gitignore — only modified when new source archives were downloaded
+    if downloaded:
+        gitignore_path = package_dir / ".gitignore"
+        if gitignore_path.exists():
+            actions.append(
+                workqueue_submit.file_action(
+                    "update",
+                    f"rpms/{package}/.gitignore",
+                    gitignore_path,
+                ),
+            )
+
+    # metadata JSON — always modified by mark_package_modified()
+    meta_path = METADATA_DIR / f"{package}.json"
+    if meta_path.exists():
+        actions.append(
+            workqueue_submit.file_action(
+                "update",
+                f"metadata/{package}.json",
+                meta_path,
+            ),
+        )
+
+    return actions
+
 
 def run_check(args: argparse.Namespace) -> None:
     """
@@ -1870,7 +1960,11 @@ def run_check(args: argparse.Namespace) -> None:
 
     # Update spec files if requested
     updates_applied = 0
+    use_workqueue = getattr(args, "workqueue", False)
     if args.update:
+        if use_workqueue:
+            import workqueue_submit
+
         for result in results:
             if not result.has_update or not result.upstream_version:
                 continue
@@ -1891,15 +1985,9 @@ def run_check(args: argparse.Namespace) -> None:
                 if downloaded:
                     _update_gitignore(RPMS_DIR / result.package, downloaded)
 
-                # Commit the changes (no -f so .gitignore is respected)
-                run_git(
-                    "add",
-                    f"rpms/{result.package}",
-                    f"metadata/{result.package}.json",
-                    cwd=ROOT_DIR,
-                )
                 source_label = (
-                    "GitLab tags API" if result.version_source == "gitlab_tags"
+                    "GitLab tags API"
+                    if result.version_source == "gitlab_tags"
                     else "release-monitoring.org"
                 )
                 commit_msg = (
@@ -1908,7 +1996,34 @@ def run_check(args: argparse.Namespace) -> None:
                     f"Upstream version detected via"
                     f" {source_label}"
                 )
-                run_git_commit("-m", commit_msg, cwd=ROOT_DIR)
+
+                if use_workqueue:
+                    actions = _build_workqueue_file_actions(
+                        result.package,
+                        downloaded,
+                    )
+                    workqueue_submit.submit(
+                        package=result.package,
+                        project="redhat/hummingbird/rpms",
+                        change_kind="upstream-sync",
+                        commit_message=commit_msg,
+                        source_branch=f"chore/upstream-update-{result.package}",
+                        mr_title=f"chore(rpms): Update {result.package}"
+                        f" to {result.upstream_version}",
+                        idempotency_key=f"upstream-update/{result.package}",
+                        file_actions=actions,
+                        auto_merge=True,
+                    )
+                    discard_package_changes(result.package)
+                else:
+                    # Commit the changes (no -f so .gitignore is respected)
+                    run_git(
+                        "add",
+                        f"rpms/{result.package}",
+                        f"metadata/{result.package}.json",
+                        cwd=ROOT_DIR,
+                    )
+                    run_git_commit("-m", commit_msg, cwd=ROOT_DIR)
             except (
                 OSError,
                 RuntimeError,
@@ -2061,46 +2176,73 @@ Examples:
         ),
     )
     check_parser.add_argument(
-        "packages", nargs="*",
+        "packages",
+        nargs="*",
         help="Package names to check (default: all tracked)",
     )
     check_parser.add_argument(
-        "--all", "-a", action="store_true",
+        "--all",
+        "-a",
+        action="store_true",
         help="Show all packages, not just those with updates",
     )
     check_parser.add_argument(
-        "--json", "-j", action="store_true",
+        "--json",
+        "-j",
+        action="store_true",
         help="Output results as JSON",
     )
     check_parser.add_argument(
-        "--update", "-u", action="store_true",
+        "--update",
+        "-u",
+        action="store_true",
         help="Update spec files to the new upstream version",
     )
     check_parser.add_argument(
-        "--distro", "-d", default=DEFAULT_DISTRO,
+        "--distro",
+        "-d",
+        default=DEFAULT_DISTRO,
         help=f"Distribution to look up in Anitya (default: {DEFAULT_DISTRO})",
     )
     check_parser.add_argument(
-        "--verbose", "-v", action="store_true",
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Enable verbose output",
     )
     check_parser.add_argument(
-        "--quiet", "-q", action="store_true",
+        "--quiet",
+        "-q",
+        action="store_true",
         help="Suppress progress output (implies not --verbose)",
     )
     check_parser.add_argument(
-        "--delay", type=float, default=API_DELAY,
+        "--delay",
+        type=float,
+        default=API_DELAY,
         help=f"Delay between API requests in seconds (default: {API_DELAY})",
     )
     check_parser.add_argument(
-        "-s", "--sign-off", action="store_true",
+        "-s",
+        "--sign-off",
+        action="store_true",
         help="Add Signed-off-by trailer to commit messages",
     )
     check_parser.add_argument(
-        "--skip-pipeline", action="store_true",
+        "--skip-pipeline",
+        action="store_true",
         help=(
             "Force the legacy hook/default source-download path even when "
             "metadata/<package>.source-pipeline.yaml exists"
+        ),
+    )
+    check_parser.add_argument(
+        "--workqueue",
+        action="store_true",
+        help=(
+            "Submit updates to the workqueue service instead of committing "
+            "locally. Requires WORKQUEUE_SERVICE_URL and WORKQUEUE_OIDC_TOKEN "
+            "environment variables."
         ),
     )
 
@@ -2114,23 +2256,33 @@ Examples:
         ),
     )
     list_parser.add_argument(
-        "--distro", "-d", default=DEFAULT_DISTRO,
+        "--distro",
+        "-d",
+        default=DEFAULT_DISTRO,
         help=f"Distribution to look up in Anitya (default: {DEFAULT_DISTRO})",
     )
     list_parser.add_argument(
-        "--verbose", "-v", action="store_true",
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Enable verbose output",
     )
     list_parser.add_argument(
-        "--quiet", "-q", action="store_true",
+        "--quiet",
+        "-q",
+        action="store_true",
         help="Suppress progress output",
     )
     list_parser.add_argument(
-        "--delay", type=float, default=API_DELAY,
+        "--delay",
+        type=float,
+        default=API_DELAY,
         help=f"Delay between API requests in seconds (default: {API_DELAY})",
     )
     list_parser.add_argument(
-        "--json", "-j", action="store_true",
+        "--json",
+        "-j",
+        action="store_true",
         help="Output results as JSON",
     )
 
