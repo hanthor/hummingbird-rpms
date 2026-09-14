@@ -85,8 +85,7 @@ Patch1002: 0001-Fix-CVE-2026-87875-cupsUTF32ToUTF8-heap-oob-read.patch
 # CVE-2026-87876: case-insensitive username matching in scheduler authorization paths
 # https://github.com/OpenPrinting/cups/commit/f56844dbe4a54a9f8e1aeb3b913fbee614156bdb
 # https://github.com/OpenPrinting/cups/commit/88e67c00c130a45f3a1edf36686f7a0b2982fef8
-Patch1003: 0002-Fix-CVE-2026-87876-case-insensitive-username-in-cupsdGetPrivateAttrs.patch
-Patch1004: 0001-Fix-CVE-2026-87876-case-insensitive-username-in-check-quotas.patch
+Patch1003: 0001-Fix-CVE-2026-87876-cups-username-case-sensitive.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -317,8 +316,7 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1000 -p1 -b .fix-filter-ppd-keyword
 %patch -P 1001 -p1 -b .fix-coverity-issues
 %patch -P 1002 -p1 -b .fix-cve-2026-87875-utf32
-%patch -P 1003 -p1 -b .fix-cve-2026-87876-private-attrs
-%patch -P 1004 -p1 -b .fix-cve-2026-87876-check-quotas
+%patch -P 1003 -p1 -b .fix-cve-2026-87876
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
