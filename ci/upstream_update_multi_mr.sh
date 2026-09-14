@@ -10,16 +10,20 @@
 #   ./ci/upstream_update_multi_mr.sh --clone --max-updates=3 --create-mrs  # Clone, create up to 3 MRs
 #   ./ci/upstream_update_multi_mr.sh --max-updates=5              # Check all, create up to 5 MRs (in current repo)
 #   ./ci/upstream_update_multi_mr.sh --only-package=curl          # Check only curl
+#   ./ci/upstream_update_multi_mr.sh --use-workqueue              # Submit to workqueue service instead of pushing
 #
 # Environment variables:
 #   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for --create-mrs)
 #   GITLAB_REMOTE_URL        - GitLab repo URL (default: https://gitlab.com/redhat/hummingbird/rpms.git)
+#   WORKQUEUE_SERVICE_URL    - Workqueue service URL (required for --use-workqueue)
+#   WORKQUEUE_OIDC_TOKEN     - GitLab CI OIDC token for workqueue auth (required for --use-workqueue)
 
 set -euo pipefail
 
 # Parse arguments
 CLONE_MODE=false
 CREATE_MRS=false
+USE_WORKQUEUE=false
 MAX_UPDATES=0   # 0 means unlimited
 ONLY_PACKAGE=""  # Empty means check all tracked packages
 TEMP_DIR=""
@@ -42,13 +46,17 @@ while [[ $# -gt 0 ]]; do
             CREATE_MRS=true
             shift
             ;;
+        --use-workqueue)
+            USE_WORKQUEUE=true
+            shift
+            ;;
         --only-package=*)
             ONLY_PACKAGE="${1#*=}"
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--clone] [--max-updates=N] [--create-mrs] [--only-package=NAME]"
+            echo "Usage: $0 [--clone] [--max-updates=N] [--create-mrs] [--use-workqueue] [--only-package=NAME]"
             exit 1
             ;;
     esac
@@ -99,8 +107,8 @@ if [[ "${CLONE_MODE}" == true ]]; then
     git config user.name "Upstream Update (Clone Mode)"
     git config user.email "noreply@example.com"
 
-    # If --create-mrs is set, configure credentials for pushing
-    if [[ "${CREATE_MRS}" == true ]]; then
+    # If --create-mrs is set (non-workqueue mode), configure credentials for pushing
+    if [[ "${CREATE_MRS}" == true && "${USE_WORKQUEUE}" == false ]]; then
         if [[ -z "${CHORE_MR_GITLAB_TOKEN:-}" ]]; then
             echo "ERROR: CHORE_MR_GITLAB_TOKEN must be set when using --create-mrs"
             echo "       Token must have write_repository scope"
@@ -147,6 +155,19 @@ if [[ -z "$(git config user.email 2>/dev/null || true)" ]]; then
     fi
 fi
 
+# Validate workqueue environment when --use-workqueue is set
+if [[ "${USE_WORKQUEUE}" == true ]]; then
+    if [[ -z "${WORKQUEUE_SERVICE_URL:-}" ]]; then
+        echo "ERROR: WORKQUEUE_SERVICE_URL must be set when using --use-workqueue"
+        exit 1
+    fi
+    if [[ -z "${WORKQUEUE_OIDC_TOKEN:-}" ]]; then
+        echo "ERROR: WORKQUEUE_OIDC_TOKEN must be set when using --use-workqueue"
+        echo "       Configure id_tokens in .gitlab-ci.yml with aud: workqueue-service"
+        exit 1
+    fi
+fi
+
 # Statistics tracking
 PACKAGES_UPDATED=0
 MR_FAILURES=0
@@ -158,7 +179,10 @@ CREATED_MR_URLS=()
 echo "========================================"
 echo "Upstream Version Multi-MR Update"
 echo "========================================"
-if [[ "${CLONE_MODE}" == true ]]; then
+if [[ "${USE_WORKQUEUE}" == true ]]; then
+    echo "Mode: WORKQUEUE"
+    echo "Service: ${WORKQUEUE_SERVICE_URL}"
+elif [[ "${CLONE_MODE}" == true ]]; then
     echo "Mode: CLONE"
     if [[ "${CREATE_MRS}" == true ]]; then
         echo "MRs: Will be created and pushed to GitLab"
@@ -184,19 +208,25 @@ if [[ -z "${CI_MERGE_REQUEST_IID:-}" ]]; then
     git checkout --quiet "${TARGET_BRANCH}" 2>/dev/null || true
 fi
 
-# Save the current commit before running updates
+# Save the current commit before running updates (used by git-push path)
 START_COMMIT=$(git rev-parse HEAD)
 
 # ── Phase 2: Run upstream version check ─────────────────────────────
 
-echo "Running check_upstream_versions.py check --update --sign-off ..."
+CHECK_ARGS=(./ci/check_upstream_versions.py check --update --sign-off --json)
+
+if [[ "${USE_WORKQUEUE}" == true ]]; then
+    CHECK_ARGS+=(--workqueue)
+    echo "Running check_upstream_versions.py check --update --workqueue --sign-off ..."
+else
+    echo "Running check_upstream_versions.py check --update --sign-off ..."
+fi
 echo ""
 
 # Request JSON so this wrapper can reliably distinguish update failures from
 # successful updates.  The checker exits 1 for both cases when at least one
 # update is available, so its exit status alone cannot drive the scheduled
 # job's final status.
-CHECK_ARGS=(./ci/check_upstream_versions.py check --update --sign-off --json)
 
 if [[ -n "${ONLY_PACKAGE}" ]]; then
     CHECK_ARGS+=("${ONLY_PACKAGE}")
@@ -218,6 +248,8 @@ if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+UPDATES_APPLIED=$(jq '[.results[] | select(.updated == true)] | length' "${CHECK_OUTPUT}")
+
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
 
@@ -232,11 +264,32 @@ if [[ ${CHECK_EXIT_CODE} -eq 0 ]]; then
     exit 0
 elif [[ ${CHECK_EXIT_CODE} -eq 2 ]]; then
     echo "Warning: check_upstream_versions.py reported errors (exit code 2)"
-    echo "Continuing to process any commits that were created..."
+    echo "Continuing to process any updates that were applied..."
     echo ""
 fi
 
-# ── Phase 3: Collect commits, create MRs ────────────────────────────
+# ── Workqueue path: submission already happened in Python ───────────
+
+if [[ "${USE_WORKQUEUE}" == true ]]; then
+    echo "========================================"
+    echo "Summary"
+    echo "========================================"
+    echo "  Mode: WORKQUEUE"
+    echo "  Updates submitted:       ${UPDATES_APPLIED}"
+    echo "  Update/check failures:   ${CHECK_FAILURES}"
+    echo "========================================"
+
+    if [[ ${CHECK_FAILURES} -gt 0 ]]; then
+        echo ""
+        echo "Exiting with error due to ${CHECK_FAILURES} failure(s)"
+        exit 1
+    fi
+    echo ""
+    echo "All upstream updates submitted to workqueue successfully!"
+    exit 0
+fi
+
+# ── Phase 3: Collect commits, create MRs (git-push path) ───────────
 
 # Check how many commits were created since we started
 COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..HEAD" 2>/dev/null || echo "0")

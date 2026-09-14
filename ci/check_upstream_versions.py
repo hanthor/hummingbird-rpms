@@ -1810,6 +1810,53 @@ def list_all(args: argparse.Namespace) -> None:
 
 
 
+
+def _build_workqueue_file_actions(
+    package: str,
+    downloaded: list[str],
+) -> list[dict[str, str]]:
+    """Build file_actions for an upstream version update.
+
+    Includes the spec file, sources, .gitignore (if modified), and
+    metadata JSON.  Source archives are excluded -- they live in the
+    lookaside cache and are listed in .gitignore.
+    """
+    import workqueue_submit
+
+    package_dir = RPMS_DIR / package
+    actions: list[dict[str, str]] = []
+
+    # Spec file -- always modified by update_spec_version()
+    for spec in package_dir.glob("*.spec"):
+        actions.append(workqueue_submit.file_action(
+            "update", f"rpms/{package}/{spec.name}", spec,
+        ))
+
+    # sources file -- rewritten when new sources are downloaded or by gorget
+    sources_path = package_dir / "sources"
+    if sources_path.exists():
+        actions.append(workqueue_submit.file_action(
+            "update", f"rpms/{package}/sources", sources_path,
+        ))
+
+    # .gitignore -- only modified when new source archives were downloaded
+    if downloaded:
+        gitignore_path = package_dir / ".gitignore"
+        if gitignore_path.exists():
+            actions.append(workqueue_submit.file_action(
+                "update", f"rpms/{package}/.gitignore", gitignore_path,
+            ))
+
+    # metadata JSON -- always modified by mark_package_modified()
+    meta_path = METADATA_DIR / f"{package}.json"
+    if meta_path.exists():
+        actions.append(workqueue_submit.file_action(
+            "update", f"metadata/{package}.json", meta_path,
+        ))
+
+    return actions
+
+
 def run_check(args: argparse.Namespace) -> None:
     """
     Check tracked packages for upstream version updates.
@@ -1870,7 +1917,11 @@ def run_check(args: argparse.Namespace) -> None:
 
     # Update spec files if requested
     updates_applied = 0
+    use_workqueue = getattr(args, "workqueue", False)
     if args.update:
+        if use_workqueue:
+            import workqueue_submit
+
         for result in results:
             if not result.has_update or not result.upstream_version:
                 continue
@@ -1891,13 +1942,6 @@ def run_check(args: argparse.Namespace) -> None:
                 if downloaded:
                     _update_gitignore(RPMS_DIR / result.package, downloaded)
 
-                # Commit the changes (no -f so .gitignore is respected)
-                run_git(
-                    "add",
-                    f"rpms/{result.package}",
-                    f"metadata/{result.package}.json",
-                    cwd=ROOT_DIR,
-                )
                 source_label = (
                     "GitLab tags API" if result.version_source == "gitlab_tags"
                     else "release-monitoring.org"
@@ -1908,7 +1952,33 @@ def run_check(args: argparse.Namespace) -> None:
                     f"Upstream version detected via"
                     f" {source_label}"
                 )
-                run_git_commit("-m", commit_msg, cwd=ROOT_DIR)
+
+                if use_workqueue:
+                    actions = _build_workqueue_file_actions(
+                        result.package, downloaded,
+                    )
+                    workqueue_submit.submit(
+                        package=result.package,
+                        project="redhat/hummingbird/rpms",
+                        change_kind="upstream-sync",
+                        commit_message=commit_msg,
+                        source_branch=f"chore/upstream-update-{result.package}",
+                        mr_title=f"chore(rpms): Update {result.package}"
+                        f" to {result.upstream_version}",
+                        idempotency_key=f"upstream-update/{result.package}",
+                        file_actions=actions,
+                        auto_merge=True,
+                    )
+                    discard_package_changes(result.package)
+                else:
+                    # Commit the changes (no -f so .gitignore is respected)
+                    run_git(
+                        "add",
+                        f"rpms/{result.package}",
+                        f"metadata/{result.package}.json",
+                        cwd=ROOT_DIR,
+                    )
+                    run_git_commit("-m", commit_msg, cwd=ROOT_DIR)
             except (
                 OSError,
                 RuntimeError,
@@ -2101,6 +2171,14 @@ Examples:
         help=(
             "Force the legacy hook/default source-download path even when "
             "metadata/<package>.source-pipeline.yaml exists"
+        ),
+    )
+    check_parser.add_argument(
+        "--workqueue", action="store_true",
+        help=(
+            "Submit updates to the workqueue service instead of committing "
+            "locally. Requires WORKQUEUE_SERVICE_URL and WORKQUEUE_OIDC_TOKEN "
+            "environment variables."
         ),
     )
 
