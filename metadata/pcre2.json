@@ -6,5 +6,5 @@
   "sha": "7564d9d768d993dc417a65d0c9c66d9a857d527d",
   "source": "https://src.fedoraproject.org/rpms/pcre2.git",
   "upstream_repo": "https://github.com/PCRE2Project/pcre2",
-  "version": "10.47"
+  "version": "10.48"
 }
