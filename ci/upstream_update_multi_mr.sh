@@ -3,17 +3,25 @@
 # Uses check_upstream_versions.py to detect newer upstream releases and update
 # spec files, then creates one MR per package for independent review.
 #
+# Without --create-mrs, this is always a dry-run: updates are applied locally
+# but no MRs are created. Pass --create-mrs to create MRs. The method is
+# auto-detected: when WORKQUEUE_SERVICE_URL and WORKQUEUE_OIDC_TOKEN are set,
+# submissions go through the workqueue service; otherwise MRs are created via
+# git push.
+#
 # Usage:
-#   ./ci/upstream_update_multi_mr.sh                              # Normal mode: check all tracked packages, create MRs
-#   ./ci/upstream_update_multi_mr.sh --clone                      # Clone to /tmp, check all tracked packages, dry-run (no MRs)
-#   ./ci/upstream_update_multi_mr.sh --clone --create-mrs         # Clone to /tmp, create MRs
-#   ./ci/upstream_update_multi_mr.sh --clone --max-updates=3 --create-mrs  # Clone, create up to 3 MRs
-#   ./ci/upstream_update_multi_mr.sh --max-updates=5              # Check all, create up to 5 MRs (in current repo)
-#   ./ci/upstream_update_multi_mr.sh --only-package=curl          # Check only curl
+#   ./ci/upstream_update_multi_mr.sh                                          # Dry-run: check and apply updates locally
+#   ./ci/upstream_update_multi_mr.sh --create-mrs                             # Create MRs (auto-detect method)
+#   ./ci/upstream_update_multi_mr.sh --clone                                  # Clone to /tmp first, then dry-run
+#   ./ci/upstream_update_multi_mr.sh --clone --create-mrs                     # Clone to /tmp, create MRs
+#   ./ci/upstream_update_multi_mr.sh --max-updates=3 --create-mrs             # Create up to 3 MRs
+#   ./ci/upstream_update_multi_mr.sh --only-package=curl                      # Check only curl
 #
 # Environment variables:
-#   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for --create-mrs)
+#   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for git-push in clone mode)
 #   GITLAB_REMOTE_URL        - GitLab repo URL (default: https://gitlab.com/redhat/hummingbird/rpms.git)
+#   WORKQUEUE_SERVICE_URL    - Workqueue service URL (enables workqueue method when set)
+#   WORKQUEUE_OIDC_TOKEN     - GitLab CI OIDC token for workqueue auth
 #
 # Failed update processing creates a draft diagnostic MR. The checker rolls
 # back partial package changes before the draft is created.
@@ -56,6 +64,17 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Auto-detect MR creation method
+if [[ "${CREATE_MRS}" == true ]]; then
+    if [[ -n "${WORKQUEUE_SERVICE_URL:-}" && -n "${WORKQUEUE_OIDC_TOKEN:-}" ]]; then
+        CREATE_METHOD=workqueue
+    else
+        CREATE_METHOD=git-push
+    fi
+else
+    CREATE_METHOD=dry-run
+fi
 
 # Configuration
 TARGET_BRANCH=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH:-main}}}
@@ -102,10 +121,10 @@ if [[ "${CLONE_MODE}" == true ]]; then
     git config user.name "Upstream Update (Clone Mode)"
     git config user.email "noreply@example.com"
 
-    # If --create-mrs is set, configure credentials for pushing
-    if [[ "${CREATE_MRS}" == true ]]; then
+    # In clone mode with --create-mrs via git-push, configure credentials for pushing
+    if [[ "${CREATE_METHOD}" == "git-push" ]]; then
         if [[ -z "${CHORE_MR_GITLAB_TOKEN:-}" ]]; then
-            echo "ERROR: CHORE_MR_GITLAB_TOKEN must be set when using --create-mrs"
+            echo "ERROR: CHORE_MR_GITLAB_TOKEN must be set when using --create-mrs in clone mode"
             echo "       Token must have write_repository scope"
             exit 1
         fi
@@ -122,7 +141,7 @@ if [[ "${CLONE_MODE}" == true ]]; then
 else
     cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-    # In production mode, extract GitLab info for MR URL tracking
+    # Extract GitLab info for MR URL tracking
     GITLAB_REMOTE_URL="${GITLAB_REMOTE_URL:-https://gitlab.com/redhat/hummingbird/rpms.git}"
     if [[ "${GITLAB_REMOTE_URL}" =~ ^https://([^/]+)/(.+)\.git$ ]]; then
         GITLAB_HOST="${BASH_REMATCH[1]}"
@@ -171,15 +190,15 @@ rm -f "${UPSTREAM_DRAFT_FAILURE_MRS_FILE}"
 echo "========================================"
 echo "Upstream Version Multi-MR Update"
 echo "========================================"
-if [[ "${CLONE_MODE}" == true ]]; then
-    echo "Mode: CLONE"
-    if [[ "${CREATE_MRS}" == true ]]; then
-        echo "MRs: Will be created and pushed to GitLab"
-    else
-        echo "MRs: Dry-run (no MRs will be created)"
-    fi
+if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
+    echo "Mode: WORKQUEUE (${WORKQUEUE_SERVICE_URL})"
+elif [[ "${CREATE_METHOD}" == "git-push" ]]; then
+    echo "Mode: GIT-PUSH (MRs will be created)"
 else
-    echo "Mode: PRODUCTION (MRs will be created)"
+    echo "Mode: DRY-RUN (no MRs will be created)"
+fi
+if [[ "${CLONE_MODE}" == true ]]; then
+    echo "Clone: ${TEMP_DIR}"
 fi
 echo "Target branch: ${TARGET_BRANCH}"
 if [[ -n "${ONLY_PACKAGE}" ]]; then
@@ -197,19 +216,24 @@ if [[ -z "${CI_MERGE_REQUEST_IID:-}" ]]; then
     git checkout --quiet "${TARGET_BRANCH}" 2>/dev/null || true
 fi
 
-# Save the current commit before running updates
+# Save the current commit before running updates (used by git-push path)
 START_COMMIT=$(git rev-parse HEAD)
 
 # ── Phase 2: Run upstream version check ─────────────────────────────
-
-echo "Running check_upstream_versions.py check --update --sign-off ..."
-echo ""
 
 # Request JSON so this wrapper can reliably distinguish update failures from
 # successful updates.  The checker exits 1 for both cases when at least one
 # update is available, so its exit status alone cannot drive the scheduled
 # job's final status.
 CHECK_ARGS=(./ci/check_upstream_versions.py check --update --sign-off --json)
+
+if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
+    CHECK_ARGS+=(--workqueue)
+    echo "Running check_upstream_versions.py check --update --workqueue --sign-off ..."
+else
+    echo "Running check_upstream_versions.py check --update --sign-off ..."
+fi
+echo ""
 
 if [[ -n "${ONLY_PACKAGE}" ]]; then
     CHECK_ARGS+=("${ONLY_PACKAGE}")
@@ -269,6 +293,8 @@ COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..${UPDATE_COMMIT_HEAD}" 
 # shellcheck disable=SC2312  # Command substitution in mapfile is intentional
 mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..${UPDATE_COMMIT_HEAD}")
 
+UPDATES_APPLIED=$(jq '[.results[] | select(.updated == true)] | length' "${CHECK_OUTPUT}")
+
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
 
@@ -322,7 +348,7 @@ for FAILURE_RECORD in "${UPDATE_FAILURE_RECORDS[@]}"; do
         continue
     fi
 
-    if [[ "${CLONE_MODE}" == true && "${CREATE_MRS}" == false ]]; then
+    if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
         echo "  [DRY-RUN] Draft MR would be created for ${PACKAGE}"
         continue
     fi
@@ -357,11 +383,21 @@ if [[ ${CHECK_EXIT_CODE} -eq 0 ]]; then
     exit 0
 elif [[ ${CHECK_EXIT_CODE} -eq 2 ]]; then
     echo "Warning: check_upstream_versions.py reported errors (exit code 2)"
-    echo "Continuing to process any commits that were created..."
+    echo "Continuing to process any updates that were applied..."
     echo ""
 fi
 
-# ── Phase 3: Collect commits, create MRs ────────────────────────────
+# ── Workqueue path: submission already happened in Python ───────────
+
+if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
+    echo "Workqueue: ${UPDATES_APPLIED} submitted, ${CHECK_FAILURES} failure(s)"
+    if [[ ${CHECK_FAILURES} -gt 0 ]]; then
+        exit 1
+    fi
+    exit 0
+fi
+
+# ── Phase 3: Collect commits, create MRs (git-push path) ───────────
 
 if [[ ${COMMITS_CREATED} -eq 0 ]]; then
     echo "No commits were created despite updates being reported."
@@ -436,15 +472,15 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
         continue
     fi
 
-    if [[ "${CLONE_MODE}" == true && "${CREATE_MRS}" == false ]]; then
-        # Clone mode without --create-mrs: dry-run
+    if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
+        # Dry-run: show what would be created
         echo "  Would create MR:"
         echo "      Branch: ${BRANCH_NAME}"
         echo "      Title: ${MR_TITLE}"
         echo "  [DRY-RUN] MR would be created for ${PACKAGE}"
         PACKAGES_UPDATED=$((PACKAGES_UPDATED + 1))
     else
-        # Production mode or clone mode with --create-mrs: actually create the MR
+        # --create-mrs: actually create the MR
         echo "  Creating MR: ${MR_TITLE}"
 
         MR_ARGS=(--branch "${BRANCH_NAME}" --title "${MR_TITLE}" --auto-merge)
@@ -483,16 +519,12 @@ echo ""
 echo "========================================"
 echo "Summary"
 echo "========================================"
-if [[ "${CLONE_MODE}" == true ]]; then
-    echo "  Mode: CLONE"
-    if [[ "${CREATE_MRS}" == true ]]; then
-        echo "  MRs: ${PACKAGES_UPDATED} created"
-    else
-        echo "  MRs: Dry-run (no MRs created)"
-    fi
+if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
+    echo "  Mode: DRY-RUN"
+    echo "  Updates found:           ${PACKAGES_UPDATED}"
 else
-    echo "  Mode: PRODUCTION"
-    echo "  MRs: ${PACKAGES_UPDATED} created"
+    echo "  Mode: GIT-PUSH"
+    echo "  MRs created:             ${PACKAGES_UPDATED}"
 fi
 echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
@@ -538,12 +570,8 @@ if [[ ${TOTAL_FAILURES} -gt 0 ]]; then
 fi
 
 echo ""
-if [[ "${CLONE_MODE}" == true ]]; then
-    if [[ "${CREATE_MRS}" == true ]]; then
-        echo "Clone mode with MR creation completed successfully!"
-    else
-        echo "Clone mode (dry-run) completed successfully!"
-    fi
+if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
+    echo "Dry-run completed successfully!"
 else
     echo "All upstream updates processed successfully!"
 fi
