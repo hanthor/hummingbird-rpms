@@ -12,7 +12,7 @@
 Summary:  The Advanced Linux Sound Architecture (ALSA) library
 Name:     alsa-lib
 Version:  %{version_alsa_lib}
-Release:  2%{?prever_dot}%{?dist}
+Release:  2%{?prever_dot}.1%{?dist}
 License:  LGPL-2.1-or-later
 URL:      http://www.alsa-project.org/
 
@@ -33,6 +33,7 @@ Patch0:   alsa-git.patch
 %endif
 Patch1:   alsa-lib-1.2.3.1-config.patch
 Patch2:   alsa-lib-1.2.10-glibc-open.patch
+Patch3:   CVE-2026-90781.patch
 
 BuildRequires:  doxygen
 BuildRequires:  autoconf automake libtool
@@ -85,6 +86,7 @@ contains alsa-lib configuration of SoC topology
 %endif
 %patch -P1 -p1 -b .config
 %patch -P2 -p1 -b .glibc-open
+%patch -P3 -p1 -b .CVE-2026-90781
 
 %build
 # This package uses top level ASM constructs which are incompatible with LTO.
