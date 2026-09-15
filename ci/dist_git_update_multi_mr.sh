@@ -200,6 +200,10 @@ CREATED_MR_URLS=()
 CONFLICT_MR_URLS=()
 ATTENTION_MRS_FILE=".ci_conflict_mrs.txt"
 rm -f "${ATTENTION_MRS_FILE}"
+# Package-level update and MR-creation failures are surfaced separately from
+# conflict MRs in the shared scheduled-job Slack notification.
+FAILURES_FILE=".ci_dist_git_update_failures.txt"
+rm -f "${FAILURES_FILE}"
 
 echo "========================================"
 echo "Dist-git Multi-MR Update"
@@ -563,6 +567,7 @@ if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
     echo "Failed packages:"
     for failed_pkg in "${FAILED_PACKAGES[@]}"; do
         echo "  - ${failed_pkg}"
+        echo "${failed_pkg}" >> "${FAILURES_FILE}"
     done
 fi
 

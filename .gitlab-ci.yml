@@ -80,6 +80,15 @@ default:
             MSG="${MSG}"$'\n'"- ${line}"
           done < .ci_upstream_update_draft_mrs.txt
         fi
+
+        # dist_git_update_multi_mr.sh records package updates and MR creation
+        # failures separately from conflict MRs so both are visible in Slack.
+        if [ -s .ci_dist_git_update_failures.txt ]; then
+          MSG="${MSG}"$'\n'"Failed packages:"
+          while IFS= read -r line; do
+            MSG="${MSG}"$'\n'"- ${line}"
+          done < .ci_dist_git_update_failures.txt
+        fi
         curl -f --show-error -X POST -H 'Content-Type: application/json' \
           --data "$(jq -n --arg text "$MSG" '{text: $text}')" \
           "$SLACK_WEBHOOK_URL"
