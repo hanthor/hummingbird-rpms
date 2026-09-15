@@ -18,7 +18,7 @@
 Summary:       A graphics library for quick creation of PNG or JPEG images
 Name:          gd
 Version:       2.3.3
-Release:       22%{?prever}%{?short}%{?dist}
+Release:       22%{?prever}%{?short}.1%{?dist}
 License:       GD
 URL:           http://libgd.github.io/
 %if 0%{?commit:1}
@@ -33,6 +33,8 @@ Source0:       https://github.com/libgd/libgd/releases/download/gd-%{version}/li
 Patch0:        libgd-flip.patch
 # Missing header see https://github.com/libgd/libgd/pull/766
 Patch1:        libgd-iostream.patch
+# Fix buffer overflow when processing specially crafted GIF file (CVE-2026-9672)
+Patch2:        gd-CVE-2026-9672.patch
 
 BuildRequires: freetype-devel
 BuildRequires: fontconfig-devel
@@ -119,6 +121,7 @@ files for gd, a graphics library for creating PNG and JPEG graphics.
 %setup -q -n libgd-%{version}%{?prever:-%{prever}}
 %patch -P0 -p1
 %patch -P1 -p1
+%patch -P2 -p1
 
 : $(perl config/getver.pl)
 
