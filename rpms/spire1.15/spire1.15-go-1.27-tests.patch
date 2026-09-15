@@ -1,0 +1,32 @@
+From 3916a4c9f107c6a60fec8bcc6cd2b5149a8a6f5f Mon Sep 17 00:00:00 2001
+From: Sorin Dumitru <sorin@returnze.ro>
+Date: Tue, 1 Sep 2026 20:59:40 +0000
+Subject: [PATCH] Update tests for Go 1.27
+
+Backport the two test-only changes from upstream's Go 1.27 update. Go 1.27
+prints string-valued PKIX attributes differently, and its IDNA validation
+rejects mixed-case DNS labels.
+
+diff --git a/pkg/common/x509svid/uniqueid_test.go b/pkg/common/x509svid/uniqueid_test.go
+index 561db0e..c7abe26 100644
+--- a/pkg/common/x509svid/uniqueid_test.go
++++ b/pkg/common/x509svid/uniqueid_test.go
+@@ -18 +18 @@ func TestUniqueIDAttribute(t *testing.T) {
+-		"2.5.4.45=#13206333343036663962313263656234663963393438333138633537396239303562",
++		"2.5.4.45=c3406f9b12ceb4f9c948318c579b905b",
+diff --git a/pkg/server/api/entry/v1/service_test.go b/pkg/server/api/entry/v1/service_test.go
+index 6311c79..d92ce49 100644
+--- a/pkg/server/api/entry/v1/service_test.go
++++ b/pkg/server/api/entry/v1/service_test.go
+@@ -4011 +4011 @@ func TestBatchUpdateEntry(t *testing.T) {
+-					DnsNames: []string{"dnsUpdated"},
++					DnsNames: []string{"dnsupdated"},
+@@ -4017 +4017 @@ func TestBatchUpdateEntry(t *testing.T) {
+-				modifiedEntry.DnsNames = []string{"dnsUpdated"}
++				modifiedEntry.DnsNames = []string{"dnsupdated"}
+@@ -4025 +4025 @@ func TestBatchUpdateEntry(t *testing.T) {
+-						DnsNames: []string{"dnsUpdated"},
++						DnsNames: []string{"dnsupdated"},
+@@ -4038 +4038 @@ func TestBatchUpdateEntry(t *testing.T) {
+-							telemetry.DNSName:        "dnsUpdated",
++							telemetry.DNSName:        "dnsupdated",

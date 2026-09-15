@@ -3,6 +3,28 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "spire-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "spire-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/spire1.15/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # These exceptions apply only to Spire 1.15.2 and must be regenerated for a
+  # future version update.
+  # HUM-7296 synchronizes Source0's go.mod/go.sum with the existing
+  # security-pinned vendor archive. The remaining Source0 files were compared
+  # with the published archive and are identical.
+  - file: "spire-1.15.2.tar.gz"
+    checksum: "8939047a7031b1bb0290a58607de06a60501e98a5a678f4ea77cdba980d114d86b5163a61464b994244bc21cb4033e591bab38a01c9c932cea38cd392e831414"
+    reason: "HUM-7296: Source0 now carries the same go.mod/go.sum security pins as the vendor archive; all other source files were verified unchanged."
+  # The extracted vendor tree and Go module metadata were compared with the
+  # published archive and are identical; the changed checksum is due solely
+  # to deterministic archive re-encoding by Gorget.
+  - file: "spire-1.15.2-vendor.tar.bz2"
+    checksum: "8c8db9eef38cfa92fd7d594eb28b34dcc0a85ce956e959d2dc9d64a256b9a3be5c6ffffe7dd78725d4f81fc041c5ad9a93538441c7543aa37731c3ef14ea558e"
+    reason: "HUM-7296: extracted vendor content matches the published archive; Gorget deterministically re-encodes the tarball."
