@@ -75,6 +75,14 @@ releases: dict[str, dict[str, str]] = {}
 # Global sign-off flag, set from command line
 sign_off: bool = False
 
+# Network-facing Git operations can fail transiently when an upstream or its
+# proxy is briefly unavailable. Keep the retry policy bounded so a persistent
+# failure remains visible to the caller without delaying the whole update
+# indefinitely.
+GIT_NETWORK_RETRY_OPERATIONS = frozenset({'clone', 'fetch', 'pull', 'ls-remote'})
+GIT_NETWORK_MAX_ATTEMPTS = 3
+GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS = 2
+
 
 class PackageMetadata(TypedDict):
     """Metadata stored in metadata/<package>.json for each package."""
@@ -395,30 +403,28 @@ def ls_sources(package: str) -> None:
 def run_git(*args: str, cwd: Path | str | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run git command and return its stdout/exit code.
 
-    For network operations (clone, fetch, pull), retries up to 3 times with exponential backoff
-    to handle transient network failures.
+    Network operations, including ``ls-remote``, are attempted at most three
+    times with exponential backoff to handle transient upstream or proxy
+    failures. The final Git error is re-raised unchanged.
     """
-    # Network operations that should be retried on failure
-    network_ops = {'clone', 'fetch', 'pull'}
-    should_retry = len(args) > 0 and args[0] in network_ops
+    should_retry = bool(args) and args[0] in GIT_NETWORK_RETRY_OPERATIONS
 
-    max_retries = 3 if should_retry else 1
-    retry_delay = 2  # Initial delay in seconds
+    max_attempts = GIT_NETWORK_MAX_ATTEMPTS if should_retry else 1
+    retry_delay = GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS
 
-    for attempt in range(max_retries):
+    for attempt in range(max_attempts):
         try:
             return subprocess.run(['git', *args], cwd=cwd, check=check, stdout=subprocess.PIPE, text=True)
         except subprocess.CalledProcessError as e:
-            if attempt < max_retries - 1:
-                logging.warning("Git %s failed (attempt %d/%d): %s", args[0], attempt + 1, max_retries, e)
+            if attempt < max_attempts - 1:
+                logging.warning("Git %s failed (attempt %d/%d): %s", args[0], attempt + 1, max_attempts, e)
                 logging.info("Retrying in %d seconds...", retry_delay)
                 time.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
+                retry_delay *= 2
             else:
-                # Last attempt failed, re-raise the exception
                 raise
 
-    # This should never be reached since max_retries >= 1 and loop always returns or raises
+    # This should never be reached since max_attempts >= 1 and the loop always returns or raises.
     raise RuntimeError("Unexpected: git command loop completed without return or exception")
 
 

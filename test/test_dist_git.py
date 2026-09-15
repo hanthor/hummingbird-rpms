@@ -33,6 +33,41 @@ def dist_git_module():
     return module
 
 
+def test_run_git_retries_ls_remote(dist_git_module) -> None:
+    """Transient ls-remote failures use the standard bounded retry policy."""
+    failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
+    success = MagicMock(spec=subprocess.CompletedProcess)
+
+    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, success]) as run, \
+         patch.object(dist_git_module.time, 'sleep') as sleep:
+        assert dist_git_module.run_git(
+            'ls-remote', 'https://example.invalid/repo.git', 'rawhide'
+        ) is success
+
+    assert run.call_count == 3
+    assert [call.args for call in sleep.call_args_list] == [
+        (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS,),
+        (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS * 2,),
+    ]
+
+
+def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
+    """The final ls-remote error is preserved after bounded retries."""
+    failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
+
+    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, failure]) as run, \
+         patch.object(dist_git_module.time, 'sleep') as sleep, \
+         pytest.raises(subprocess.CalledProcessError) as raised:
+        dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git', 'rawhide')
+
+    assert raised.value is failure
+    assert run.call_count == dist_git_module.GIT_NETWORK_MAX_ATTEMPTS
+    assert [call.args for call in sleep.call_args_list] == [
+        (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS,),
+        (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS * 2,),
+    ]
+
+
 @pytest.fixture
 def workdir(tmp_path: Path) -> Path:
     """Shallow copy of the project with no imports"""
