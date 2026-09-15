@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 License: Python-2.0.1
 
 
@@ -393,6 +393,10 @@ Patch499: 00499-cve-2026-15310.patch
 Patch500: 00500-cve-2026-87910.patch
 Patch501: 00501-cve-2026-87910-windows-test-adjustment.patch
 Patch502: 00502-cve-2026-87910-remove-symlink-test-decorator.patch
+
+# CVE-2026-82049
+# gh-157190: follow symlinks when extracting tarfile hard links
+Patch503: 00503-cve-2026-82049.patch
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
