@@ -45,6 +45,14 @@ transform:
         # Generated against the post-fast-uri-3.1.7 lockfile, so this comes
         # after Patch10 (same order as Patch11 in the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-undici-cve.patch"
+        # Note: Patch12 (grafana-joi-cve.patch) is not applied by this
+        # transform -- a pre-existing gap, not introduced here (see
+        # "Known sharp edge: patch-list duplication" in
+        # documentation/background/source-pipeline-tool.md). Applies cleanly
+        # either way (verified against a checkout with and without Patch12).
+        # Bumps the same fast-uri dependency again (3.1.7 -> 3.1.8) for
+        # CVE-2026-86472.
+        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
@@ -69,6 +77,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "8562304852db8d60a12d577c9629226375802a73aa36bce5a9f217e47be1a4a5f38867667802f15e1f1ab824186389c2568af04e8832940ee492d87f48eb0039"
+    reason: "grafana-fast-uri-3.1.8-cve.patch bumps fast-uri 3.1.7->3.1.8 for CVE-2026-86472; yarn cache regenerated to include the patched dependency"
   - file: "grafana-yarn-cache-12.4.9.tar.bz2"
     checksum: "a11fdff03b7f86d7e6b35439ec85b6ee647604c5efbcd800128b0e28a22236c694903702f28ffc4c703f92eef128ce93023e10f942ddb2482160f024df386277"
     reason: "grafana-fast-uri-cve.patch bumps fast-uri 3.1.5->3.1.6 for CVE-2026-76172/75975/75931/75899; yarn cache regenerated to include the patched dependency"
