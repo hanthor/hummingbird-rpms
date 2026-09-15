@@ -1223,6 +1223,91 @@ def update_release_in_spec(package_dir: Path, new_release: str) -> None:
     logging.info("Updated Release: to %s%%{?dist} in %s", new_release, spec_file.name)
 
 
+# --- Post-update spec sanitizer ----------------------------------------------
+
+_ORPHAN_PATCH_DECL_RE = re.compile(r'^Patch(\d*)\s*:', re.IGNORECASE)
+_ORPHAN_PATCH_APPLY_RE = re.compile(r'^%patch(?:\s+-P\s*(\d+)|(\d+)\b)')
+_ORPHAN_PREP_RE = re.compile(r'^%prep\b')
+# RPM section boundaries (not in-prep macros like %setup / %autosetup / %patch).
+_ORPHAN_RPM_SECTION_RE = re.compile(
+    r'^%(?:description|package|build|install|check|files|changelog'
+    r'|pre|preun|post|postun|pretrans|posttrans'
+    r'|triggerpostun|triggerprein|triggerin|triggerun|verifyscript)\b',
+    re.IGNORECASE,
+)
+
+
+def _scan_orphaned_patch_directives(lines: list[str]) -> tuple[set[int], list[int]]:
+    """Scan spec lines for orphaned %%patch directives.
+
+    An orphan is a ``%patch -P<N>`` or ``%patch<N>`` invocation within %%prep
+    whose number has no matching Patch<N>: declaration in the preamble
+    (before %%prep).  ``Patch:`` (no number) is treated as ``Patch0:`` per RPM
+    conventions.
+
+    Returns (line_indices_to_drop, orphaned_patch_numbers).
+    """
+    # Locate the %prep section start.
+    prep_start = next(
+        (i for i, ln in enumerate(lines) if _ORPHAN_PREP_RE.match(ln)), None)
+    if prep_start is None:
+        return set(), []
+
+    # End of %prep: next RPM section boundary (excludes in-prep macros like
+    # %setup, %autosetup, %patch, %global, %if, %bcond, …).
+    prep_end = next(
+        (i for i in range(prep_start + 1, len(lines))
+         if _ORPHAN_RPM_SECTION_RE.match(lines[i])),
+        len(lines))
+
+    # Collect declared patch numbers from the preamble only (Patch: == Patch0).
+    declared: set[int] = set()
+    for ln in lines[:prep_start]:
+        m = _ORPHAN_PATCH_DECL_RE.match(ln)
+        if m:
+            declared.add(int(m.group(1)) if m.group(1) else 0)
+
+    # Find %patch lines within %prep whose number has no preamble declaration.
+    orphaned_nums: list[int] = []
+    drop_indices: set[int] = set()
+    for i in range(prep_start, prep_end):
+        m = _ORPHAN_PATCH_APPLY_RE.match(lines[i])
+        if m:
+            n = int(m.group(1) if m.group(1) is not None else m.group(2))
+            if n not in declared:
+                orphaned_nums.append(n)
+                drop_indices.add(i)
+
+    return drop_indices, orphaned_nums
+
+
+def detect_orphaned_patch_directives(spec_path: Path) -> list[int]:
+    """Return the sorted orphaned patch numbers in a spec, without modifying it."""
+    _, nums = _scan_orphaned_patch_directives(
+        spec_path.read_text().splitlines(keepends=True))
+    return sorted(set(nums))
+
+
+def strip_orphaned_patch_directives(spec_path: Path) -> list[int]:
+    """Remove orphaned %%patch invocations from %%prep (see _scan_… for the rule).
+
+    Returns a sorted list of the orphaned patch numbers whose %%patch lines
+    were removed.
+    """
+    lines = spec_path.read_text().splitlines(keepends=True)
+    drop_indices, orphaned_nums = _scan_orphaned_patch_directives(lines)
+    if not drop_indices:
+        return []
+    spec_path.write_text(
+        ''.join(ln for i, ln in enumerate(lines) if i not in drop_indices))
+    return sorted(set(orphaned_nums))
+
+
+def _format_orphan_patches(patch_numbers: list[int]) -> str:
+    """Render orphaned patch numbers as a human-readable list, e.g. "%patch -P0, %patch -P1"."""
+    return ', '.join(f'%patch -P{n}' for n in patch_numbers)
+
+
 def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path,
                               metadata: PackageMetadata, upstream_dir: Path,
                               new_sha: str) -> bool:
@@ -1809,10 +1894,12 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # Sync mode: discard local modifications
         has_modifications = not is_package_unmodified(package_name, metadata, upstream_dir)
         has_conflicts = False
+        took_merge_path = False
 
         if not sync and metadata.get('modification_status') == 'modified' and has_modifications:
             has_conflicts = merge_local_modifications(package_name, package_dir, Path(tmpdir),
                                                      metadata, upstream_dir, latest_sha)
+            took_merge_path = True
         else:
             # No modifications or sync mode - simple update
             action = "Syncing" if sync else "Updating"
@@ -1848,6 +1935,41 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                 logging.warning("%s", gorget_failure_reason)
                 has_conflicts = True
 
+        # Handle orphaned %patch directives (a %patch -P<N>/%patch<N> in %prep
+        # with no matching Patch<N>: declaration -- breaks %prep entirely, e.g. a
+        # Fedora maintainer dropping a patch but leaving its invocation, HUM-6099).
+        #   - Modified packages already diverge from Fedora, so auto-strip the
+        #     stale line and fold the removal into the update commit.
+        #   - Clean/sync packages must stay byte-identical to Fedora upstream (the
+        #     clean-status invariant checked by validate_package_modifications.py
+        #     --thorough); rewriting the spec would make them fail as "clean but
+        #     modified". Flag them for human review instead (same draft-MR
+        #     treatment as a gorget-verification failure).
+        orphan_msg_suffix = ''
+        patch_cleanup_reason = None
+        if not has_conflicts:
+            spec_candidates = list(package_dir.glob('*.spec'))
+            if spec_candidates:
+                orphans = detect_orphaned_patch_directives(spec_candidates[0])
+                if orphans:
+                    detail = _format_orphan_patches(orphans)
+                    if took_merge_path:
+                        # Modified package already diverges from Fedora: safe to
+                        # rewrite the spec in place.
+                        strip_orphaned_patch_directives(spec_candidates[0])
+                        logging.info("Stripped orphaned %s with no Patch<N>: declaration", detail)
+                        orphan_msg_suffix = f"\n\nStripped orphaned {detail} with no Patch<N>: declaration"
+                    else:
+                        # Clean/sync package must stay byte-identical to Fedora:
+                        # flag for human review instead of rewriting.
+                        patch_cleanup_reason = (
+                            f"Orphaned {detail} in %prep with no matching Patch<N>: "
+                            f"declaration. Upstream dropped the patch but left the %patch "
+                            f"invocation; remove the stale line(s) before merging (see HUM-6099)."
+                        )
+                        logging.warning("%s", patch_cleanup_reason)
+                        has_conflicts = True
+
         # Update package metadata
         imports[package_name]['sha'] = latest_sha
         imports[package_name]['version'] = version
@@ -1877,6 +1999,11 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                     # routes this to a draft, no-test, human-reviewed MR
                     # instead of silently auto-merging it.
                     commit_msg = f"NEEDS MANUAL GORGET RUN: {commit_msg}\n\n{gorget_failure_reason}"
+                elif patch_cleanup_reason:
+                    # Clean package with an orphaned %patch: same draft-MR routing
+                    # as the gorget case, so a human removes the stale line rather
+                    # than us rewriting a spec that must match Fedora upstream.
+                    commit_msg = f"NEEDS MANUAL PATCH CLEANUP: {commit_msg}\n\n{patch_cleanup_reason}"
                 with open(UPDATE_STATE_FILE, 'w') as f:
                     json.dump({
                         'package': package_name,
@@ -1903,7 +2030,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                                        tuple(extra_paths), new_source_filenames)
             verb = "Sync" if sync else "Update"
             branch_suffix = f" ({old_branch} -> {effective_branch})" if branch_changed else ""
-            commit_msg = f"{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}"
+            commit_msg = f"{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}{orphan_msg_suffix}"
             run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
@@ -1958,6 +2085,26 @@ def continue_update(dry_run: bool = False) -> None:
             )
 
     if not dry_run:
+        # Post-update spec sanitizer for orphaned %patch directives after the
+        # human resolved conflicts. Only auto-strip for modified packages (they
+        # already diverge from Fedora); a clean/sync package must stay
+        # byte-identical to upstream, so warn instead of rewriting it.
+        spec_candidates = list(package_dir.glob('*.spec'))
+        if spec_candidates:
+            orphans = detect_orphaned_patch_directives(spec_candidates[0])
+            if orphans:
+                detail = _format_orphan_patches(orphans)
+                status = state.get('metadata', {}).get('modification_status', 'modified')
+                if status == 'modified':
+                    strip_orphaned_patch_directives(spec_candidates[0])
+                    logging.info("Stripped orphaned %s with no Patch<N>: declaration", detail)
+                    commit_msg += f"\n\nStripped orphaned {detail} with no Patch<N>: declaration"
+                else:
+                    logging.warning(
+                        "Clean package %s still has orphaned %s in %%prep; "
+                        "remove the stale line(s) manually before merging.",
+                        package_name, detail)
+
         # Restore the updated metadata saved during the conflict exit
         if 'metadata' in state:
             save_package_metadata(package_name, cast(PackageMetadata, state['metadata']))
