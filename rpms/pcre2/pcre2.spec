@@ -8,8 +8,8 @@
 # This is stable release:
 #%%global rcversion RC1
 Name:       pcre2
-Version:    10.47
-Release:    %{?rcversion:0.}1%{?rcversion:.%rcversion}.2%{?dist}
+Version:    10.48
+Release:    0.%{?rcversion:0.}1%{?rcversion:.%rcversion}%{?dist}
 %global     myversion %{version}%{?rcversion:-%rcversion}
 Summary:    Perl-compatible regular expression library
 # the library:                          BSD with exceptions
@@ -54,15 +54,10 @@ Source1:    https://github.com/PCRE2Project/pcre2/releases/download/pcre2-%{vers
 # The GPG key changed with the new upstream maintainer
 # More in https://github.com/PCRE2Project/pcre2/blob/master/SECURITY.md
 Source2:    https://ftp.pcre.org/pub/pcre/New-Public-Key
-# Do no set RPATH if libdir is not /usr/lib
-Patch0:     pcre2-10.10-Fix-multilib.patch
 
-BuildRequires:  autoconf
-BuildRequires:  automake
 BuildRequires:  coreutils
 BuildRequires:  gcc
 BuildRequires:  gnupg2
-BuildRequires:  libtool
 BuildRequires:  make
 %if %{with pcre2_enables_readline}
 BuildRequires:  readline-devel
@@ -149,9 +144,6 @@ Utilities demonstrating PCRE2 capabilities like pcre2grep or pcre2test.
 %prep
 %{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
 %autosetup -n %{name}-%{myversion} -p1
-# Because of multilib patch
-libtoolize --copy --force
-autoreconf -vif
 
 %build
 # There is a strict-aliasing problem on PPC64, bug #881232
