@@ -14,6 +14,9 @@
 # Environment variables:
 #   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for --create-mrs)
 #   GITLAB_REMOTE_URL        - GitLab repo URL (default: https://gitlab.com/redhat/hummingbird/rpms.git)
+#
+# Failed update processing creates a draft diagnostic MR. The checker rolls
+# back partial package changes before the draft is created.
 
 set -euo pipefail
 
@@ -154,11 +157,16 @@ EXISTING_UPDATES=0
 CHECK_FAILURES=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
+DRAFT_FAILURE_MR_URLS=()
 # Package-level checker failures are written here for the shared scheduled-job
 # Slack notification.  Keep this separate from .ci_conflict_mrs.txt: upstream
 # updates do not create a conflict MR when Gorget or source processing fails.
 UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
 rm -f "${UPSTREAM_FAILURES_FILE}"
+# Keep draft-MR links separately so the scheduled Slack notification can
+# direct maintainers to the corresponding investigation branch.
+UPSTREAM_DRAFT_FAILURE_MRS_FILE=".ci_upstream_update_draft_mrs.txt"
+rm -f "${UPSTREAM_DRAFT_FAILURE_MRS_FILE}"
 
 echo "========================================"
 echo "Upstream Version Multi-MR Update"
@@ -239,6 +247,28 @@ if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     rm -f "${UPSTREAM_FAILURES_FILE}"
 fi
 
+# Keep update-processing failures separate from version-discovery failures.
+# Only the former have a candidate version and a source-processing error that
+# a maintainer can act on in a draft MR.
+if ! UPDATE_FAILURE_RECORDS_TEXT=$(jq -r \
+    '.results[] | select(.update_error != null) | @base64' "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not parse failed upstream update records"
+    rm -f "${CHECK_OUTPUT}" "${UPSTREAM_FAILURES_FILE}"
+    exit 1
+fi
+UPDATE_FAILURE_RECORDS=()
+if [[ -n "${UPDATE_FAILURE_RECORDS_TEXT}" ]]; then
+    mapfile -t UPDATE_FAILURE_RECORDS <<<"${UPDATE_FAILURE_RECORDS_TEXT}"
+fi
+
+# Save the update commits before creating draft diagnostic branches below.
+# The draft branches are intentionally based on START_COMMIT and would
+# otherwise hide successfully created update commits from Phase 3.
+UPDATE_COMMIT_HEAD=$(git rev-parse HEAD)
+COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..${UPDATE_COMMIT_HEAD}" 2>/dev/null || echo "0")
+# shellcheck disable=SC2312  # Command substitution in mapfile is intentional
+mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..${UPDATE_COMMIT_HEAD}")
+
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
 
@@ -250,6 +280,73 @@ if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     done < "${UPSTREAM_FAILURES_FILE}"
     echo ""
 fi
+
+# ── Phase 2b: Create draft MRs for failed package updates ───────────
+
+for FAILURE_RECORD in "${UPDATE_FAILURE_RECORDS[@]}"; do
+    FAILURE_JSON=$(printf '%s' "${FAILURE_RECORD}" | base64 --decode)
+    PACKAGE=$(jq -r '.package' <<<"${FAILURE_JSON}")
+    CURRENT_VERSION=$(jq -r '.current_version // "unknown"' <<<"${FAILURE_JSON}")
+    UPSTREAM_VERSION=$(jq -r '.upstream_version // "unknown"' <<<"${FAILURE_JSON}")
+    # Push options are newline-delimited. Keep multi-line errors intact for
+    # GitLab by encoding their newlines as the literal \n sequence, as used
+    # by create_mr.sh descriptions elsewhere.
+    UPDATE_ERROR=$(jq -r '.update_error | gsub("\n"; "\\n")' <<<"${FAILURE_JSON}")
+    BRANCH_NAME="chore/upstream-update-failure-${PACKAGE}"
+    MR_TITLE="Draft: investigate failed upstream update for ${PACKAGE}"
+    MR_DESCRIPTION="Automated upstream update from ${CURRENT_VERSION} to ${UPSTREAM_VERSION} failed.\n\nError:\n\`\`\`\n${UPDATE_ERROR}\n\`\`\`\n\nThis diagnostic MR intentionally contains no partial package changes. The updater discarded them after the failure to avoid proposing an unsafe update. Reproduce the update from this branch, apply and validate the required fix, then replace this empty commit with the resolved package changes."
+
+    echo "----------------------------------------"
+    echo "Processing failed update: ${PACKAGE}"
+    echo "  ${CURRENT_VERSION} -> ${UPSTREAM_VERSION}"
+
+    if ! git checkout --quiet "${START_COMMIT}"; then
+        echo "  Failed to checkout starting commit"
+        MR_FAILURES=$((MR_FAILURES + 1))
+        FAILED_PACKAGES+=("${PACKAGE} (draft MR checkout failed)")
+        continue
+    fi
+
+    git branch -D "${BRANCH_NAME}" 2>/dev/null || true
+    if ! git checkout -b "${BRANCH_NAME}" 2>/dev/null; then
+        echo "  Failed to create draft MR branch ${BRANCH_NAME}"
+        MR_FAILURES=$((MR_FAILURES + 1))
+        FAILED_PACKAGES+=("${PACKAGE} (draft MR branch creation failed)")
+        continue
+    fi
+
+    if ! git commit --allow-empty -m "Draft: investigate failed upstream update for ${PACKAGE}" >/dev/null; then
+        echo "  Failed to create diagnostic commit for ${PACKAGE}"
+        MR_FAILURES=$((MR_FAILURES + 1))
+        FAILED_PACKAGES+=("${PACKAGE} (draft MR commit failed)")
+        continue
+    fi
+
+    if [[ "${CLONE_MODE}" == true && "${CREATE_MRS}" == false ]]; then
+        echo "  [DRY-RUN] Draft MR would be created for ${PACKAGE}"
+        continue
+    fi
+
+    MR_EXIT_CODE=0
+    MR_OUTPUT=$(./ci/create_mr.sh --branch "${BRANCH_NAME}" --title "${MR_TITLE}" \
+        --description "${MR_DESCRIPTION}" --draft --jira HUM-6984 2>&1) || MR_EXIT_CODE=$?
+    echo "${MR_OUTPUT}"
+
+    MR_URL="https://${GITLAB_HOST}/${GITLAB_PROJECT}/-/merge_requests?source_branch=${BRANCH_NAME}"
+    if [[ ${MR_EXIT_CODE} -eq 0 ]]; then
+        echo "  Created draft failure MR for ${PACKAGE}"
+        DRAFT_FAILURE_MR_URLS+=("${PACKAGE}: ${MR_URL}")
+        echo "${PACKAGE}: ${MR_URL}" >> "${UPSTREAM_DRAFT_FAILURE_MRS_FILE}"
+    elif [[ ${MR_EXIT_CODE} -eq 2 ]]; then
+        echo "  Draft failure MR already exists for ${PACKAGE}"
+        DRAFT_FAILURE_MR_URLS+=("${PACKAGE}: ${MR_URL}")
+        echo "${PACKAGE}: ${MR_URL}" >> "${UPSTREAM_DRAFT_FAILURE_MRS_FILE}"
+    else
+        echo "  Failed to create draft failure MR for ${PACKAGE}"
+        MR_FAILURES=$((MR_FAILURES + 1))
+        FAILED_PACKAGES+=("${PACKAGE} (draft MR creation failed)")
+    fi
+done
 
 # Exit codes from check_upstream_versions.py:
 #   0 = no updates available
@@ -266,9 +363,6 @@ fi
 
 # ── Phase 3: Collect commits, create MRs ────────────────────────────
 
-# Check how many commits were created since we started
-COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..HEAD" 2>/dev/null || echo "0")
-
 if [[ ${COMMITS_CREATED} -eq 0 ]]; then
     echo "No commits were created despite updates being reported."
     echo "This may indicate all updates failed."
@@ -279,10 +373,6 @@ fi
 echo "Found ${COMMITS_CREATED} upstream update commit(s)"
 echo ""
 
-# Get list of commit SHAs (oldest first, so we process in chronological order)
-# shellcheck disable=SC2312  # Command substitution in mapfile is intentional
-mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..HEAD")
-
 # Apply --max-updates limit by truncating the commit array
 if [[ ${MAX_UPDATES} -gt 0 && ${#COMMIT_SHAS[@]} -gt ${MAX_UPDATES} ]]; then
     echo "Limiting to ${MAX_UPDATES} updates (--max-updates=${MAX_UPDATES})"
@@ -290,9 +380,9 @@ if [[ ${MAX_UPDATES} -gt 0 && ${#COMMIT_SHAS[@]} -gt ${MAX_UPDATES} ]]; then
     echo ""
 fi
 
-# Reset main back to START_COMMIT so MR branches will have commits ahead
-# (The commits are preserved in COMMIT_SHAS array)
-git reset --hard "${START_COMMIT}" --quiet
+# Return to the known base without moving the most recent diagnostic branch.
+# Each loop iteration below creates its package branch from this commit.
+git checkout --quiet "${START_COMMIT}"
 
 # Process each commit to create individual MRs
 for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
@@ -408,6 +498,7 @@ echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
 echo "  Update/check failures:   ${CHECK_FAILURES}"
+echo "  Draft failure MRs:       ${#DRAFT_FAILURE_MR_URLS[@]}"
 echo "  MR failures:             ${MR_FAILURES}"
 
 if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
@@ -415,6 +506,14 @@ if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
     echo "Failed packages:"
     for failed_pkg in "${FAILED_PACKAGES[@]}"; do
         echo "  - ${failed_pkg}"
+    done
+fi
+
+if [[ ${#DRAFT_FAILURE_MR_URLS[@]} -gt 0 ]]; then
+    echo ""
+    echo "Draft MRs for failed upstream updates:"
+    for mr_url in "${DRAFT_FAILURE_MR_URLS[@]}"; do
+        echo "  - ${mr_url}"
     done
 fi
 

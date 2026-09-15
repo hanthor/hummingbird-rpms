@@ -102,6 +102,11 @@ Changes reach main via merge requests. Automated MRs are created using:
 - **`ci/dist_git_update_multi_mr.sh`** - Automated Fedora update MRs (scheduled CI job)
 - **`ci/upstream_update_multi_mr.sh`** - Automated upstream version update MRs (scheduled CI job)
 
+The scheduled upstream-version update job creates normal MRs for successful package updates. If a
+package update fails after a new version has been identified, it creates (or reuses) a draft
+diagnostic MR instead. The diagnostic MR includes the original error but no partial package
+changes, and must be resolved manually before a package update can be proposed.
+
 ### CI validation
 
 GitLab CI runs validation jobs on every merge request:
