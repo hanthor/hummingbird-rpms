@@ -1,8 +1,8 @@
 %bcond_without check
 
 Name:           cargo2rpm
-Version:        0.3.4
-Release:        2.1%{?dist}
+Version:        0.4.0
+Release:        1%{?dist}
 Summary:        Translation layer between cargo and RPM
 License:        MIT
 
