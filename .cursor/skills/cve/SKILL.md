@@ -74,6 +74,24 @@ SBOM work. If the spec has the component, inspect the source for the
 vulnerable pattern; if that path is not used, close as NAB
 (`Vulnerable Code not Present`).
 
+**Fast-path NAB (skip `version-check`):** When the bot's recap shows
+`mismatch_sbom_miss` (or the SBOM check is a miss) **and** `spec-deps
+hits = 0`, propose NAB (Component not Present) closure immediately
+without running `version-check`. The bot's `recommended_next:
+version-check` can be ignored in this case — with nothing in the spec
+and nothing in the SBOM, `version-check` will always return
+`non_comparable` because there is no bundled version to resolve. The
+three signals together are definitive proof of absence:
+
+| Signal | Value | Meaning |
+| --- | --- | --- |
+| Bot reason code | `mismatch_sbom_miss` | Product mismatch + SBOM miss |
+| `spec-deps` hits | `0` | Component not referenced in spec |
+| SBOM check | miss | Component not in shipped binaries |
+
+Do not ask the user to run `version-check` first when all three agree.
+Present the NAB closure directly and ask for confirmation.
+
 ### Resolution commands
 
 **Already fixed (3a):** `version-check PKG --ticket HUM-XXXX` then
