@@ -198,13 +198,23 @@ sync_releng:
 
 dist_git_update:
   tags: [big-runner]
+  timeout: 1h
+  variables:
+    # Leave time for after_script to report a script-level timeout to Slack.
+    RUNNER_SCRIPT_TIMEOUT: 50m
+    RUNNER_AFTER_SCRIPT_TIMEOUT: 5m
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - unknown_failure
+      - api_failure
   environment:
     name: chore-mr
     action: access
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
-  allow_failure: true
   before_script:
     - |
       git config --local user.name "${GITLAB_USER_NAME}"
