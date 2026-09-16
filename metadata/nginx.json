@@ -2,9 +2,9 @@
   "branch": "rawhide",
   "cve_product": "F5 / NGINX Open Source",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "1378751e5130233c0c0b112cb6c4ea5554726320",
+  "release": "4",
+  "sha": "1e3677491cc2eb75d895a24d3b54ed71d702443d",
   "source": "https://src.fedoraproject.org/rpms/nginx.git",
   "upstream_repo": "https://github.com/nginx/nginx",
-  "version": "1.30.4"
+  "version": "1.30.5"
 }
