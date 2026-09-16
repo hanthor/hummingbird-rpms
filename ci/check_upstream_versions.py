@@ -99,6 +99,7 @@ UPLOAD_SCRIPT = ROOT_DIR / "ci" / "upload-to-lookaside-cache.sh"
 
 GORGET_PIPELINE_TIMEOUT_SECONDS = 15 * 60
 GORGET_TERMINATION_GRACE_SECONDS = 10
+GORGET_TIMEOUT_OUTPUT_TAIL_CHARS = 2000
 
 # Maps a package's ci/package-overrides.yaml `lookaside_cache_url` (a CloudFront
 # distribution used for reads at build time) to the S3 bucket backing it, since
@@ -689,6 +690,17 @@ def _run_gorget_pipeline(
                 env=_git_clone_env_for_upstream_repo(upstream_repo),
             )
         except subprocess.TimeoutExpired as timeout_error:
+            partial_output = timeout_error.output
+            if isinstance(partial_output, bytes):
+                partial_output = partial_output.decode(errors="replace")
+            partial_output = (partial_output or "").strip()
+            if partial_output:
+                logger.warning(
+                    "%s: last %d characters of gorget output before timeout:\n%s",
+                    package,
+                    GORGET_TIMEOUT_OUTPUT_TAIL_CHARS,
+                    partial_output[-GORGET_TIMEOUT_OUTPUT_TAIL_CHARS:],
+                )
             raise RuntimeError(
                 f"{package}: gorget pipeline timed out after "
                 f"{GORGET_PIPELINE_TIMEOUT_SECONDS} seconds"
