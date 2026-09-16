@@ -7,7 +7,7 @@ Name: binutils%{?_with_debug:-debug}
 # The variable %%{source} (see below) should be set to indicate which of these
 # origins is being used.
 Version: 2.46.1
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: GPL-3.0-or-later AND (GPL-3.0-or-later WITH Bison-exception-2.2) AND (LGPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND GFDL-1.3-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later AND LGPL-2.0-or-later
 URL: https://sourceware.org/binutils
 
@@ -370,6 +370,11 @@ Patch23: binutils-CVE-2026-4647.patch
 #            symbol buffer.  PR 34053 (CVE-2026-15003).
 # Lifetime: Fixed in 2.47
 Patch24: binutils-CVE-2026-15003.patch
+
+# Purpose:  Fix local DoS in elf_x86_64_common_section_index via null pointer dereference.
+#           CVE-2026-91781
+# Lifetime: Fixed in 2.47
+Patch25: binutils-CVE-2026-91781.patch
 
 #----------------------------------------------------------------------------
 
