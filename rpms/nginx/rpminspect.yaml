@@ -1,0 +1,6 @@
+
+# Avoid lostpayload warnings for nginx-all-modules which is expected
+# to be an empty binary RPM.
+emptyrpm:
+  expected_empty:
+    - nginx-all-modules
