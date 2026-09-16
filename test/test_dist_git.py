@@ -5092,7 +5092,7 @@ def test_update_flags_orphaned_patch_for_clean_package(
         'Summary: Test package vanilla\nLicense: MIT\n'
         'Patch0: fix.patch\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%files\n'
     )
     (vanilla_dir / 'fix.patch').write_text('--- a\n+++ b\n')
@@ -5110,7 +5110,7 @@ def test_update_flags_orphaned_patch_for_clean_package(
         'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
         'Summary: Test package vanilla\nLicense: MIT\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%files\n'
     )
     (vanilla_dir / 'fix.patch').unlink()
@@ -5143,7 +5143,7 @@ def test_update_strips_orphaned_patch_for_modified_package(
         'Summary: Test package vanilla\nLicense: MIT\n'
         'Patch0: fix.patch\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%build\nmake\n\n'
         '%files\n'
     )
@@ -5170,7 +5170,7 @@ def test_update_strips_orphaned_patch_for_modified_package(
         'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
         'Summary: Test package vanilla\nLicense: MIT\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%build\nmake\n\n'
         '%files\n'
     )
@@ -5213,7 +5213,7 @@ def test_update_flags_orphaned_patch_for_modified_but_unchanged_package(
         'Summary: Test package vanilla\nLicense: MIT\n'
         'Patch0: fix.patch\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%files\n'
     )
     (vanilla_dir / 'fix.patch').write_text('--- a\n+++ b\n')
@@ -5237,7 +5237,7 @@ def test_update_flags_orphaned_patch_for_modified_but_unchanged_package(
         'Name: vanilla\nVersion: 2.0\nRelease: 1%{?dist}\n'
         'Summary: Test package vanilla\nLicense: MIT\n\n'
         '%description\nTest package\n\n'
-        '%prep\n%setup -q\n%patch -P0 -p1\n\n'
+        '%prep\n%setup -q -T\n%patch -P0 -p1\n\n'
         '%files\n'
     )
     (vanilla_dir / 'fix.patch').unlink()

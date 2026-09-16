@@ -194,13 +194,38 @@ def parse_spec_version(package_dir: Path) -> tuple[str, str]:
 
     spec_file = spec_files[0]
 
+    # RPM 6.1 refuses to query a spec containing an orphaned %patch directive.
+    # Query a temporary, sanitized copy so update() can still inspect the
+    # original spec later and either flag it or clean it up as appropriate.
+    query_spec = spec_file
+    temporary_spec: Path | None = None
+    orphans = detect_orphaned_patch_directives(spec_file)
+    if orphans:
+        with tempfile.NamedTemporaryFile(
+            mode='w', prefix=f'.{spec_file.stem}-', suffix='.spec',
+            dir=package_dir, delete=False,
+        ) as temporary_file:
+            temporary_file.write(spec_file.read_text())
+            temporary_spec = Path(temporary_file.name)
+        strip_orphaned_patch_directives(temporary_spec)
+        query_spec = temporary_spec
+        logging.debug(
+            "Ignoring orphaned %s while querying %s version",
+            _format_orphan_patches(orphans), spec_file.name,
+        )
+
     # Use rpmspec to query the resolved version and release
     # Set dist to %{nil} to get release without dist suffix
     # Set _sourcedir so rpmspec can find source files referenced in the spec
-    rpmspec = subprocess.run(
-        ['rpmspec', '-q', '--qf', '%{VERSION}\n%{RELEASE}\n',
-         '--define=dist %{nil}', f'--define=_sourcedir {package_dir}', '--srpm', str(spec_file)],
-        stdout=subprocess.PIPE, text=True, check=True)
+    try:
+        rpmspec = subprocess.run(
+            ['rpmspec', '-q', '--qf', '%{VERSION}\n%{RELEASE}\n',
+             '--define=dist %{nil}', f'--define=_sourcedir {package_dir}',
+             '--srpm', str(query_spec)],
+            stdout=subprocess.PIPE, text=True, check=True)
+    finally:
+        if temporary_spec is not None:
+            temporary_spec.unlink()
     lines = rpmspec.stdout.strip().splitlines()
     try:
         return lines[0], lines[1]
