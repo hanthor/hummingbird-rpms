@@ -21,6 +21,9 @@ Source1:        %{archivename}-vendor.tar.bz2
 Source2:        go-vendor-tools.toml
 Source3:        CVE-2026-56852-golang-x-text-infinite-loop.patch
 Source4:        CVE-2026-88922-go-getter-decompress-perms.patch
+# Go 1.27 changed deterministic archive/zip and compress/gzip output; refresh
+# the hardcoded expectations in the upstream test suite so %%check passes.
+Source5:        opentofu1.10-go1.27-test-fixes.patch
 
 BuildRequires:  go-vendor-tools
 
@@ -32,6 +35,7 @@ OpenTofu lets you declaratively manage your cloud infrastructure.
 tar -xf %{SOURCE1}
 patch -p1 < %{SOURCE3}
 patch -p1 < %{SOURCE4}
+patch -p1 < %{SOURCE5}
 
 %generate_buildrequires
 %go_vendor_license_buildrequires -c %{S:2}
