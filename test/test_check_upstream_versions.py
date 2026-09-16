@@ -1754,14 +1754,20 @@ def test_run_gorget_pipeline_success(cuv_module, workdir: Path) -> None:
 
 
 def test_run_gorget_pipeline_timeout_is_package_failure(
-    cuv_module, workdir: Path,
+    cuv_module, workdir: Path, caplog,
 ) -> None:
-    """A gorget timeout becomes a recoverable package-level RuntimeError."""
+    """A timeout is recoverable and retains bounded diagnostic output."""
     _create_package(workdir, 'pkg', '1.0', sources={'pkg-1.0.tar.gz': 'oldhash'})
     pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
     pipeline_file.write_text('fetch: []\n')
+    partial_output = (
+        'old output that should be truncated\n'
+        + ('x' * cuv_module.GORGET_TIMEOUT_OUTPUT_TAIL_CHARS)
+        + '\nuseful output tail'
+    )
     timeout_error = subprocess.TimeoutExpired(
         ['gorget'], cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS,
+        output=partial_output,
     )
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
@@ -1770,6 +1776,9 @@ def test_run_gorget_pipeline_timeout_is_package_failure(
         cuv_module, '_run_gorget_command', side_effect=timeout_error,
     ), pytest.raises(RuntimeError, match='timed out after 900 seconds'):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
+
+    assert 'useful output tail' in caplog.text
+    assert 'old output that should be truncated' not in caplog.text
 
 
 def test_run_gorget_pipeline_always_passes_debug(cuv_module, workdir: Path) -> None:
