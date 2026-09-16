@@ -1666,6 +1666,56 @@ def _fake_gorget_run(artifacts: dict[str, bytes]):
     return fake_subprocess_run
 
 
+def test_run_gorget_command_starts_new_process_session(cuv_module) -> None:
+    """Gorget gets its own process group so descendants can be terminated."""
+    process = MagicMock()
+    process.returncode = 0
+    process.communicate.return_value = ('output', None)
+    env = {'PATH': '/usr/bin'}
+
+    with patch.object(
+        cuv_module.subprocess, 'Popen', return_value=process,
+    ) as mock_popen:
+        result = cuv_module._run_gorget_command(['gorget', '--debug'], env)
+
+    mock_popen.assert_called_once_with(
+        ['gorget', '--debug'],
+        stdout=subprocess.PIPE,
+        text=True,
+        env=env,
+        start_new_session=True,
+    )
+    process.communicate.assert_called_once_with(
+        timeout=cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS,
+    )
+    assert result.returncode == 0
+    assert result.stdout == 'output'
+
+
+def test_run_gorget_command_timeout_terminates_process_group(cuv_module) -> None:
+    """A stuck gorget tree gets TERM, then KILL after the grace period."""
+    command = ['gorget', '--debug']
+    process = MagicMock()
+    process.pid = 1234
+    process.communicate.side_effect = [
+        subprocess.TimeoutExpired(command, 900),
+        subprocess.TimeoutExpired(command, 10),
+        ('partial output', None),
+    ]
+
+    with patch.object(cuv_module.subprocess, 'Popen', return_value=process), \
+         patch.object(cuv_module.os, 'killpg') as mock_killpg, \
+         pytest.raises(subprocess.TimeoutExpired) as exc_info:
+        cuv_module._run_gorget_command(command, {'PATH': '/usr/bin'})
+
+    assert exc_info.value.timeout == cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS
+    assert exc_info.value.output == 'partial output'
+    assert mock_killpg.call_args_list == [
+        call(1234, cuv_module.signal.SIGTERM),
+        call(1234, cuv_module.signal.SIGKILL),
+    ]
+
+
 def test_run_gorget_pipeline_success(cuv_module, workdir: Path) -> None:
     """Runs gorget natively, uploads emitted artifacts, replaces sources."""
     pkg_dir = _create_package(
@@ -1681,7 +1731,7 @@ def test_run_gorget_pipeline_success(cuv_module, workdir: Path) -> None:
     })
 
     with patch.object(cuv_module, '_upload_to_lookaside') as mock_ul, \
-         patch('subprocess.run', side_effect=fake_run):
+         patch.object(cuv_module, '_run_gorget_command', side_effect=fake_run):
         cuv_module.RPMS_DIR = workdir / 'rpms'
         cuv_module.METADATA_DIR = workdir / 'metadata'
         downloaded = cuv_module._run_gorget_pipeline(
@@ -1703,6 +1753,25 @@ def test_run_gorget_pipeline_success(cuv_module, workdir: Path) -> None:
     assert filenames == {'pkg-2.0.tar.gz', 'pkg-2.0-vendor.tar.gz'}
 
 
+def test_run_gorget_pipeline_timeout_is_package_failure(
+    cuv_module, workdir: Path,
+) -> None:
+    """A gorget timeout becomes a recoverable package-level RuntimeError."""
+    _create_package(workdir, 'pkg', '1.0', sources={'pkg-1.0.tar.gz': 'oldhash'})
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch: []\n')
+    timeout_error = subprocess.TimeoutExpired(
+        ['gorget'], cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS,
+    )
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    with patch.object(
+        cuv_module, '_run_gorget_command', side_effect=timeout_error,
+    ), pytest.raises(RuntimeError, match='timed out after 900 seconds'):
+        cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
+
+
 def test_run_gorget_pipeline_always_passes_debug(cuv_module, workdir: Path) -> None:
     """--debug is always passed, so gorget's stage/step trace lands in the
     job log."""
@@ -1712,7 +1781,9 @@ def test_run_gorget_pipeline_always_passes_debug(cuv_module, workdir: Path) -> N
 
     fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
     with patch.object(cuv_module, '_upload_to_lookaside'), \
-         patch('subprocess.run', side_effect=fake_run) as mock_run:
+         patch.object(
+             cuv_module, '_run_gorget_command', side_effect=fake_run,
+         ) as mock_run:
         cuv_module.RPMS_DIR = workdir / 'rpms'
         cuv_module.METADATA_DIR = workdir / 'metadata'
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
@@ -1737,7 +1808,9 @@ def test_run_gorget_pipeline_passes_upstream_repo_when_declared(
 
     fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
     with patch.object(cuv_module, '_upload_to_lookaside'), \
-         patch('subprocess.run', side_effect=fake_run) as mock_run:
+         patch.object(
+             cuv_module, '_run_gorget_command', side_effect=fake_run,
+         ) as mock_run:
         cuv_module.RPMS_DIR = workdir / 'rpms'
         cuv_module.METADATA_DIR = workdir / 'metadata'
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
@@ -1757,7 +1830,9 @@ def test_run_gorget_pipeline_omits_upstream_repo_when_not_declared(
 
     fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
     with patch.object(cuv_module, '_upload_to_lookaside'), \
-         patch('subprocess.run', side_effect=fake_run) as mock_run:
+         patch.object(
+             cuv_module, '_run_gorget_command', side_effect=fake_run,
+         ) as mock_run:
         cuv_module.RPMS_DIR = workdir / 'rpms'
         cuv_module.METADATA_DIR = workdir / 'metadata'
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
@@ -1779,7 +1854,7 @@ def test_run_gorget_pipeline_logs_command_and_duration(
     fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
 
     with patch.object(cuv_module, '_upload_to_lookaside'), \
-         patch('subprocess.run', side_effect=fake_run), \
+         patch.object(cuv_module, '_run_gorget_command', side_effect=fake_run), \
          patch.object(cuv_module.time, 'monotonic', side_effect=[10.0, 12.5]), \
          caplog.at_level('INFO'):
         cuv_module.RPMS_DIR = workdir / 'rpms'
@@ -1800,7 +1875,12 @@ def test_run_gorget_pipeline_creates_gpg_keys_dir(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
-    with patch('subprocess.run', side_effect=_fake_gorget_run({'pkg-2.0.tar.gz': b'x'})):
+    with patch.object(cuv_module, '_upload_to_lookaside'), \
+         patch.object(
+             cuv_module,
+             '_run_gorget_command',
+             side_effect=_fake_gorget_run({'pkg-2.0.tar.gz': b'x'}),
+         ):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
     assert (workdir / 'metadata' / 'gpg-keys').is_dir()
@@ -1825,7 +1905,9 @@ def test_run_gorget_pipeline_failure_includes_report(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
-    with patch('subprocess.run', side_effect=fake_subprocess_run), \
+    with patch.object(
+        cuv_module, '_run_gorget_command', side_effect=fake_subprocess_run,
+    ), \
          pytest.raises(RuntimeError, match='republication check failed'):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
@@ -1843,7 +1925,9 @@ def test_run_gorget_pipeline_missing_sources_file(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
-    with patch('subprocess.run', side_effect=fake_subprocess_run), \
+    with patch.object(
+        cuv_module, '_run_gorget_command', side_effect=fake_subprocess_run,
+    ), \
          pytest.raises(RuntimeError, match="emitted no 'sources' file"):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
@@ -1868,7 +1952,9 @@ def test_run_gorget_pipeline_empty_sources_file(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
-    with patch('subprocess.run', side_effect=fake_subprocess_run), \
+    with patch.object(
+        cuv_module, '_run_gorget_command', side_effect=fake_subprocess_run,
+    ), \
          pytest.raises(RuntimeError, match='empty .sources. file'):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
@@ -1899,7 +1985,9 @@ def test_run_gorget_pipeline_missing_declared_artifact(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
-    with patch('subprocess.run', side_effect=fake_subprocess_run), \
+    with patch.object(
+        cuv_module, '_run_gorget_command', side_effect=fake_subprocess_run,
+    ), \
          pytest.raises(RuntimeError, match='was not emitted to /output'):
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
@@ -2469,7 +2557,10 @@ def test_cli_error_exit_two(cuv_module, workdir: Path) -> None:
     assert exc_info.value.code == 2
 
 
-def test_update_continues_after_package_failure(cuv_module, workdir: Path) -> None:
+@pytest.mark.parametrize('failure_kind', ['download', 'gorget_timeout'])
+def test_update_continues_after_package_failure(
+    cuv_module, workdir: Path, failure_kind: str,
+) -> None:
     """A failed package update is restored and does not block later packages."""
     _create_package(workdir, 'bad', '1.0',
                     metadata={'version': '1.0', 'release': '1',
@@ -2510,6 +2601,8 @@ def test_update_continues_after_package_failure(cuv_module, workdir: Path) -> No
         metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + '\n')
 
         if package == 'bad':
+            if failure_kind == 'gorget_timeout':
+                raise RuntimeError('bad: gorget pipeline timed out after 900 seconds')
             raise cuv_module.urllib.error.HTTPError(
                 'https://example.com/bad-2.0.tar.gz', 404, 'Not Found', {}, None
             )
