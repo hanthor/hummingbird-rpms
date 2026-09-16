@@ -1714,6 +1714,59 @@ def test_run_gorget_command_timeout_terminates_process_group(cuv_module) -> None
         call(1234, cuv_module.signal.SIGTERM),
         call(1234, cuv_module.signal.SIGKILL),
     ]
+    assert process.communicate.call_args_list == [
+        call(timeout=cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS),
+        call(timeout=cuv_module.GORGET_TERMINATION_GRACE_SECONDS),
+        call(timeout=cuv_module.GORGET_TERMINATION_GRACE_SECONDS),
+    ]
+
+
+def test_run_gorget_command_kills_descendants_after_gorget_exits(cuv_module) -> None:
+    """A descendant cannot survive when gorget exits during the grace period."""
+    command = ['gorget', '--debug']
+    process = MagicMock()
+    process.pid = 1234
+    process.communicate.side_effect = [
+        subprocess.TimeoutExpired(command, 900),
+        ('partial output', None),
+    ]
+
+    with patch.object(cuv_module.subprocess, 'Popen', return_value=process), \
+         patch.object(cuv_module.os, 'killpg') as mock_killpg, \
+         pytest.raises(subprocess.TimeoutExpired) as exc_info:
+        cuv_module._run_gorget_command(command, {'PATH': '/usr/bin'})
+
+    assert exc_info.value.output == 'partial output'
+    assert mock_killpg.call_args_list == [
+        call(1234, cuv_module.signal.SIGTERM),
+        call(1234, cuv_module.signal.SIGKILL),
+    ]
+    assert process.communicate.call_args_list == [
+        call(timeout=cuv_module.GORGET_PIPELINE_TIMEOUT_SECONDS),
+        call(timeout=cuv_module.GORGET_TERMINATION_GRACE_SECONDS),
+    ]
+
+
+def test_run_gorget_command_remains_bounded_after_sigkill(cuv_module) -> None:
+    """An unkillable process cannot make the final cleanup wait forever."""
+    command = ['gorget', '--debug']
+    process = MagicMock()
+    process.pid = 1234
+    process.communicate.side_effect = [
+        subprocess.TimeoutExpired(command, 900),
+        subprocess.TimeoutExpired(command, 10),
+        subprocess.TimeoutExpired(command, 10, output='last output'),
+    ]
+
+    with patch.object(cuv_module.subprocess, 'Popen', return_value=process), \
+         patch.object(cuv_module.os, 'killpg'), \
+         pytest.raises(subprocess.TimeoutExpired) as exc_info:
+        cuv_module._run_gorget_command(command, {'PATH': '/usr/bin'})
+
+    assert exc_info.value.output == 'last output'
+    assert process.communicate.call_args_list[-1] == call(
+        timeout=cuv_module.GORGET_TERMINATION_GRACE_SECONDS,
+    )
 
 
 def test_run_gorget_pipeline_success(cuv_module, workdir: Path) -> None:

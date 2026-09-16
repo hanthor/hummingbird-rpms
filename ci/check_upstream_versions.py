@@ -594,6 +594,7 @@ def _run_gorget_command(
     """Run gorget with a bounded lifetime and clean up its subprocess tree."""
     process = subprocess.Popen(
         command,
+        # Keep stderr inherited so gorget diagnostics stream to the job log.
         stdout=subprocess.PIPE,
         text=True,
         env=env,
@@ -604,10 +605,23 @@ def _run_gorget_command(
     except subprocess.TimeoutExpired as timeout_error:
         _signal_process_group(process, signal.SIGTERM)
         try:
-            stdout, _ = process.communicate(timeout=GORGET_TERMINATION_GRACE_SECONDS)
+            try:
+                stdout, _ = process.communicate(
+                    timeout=GORGET_TERMINATION_GRACE_SECONDS,
+                )
+            finally:
+                # Gorget may exit while a descendant survives after closing
+                # stdout. Always kill the group after the grace period.
+                _signal_process_group(process, signal.SIGKILL)
         except subprocess.TimeoutExpired:
-            _signal_process_group(process, signal.SIGKILL)
-            stdout, _ = process.communicate()
+            try:
+                stdout, _ = process.communicate(
+                    timeout=GORGET_TERMINATION_GRACE_SECONDS,
+                )
+            except subprocess.TimeoutExpired as kill_timeout_error:
+                # SIGKILL is not ignorable, but a task stuck in the kernel can
+                # take an unbounded time to exit. Preserve the bounded lifetime.
+                stdout = kill_timeout_error.output or ""
         raise subprocess.TimeoutExpired(
             command,
             GORGET_PIPELINE_TIMEOUT_SECONDS,
