@@ -16,12 +16,11 @@ Source1:        go-vendor-tools.toml
 Patch0:         0001-tests-use-explicit-loopback-addresses.patch
 # Update the encoding/json error type name used by Go 1.27.
 Patch1:         0002-tests-update-json-error-for-go1.27.patch
-# CVE-2026-81871: bump the vendored OTLP log exporters to v0.21.0. This package
-# vendors in-tree rather than using a vendor archive, so the patch carries the
-# regenerated go.mod, go.sum, vendor/modules.txt and vendored sources together.
-# The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log API, so
-# otlploggrpc, otlploghttp and stdoutlog must move as a set.
-Patch2:         0003-vendor-bump-otel-otlplog-0.21.0.patch
+# CVE-2026-81871: the vendored otlploggrpc exporter loads the OTLP TLS environment
+# variables into cfg.tlsCfg but never applies them, silently falling back to system
+# roots. Backport the upstream two-line fix rather than bumping the module, which
+# would pull otel 1.45 and regenerated semconv through the whole in-tree vendor tree.
+Patch2:       0003-backport-otlploggrpc-tls-CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26
