@@ -57,6 +57,46 @@ def test_pulp_sbom_package_dir_replaces_dots() -> None:
     assert lib_sbom.pulp_sbom_package_dir("boost") == "boost-main"
 
 
+def test_latest_pulp_sbom_filename_plain_text_listing(monkeypatch) -> None:
+    listing = (
+        "sha256-d24ad465.sbom    12-Aug-2026 14:23    7.0 MB\n"
+        "sha256-f8eabb4a.sbom    29-Jul-2026 09:10    6.9 MB\n"
+    )
+    monkeypatch.setattr(lib_sbom, "http_get_text", lambda url: listing)
+    directory, filename = lib_sbom.latest_pulp_sbom_filename("nodejs26")
+    assert filename == "sha256-d24ad465.sbom"
+    assert directory.endswith("/nodejs26-main/")
+
+
+def test_latest_pulp_sbom_filename_html_autoindex_listing(monkeypatch) -> None:
+    # Pulp has been observed switching to an nginx-style HTML autoindex where
+    # the filename is wrapped in an <a> tag and followed by </a> before the
+    # timestamp, rather than being followed directly by whitespace.
+    listing = "\n".join(
+        [
+            '<a href="../">../</a>',
+            (
+                '<a href="./sha256-0d8dbdce.sbom">sha256-0d8dbdce.sbom</a>'
+                "                        22-Jul-2026 09:17  2.4 MB"
+            ),
+            (
+                '<a href="./sha256-e1e9ffb8.sbom">sha256-e1e9ffb8.sbom</a>'
+                "                        23-Jul-2026 10:46  2.4 MB"
+            ),
+        ]
+    )
+    monkeypatch.setattr(lib_sbom, "http_get_text", lambda url: listing)
+    directory, filename = lib_sbom.latest_pulp_sbom_filename("llvm")
+    assert filename == "sha256-e1e9ffb8.sbom"
+    assert directory.endswith("/llvm-main/")
+
+
+def test_latest_pulp_sbom_filename_raises_when_listing_empty(monkeypatch) -> None:
+    monkeypatch.setattr(lib_sbom, "http_get_text", lambda url: "<html></html>")
+    with pytest.raises(RuntimeError, match="No SBOM files found"):
+        lib_sbom.latest_pulp_sbom_filename("ghostpkg")
+
+
 def test_parse_glab_mr_list() -> None:
     output = "\n".join(
         [
