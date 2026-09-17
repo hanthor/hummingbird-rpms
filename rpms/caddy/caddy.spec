@@ -33,9 +33,8 @@ Source31:       poweredby-black.png
 
 # downstream only patch to disable commands that can alter the binary
 Patch1:         0001-Disable-commands-that-can-alter-the-binary.patch
-# backport security update for CVE-2026-56852
-Patch2:         0002-bump-golang.org-x-text-to-v0.39.0.patch
-# update OpenTelemetry log exporters for CVE-2026-81871
+# update OpenTelemetry log exporters for CVE-2026-81871; this also pulls
+# golang.org/x/text to v0.40.0, superseding the former CVE-2026-56852 bump
 Patch3:         0003-CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
