@@ -23,7 +23,10 @@ Source4:        opentofu1.12-grpc-go1.27-http2-trailer-prefix.patch
 Source5:        opentofu1.12-go1.27-test-fixes.patch
 Source6:        CVE-2026-88922-go-getter-decompress-perms.patch
 
-# Update OpenTelemetry log exporters for CVE-2026-81871
+# Update OpenTelemetry log exporters for CVE-2026-81871. This also pulls
+# go.opentelemetry.io/otel/sdk to v1.45.0, whose resource detector registers
+# schema 1.43.0, so traceattrs/semconv.go must import the matching semconv
+# package or NewResource fails with a conflicting Schema URL.
 Patch0:         CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
