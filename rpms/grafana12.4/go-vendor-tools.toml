@@ -1,4 +1,36 @@
 [archive]
+# CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
+# API, so they must move together; bumping otlploggrpc alone leaves the siblings
+# calling symbols that no longer exist. Keep in sync with grafana-otlplog-cve.patch.
+pre_commands = [
+  [
+    "go", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+  # These workspace members also require the exporters. Without bumping them,
+  # `go work vendor` keeps explicit v0.19.0 entries in vendor/modules.txt even
+  # though the vendored source is v0.21.0, and scanners still report the CVE.
+  [
+    "go", "-C", "apps/alerting/historian", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+  [
+    "go", "-C", "apps/iam", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+  [
+    "go", "-C", "apps/quotas", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+]
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
   ["cp", "-p", "vendor/github.com/mattn/go-localereader/README.md", "vendor/github.com/mattn/go-localereader/LICENSE"],
