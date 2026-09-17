@@ -11,3 +11,14 @@ index 3140c8bb545..32a0b502ae6 100755
                      -DLLDB_ENABLE_LUA=OFF
                      -DLLDB_INCLUDE_TESTS:BOOL="${should_configure_tests}"
                      -DLLDB_TEST_LIBCXX_ROOT_DIR:STRING="${libcxx_build_dir}"
+diff --git swift.orig/lib/SILOptimizer/PassManager/PassManager.cpp swift/lib/SILOptimizer/PassManager/PassManager.cpp
+--- swift.orig/lib/SILOptimizer/PassManager/PassManager.cpp
++++ swift/lib/SILOptimizer/PassManager/PassManager.cpp
+@@ -42,7 +42,2 @@
+ #include <fstream>
+-
+-#ifndef SWIFT_ENABLE_SWIFT_IN_SWIFT
+-#error "Building the compiler without Swift sources is not supported anymore"
+-#endif
+-
+ using namespace swift;

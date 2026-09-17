@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 UPDATE_SCRIPT = ROOT_DIR / "rpms" / "swift-lang" / "update-swift-version.sh"
+SWIFT_PATCH = ROOT_DIR / "rpms" / "swift-lang" / "swift.patch"
 
 
 def _run_update(tmp_path: Path, version: str, schemes: dict[str, dict]) -> subprocess.CompletedProcess[str]:
@@ -112,3 +113,16 @@ def test_update_swift_version_reports_missing_scheme(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "has no supported release branch scheme" in result.stdout
     assert "release/6.5.0, release/6.5, release/6.5.x" in result.stdout
+
+
+def test_swift_patch_preserves_source_bootstrap() -> None:
+    patch = SWIFT_PATCH.read_text()
+
+    # Swift 6.4 added this guard before removing the underlying C++ bootstrap
+    # implementation. The package deliberately retains that self-contained
+    # path so it does not acquire a circular BuildRequires on swift-lang.
+    assert "-#ifndef SWIFT_ENABLE_SWIFT_IN_SWIFT" in patch
+    assert (
+        '-#error "Building the compiler without Swift sources is not supported anymore"'
+        in patch
+    )
