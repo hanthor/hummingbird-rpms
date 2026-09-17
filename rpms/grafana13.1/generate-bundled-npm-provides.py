@@ -122,16 +122,26 @@ def read_member(source, member):
     return extracted.read().decode()
 
 
-def main():
-    if len(sys.argv) != 2 or not re.fullmatch(r"[0-9][0-9A-Za-z.+-]*", sys.argv[1]):
-        raise SystemExit(f"usage: {Path(sys.argv[0]).name} VERSION")
-    version = sys.argv[1]
-    package_dir = Path(__file__).resolve().parent
-    archive = package_dir / f"grafana-{version}.tar.gz"
-    specs = list(package_dir.glob("grafana*.spec"))
-    if len(specs) != 1:
-        raise SystemExit("expected exactly one grafana*.spec")
+def read_source_tree(source_dir):
+    """Read Yarn metadata from an already-extracted (and possibly patched) tree."""
+    lock = (source_dir / "yarn.lock").read_text()
+    root_package = json.loads((source_dir / "package.json").read_text())
+    patterns = root_package.get("workspaces", {}).get("packages", [])
+    workspaces = {}
+    for package_json in source_dir.rglob("package.json"):
+        if package_json == source_dir / "package.json":
+            continue
+        relative = package_json.relative_to(source_dir)
+        if not any(relative.match(f"{pattern}/package.json") for pattern in patterns):
+            continue
+        package = json.loads(package_json.read_text())
+        if package.get("name"):
+            workspaces[package["name"]] = package
+    return lock, root_package, workspaces
 
+
+def read_source_archive(archive, version):
+    """Read Yarn metadata from Grafana's pristine source archive."""
     with tarfile.open(archive, "r:gz") as source:
         prefix = f"grafana-{version}/"
         lock = read_member(source, source.getmember(f"{prefix}yarn.lock"))
@@ -145,6 +155,26 @@ def main():
             package = json.loads(read_member(source, member))
             if package.get("name"):
                 workspaces[package["name"]] = package
+    return lock, root_package, workspaces
+
+
+def main():
+    if len(sys.argv) not in (2, 3) or not re.fullmatch(r"[0-9][0-9A-Za-z.+-]*", sys.argv[1]):
+        raise SystemExit(f"usage: {Path(sys.argv[0]).name} VERSION [SOURCE_DIR]")
+    version = sys.argv[1]
+    package_dir = Path(__file__).resolve().parent
+    specs = list(package_dir.glob("grafana*.spec"))
+    if len(specs) != 1:
+        raise SystemExit("expected exactly one grafana*.spec")
+
+    if len(sys.argv) == 3:
+        source_dir = Path(sys.argv[2])
+        if not source_dir.is_dir():
+            raise SystemExit(f"source directory not found: {source_dir}")
+        lock, root_package, workspaces = read_source_tree(source_dir)
+    else:
+        archive = package_dir / f"grafana-{version}.tar.gz"
+        lock, root_package, workspaces = read_source_archive(archive, version)
 
     provides = yarn_packages(lock, root_package, workspaces)
 

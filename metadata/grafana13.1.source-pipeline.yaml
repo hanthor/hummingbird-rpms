@@ -15,42 +15,12 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        # Apply every patch %prep will (in the same order), not just
-        # grafana-yarn-cache.patch: the nanoid/axios/browserslist/dompurify CVE
-        # patches also bump yarn.lock/package.json entries. Populating the
-        # cache from the pristine (pre-CVE-patch) lockfile leaves it missing
-        # whatever versions those patches bump to, so %build's own
-        # `yarn install --immutable` (against the post-patch lockfile) fails
-        # with "Cache entry required but missing" for exactly those packages.
-        # (grafana-fast-uri-cve.patch/grafana-brace-postcss-cve.patch/
-        # grafana-ip-address-cve.patch are no longer applied as of 13.1.3 --
-        # upstream's own dependency bumps already satisfy those CVE fixes.)
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-nanoid-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-axios-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-browserslist-cve.patch"
-        # Must apply after the CVE patches above: pins compressionLevel and
-        # carries the resulting full yarn.lock checksum regeneration (see
-        # version-specific compression patch's own header comment).
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression-${VERSION}.patch"
-        # Generated against the post-compression lockfile, so this comes after
-        # grafana-yarn-cache-compression-${VERSION}.patch (same order as Patch7 in
-        # the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
-        # Generated against the post-DOMPurify-bump lockfile, so this comes
-        # after grafana-dompurify-cve.patch (same order as Patch10 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.6-cve.patch"
-        # Generated against the post-fast-uri lockfile, so this comes after
-        # grafana-fast-uri-3.1.6-cve.patch (same order as Patch11 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-qs-6.16.0-cve.patch"
-        # Generated against the post-qs lockfile, so this comes after
-        # grafana-qs-6.16.0-cve.patch (same order as Patch12 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
-        # Generated against the post-js-yaml lockfile, so this comes after
-        # grafana-js-yaml-cve.patch (same order as Patch13 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
+        # Apply the complete frontend patch sequence and generate this
+        # release's compression patch before creating the offline cache.
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
+          . "${VERSION}" --generate-compression
         # Unlike grafana12.4, 13.1's yarn.lock has no Cypress dependency to
         # suppress a binary download for.
         # YARN_NPM_MINIMAL_AGE_GATE=0: qs 6.16.0 is newer than the 3-day gate
@@ -68,6 +38,35 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-yarn-cache-compression-${VERSION}.patch"
+
+post:
+  # Generate the spec's bundled npm Provides from the same patched dependency
+  # graph used to populate the offline Yarn cache.
+  - type: run
+    artifacts:
+      - "grafana-${VERSION}.tar.gz"
+      - "grafana-yarn-cache-compression-${VERSION}.patch"
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        # Grafana 13.1.4 incorporated the ngalert datasource authorization
+        # fix carried by Patch14. Retain its audit comment and patch file, but
+        # stop applying it once upstream includes the correction.
+        if [ "$(printf '%s\n%s\n' '13.1.4' "${VERSION}" | sort -V | head -n1)" = '13.1.4' ]; then
+          sed -i \
+            's/^Patch14:[[:space:]]*grafana-ngalert-datasource-authz-cve\.patch/#Patch14:        grafana-ngalert-datasource-authz-cve.patch/' \
+            grafana13.1.spec
+        fi
+        work_dir=$(mktemp -d)
+        trap 'rm -rf "${work_dir}"' EXIT
+        tar -xzf "grafana-${VERSION}.tar.gz" -C "${work_dir}"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
+          "${work_dir}/grafana-${VERSION}" "${VERSION}"
+        ./generate-bundled-npm-provides.py "${VERSION}" \
+          "${work_dir}/grafana-${VERSION}"
 
 # Same-version yarn-cache regeneration (CVE npm bump) changes the archive
 # checksum while keeping the filename, so gorget needs an accepted-checksums
