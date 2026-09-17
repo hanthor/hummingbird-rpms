@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://nlnetlabs.nl/downloads/unbound/unbound-${VERSION}.tar.gz"
+  - type: url
+    url: "https://nlnetlabs.nl/downloads/unbound/unbound-${VERSION}.tar.gz.asc"
+
+verify:
+  - type: gpg-signature
+    target: "unbound-${VERSION}.tar.gz"
+    signature: "unbound-${VERSION}.tar.gz.asc"
+    keyring: "nlnetlabs.gpg"
