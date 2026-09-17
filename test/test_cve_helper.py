@@ -803,6 +803,27 @@ def test_resolve_component_version_from_spec_provides(
     assert evidence == "spec_provides"
 
 
+def test_resolve_component_version_from_spec_provides_nested_parens(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # go-vendor-tools generates npm bundled Provides as
+    # bundled(npm(<name>)) = <version>; the name has one level of nested
+    # parens and must still resolve (regression: a naive [^)]+ capture
+    # stops at the *inner* ")" and drops the version entirely).
+    pkg = "grafana13.2"
+    pkg_dir = tmp_path / "rpms" / pkg
+    pkg_dir.mkdir(parents=True)
+    (pkg_dir / f"{pkg}.spec").write_text(
+        "Name: grafana13.2\nVersion: 13.2.1\nRelease: 4%{?dist}\n"
+        "Provides:       bundled(npm(fast-uri)) = 3.1.7\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    version, evidence = lib_spec.resolve_component_version(pkg, "fast-uri")
+    assert version == "3.1.7"
+    assert evidence == "spec_provides"
+
+
 def test_version_check_component_uses_component_version(
     tmp_path: Path, monkeypatch
 ) -> None:
