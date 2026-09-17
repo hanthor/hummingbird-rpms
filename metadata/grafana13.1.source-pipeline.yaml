@@ -29,10 +29,27 @@ transform:
         patch -p1 < "${PACKAGE_DIR}/grafana-nanoid-cve.patch"
         patch -p1 < "${PACKAGE_DIR}/grafana-axios-cve.patch"
         patch -p1 < "${PACKAGE_DIR}/grafana-browserslist-cve.patch"
-        # Must apply after the CVE patches above: pins compressionLevel and
-        # carries the resulting full yarn.lock checksum regeneration (see
-        # version-specific compression patch's own header comment).
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression-${VERSION}.patch"
+        # Generate the version-specific compression patch from this release's
+        # post-CVE lockfile.  A pre-existing patch cannot support scheduled
+        # updates: its filename and full yarn.lock checksum regeneration are
+        # necessarily tied to the version that has not been processed yet.
+        compression_workdir=$(mktemp -d)
+        trap 'rm -rf "${compression_workdir}"' EXIT
+        cp .yarnrc.yml "${compression_workdir}/yarnrc.before"
+        cp yarn.lock "${compression_workdir}/yarn.lock.before"
+        sed -i 's/^compressionLevel:.*/compressionLevel: 0/' .yarnrc.yml
+        if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
+        if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
+        YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
+          YARN_ENABLE_IMMUTABLE_INSTALLS=false YARN_NPM_MINIMAL_AGE_GATE=0 \
+          node .yarn/releases/yarn-*.cjs install
+        compression_patch="grafana-yarn-cache-compression-${VERSION}.patch"
+        diff -u --label a/.yarnrc.yml --label b/.yarnrc.yml \
+          "${compression_workdir}/yarnrc.before" .yarnrc.yml \
+          > "${compression_patch}" || [ "$?" -eq 1 ]
+        diff -u --label a/yarn.lock --label b/yarn.lock \
+          "${compression_workdir}/yarn.lock.before" yarn.lock \
+          >> "${compression_patch}" || [ "$?" -eq 1 ]
         # Generated against the post-compression lockfile, so this comes after
         # grafana-yarn-cache-compression-${VERSION}.patch (same order as Patch7 in
         # the spec).
@@ -68,6 +85,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-yarn-cache-compression-${VERSION}.patch"
 
 # Same-version yarn-cache regeneration (CVE npm bump) changes the archive
 # checksum while keeping the filename, so gorget needs an accepted-checksums

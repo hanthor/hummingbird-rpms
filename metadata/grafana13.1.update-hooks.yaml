@@ -4,4 +4,12 @@
 # spec file that gorget's sandboxed run: steps don't have.
 post_update: |
   set -euo pipefail
+  # Grafana 13.1.4 incorporated the ngalert datasource authorization fix
+  # carried by Patch14. Leave the patch file and explanatory comment in the
+  # spec for audit history, but stop applying it once upstream contains it.
+  if [[ "$(printf '%s\n%s\n' '13.1.4' "${UPDATE_NEW_VERSION}" | sort -V | head -n1)" == '13.1.4' ]]; then
+    sed -i \
+      's/^Patch14:[[:space:]]*grafana-ngalert-datasource-authz-cve\.patch/#Patch14:        grafana-ngalert-datasource-authz-cve.patch/' \
+      grafana13.1.spec
+  fi
   ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}"
