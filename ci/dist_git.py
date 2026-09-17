@@ -185,7 +185,9 @@ def replace_autorelease_in_spec(package_dir: Path, release: str, required: bool 
         logging.info("Replaced %%autorelease with %s%%{?dist} in %s", release, spec_file.name)
 
 
-def parse_spec_version(package_dir: Path) -> tuple[str, str]:
+def parse_spec_version(
+    package_dir: Path, *, tolerate_orphaned_patches: bool = False
+) -> tuple[str, str]:
     """Extract version and release from package directory's spec file."""
     # Find the spec file
     spec_files = list(package_dir.glob('*.spec'))
@@ -194,13 +196,22 @@ def parse_spec_version(package_dir: Path) -> tuple[str, str]:
 
     spec_file = spec_files[0]
 
-    # Use rpmspec to query the resolved version and release
-    # Set dist to %{nil} to get release without dist suffix
-    # Set _sourcedir so rpmspec can find source files referenced in the spec
-    rpmspec = subprocess.run(
-        ['rpmspec', '-q', '--qf', '%{VERSION}\n%{RELEASE}\n',
-         '--define=dist %{nil}', f'--define=_sourcedir {package_dir}', '--srpm', str(spec_file)],
-        stdout=subprocess.PIPE, text=True, check=True)
+    original_spec = None
+    if tolerate_orphaned_patches and detect_orphaned_patch_directives(spec_file):
+        original_spec = spec_file.read_text()
+        strip_orphaned_patch_directives(spec_file)
+
+    try:
+        # Use rpmspec to query the resolved version and release.
+        # Set dist to %{nil} to get release without dist suffix.
+        # Set _sourcedir so rpmspec can find source files referenced in the spec.
+        rpmspec = subprocess.run(
+            ['rpmspec', '-q', '--qf', '%{VERSION}\n%{RELEASE}\n',
+             '--define=dist %{nil}', f'--define=_sourcedir {package_dir}', '--srpm', str(spec_file)],
+            stdout=subprocess.PIPE, text=True, check=True)
+    finally:
+        if original_spec is not None:
+            spec_file.write_text(original_spec)
     lines = rpmspec.stdout.strip().splitlines()
     try:
         return lines[0], lines[1]
@@ -1314,6 +1325,195 @@ def _format_orphan_patches(patch_numbers: list[int]) -> str:
     return ', '.join(f'%patch -P{n}' for n in patch_numbers)
 
 
+# --- Stale patch detection ---------------------------------------------------
+
+_PATCH_TAG_RE = re.compile(r'^Patch(\d+)\s*:\s*(\S+)', re.MULTILINE)
+_PATCH_APPLY_RE = re.compile(
+    r'^(?:%patch\s+-P\s*(?P<pnum>\d+)|%patch(?P<onum>\d+))\b.*$', re.MULTILINE)
+
+def get_spec_patches(spec_path: Path) -> list[tuple[int, str]]:
+    """Parse Patch<N>: declarations from a spec file.
+
+    Returns list of (patch_number, filename) tuples.
+    """
+    return [(int(m.group(1)), m.group(2)) for m in _PATCH_TAG_RE.finditer(spec_path.read_text())]
+
+
+def _find_source_root(extract_dir: Path) -> Path:
+    """Find source root inside an extracted archive.
+
+    Most tarballs extract into a single top-level directory.
+    """
+    entries = list(extract_dir.iterdir())
+    if len(entries) == 1 and entries[0].is_dir():
+        return entries[0]
+    return extract_dir
+
+
+def detect_stale_patches(package_dir: Path,
+                         source_filenames: list[str],
+                         archive_dir: Path | None = None) -> list[tuple[int, str]]:
+    """Detect local patches already present in new upstream sources.
+
+    Expects source archives to already be on disk in archive_dir (defaults to
+    package_dir, where gorget leaves them).  Extracts the first tarball, then
+    runs `git apply --check -R` for each local Patch<N>:.
+
+    git apply is used rather than `patch -R --dry-run` because it applies no
+    fuzz: GNU patch defaults to fuzz=2 and will reverse-apply a patch that is
+    only partially upstream, which would make us delete a patch that is still
+    needed.  git apply works fine outside a git repository, so the extracted
+    tarball (the exact tree that gets built) is used directly.
+
+    Returns list of (patch_number, filename) for stale patches.
+    """
+    if archive_dir is None:
+        archive_dir = package_dir
+    spec_files = list(package_dir.glob('*.spec'))
+    if not spec_files:
+        return []
+    local_patches = get_spec_patches(spec_files[0])
+    if not local_patches:
+        return []
+
+    # Find the first extractable archive
+    archive_path = None
+    for fn in source_filenames:
+        candidate = archive_dir / fn
+        if candidate.exists() and fn.lower().endswith(
+                ('.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst', '.tgz', '.tar', '.zip')):
+            archive_path = candidate
+            break
+
+    if archive_path is None:
+        # Fall back to the sources file listing (gorget may have downloaded archives
+        # in a prior run without re-uploading in the current one).
+        sources_file = archive_dir / 'sources'
+        if sources_file.exists():
+            for fn in _parse_sources_file(sources_file):
+                candidate = archive_dir / fn
+                if candidate.exists() and fn.lower().endswith(
+                        ('.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst', '.tgz', '.tar', '.zip')):
+                    archive_path = candidate
+                    break
+
+    if archive_path is None:
+        logging.debug('No source archive found for stale patch detection')
+        return []
+
+    with tempfile.TemporaryDirectory() as extract_tmpdir:
+        extract_dir = Path(extract_tmpdir)
+        if archive_path.name.lower().endswith('.zip'):
+            result = subprocess.run(
+                ['unzip', '-q', str(archive_path), '-d', str(extract_dir)],
+                capture_output=True, text=True,
+            )
+        else:
+            result = subprocess.run(
+                ['tar', 'xf', str(archive_path), '-C', str(extract_dir)],
+                capture_output=True, text=True,
+            )
+        if result.returncode != 0:
+            logging.debug('Source extraction failed: %s', result.stderr)
+            return []
+
+        source_root = _find_source_root(extract_dir)
+        stale: list[tuple[int, str]] = []
+
+        for patch_num, patch_filename in local_patches:
+            patch_file = package_dir / patch_filename
+            if not patch_file.exists():
+                logging.debug('Patch file not found, skipping staleness check: %s', patch_file)
+                continue
+            check = subprocess.run(
+                ['git', 'apply', '--check', '-R', str(patch_file)],
+                cwd=source_root, capture_output=True, text=True,
+            )
+            if check.returncode == 0:
+                logging.info('Stale patch: Patch%d: %s (already upstream)',
+                             patch_num, patch_filename)
+                stale.append((patch_num, patch_filename))
+
+    return stale
+
+
+def drop_patches_from_spec(spec_path: Path, patch_numbers: set[int]) -> None:
+    """Remove Patch<N>: declarations and %patch -P<N> lines from a spec.
+
+    Also removes comment lines immediately above each dropped Patch<N>:,
+    stopping at blank lines and non-comment lines. Note: a comment block
+    directly adjacent (no blank line) to a dropped Patch<N>: is removed even
+    if it logically belongs to a section header or an adjacent patch entry.
+    """
+    if not patch_numbers:
+        return
+    lines = spec_path.read_text().splitlines(keepends=True)
+    drop_indices: set[int] = set()
+
+    for i, line in enumerate(lines):
+        m = _PATCH_TAG_RE.match(line)
+        if m and int(m.group(1)) in patch_numbers:
+            drop_indices.add(i)
+            # Drop preceding comment block (stops at blank lines and non-comment
+            # lines, so section headers separated by a blank line are preserved).
+            j = i - 1
+            while j >= 0 and lines[j].lstrip().startswith('#'):
+                drop_indices.add(j)
+                j -= 1
+            continue
+
+        m = _PATCH_APPLY_RE.match(line)
+        if m:
+            raw = m.group('pnum') or m.group('onum')
+            if raw and int(raw) in patch_numbers:
+                drop_indices.add(i)
+
+    spec_path.write_text(''.join(line for i, line in enumerate(lines) if i not in drop_indices))
+
+
+def drop_stale_patches(package_dir: Path,
+                       stale_patches: list[tuple[int, str]]) -> None:
+    """Remove stale patches: delete files and update spec."""
+    if not stale_patches:
+        return
+
+    spec_files = list(package_dir.glob('*.spec'))
+    if not spec_files:
+        raise RuntimeError(f'No spec file found in {package_dir}')
+
+    drop_patches_from_spec(spec_files[0], {num for num, _ in stale_patches})
+
+    for _, filename in stale_patches:
+        patch_file = package_dir / filename
+        if patch_file.exists():
+            patch_file.unlink()
+            logging.info('Removed stale patch: %s', filename)
+
+
+def _fetch_sources_for_stale_check(package_dir: Path, source_url: str,
+                                   tmpdir: Path) -> list[str]:
+    """Download sources for a non-gorget package into tmpdir for stale patch detection.
+
+    Copies the sources file into tmpdir, then runs dist-git-client sources there
+    so tarballs land in tmpdir rather than package_dir (no cleanup needed).
+    Returns list of filenames, empty on failure.
+    """
+    sources_path = package_dir / 'sources'
+    if not sources_path.exists():
+        return []
+    shutil.copy(sources_path, tmpdir / 'sources')
+    result = subprocess.run(
+        ['dist-git-client', '--configdir', str(ROOT_DIR / 'mock'),
+         '--loglevel', 'warning',
+         '--forked-from', source_url, 'sources'],
+        cwd=str(tmpdir), capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        logging.debug('dist-git-client sources failed for stale check: %s', result.stderr)
+        return []
+    return list(_parse_sources_file(tmpdir / 'sources'))
+
+
 def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path,
                               metadata: PackageMetadata, upstream_dir: Path,
                               new_sha: str) -> bool:
@@ -1846,7 +2046,9 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             return
 
         # Parse spec file to get version-release
-        version, release = parse_spec_version(upstream_dir)
+        version, release = parse_spec_version(
+            upstream_dir, tolerate_orphaned_patches=True
+        )
 
         # Query MDAPI for autorelease if needed (but don't modify upstream_dir yet, it's a git repo)
         has_autorelease = uses_autorelease(upstream_dir)
@@ -1976,6 +2178,29 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                         logging.warning("%s", patch_cleanup_reason)
                         has_conflicts = True
 
+        # --- Stale patch detection (gorget packages reuse downloaded sources;
+        #     non-gorget packages fetch via dist-git-client) ---
+        stale_patches: list[tuple[int, str]] = []
+        if not has_conflicts and not dry_run and has_modifications:
+            source_filenames_for_check = new_source_filenames
+            if not source_filenames_for_check and 'source' in metadata and cuv._load_source_pipeline(package_name) is None:
+                # Non-gorget dist-git package: download sources into a tempdir
+                # so nothing is left behind in package_dir after the check.
+                with tempfile.TemporaryDirectory() as fetch_tmpdir:
+                    fetch_dir = Path(fetch_tmpdir)
+                    source_filenames_for_check = _fetch_sources_for_stale_check(
+                        package_dir, metadata['source'], fetch_dir)
+                    stale_patches = detect_stale_patches(
+                        package_dir, source_filenames_for_check, archive_dir=fetch_dir)
+            else:
+                # Gorget package (ran or skipped due to no version change):
+                # look at archives already on disk in package_dir.
+                stale_patches = detect_stale_patches(package_dir, source_filenames_for_check)
+            if stale_patches:
+                stale_names = ', '.join(f'Patch{n}: {f}' for n, f in stale_patches)
+                drop_stale_patches(package_dir, stale_patches)
+                logging.info('Dropped stale patches: %s', stale_names)
+
         # Update package metadata
         imports[package_name]['sha'] = latest_sha
         imports[package_name]['version'] = version
@@ -1990,13 +2215,18 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # In merge mode with local modifications, keep modification_status as 'modified'
 
         # Commit the changes (or stage for manual resolution on conflict)
+        stale_patch_prefix = "STALE PATCH: " if stale_patches else ""
+        stale_patch_body = ""
+        if stale_patches:
+            stale_patch_body = "\n\nDropped stale patches (already upstream):\n" + \
+                '\n'.join(f'  Patch{n}: {f}' for n, f in stale_patches)
         if not dry_run:
             if has_conflicts:
                 # Save state for --continue (including metadata so we can
                 # restore it from a clean working tree)
                 verb = "Sync" if sync else "Update"
                 branch_suffix = f" ({old_branch} -> {effective_branch})" if branch_changed else ""
-                commit_msg = f"{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}"
+                commit_msg = f"{stale_patch_prefix}{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}{stale_patch_body}"
                 if gorget_failure_reason:
                     # No git-level conflict markers exist in this case (the
                     # merge itself was clean) -- prefix the commit message so
@@ -2036,7 +2266,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                                        tuple(extra_paths), new_source_filenames)
             verb = "Sync" if sync else "Update"
             branch_suffix = f" ({old_branch} -> {effective_branch})" if branch_changed else ""
-            commit_msg = f"{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}{orphan_msg_suffix}"
+            commit_msg = f"{stale_patch_prefix}{verb} {package_name} from {old_version}-{old_release} to {version}-{release}{branch_suffix}\n\nUpstream: {latest_sha}{orphan_msg_suffix}{stale_patch_body}"
             run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
@@ -2903,6 +3133,7 @@ Examples:
                               help='Switch to a different upstream branch and update from it (e.g., --branch f44)')
     update_parser.add_argument('--continue', action='store_true', dest='continue_',
                               help='Continue a conflicted update after resolving conflicts')
+
 
     # sync command
     sync_parser = subparsers.add_parser('sync', help='Force-sync package to upstream (discards local changes)')

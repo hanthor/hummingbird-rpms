@@ -439,6 +439,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
         echo "  ⚠ Needs manual patch cleanup (orphaned %patch directive in %prep)"
         MR_TITLE="CONFLICT: chore(rpms): ${COMMIT_MSG#NEEDS MANUAL PATCH CLEANUP: }"
         MR_DESCRIPTION="**Needs manual patch cleanup:**\nSee the commit message on this branch. An orphaned %patch directive in %prep has no matching Patch<N>: declaration (upstream dropped the patch but left the invocation). Remove the stale %patch line(s) before this can merge."
+    elif [[ "${COMMIT_MSG}" == "STALE PATCH:"* ]]; then
+        HAS_CONFLICT=true
+        UPDATES_WITH_CONFLICTS=$((UPDATES_WITH_CONFLICTS + 1))
+        echo "  ⚠ Stale patches detected and removed (already upstream, needs review before merge)"
+        MR_TITLE="STALE PATCH: chore(rpms): ${COMMIT_MSG#STALE PATCH: }"
+        MR_DESCRIPTION="**Stale patches removed:**\nSome local patches were already present in the new upstream sources and have been automatically removed. See the commit message for details.\n\nPlease review the changes before merging."
     else
         HAS_CONFLICT=false
         MR_TITLE="chore(rpms): ${COMMIT_MSG}"

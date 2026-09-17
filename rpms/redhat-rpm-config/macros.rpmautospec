@@ -3,6 +3,7 @@
     base_release_number = tonumber(rpm.expand("%{?-b*}%{!?-b:1}"));
     print(release_number + base_release_number - 1);
 }%{?-e:.%{-e*}}%{?-s:.%{-s*}}%{!?-n:%{?dist}}
+
 %autochangelog %{lua:
     locale = os.setlocale(nil)
     os.setlocale("C.utf8")
@@ -13,4 +14,3 @@
     print("* " .. date .. " " .. packager .. " - " .. evr .. "\\n")
     print("- local build")
 }
-
