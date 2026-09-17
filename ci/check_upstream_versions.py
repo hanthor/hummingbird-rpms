@@ -62,6 +62,7 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -95,6 +96,10 @@ PACKAGE_OVERRIDES_YAML = ROOT_DIR / "ci" / "package-overrides.yaml"
 # release-monitoring.org API base URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
 UPLOAD_SCRIPT = ROOT_DIR / "ci" / "upload-to-lookaside-cache.sh"
+
+GORGET_PIPELINE_TIMEOUT_SECONDS = 15 * 60
+GORGET_TERMINATION_GRACE_SECONDS = 10
+GORGET_TIMEOUT_OUTPUT_TAIL_CHARS = 2000
 
 # Maps a package's ci/package-overrides.yaml `lookaside_cache_url` (a CloudFront
 # distribution used for reads at build time) to the S3 bucket backing it, since
@@ -573,6 +578,59 @@ def _load_source_pipeline(package: str) -> Optional[Path]:
     return pipeline_file if pipeline_file.is_file() else None
 
 
+def _signal_process_group(
+    process: subprocess.Popen[str], process_signal: signal.Signals,
+) -> None:
+    """Signal a gorget process group, tolerating an already-exited process."""
+    try:
+        os.killpg(process.pid, process_signal)
+    except ProcessLookupError:
+        pass
+
+
+def _run_gorget_command(
+    command: list[str], env: dict[str, str],
+) -> subprocess.CompletedProcess[str]:
+    """Run gorget with a bounded lifetime and clean up its subprocess tree."""
+    process = subprocess.Popen(
+        command,
+        # Keep stderr inherited so gorget diagnostics stream to the job log.
+        stdout=subprocess.PIPE,
+        text=True,
+        env=env,
+        start_new_session=True,
+    )
+    try:
+        stdout, _ = process.communicate(timeout=GORGET_PIPELINE_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as timeout_error:
+        _signal_process_group(process, signal.SIGTERM)
+        try:
+            try:
+                stdout, _ = process.communicate(
+                    timeout=GORGET_TERMINATION_GRACE_SECONDS,
+                )
+            finally:
+                # Gorget may exit while a descendant survives after closing
+                # stdout. Always kill the group after the grace period.
+                _signal_process_group(process, signal.SIGKILL)
+        except subprocess.TimeoutExpired:
+            try:
+                stdout, _ = process.communicate(
+                    timeout=GORGET_TERMINATION_GRACE_SECONDS,
+                )
+            except subprocess.TimeoutExpired as kill_timeout_error:
+                # SIGKILL is not ignorable, but a task stuck in the kernel can
+                # take an unbounded time to exit. Preserve the bounded lifetime.
+                stdout = kill_timeout_error.output or ""
+        raise subprocess.TimeoutExpired(
+            command,
+            GORGET_PIPELINE_TIMEOUT_SECONDS,
+            output=stdout,
+        ) from timeout_error
+
+    return subprocess.CompletedProcess(command, process.returncode, stdout=stdout)
+
+
 def _run_gorget_pipeline(
     package: str,
     old_version: str,
@@ -641,12 +699,26 @@ def _run_gorget_pipeline(
         )
         started_at = time.monotonic()
         try:
-            result = subprocess.run(
+            result = _run_gorget_command(
                 command,
-                stdout=subprocess.PIPE,
-                text=True,
                 env=_git_clone_env_for_upstream_repo(upstream_repo),
             )
+        except subprocess.TimeoutExpired as timeout_error:
+            partial_output = timeout_error.output
+            if isinstance(partial_output, bytes):
+                partial_output = partial_output.decode(errors="replace")
+            partial_output = (partial_output or "").strip()
+            if partial_output:
+                logger.warning(
+                    "%s: last %d characters of gorget output before timeout:\n%s",
+                    package,
+                    GORGET_TIMEOUT_OUTPUT_TAIL_CHARS,
+                    partial_output[-GORGET_TIMEOUT_OUTPUT_TAIL_CHARS:],
+                )
+            raise RuntimeError(
+                f"{package}: gorget pipeline timed out after "
+                f"{GORGET_PIPELINE_TIMEOUT_SECONDS} seconds"
+            ) from timeout_error
         finally:
             logger.info(
                 "%s: gorget pipeline completed after %.1fs",
