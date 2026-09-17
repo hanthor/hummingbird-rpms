@@ -11,39 +11,39 @@ version=${2:?Usage: prepare-yarn-cache-source.sh SOURCE_DIR VERSION [--generate-
 mode=${3:-}
 package_dir=$(cd "$(dirname "$0")" && pwd)
 
-cd "$source_dir"
+cd "${source_dir}"
 
-patch -p1 < "$package_dir/grafana-yarn-cache.patch"
-patch -p1 < "$package_dir/grafana-nanoid-cve.patch"
-patch -p1 < "$package_dir/grafana-axios-cve.patch"
-patch -p1 < "$package_dir/grafana-browserslist-cve.patch"
+patch -p1 < "${package_dir}/grafana-yarn-cache.patch"
+patch -p1 < "${package_dir}/grafana-nanoid-cve.patch"
+patch -p1 < "${package_dir}/grafana-axios-cve.patch"
+patch -p1 < "${package_dir}/grafana-browserslist-cve.patch"
 
-if [[ "$mode" == "--generate-compression" ]]; then
+if [[ "${mode}" == "--generate-compression" ]]; then
     compression_workdir=$(mktemp -d)
-    trap 'rm -rf "$compression_workdir"' EXIT
-    cp .yarnrc.yml "$compression_workdir/yarnrc.before"
-    cp yarn.lock "$compression_workdir/yarn.lock.before"
+    trap 'rm -rf "${compression_workdir}"' EXIT
+    cp .yarnrc.yml "${compression_workdir}/yarnrc.before"
+    cp yarn.lock "${compression_workdir}/yarn.lock.before"
     sed -i 's/^compressionLevel:.*/compressionLevel: 0/' .yarnrc.yml
     YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
         YARN_ENABLE_IMMUTABLE_INSTALLS=false YARN_NPM_MINIMAL_AGE_GATE=0 \
         node .yarn/releases/yarn-*.cjs install
     compression_patch="grafana-yarn-cache-compression-${version}.patch"
     diff -u --label a/.yarnrc.yml --label b/.yarnrc.yml \
-        "$compression_workdir/yarnrc.before" .yarnrc.yml \
-        > "$compression_patch" || [[ $? -eq 1 ]]
+        "${compression_workdir}/yarnrc.before" .yarnrc.yml \
+        > "${compression_patch}" || [[ $? -eq 1 ]]
     diff -u --label a/yarn.lock --label b/yarn.lock \
-        "$compression_workdir/yarn.lock.before" yarn.lock \
-        >> "$compression_patch" || [[ $? -eq 1 ]]
-elif [[ -z "$mode" ]]; then
-    patch -p1 < "$package_dir/grafana-yarn-cache-compression-${version}.patch"
+        "${compression_workdir}/yarn.lock.before" yarn.lock \
+        >> "${compression_patch}" || [[ $? -eq 1 ]]
+elif [[ -z "${mode}" ]]; then
+    patch -p1 < "${package_dir}/grafana-yarn-cache-compression-${version}.patch"
 else
-    echo "Unknown mode: $mode" >&2
+    echo "Unknown mode: ${mode}" >&2
     exit 2
 fi
 
-patch -p1 < "$package_dir/grafana-dompurify-cve.patch"
-patch -p1 < "$package_dir/grafana-fast-uri-3.1.6-cve.patch"
-patch -p1 < "$package_dir/grafana-qs-6.16.0-cve.patch"
-patch -p1 < "$package_dir/grafana-js-yaml-cve.patch"
-patch -p1 < "$package_dir/grafana-fast-uri-3.1.7-cve.patch"
-patch -p1 < "$package_dir/grafana-joi-cve.patch"
+patch -p1 < "${package_dir}/grafana-dompurify-cve.patch"
+patch -p1 < "${package_dir}/grafana-fast-uri-3.1.6-cve.patch"
+patch -p1 < "${package_dir}/grafana-qs-6.16.0-cve.patch"
+patch -p1 < "${package_dir}/grafana-js-yaml-cve.patch"
+patch -p1 < "${package_dir}/grafana-fast-uri-3.1.7-cve.patch"
+patch -p1 < "${package_dir}/grafana-joi-cve.patch"

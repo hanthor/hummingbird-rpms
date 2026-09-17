@@ -25,7 +25,8 @@ METADATA_DIR = ROOT_DIR / "metadata"
 PIPELINE_SUFFIX = ".source-pipeline.yaml"
 PATCH_DECL_RE = re.compile(r"^Patch\d*:\s+(\S+)", re.MULTILINE)
 PATCH_APPLY_RE = re.compile(
-    r'patch\b[^<\n]*-p1\b[^<\n]*<\s*"?(?:\$\{PACKAGE_DIR\}|\$package_dir)/([^"\s]+\.patch)"?'
+    r'patch\b[^<\n]*-p1\b[^<\n]*<\s*"?'
+    r'(?:\$\{PACKAGE_DIR\}|\$\{package_dir\}|\$package_dir)/([^"\s]+\.patch)"?'
 )
 PACKAGE_HELPER_RE = re.compile(r'\bbash\s+"?\$\{PACKAGE_DIR\}/([^"\s]+\.sh)"?')
 SPEC_VERSION_RE = re.compile(r"^Version:\s+(\S+)", re.MULTILINE)
