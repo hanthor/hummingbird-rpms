@@ -26,6 +26,15 @@ def _run_update(tmp_path: Path, version: str, schemes: dict[str, dict]) -> subpr
         "# Begin forge sources\n"
         "old source data\n"
         "# End forge sources\n"
+        "%{lua:\n"
+        "for i = 0, 53 do\n"
+        "end\n"
+        "}\n"
+        "%prep\n"
+        "%{lua:\n"
+        "for i = 0, 53 do\n"
+        "end\n"
+        "}\n"
     )
 
     bin_dir = tmp_path / "bin"
@@ -78,6 +87,8 @@ def test_update_swift_version_uses_major_minor_scheme(tmp_path: Path) -> None:
     assert "Version: 6.3.3" in spec
     assert "%global forgeurl1  https://github.com/swiftlang/swift-cmark" in spec
     assert "%global tag1       swift-%{version0}-RELEASE" in spec
+    assert spec.count("for i = 0, 1 do") == 2
+    assert "for i = 0, 53 do" not in spec
 
 
 def test_update_swift_version_prefers_exact_scheme(tmp_path: Path) -> None:

@@ -90,6 +90,11 @@ for PROJECT in ${PROJECTS}; do
     IDX=$((IDX + 1))
 done
 
+# Keep the generated Source list and unpack loop in sync with the number of
+# repositories in the selected checkout scheme.
+LAST_IDX=$((IDX - 1))
+sed -Ei "s/(for i = 0, )[0-9]+( do)/\1${LAST_IDX}\2/" "${SPEC_FILE}"
+
 # Update the version number in the spec file.
 echo "Updating version number in the spec file."
 sed -i "s|Version: .*|Version: ${SWIFT_VERSION}|" "${SPEC_FILE}"
