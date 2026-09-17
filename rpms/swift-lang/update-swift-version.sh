@@ -1,45 +1,63 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 SWIFT_VERSION="${1:-}"
-# Patch releases use the major.minor release branch (for example, 6.3.2
-# is described by the release/6.3 branch scheme).
-if [[ "${SWIFT_VERSION}" =~ ^[^.]+\.[^.]+\. ]]; then
-    SHORT_SWIFT_VERSION="${SWIFT_VERSION%.*}"
-else
-    SHORT_SWIFT_VERSION="${SWIFT_VERSION}"
-fi
-
 if [[ -z "$SWIFT_VERSION" ]]; then
     echo "Usage: $0 <swift-version>"
     echo "Example: $0 6.1.3"
     exit 1
 fi
 
+# Patch releases use the major.minor release branch (for example, 6.3.2
+# is described by the release/6.3 branch scheme). Some Swift releases instead
+# publish an exact scheme (release/6.4.0) or a patch-series scheme
+# (release/6.4.x), so choose the first one present in the release config.
+if [[ "${SWIFT_VERSION}" =~ ^[^.]+\.[^.]+\. ]]; then
+    SHORT_SWIFT_VERSION="${SWIFT_VERSION%.*}"
+else
+    SHORT_SWIFT_VERSION="${SWIFT_VERSION}"
+fi
+
 SPEC_FILE="swift-lang.spec"
 TAG="swift-${SWIFT_VERSION}-RELEASE"
 CONFIG_URL="https://raw.githubusercontent.com/swiftlang/swift/${TAG}/utils/update_checkout/update-checkout-config.json"
 TEMP_CONFIG=$(mktemp)
+trap 'rm -f "$TEMP_CONFIG"' EXIT
 
 echo "Downloading Swift $SWIFT_VERSION configuration..."
-if ! curl -sSL "$CONFIG_URL" -o "$TEMP_CONFIG"; then
+if ! curl --fail --silent --show-error --location "$CONFIG_URL" --output "$TEMP_CONFIG"; then
     echo "Error: Failed to download configuration for Swift $SWIFT_VERSION"
     echo "URL: $CONFIG_URL"
-    rm -f "$TEMP_CONFIG"
     exit 1
 fi
 
 if ! jq . "$TEMP_CONFIG" >/dev/null 2>&1; then
     echo "Error: Downloaded file is not valid JSON"
-    rm -f "$TEMP_CONFIG"
     exit 1
 fi
 
 echo "Parsing repository versions..."
 
-# Collect all the projects included in the desired branch scheme
-PROJECTS=$(jq -r --arg scheme "release/${SHORT_SWIFT_VERSION}" '.["branch-schemes"][$scheme]["repos"]|keys[]' "${TEMP_CONFIG}")
+BRANCH_SCHEME=$(jq -r \
+    --arg exact "release/${SWIFT_VERSION}" \
+    --arg short "release/${SHORT_SWIFT_VERSION}" \
+    --arg series "release/${SHORT_SWIFT_VERSION}.x" \
+    '.["branch-schemes"] as $schemes
+     | [$exact, $short, $series]
+     | map(select($schemes[.] != null))
+     | first // ""' \
+    "${TEMP_CONFIG}")
+if [[ -z "${BRANCH_SCHEME}" ]]; then
+    echo "Error: Swift $SWIFT_VERSION configuration has no supported release branch scheme"
+    echo "Tried: release/${SWIFT_VERSION}, release/${SHORT_SWIFT_VERSION}, release/${SHORT_SWIFT_VERSION}.x"
+    exit 1
+fi
+echo "Using checkout branch scheme ${BRANCH_SCHEME}"
+
+# Collect all the projects included in the desired branch scheme.
+PROJECTS=$(jq -r --arg scheme "${BRANCH_SCHEME}" \
+    '.["branch-schemes"][$scheme]["repos"] | keys[]' "${TEMP_CONFIG}")
 
 # Remove all existing sources between the lines "Begin forge sources" and "End forge sources"
 sed -i "/Begin forge sources/,/End forge sources/{//!d;}" "${SPEC_FILE}"
@@ -51,7 +69,7 @@ for PROJECT in ${PROJECTS}; do
         continue
     fi
 
-    PROJECT_REF=$(jq -r --arg scheme "release/${SHORT_SWIFT_VERSION}" --arg project "$PROJECT" '.["branch-schemes"][$scheme]["repos"][$project]' "${TEMP_CONFIG}")
+    PROJECT_REF=$(jq -r --arg scheme "${BRANCH_SCHEME}" --arg project "$PROJECT" '.["branch-schemes"][$scheme]["repos"][$project]' "${TEMP_CONFIG}")
     PROJECT_ID=$(jq -r --arg project "${PROJECT}" '.["repos"][$project].remote.id' "${TEMP_CONFIG}")
     FORGEURL="https://github.com/${PROJECT_ID}"
 
@@ -75,8 +93,6 @@ done
 # Update the version number in the spec file.
 echo "Updating version number in the spec file."
 sed -i "s|Version: .*|Version: ${SWIFT_VERSION}|" "${SPEC_FILE}"
-
-rm -f "$TEMP_CONFIG"
 
 echo "Done! Please review the changes to ensure everything is correct."
 echo "Remember to review the patches and remove any that are no longer needed."
