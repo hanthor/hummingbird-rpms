@@ -9,7 +9,8 @@ from lib.utils import repo_root, _pkg_dir, normalize_nvr, extract_vendor_field, 
 # ---- Constants ----
 
 BUNDLED_PROVIDES_RE = re.compile(
-    r"(?i)^\s*Provides:\s*bundled\(([^)]+)\)(?:\s*=\s*(\S+))?"
+    # Name allows one level of nested parens, e.g. bundled(npm(fast-uri)) = 3.1.7.
+    r"(?i)^\s*Provides:\s*bundled\(((?:[^()]|\([^()]*\))+)\)(?:\s*=\s*(\S+))?"
 )
 _MACRO_BODY = r"([^{}]*(?:\{[^{}]*\}[^{}]*)*)"  # body allowing one level of nested {}
 _MAX_MACRO_EXPANSIONS = 10
