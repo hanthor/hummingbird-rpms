@@ -58,6 +58,10 @@ Patch13:        grafana-fast-uri-3.1.8-cve.patch
 # apps/alerting/historian, apps/iam and apps/quotas workspace modules, which
 # otherwise keep requiring v0.19.0 and leave stale entries in modules.txt.
 Patch14:        grafana-otlplog-cve.patch
+# Bump vendored openfga 1.18.0 -> 1.18.1 for CVE-2026-61709. Also bumps the
+# apps/iam workspace module, which otherwise keeps requiring v1.18.0 and
+# leaves a stale entry in the vendor archive's modules.txt.
+Patch15:        grafana-openfga-cve.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.5
