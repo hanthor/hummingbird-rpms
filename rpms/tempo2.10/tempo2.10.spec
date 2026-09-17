@@ -18,13 +18,11 @@ Patch1:         0002-livestore-treat-canceled-initial-offset-fetch-as-stop.patch
 Patch2:         0003-vendor-bump-apache-thrift-0.24.0.patch
 Patch3:         0004-vendor-bump-mcp-go-0.56.0.patch
 Patch4:         0005-fix-mcp-CallToolParams-test-helper.patch
-# CVE-2026-81871: bump the vendored OTLP log exporters to v0.21.0. This package
-# vendors in-tree rather than using a vendor archive, so the patch carries the
-# regenerated go.mod, go.sum, vendor/modules.txt and vendored sources together.
-# The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log API, so
-# otlploggrpc, otlploghttp and stdoutlog must move as a set. otelzap is pinned
-# to v0.20.0, the newest release still built against otel/log v0.21.0.
-Patch5:         0006-vendor-bump-otel-otlplog-0.21.0.patch
+# CVE-2026-81871: the vendored otlploggrpc exporter loads the OTLP TLS environment
+# variables into cfg.tlsCfg but never applies them, silently falling back to system
+# roots. Backport the upstream two-line fix rather than bumping the module, which
+# would pull otel 1.45 and regenerated semconv through the whole in-tree vendor tree.
+Patch5:       0006-backport-otlploggrpc-tls-CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26
