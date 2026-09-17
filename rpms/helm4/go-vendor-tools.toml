@@ -54,3 +54,14 @@ path = "vendor/github.com/cloudflare/circl/LICENSE"
 sha256sum = "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
 expression = "BSD-3-Clause"
 [archive]
+# CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
+# API, so they must move together; bumping otlploggrpc alone leaves the siblings
+# calling symbols that no longer exist. Keep in sync with CVE-2026-81871.patch.
+pre_commands = [
+  [
+    "go", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+]
