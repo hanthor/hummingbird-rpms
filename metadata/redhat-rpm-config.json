@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "7",
-  "sha": "9110aec0fba3fb2622df30eebf230821df8fc1f5",
+  "release": "4",
+  "sha": "b2b8f3ea63b3438d656acf61ade734c172e2b565",
   "source": "https://src.fedoraproject.org/rpms/redhat-rpm-config.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/redhat-rpm-config",
-  "version": "344"
+  "version": "345"
 }

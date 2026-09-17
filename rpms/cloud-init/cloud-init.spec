@@ -6,7 +6,7 @@
 
 Name:           cloud-init
 Version:        26.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Cloud instance init scripts
 License:        Apache-2.0 OR GPL-3.0-only
 URL:            https://github.com/canonical/cloud-init
@@ -22,6 +22,9 @@ Patch0:         0001-fix-avoid-dependency-cycle-on-Fedora.patch
 # feat: add ELN support to distros
 Patch1:         0002-feat-add-ELN-support-to-distros.patch
 Patch2:         0002-fix-force-fedora-variant-for-template-rendering.patch
+# https://github.com/canonical/cloud-init/pull/7082.patch
+# Fixes reformatting disks with util-linux 2.42.
+Patch3:         7082.patch
 
 BuildArch:      noarch
 

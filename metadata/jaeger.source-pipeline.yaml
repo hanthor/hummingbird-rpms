@@ -7,6 +7,11 @@ fetch:
     ecosystem: go
     archive_name: "jaeger-${VERSION}-vendor.tar.bz2"
 
+toolchain:
+  - name: node
+    version: "24"
+    minimum-version: "24.16.0"
+
 transform:
   - type: run
     path: "."

@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "CVE-2026-71556: rebuild to publish go-git 5.19.2 fix vendored in trivy 0.74.0",
+  "modification_reason": "CVE-2026-71556: rebuild to publish go-git 5.19.2 fix vendored in trivy 0.74.0; CVE-2026-88922: backport go-getter 1.8.9 decompress permissions fix",
   "modification_status": "modified",
   "release_monitoring_project_id": 141362,
   "sha": "1741a090d7d41332bef492d4d294226992a9e4ed",

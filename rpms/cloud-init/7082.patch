@@ -1,0 +1,50 @@
+From 21239ffeb8af8b1b379a62341f8eb2e8354fe374 Mon Sep 17 00:00:00 2001
+From: Bala Konda Reddy M <bala12352@gmail.com>
+Date: Tue, 8 Sep 2026 13:36:44 -0700
+Subject: [PATCH] fix(mount): settle udev before mounting filesystems
+
+Wait for pending udev events before running mount -a. This ensures mount
+uses current filesystem information after a disk has been reformatted.
+
+fixes: https://bugzilla.redhat.com/show_bug.cgi?id=2525858
+
+Signed-off-by: Bala Konda Reddy M <bala12352@gmail.com>
+---
+ cloudinit/config/cc_mounts.py            | 1 +
+ tests/unittests/config/test_cc_mounts.py | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/cloudinit/config/cc_mounts.py b/cloudinit/config/cc_mounts.py
+index e83fbd8dff8..eb535520a39 100644
+--- a/cloudinit/config/cc_mounts.py
++++ b/cloudinit/config/cc_mounts.py
+@@ -508,6 +508,7 @@ def mount_if_needed(
+         do_mount = bool(set(dirs).difference(mount_points))
+ 
+     if do_mount:
++        util.udevadm_settle()
+         subp.subp(["mount", "-a"])
+         if uses_systemd:
+             subp.subp(["systemctl", "daemon-reload"])
+diff --git a/tests/unittests/config/test_cc_mounts.py b/tests/unittests/config/test_cc_mounts.py
+index 7da080544fb..1d23f725674 100644
+--- a/tests/unittests/config/test_cc_mounts.py
++++ b/tests/unittests/config/test_cc_mounts.py
+@@ -298,6 +298,9 @@ def setup(self, mocker, fake_fs):
+         fake_fs.create_dir("/etc")
+ 
+         self.m_subp = mocker.patch(f"{M_PATH}subp.subp")
++        self.m_udevadm_settle = mocker.patch(
++            f"{M_PATH}util.udevadm_settle"
++        )
+         self.m_mounts = mocker.patch(
+             f"{M_PATH}util.mounts",
+             return_value={
+@@ -473,6 +476,7 @@ def test_no_change_fstab_sets_needs_mount_all(self):
+         with open(cc_mounts.FSTAB_PATH, "r") as fd:
+             fstab_new_content = fd.read()
+             assert fstab_original_content == fstab_new_content.strip()
++        self.m_udevadm_settle.assert_called_once_with()
+         self.m_subp.assert_has_calls(
+             [
+                 mock.call(["mount", "-a"]),
