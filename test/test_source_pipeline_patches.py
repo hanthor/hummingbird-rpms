@@ -24,9 +24,15 @@ METADATA_DIR = ROOT_DIR / "metadata"
 
 PIPELINE_SUFFIX = ".source-pipeline.yaml"
 PATCH_DECL_RE = re.compile(r"^Patch\d*:\s+(\S+)", re.MULTILINE)
-PATCH_APPLY_RE = re.compile(r'patch\b[^<\n]*-p1\b[^<\n]*<\s*"?\$\{PACKAGE_DIR\}/([^"\s]+\.patch)"?')
+PATCH_APPLY_RE = re.compile(
+    r'patch\b[^<\n]*-p1\b[^<\n]*<\s*"?(?:\$\{PACKAGE_DIR\}|\$package_dir)/([^"\s]+\.patch)"?'
+)
+PACKAGE_HELPER_RE = re.compile(r'\bbash\s+"?\$\{PACKAGE_DIR\}/([^"\s]+\.sh)"?')
 SPEC_VERSION_RE = re.compile(r"^Version:\s+(\S+)", re.MULTILINE)
 DIFF_TARGET_RE = re.compile(r"^\+\+\+ b/(.+)$", re.MULTILINE)
+TIMESTAMPED_DIFF_TARGET_RE = re.compile(
+    r"^\+\+\+ b/([^\t\n]+)(?:\t.*)?$", re.MULTILINE
+)
 
 # Commands that resolve dependencies against a lockfile/manifest -- if a transform
 # runs one of these, every spec patch touching that ecosystem's lockfile/manifest
@@ -56,8 +62,8 @@ def _spec_path(package: str) -> Path | None:
     return matches[0] if matches else None
 
 
-def _transform_run_scripts(pipeline: dict) -> list[str]:
-    """Return the shell script body of every `run:` transform step."""
+def _transform_run_scripts(pipeline: dict, package_dir: Path) -> list[str]:
+    """Return transform shell bodies plus package helpers they invoke."""
     scripts = []
     for step in pipeline.get("transform") or []:
         if not isinstance(step, dict) or step.get("type") != "run":
@@ -69,7 +75,12 @@ def _transform_run_scripts(pipeline: dict) -> list[str]:
                 f"{command!r}"
             )
         if command:
-            scripts.append(command[-1])
+            script = command[-1]
+            scripts.append(script)
+            for helper in PACKAGE_HELPER_RE.findall(script):
+                helper_path = package_dir / helper
+                if helper_path.is_file():
+                    scripts.append(helper_path.read_text())
     return scripts
 
 
@@ -107,10 +118,16 @@ def _spec_version(spec_path: Path) -> str:
 
 def _expand_version_template(name: str, version: str) -> str:
     """Resolve the version placeholders used by specs and source pipelines."""
-    return name.replace("%{version}", version).replace("${VERSION}", version)
+    return (
+        name.replace("%{version}", version)
+        .replace("${VERSION}", version)
+        .replace("${version}", version)
+    )
 
 
-def _patch_touched_basenames(patch_path: Path) -> set[str]:
+def _patch_touched_basenames(
+    patch_path: Path, target_re: re.Pattern = DIFF_TARGET_RE
+) -> set[str]:
     """Return the basenames of files a patch modifies, from its `+++ b/...` lines.
 
     Basenames rather than full paths: a monorepo lockfile-resolving install can be
@@ -121,7 +138,7 @@ def _patch_touched_basenames(patch_path: Path) -> set[str]:
     if not patch_path.exists():
         return set()
     text = patch_path.read_text(errors="replace")
-    return {PurePosixPath(p).name for p in DIFF_TARGET_RE.findall(text)}
+    return {PurePosixPath(p).name for p in target_re.findall(text)}
 
 
 def _relevant_manifests(scripts: list[str]) -> set[str]:
@@ -145,7 +162,16 @@ def test_transform_patches_cover_files_they_touch(package: str) -> None:
     pipeline_path = METADATA_DIR / f"{package}{PIPELINE_SUFFIX}"
     pipeline = yaml.safe_load(pipeline_path.read_text())
 
-    scripts = _transform_run_scripts(pipeline)
+    package_dir = RPMS_DIR / package
+    scripts = _transform_run_scripts(pipeline, package_dir)
+    # Package helpers are new code and should handle ordinary git patches as
+    # well as diff output carrying timestamps. Preserve the legacy parser for
+    # older inline pipelines, whose known gaps are tracked independently.
+    target_re = (
+        TIMESTAMPED_DIFF_TARGET_RE
+        if any(PACKAGE_HELPER_RE.search(script) for script in scripts)
+        else DIFF_TARGET_RE
+    )
     applied = _applied_patches(scripts)
     if not applied:
         pytest.skip(f"{package}: no run: transform step applies patches")
@@ -159,10 +185,9 @@ def test_transform_patches_cover_files_they_touch(package: str) -> None:
     applied += _generated_patches(pipeline)
     applied = [_expand_version_template(name, version) for name in applied]
 
-    package_dir = RPMS_DIR / package
     applied_basenames: set[str] = set()
     for name in applied:
-        applied_basenames |= _patch_touched_basenames(package_dir / name)
+        applied_basenames |= _patch_touched_basenames(package_dir / name, target_re)
 
     relevant = applied_basenames | _relevant_manifests(scripts)
 
@@ -170,7 +195,7 @@ def test_transform_patches_cover_files_they_touch(package: str) -> None:
     for name in declared:
         if name in applied or not name.endswith(".patch"):
             continue
-        overlap = _patch_touched_basenames(package_dir / name) & relevant
+        overlap = _patch_touched_basenames(package_dir / name, target_re) & relevant
         if overlap:
             missing.append((name, sorted(overlap)))
 
