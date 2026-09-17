@@ -76,6 +76,10 @@ Patch14:        grafana-ngalert-datasource-authz-cve.patch
 # Generated against the post-Patch13 lockfile. Bumps vendored joi
 # 17.13.3 -> 17.13.8 and joi 18.2.1 -> 18.2.9 for CVE-2026-90771.
 Patch15:        grafana-joi-cve.patch
+# Update the OTLP log exporters to v0.21.0 for CVE-2026-81871. Also bumps the
+# apps/alerting/historian and apps/quotas workspace modules, which otherwise keep
+# requiring v0.19.0 and leave stale entries in the vendor archive's modules.txt.
+Patch16:        grafana-otlplog-cve.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.4
