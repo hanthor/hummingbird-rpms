@@ -32,7 +32,10 @@ Source8:        jaeger-ui-bump-nanoid-5.1.16.patch
 Patch0:         fix-ai-sidecar-pyasn1-0.6.4.patch
 # Bump ai-sidecar dependency joserfc to 1.7.2 for CVE-2026-62995
 Patch1:         fix-ai-sidecar-joserfc-1.7.2.patch
-# Update OpenTelemetry log exporters for CVE-2026-81871
+# Update OpenTelemetry log exporters for CVE-2026-81871. This also pulls
+# go.opentelemetry.io/otel/sdk to v1.45.0, whose resource detectors emit schema
+# 1.43.0, so otelsemconv.SchemaURL must come from the matching semconv package
+# or resource detection fails with a conflicting Schema URL.
 Patch2:         CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
