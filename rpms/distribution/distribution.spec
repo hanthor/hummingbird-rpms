@@ -27,6 +27,7 @@ Specification for storing and distributing container images and other content.
 
 %prep
 %goprep -p1
+rm -rf vendor
 tar -xf %{S:1}
 
 %generate_buildrequires
