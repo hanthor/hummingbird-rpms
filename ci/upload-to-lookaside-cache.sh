@@ -97,7 +97,37 @@ echo "  S3 key:    ${S3_KEY}"
 echo ""
 
 # Upload to S3
-aws s3 cp "${FILE}" "s3://${BUCKET}/${S3_KEY}"
+MAX_UPLOAD_ATTEMPTS="${LOOKASIDE_UPLOAD_MAX_ATTEMPTS:-5}"
+RETRY_DELAY_SECONDS="${LOOKASIDE_UPLOAD_RETRY_BASE_SECONDS:-5}"
+
+if [[ ! "${MAX_UPLOAD_ATTEMPTS}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: LOOKASIDE_UPLOAD_MAX_ATTEMPTS must be a positive integer" >&2
+    exit 1
+fi
+if [[ ! "${RETRY_DELAY_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: LOOKASIDE_UPLOAD_RETRY_BASE_SECONDS must be a positive integer" >&2
+    exit 1
+fi
+
+UPLOAD_ATTEMPT=1
+while true; do
+    if aws s3 cp "${FILE}" "s3://${BUCKET}/${S3_KEY}"; then
+        break
+    else
+        UPLOAD_STATUS=$?
+    fi
+
+    if (( UPLOAD_ATTEMPT >= MAX_UPLOAD_ATTEMPTS )); then
+        echo "Error: S3 upload failed after ${UPLOAD_ATTEMPT} attempts" >&2
+        exit "${UPLOAD_STATUS}"
+    fi
+
+    printf 'Warning: S3 upload attempt %s/%s failed; retrying in %ss\n' \
+        "${UPLOAD_ATTEMPT}" "${MAX_UPLOAD_ATTEMPTS}" "${RETRY_DELAY_SECONDS}" >&2
+    sleep "${RETRY_DELAY_SECONDS}"
+    RETRY_DELAY_SECONDS=$((RETRY_DELAY_SECONDS * 2))
+    UPLOAD_ATTEMPT=$((UPLOAD_ATTEMPT + 1))
+done
 
 echo ""
 echo "Upload complete!"
