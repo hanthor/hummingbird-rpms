@@ -967,7 +967,7 @@ def test_check_package_version_skips_unavailable_source(
         'stable_versions': ['21.0.12.1+0', '21.0.12+8', '21.0.11+10'],
     }
 
-    def fake_check(version: str, _checker: str, _meta: dict) -> bool:
+    def fake_check(version: str, _checker: object, _meta: dict) -> bool:
         return version != '21.0.12.1+0'
 
     with (
@@ -980,6 +980,12 @@ def test_check_package_version_skips_unavailable_source(
 
     assert result.has_update is True
     assert result.upstream_version == '21.0.12.0.8'
+    assert result.warnings == [
+        (
+            'skipped upstream version 21.0.12.1+0: required source artifact '
+            'is not published'
+        ),
+    ]
 
 
 def test_check_package_version_all_sources_unavailable(
@@ -1009,12 +1015,85 @@ def test_check_package_version_all_sources_unavailable(
         result = cuv_module.check_package_version('java-21-openjdk-portable')
 
     assert result.has_update is False
+    assert result.error is None
+    assert result.warnings == [
+        (
+            'skipped upstream version 21.0.12.1+0: required source artifact '
+            'is not published'
+        ),
+    ]
 
 
 def test_check_source_available_unknown(cuv_module) -> None:
     """check_source_available raises ValueError for unknown checker name."""
     with pytest.raises(ValueError, match="unknown source_availability_check"):
         cuv_module.check_source_available('1.0', 'nonexistent', {})
+
+
+def test_http_source_check_expands_metadata_variables(cuv_module) -> None:
+    """The generic HTTP probe expands version and package metadata variables."""
+    config = {
+        'type': 'http',
+        'urls': [
+            (
+                '${UPSTREAM_REPO}/releases/download/v${VERSION}/'
+                'libfabric-${VERSION}.tar.bz2'
+            ),
+        ],
+    }
+    metadata = {
+        'upstream_repo': 'https://github.com/ofiwg/libfabric/',
+        'track_upstream': 'latest',
+    }
+
+    with patch.object(cuv_module, '_check_source_exists', return_value=True) as check:
+        assert cuv_module.check_source_available('2.7.0', config, metadata) is True
+
+    check.assert_called_once_with(
+        'https://github.com/ofiwg/libfabric/releases/download/v2.7.0/'
+        'libfabric-2.7.0.tar.bz2',
+    )
+
+
+def test_http_source_check_requires_every_url(cuv_module) -> None:
+    """A release is unavailable when any required source URL is missing."""
+    config = {
+        'type': 'http',
+        'urls': [
+            'https://example.com/project-${VERSION}.tar.gz',
+            'https://example.com/project-${VERSION}.tar.gz.asc',
+        ],
+    }
+
+    with patch.object(
+        cuv_module, '_check_source_exists', side_effect=[True, False],
+    ) as check:
+        assert cuv_module.check_source_available('1.2.3', config, {}) is False
+
+    assert [call.args[0] for call in check.call_args_list] == [
+        'https://example.com/project-1.2.3.tar.gz',
+        'https://example.com/project-1.2.3.tar.gz.asc',
+    ]
+
+
+@pytest.mark.parametrize(
+    ('config', 'message'),
+    [
+        ({'type': 'ftp', 'urls': ['https://example.com/a']}, 'unknown.*type'),
+        ({'type': 'http', 'urls': []}, 'requires a non-empty urls list'),
+        ({'type': 'http', 'urls': [42]}, 'urls must be non-empty strings'),
+        (
+            {'type': 'http', 'urls': ['https://example.com/${MISSING}']},
+            'unknown source_availability_check variable',
+        ),
+    ],
+)
+def test_source_availability_probe_rejects_invalid_config(
+    cuv_module, config: dict[str, object], message: str,
+) -> None:
+    """Invalid source probe configurations fail with actionable errors."""
+    with pytest.raises(ValueError, match=message):
+        cuv_module.check_source_available('1.0', config, {})
 
 
 def test_openjdk_source_check_url_construction(cuv_module) -> None:
@@ -2582,6 +2661,49 @@ def test_cli_check_json_output(cuv_module, workdir: Path) -> None:
         cuv_module.main()
 
     assert exc_info.value.code == 1  # updates found
+
+
+def test_cli_check_json_reports_source_warnings(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """JSON output exposes skipped sources without failing the check."""
+    _create_package(
+        workdir, 'pkg', '1.0',
+        metadata={
+            'version': '1.0',
+            'track_upstream': 'latest',
+            'source_availability_check': {
+                'type': 'http',
+                'urls': ['https://example.com/pkg-${VERSION}.tar.gz'],
+            },
+        },
+    )
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    mock_response = {
+        'version': '2.0',
+        'stable_versions': ['2.0'],
+        'id': 42,
+    }
+
+    with (
+        patch.object(cuv_module, 'query_anitya', return_value=mock_response),
+        patch.object(cuv_module, '_check_source_exists', return_value=False),
+        patch('sys.argv', [
+            'check_upstream_versions.py', 'check', '--quiet', '--json', 'pkg',
+        ]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert exc_info.value.code == 0
+    assert output['warnings'] == 1
+    assert output['errors'] == 0
+    assert output['results'][0]['package'] == 'pkg'
+    assert output['results'][0]['warnings'] == [
+        'skipped upstream version 2.0: required source artifact is not published',
+    ]
 
 
 def test_cli_no_updates_exit_zero(cuv_module, workdir: Path) -> None:
