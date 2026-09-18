@@ -44,10 +44,27 @@ transform:
         mkdir "${root}/.jaeger-ui-src"
         tar -xzf "${ui_archive}" -C "${root}/.jaeger-ui-src" --strip-components=1
         patch -d "${root}/.jaeger-ui-src" -p1 < "${PACKAGE_DIR}/jaeger-ui-pnpm-cache.patch"
-        npm install --prefix "${root}/.pnpm" --ignore-scripts pnpm@10.5.0
-        pnpm="${root}/.pnpm/node_modules/.bin/pnpm"
+
+        # Follow the exact pnpm version selected by Jaeger UI. pnpm 12's
+        # generated .bin/pnpm wrapper requires a lifecycle script, which is
+        # intentionally disabled here, so invoke its JavaScript entry point.
+        pnpm_spec="$(node -e '
+        const declared = require(process.argv[1]).packageManager
+        const spec = declared?.split("+")[0]
+        if (!/^pnpm@[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(spec)) {
+          console.error(`Invalid or missing pnpm packageManager declaration: ${declared}`)
+          process.exit(1)
+        }
+        process.stdout.write(spec)
+        ' "${root}/.jaeger-ui-src/package.json")"
+        npm install --prefix "${root}/.pnpm" --ignore-scripts "${pnpm_spec}"
+        pnpm="${root}/.pnpm/node_modules/pnpm/bin/pnpm.mjs"
+        if [[ ! -f "${pnpm}" ]]; then
+          echo "pnpm entry point not found: ${pnpm}" >&2
+          exit 1
+        fi
         pnpm_store="${root}/.pnpm-store"
-        (cd "${root}/.jaeger-ui-src" && "${pnpm}" fetch --frozen-lockfile --store-dir "${pnpm_store}")
+        (cd "${root}/.jaeger-ui-src" && node "${pnpm}" fetch --store-dir "${pnpm_store}")
         tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store
     outputs:
       - "jaeger-ui-${VERSION}.tar.gz"
