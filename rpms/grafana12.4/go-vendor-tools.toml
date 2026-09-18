@@ -30,6 +30,14 @@ pre_commands = [
     "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
     "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
   ],
+  # CVE-2026-61709. Bumps vendored openfga 1.18.0 -> 1.18.1. Keep in sync
+  # with grafana-openfga-cve.patch.
+  ["go", "get", "github.com/openfga/openfga@v1.18.1"],
+  # apps/iam is a workspace member that also requires openfga (indirect).
+  # Without this, `go work vendor` keeps an explicit v1.18.0 entry in
+  # vendor/modules.txt even though the vendored source is v1.18.1, and
+  # scanners still report the CVE.
+  ["go", "-C", "apps/iam", "get", "github.com/openfga/openfga@v1.18.1"],
 ]
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
