@@ -38,7 +38,17 @@ cat <<'EOF'
       "update_error": null,
       "updated": false,
       "warnings": [
-        "skipped upstream version 2.6.0: required source artifact is not published"
+        "skipped upstream version 2.6.0: required source artifact is not published",
+        "skipped upstream version 2.5.0: required source artifact is not published"
+      ]
+    },
+    {
+      "package": "other-package",
+      "error": null,
+      "update_error": null,
+      "updated": false,
+      "warnings": [
+        "skipped upstream version 3.0: required source artifact is not published"
       ]
     }
   ]
@@ -63,9 +73,9 @@ EOF
     )
 
     assert result.returncode == 0
-    assert "No updates available; 1 source warning(s) reported." in result.stdout
+    assert "No updates available; 3 source warning(s) reported." in result.stdout
     assert "All tracked packages are up-to-date." not in result.stdout
     assert (repo / ".ci_upstream_update_warnings.txt").read_text() == (
-        "libfabric: skipped upstream version 2.6.0: "
-        "required source artifact is not published\n"
+        "3 skipped candidate version(s) across 2 package(s); "
+        "see job log for details\n"
     )

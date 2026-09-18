@@ -86,10 +86,8 @@ default:
           done < .ci_upstream_update_draft_mrs.txt
         fi
         if [ -s .ci_upstream_update_warnings.txt ]; then
-          MSG="${MSG}"$'\n'"Skipped upstream versions (required sources not yet published):"
-          while IFS= read -r line; do
-            MSG="${MSG}"$'\n'"- ${line}"
-          done < .ci_upstream_update_warnings.txt
+          WARNING_SUMMARY=$(<.ci_upstream_update_warnings.txt)
+          MSG="${MSG}"$'\n'"Source availability warnings: ${WARNING_SUMMARY}"
         fi
 
         # dist_git_update_multi_mr.sh records package updates and MR creation

@@ -175,6 +175,7 @@ MR_FAILURES=0
 EXISTING_UPDATES=0
 CHECK_FAILURES=0
 CHECK_WARNINGS=0
+CHECK_WARNING_PACKAGES=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
 DRAFT_FAILURE_MR_URLS=()
@@ -184,7 +185,8 @@ DRAFT_FAILURE_MR_URLS=()
 UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
 rm -f "${UPSTREAM_FAILURES_FILE}"
 # Source versions skipped because their required artifacts are not published
-# are warnings, not checker failures. Preserve them for the job log and Slack.
+# are warnings, not checker failures. Detailed warnings remain in the checker
+# output; this file carries only aggregate counts for Slack.
 UPSTREAM_WARNINGS_FILE=".ci_upstream_update_warnings.txt"
 rm -f "${UPSTREAM_WARNINGS_FILE}"
 # Keep draft-MR links separately so the scheduled Slack notification can
@@ -269,10 +271,22 @@ if ! [[ "${CHECK_WARNINGS}" =~ ^[0-9]+$ ]]; then
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
+if ! CHECK_WARNING_PACKAGES=$(jq \
+    '[.results[] | select((.warnings // []) | length > 0)] | length' \
+    "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not count packages with source availability warnings"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${CHECK_WARNING_PACKAGES}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable warning package count"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
 
-# Preserve a short, one-line-per-package summary for both the job log and the
-# scheduled-job Slack notification.  The full error (which can contain Gorget
-# JSON and remediation guidance) remains in the job log linked from Slack.
+# Preserve a short, one-line-per-package failure summary for both the job log
+# and the scheduled-job Slack notification. The full error (which can contain
+# Gorget JSON and remediation guidance) remains in the job log linked from Slack.
 if ! jq -r '
     .results[]
     | select(.error != null or .update_error != null)
@@ -286,17 +300,12 @@ if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     rm -f "${UPSTREAM_FAILURES_FILE}"
 fi
 
-if ! jq -r '
-    .results[]
-    | .package as $package
-    | .warnings[]?
-    | "\($package): \(.)"
-' "${CHECK_OUTPUT}" > "${UPSTREAM_WARNINGS_FILE}"; then
-    echo "ERROR: Could not create source availability warning summary"
-    rm -f "${CHECK_OUTPUT}" "${UPSTREAM_WARNINGS_FILE}"
-    exit 1
-fi
-if [[ ! -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
+if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
+    # Avoid flooding Slack when several unpublished candidates exist for each
+    # package. The checker stderr and JSON above retain every detailed warning.
+    printf '%s skipped candidate version(s) across %s package(s); see job log for details\n' \
+        "${CHECK_WARNINGS}" "${CHECK_WARNING_PACKAGES}" > "${UPSTREAM_WARNINGS_FILE}"
+else
     rm -f "${UPSTREAM_WARNINGS_FILE}"
 fi
 
