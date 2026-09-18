@@ -114,6 +114,31 @@ Chat prefix `NAB`.
 
 **Version bump or backport (3d/3e):** prefer a version bump.
 
+**If this is a version bump (package update, not a backport):** before starting
+any update work, send a Slack warning to `#hummingbird-pipeline-notifications`.
+Use the `user-slack` MCP tools:
+
+1. Read `.git/slackid` (in the repo root) to get the user's Slack member ID:
+
+   ```bash
+   cat .git/slackid
+   ```
+
+   If the file is missing or empty, **stop and tell the user:**
+   > `.git/slackid` is not set. To create it:
+   > 1. In Slack, click your profile picture → **Profile**
+   > 2. Click the three-dot menu (⋯) → **Copy member ID**
+   > 3. Run: `echo 'UXXXXXXXXX' > .git/slackid` (replace with your actual ID)
+   >
+   > Then re-run this step.
+
+2. The channel ID for `#hummingbird-pipeline-notifications` is `C0AFWEGK8CR`.
+
+3. Call `post_message` with `channel_id: C0AFWEGK8CR` and the text:
+   `:warning: <@SLACK_ID> cve skill is updating <package_name> to <version>`
+   where `SLACK_ID` is the ID read from `.git/slackid`, `package_name` is
+   the RPM package being updated, and `version` is the target version.
+
 Then `create-task --worktree`, move the agent into that worktree, then follow
 [Rebuilding Packages](../../../documentation/operating/rebuilding-packages.md)
 and [package-metadata-fields.md](../../../documentation/operating/package-metadata-fields.md).
