@@ -174,6 +174,7 @@ PACKAGES_UPDATED=0
 MR_FAILURES=0
 EXISTING_UPDATES=0
 CHECK_FAILURES=0
+CHECK_WARNINGS=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
 DRAFT_FAILURE_MR_URLS=()
@@ -182,6 +183,10 @@ DRAFT_FAILURE_MR_URLS=()
 # updates do not create a conflict MR when Gorget or source processing fails.
 UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
 rm -f "${UPSTREAM_FAILURES_FILE}"
+# Source versions skipped because their required artifacts are not published
+# are warnings, not checker failures. Preserve them for the job log and Slack.
+UPSTREAM_WARNINGS_FILE=".ci_upstream_update_warnings.txt"
+rm -f "${UPSTREAM_WARNINGS_FILE}"
 # Keep draft-MR links separately so the scheduled Slack notification can
 # direct maintainers to the corresponding investigation branch.
 UPSTREAM_DRAFT_FAILURE_MRS_FILE=".ci_upstream_update_draft_mrs.txt"
@@ -254,6 +259,16 @@ if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
+if ! CHECK_WARNINGS=$(jq '[.results[] | .warnings[]?] | length' "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not parse source availability warnings"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${CHECK_WARNINGS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable warning count"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
 
 # Preserve a short, one-line-per-package summary for both the job log and the
 # scheduled-job Slack notification.  The full error (which can contain Gorget
@@ -269,6 +284,20 @@ if ! jq -r '
 fi
 if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     rm -f "${UPSTREAM_FAILURES_FILE}"
+fi
+
+if ! jq -r '
+    .results[]
+    | .package as $package
+    | .warnings[]?
+    | "\($package): \(.)"
+' "${CHECK_OUTPUT}" > "${UPSTREAM_WARNINGS_FILE}"; then
+    echo "ERROR: Could not create source availability warning summary"
+    rm -f "${CHECK_OUTPUT}" "${UPSTREAM_WARNINGS_FILE}"
+    exit 1
+fi
+if [[ ! -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
+    rm -f "${UPSTREAM_WARNINGS_FILE}"
 fi
 
 # Keep update-processing failures separate from version-discovery failures.
@@ -304,6 +333,13 @@ if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     while IFS= read -r failure; do
         echo "  - ${failure}"
     done < "${UPSTREAM_FAILURES_FILE}"
+    echo ""
+fi
+if [[ -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
+    echo "Upstream source availability warnings:"
+    while IFS= read -r warning; do
+        echo "  - ${warning}"
+    done < "${UPSTREAM_WARNINGS_FILE}"
     echo ""
 fi
 
@@ -379,7 +415,11 @@ done
 #   1 = updates found and applied
 #   2 = errors occurred
 if [[ ${CHECK_EXIT_CODE} -eq 0 ]]; then
-    echo "No upstream version updates available. All tracked packages are up-to-date."
+    if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
+        echo "No updates available; ${CHECK_WARNINGS} source warning(s) reported."
+    else
+        echo "No upstream version updates available. All tracked packages are up-to-date."
+    fi
     exit 0
 elif [[ ${CHECK_EXIT_CODE} -eq 2 ]]; then
     echo "Warning: check_upstream_versions.py reported errors (exit code 2)"
@@ -390,7 +430,7 @@ fi
 # ── Workqueue path: submission already happened in Python ───────────
 
 if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
-    echo "Workqueue: ${UPDATES_APPLIED} submitted, ${CHECK_FAILURES} failure(s)"
+    echo "Workqueue: ${UPDATES_APPLIED} submitted, ${CHECK_FAILURES} failure(s), ${CHECK_WARNINGS} warning(s)"
     if [[ ${CHECK_FAILURES} -gt 0 ]]; then
         exit 1
     fi
@@ -530,6 +570,7 @@ echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
 echo "  Update/check failures:   ${CHECK_FAILURES}"
+echo "  Source warnings:         ${CHECK_WARNINGS}"
 echo "  Draft failure MRs:       ${#DRAFT_FAILURE_MR_URLS[@]}"
 echo "  MR failures:             ${MR_FAILURES}"
 

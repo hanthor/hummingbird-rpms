@@ -70,8 +70,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from string import Template
 from typing import Callable, Optional
 
 import requests
@@ -179,6 +180,7 @@ class VersionCheckResult:
     update_error: Optional[str] = None
     downloaded_sources: Optional[list[str]] = None
     version_source: Optional[str] = None
+    warnings: list[str] = field(default_factory=list)
 
 
 def compare_versions(current: str, upstream: str) -> int:
@@ -1566,12 +1568,59 @@ SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]
 }
 
 
-def check_source_available(version: str, checker_name: str, metadata: dict[str, object]) -> bool:
-    """Check if a source tarball is available using a named checker."""
-    fn = SOURCE_AVAILABILITY_CHECKERS.get(checker_name)
-    if fn is None:
-        raise ValueError(f"unknown source_availability_check {checker_name!r}")
-    return fn(version, metadata)
+def _http_source_check(
+    version: str,
+    config: dict[str, object],
+    metadata: dict[str, object],
+) -> bool:
+    """HEAD-probe every configured, version-templated source URL."""
+    urls = config.get("urls")
+    if not isinstance(urls, list) or not urls:
+        raise ValueError("http source_availability_check requires a non-empty urls list")
+    if not all(isinstance(url, str) and url for url in urls):
+        raise ValueError("http source_availability_check urls must be non-empty strings")
+
+    substitutions = {
+        "VERSION": version,
+        "UPSTREAM_REPO": str(metadata.get("upstream_repo") or "").rstrip("/"),
+        "TRACK_UPSTREAM": str(metadata.get("track_upstream") or ""),
+    }
+    for url_template in urls:
+        try:
+            url = Template(url_template).substitute(substitutions)
+        except KeyError as e:
+            raise ValueError(
+                f"unknown source_availability_check variable {e.args[0]!r}"
+            ) from e
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise ValueError(
+                "source_availability_check url expanded to a non-HTTP URL: "
+                f"{url!r}"
+            )
+        if not _check_source_exists(url):
+            return False
+    return True
+
+
+def check_source_available(
+    version: str,
+    checker: object,
+    metadata: dict[str, object],
+) -> bool:
+    """Check source availability using a legacy named checker or probe config."""
+    if isinstance(checker, str):
+        fn = SOURCE_AVAILABILITY_CHECKERS.get(checker)
+        if fn is None:
+            raise ValueError(f"unknown source_availability_check {checker!r}")
+        return fn(version, metadata)
+
+    if not isinstance(checker, dict):
+        raise ValueError("source_availability_check must be a name or probe object")
+    probe_type = checker.get("type")
+    if probe_type == "http":
+        return _http_source_check(version, checker, metadata)
+    raise ValueError(f"unknown source_availability_check type {probe_type!r}")
 
 
 def check_package_version(
@@ -1683,19 +1732,23 @@ def check_package_version(
         if tracked_candidates:
             source_candidates = tracked_candidates
 
+    source_warnings: list[str] = []
+
     # Filter out leading versions whose source tarball is not yet published.
     # Probes only until a published version is found; older versions are
     # assumed available.
-    if source_checker and meta is not None:
+    if source_checker is not None and meta is not None:
         skip = 0
         for v in source_candidates:
             try:
                 if check_source_available(v, source_checker, meta):
                     break
-                logger.info(
-                    "%s: skipping %s (source not published)",
-                    package, v,
+                warning = (
+                    f"skipped upstream version {v}: required source artifact "
+                    "is not published"
                 )
+                source_warnings.append(warning)
+                logger.warning("%s: %s", package, warning)
                 skip += 1
             except urllib.error.URLError as e:
                 logger.warning(
@@ -1756,6 +1809,16 @@ def check_package_version(
                 upstream_version = None
 
     if not upstream_version:
+        if source_warnings:
+            return VersionCheckResult(
+                package=package,
+                current_version=current_version,
+                upstream_version=None,
+                has_update=False,
+                anitya_project_id=anitya_data.get("id"),
+                version_source=version_source,
+                warnings=source_warnings,
+            )
         return VersionCheckResult(
             package=package,
             current_version=current_version,
@@ -1780,6 +1843,7 @@ def check_package_version(
         has_update=has_update,
         anitya_project_id=anitya_data.get("id"),
         version_source=version_source,
+        warnings=source_warnings,
     )
 
 
@@ -1836,6 +1900,9 @@ def list_all(args: argparse.Namespace) -> None:
         elif result.has_update:
             status = "update available"
             upstream_display = result.upstream_version or "-"
+        elif result.warnings:
+            status = "; ".join(result.warnings)
+            upstream_display = "-"
         else:
             status = "up-to-date"
             upstream_display = result.upstream_version or "-"
@@ -1940,6 +2007,7 @@ def run_check(args: argparse.Namespace) -> None:
     results: list[VersionCheckResult] = []
     updates_found = 0
     errors_found = 0
+    warnings_found = 0
 
     for i, package in enumerate(packages):
         if not args.quiet and not args.json:
@@ -1955,10 +2023,17 @@ def run_check(args: argparse.Namespace) -> None:
             updates_found += 1
         if result.error:
             errors_found += 1
+        warnings_found += len(result.warnings)
 
         # Rate limiting
         if i < len(packages) - 1:
             time.sleep(args.delay)
+
+    skipped_found = sum(
+        1 for result in results
+        if result.warnings and not result.has_update and not result.error
+    )
+    up_to_date_found = len(results) - updates_found - errors_found - skipped_found
 
     # Clear progress line
     if not args.quiet and not args.json:
@@ -2061,6 +2136,7 @@ def run_check(args: argparse.Namespace) -> None:
             "updates_available": updates_found,
             "updates_applied": updates_applied,
             "errors": errors_found,
+            "warnings": warnings_found,
             "results": [
                 {
                     "package": r.package,
@@ -2072,9 +2148,10 @@ def run_check(args: argparse.Namespace) -> None:
                     "error": r.error,
                     "update_error": r.update_error,
                     "anitya_project_id": r.anitya_project_id,
+                    "warnings": r.warnings,
                 }
                 for r in results
-                if args.all or r.has_update or r.error
+                if args.all or r.has_update or r.error or r.warnings
             ],
         }
         print(json.dumps(output, indent=2))
@@ -2113,7 +2190,10 @@ def run_check(args: argparse.Namespace) -> None:
 
         if args.all:
             # Show up-to-date packages
-            up_to_date = [r for r in results if not r.has_update and not r.error]
+            up_to_date = [
+                r for r in results
+                if not r.has_update and not r.error and not r.warnings
+            ]
             if up_to_date:
                 print("\nUp-to-date packages:")
                 print("-" * 70)
@@ -2127,6 +2207,13 @@ def run_check(args: argparse.Namespace) -> None:
                 if r.error:
                     print(f"{r.package:<30} {r.error}")
 
+        if warnings_found > 0:
+            print("\nSource availability warnings:")
+            print("-" * 70)
+            for r in results:
+                for warning in r.warnings:
+                    print(f"{r.package:<30} {warning}")
+
         # Summary
         print()
         if args.update:
@@ -2134,14 +2221,18 @@ def run_check(args: argparse.Namespace) -> None:
             print(
                 f"Summary: {updates_applied} specs updated, "
                 f"{update_failures} update failures, "
-                f"{len(results) - updates_found - errors_found} up-to-date, "
-                f"{errors_found} errors"
+                f"{up_to_date_found} up-to-date, "
+                f"{skipped_found} skipped (source unavailable), "
+                f"{errors_found} errors, "
+                f"{warnings_found} source version warnings"
             )
         else:
             print(
                 f"Summary: {updates_found} updates available, "
-                f"{len(results) - updates_found - errors_found} up-to-date, "
-                f"{errors_found} errors"
+                f"{up_to_date_found} up-to-date, "
+                f"{skipped_found} skipped (source unavailable), "
+                f"{errors_found} errors, "
+                f"{warnings_found} source version warnings"
             )
 
     # Exit code: 0 if no updates, 1 if updates found, 2 if errors

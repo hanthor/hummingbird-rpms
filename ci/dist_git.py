@@ -84,6 +84,12 @@ GIT_NETWORK_MAX_ATTEMPTS = 3
 GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS = 2
 
 
+class SourceAvailabilityProbe(TypedDict):
+    """Data-driven probe for confirming that upstream sources are published."""
+    type: Literal["http"]
+    urls: list[str]
+
+
 class PackageMetadata(TypedDict):
     """Metadata stored in metadata/<package>.json for each package."""
     source: NotRequired[str]  # Not present for independent packages
@@ -100,7 +106,7 @@ class PackageMetadata(TypedDict):
     cve_product: NotRequired[str | list[str]]  # CVE vendor/product override; list for multi-product
     version_transform: NotRequired[str]  # Version transform rule (e.g., "dotnet_sdk_to_runtime")
     upstream_version_transform: NotRequired[str]  # Named Anitya-to-RPM version transform (e.g., "openjdk_to_rpm")
-    source_availability_check: NotRequired[str]  # Named source checker (e.g., "openjdk_osci")
+    source_availability_check: NotRequired[str | SourceAvailabilityProbe]
     version_from_ref: NotRequired[dict[str, str]]  # How to derive a fixed-ref pipeline's gorget --version (e.g. gcc)
 
 
