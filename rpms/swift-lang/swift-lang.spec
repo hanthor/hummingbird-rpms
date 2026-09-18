@@ -260,7 +260,6 @@ Patch4:         cmark.patch
 Patch8:         llbuild.patch
 Patch51:        swiftpm.patch
 Patch31:        swift-foundation.patch
-Patch21:        swift-corelibs-foundation.patch
 Patch22:        swift-corelibs-libdispatch.patch
 Patch24:        swift-crypto-CVE-2026-43823.patch
 Patch3:         cmake.patch
@@ -280,6 +279,9 @@ BuildRequires:  perl-podlators
 BuildRequires:  lld
 BuildRequires:  kernel-headers
 BuildRequires:  kernel-cross-headers
+# Swift 6.4 no longer supports the C++-only bootstrap compiler.  Use the
+# previous Swift toolchain as the host compiler for the build.
+BuildRequires:  swift-lang
 
 Requires:       glibc-devel
 Requires:       lld
@@ -353,7 +355,6 @@ end
 %patch 8
 %patch 51
 %patch 31
-%patch 21
 %patch 22
 %patch 24
 %patch 3
@@ -373,48 +374,18 @@ export VERBOSE=1
 export CFLAGS="-O2 -g -fno-builtin-logf"
 export CXXFLAGS="-O2 -g -fno-builtin-logf"
 
-# Four-stage bootstrap to build Swift from scratch without external Swift compiler
-# Stage 0: Build minimal Swift toolchain from C++ using gold linker
-#          Produces: Swift compiler with C++ legacy driver (no SwiftPM, no swift-driver)
-#          Stage 0 clang defaults to gold
-# Stage 1: Rebuild Swift compiler using Stage 0 with gold linker
-#          Produces: Swift compiler with macros support + Foundation + Dispatch
-#          Stage 1 clang is compiled with lld as its default linker
-# Stage 2: Build Swift compiler using Stage 1 with lld linker
-#          Produces: Swift compiler + SwiftPM + basic tools (still no swift-driver)
-#          Stage 2 clang defaults to lld
-# Stage 3: Build final production toolchain using Stage 2
-#          Produces: Complete toolchain with swift-driver, sourcekit-lsp, swift-format, etc.
-#          This matches upstream first-party distributions
+# Swift 6.4 requires Swift-in-Swift sources when building the compiler.  The
+# upstream-supported path is hosttools, using the previous Swift release as
+# the host compiler.
+for swift_host_bin in %{_libexecdir}/swift/*/bin; do
+    if [ -x "$swift_host_bin/swiftc" ]; then
+        export PATH="$swift_host_bin:$PATH"
+        break
+    fi
+done
+command -v swiftc
 
-echo "=== Bootstrap Stage 0: Building minimal Swift from C++ ==="
-%{builddir}/swift/utils/build-script --preset=bootstrap_stage0 \
-    build_subdir=bootstrap_stage0 \
-    install_destdir=%{_builddir}/stage0 \
-    installable_package=%{_builddir}/swift-%{version}-stage0.tar.gz \
-    extra-cmake-options="-DLLVM_USE_LINKER=lld -DCLANG_DEFAULT_LINKER=ld.lld" \
-    swift-cmake-options="-DSWIFT_USE_LINKER=lld"
-
-echo "=== Bootstrap Stage 1: Rebuilding Swift with Stage 0 ==="
-export PATH=%{_builddir}/stage0/usr/bin:$PATH
-%{builddir}/swift/utils/build-script --preset=bootstrap_stage1 \
-    build_subdir=bootstrap_stage1 \
-    install_destdir=%{_builddir}/stage1 \
-    installable_package=%{_builddir}/swift-%{version}-stage1.tar.gz \
-    extra-cmake-options="-DLLVM_USE_LINKER=lld -DCLANG_DEFAULT_LINKER=ld.lld" \
-    swift-cmake-options="-DSWIFT_USE_LINKER=lld"
-
-echo "=== Bootstrap Stage 2: Building toolchain with SwiftPM ==="
-export PATH=%{_builddir}/stage1/usr/bin:%{_builddir}/stage0/usr/bin:$PATH
-%{builddir}/swift/utils/build-script --preset=bootstrap_stage2 \
-    build_subdir=bootstrap_stage2 \
-    install_destdir=%{_builddir}/stage2 \
-    installable_package=%{_builddir}/swift-%{version}-stage2.tar.gz \
-    extra-cmake-options="-DLLVM_USE_LINKER=lld -DCLANG_DEFAULT_LINKER=ld.lld" \
-    swift-cmake-options="-DSWIFT_USE_LINKER=lld"
-
-echo "=== Stage 3: Building final production toolchain with swift-driver ==="
-export PATH=%{_builddir}/stage2/usr/bin:%{_builddir}/stage1/usr/bin:%{_builddir}/stage0/usr/bin:$PATH
+echo "=== Building final production toolchain with host Swift compiler ==="
 %{builddir}/swift/utils/build-script --preset=fedora_final \
     --preset-file=%{builddir}/swift/utils/fedora-presets.ini \
     build_subdir=fedora_final \
