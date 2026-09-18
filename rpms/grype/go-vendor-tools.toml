@@ -28,6 +28,11 @@ sha256sum = "8438c9c89b849131ead81d5435cb97fcf052df5b0b286dda8a2d4c29e6cb3fd0"
 expression = "LicenseRef-Fedora-Public-Domain"
 
 [[licensing.licenses]]
+path = "vendor/modernc.org/sqlite/LICENSE-SQLITE"
+sha256sum = "8438c9c89b849131ead81d5435cb97fcf052df5b0b286dda8a2d4c29e6cb3fd0"
+expression = "LicenseRef-Fedora-Public-Domain"
+
+[[licensing.licenses]]
 path = "vendor/github.com/kevinburke/ssh_config/LICENSE"
 sha256sum = "a15a6f732df3a033a71853ce1d255bd671f00fbc537fa629b78d71baecda0ace"
 expression = "MIT"
