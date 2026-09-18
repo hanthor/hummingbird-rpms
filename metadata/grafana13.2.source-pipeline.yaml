@@ -29,6 +29,9 @@ transform:
         # CVE-2026-84394, CVE-2026-84292: bump vendored fast-uri to 3.1.7.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7.patch"
+        # Generated against the post-Patch7 lockfile; include the Joi bump
+        # before cache generation so the offline cache contains both versions.
+        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -50,6 +53,12 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-13.2.2-vendor.tar.bz2"
+    checksum: "45e7fae181e5335271bc00289012f22c5b1f69ae18d21f368ba7718754da6da0fa64c1ac5b82fa7dabbc6b60b69eb70c06962e93ff1a4d5f077ad724f33ca0d1"
+    reason: "Regenerated with gorget 0.1.24 for the 13.2.2 source update"
+  - file: "grafana-yarn-cache-13.2.2.tar.bz2"
+    checksum: "7c44c3a6a52d76604ae9472e695598f4b9245d407ebc6f797a4e0502067934461110e753392938d1d4dde69eb3e2c787ce8c5314df8e9e8e3d064d59f552fce7"
+    reason: "Regenerated after applying grafana-joi-cve.patch so the offline cache contains both patched Joi versions"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "aa24fdd6fc2453acc3a42466f33e0f86639c816fd4a04858405e02c8ef629f94767ffd7fc937bae30c9f478d9f05d2809c3f89a21a3c9c460ce03ddb14958987"
     reason: "grafana-fast-uri-3.1.7.patch bumps fast-uri 3.1.6->3.1.7 for CVE-2026-84394/CVE-2026-84292; yarn-cache regenerated without stale fast-uri-3.1.6 zip"
