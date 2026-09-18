@@ -3,13 +3,6 @@
 set -e
 
 SWIFT_VERSION="${1:-}"
-# Patch releases use the major.minor release branch (for example, 6.3.2
-# is described by the release/6.3 branch scheme).
-if [[ "${SWIFT_VERSION}" =~ ^[^.]+\.[^.]+\. ]]; then
-    SHORT_SWIFT_VERSION="${SWIFT_VERSION%.*}"
-else
-    SHORT_SWIFT_VERSION="${SWIFT_VERSION}"
-fi
 
 if [[ -z "$SWIFT_VERSION" ]]; then
     echo "Usage: $0 <swift-version>"
@@ -36,10 +29,18 @@ if ! jq . "$TEMP_CONFIG" >/dev/null 2>&1; then
     exit 1
 fi
 
+# Most patch releases use the major.minor release branch (for example,
+# 6.3.2 is described by the release/6.3 branch scheme). Some releases have
+# an exact scheme instead, so prefer it when the configuration provides one.
+RELEASE_SCHEME="release/${SWIFT_VERSION}"
+if ! jq -e --arg scheme "$RELEASE_SCHEME" '."branch-schemes"[$scheme]' "$TEMP_CONFIG" >/dev/null; then
+    RELEASE_SCHEME="release/${SWIFT_VERSION%.*}"
+fi
+
 echo "Parsing repository versions..."
 
 # Collect all the projects included in the desired branch scheme
-PROJECTS=$(jq -r --arg scheme "release/${SHORT_SWIFT_VERSION}" '.["branch-schemes"][$scheme]["repos"]|keys[]' "${TEMP_CONFIG}")
+PROJECTS=$(jq -r --arg scheme "$RELEASE_SCHEME" '.["branch-schemes"][$scheme]["repos"]|keys[]' "${TEMP_CONFIG}")
 
 # Remove all existing sources between the lines "Begin forge sources" and "End forge sources"
 sed -i "/Begin forge sources/,/End forge sources/{//!d;}" "${SPEC_FILE}"
@@ -51,7 +52,7 @@ for PROJECT in ${PROJECTS}; do
         continue
     fi
 
-    PROJECT_REF=$(jq -r --arg scheme "release/${SHORT_SWIFT_VERSION}" --arg project "$PROJECT" '.["branch-schemes"][$scheme]["repos"][$project]' "${TEMP_CONFIG}")
+    PROJECT_REF=$(jq -r --arg scheme "$RELEASE_SCHEME" --arg project "$PROJECT" '.["branch-schemes"][$scheme]["repos"][$project]' "${TEMP_CONFIG}")
     PROJECT_ID=$(jq -r --arg project "${PROJECT}" '.["repos"][$project].remote.id' "${TEMP_CONFIG}")
     FORGEURL="https://github.com/${PROJECT_ID}"
 
