@@ -234,7 +234,7 @@ Version: 6.4.0
 # End forge sources
 
 Name:           swift-lang
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
