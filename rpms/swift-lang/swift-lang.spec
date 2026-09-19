@@ -234,7 +234,7 @@ Version: 6.4.0
 # End forge sources
 
 Name:           swift-lang
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
@@ -496,8 +496,9 @@ fi
 if [ -d %{_builddir}/usr/share/swift ]; then
     cp -a %{_builddir}/usr/share/swift/* %{buildroot}%{_datadir}/swift/
 fi
-mkdir -p %{buildroot}%{_datadir}/pm
-cp -a %{_builddir}/usr/share/pm/. %{buildroot}%{_datadir}/pm/
+# Keep SwiftPM resources beside the relocated Swift toolchain.
+mkdir -p %{buildroot}%{_libexecdir}/swift/%{version}/share/pm
+cp -a %{_builddir}/usr/share/pm/. %{buildroot}%{_libexecdir}/swift/%{version}/share/pm/
 
 # Install man pages
 if [ -f %{_builddir}/usr/share/man/man1/swift.1 ]; then
@@ -549,7 +550,6 @@ export QA_SKIP_RPATHS=1
 
 # Data files (diagnostics, features.json, etc.)
 %{_datadir}/swift/
-%{_datadir}/pm/
 
 %files runtime
 %license swift/LICENSE.txt
