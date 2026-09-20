@@ -1,0 +1,251 @@
+From 4b78688df552bdc12df9abda0a34bef80a1bc119 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Sun, 20 Sep 2026 14:34:25 +0100
+Subject: [PATCH] [SwiftPM] Resolve tools relative to the selected compiler
+
+Linux distributions may expose swift and swiftc through symlinks while
+keeping the complete toolchain under a private, versioned prefix.
+SwiftPM currently searches for adjacent LLVM tools and resources using
+the unresolved public compiler path. This can select unrelated system
+tools or fail to find files installed with the selected toolchain.
+
+Resolve the compiler symlink and use its bin directory for tool and
+resource lookup. When a toolset root names the public compiler
+directory, replace it with the resolved directory so its precedence
+remains unchanged. Continue to accept /usr and /usr/local layouts, and
+also accept a conventional flat prefix.
+---
+ Sources/CoreCommands/SwiftCommandState.swift | 16 ++++--
+ Sources/PackageModel/Toolchain.swift         | 60 ++++++++++++++------
+ Sources/PackageModel/UserToolchain.swift     | 29 ++++++----
+ 3 files changed, 73 insertions(+), 32 deletions(-)
+
+diff --git swiftpm.orig/Sources/CoreCommands/SwiftCommandState.swift swiftpm/Sources/CoreCommands/SwiftCommandState.swift
+index 453d084..5ca1b88 100644
+--- swiftpm.orig/Sources/CoreCommands/SwiftCommandState.swift
++++ swiftpm/Sources/CoreCommands/SwiftCommandState.swift
+@@ -481,11 +481,17 @@ public final class SwiftCommandState {
+         if let packageManagerResourcesDirectory = options.locations.packageManagerResourcesDirectory {
+             self.packageManagerResourcesDirectory = packageManagerResourcesDirectory
+         } else if let cwd = localFileSystem.currentWorkingDirectory {
+-            self.packageManagerResourcesDirectory = try? AbsolutePath(validating: CommandLine.arguments[0], relativeTo: cwd)
+-                .parentDirectory.parentDirectory.appending(components: ["share", "pm"])
++            let executablePath = try? AbsolutePath(validating: CommandLine.arguments[0], relativeTo: cwd)
++            self.packageManagerResourcesDirectory = executablePath.map {
++                ((try? resolveSymlinks($0)) ?? $0)
++                    .parentDirectory.parentDirectory.appending(components: ["share", "pm"])
++            }
+         } else {
+-            self.packageManagerResourcesDirectory = try? AbsolutePath(validating: CommandLine.arguments[0])
+-                .parentDirectory.parentDirectory.appending(components: ["share", "pm"])
++            let executablePath = try? AbsolutePath(validating: CommandLine.arguments[0])
++            self.packageManagerResourcesDirectory = executablePath.map {
++                ((try? resolveSymlinks($0)) ?? $0)
++                    .parentDirectory.parentDirectory.appending(components: ["share", "pm"])
++            }
+         }
+ 
+         self.sharedSwiftSDKsDirectory = try fileSystem.getSharedSwiftSDKsDirectory(
+@@ -1139,7 +1145,7 @@ public final class SwiftCommandState {
+ 
+             let store = SwiftSDKBundleStore(
+                 swiftSDKsDirectory: self.sharedSwiftSDKsDirectory,
+-                hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++                hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+                 fileSystem: self.fileSystem,
+                 observabilityScope: self.observabilityScope,
+                 outputHandler: { print($0.description) }
+diff --git swiftpm.orig/Sources/PackageModel/Toolchain.swift swiftpm/Sources/PackageModel/Toolchain.swift
+index 93d19bf..b4ad409 100644
+--- swiftpm.orig/Sources/PackageModel/Toolchain.swift
++++ swiftpm/Sources/PackageModel/Toolchain.swift
+@@ -88,6 +88,33 @@ public protocol Toolchain {
+ }
+ 
+ extension Toolchain {
++    package var resolvedSwiftCompilerBinDir: AbsolutePath {
++        Self.resolvedSwiftCompilerBinDir(swiftCompilerPath)
++    }
++
++    package static func resolvedSwiftCompilerBinDir(_ swiftCompilerPath: AbsolutePath) -> AbsolutePath {
++        ((try? resolveSymlinks(swiftCompilerPath)) ?? swiftCompilerPath).parentDirectory
++    }
++
++    package var toolchainBinDirectories: [AbsolutePath] {
++        Self.toolchainBinDirectories(swiftCompilerPath: swiftCompilerPath, swiftSDK: swiftSDK)
++    }
++
++    package static func toolchainBinDirectories(
++        swiftCompilerPath: AbsolutePath,
++        swiftSDK: SwiftSDK
++    ) -> [AbsolutePath] {
++        let compilerBinDir = swiftCompilerPath.parentDirectory
++        let resolvedCompilerBinDir = resolvedSwiftCompilerBinDir(swiftCompilerPath)
++        var binDirectories = swiftSDK.toolset.rootPaths.map {
++            $0 == compilerBinDir ? resolvedCompilerBinDir : $0
++        }
++        if !binDirectories.contains(resolvedCompilerBinDir) {
++            binDirectories.append(resolvedCompilerBinDir)
++        }
++        return binDirectories
++    }
++
+     public func _isClangCompilerVendorApple() throws -> Bool? {
+         return nil
+     }
+@@ -112,22 +139,21 @@ extension Toolchain {
+     public var toolchainDir: AbsolutePath {
+         get throws {
+             let compilerPath = try resolveSymlinks(swiftCompilerPath)
+-            let os = ProcessInfo.hostOperatingSystem
+-            switch os {
+-            case .windows, .macOS, .linux, .android:
+-                return compilerPath
+-                    .parentDirectory // bin
+-                    .parentDirectory // usr
+-                    .parentDirectory // <toolchain>
+-            case .freebsd, .openbsd:
+-                return compilerPath
+-                    .parentDirectory // bin
+-                    .parentDirectory // local
+-                    .parentDirectory // usr
+-                    .parentDirectory // <toolchain>
+-            case .unknown:
+-                throw UnknownToolchainLayout(os: os)
++            let binDir = compilerPath.parentDirectory
++            guard binDir.basename == "bin" else {
++                throw UnknownToolchainLayout(path: binDir)
++            }
++
++            let installationPrefix = binDir.parentDirectory
++            if installationPrefix.basename == "usr" {
++                return installationPrefix.parentDirectory
++            }
++            if installationPrefix.basename == "local",
++                installationPrefix.parentDirectory.basename == "usr"
++            {
++                return installationPrefix.parentDirectory.parentDirectory
+             }
++            return installationPrefix
+         }
+     }
+ 
+@@ -164,8 +190,8 @@ extension Toolchain {
+ }
+ 
+ struct UnknownToolchainLayout: Error, CustomStringConvertible {
+-    let os: OperatingSystem
++    let path: AbsolutePath
+     var description: String {
+-        "Unknown toolchain layout for host operating system: \(os)"
++        "Unexpected toolchain layout for Swift installation path: \(path)"
+     }
+ }
+diff --git swiftpm.orig/Sources/PackageModel/UserToolchain.swift swiftpm/Sources/PackageModel/UserToolchain.swift
+index 0bf36ad..15bca1b 100644
+--- swiftpm.orig/Sources/PackageModel/UserToolchain.swift
++++ swiftpm/Sources/PackageModel/UserToolchain.swift
+@@ -461,7 +461,7 @@ public final class UserToolchain: Toolchain {
+         // Then, check the toolchain.
+         if let toolPath = try? UserToolchain.getTool(
+             "clang",
+-            binDirectories: self.swiftSDK.toolset.rootPaths,
++            binDirectories: self.toolchainBinDirectories,
+             fileSystem: self.fileSystem
+         ) {
+             self._clangCompiler = toolPath
+@@ -494,7 +494,7 @@ public final class UserToolchain: Toolchain {
+         // Look for LLDB next to the compiler first.
+         if let lldbPath = try? UserToolchain.getTool(
+             "lldb",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+         ) {
+             return lldbPath
+@@ -512,7 +512,7 @@ public final class UserToolchain: Toolchain {
+     public func getLLVMCov() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-cov",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -521,7 +521,7 @@ public final class UserToolchain: Toolchain {
+     public func getLLVMProf() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-profdata",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -530,7 +530,7 @@ public final class UserToolchain: Toolchain {
+     package func getLLVMObjdump() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-objdump",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -545,7 +545,7 @@ public final class UserToolchain: Toolchain {
+         }
+         return try UserToolchain.getTool(
+             "swift-api-digester",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+ 
+         )
+@@ -561,7 +561,7 @@ public final class UserToolchain: Toolchain {
+         }
+         return try UserToolchain.getTool(
+             "swift-symbolgraph-extract",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: [self.resolvedSwiftCompilerBinDir],
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -794,10 +794,12 @@ public final class UserToolchain: Toolchain {
+         self.swiftCompilerPath = swiftCompilers.compile
+         self.architectures = swiftSDK.architectures
+ 
++        let swiftCompilerBinDir = Self.resolvedSwiftCompilerBinDir(swiftCompilerPath)
++
+         if let customInstalledSwiftPMConfiguration {
+             self.installedSwiftPMConfiguration = customInstalledSwiftPMConfiguration
+         } else {
+-            let path = swiftCompilerPath.parentDirectory.parentDirectory.appending(components: [
++            let path = swiftCompilerBinDir.parentDirectory.appending(components: [
+                 "share", "pm", "config.json",
+             ])
+             self.installedSwiftPMConfiguration = try Self.loadJSONResource(
+@@ -889,7 +891,10 @@ public final class UserToolchain: Toolchain {
+ 
+         self.librarianPath = try swiftSDK.toolset.knownTools[.librarian]?.path ?? UserToolchain.determineLibrarian(
+             triple: triple,
+-            binDirectories: swiftSDK.toolset.rootPaths,
++            binDirectories: Self.toolchainBinDirectories(
++                swiftCompilerPath: swiftCompilers.compile,
++                swiftSDK: swiftSDK
++            ),
+             useXcrun: useXcrun,
+             environment: environment,
+             searchPaths: envSearchPaths,
+@@ -1022,7 +1027,11 @@ public final class UserToolchain: Toolchain {
+         // an alternative cloud be to force explicit locations to always be set explicitly when running in Xcode/SwiftPM
+         // debug and assert if not set but we detect that we are in this mode
+ 
+-        for applicationPath in swiftSDK.toolset.rootPaths {
++        let binDirectories = Self.toolchainBinDirectories(
++            swiftCompilerPath: swiftCompilerPath,
++            swiftSDK: swiftSDK
++        )
++        for applicationPath in binDirectories {
+             // this is the normal case when using the toolchain
+             let librariesPath = applicationPath.parentDirectory.appending(components: "lib", "swift", "pm")
+             if fileSystem.exists(librariesPath) {
+-- 
+2.55.0
