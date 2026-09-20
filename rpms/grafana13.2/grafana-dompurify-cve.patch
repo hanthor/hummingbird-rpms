@@ -26,7 +26,7 @@ diff --git a/package.json b/package.json
 diff --git a/yarn.lock b/yarn.lock
 --- a/yarn.lock
 +++ b/yarn.lock
-@@ -16613,22 +16613,13 @@ __metadata:
+@@ -16613,19 +16613,7 @@
    languageName: node
    linkType: hard
  
@@ -47,17 +47,7 @@ diff --git a/yarn.lock b/yarn.lock
    version: 3.4.13
    resolution: "dompurify@npm:3.4.13"
    dependencies:
-     "@types/trusted-types": "npm:^2.0.7"
-   dependenciesMeta:
-     "@types/trusted-types":
-       optional: true
-   checksum: 10c0/9c2a1a71e1a1d8b77953db7a39ffc935ef4ed4f10fe40770232128c2cbfd4c3dc677d3d7bae51eb24cc52d9ff3548612dc540ecb4343e89b26e809d2be2e0cfe
-   languageName: node
-   linkType: hard
- 
-@@ -19700,7 +19691,7 @@ __metadata:
-     d3-scale: "npm:^4.0.2"
-     d3-scale-chromatic: "npm:3.1.0"
+@@ -19700,7 +19688,7 @@
      dangerously-set-html-content: "npm:1.1.1"
      date-fns: "npm:4.1.0"
      debounce-promise: "npm:3.1.2"
