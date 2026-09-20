@@ -234,7 +234,7 @@ Version: 6.4.0
 # End forge sources
 
 Name:           swift-lang
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
@@ -286,6 +286,7 @@ BuildRequires:  swift-lang
 Requires:       glibc-devel
 Requires:       lld
 Requires:       gcc
+Requires:       clang
 Requires:       %{name}-runtime = %{version}-%{release}
 
 Recommends:     libstdc++-devel
