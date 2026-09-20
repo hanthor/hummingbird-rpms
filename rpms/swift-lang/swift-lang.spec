@@ -417,7 +417,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
 cp -a %{_builddir}/usr/bin/* %{buildroot}%{_libexecdir}/swift/%{version}/bin/
 
 # Create symlinks in %{_bindir} for user-facing tools
-TOOLS="swift swiftc swift-build swift-run swift-package swift-test sourcekit-lsp swift-format swift-demangle"
+TOOLS="swift swiftc swift-build swift-run swift-package swift-test sourcekit-lsp swift-format swift-demangle swift-autolink-extract"
 for tool in ${TOOLS}; do
     if [ -f %{buildroot}%{_libexecdir}/swift/%{version}/bin/$tool ]; then
         ln -sf %{_libexecdir}/swift/%{version}/bin/$tool %{buildroot}%{_bindir}/$tool
@@ -536,6 +536,7 @@ export QA_SKIP_RPATHS=1
 %{_bindir}/sourcekit-lsp
 %{_bindir}/swift-format
 %{_bindir}/swift-demangle
+%{_bindir}/swift-autolink-extract
 
 # Man pages
 %{_mandir}/man1/swift.1.gz
