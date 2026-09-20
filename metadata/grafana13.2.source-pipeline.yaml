@@ -29,6 +29,9 @@ transform:
         # CVE-2026-84394, CVE-2026-84292: bump vendored fast-uri to 3.1.7.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7.patch"
+        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -50,6 +53,9 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.2.1.tar.bz2"
+    checksum: "43fa274487225454b99922a87ca9138610e352dff6e7d742afd76166f862517109754cc98d8579c4ad1a6fa15499360d087f21a739d565c64593a82883619121"
+    reason: "grafana-dompurify-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; yarn cache regenerated to replace dompurify 3.4.12 zip with 3.4.13"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "aa24fdd6fc2453acc3a42466f33e0f86639c816fd4a04858405e02c8ef629f94767ffd7fc937bae30c9f478d9f05d2809c3f89a21a3c9c460ce03ddb14958987"
     reason: "grafana-fast-uri-3.1.7.patch bumps fast-uri 3.1.6->3.1.7 for CVE-2026-84394/CVE-2026-84292; yarn-cache regenerated without stale fast-uri-3.1.6 zip"

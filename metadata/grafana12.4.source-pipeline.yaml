@@ -53,6 +53,9 @@ transform:
         # Bumps the same fast-uri dependency again (3.1.7 -> 3.1.8) for
         # CVE-2026-86472.
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
+        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-3.4.13-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
@@ -77,6 +80,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "17d5bad95042cfa2e5f4e66e8f557bc11468809394954a1b694f5dde7a5cf0f9f41672bd71f3377710f3dcc728e050e3e87032008fb571dd4d19cd80f0f3fba4"
+    reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; yarn cache regenerated to replace dompurify 3.4.12 zip with 3.4.13"
   - file: "grafana-yarn-cache-12.4.10.tar.bz2"
     checksum: "8562304852db8d60a12d577c9629226375802a73aa36bce5a9f217e47be1a4a5f38867667802f15e1f1ab824186389c2568af04e8832940ee492d87f48eb0039"
     reason: "grafana-fast-uri-3.1.8-cve.patch bumps fast-uri 3.1.7->3.1.8 for CVE-2026-86472; yarn cache regenerated to include the patched dependency"
