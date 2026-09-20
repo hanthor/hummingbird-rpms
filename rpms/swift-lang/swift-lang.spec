@@ -234,7 +234,7 @@ Version: 6.4.0
 # End forge sources
 
 Name:           swift-lang
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
@@ -259,6 +259,9 @@ Patch9:         llvm-project.patch
 Patch4:         cmark.patch
 Patch8:         llbuild.patch
 Patch51:        swiftpm.patch
+Patch1701:      swift-build-toolchain-layout.patch
+Patch2801:      swift-driver-swiftscan-symlink.patch
+Patch5101:      swiftpm-toolchain-layout.patch
 Patch31:        swift-foundation.patch
 Patch22:        swift-corelibs-libdispatch.patch
 Patch24:        swift-crypto-CVE-2026-43823.patch
@@ -354,6 +357,9 @@ end
 %patch 4
 %patch 8
 %patch 51
+%patch 1701 -p1 -d swift-build
+%patch 2801 -p1 -d swift-driver
+%patch 5101 -p1 -d swiftpm
 %patch 31
 %patch 22
 %patch 24

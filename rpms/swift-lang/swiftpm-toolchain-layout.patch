@@ -1,0 +1,406 @@
+From 100066564a7f875d736563419f03916eeedcbccd Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Sun, 20 Sep 2026 22:25:31 +0100
+Subject: [PATCH] Resolve toolchain paths through compiler symlinks
+
+### Motivation
+
+SwiftPM assumes that sibling tools and resources are installed relative to the path used to invoke the Swift compiler. This breaks when a public compiler path, such as /usr/bin/swiftc, is a symlink into a complete toolchain under another prefix. Lookup can then miss the selected toolchain or use an unrelated system tool.
+
+### Modifications
+
+Resolve the selected compiler before deriving paths owned by its toolchain. Search the resolved compiler directory before the public directory while preserving configured toolset order and the public path as a fallback.
+
+Use these paths for adjacent tools, the Swift interpreter, plug-in tool searches, SwiftPM configuration and libraries, host SDK tools, index-store loading, and Linux compiler-owned resources. Derive the Swift Build toolchain path from a resolved <prefix>/bin layout while preserving the existing /usr and /usr/local behavior.
+
+### Result
+
+SwiftPM uses tools and resources from the installation that owns the selected compiler. Existing non-symlinked, /usr, and /usr/local layouts keep their current behavior.
+---
+ .../ClangModuleBuildDescription.swift         |  6 +-
+ Sources/Build/BuildPlan/BuildPlan.swift       |  2 +-
+ .../PackageCommands/PluginCommand.swift       |  4 +-
+ Sources/CoreCommands/SwiftCommandState.swift  |  2 +-
+ .../DriverSupport/DriverSupportUtils.swift    |  2 +-
+ Sources/PackageModel/Toolchain.swift          | 87 +++++++++++++++----
+ Sources/PackageModel/UserToolchain.swift      | 41 ++++++---
+ Sources/SwiftBuildSupport/PIFBuilder.swift    |  2 +-
+ .../SwiftSDKCommand/ConfigureSwiftSDK.swift   |  2 +-
+ Sources/SwiftSDKCommand/InstallSwiftSDK.swift |  2 +-
+ Sources/SwiftSDKCommand/ListSwiftSDKs.swift   |  2 +-
+ Sources/SwiftSDKCommand/RemoveSwiftSDK.swift  |  2 +-
+ 12 files changed, 108 insertions(+), 46 deletions(-)
+
+diff --git a/Sources/Build/BuildDescription/ClangModuleBuildDescription.swift b/Sources/Build/BuildDescription/ClangModuleBuildDescription.swift
+index ffe0bae92..445b99bc8 100644
+--- a/Sources/Build/BuildDescription/ClangModuleBuildDescription.swift
++++ b/Sources/Build/BuildDescription/ClangModuleBuildDescription.swift
+@@ -399,10 +399,8 @@ public final class ClangModuleBuildDescription {
+         // On Linux/Android swift-corelibs-foundation depends on dispatch library which is
+         // currently shipped with the Swift toolchain.
+         if (triple.isLinux() || triple.isAndroid()) && self.package.id == .plain("swift-corelibs-foundation") {
+-            let swiftCompilerPath = self.buildParameters.toolchain.swiftCompilerPath
+-            let toolchainResourcesPath = swiftCompilerPath.parentDirectory
+-                                                          .parentDirectory
+-                                                          .appending(components: ["lib", "swift"])
++            let toolchainResourcesPath = try self.buildParameters.toolchain.toolchainLibDir
++                .appending("swift")
+             args += ["-I", toolchainResourcesPath.pathString]
+         }
+ 
+diff --git a/Sources/Build/BuildPlan/BuildPlan.swift b/Sources/Build/BuildPlan/BuildPlan.swift
+index 1960c4ed3..dcd7528c4 100644
+--- a/Sources/Build/BuildPlan/BuildPlan.swift
++++ b/Sources/Build/BuildPlan/BuildPlan.swift
+@@ -829,7 +829,7 @@ extension BuildPlan {
+                 scriptRunner: configuration.scriptRunner,
+                 workingDirectory: package.path,
+                 outputDirectory: pluginOutputDir,
+-                toolSearchDirectories: [buildParameters.toolchain.swiftCompilerPath.parentDirectory],
++                toolSearchDirectories: buildParameters.toolchain.compilerBinDirectories,
+                 accessibleTools: accessibleTools,
+                 writableDirectories: writableDirectories,
+                 readOnlyDirectories: readOnlyDirectories,
+diff --git a/Sources/Commands/PackageCommands/PluginCommand.swift b/Sources/Commands/PackageCommands/PluginCommand.swift
+index 9d75f055f..3b625573b 100644
+--- a/Sources/Commands/PackageCommands/PluginCommand.swift
++++ b/Sources/Commands/PackageCommands/PluginCommand.swift
+@@ -326,8 +326,8 @@ struct PluginCommand: AsyncSwiftCommand {
+         let readOnlyDirectories = writableDirectories
+             .contains { package.path.isDescendantOfOrEqual(to: $0) } ? [] : [package.path]
+ 
+-        // Use the directory containing the compiler as an additional search directory, and add the $PATH.
+-        let toolSearchDirs = [try swiftCommandState.getTargetToolchain().swiftCompilerPath.parentDirectory]
++        // Use the toolchain bin directories as additional search directories, and add the $PATH.
++        let toolSearchDirs = try swiftCommandState.getTargetToolchain().compilerBinDirectories
+             + getEnvSearchPaths(pathString: Environment.current[.path], currentWorkingDirectory: .none)
+ 
+         var buildParameters = try swiftCommandState.toolsBuildParameters
+diff --git a/Sources/CoreCommands/SwiftCommandState.swift b/Sources/CoreCommands/SwiftCommandState.swift
+index 453d08464..30ec8c6f5 100644
+--- a/Sources/CoreCommands/SwiftCommandState.swift
++++ b/Sources/CoreCommands/SwiftCommandState.swift
+@@ -1139,7 +1139,7 @@ public final class SwiftCommandState {
+ 
+             let store = SwiftSDKBundleStore(
+                 swiftSDKsDirectory: self.sharedSwiftSDKsDirectory,
+-                hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++                hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+                 fileSystem: self.fileSystem,
+                 observabilityScope: self.observabilityScope,
+                 outputHandler: { print($0.description) }
+diff --git a/Sources/DriverSupport/DriverSupportUtils.swift b/Sources/DriverSupport/DriverSupportUtils.swift
+index 1f7ccfadd..8c06eebc3 100644
+--- a/Sources/DriverSupport/DriverSupportUtils.swift
++++ b/Sources/DriverSupport/DriverSupportUtils.swift
+@@ -44,7 +44,7 @@ public enum DriverSupport {
+                 args: ["swiftc"],
+                 executor: executor,
+                 compilerIntegratedTooling: false,
+-                compilerExecutableDir: TSCAbsolutePath(toolchain.swiftCompilerPath.parentDirectory)
++                compilerExecutableDir: TSCAbsolutePath(toolchain.resolvedSwiftCompilerBinDir)
+             )
+             let supportedFlagSet = Set(driver.supportedFrontendFlags.map { $0.trimmingCharacters(in: ["-"]) })
+             flagsMap.put([swiftcPathString + "-frontend": supportedFlagSet])
+diff --git a/Sources/PackageModel/Toolchain.swift b/Sources/PackageModel/Toolchain.swift
+index 93d19bf55..07081c768 100644
+--- a/Sources/PackageModel/Toolchain.swift
++++ b/Sources/PackageModel/Toolchain.swift
+@@ -88,6 +88,52 @@ public protocol Toolchain {
+ }
+ 
+ extension Toolchain {
++    package var resolvedSwiftCompilerBinDir: AbsolutePath {
++        Self.resolvedSwiftCompilerBinDir(swiftCompilerPath)
++    }
++
++    package static func resolvedSwiftCompilerBinDir(_ swiftCompilerPath: AbsolutePath) -> AbsolutePath {
++        ((try? resolveSymlinks(swiftCompilerPath)) ?? swiftCompilerPath).parentDirectory
++    }
++
++    package var compilerBinDirectories: [AbsolutePath] {
++        Self.compilerBinDirectories(swiftCompilerPath: swiftCompilerPath)
++    }
++
++    package static func compilerBinDirectories(swiftCompilerPath: AbsolutePath) -> [AbsolutePath] {
++        let compilerBinDir = swiftCompilerPath.parentDirectory
++        let resolvedCompilerBinDir = resolvedSwiftCompilerBinDir(swiftCompilerPath)
++        return resolvedCompilerBinDir == compilerBinDir
++            ? [compilerBinDir]
++            : [resolvedCompilerBinDir, compilerBinDir]
++    }
++
++    package var toolchainBinDirectories: [AbsolutePath] {
++        Self.toolchainBinDirectories(swiftCompilerPath: swiftCompilerPath, swiftSDK: swiftSDK)
++    }
++
++    package static func toolchainBinDirectories(
++        swiftCompilerPath: AbsolutePath,
++        swiftSDK: SwiftSDK
++    ) -> [AbsolutePath] {
++        let compilerBinDir = swiftCompilerPath.parentDirectory
++        var binDirectories: [AbsolutePath] = []
++        for rootPath in swiftSDK.toolset.rootPaths {
++            let candidates = rootPath == compilerBinDir
++                ? compilerBinDirectories(swiftCompilerPath: swiftCompilerPath)
++                : [rootPath]
++            for candidate in candidates where !binDirectories.contains(candidate) {
++                binDirectories.append(candidate)
++            }
++        }
++        for candidate in compilerBinDirectories(swiftCompilerPath: swiftCompilerPath)
++            where !binDirectories.contains(candidate)
++        {
++            binDirectories.append(candidate)
++        }
++        return binDirectories
++    }
++
+     public func _isClangCompilerVendorApple() throws -> Bool? {
+         return nil
+     }
+@@ -111,24 +157,27 @@ extension Toolchain {
+     /// Toolchain path that's given to Swift Build to determine whether the compiler needs to be overridden.
+     public var toolchainDir: AbsolutePath {
+         get throws {
+-            let compilerPath = try resolveSymlinks(swiftCompilerPath)
+-            let os = ProcessInfo.hostOperatingSystem
+-            switch os {
+-            case .windows, .macOS, .linux, .android:
+-                return compilerPath
+-                    .parentDirectory // bin
+-                    .parentDirectory // usr
+-                    .parentDirectory // <toolchain>
+-            case .freebsd, .openbsd:
+-                return compilerPath
+-                    .parentDirectory // bin
+-                    .parentDirectory // local
+-                    .parentDirectory // usr
+-                    .parentDirectory // <toolchain>
+-            case .unknown:
+-                throw UnknownToolchainLayout(os: os)
+-            }
++            try Self.toolchainDir(swiftCompilerPath: swiftCompilerPath)
++        }
++    }
++
++    package static func toolchainDir(swiftCompilerPath: AbsolutePath) throws -> AbsolutePath {
++        let compilerPath = try resolveSymlinks(swiftCompilerPath)
++        let binDir = compilerPath.parentDirectory
++        guard binDir.basename == "bin" else {
++            throw UnknownToolchainLayout(path: binDir)
++        }
++
++        let installationPrefix = binDir.parentDirectory
++        if installationPrefix.basename == "usr" {
++            return installationPrefix.parentDirectory
++        }
++        if installationPrefix.basename == "local",
++            installationPrefix.parentDirectory.basename == "usr"
++        {
++            return installationPrefix.parentDirectory.parentDirectory
+         }
++        return installationPrefix
+     }
+ 
+     public var toolchainLibDir: AbsolutePath {
+@@ -164,8 +213,8 @@ extension Toolchain {
+ }
+ 
+ struct UnknownToolchainLayout: Error, CustomStringConvertible {
+-    let os: OperatingSystem
++    let path: AbsolutePath
+     var description: String {
+-        "Unknown toolchain layout for host operating system: \(os)"
++        "Unexpected toolchain layout for Swift installation path: \(path)"
+     }
+ }
+diff --git a/Sources/PackageModel/UserToolchain.swift b/Sources/PackageModel/UserToolchain.swift
+index 0bf36ad50..0c3e5f18d 100644
+--- a/Sources/PackageModel/UserToolchain.swift
++++ b/Sources/PackageModel/UserToolchain.swift
+@@ -70,7 +70,11 @@ public final class UserToolchain: Toolchain {
+ 
+     /// Path of the `swift` interpreter.
+     public var swiftInterpreterPath: AbsolutePath {
+-        self.swiftCompilerPath.parentDirectory.appending("swift" + hostExecutableSuffix)
++        let interpreterName = "swift" + hostExecutableSuffix
++        let resolvedPath = self.resolvedSwiftCompilerBinDir.appending(interpreterName)
++        return self.fileSystem.exists(resolvedPath)
++            ? resolvedPath
++            : self.swiftCompilerPath.parentDirectory.appending(interpreterName)
+     }
+ 
+     private let fileSystem: any FileSystem
+@@ -461,7 +465,7 @@ public final class UserToolchain: Toolchain {
+         // Then, check the toolchain.
+         if let toolPath = try? UserToolchain.getTool(
+             "clang",
+-            binDirectories: self.swiftSDK.toolset.rootPaths,
++            binDirectories: self.toolchainBinDirectories,
+             fileSystem: self.fileSystem
+         ) {
+             self._clangCompiler = toolPath
+@@ -494,7 +498,7 @@ public final class UserToolchain: Toolchain {
+         // Look for LLDB next to the compiler first.
+         if let lldbPath = try? UserToolchain.getTool(
+             "lldb",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+         ) {
+             return lldbPath
+@@ -512,7 +516,7 @@ public final class UserToolchain: Toolchain {
+     public func getLLVMCov() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-cov",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -521,7 +525,7 @@ public final class UserToolchain: Toolchain {
+     public func getLLVMProf() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-profdata",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -530,7 +534,7 @@ public final class UserToolchain: Toolchain {
+     package func getLLVMObjdump() throws -> AbsolutePath {
+         try UserToolchain.getTool(
+             "llvm-objdump",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -545,7 +549,7 @@ public final class UserToolchain: Toolchain {
+         }
+         return try UserToolchain.getTool(
+             "swift-api-digester",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+ 
+         )
+@@ -561,7 +565,7 @@ public final class UserToolchain: Toolchain {
+         }
+         return try UserToolchain.getTool(
+             "swift-symbolgraph-extract",
+-            binDirectories: [self.swiftCompilerPath.parentDirectory],
++            binDirectories: self.compilerBinDirectories,
+             fileSystem: self.fileSystem
+         )
+     }
+@@ -797,9 +801,13 @@ public final class UserToolchain: Toolchain {
+         if let customInstalledSwiftPMConfiguration {
+             self.installedSwiftPMConfiguration = customInstalledSwiftPMConfiguration
+         } else {
+-            let path = swiftCompilerPath.parentDirectory.parentDirectory.appending(components: [
+-                "share", "pm", "config.json",
+-            ])
++            let paths = Self.compilerBinDirectories(swiftCompilerPath: swiftCompilerPath).map {
++                $0.parentDirectory.appending(components: ["share", "pm", "config.json"])
++            }
++            let path = paths.first(where: fileSystem.exists)
++                ?? swiftCompilerPath.parentDirectory.parentDirectory.appending(components: [
++                    "share", "pm", "config.json",
++                ])
+             self.installedSwiftPMConfiguration = try Self.loadJSONResource(
+                 config: path,
+                 type: InstalledSwiftPMConfiguration.self,
+@@ -889,7 +897,10 @@ public final class UserToolchain: Toolchain {
+ 
+         self.librarianPath = try swiftSDK.toolset.knownTools[.librarian]?.path ?? UserToolchain.determineLibrarian(
+             triple: triple,
+-            binDirectories: swiftSDK.toolset.rootPaths,
++            binDirectories: Self.toolchainBinDirectories(
++                swiftCompilerPath: swiftCompilers.compile,
++                swiftSDK: swiftSDK
++            ),
+             useXcrun: useXcrun,
+             environment: environment,
+             searchPaths: envSearchPaths,
+@@ -1022,7 +1033,11 @@ public final class UserToolchain: Toolchain {
+         // an alternative cloud be to force explicit locations to always be set explicitly when running in Xcode/SwiftPM
+         // debug and assert if not set but we detect that we are in this mode
+ 
+-        for applicationPath in swiftSDK.toolset.rootPaths {
++        let binDirectories = Self.toolchainBinDirectories(
++            swiftCompilerPath: swiftCompilerPath,
++            swiftSDK: swiftSDK
++        )
++        for applicationPath in binDirectories {
+             // this is the normal case when using the toolchain
+             let librariesPath = applicationPath.parentDirectory.appending(components: "lib", "swift", "pm")
+             if fileSystem.exists(librariesPath) {
+diff --git a/Sources/SwiftBuildSupport/PIFBuilder.swift b/Sources/SwiftBuildSupport/PIFBuilder.swift
+index c2188377a..04b83a181 100644
+--- a/Sources/SwiftBuildSupport/PIFBuilder.swift
++++ b/Sources/SwiftBuildSupport/PIFBuilder.swift
+@@ -350,7 +350,7 @@ public final class PIFBuilder {
+                         scriptRunner: pluginScriptRunner,
+                         workingDirectory: package.path,
+                         outputDirectory: pluginOutputDir,
+-                        toolSearchDirectories: [buildParameters.toolchain.swiftCompilerPath.parentDirectory],
++                        toolSearchDirectories: buildParameters.toolchain.compilerBinDirectories,
+                         accessibleTools: accessibleTools,
+                         writableDirectories: writableDirectories,
+                         readOnlyDirectories: readOnlyDirectories,
+diff --git a/Sources/SwiftSDKCommand/ConfigureSwiftSDK.swift b/Sources/SwiftSDKCommand/ConfigureSwiftSDK.swift
+index 5e3b0e3b2..ccde2ed21 100644
+--- a/Sources/SwiftSDKCommand/ConfigureSwiftSDK.swift
++++ b/Sources/SwiftSDKCommand/ConfigureSwiftSDK.swift
+@@ -122,7 +122,7 @@ struct ConfigureSwiftSDK: AsyncParsableCommand {
+         do {
+             let bundleStore = SwiftSDKBundleStore(
+                 swiftSDKsDirectory: swiftSDKsDirectory,
+-                hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++                hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+                 fileSystem: self.fileSystem,
+                 observabilityScope: observabilityScope,
+                 outputHandler: { print($0) }
+diff --git a/Sources/SwiftSDKCommand/InstallSwiftSDK.swift b/Sources/SwiftSDKCommand/InstallSwiftSDK.swift
+index f5b7ae0ce..283dc692e 100644
+--- a/Sources/SwiftSDKCommand/InstallSwiftSDK.swift
++++ b/Sources/SwiftSDKCommand/InstallSwiftSDK.swift
+@@ -59,7 +59,7 @@ struct InstallSwiftSDK: SwiftSDKSubcommand {
+ 
+         let store = SwiftSDKBundleStore(
+             swiftSDKsDirectory: swiftSDKsDirectory,
+-            hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++            hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+             fileSystem: self.fileSystem,
+             observabilityScope: observabilityScope,
+             outputHandler: { print($0.description) },
+diff --git a/Sources/SwiftSDKCommand/ListSwiftSDKs.swift b/Sources/SwiftSDKCommand/ListSwiftSDKs.swift
+index 9e19b4711..1ec48eb10 100644
+--- a/Sources/SwiftSDKCommand/ListSwiftSDKs.swift
++++ b/Sources/SwiftSDKCommand/ListSwiftSDKs.swift
+@@ -38,7 +38,7 @@ package struct ListSwiftSDKs: SwiftSDKSubcommand {
+     ) throws {
+         let store = SwiftSDKBundleStore(
+             swiftSDKsDirectory: swiftSDKsDirectory,
+-            hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++            hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+             fileSystem: fileSystem,
+             observabilityScope: observabilityScope,
+             outputHandler: { print($0.description) }
+diff --git a/Sources/SwiftSDKCommand/RemoveSwiftSDK.swift b/Sources/SwiftSDKCommand/RemoveSwiftSDK.swift
+index 5e8c61530..d69322059 100644
+--- a/Sources/SwiftSDKCommand/RemoveSwiftSDK.swift
++++ b/Sources/SwiftSDKCommand/RemoveSwiftSDK.swift
+@@ -48,7 +48,7 @@ package struct RemoveSwiftSDK: SwiftSDKSubcommand {
+         } else {
+             let bundleStore = SwiftSDKBundleStore(
+                 swiftSDKsDirectory: swiftSDKsDirectory,
+-                hostToolchainBinDir: hostToolchain.swiftCompilerPath.parentDirectory,
++                hostToolchainBinDir: hostToolchain.resolvedSwiftCompilerBinDir,
+                 fileSystem: self.fileSystem,
+                 observabilityScope: observabilityScope,
+                 outputHandler: { print($0) }
+-- 
+2.55.0
