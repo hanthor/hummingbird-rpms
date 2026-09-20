@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 6.4.0; backport swift-crypto fix for CVE-2026-43823; package SwiftBuild resource bundles",
+  "modification_reason": "Update to upstream version 6.4.0; backport swift-crypto fix for CVE-2026-43823; package SwiftBuild resource bundles; support flat, symlink-selected Swift toolchain layouts",
   "modification_status": "modified",
   "release_monitoring_project_id": 21267,
   "sha": "001d0b1d64b260f62eefac7b70566b5905a59afe",
