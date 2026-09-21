@@ -123,6 +123,9 @@ erlang27:
 etcd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+environment-modules:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 expat:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
