@@ -18,8 +18,9 @@
 #   ./ci/upstream_update_multi_mr.sh --only-package=curl                      # Check only curl
 #
 # Environment variables:
-#   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for git-push in clone mode)
+#   CHORE_MR_GITLAB_TOKEN    - GitLab token with api and write_repository scopes
 #   GITLAB_REMOTE_URL        - GitLab repo URL (default: https://gitlab.com/redhat/hummingbird/rpms.git)
+#   GITLAB_PROJECT_ID        - Numeric GitLab project ID fallback outside GitLab CI (optional)
 #   WORKQUEUE_SERVICE_URL    - Workqueue service URL (enables workqueue method when set)
 #   WORKQUEUE_OIDC_TOKEN     - GitLab CI OIDC token for workqueue auth
 #
@@ -78,6 +79,96 @@ fi
 
 # Configuration
 TARGET_BRANCH=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH:-main}}}
+
+cleanup_resolved_failure_mr() {
+    local package=$1
+
+    if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
+        return
+    fi
+
+    local token=${CHORE_MR_GITLAB_TOKEN:-}
+    local project_id=${CI_PROJECT_ID:-${GITLAB_PROJECT_ID:-}}
+    local api_url=${CI_API_V4_URL:-https://${GITLAB_HOST:-gitlab.com}/api/v4}
+    local branch_name="chore/upstream-update-failure-${package}"
+    local expected_title="Draft: investigate failed upstream update for ${package}"
+
+    if [[ -z "${token}" || -z "${project_id}" ]]; then
+        echo "WARNING: Cannot clean up resolved diagnostic MR for ${package}: " \
+            "CHORE_MR_GITLAB_TOKEN and CI_PROJECT_ID (or GITLAB_PROJECT_ID) are required" >&2
+        return
+    fi
+
+    local open_mrs
+    if ! open_mrs=$(curl --silent --show-error --fail-with-body \
+        --header "PRIVATE-TOKEN: ${token}" \
+        --get \
+        --data-urlencode "source_branch=${branch_name}" \
+        --data-urlencode "state=opened" \
+        "${api_url}/projects/${project_id}/merge_requests"); then
+        echo "WARNING: Failed to query resolved diagnostic MR for ${package}; leaving it open" >&2
+        return
+    fi
+
+    local mr_iid
+    if ! mr_iid=$(jq -r --arg title "${expected_title}" --arg project_id "${project_id}" \
+        '[.[] | select(
+            (.source_project_id | tostring) == $project_id
+            and .draft == true
+            and .title == $title
+        )][0].iid // empty' \
+        <<<"${open_mrs}"); then
+        echo "WARNING: Failed to parse diagnostic MR query for ${package}; leaving it open" >&2
+        return
+    fi
+    if [[ -z "${mr_iid}" ]]; then
+        return
+    fi
+
+    # Never close a diagnostic branch that a maintainer has started turning
+    # into a real fix. Bot-created diagnostic MRs have an empty diff.
+    local mr_diffs
+    if ! mr_diffs=$(curl --silent --show-error --fail-with-body \
+        --header "PRIVATE-TOKEN: ${token}" \
+        "${api_url}/projects/${project_id}/merge_requests/${mr_iid}/diffs"); then
+        echo "WARNING: Failed to inspect diagnostic MR !${mr_iid} for ${package}; leaving it open" >&2
+        return
+    fi
+
+    local diff_count
+    if ! diff_count=$(jq -er \
+        'if type == "array" then length else error("expected diff array") end' \
+        <<<"${mr_diffs}"); then
+        echo "WARNING: Failed to parse diagnostic MR !${mr_iid} diffs for ${package}; leaving it open" >&2
+        return
+    fi
+    if [[ ${diff_count} -ne 0 ]]; then
+        echo "WARNING: Resolved diagnostic MR !${mr_iid} for ${package} has changes; leaving it open" >&2
+        return
+    fi
+
+    if ! curl --silent --show-error --fail-with-body --output /dev/null \
+        --request PUT \
+        --header "PRIVATE-TOKEN: ${token}" \
+        --data-urlencode "state_event=close" \
+        "${api_url}/projects/${project_id}/merge_requests/${mr_iid}"; then
+        echo "WARNING: Failed to close resolved diagnostic MR !${mr_iid} for ${package}" >&2
+        return
+    fi
+
+    local encoded_branch
+    encoded_branch=$(jq -rn --arg branch "${branch_name}" '$branch | @uri')
+    if ! curl --silent --show-error --fail-with-body --output /dev/null \
+        --request DELETE \
+        --header "PRIVATE-TOKEN: ${token}" \
+        "${api_url}/projects/${project_id}/repository/branches/${encoded_branch}"; then
+        echo "WARNING: Closed resolved diagnostic MR !${mr_iid} for ${package}, " \
+            "but failed to delete ${branch_name}" >&2
+        return
+    fi
+
+    echo "Closed resolved diagnostic MR !${mr_iid} and deleted ${branch_name}"
+}
 
 # Cleanup function for clone mode
 # shellcheck disable=SC2329  # Function is invoked via EXIT trap
@@ -332,9 +423,19 @@ COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..${UPDATE_COMMIT_HEAD}" 
 mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..${UPDATE_COMMIT_HEAD}")
 
 UPDATES_APPLIED=$(jq '[.results[] | select(.updated == true)] | length' "${CHECK_OUTPUT}")
+# shellcheck disable=SC2312  # Command substitution in mapfile is intentional
+mapfile -t SUCCESSFUL_PACKAGES < <(
+    jq -r '.results[] | select(.updated == true) | .package' "${CHECK_OUTPUT}"
+)
 
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
+
+if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
+    for PACKAGE in "${SUCCESSFUL_PACKAGES[@]}"; do
+        cleanup_resolved_failure_mr "${PACKAGE}"
+    done
+fi
 
 echo ""
 if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
@@ -555,6 +656,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
             echo "  Failed to create MR for ${PACKAGE}"
             MR_FAILURES=$((MR_FAILURES + 1))
             FAILED_PACKAGES+=("${PACKAGE} (MR creation failed)")
+        fi
+
+        # A local checker commit is not enough to consider the diagnostic MR
+        # resolved. Wait until create_mr.sh has created or found the replacement.
+        if [[ ${MR_EXIT_CODE} -eq 0 || ${MR_EXIT_CODE} -eq 2 ]]; then
+            cleanup_resolved_failure_mr "${PACKAGE}"
         fi
     fi
 done
