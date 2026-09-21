@@ -125,3 +125,4 @@ expression = "LicenseRef-Fedora-Public-Domain"
 path = "vendor/github.com/mattn/go-localereader/LICENSE"
 sha256sum = "0c5c52517f13becd7a1e1234f1e8a5ba370f5a5078cee9ac058c2d534e267fcb"
 expression = "MIT"
+

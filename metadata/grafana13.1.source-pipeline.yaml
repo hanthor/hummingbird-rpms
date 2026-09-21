@@ -3,11 +3,11 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "grafana-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "grafana-${VERSION}-vendor.tar.bz2"
-
-transform:
   - type: run
     path: "."
     command:
@@ -78,3 +78,9 @@ accepted-checksums:
   - file: "grafana-yarn-cache-13.1.3.tar.bz2"
     checksum: "98d0ba0cf187abe1b35ec607f68a2a9ac981e5f7835c632e0b780e6ca939068d08513392b8445305c5d0ace3cbda17311035ac95f79a70371e8035490e6e187d"
     reason: "grafana-fast-uri-3.1.7-cve.patch bumps fast-uri 3.1.6->3.1.7 for CVE-2026-84394/CVE-2026-84292; yarn-cache regenerated without stale fast-uri-3.1.6 zip"
+  - file: "grafana-13.1.6-vendor.tar.bz2"
+    checksum: "2c56ce73471adb8b97a2da7d9a242dbee723241cc829a0a51f2d82fb4031379cb577370ab47fa4339d985d0b1a5eb2299c99488e0ac8743a736744e13e0570cd"
+    reason: "grafana-openfga-cve.patch + the vendor-bump above bump vendored openfga 1.18.0->1.18.1 for CVE-2026-61709; vendor archive regenerated with go work vendor against patched source to preserve otel v1.45.0 and include synthesized LICENSE files"
+  - file: "grafana-yarn-cache-13.1.6.tar.bz2"
+    checksum: "5f90cc52c0154c96949eeb94f6813b1cbe7d6905f9dfcedfb4964067da1717c579a8269f9a6e9935d303e2f1a3ed8c4eb7454b91c4128c9af510a1ec8322947f"
+    reason: "grafana-fast-uri-3.1.8-cve.patch bumps fast-uri 3.1.7->3.1.8 for CVE-2026-86472; yarn-cache regenerated without stale fast-uri-3.1.7 zip"
