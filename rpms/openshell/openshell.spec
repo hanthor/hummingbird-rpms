@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
