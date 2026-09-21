@@ -80,8 +80,45 @@ transform:
           exit 1
         fi
         pnpm_store="${root}/.pnpm-store"
-        (cd "${root}/.jaeger-ui-src" && run_pnpm fetch --store-dir "${pnpm_store}")
-        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store
+        export XDG_CACHE_HOME="${root}/.pnpm-cache"
+        # Force includes optional packages for every platform in the lockfile.
+        (cd "${root}/.jaeger-ui-src" && run_pnpm install \
+          --force \
+          --ignore-scripts \
+          --frozen-lockfile \
+          --store-dir "${pnpm_store}")
+
+        # Preserve registry packument needed to resolve this new transitive dependency offline.
+        metadata_dir="${root}/.pnpm-cache/pnpm/v11/metadata-full/registry.npmjs.org/@adobe"
+        mkdir -p "${metadata_dir}"
+        metadata_headers="$(mktemp)"
+        metadata_body="$(mktemp)"
+        metadata_file="${metadata_dir}/css-tools.jsonl"
+        curl -fSL --retry 3 -D "${metadata_headers}" -o "${metadata_body}" \
+          "https://registry.npmjs.org/@adobe%2Fcss-tools"
+        node - "${metadata_headers}" "${metadata_body}" "${metadata_file}" <<'NODE'
+        const fs = require("node:fs")
+        const [headersPath, bodyPath, outputPath] = process.argv.slice(2)
+        const headers = fs.readFileSync(headersPath, "utf8")
+        const etag = headers.match(/^etag:\s*(.+?)\r?$/im)?.[1]
+        const lastModified = headers.match(/^last-modified:\s*(.+?)\r?$/im)?.[1]
+        const body = fs.readFileSync(bodyPath)
+        const packument = JSON.parse(body.toString("utf8"))
+        if (!etag || !lastModified || packument.name !== "@adobe/css-tools") {
+          throw new Error("Invalid @adobe/css-tools registry metadata")
+        }
+        const modified = new Date(lastModified).toISOString()
+        fs.writeFileSync(outputPath, `${JSON.stringify({ etag, modified })}\n`)
+        fs.appendFileSync(outputPath, body)
+        fs.appendFileSync(outputPath, "\n")
+        NODE
+        rm -f "${metadata_headers}" "${metadata_body}"
+        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store .pnpm-cache
     outputs:
       - "jaeger-ui-${VERSION}.tar.gz"
       - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
+
+accepted-checksums:
+  - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
+    checksum: "cffefe1eea03ada6235034ff6f55fc70140509a1a3f9f4f97e57ef5b9aba57fe3f7cf51075008065bcb09b9a2b6b23a5dfd0f471c9b5bb76bbc93b89902794e0"
+    reason: "Regenerated from Jaeger UI v2.21.0 lockfile with all 883 package entries and bundled @adobe/css-tools offline metadata."

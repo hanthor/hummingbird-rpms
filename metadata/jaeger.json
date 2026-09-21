@@ -1,8 +1,8 @@
 {
-  "modification_reason": "bump ai-sidecar dependency pyasn1 to 0.6.4 for CVE fixes; backport fix for CVE-2026-48586; CVE-2026-55969; CVE-2026-67214; CVE-2026-62995; CVE-2026-81871",
+  "modification_reason": "Update to upstream version 2.21.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 371233,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/jaegertracing/jaeger",
-  "version": "2.20.0"
+  "version": "2.21.0"
 }
