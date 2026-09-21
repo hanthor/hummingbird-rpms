@@ -1,18 +1,17 @@
 #!/usr/bin/python3
 """Refresh bundled npm Provides from the Jaeger UI pnpm lockfile."""
 
-import ast
 import json
 import re
 import sys
 import tarfile
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 BEGIN = "# BEGIN generated bundled npm Provides"
 END = "# END generated bundled npm Provides"
-PACKAGE_KEY_RE = re.compile(r"^  (\S.*):$")
 PACKAGE_NAME_RE = re.compile(r"^(?:@[^/@]+/)?[^/@]+$")
 
 
@@ -25,25 +24,31 @@ def rpm_version(version: str) -> str:
     return re.sub(r"([._+~])\1+", r"\1", version)
 
 
-def unquote(value: str) -> str:
-    if value.startswith(("'", '"')):
-        parsed = ast.literal_eval(value)
-        if not isinstance(parsed, str):
-            raise ValueError(f"invalid pnpm package key: {value}")
-        return parsed
-    return value
+def lockfile_documents(lock: str) -> list[dict[str, Any]]:
+    """Parse every YAML document in a pnpm lockfile."""
+    documents = []
+    for document in yaml.safe_load_all(lock):
+        if document is None:
+            continue
+        if not isinstance(document, dict):
+            raise ValueError("pnpm lockfile document is not a mapping")
+        documents.append(document)
+    if not documents:
+        raise ValueError("pnpm lockfile contains no documents")
+    return documents
 
 
 def lockfile_provides(lock: str) -> set[tuple[str, str]]:
     """Return production dependency closure from pnpm's importers and snapshots."""
-    data = yaml.safe_load(lock)
-    snapshots = data.get("snapshots", {})
+    snapshots = {}
     queue = []
-    for importer in data.get("importers", {}).values():
-        for section in ("dependencies", "optionalDependencies"):
-            for name, dependency in importer.get(section, {}).items():
-                if reference := pnpm_reference(name, dependency):
-                    queue.append(reference)
+    for data in lockfile_documents(lock):
+        snapshots.update(data.get("snapshots", {}))
+        for importer in data.get("importers", {}).values():
+            for section in ("dependencies", "optionalDependencies"):
+                for name, dependency in importer.get(section, {}).items():
+                    if reference := pnpm_reference(name, dependency):
+                        queue.append(reference)
 
     visited = set()
     provides = set()
@@ -83,19 +88,9 @@ def pnpm_reference(name: str, dependency: object) -> str | None:
 
 def lockfile_importers(lock: str) -> set[str]:
     """Return non-root workspace paths from pnpm's importers section."""
-    importers = False
     paths = set()
-    for line in lock.splitlines():
-        if line == "importers:":
-            importers = True
-            continue
-        if importers and line and not line.startswith(" "):
-            break
-        if not importers or not (match := PACKAGE_KEY_RE.fullmatch(line)):
-            continue
-        path = unquote(match.group(1))
-        if path != ".":
-            paths.add(path)
+    for data in lockfile_documents(lock):
+        paths.update(path for path in data.get("importers", {}) if path != ".")
     return paths
 
 
