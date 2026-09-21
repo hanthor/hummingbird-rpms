@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import types
+import xmlrpc.client
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -2777,6 +2778,235 @@ def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
         metadata = json.load(f)
     assert metadata['version'] == '2.0'
     assert metadata['release'] == '1'
+
+
+def _koji_search_server(builds: list[dict]) -> MagicMock:
+    """Build a mock Koji server whose search()/getBuild() return the given builds."""
+    server = MagicMock()
+    server.search.return_value = [{'id': i, 'name': b['nvr']} for i, b in enumerate(builds)]
+    server.getBuild.side_effect = lambda nvr: next(
+        (b for b in builds if b['nvr'] == nvr), None)
+    return server
+
+
+def test_resolve_release_from_koji_matches_commit(dist_git_module) -> None:
+    """Release comes from the completed Koji build whose source commit matches."""
+    sha = 'a' * 40
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+        'release': '1.fc46', 'source': f'git+https://example.com/nginx.git#{sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '1'
+
+
+def test_resolve_release_from_koji_rejects_other_commit(dist_git_module) -> None:
+    """A build of the right version but a different commit is not accepted."""
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+        'release': '1.fc46', 'source': 'git+https://example.com/nginx.git#' + 'b' * 40,
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', 'a' * 40) is None
+
+
+def test_resolve_release_from_koji_skips_incomplete_build(dist_git_module) -> None:
+    """Builds that are not COMPLETE (state != 1) are ignored."""
+    sha = 'a' * 40
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 0, 'version': '1.30.5',
+        'release': '1.fc46', 'source': f'git+https://example.com/nginx.git#{sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) is None
+
+
+def test_resolve_release_from_koji_no_builds(dist_git_module) -> None:
+    """No search hits returns None so the caller skips the update.
+
+    There is deliberately no MDAPI fallback; see resolve_release_from_koji().
+    """
+    server = MagicMock()
+    server.search.return_value = []
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', 'a' * 40) is None
+
+
+def test_resolve_release_from_koji_takes_highest_release(dist_git_module) -> None:
+    """One commit built on several branches: never number below Fedora."""
+    sha = 'a' * 40
+    src = f'git+https://example.com/nginx.git#{sha}'
+    server = _koji_search_server([
+        {'nvr': 'nginx-1.30.5-1.fc45', 'state': 1, 'version': '1.30.5',
+         'release': '1.fc45', 'source': src},
+        {'nvr': 'nginx-1.30.5-2.fc46', 'state': 1, 'version': '1.30.5',
+         'release': '2.fc46', 'source': src},
+    ])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '2'
+
+
+def test_resolve_release_from_koji_ignores_module_build(dist_git_module) -> None:
+    """A module build reuses the dist-git commit but its release is not %autorelease.
+
+    Left unfiltered it survives the dist-suffix strip and wins max(), producing an
+    NVR that never existed.
+    """
+    sha = 'a' * 40
+    src = f'git+https://example.com/nginx.git#{sha}'
+    server = _koji_search_server([
+        {'nvr': 'nginx-1.30.5-1.module_f38+1234+abcdef', 'state': 1, 'version': '1.30.5',
+         'release': '1.module_f38+1234+abcdef', 'source': src},
+        {'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+         'release': '1.fc46', 'source': src},
+    ])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '1'
+
+
+def test_update_autorelease_prefers_koji_over_stale_mdapi(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """Regression: a lagging MDAPI must not block an update Koji already has.
+
+    MDAPI reflects a later compose, so right after a version bump it still
+    reports the previous version's release. Pairing that with the new spec
+    version yields an NVR that never existed and the update was skipped
+    (observed on nginx 1.30.5). Koji is authoritative and must win.
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    new_sha = add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    # Koji has the real build (2.0-1); MDAPI still reports the old version (1.0-2).
+    server = _koji_search_server([{
+        'nvr': 'vanilla-2.0-1.fc99', 'state': 1, 'version': '2.0',
+        'release': '1.fc99', 'source': f'git+https://example.com/vanilla.git#{new_sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server), \
+            patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+        # Koji answered, so the stale MDAPI must never be consulted
+        mock_mdapi.assert_not_called()
+
+    spec_content = (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+    assert 'Version: 2.0' in spec_content
+    assert 'Release: 1%{?dist}\n' in spec_content
+    assert '%autorelease' not in spec_content
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '2.0'
+    assert metadata['release'] == '1'
+    assert metadata['sha'] == new_sha
+
+
+def test_call_koji_with_retry_offline_raises_koji_offline(dist_git_module) -> None:
+    """A ServerOffline fault becomes KojiOfflineError and is not retried."""
+    method = MagicMock(side_effect=xmlrpc.client.Fault(
+        dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline'))
+    with pytest.raises(dist_git_module.KojiOfflineError):
+        dist_git_module.call_koji_with_retry(method, 'x', method_name='test')
+    assert method.call_count == 1  # retrying a planned outage is pointless
+
+
+def test_call_koji_with_retry_other_fault_still_raises_fault(dist_git_module) -> None:
+    """Non-offline faults keep their existing behaviour."""
+    method = MagicMock(side_effect=xmlrpc.client.Fault(1000, 'boom'))
+    with pytest.raises(xmlrpc.client.Fault):
+        dist_git_module.call_koji_with_retry(method, 'x', method_name='test')
+
+
+def test_update_skips_cleanly_when_koji_offline(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """A planned Koji outage is a skip, not a failure.
+
+    The hub returns ServerOffline on every call during e.g. a mass rebuild.
+    We cannot verify the build, so we must not update -- but it is expected and
+    self-healing, so it must not fail the scheduled job or page anyone.
+    """
+    run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["chocolate"]}')
+    new_sha = add_upstream_commit(upstream_repos['chocolate'], 'chocolate', '10', '11')
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        mock_server.getBuild.side_effect = xmlrpc.client.Fault(
+            dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline')
+        mock_server_class.return_value = mock_server
+
+        # Must return normally rather than propagating the fault
+        run_dist_git(dist_git_module, workdir, 'update', 'chocolate')
+
+    # Nothing was updated: metadata still points at the pre-update commit
+    with open(workdir / 'metadata' / 'chocolate.json') as f:
+        metadata = json.load(f)
+    assert metadata['sha'] != new_sha
+    assert metadata['version'] == '10'
+
+
+def test_update_autorelease_skips_when_koji_offline(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """Same planned outage, but hit while resolving %autorelease.
+
+    Covers the second KojiOfflineError handler: the one around
+    resolve_release_from_koji(), which runs before check_koji_build().
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '1.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    new_sha = add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    server = MagicMock()
+    server.search.side_effect = xmlrpc.client.Fault(
+        dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline')
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        # Must return normally rather than propagating the fault
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '1.0', "Should not update while Koji is offline"
+    assert metadata['sha'] != new_sha
+
+
+def test_update_autorelease_no_koji_build_skips_without_mdapi(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """No matching Koji build means skip, with no MDAPI fallback.
+
+    Falling back to MDAPI here would only resolve a release the build check is
+    about to reject, and would report a misleading reason for the skip.
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    server = MagicMock()
+    server.search.return_value = []  # Koji has no build for this version yet
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server), \
+            patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+        mock_mdapi.assert_not_called()
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '1.0', "Should not update without a Koji build"
 
 
 def test_update_autorelease_modified(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
