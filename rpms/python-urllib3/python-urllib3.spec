@@ -160,17 +160,12 @@ export PYTHONPATH="${hypercorndir}:%{buildroot}%{python3_sitelib}"
 # even when we export the CI environment variable to increase timeouts.
 k="${k-}${k+ and }not (TestHTTPProxyManager and test_tunneling_proxy_request_timeout[https-https])"
 
-<<<<<<< HEAD
-%pytest --verbose -rs ${ignore-} -k "${k-}"
-%pytest --verbose -rs ${ignore-} -k "${k-}" --integration
-=======
 # Skip test_http2_probe_blocked_per_thread tests - they require network access
 # to TARPIT_HOST which is unavailable in konflux build environments
 k="${k-}${k+ and }not test_http2_probe_blocked_per_thread"
 
-%pytest -v -rs ${ignore-} -k "${k-}"
-%pytest -v -rs ${ignore-} -k "${k-}" --integration
->>>>>>> hummingbird-local
+%pytest --verbose -rs ${ignore-} -k "${k-}"
+%pytest --verbose -rs ${ignore-} -k "${k-}" --integration
 %endif
 
 
