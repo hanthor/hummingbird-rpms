@@ -78,6 +78,7 @@ BuildRequires:  pkg-config
 BuildRequires:  clang-devel
 BuildRequires:  z3-devel
 BuildRequires:  systemd-rpm-macros
+BuildRequires:  e2fsprogs
 
 # Man page generation
 BuildRequires:  pandoc
