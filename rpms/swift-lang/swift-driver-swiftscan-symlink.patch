@@ -1,0 +1,42 @@
+From 9653e20962c1a8804695df11239e9cf90a6ba1cc Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Sun, 20 Sep 2026 16:22:49 +0100
+Subject: [PATCH] [Driver] Resolve compiler symlinks for SwiftScan
+
+SwiftDriver derives the libSwiftScan path from the selected compiler.
+When a compiler is exposed through a symlink outside its toolchain, the
+lookup searches relative to the symlink instead of the installation.
+
+Resolve the compiler path before deriving the toolchain root. Keep the
+selected path as a fallback if symlink resolution fails.
+---
+ Sources/SwiftDriver/Toolchains/Toolchain.swift | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git swift-driver.orig/Sources/SwiftDriver/Toolchains/Toolchain.swift swift-driver/Sources/SwiftDriver/Toolchains/Toolchain.swift
+index af6b9669..51141b90 100644
+--- swift-driver.orig/Sources/SwiftDriver/Toolchains/Toolchain.swift
++++ swift-driver/Sources/SwiftDriver/Toolchains/Toolchain.swift
+@@ -17,6 +17,7 @@ import class Foundation.Bundle
+ 
+ import func TSCBasic.getEnvSearchPaths
+ import func TSCBasic.lookupExecutablePath
++import func TSCBasic.resolveSymlinks
+ import class TSCBasic.DiagnosticsEngine
+ import protocol TSCBasic.FileSystem
+ import struct TSCBasic.AbsolutePath
+@@ -280,8 +281,9 @@ extension Toolchain {
+                                           .appending(component: libraryName)
+ #else
+     let compilerPath = try getToolPath(.swiftCompiler)
+-    let toolchainRootPath = compilerPath.parentDirectory // bin
+-                                        .parentDirectory // toolchain root
++    let resolvedCompilerPath = (try? resolveSymlinks(compilerPath)) ?? compilerPath
++    let toolchainRootPath = resolvedCompilerPath.parentDirectory // bin
++                                                .parentDirectory // toolchain root
+ 
+     let searchPaths = [toolchainRootPath.appending(component: "lib")
+                                         .appending(component: "swift")
+-- 
+2.55.0
+
