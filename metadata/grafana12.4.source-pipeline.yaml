@@ -81,6 +81,9 @@ transform:
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
   - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "8dbf6be3a1f3ac7b27d13b61dcd26662117a8786167cb9f0037189542001aead3109c029a35a3f92b38da6885b5de2bcbfe6c2e6e1f4ed18aaea49b1a21f7797"
+    reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; includes fast-uri-npm-3.1.8 in place of 3.1.7"
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
     checksum: "17d5bad95042cfa2e5f4e66e8f557bc11468809394954a1b694f5dde7a5cf0f9f41672bd71f3377710f3dcc728e050e3e87032008fb571dd4d19cd80f0f3fba4"
     reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; yarn cache regenerated to replace dompurify 3.4.12 zip with 3.4.13"
   - file: "grafana-yarn-cache-12.4.10.tar.bz2"
