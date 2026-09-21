@@ -40,7 +40,8 @@ export CHORE_MR_GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
 
 ## Environment Variables
 
-- `CHORE_MR_GITLAB_TOKEN` - GitLab token with `write_repository` scope (required for `--create-mrs`)
+- `CHORE_MR_GITLAB_TOKEN` - GitLab token with `api` and `write_repository` scopes (required for
+  `--create-mrs` and resolved diagnostic-MR cleanup)
 - `CHORE_MR_APPROVAL_GITLAB_TOKEN` - GitLab token with `api` scope for auto-approving MRs (used by
   CI)
 - `GITLAB_REMOTE_URL` - Target repo (default: <https://gitlab.com/redhat/hummingbird/rpms.git>)
