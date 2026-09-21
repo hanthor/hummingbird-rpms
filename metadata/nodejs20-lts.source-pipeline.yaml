@@ -1,7 +1,10 @@
 fetch:
   - type: spec-update
-    set-version: "${VERSION}"
-    reset-release: "1"
+    set-version: false
+    reset-release: null
+    substitutions:
+      - pattern: "^(%nodejs_define_version\\s+node\\b.*?):[0-9]+\\.[0-9]+\\.[0-9]+-"
+        replacement: "\\1:${VERSION}-"
   - type: git
     repo: "https://gitlab.com/redhat/hummingbird/src/nodejs-lts.git"
     ref: "v${VERSION}"
@@ -30,6 +33,21 @@ transform:
       - "packaging/make-nodejs-tarball.sh"
       - "packaging/fill-versions.sh"
     output: "packaging-scripts.tar.gz"
+
+post:
+  - type: run
+    artifacts: ["node-v${VERSION}.tar.gz"]
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        ./packaging/fill-versions.sh "${SPEC_FILE}" "node-v${VERSION}.tar.gz"
+        # The downstream patch updates nghttp2 beyond the upstream tarball.
+        sed -Ei \
+          's|^%nodejs_define_version[[:space:]]+nghttp2[[:space:]]+[^[:space:]]+|%nodejs_define_version nghttp2 1.68.1|' \
+          "${SPEC_FILE}"
+        rm -rf "node-v${VERSION}"
 
 accepted-checksums:
   - file: "packaging-scripts.tar.gz"
