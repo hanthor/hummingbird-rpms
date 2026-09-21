@@ -1,11 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
-  "release": "1",
+  "modification_reason": "Update to upstream version 5.7.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 700,
   "sha": "c3134f68a88386a057aa288e5a11c8ebe40f2c09",
   "source": "https://src.fedoraproject.org/rpms/environment-modules.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/envmodules/modules",
-  "version": "5.6.2"
+  "version": "5.7.0"
 }
