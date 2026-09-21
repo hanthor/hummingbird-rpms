@@ -58,6 +58,11 @@ AUTORELEASE_PATTERN = r'%\{?\??autorelease.*'
 # Match dist-git sources file format: ALGO (filename) = hash
 SOURCES_LINE_PATTERN = re.compile(r'^(\w+)\s+\((.+?)\)\s+=\s+(\w+)$')
 
+# koji.ServerOffline.faultCode. The koji module isn't installed (we talk to the
+# hub over plain XML-RPC), so the value is inlined here. The hub raises this on
+# every call while it is deliberately offline, e.g. during a mass rebuild.
+KOJI_SERVER_OFFLINE = 1014
+
 # When the LATEST version of a virtual BuildRequires changes, rebuild all its dependents
 # See get_virtual_buildrequires_translation() below for details
 VIRTUAL_BUILDREQUIRES_PATTERNS = {
@@ -794,6 +799,15 @@ def get_koji_server() -> xmlrpc.client.ServerProxy:
                                       allow_none=True)
 
 
+class KojiOfflineError(Exception):
+    """The Koji hub is deliberately offline (planned outage).
+
+    Distinct from a transient failure: retrying is pointless, but it is also
+    not a real error. Callers should skip the package and let the next
+    scheduled run pick it up.
+    """
+
+
 def call_koji_with_retry(method, *args, method_name: str = "Koji method"):
     """Call a Koji XML-RPC method with retry logic for transient errors.
 
@@ -820,7 +834,10 @@ def call_koji_with_retry(method, *args, method_name: str = "Koji method"):
     for attempt in range(max_retries):
         try:
             return method(*args)
-        except xmlrpc.client.Fault:
+        except xmlrpc.client.Fault as e:
+            if e.faultCode == KOJI_SERVER_OFFLINE:
+                # Planned outage: retrying won't help and it isn't a failure
+                raise KojiOfflineError(e.faultString) from e
             # Don't retry on Fault - these are application-level errors
             raise
         except (OSError, http.client.HTTPException) as e:
@@ -896,6 +913,66 @@ def _get_fallback_dist_tags(dist_tag: str) -> list[str]:
 
     other_nums.sort(reverse=True)
     return [f'f{n}' for n in other_nums]
+
+
+def resolve_release_from_koji(package_name: str, version: str,
+                              expected_commit: str) -> str | None:
+    """Resolve the Release for a version from its completed Koji build.
+
+    Koji records the dist-git commit every build came from and is authoritative
+    the moment a build completes.  MDAPI only reflects a later compose, so it
+    can still report the *previous* version's release; pairing that release with
+    the new spec version produces an NVR that never existed and the build check
+    then skips a perfectly good update.  HUM-483 moved release lookup to MDAPI
+    for availability and explicitly left this for a follow-up.
+
+    Returns the release with the dist suffix stripped ("1.fc46" -> "1"), or None
+    when no completed build matches both version and commit.
+    """
+    server = get_koji_server()
+    pattern = f'{package_name}-{version}-*'
+    matches = call_koji_with_retry(
+        server.search, pattern, 'build', 'glob',
+        method_name=f"Koji search({pattern})"
+    )
+    if not matches:
+        logging.info("No Koji builds matching %s", pattern)
+        return None
+
+    found: list[str] = []
+    for entry in matches:
+        nvr = entry['name']
+        build = call_koji_with_retry(
+            server.getBuild, nvr, method_name=f"Koji getBuild({nvr})"
+        )
+        # state 1 = COMPLETE; the glob can also match a longer version string
+        if not build or build.get('state') != 1 or build.get('version') != version:
+            continue
+        source = build.get('source') or ''
+        if '#' not in source or source.split('#')[1] != expected_commit:
+            continue
+        # Accept only a plain N[.N…] release carrying a recognised dist suffix. A module
+        # build reuses the same dist-git commit, so it can reach this point, but its
+        # release ("1.module_f38+1234+abcdef") is not a %autorelease value: it would both
+        # survive unstripped and win the max() below, yielding an NVR that never existed.
+        matched = re.fullmatch(r'(\d+(?:\.\d+)*)\.(?:fc|el)\d+', build['release'])
+        if not matched:
+            logging.info("Ignoring Koji build %s: release is not a plain dist release", nvr)
+            continue
+        found.append(matched.group(1))
+
+    if not found:
+        logging.info("No completed Koji build for %s-%s matches commit %s",
+                     package_name, version, expected_commit[:8])
+        return None
+
+    # One commit built on several branches normally carries the same %autorelease
+    # value; if they ever differ take the highest so we never number below Fedora.
+    release = max(found, key=lambda r: tuple(
+        int(part) if part.isdigit() else 0 for part in r.split('.')))
+    logging.info("Koji build %s-%s-%s matches commit %s",
+                 package_name, version, release, expected_commit[:8])
+    return release
 
 
 def check_koji_build(package_name: str, version: str, release: str, expected_commit: str,
@@ -2056,11 +2133,33 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             upstream_dir, tolerate_orphaned_patches=True
         )
 
-        # Query MDAPI for autorelease if needed (but don't modify upstream_dir yet, it's a git repo)
+        # Resolve %autorelease if needed (but don't modify upstream_dir yet, it's a git repo).
+        # Koji is authoritative here. It is already a hard dependency of this path
+        # (check_koji_build below), it is current the moment a build completes, and it is the
+        # only source that maps a build back to its dist-git commit. There is deliberately no
+        # MDAPI fallback. If Koji cannot answer then the build check cannot pass either, so a
+        # fallback would only resolve a release we are about to reject anyway, and it would
+        # report a misleading reason for the skip.
+        # MDAPI is still used when the caller bypassed Koji entirely (sync, --skip-build-check).
         has_autorelease = uses_autorelease(upstream_dir)
         if has_autorelease:
-            resolved_release = query_autorelease_from_mdapi(upstream_package_name, effective_branch, release)
-            if resolved_release:
+            if skip_build_check or sync:
+                resolved_release = query_autorelease_from_mdapi(
+                    upstream_package_name, effective_branch, release)
+                # MDAPI may legitimately have nothing; keep the spec's own release.
+                if resolved_release:
+                    release = resolved_release
+            else:
+                try:
+                    resolved_release = resolve_release_from_koji(
+                        upstream_package_name, version, latest_sha)
+                except KojiOfflineError as e:
+                    logging.info("Skipping %s: Koji is offline (%s)", package_name, e)
+                    return
+                if not resolved_release:
+                    logging.info("Skipping %s: no completed Koji build for %s at commit %s",
+                                 package_name, version, latest_sha[:8])
+                    return
                 release = resolved_release
 
         logging.info("Version: %s-%s", version, release)
@@ -2100,7 +2199,13 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # assume they know what they are doing
         if not skip_build_check and not sync:
             logging.info("Checking Koji for build %s-%s-%s...", upstream_package_name, version, release)
-            if not check_koji_build(upstream_package_name, version, release, latest_sha, dist_tag, effective_branch):
+            try:
+                built = check_koji_build(upstream_package_name, version, release,
+                                         latest_sha, dist_tag, effective_branch)
+            except KojiOfflineError as e:
+                logging.info("Skipping %s: Koji is offline (%s)", package_name, e)
+                return
+            if not built:
                 logging.info("Skipping %s: %s-%s not built in Koji", package_name, version, release)
                 return
 
