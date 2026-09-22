@@ -896,25 +896,6 @@ def get_mdapi_latest_build(package_name: str, branch: str) -> MdapiPackageInfo |
         return None
 
 
-def _get_fallback_dist_tags(dist_tag: str) -> list[str]:
-    """Get all active Fedora dist tags except the given one, in descending order."""
-    current_match = re.match(r'^f(\d+)$', dist_tag)
-    if not current_match:
-        return []
-
-    current_num = int(current_match.group(1))
-    fedora_releases = releases.get('fedora', {})
-    other_nums = []
-    for release_dist_tag in fedora_releases.values():
-        if match := re.match(r'^f(\d+)$', release_dist_tag):
-            num = int(match.group(1))
-            if num != current_num:
-                other_nums.append(num)
-
-    other_nums.sort(reverse=True)
-    return [f'f{n}' for n in other_nums]
-
-
 def resolve_release_from_koji(package_name: str, version: str,
                               expected_commit: str) -> str | None:
     """Resolve the Release for a version from its completed Koji build.
@@ -979,70 +960,74 @@ def check_koji_build(package_name: str, version: str, release: str, expected_com
                      dist_tag: str, branch: str) -> bool:
     """Check if a build exists in Koji and matches the expected commit.
 
-    If not found with current dist tag, tries all active Fedora releases in
-    descending order as fallback. This handles packages like OpenJDK portables
-    that are built once for the earliest active release and reused across all.
+    Check the expected dist tag first. If it does not match, search Koji for
+    other dist tags. The search handles a stale local release list during a
+    Fedora branch transition.
     """
     # Transform dist_tag for Koji: Bodhi uses f41, f42, etc. but Koji uses fc41, fc42
     koji_dist_tag = dist_tag
     if match := re.match(r'^f(\d+)$', dist_tag):
         koji_dist_tag = f'fc{match.group(1)}'
 
-    # Construct NVR
-    nvr = f'{package_name}-{version}-{release}.{koji_dist_tag}'
-
     server = get_koji_server()
+    preferred_nvr = f'{package_name}-{version}-{release}.{koji_dist_tag}'
+
+    def build_matches(nvr: str, build_result: object) -> bool:
+        if not build_result:
+            logging.info("Build %s not found in Koji", nvr)
+            return False
+
+        build = cast(KojiBuild, build_result)
+        source = build.get('source', '')
+        if '#' not in source:
+            logging.warning("Build %s has no commit in source: %s", nvr, source)
+            return False
+
+        commit = source.split('#')[1]
+        if commit != expected_commit:
+            logging.warning("Build %s has different commit: %s (expected %s)",
+                            nvr, commit[:8], expected_commit[:8])
+            return False
+
+        if build.get('state') != 1:
+            logging.info("Build %s is not complete (state=%s)", nvr, build.get('state'))
+            return False
+
+        logging.info("Build %s found in Koji (commit %s)", nvr, commit[:8])
+        return True
+
     build_result = call_koji_with_retry(
-        server.getBuild, nvr,
-        method_name=f"Koji getBuild({nvr})"
+        server.getBuild, preferred_nvr,
+        method_name=f"Koji getBuild({preferred_nvr})"
     )
+    if build_matches(preferred_nvr, build_result):
+        return True
 
-    # If build not found, try all active Fedora releases in descending order
-    # Some packages (e.g. OpenJDK portables) are built for one release and reused
-    if not build_result:
-        fallback_dist_tags = _get_fallback_dist_tags(dist_tag)
-        for fallback_tag in fallback_dist_tags:
-            fallback_koji_tag = fallback_tag
-            if match := re.match(r'^f(\d+)$', fallback_tag):
-                fallback_koji_tag = f'fc{match.group(1)}'
+    # A checked-in upstream-releases.json can become stale when Fedora branches.
+    # Search all Fedora and CentOS dist tags for the expected source commit.
+    pattern = f'{package_name}-{version}-{release}.*'
+    matches = call_koji_with_retry(
+        server.search, pattern, 'build', 'glob',
+        method_name=f"Koji search({pattern})"
+    )
+    nvr_prefix = f'{package_name}-{version}-{release}.'
+    for entry in matches or []:
+        nvr = entry['name']
+        if nvr == preferred_nvr or not nvr.startswith(nvr_prefix):
+            continue
+        dist_suffix = nvr.removeprefix(nvr_prefix)
+        if re.fullmatch(r'(?:fc|el)\d+', dist_suffix) is None:
+            continue
+        build_result = call_koji_with_retry(
+            server.getBuild, nvr,
+            method_name=f"Koji getBuild({nvr})"
+        )
+        if build_matches(nvr, build_result):
+            return True
 
-            fallback_nvr = f'{package_name}-{version}-{release}.{fallback_koji_tag}'
-            logging.info("Build %s not found in Koji, trying %s", nvr, fallback_nvr)
-            nvr = fallback_nvr
-            build_result = call_koji_with_retry(
-                server.getBuild, fallback_nvr,
-                method_name=f"Koji getBuild({fallback_nvr})"
-            )
-            if build_result:
-                break
-
-    if not build_result:
-        logging.info("Build %s not found in Koji", nvr)
-        return False
-
-    build = cast(KojiBuild, build_result)
-
-    # Extract commit from source field
-    source = build.get('source', '')
-    if '#' not in source:
-        logging.warning("Build %s has no commit in source: %s", nvr, source)
-        return False
-
-    commit = source.split('#')[1]
-
-    # Check if commit matches
-    if commit != expected_commit:
-        logging.warning("Build %s has different commit: %s (expected %s)",
-                        nvr, commit[:8], expected_commit[:8])
-        return False
-
-    # Check build state (1 = COMPLETE)
-    if build.get('state') != 1:
-        logging.info("Build %s is not complete (state=%s)", nvr, build.get('state'))
-        return False
-
-    logging.info("Build %s found in Koji (commit %s)", nvr, commit[:8])
-    return True
+    logging.info("No completed Koji build for %s-%s-%s matches commit %s",
+                 package_name, version, release, expected_commit[:8])
+    return False
 
 
 def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream_dir: Path) -> bool:
