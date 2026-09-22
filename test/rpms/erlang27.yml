@@ -25,15 +25,19 @@ unversioned-provides-alias:
     esac
 
     version_release=$(rpm -qp --queryformat '%{VERSION}-%{RELEASE}' "${TEST_RPM}")
-    provides=$(rpm -qp --provides "${TEST_RPM}")
+    # Query the provider name and version fields directly.  Parsing the
+    # human-readable `rpm --provides` output is sensitive to architecture
+    # qualifiers and whitespace differences between RPM implementations.
+    provides=$(rpm -qp --qf '[%{PROVIDENAME}\t%{PROVIDEVERSION}\n]' "${TEST_RPM}")
 
-    # Strip arch qualifiers like "(x86-64)" before matching — the spec
-    # uses %{?_isa} so provides are arch-qualified, but we only care
-    # that the unversioned name alias exists at the correct version.
-    provides_plain=$(echo "${provides}" | sed 's/([^)]*)//g; s/  */ /g')
-
-    if echo "${provides_plain}" | grep -qxF "${expected} = ${version_release}"; then
+    if printf '%s\n' "${provides}" | awk -F '\t' \
+      -v expected_name="${expected}" -v expected_version="${version_release}" \
+      '$1 == expected_name && $2 == expected_version { found = 1; exit }
+       END { exit !found }'; then
       echo "PASS: ${rpm_name} provides ${expected} = ${version_release}"
     else
-      TEST_FAIL "${rpm_name} is missing unversioned Provides: ${expected} = ${version_release} (got: $(echo "${provides}" | grep -F "${expected} =" || echo none))"
+      matching=$(printf '%s\n' "${provides}" | awk -F '\t' \
+        -v expected_name="${expected}" \
+        '$1 == expected_name { print $1 " = " $2 }')
+      TEST_FAIL "${rpm_name} is missing unversioned Provides: ${expected} = ${version_release} (got: ${matching:-none})"
     fi
