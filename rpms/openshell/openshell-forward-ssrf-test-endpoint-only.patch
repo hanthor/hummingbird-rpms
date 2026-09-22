@@ -1,0 +1,164 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Tue, 22 Sep 2026 00:00:00 +0000
+Subject: [PATCH] network: keep authorization mode consistent with loaded policy
+
+The binary identity mode is used while policy data is preprocessed, but the
+forward authorization path reads the environment again for every request.
+That allows the policy and the runtime authorization path to use different
+modes if the environment changes after the engine is created.
+
+Keep the mode on the engine and use it for runtime authorization. This also
+lets the forward-handler regression test explicitly use endpoint-only mode:
+the test covers SSRF response handling and denial-stage reporting, not process
+identity discovery.
+
+diff --git a/crates/openshell-supervisor-network/src/opa.rs b/crates/openshell-supervisor-network/src/opa.rs
+index 63aa2c2..fcfea76 100644
+--- a/crates/openshell-supervisor-network/src/opa.rs
++++ b/crates/openshell-supervisor-network/src/opa.rs
+@@ -152,6 +152,10 @@ pub struct OpaEngine {
+     engine: Mutex<regorus::Engine>,
+     generation: Arc<AtomicU64>,
+     middleware_runner: RwLock<ChainRunner>,
++    // This must match the mode used to preprocess the policy data. Keeping it
++    // on the engine avoids rereading process-global configuration for every
++    // request.
++    require_binary_identity: bool,
+     websocket_assembly_budget: crate::l7::websocket::WebSocketAssemblyBudget,
+     generation_tx: watch::Sender<u64>,
+     fail_closed_reason: RwLock<Option<String>>,
+@@ -278,19 +279,24 @@ impl OpaEngine {
+         self.websocket_assembly_budget.clone()
+     }
+
+-    fn with_engine(engine: regorus::Engine) -> Self {
++    fn with_engine(engine: regorus::Engine, require_binary_identity: bool) -> Self {
+         let generation = Arc::new(AtomicU64::new(0));
+         let (generation_tx, _) = watch::channel(0);
+         Self {
+             engine: Mutex::new(engine),
+             generation,
+             middleware_runner: RwLock::new(ChainRunner::default()),
++            require_binary_identity,
+             websocket_assembly_budget: crate::l7::websocket::WebSocketAssemblyBudget::default(),
+             generation_tx,
+             fail_closed_reason: RwLock::new(None),
+         }
+     }
+
++    pub(crate) fn requires_binary_identity(&self) -> bool {
++        self.require_binary_identity
++    }
++
+     fn advance_generation(&self) -> u64 {
+         let generation = self.generation.fetch_add(1, Ordering::AcqRel) + 1;
+         self.generation_tx.send_replace(generation);
+@@ -328,7 +334,7 @@ impl OpaEngine {
+         engine
+             .add_data_json(&data_json)
+             .map_err(|e| miette::miette!("{e}"))?;
+-        Ok(Self::with_engine(engine))
++        Ok(Self::with_engine(engine, require_binary_identity))
+     }
+
+     /// Load policy rules and data from strings (data is YAML).
+@@ -379,7 +385,7 @@ impl OpaEngine {
+         engine
+             .add_data_json(&data_json)
+             .map_err(|e| miette::miette!("{e}"))?;
+-        Ok(Self::with_engine(engine))
++        Ok(Self::with_engine(engine, require_binary_identity))
+     }
+
+     /// Create OPA engine from a typed proto policy.
+@@ -466,7 +472,7 @@ impl OpaEngine {
+         engine
+             .add_data_json(&data_json)
+             .map_err(|e| miette::miette!("{e}"))?;
+-        Ok(Self::with_engine(engine))
++        Ok(Self::with_engine(engine, require_binary_identity))
+     }
+
+     /// Evaluate a network access request against the loaded policy.
+@@ -3572,7 +3578,7 @@ network_policies:
+             .expect("policy should load");
+         rego.add_data_json(&data_json.to_string())
+             .expect("data should load");
+-        let engine = OpaEngine::with_engine(rego);
++        let engine = OpaEngine::with_engine(rego, network_binary_identity_required());
+         let input = l7_websocket_graphql_input(
+             "realtime.graphql.com",
+             serde_json::json!([{
+diff --git a/crates/openshell-supervisor-network/src/proxy.rs b/crates/openshell-supervisor-network/src/proxy.rs
+index dc2736a..d33ef76 100644
+--- a/crates/openshell-supervisor-network/src/proxy.rs
++++ b/crates/openshell-supervisor-network/src/proxy.rs
+@@ -2637,7 +2637,7 @@ fn authorize_egress_intent(
+         }
+     };
+
+-    if !crate::opa::network_binary_identity_required() {
++    if !engine.requires_binary_identity() {
+         let result = evaluate_endpoint_only_opa(engine, intent);
+         debug!(
+             "authorize_egress_intent endpoint-only: host={} port={} transport={:?} action={:?}",
+@@ -2789,7 +2789,7 @@ fn authorize_egress_intent(
+     _entrypoint_pid: &AtomicU32,
+     intent: EgressIntent,
+ ) -> EgressDecision {
+-    if !crate::opa::network_binary_identity_required() {
++    if !engine.requires_binary_identity() {
+         return evaluate_endpoint_only_opa(engine, intent);
+     }
+
+@@ -12129,18 +12129,21 @@ network_policies:
+     ) -> (Vec<u8>, Vec<String>) {
+         const POLICY_REGO: &str = include_str!("../data/sandbox-policy.rego");
+ 
++        // This helper exercises endpoint validation and response handling. It
++        // does not need process identity discovery, which is a separate
++        // authorization mode and depends on host /proc state.
+-        let exe = std::env::current_exe().expect("current_exe");
+         let data = format!(
+             r#"network_policies:
+   test_allow:
+     name: test_allow
+     endpoints:
+-{endpoint_yaml}    binaries:
+-      - {{ path: "{exe}" }}
++{endpoint_yaml}
+ "#,
+-            exe = exe.display(),
+         );
+-        let engine = Arc::new(OpaEngine::from_strings(POLICY_REGO, &data).expect("load policy"));
++        let engine = Arc::new(
++            OpaEngine::from_strings_with_binary_identity_required(POLICY_REGO, &data, false)
++                .expect("load policy"),
++        );
+
+         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+         let proxy_port = listener.local_addr().unwrap().port();
+@@ -12257,11 +12257,6 @@ network_policies:
+
+     #[tokio::test]
+     async fn forward_handler_preserves_ssrf_response_and_denial_stage() {
+-        if !cfg!(target_os = "linux") {
+-            eprintln!("skipping: handler identity binding requires /proc (Linux)");
+-            return;
+-        }
+-
+         let (response, denial_stages) = Box::pin(drive_forward_through_handler(
+             "      - { host: \"127.0.0.1\", port: 80 }\n",
+             "http://127.0.0.1/private",
+@@ -12273,6 +12268,9 @@ network_policies:
+             "internal forward destination must get the SSRF 403; got: {response:?}"
+         );
+-        assert!(response.contains("ssrf_denied"));
++        assert!(
++            response.contains("ssrf_denied"),
++            "expected the SSRF-specific denial body; got: {response:?}"
++        );
+         assert!(
+             response.contains("GET 127.0.0.1:80 blocked: declared endpoint check failed"),
+             "an explicit loopback endpoint must fail declared-endpoint validation; got: {response:?}"
