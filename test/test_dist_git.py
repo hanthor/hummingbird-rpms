@@ -9,7 +9,7 @@ import sys
 import types
 import xmlrpc.client
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 import yaml
@@ -636,18 +636,19 @@ def test_update_unbuilt(workdir: Path, upstream_repos: dict[str, Path], dist_git
     # Update upstream chocolate
     add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
 
-    # Mock Koji to return no build found (for both current and fallback)
+    # Mock Koji to return no build found.
     with patch('xmlrpc.client.ServerProxy') as mock_server_class:
         mock_server = MagicMock()
         mock_server.getBuild.return_value = None  # Build not found
+        mock_server.search.return_value = []
         mock_server_class.return_value = mock_server
 
         # Run update in-process
         run_dist_git(dist_git_module, workdir, 'update', 'chocolate')
-        # Should try fc99 first, then fallback to fc40 (both not found)
-        assert mock_server.getBuild.call_count == 2
-        mock_server.getBuild.assert_any_call('chocolate-11-1.fc99')
-        mock_server.getBuild.assert_any_call('chocolate-11-1.fc40')
+        mock_server.getBuild.assert_called_once_with('chocolate-11-1.fc99')
+        mock_server.search.assert_called_once_with(
+            'chocolate-11-1.*', 'build', 'glob'
+        )
         chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
         with open(chocolate_import_json) as f:
             import_data = json.load(f)
@@ -730,11 +731,10 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
     # Update upstream vanilla
     new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
 
-    # Mock Koji to:
-    # 1. Return None for fc99 (current rawhide)
-    # 2. Return successful build for fc40 (previous release fallback)
+    # Mock Koji to return no fc99 build and find an fc40 build through search.
     with patch('xmlrpc.client.ServerProxy') as mock_server_class:
         mock_server = MagicMock()
+        mock_server.search.return_value = [{'name': 'vanilla-2.0-1.fc40'}]
 
         def getBuild_side_effect(nvr):
             if nvr == 'vanilla-2.0-1.fc99':
@@ -758,6 +758,9 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
         assert mock_server.getBuild.call_count == 2
         mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc99')
         mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc40')
+        mock_server.search.assert_called_once_with(
+            'vanilla-2.0-1.*', 'build', 'glob'
+        )
 
         # Package should be updated using the fallback
         vanilla_import_json = workdir / 'metadata' / 'vanilla.json'
@@ -765,6 +768,92 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
             import_data = json.load(f)
         assert import_data['version'] == '2.0'
         assert import_data['sha'] == new_sha
+
+
+def test_update_rawhide_finds_build_for_unknown_dist_tag(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module
+) -> None:
+    """Update finds the rawhide build when the local release list is stale."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import',
+         f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        unknown_nvr = 'vanilla-2.0-1.fc100'
+        el_nvr = 'vanilla-2.0-1.el10'
+        mock_server.search.return_value = [
+            {'name': el_nvr},
+            {'name': unknown_nvr},
+        ]
+
+        def getBuild_side_effect(nvr):
+            if nvr == 'vanilla-2.0-1.fc99':
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': 'git+https://example.com/vanilla.git#' + 'a' * 40,
+                }
+            if nvr == unknown_nvr:
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': f'git+https://example.com/vanilla.git#{new_sha}',
+                }
+            return None
+
+        mock_server.getBuild.side_effect = getBuild_side_effect
+        mock_server_class.return_value = mock_server
+
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+
+        mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc99')
+        mock_server.getBuild.assert_any_call(unknown_nvr)
+        assert call(el_nvr) not in mock_server.getBuild.call_args_list
+        mock_server.search.assert_called_once_with(
+            'vanilla-2.0-1.*', 'build', 'glob'
+        )
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        import_data = json.load(f)
+    assert import_data['version'] == '2.0'
+    assert import_data['sha'] == new_sha
+
+
+def test_check_koji_build_finds_numbered_eln_suffix(dist_git_module) -> None:
+    """ELN lookup accepts numbered ELN build suffixes, but not Fedora builds."""
+    expected_commit = 'a' * 40
+    eln_nvr = 'vanilla-2.0-1.eln159'
+    fedora_nvr = 'vanilla-2.0-1.fc46'
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        mock_server.search.return_value = [
+            {'name': fedora_nvr},
+            {'name': eln_nvr},
+        ]
+
+        def getBuild_side_effect(nvr):
+            if nvr == eln_nvr:
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': f'git+https://example.com/vanilla.git#{expected_commit}',
+                }
+            return None
+
+        mock_server.getBuild.side_effect = getBuild_side_effect
+        mock_server_class.return_value = mock_server
+
+        assert dist_git_module.check_koji_build(
+            'vanilla', '2.0', '1', expected_commit, 'eln', 'eln'
+        )
+        assert call(fedora_nvr) not in mock_server.getBuild.call_args_list
+        mock_server.getBuild.assert_any_call(eln_nvr)
 
 
 def test_koji_retry_on_transient_error(dist_git_module) -> None:
