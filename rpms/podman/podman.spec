@@ -77,8 +77,6 @@ Summary: Manage Pods, Containers and Container Images
 URL: https://%{name}.io/
 # All SourceN files fetched from upstream
 Source0: https://github.com/containers/%{name}/archive/v%{version_no_tilde}.tar.gz
-Patch0: 0001-backport-bump-buildkit-and-x-text-for-cves.patch
-Patch1: 0002-backport-bump-go-archive-for-cve-2026-17106.patch
 Provides: %{name}-manpages = %{epoch}:%{version}-%{release}
 BuildRequires: %{_bindir}/envsubst
 %if %{defined build_with_btrfs}
