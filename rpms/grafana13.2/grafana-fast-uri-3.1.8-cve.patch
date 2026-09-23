@@ -1,0 +1,40 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump fast-uri 3.1.7 -> 3.1.8 for CVE-2026-86472
+
+Upstream: https://github.com/nicolo-ribaudo/fast-uri/commit/34bff8d3c2d57c73c41ef02c0e7a4b3e38c07c34
+
+fast-uri folds a host to lowercase before percent-decoding it, so a
+percent-encoded uppercase octet (e.g. %41) is never folded. For
+scheme-relative references (//host) the host canonicalization path does
+not run, so parse/normalize/equal disagree on the same host and a
+case-sensitive allowlist/denylist can be bypassed. Fixed in 3.1.8.
+Yarn cache regenerated and uploaded to lookaside.
+
+--- a/package.json
++++ b/package.json
+@@ -462,7 +462,7 @@
+     "tar@npm:7.5.11": "7.5.21",
+     "linkify-it": "5.0.2",
+     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
+-    "fast-uri": "3.1.7",
++    "fast-uri": "3.1.8",
+     "qs": "6.16.0",
+     "js-yaml@npm:^3.10.0": "3.15.2",
+     "js-yaml@npm:^3.13.1": "3.15.2",
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -18386,10 +18386,10 @@ __metadata:
+   languageName: node
+   linkType: hard
+ 
+-"fast-uri@npm:3.1.7":
+-  version: 3.1.7
+-  resolution: "fast-uri@npm:3.1.7"
+-  checksum: 10c0/ca2baa4bde48fc7322bdc692c6636975943ebe4f6dd97e07d70b14e0ab85af2ff30de90f550f5ec2956684fe208e150d85d6cb5f3c74438c8ac1bf86bd435c13
++"fast-uri@npm:3.1.8":
++  version: 3.1.8
++  resolution: "fast-uri@npm:3.1.8"
++  checksum: 10c0/c9c47860a7f9110176d94bb30a02942182f0bfc8d6780e9702f320336dc2dadb83b1d9879cceaf8d4b439642d1ec6d78c317cb808ab155455551bd5d9d7c22d8
+   languageName: node
+   linkType: hard
+ 
