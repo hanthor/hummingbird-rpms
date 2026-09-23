@@ -225,6 +225,9 @@ helm4:
 httpd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+hwloc:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 hugo:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
