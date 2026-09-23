@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          3%{?with_debug:.debug}%{?dist}
+Release:          4%{?with_debug:.debug}%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -1293,7 +1293,7 @@ rm %{buildroot}%{_mandir}/man1/{mariadb-client-test-embedded,mariadb-test-embedd
 %endif
 %if %{with pam}
 rm %{buildroot}/suite/plugins/pam/mariadb_mtr
-rm %{buildroot}/suite/plugins/pam/pam_mariadb_mtr.so
+rm %{buildroot}/%{_libdir}/%{majorname}/plugin/test_pam_modules/pam_mariadb_mtr.so
 # endif pam
 %endif
 rm %{buildroot}%{_bindir}/{mysql_client_test,mysqltest}
@@ -1849,6 +1849,9 @@ fi
 %endif
 
 %changelog
+* Thu Sep 10 2026 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3:10.11.18-4
+- Rebuilt for libxml-2.5.4
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 3:10.11.18-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
