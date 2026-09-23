@@ -18,7 +18,7 @@ Subcommands:
   set-fib         Set Fixed in Build after a Pulp NVR check
   close-nab       Comment, set VEX, close as Not a Bug
   create-task     Create a HUM Task, link blockers, set In Progress
-  open-mr         Push the fork and open a package fix MR
+  open-mr         Push a branch and open a package fix MR
   lookaside-cmd   Print lookaside upload commands; do not upload
   investigate     One-shot show + probes + related-ticket recap
   version-check   Compare local NVR vs CVE range / FIB / analysis NVR
@@ -352,7 +352,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     mr = subparsers.add_parser(
         "open-mr",
-        help="Push the fork branch and create a package fix MR (not advisory_handler).",
+        help="Push a branch and create a package fix MR (not advisory_handler).",
     )
     mr.add_argument("--task", required=True, help="HUM task ticket to Closes.")
     mr.add_argument(
@@ -371,6 +371,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mr.add_argument("--title", required=True, help="MR title.")
     mr.add_argument(
+        "--push-remote",
+        help="Push remote (default: current branch upstream, then origin).",
+    )
+    mr.add_argument(
         "-m",
         "--message",
         default="",
@@ -383,11 +387,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-branch", default="", help="Branch to push (default: the task key)."
     )
     mr.add_argument("--no-push", action="store_true", help="Skip git push.")
-    mr.add_argument(
-        "--no-review",
-        action="store_true",
-        help="Do not post /hummingbird code-review on the MR.",
-    )
 
     lookaside = subparsers.add_parser(
         "lookaside-cmd", help="Print lookaside copy/upload commands; do not upload."
@@ -844,7 +843,7 @@ def cmd_open_mr(args: argparse.Namespace) -> int:
         source_branch=branch,
         post_comment=post_comment,
         push=not args.no_push,
-        trigger_review=not args.no_review,
+        push_remote=args.push_remote,
     )
     print(f"MR={url}")
     return 0

@@ -19,7 +19,7 @@ if str(_SKILL_DIR) not in sys.path:
 
 
 def repo_root() -> Path:
-    # parents[4]: lib/utils.py → lib/ → cve/ → skills/ → .cursor/ → repo root
+    # parents[4]: lib/utils.py → lib/ → cve/ → skills/ → .agents/ → repo root
     return Path(__file__).resolve().parents[4]
 
 

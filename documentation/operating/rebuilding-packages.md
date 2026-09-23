@@ -450,6 +450,16 @@ curl -L https://github.com/<org>/<repo>/pull/<number>.patch \
 Name the patch file with a numeric prefix matching the next available `PatchN:` slot in the spec
 file (e.g., `0004-fix-foo.patch` if Patch1-3 already exist).
 
+Keep the upstream provenance in the patch header:
+
+```text
+Upstream: https://github.com/<org>/<repo>/commit/<direct-commit>
+Origin: https://github.com/<org>/<repo>/commit/<original-commit>
+```
+
+`Upstream` is the commit that the patch applies. Add `Origin` only when `Upstream` adapts or
+backports an earlier commit.
+
 ### 2. Add the patch to the spec file
 
 Add a `PatchN:` declaration after the existing patches:
@@ -526,12 +536,24 @@ Follow the same `.N` suffix pattern as no-change rebuilds:
 + Release: 3.1%{?dist}
 ```
 
-### 6. Commit the patch
+### 6. Mark the package as modified
+
+Mark a Fedora-imported package as modified before you commit. This prevents an automatic Fedora
+update from overwriting the patch:
+
+```bash
+make dist-git ARGS='mark-modified <package> --modified --reason "Backport <issue or CVE>"'
+```
+
+Preserve existing modification reasons. Do not change an independent package to `modified`.
+`mark-modified` updates the metadata file but does not commit it.
+
+### 7. Commit the patch
 
 Use this commit message format:
 
 ```text
-<package>: backport <short description>
+Backport <short description> to <package>
 
 Backport: <link to PR or commit>
 <ticket link if applicable>
@@ -540,39 +562,17 @@ Backport: <link to PR or commit>
 Example:
 
 ```text
-dnf5: backport reproducible build sorting fix
+Backport reproducible build sorting fix to dnf5
 
 Backport: https://github.com/rpm-software-management/dnf5/pull/2522
 ```
 
-### 7. Mark package as modified
+Include the patch, spec file, and metadata file in the same package commit. Do not use
+`dist_git.py rebuild` for this step. That command describes and commits a no-change rebuild.
 
-Mark the package as modified to prevent automatic Fedora updates from overwriting your backport:
+### 8. Verify patch application
 
-```bash
-./ci/dist_git.py mark-modified <package> --modified \
-  --reason "Backport fix for <issue description>"
-```
-
-Example:
-
-```bash
-./ci/dist_git.py mark-modified dnf5 --modified \
-  --reason "Backport reproducible build sorting fix from upstream PR#2522"
-```
-
-This ensures the package won't be automatically updated from Fedora until the backported patch lands
-upstream and you explicitly mark it clean again.
-
-### 8. Test the build locally (optional)
-
-Build the package locally to verify the patch applies cleanly:
-
-```bash
-./ci/build_rpms.sh <package>
-```
-
-Built RPMs will be in `builds/<package>/RPMS/`.
+Apply the patch to the exact packaged source release.
 
 ## Related Operations
 

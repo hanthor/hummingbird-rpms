@@ -1,4 +1,4 @@
-"""Unit tests for .cursor/skills/cve/cve_helper.py probe helpers."""
+"""Unit tests for .agents/skills/cve/cve_helper.py probe helpers."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parent.parent
-HELPER_PATH = ROOT / ".cursor" / "skills" / "cve" / "cve_helper.py"
+HELPER_PATH = ROOT / ".agents" / "skills" / "cve" / "cve_helper.py"
 
 
 def _load_helper():
@@ -560,23 +560,109 @@ def test_gitlab_project_from_url() -> None:
     )
 
 
-def test_detect_fork_remote_skips_upstream(monkeypatch) -> None:
-    output = "\n".join(
-        [
-            "origin\thttps://gitlab.com/redhat/hummingbird/rpms.git (fetch)",
-            "origin\thttps://gitlab.com/redhat/hummingbird/rpms.git (push)",
-            "prarit\thttps://gitlab.com/prarit/rpms.git (fetch)",
-            "prarit\thttps://gitlab.com/prarit/rpms.git (push)",
-        ]
+def test_open_package_mr_pushes_to_target_remote_by_default(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    comments: list[tuple[str, str]] = []
+
+    def fake_run(args, **_kwargs):
+        calls.append(args)
+        if args == ["git", "remote", "-v"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "origin\thttps://gitlab.com/redhat/hummingbird/rpms.git (push)\n"
+                ),
+                stderr="",
+            )
+        if args == ["git", "remote", "get-url", "--push", "origin"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout="https://gitlab.com/redhat/hummingbird/rpms.git\n",
+                stderr="",
+            )
+        if args[:3] == ["glab", "mr", "create"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout="https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/9\n",
+                stderr="",
+            )
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(lib_vcs, "ensure_glab_available", lambda: None)
+    monkeypatch.setattr(lib_vcs, "run_command", fake_run)
+
+    def post_comment(key: str, body: str) -> bool:
+        comments.append((key, body))
+        return True
+
+    url = lib_vcs.open_package_mr(
+        title="Fix CVE",
+        description="Description",
+        task="HUM-9",
+        source_branch="HUM-9",
+        post_comment=post_comment,
     )
+
+    assert url.endswith("/9")
+    assert ["git", "push", "-u", "origin", "HUM-9"] in calls
+    create = next(args for args in calls if args[:3] == ["glab", "mr", "create"])
+    assert "--head" not in create
+    assert not any(args[:3] == ["glab", "mr", "note"] for args in calls)
+    assert comments == [("HUM-9", f"MR: {url}\n")]
+
+
+def test_detect_push_remote_prefers_branch_upstream(monkeypatch) -> None:
     monkeypatch.setattr(
         lib_vcs,
         "run_command",
-        lambda *_a, **_k: SimpleNamespace(returncode=0, stdout=output, stderr=""),
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="contributor/HUM-9\n", stderr=""
+        ),
     )
-    name, project = lib_vcs.detect_fork_remote()
-    assert name == "prarit"
-    assert project == "prarit/rpms"
+    assert lib_vcs.detect_push_remote() == "contributor"
+
+
+def test_open_package_mr_uses_explicit_source_remote(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(args, **_kwargs):
+        calls.append(args)
+        if args == ["git", "remote", "-v"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "origin\thttps://gitlab.com/redhat/hummingbird/rpms.git (push)\n"
+                ),
+                stderr="",
+            )
+        if args == ["git", "remote", "get-url", "--push", "contributor"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout="https://gitlab.com/prarit/rpms.git\n",
+                stderr="",
+            )
+        if args[:3] == ["glab", "mr", "create"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout="https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/10\n",
+                stderr="",
+            )
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(lib_vcs, "ensure_glab_available", lambda: None)
+    monkeypatch.setattr(lib_vcs, "run_command", fake_run)
+    lib_vcs.open_package_mr(
+        title="Fix CVE",
+        description="Description",
+        task="HUM-10",
+        source_branch="HUM-10",
+        push_remote="contributor",
+        post_comment=lambda *_args: True,
+    )
+
+    assert ["git", "push", "-u", "contributor", "HUM-10"] in calls
+    create = next(args for args in calls if args[:3] == ["glab", "mr", "create"])
+    assert create[create.index("--head") + 1] == "prarit/rpms"
 
 
 def test_lookaside_upload_commands() -> None:
@@ -664,7 +750,7 @@ def test_recap_lines_asks_before_discovered() -> None:
     assert "resolution_hint=needs_version_check" in text
     assert "recommended_next: version-check bar --ticket HUM-2" in text
     assert "Related: HUM-2 (bar)" in text
-    assert "Yes please" in text
+    assert "Include all related tickets, or only the tickets you named?" in text
 
 
 def test_recap_lines_embargoed_ticket() -> None:

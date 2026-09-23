@@ -21,7 +21,7 @@ go-vendor-tools.toml's own pre_commands staying in sync with the spec's
 patches, not about a pipeline transform step.
 
 See documentation/operating/rebuilding-packages.md's "For Go packages that
-vendor deps" guidance and .cursor/skills/cve/SKILL.md's "Needs backport"
+vendor deps" guidance and .agents/skills/cve/SKILL.md's "Needs backport"
 step for the human-facing version of this rule.
 """
 

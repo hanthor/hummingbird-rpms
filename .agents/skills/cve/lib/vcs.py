@@ -25,12 +25,8 @@ def ensure_glab_available() -> None:
 
     open_package_mr() below assumes a `glab` CLI (verified against 1.115.0)
     that uses explicit `--repo`/`--head`/`--source-branch`/`--target-branch`
-    flags for `mr create` (fork MRs, no local target remote checkout needed)
-    and `mr note create <id> --repo ... -m ...` for comments. Older glab/lab
-    releases used positional `mr create [target_remote [target_branch]]
-    --source fork:branch` / `mr note <remote> <id>` syntax instead; if a
-    future CLI version changes this syntax again, "unknown flag" errors will
-    surface here first.
+    flags for `mr create`. If a future CLI version changes this syntax,
+    "unknown flag" errors will surface here first.
     """
     if shutil.which("glab"):
         return
@@ -268,29 +264,6 @@ def gitlab_project_from_url(url: str) -> str:
     return cleaned.split("gitlab.com/", 1)[1]
 
 
-def detect_fork_remote(cwd: Path | str | None = None) -> tuple[str, str]:
-    """Return (remote_name, gitlab project path) for the user's fork."""
-    proc = run_command(["git", "remote", "-v"], cwd=cwd)
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr or "git remote -v failed")
-    for line in proc.stdout.splitlines():
-        parts = line.split()
-        if len(parts) < 3 or parts[-1] != "(push)":
-            continue
-        name, url = parts[0], parts[1]
-        try:
-            project = gitlab_project_from_url(url)
-        except RuntimeError:
-            continue
-        if project.rstrip("/") == GITLAB_RPMS_REPO:
-            continue
-        return name, project
-    raise RuntimeError(
-        "Could not detect a fork remote. Check `git remote -v` "
-        f"(need a push remote other than {GITLAB_RPMS_REPO})."
-    )
-
-
 def detect_target_remote(cwd: Path | str | None = None) -> str:
     """Return the remote name that points at GITLAB_RPMS_REPO (e.g. "origin")."""
     proc = run_command(["git", "remote", "-v"], cwd=cwd)
@@ -309,6 +282,32 @@ def detect_target_remote(cwd: Path | str | None = None) -> str:
             return name
     raise RuntimeError(
         f"Could not detect a remote pointing at {GITLAB_RPMS_REPO}. Check `git remote -v`."
+    )
+
+
+def project_for_remote(remote: str, cwd: Path | str | None = None) -> str:
+    """Return the GitLab project path for a named push remote."""
+    proc = run_command(["git", "remote", "get-url", "--push", remote], cwd=cwd)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            (proc.stderr or proc.stdout or f"Could not read remote {remote}").strip()
+        )
+    return gitlab_project_from_url(proc.stdout.strip())
+
+
+def detect_push_remote(cwd: Path | str | None = None) -> str:
+    """Return the branch upstream remote, or origin when none is configured."""
+    proc = run_command(
+        ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+        cwd=cwd,
+    )
+    if proc.returncode == 0 and "/" in proc.stdout.strip():
+        return proc.stdout.strip().split("/", 1)[0]
+    origin = run_command(["git", "remote", "get-url", "--push", "origin"], cwd=cwd)
+    if origin.returncode == 0:
+        return "origin"
+    raise RuntimeError(
+        "Could not choose a push remote. Configure a branch upstream or pass --push-remote."
     )
 
 
@@ -381,40 +380,39 @@ def open_package_mr(
     post_comment: Callable[[str, str], bool],
     cwd: Path | str | None = None,
     push: bool = True,
-    trigger_review: bool = True,
+    push_remote: str | None = None,
 ) -> str:
     ensure_glab_available()
-    fork_remote, fork_project = detect_fork_remote(cwd=cwd)
-    # Sanity-check that a remote pointing at GITLAB_RPMS_REPO exists; the
-    # actual MR create/note calls below target it by project path via --repo.
     detect_target_remote(cwd=cwd)
+    selected_remote = push_remote or detect_push_remote(cwd=cwd)
+    source_project = project_for_remote(selected_remote, cwd=cwd)
     if push:
-        pushed = run_command(["git", "push", "-u", fork_remote, source_branch], cwd=cwd)
+        pushed = run_command(
+            ["git", "push", "-u", selected_remote, source_branch], cwd=cwd
+        )
         if pushed.returncode != 0:
             raise RuntimeError(
                 (pushed.stderr or pushed.stdout or "git push failed").strip()
             )
-    created = run_command(
-        [
-            "glab",
-            "mr",
-            "create",
-            "--repo",
-            GITLAB_RPMS_REPO,
-            "--head",
-            fork_project,
-            "--source-branch",
-            source_branch,
-            "--target-branch",
-            "main",
-            "-t",
-            title,
-            "-d",
-            description,
-            "--yes",
-        ],
-        cwd=cwd,
-    )
+    create_args = [
+        "glab",
+        "mr",
+        "create",
+        "--repo",
+        GITLAB_RPMS_REPO,
+        "--source-branch",
+        source_branch,
+        "--target-branch",
+        "main",
+        "-t",
+        title,
+        "-d",
+        description,
+        "--yes",
+    ]
+    if source_project != GITLAB_RPMS_REPO:
+        create_args[5:5] = ["--head", source_project]
+    created = run_command(create_args, cwd=cwd)
     if created.returncode != 0:
         raise RuntimeError(
             (created.stderr or created.stdout or "glab mr create failed").strip()
@@ -433,20 +431,4 @@ def open_package_mr(
     else:
         mr_url = urls[-1]
     post_comment(normalize_hum_key(task), f"MR: {mr_url}\n")
-    if trigger_review:
-        iid = mr_url.rstrip("/").rsplit("/", 1)[-1]
-        run_command(
-            [
-                "glab",
-                "mr",
-                "note",
-                "create",
-                iid,
-                "--repo",
-                GITLAB_RPMS_REPO,
-                "-m",
-                "/hummingbird code-review",
-            ],
-            cwd=cwd,
-        )
     return mr_url
