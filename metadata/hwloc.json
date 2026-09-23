@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
+  "release": "3",
   "release_monitoring_project_id": 13501,
-  "sha": "fdcd5107833eb6bdca8fb9cb89abc1dde712498c",
+  "sha": "0f2a383b8c4f9e1d3ad6b2f48e1f8572abaad382",
   "source": "https://src.fedoraproject.org/rpms/hwloc.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/open-mpi/hwloc",
