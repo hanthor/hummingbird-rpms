@@ -31,7 +31,7 @@ google-noto-sans-bassa-vah-fonts;sans-serif;-;normal;Noto Sans Bassa Vah;0;0;0;0
 google-noto-sans-bassa-vah-vf-fonts;sans-serif;-;normal;Noto Sans Bassa Vah;0;0;0;0;0;0;;;
 google-noto-sans-batak-fonts;sans-serif;-;normal;Noto Sans Batak;0;0;0;0;0;0;;;
 google-noto-sans-bengali-fonts;sans-serif;as,bn;normal;Noto Sans Bengali;1;0;1;0;0;0;;(Condensed|ExtraCondensed|SemiCondensed);
-google-noto-sans-bengali-ui-fonts;system-ui;as,bn,mni;normal;Noto Sans Bengali UI;0;0;0;0;0;0;;(Condensed|ExtraCondensed|SemiCondensed);
+google-noto-sans-bengali-ui-fonts;system-ui;as,bn;normal;Noto Sans Bengali UI;0;0;0;0;0;0;;(Condensed|ExtraCondensed|SemiCondensed);
 google-noto-sans-bengali-vf-fonts;sans-serif;as,bn;normal;Noto Sans Bengali;1;0;1;0;0;0;;;
 google-noto-sans-bhaiksuki-fonts;sans-serif;-;normal;Noto Sans Bhaiksuki;0;0;0;0;0;0;;;
 google-noto-sans-brahmi-fonts;sans-serif;-;normal;Noto Sans Brahmi;0;0;0;0;0;0;;;
