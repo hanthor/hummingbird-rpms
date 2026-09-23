@@ -3,8 +3,8 @@
   "modification_status": "clean",
   "release": "1",
   "release_monitoring_project_id": 9989,
-  "sha": "4c18519ae432381e9cb18e105f0f15c46537e81c",
+  "sha": "3fe82b7aded61c84813926df7a2737d3a6ad8c5c",
   "source": "https://src.fedoraproject.org/rpms/firewalld.git",
   "upstream_repo": "https://github.com/firewalld/firewalld",
-  "version": "2.5.1"
+  "version": "2.5.2"
 }
