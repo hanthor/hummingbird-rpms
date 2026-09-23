@@ -1,4 +1,4 @@
-From b94d9843a82dc187df0720636cbfcc6b6163cba8 Mon Sep 17 00:00:00 2001
+From b73fecbe4730fe94d2849d95f7fa56356ce621d3 Mon Sep 17 00:00:00 2001
 From: Kamil Dudka <kdudka@redhat.com>
 Date: Mon, 29 Mar 2010 17:20:34 +0000
 Subject: [PATCH] coreutils-df-direct.patch
@@ -12,10 +12,10 @@ Subject: [PATCH] coreutils-df-direct.patch
  create mode 100755 tests/df/direct.sh
 
 diff --git a/doc/coreutils.texi b/doc/coreutils.texi
-index 0f9d3e27..dd77f03d 100644
+index 46854db..1bd6976 100644
 --- a/doc/coreutils.texi
 +++ b/doc/coreutils.texi
-@@ -12007,6 +12007,12 @@ some systems (notably Solaris), doing this yields more up to date results,
+@@ -12067,6 +12067,12 @@ some systems (notably Solaris), doing this yields more up to date results,
  but in general this option makes @command{df} much slower, especially when
  there are many or very busy file systems.
  
@@ -29,7 +29,7 @@ index 0f9d3e27..dd77f03d 100644
  @cindex grand total of file system size, usage and available space
  Print a grand total of all arguments after all arguments have
 diff --git a/src/df.c b/src/df.c
-index f41ba3a8..6b23df75 100644
+index b3d83f5..f0c5f09 100644
 --- a/src/df.c
 +++ b/src/df.c
 @@ -122,6 +122,9 @@ static bool print_type;
@@ -126,7 +126,7 @@ index f41ba3a8..6b23df75 100644
        if (posix_format)
 diff --git a/tests/df/direct.sh b/tests/df/direct.sh
 new file mode 100755
-index 00000000..8373705a
+index 0000000..8373705
 --- /dev/null
 +++ b/tests/df/direct.sh
 @@ -0,0 +1,55 @@
@@ -186,10 +186,10 @@ index 00000000..8373705a
 +
 +Exit $fail
 diff --git a/tests/local.mk b/tests/local.mk
-index 628e5443..e2c07a89 100644
+index e21c111..b3e45c4 100644
 --- a/tests/local.mk
 +++ b/tests/local.mk
-@@ -610,6 +610,7 @@ all_tests =					\
+@@ -634,6 +634,7 @@ all_tests =					\
    tests/df/no-mtab-status-masked-proc.sh	\
    tests/df/skip-duplicates.sh			\
    tests/df/skip-rootfs.sh			\
@@ -198,5 +198,5 @@ index 628e5443..e2c07a89 100644
    tests/dd/conv-case.sh				\
    tests/dd/direct.sh				\
 -- 
-2.54.0
+2.55.0
 
