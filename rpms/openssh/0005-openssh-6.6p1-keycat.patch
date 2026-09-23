@@ -1,7 +1,7 @@
-From 9f85e1dff3539c5791634a361f3c696d87ef9beb Mon Sep 17 00:00:00 2001
+From 6164d9589be5125b95da999ed6615aa431a42e70 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 05/54] openssh-6.6p1-keycat
+Subject: [PATCH 05/53] openssh-6.6p1-keycat
 
 ---
  .depend          |   1 +
@@ -15,10 +15,10 @@ Subject: [PATCH 05/54] openssh-6.6p1-keycat
  create mode 100644 ssh-keycat.c
 
 diff --git a/.depend b/.depend
-index 03e8c423d..b6b1ad242 100644
+index 845fadceb..7d2d00bbf 100644
 --- a/.depend
 +++ b/.depend
-@@ -134,6 +134,7 @@ ssh-ed25519-sk.o: includes.h config.h defines.h platform.h openbsd-compat/openbs
+@@ -135,6 +135,7 @@ ssh-ed25519-sk.o: includes.h config.h defines.h platform.h openbsd-compat/openbs
  ssh-ed25519.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h crypto_api.h log.h ssherr.h sshbuf.h sshkey.h
  ssh-keygen.o: cipher-chachapoly.h chacha.h poly1305.h cipher-aesctr.h rijndael.h
  ssh-keygen.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h xmalloc.h sshkey.h authfile.h sshbuf.h pathnames.h log.h ssherr.h misc.h match.h hostfile.h dns.h ssh.h ssh2.h atomicio.h krl.h digest.h utf8.h authfd.h sshsig.h ssh-sk.h sk-api.h cipher.h
@@ -57,7 +57,7 @@ index 000000000..630ec628c
 +
 +
 diff --git a/Makefile.in b/Makefile.in
-index da59bcc10..c932373fc 100644
+index e9503e7b7..2a449680a 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -23,6 +23,7 @@ SSH_PROGRAM=@bindir@/ssh
@@ -104,10 +104,10 @@ index da59bcc10..c932373fc 100644
  	$(INSTALL) -m 0755 $(STRIP_OPT) sftp-server$(EXEEXT) $(DESTDIR)$(SFTP_SERVER)$(EXEEXT)
  	$(INSTALL) -m 644 ssh.1.out $(DESTDIR)$(mandir)/$(mansubdir)1/ssh.1
 diff --git a/configure.ac b/configure.ac
-index a4d544cc5..d7e911e81 100644
+index cb1711f6b..4b3cff38c 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3700,6 +3700,7 @@ AC_ARG_WITH([pam],
+@@ -3639,6 +3639,7 @@ AC_ARG_WITH([pam],
  			PAM_MSG="yes"
  
  			SSHDLIBS="$SSHDLIBS -lpam"
@@ -115,7 +115,7 @@ index a4d544cc5..d7e911e81 100644
  			AC_DEFINE([USE_PAM], [1],
  				[Define if you want to enable PAM support])
  
-@@ -3710,6 +3711,7 @@ AC_ARG_WITH([pam],
+@@ -3649,6 +3650,7 @@ AC_ARG_WITH([pam],
  					;;
  				*)
  					SSHDLIBS="$SSHDLIBS -ldl"
@@ -123,7 +123,7 @@ index a4d544cc5..d7e911e81 100644
  					;;
  				esac
  			fi
-@@ -4953,6 +4955,7 @@ AC_ARG_WITH([selinux],
+@@ -4892,6 +4894,7 @@ AC_ARG_WITH([selinux],
  	fi ]
  )
  AC_SUBST([SSHDLIBS])
@@ -131,7 +131,7 @@ index a4d544cc5..d7e911e81 100644
  
  # Check whether user wants Kerberos 5 support
  KRB5_MSG="no"
-@@ -5966,6 +5969,9 @@ fi
+@@ -5905,6 +5908,9 @@ fi
  if test ! -z "${SSHDLIBS}"; then
  echo "         +for sshd: ${SSHDLIBS}"
  fi

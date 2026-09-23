@@ -1,7 +1,7 @@
-From 8a56ff00539091507c57a3218641c6d96fcb89d6 Mon Sep 17 00:00:00 2001
+From fa6f77d16574bf45434431c2fd60fcd34e9a0c8f Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 7 Aug 2026 17:25:07 +0200
-Subject: [PATCH 54/54] openssh-6.7p1-coverity
+Subject: [PATCH 01/53] openssh-6.7p1-coverity
 
 ---
  krl.c                         | 3 +++
@@ -60,10 +60,10 @@ index 7499aa975..2807cad4a 100644
  	    MIN_SIZEOF(ut->ut_host, li->hostname));
  # endif
 diff --git a/misc.c b/misc.c
-index c0e16437a..f5275d108 100644
+index 517fa7a97..88dc78821 100644
 --- a/misc.c
 +++ b/misc.c
-@@ -1620,6 +1620,8 @@ sanitise_stdfd(void)
+@@ -1612,6 +1612,8 @@ sanitise_stdfd(void)
  	}
  	if (nullfd > STDERR_FILENO)
  		close(nullfd);
@@ -72,7 +72,7 @@ index c0e16437a..f5275d108 100644
  }
  
  char *
-@@ -2823,6 +2825,7 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
+@@ -2815,6 +2817,7 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
  	}
  	if (devnull > STDERR_FILENO)
  		close(devnull);
@@ -81,10 +81,10 @@ index c0e16437a..f5275d108 100644
  }
  
 diff --git a/monitor.c b/monitor.c
-index 63180e2a9..be55a32f3 100644
+index 149671145..0e5871994 100644
 --- a/monitor.c
 +++ b/monitor.c
-@@ -410,7 +410,7 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
+@@ -367,7 +367,7 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
  	mm_get_keystate(ssh, pmonitor);
  
  	/* Drain any buffered messages from the child */
@@ -93,7 +93,7 @@ index 63180e2a9..be55a32f3 100644
  		;
  
  	/* Wait for the child's exit status */
-@@ -1829,7 +1829,7 @@ mm_answer_pty(struct ssh *ssh, int sock, struct sshbuf *m)
+@@ -1733,7 +1733,7 @@ mm_answer_pty(struct ssh *ssh, int sock, struct sshbuf *m)
  	s->ptymaster = s->ptyfd;
  
  	debug3_f("tty %s ptyfd %d", s->tty, s->ttyfd);
@@ -147,10 +147,10 @@ index 26bdc3e08..8e2939b95 100644
  		FD_CLR(notify_pipe[0], readset);
  	}
 diff --git a/readconf.c b/readconf.c
-index e971ca5c4..4baeb108d 100644
+index bc48b4f55..7465216f3 100644
 --- a/readconf.c
 +++ b/readconf.c
-@@ -2164,6 +2164,7 @@ parse_pubkey_algos:
+@@ -2111,6 +2111,7 @@ parse_pubkey_algos:
  			} else if (r != 0) {
  				error("%.200s line %d: glob failed for %s.",
  				    filename, linenum, arg2);
@@ -159,10 +159,10 @@ index e971ca5c4..4baeb108d 100644
  			}
  			free(arg2);
 diff --git a/servconf.c b/servconf.c
-index ab7327a2a..8480e9321 100644
+index ac0c31d95..e7819d59a 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -2121,8 +2121,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -2026,8 +2026,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (*activep && *charptr == NULL) {
  			*charptr = tilde_expand_filename(arg, getuid());
  			/* increase optional counter */
@@ -175,7 +175,7 @@ index ab7327a2a..8480e9321 100644
  		break;
  
 diff --git a/serverloop.c b/serverloop.c
-index e50985e90..de2dfeef9 100644
+index 9d8a3429e..c22681483 100644
 --- a/serverloop.c
 +++ b/serverloop.c
 @@ -536,7 +536,7 @@ server_request_tun(struct ssh *ssh)

@@ -1,7 +1,7 @@
-From a7cce97da90aae29ee50dc223ac51e560640cde6 Mon Sep 17 00:00:00 2001
+From 1fdd8f9ddb1b2e1e0d4f7d97e5e7e17b74a85a6a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 28/54] openssh-8.0p1-openssl-kdf
+Subject: [PATCH 28/53] openssh-8.0p1-openssl-kdf
 
 # Use OpenSSL KDF (#1631761)
 ---
@@ -10,10 +10,10 @@ Subject: [PATCH 28/54] openssh-8.0p1-openssl-kdf
  2 files changed, 108 insertions(+)
 
 diff --git a/configure.ac b/configure.ac
-index 321adbab1..caa75f708 100644
+index cb46903f4..394acc3d8 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3248,6 +3248,7 @@ if test "x$openssl" = "xyes" ; then
+@@ -3261,6 +3261,7 @@ if test "x$openssl" = "xyes" ; then
  		HMAC_CTX_init \
  		RSA_generate_key_ex \
  		RSA_get_default_method \
@@ -22,7 +22,7 @@ index 321adbab1..caa75f708 100644
  
  	# LibreSSL/OpenSSL API differences
 diff --git a/kex.c b/kex.c
-index 3701a40c0..5b6066169 100644
+index 1b8f1c3c5..6981b59f5 100644
 --- a/kex.c
 +++ b/kex.c
 @@ -37,6 +37,11 @@
@@ -37,7 +37,7 @@ index 3701a40c0..5b6066169 100644
  #endif
  
  #include "ssh.h"
-@@ -1088,6 +1093,107 @@ kex_choose_conf(struct ssh *ssh, uint32_t seq)
+@@ -1086,6 +1091,107 @@ kex_choose_conf(struct ssh *ssh, uint32_t seq)
  	return r;
  }
  
@@ -145,7 +145,7 @@ index 3701a40c0..5b6066169 100644
  static int
  derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
      const struct sshbuf *shared_secret, u_char **keyp)
-@@ -1151,6 +1257,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
+@@ -1149,6 +1255,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
  	ssh_digest_free(hashctx);
  	return r;
  }
