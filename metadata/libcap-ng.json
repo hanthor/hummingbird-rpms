@@ -2,8 +2,8 @@
   "branch": "rawhide",
   "modification_status": "clean",
   "release": "1",
-  "sha": "64bb2a2dc4956219ab3215c9060136cc4ebe14e0",
+  "sha": "26345a03916d88e186c80c5d1ef3dfc5f8ebbc85",
   "source": "https://src.fedoraproject.org/rpms/libcap-ng.git",
   "upstream_repo": "https://github.com/stevegrubb/libcap-ng",
-  "version": "0.9.5"
+  "version": "0.9.6"
 }
