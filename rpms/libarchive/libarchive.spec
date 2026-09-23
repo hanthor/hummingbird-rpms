@@ -42,7 +42,6 @@ BuildRequires: make
 # loaded, which breaks the RIPEMD-160 test. This patch disables the RIPEMD-160
 # support explicitly.
 Patch0001: 0001-Drop-rmd160-from-OpenSSL.patch
-Patch0002: 3228.patch
 
 %description
 Libarchive is a programming library that can create and read several different
