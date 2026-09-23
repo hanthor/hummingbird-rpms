@@ -42,7 +42,7 @@ IPTABLES_CONFIG=/etc/sysconfig/${IPTABLES}-config
 IPV=${IPTABLES%tables} # ip for ipv4 | ip6 for ipv6
 [ "$IPV" = "ip" ] && _IPV="ipv4" || _IPV="ipv6"
 PROC_IPTABLES_NAMES=/proc/net/${IPV}_tables_names
-VAR_SUBSYS_IPTABLES=/var/lock/subsys/$IPTABLES
+VAR_LOCK_IPTABLES=/var/lock/$IPTABLES
 
 # only usable for root
 if [ $EUID != 0 ]; then
@@ -249,7 +249,7 @@ start() {
     # Load sysctl settings
     load_sysctl
 
-    touch $VAR_SUBSYS_IPTABLES
+    touch $VAR_LOCK_IPTABLES
     return $ret
 }
 
@@ -264,7 +264,7 @@ stop() {
     # And then, flush the rules and delete chains
     flush_n_delete
 
-    rm -f $VAR_SUBSYS_IPTABLES
+    rm -f $VAR_LOCK_IPTABLES
     return $ret
 }
 
@@ -313,7 +313,7 @@ save() {
 }
 
 status() {
-    if [ ! -f "$VAR_SUBSYS_IPTABLES" ]; then
+    if [ ! -f "$VAR_LOCK_IPTABLES" ]; then
 	echo $"${IPTABLES}: Firewall is not running."
 	return 3
     fi
@@ -407,7 +407,7 @@ restart() {
 
 case "$1" in
     start)
-	[ -f "$VAR_SUBSYS_IPTABLES" ] && exit 0
+	[ -f "$VAR_LOCK_IPTABLES" ] && exit 0
 	start
 	RETVAL=$?
 	;;
@@ -421,11 +421,11 @@ case "$1" in
 	RETVAL=$?
 	;;
     reload)
-	[ -e "$VAR_SUBSYS_IPTABLES" ] && reload
+	[ -e "$VAR_LOCK_IPTABLES" ] && reload
 	RETVAL=$?
 	;;      
     condrestart|try-restart)
-	[ ! -e "$VAR_SUBSYS_IPTABLES" ] && exit 0
+	[ ! -e "$VAR_LOCK_IPTABLES" ] && exit 0
 	restart
 	RETVAL=$?
 	;;

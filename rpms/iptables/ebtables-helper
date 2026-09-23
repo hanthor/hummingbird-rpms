@@ -16,7 +16,7 @@ failure() {
 EBTABLES_CONFIG=/etc/sysconfig/ebtables-config
 EBTABLES_DATA=/etc/sysconfig/ebtables
 EBTABLES_TABLES="broute filter nat"
-VAR_SUBSYS_EBTABLES=/var/lock/subsys/ebtables
+VAR_LOCK_EBTABLES=/var/lock/ebtables
 
 # ebtables-config defaults
 EBTABLES_SAVE_ON_STOP="no"
@@ -67,7 +67,7 @@ start() {
 		initialize
 	fi
 	local ret=$?
-	touch $VAR_SUBSYS_EBTABLES
+	touch $VAR_LOCK_EBTABLES
 	return $ret
 }
 
@@ -79,7 +79,7 @@ save() {
 
 case $1 in
 	start)
-		[ -f "$VAR_SUBSYS_EBTABLES" ] && exit 0
+		[ -f "$VAR_LOCK_EBTABLES" ] && exit 0
 		start && success || failure
 		RETVAL=$?
 		;;
@@ -88,7 +88,7 @@ case $1 in
 		echo -n $"ebtables: stopping firewall: "
 		initialize && success || failure
 		RETVAL=$?
-		rm -f $VAR_SUBSYS_EBTABLES
+		rm -f $VAR_LOCK_EBTABLES
 		;;
 	save)
 		save
