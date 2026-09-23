@@ -1,6 +1,6 @@
 # https://github.com/etcd-io/etcd
 %global goipath         github.com/etcd-io/etcd
-Version:                3.7.1
+Version:                3.7.2
 
 %gometa -L -f
 
@@ -18,7 +18,6 @@ Source1:        etcd-server-%{version}-vendor.tar.bz2
 Source2:        etcd-etcdctl-%{version}-vendor.tar.bz2
 Source3:        etcd-etcdutl-%{version}-vendor.tar.bz2
 Source4:        go-vendor-tools.toml
-Patch0:         0001-cve-2026-56852-update-golang.org-x-text-to-v0.39.0.patch
 
 BuildRequires:  go-vendor-tools
 
@@ -29,7 +28,6 @@ and many other distributed systems.
 
 %prep
 %goprep -A
-%autopatch -p1
 tar -xf %{S:1} -C server
 tar -xf %{S:2} -C etcdctl
 tar -xf %{S:3} -C etcdutl
