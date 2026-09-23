@@ -2,9 +2,9 @@
   "branch": "rawhide",
   "modification_reason": "backport uniq -w multibyte read overrun fix for CVE-2026-56391",
   "modification_status": "modified",
-  "release": "6",
-  "sha": "08a268447f66d6a0552cf6fd5056265bf82da808",
+  "release": "1",
+  "sha": "072fa66649a42f9da3181d031188c78890b330c1",
   "source": "https://src.fedoraproject.org/rpms/coreutils.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/coreutils.git",
-  "version": "9.11"
+  "version": "9.12"
 }
