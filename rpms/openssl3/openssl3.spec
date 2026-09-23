@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl3
 Version: 3.5.8
-Release: 0.1%{?dist}
+Release: 1%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -495,6 +495,9 @@ install -m644 %{SOURCE9} \
 %ldconfig_scriptlets libs
 
 %changelog
+* Thu Sep 10 2026 Dmitry Belyavskiy <beldmit@gmail.com> - 1:3.5.8-1
+- Rebase to OpenSSL 3.5.8
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 1:3.5.7-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
