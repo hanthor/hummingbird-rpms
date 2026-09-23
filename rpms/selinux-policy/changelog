@@ -1,4 +1,120 @@
-* Wed Aug 05 2026 Zdenek Pytela <zpytela@redhat.com>
+* Mon Sep 21 2026 Zdenek Pytela <zpytela@redhat.com> - 45.19-1
+- Make post-te statement extraction tolerant of leading whitespace
+- Allow login/pam_systemd started by kmscon to access env vars
+
+* Fri Sep 18 2026 Zdenek Pytela <zpytela@redhat.com> - 45.18-1
+- Allow sshd-session tcp connect to all reserved ports
+- Allow sshd-session connect to vnc port
+- Allow sshd-session transition on passwd execution
+- Allow dhcpc-hook get init status
+- Allow kmscon read systemd_ssh_issue PID files
+- Rearrange kmscon policy to comply with formatting rules
+- Allow kmscon signal init
+- Allow systemd-timedated read network sysctls
+- Add CI check for whitespace on pull requests
+- Remove commented-out interface calls
+- Fix whitespace across all policy modules
+- Move systemd_read_userdbd_runtime_sock_files() to another optional block
+- Use udev_manage_pid_lnk_files() instead of direct reference
+
+* Fri Sep 11 2026 Zdenek Pytela <zpytela@redhat.com> - 45.17-1
+- Fix corrupted formatting in files.if
+- Allow nsswitch_domain connect to read xdm pid socket files
+- nsresourced fixes for mkosi (bsc#1279902)
+- Allow sshd-session connect to gnome remote desktop port
+- Allow sshd-session to connect to all generic ports
+- Allow sshd-session connect to port 443/tcp (http_port_t)
+- Allow sshd-session connect to tcp/22 (ssh_port_t)
+- Allow rsync to getattr pipes and sockes if rsync_export_all_ro is set (bsc#1279051)
+- Introduce files_getattr_non_auth_sockets
+- Introduce files_getattr_non_auth_pipes interface
+- Allow rsync to read var_t (bsc#1279565)
+- Update udev_manage_pid_files() to include symlinks read
+- Support vfs_snapper to work with samba_share_t (bsc#1265400)
+- vfs_samba uses dbus to communicate with snapper (bsc#1265400)
+- fix NetworkManager dnsmasq-forwarders.conf labeling (bsc#1260038)
+- Allow cupsd_t to communicate with fprintd via dbus (bsc#1268366)
+- Allow kmscon read cocpit's pid files
+- fix vpnc_t setpgid permission for openconnect (bsc#1272934)
+
+* Mon Sep 07 2026 Zdenek Pytela <zpytela@redhat.com> - 45.16-1
+- Allow systemd-sysctl to create /run/sysctl.d
+- Allow systemd to create /run/udev/control
+- Allow systemd-coredumpd to create /run/systemd/coredumpd/kernel
+- Allow bootupcl nnp transition to mount_t
+- Networkmanager: Remove files_manage_etc_files for console_t
+- Networkmanager: Allow NM to manage files under /run
+- Allow login_userdomain read/write kmscon devpts chr_files
+- Support console version of initial-setup
+- ssh-session accesses gitolite ssh config files (bsc#1277259)
+- Allow kmscon use netlink permissions (#3368)
+
+* Wed Sep 02 2026 Adam Williamson <adamwill@fedoraproject.org> - 45.15-2
+- Backport PR #3396 to fix initial-setup on kmscon (rhbz#2484542)
+
+* Thu Aug 27 2026 Zdenek Pytela <zpytela@redhat.com> - 45.15-1
+- Fix NFS mount with xprtsec=tls / xprtsec=mtls (bsc#1275783)
+- Allow ssh_agent_type manage ssh_home_t files and sock_files
+- Allow sshd-session manage ssh_home_t socke files
+- Allow sshd-session X11 forwarding
+- Allow lsmd-plugin read udev pid files
+- Allow virtstoraged domain transition on iscsiadm execution
+- Revert "Allow virtqemud domain transition on iscsiadm execution"
+- Allow rhsmcertd search gconf home data dirs
+- Allow rhsmcertd read gconf home files
+- Revert "Allow rhsmcertd read gconf home files"
+
+* Sat Aug 22 2026 Zdenek Pytela <zpytela@redhat.com> - 45.14-1
+- Label malware-detection-config.yml with insights_client_etc_rw_t
+- Add the files_write_system_conf_files() interface
+- Allow bluez dbus api pass sockets over dbus
+- Support sandboxing features for sysadm_t
+- Update dhcpc-hook policy
+- Allow dhcpc hook query the chronyd service
+- Support gnome-remote-desktop's smartcard redirection support
+- Allow gnome-remote-desktop read sssd public files
+- Allow gnome-remote-desktop connect to unreserved ports
+- Allow gnome-remote-desktop speak with tabrmd over dbus (bsc#1244573)
+- Label /run/audit with auditd_var_run_t
+- Allow auditd manage its private run dirs
+- Allow virtqemud relabelfrom its private fifo files
+- Update the ssh_server_template() template
+- Add rules for sshd vsock socket read/write
+- Allow sshd-auth/sshd-session get attributes of their sshd parent
+- Allow qatlib manage hugetlbfs directories
+- Allow sanlock the sys_admin capability
+- Allow lsmd-plugin use libStorageMgmt to provision storage
+- Allow insights-client read gconf home files
+- rhsmcertd: allow bootc/ostree transient package persistence detection
+- Allow rhsmcertd read the file_contexts files
+- Allow rhsmcertd read selinux config and default file contexts
+- Use NetworkManager_t instead of networkmanager_t
+
+* Thu Aug 20 2026 Zdenek Pytela <zpytela@redhat.com> - 45.13-1
+- Allow namespace_init_t execute generic programs in bin directories
+- Update the ssh_server_template() template
+- Add rules for sshd vsock socket read/write
+- Allow dhcpc hook query the chronyd service
+- Allow insights-client read gconf home files
+- Allow login_userdomain mount, remount, unmount all mount points
+- Allow login_userdomain mount on all mount points
+- Revert "Allow userdomain get attributes of files on an nsfs filesystem"
+- Allow accountsd create and use its private tmpfs files
+- Add the anaconda_read_state_install() interface
+
+* Fri Aug 14 2026 Zdenek Pytela <zpytela@redhat.com> - 45.12-1
+- Update qatlib policy
+- Allow rhsmcertd read the file_contexts files
+- rhsmcertd: allow bootc/ostree transient package persistence detection
+- Allow virtproxyd connect to systemd-homed over a unix stream socket
+- Allow system_mail_t read procmail home content
+- Label malware-detection-config.yml with insights_client_etc_rw_t
+- Add bcachefs as a SELinux capable filesystem
+- Allow unconfined_service_t nnp_transition to container_runtime_t
+- Add the files_write_system_conf_files() interface
+- Allow haveged (entropyd_t)  create and use its private tmpfs files
+
+* Wed Aug 05 2026 Zdenek Pytela <zpytela@redhat.com> - 45.11-1
 - Allow ctdbd manage access to Samba PID directories
 - Allow rhsmcertd read selinux config and default file contexts
 - Allow staff_t and user_t execute udev without a domain transition
