@@ -1,17 +1,17 @@
-From 4a68f641e71153c825f5cdc34d0b3a07022df638 Mon Sep 17 00:00:00 2001
+From dccd2a9aba5fa758cfd27c6de86fa73830aa7f6f Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 08/54] openssh-5.8p2-sigpipe
+Subject: [PATCH 08/53] openssh-5.8p2-sigpipe
 
 ---
  ssh-keyscan.c | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/ssh-keyscan.c b/ssh-keyscan.c
-index ddaf8dfb1..c455ef532 100644
+index f093b0108..77b4341c9 100644
 --- a/ssh-keyscan.c
 +++ b/ssh-keyscan.c
-@@ -786,6 +786,9 @@ main(int argc, char **argv)
+@@ -797,6 +797,9 @@ main(int argc, char **argv)
  	if (maxfd > fdlim_get(0))
  		fdlim_set(maxfd);
  	fdcon = xcalloc(maxfd, sizeof(con));

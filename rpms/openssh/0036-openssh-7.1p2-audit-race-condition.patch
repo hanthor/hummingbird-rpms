@@ -1,7 +1,7 @@
-From eb15cb2fc5cb181c68b4056c1af3caf4c9aff551 Mon Sep 17 00:00:00 2001
+From 6991682335fb1dded7b50d903b7f9cc600535ba2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 36/54] openssh-7.1p2-audit-race-condition
+Subject: [PATCH 36/53] openssh-7.1p2-audit-race-condition
 
 # Audit race condition in forked child (#1310684)
 ---
@@ -11,10 +11,10 @@ Subject: [PATCH 36/54] openssh-7.1p2-audit-race-condition
  3 files changed, 102 insertions(+), 7 deletions(-)
 
 diff --git a/monitor_wrap.c b/monitor_wrap.c
-index 7ccf8729c..cd70a4e12 100644
+index bdac7d3f9..4dc64857b 100644
 --- a/monitor_wrap.c
 +++ b/monitor_wrap.c
-@@ -1394,4 +1394,50 @@ mm_audit_destroy_sensitive_data(struct ssh *ssh, const char *fp, pid_t pid, uid_
+@@ -1396,4 +1396,50 @@ mm_audit_destroy_sensitive_data(struct ssh *ssh, const char *fp, pid_t pid, uid_
  	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_SERVER_KEY_FREE, m);
  	sshbuf_free(m);
  }

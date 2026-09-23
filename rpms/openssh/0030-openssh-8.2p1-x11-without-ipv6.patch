@@ -1,7 +1,7 @@
-From 228a3b51fbf3025bb1401dd885423206c8763266 Mon Sep 17 00:00:00 2001
+From a29df25b1ed0d2945d0990bc7ca8918c16c7d264 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 30/54] openssh-8.2p1-x11-without-ipv6
+Subject: [PATCH 30/53] openssh-8.2p1-x11-without-ipv6
 
 # Do not break X11 without IPv6
 ---

@@ -1,7 +1,7 @@
-From 2f007272e169c885bf152a8fe7ddcac127b8bc07 Mon Sep 17 00:00:00 2001
+From 5d1debdaee7b6dc51c5f10530b4698a7a2f1bb80 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 14/54] openssh-6.6p1-force_krb
+Subject: [PATCH 14/53] openssh-6.6p1-force_krb
 
 #http://www.mail-archive.com/kerberos@mit.edu/msg17591.html
 ---
@@ -267,10 +267,10 @@ index 8ec451926..db34d77f4 100644
  
  /* draft-ietf-secsh-gsskeyex-06 */
 diff --git a/sshd.8 b/sshd.8
-index 0226a8303..e2d8ff003 100644
+index 24e5639a3..8ef358cd5 100644
 --- a/sshd.8
 +++ b/sshd.8
-@@ -286,6 +286,7 @@ Finally, the server and the client enter an authentication dialog.
+@@ -287,6 +287,7 @@ Finally, the server and the client enter an authentication dialog.
  The client tries to authenticate itself using
  host-based authentication,
  public key authentication,
@@ -278,7 +278,7 @@ index 0226a8303..e2d8ff003 100644
  challenge-response authentication,
  or password authentication.
  .Pp
-@@ -874,6 +875,12 @@ This file is used in exactly the same way as
+@@ -878,6 +879,12 @@ This file is used in exactly the same way as
  but allows host-based authentication without permitting login with
  rlogin/rsh.
  .Pp

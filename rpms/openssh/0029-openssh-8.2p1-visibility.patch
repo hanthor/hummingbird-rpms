@@ -1,7 +1,7 @@
-From 67b12f7fcdb4183c48195e90920cb80d2d538b34 Mon Sep 17 00:00:00 2001
+From 0c8380243aa47419186f12070b4115846bf9b425 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 29/54] openssh-8.2p1-visibility
+Subject: [PATCH 29/53] openssh-8.2p1-visibility
 
 # sk-dummy.so built with -fvisibility=hidden does not work
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 29/54] openssh-8.2p1-visibility
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/regress/misc/sk-dummy/sk-dummy.c b/regress/misc/sk-dummy/sk-dummy.c
-index 4c96e8827..4af5209db 100644
+index cbbba7459..f1b3f060b 100644
 --- a/regress/misc/sk-dummy/sk-dummy.c
 +++ b/regress/misc/sk-dummy/sk-dummy.c
 @@ -80,7 +80,7 @@ skdebug(const char *func, const char *fmt, ...)
