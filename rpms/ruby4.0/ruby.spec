@@ -323,10 +323,6 @@ Patch11: ruby-4.0.6-json-CVE-2026-54696-fbuffer-capa.patch
 # Fix format string injection in JSON.parse with allow_duplicate_key: false (CVE-2026-33210).
 # https://github.com/ruby/json/security/advisories/GHSA-3m6g-2423-7cp3
 Patch12: ruby-4.0.6-json-CVE-2026-33210-format-string.patch
-# Bump default-gem resolv 0.7.0 -> 0.7.2 (CVE-2026-80212, CVE-2026-80213).
-# https://github.com/ruby/ruby/pull/18528
-Patch13: ruby-4.0.6-resolv-CVE-2026-80212-CVE-2026-80213.patch
-
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
 Recommends: ruby(rubygems) >= %{rubygems_version}
@@ -866,7 +862,6 @@ popd
 %patch 10 -p1
 %patch 11 -p1
 %patch 12 -p1
-%patch 13 -p1
 
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE3} .
