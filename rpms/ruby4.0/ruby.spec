@@ -50,7 +50,7 @@
 %global rubygems_net_http_version 0.7.0
 %global rubygems_net_protocol_version 0.2.2
 %global rubygems_optparse_version 0.8.0
-%global rubygems_resolv_version 0.7.0
+%global rubygems_resolv_version 0.7.2
 %global rubygems_securerandom_version 0.4.1
 %global rubygems_timeout_version 0.4.4
 %global rubygems_tsort_version 0.2.0
@@ -204,7 +204,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 37.3%{?dist}
+Release: 38%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -313,16 +313,16 @@ Patch8: ruby-4.0.1-Support-customizable-rustc_flags-for-rustc-builds.patch
 # Fix error with `gem install --document=rdoc,ri`
 # Fixed in rdoc 7.1.0 but not in 7.0.4
 Patch9: rdoc-pr1531-fix-mutilple-document-installation.patch
+# Backport from ruby_4_0 branch to update resolv to 0.7.2 (fixes CVE-2026-80212 CVE-2026-80213)
+# https://github.com/ruby/ruby/pull/18528
+# Also copied the patch to apply the fix also for vendored resolv
+Patch10: ruby-4_0-pr18528-update-resolv-0_7_2.patch
 # Fix heap buffer overflow when streaming JSON to an IO (CVE-2026-54696).
 # https://github.com/ruby/json/security/advisories/GHSA-x2f5-4prf-w687
-Patch10: ruby-4.0.6-json-CVE-2026-54696-fbuffer-capa.patch
+Patch11: ruby-4.0.6-json-CVE-2026-54696-fbuffer-capa.patch
 # Fix format string injection in JSON.parse with allow_duplicate_key: false (CVE-2026-33210).
 # https://github.com/ruby/json/security/advisories/GHSA-3m6g-2423-7cp3
-Patch11: ruby-4.0.6-json-CVE-2026-33210-format-string.patch
-# Bump default-gem resolv 0.7.0 -> 0.7.2 (CVE-2026-80212, CVE-2026-80213).
-# https://github.com/ruby/ruby/pull/18528
-Patch12: ruby-4.0.6-resolv-CVE-2026-80212-CVE-2026-80213.patch
-
+Patch12: ruby-4.0.6-json-CVE-2026-33210-format-string.patch
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
 Recommends: ruby(rubygems) >= %{rubygems_version}
@@ -2028,7 +2028,12 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
-* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org>
+* Thu Sep 03 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.6-38
+- Backport upstream patch to update resolv to 0.7.2
+- Resolves: CVE-2026-80212 (rhbz#2527308)
+- Resolves: CVE-2026-80213 (rhbz#2527310)
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 4.0.6-37
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
 * Tue Jul 14 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.6-36
