@@ -15,7 +15,7 @@ Yarn cache regenerated and uploaded to lookaside.
 
 --- a/yarn.lock
 +++ b/yarn.lock
-@@ -20129,16 +20129,16 @@ __metadata:
+@@ -20117,14 +20117,14 @@ __metadata:
    resolution: "homedir-polyfill@npm:1.0.3"
    dependencies:
      parse-passwd: "npm:^1.0.0"
