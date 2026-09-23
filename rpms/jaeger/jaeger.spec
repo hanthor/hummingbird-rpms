@@ -373,12 +373,13 @@ else
     exit 1
 fi
 pnpm_store="$PWD/.pnpm-store"
+export XDG_CACHE_HOME="$PWD/.pnpm-cache"
 (cd jaeger-ui && run_pnpm install --offline --frozen-lockfile --ignore-scripts --store-dir "$pnpm_store")
 (cd jaeger-ui && run_pnpm run build)
 make build-ui JAEGER_UI_DIR=jaeger-ui
 # Keep build-only frontend dependencies and pnpm itself out of license payload discovery.
 find jaeger-ui -type d -name node_modules -prune -exec rm -rf -- {} +
-rm -rf .pnpm .pnpm-store
+rm -rf .pnpm .pnpm-store .pnpm-cache
 
 export LDFLAGS="-X github.com/jaegertracing/jaeger/internal/version.latestVersion=v%{version} -X github.com/jaegertracing/jaeger/internal/version.date=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ) "
 %gobuild -o %{gobuilddir}/bin/jaeger %{goipath}/cmd/jaeger
