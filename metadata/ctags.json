@@ -1,8 +1,8 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "4",
-  "sha": "a53ea9c38b1b8cc7ddf7a2777422d2b53aad1328",
+  "release": "5",
+  "sha": "f0b09ca49e07f76b65f1a417448350c04bc38ee6",
   "source": "https://src.fedoraproject.org/rpms/ctags.git",
   "upstream_repo": "https://github.com/universal-ctags/ctags",
   "version": "6.2.1"
