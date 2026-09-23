@@ -6,8 +6,8 @@
 %endif
 
 Name:       pgbouncer
-Version:    1.25.2
-Release:    4%{?dist}
+Version:    1.26.0
+Release:    0.1%{?dist}
 Summary:    Lightweight connection pooler for PostgreSQL
 License:    ISC and BSD-2-Clause
 URL:        https://www.pgbouncer.org
