@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "3",
-  "sha": "f27f1a03b95f7c62f86bb4e623c02ff78bf6fa28",
+  "release": "1",
+  "sha": "125f9b14d207448cd24f840c50a359e186ba7a9e",
   "source": "https://src.fedoraproject.org/rpms/libffi.git",
   "upstream_repo": "https://github.com/libffi/libffi",
-  "version": "3.5.2"
+  "version": "3.8.0"
 }
