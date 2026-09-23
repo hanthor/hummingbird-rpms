@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Refresh bundled npm Provides from the Jaeger UI pnpm lockfile."""
+"""Refresh bundled npm Provides from the Jaeger UI pnpm lockfile in Source0."""
 
 import json
 import re
@@ -113,16 +113,19 @@ def main() -> None:
         raise SystemExit(f"usage: {Path(sys.argv[0]).name} VERSION")
     version = sys.argv[1]
     package_dir = Path(__file__).resolve().parent
-    archive = package_dir / f"jaeger-ui-{version}.tar.gz"
+    archive = package_dir / f"jaeger-{version}.tar.gz"
     spec = package_dir / "jaeger.spec"
 
     with tarfile.open(archive, "r:gz") as source:
-        lock = read_member(source, archive_member(source, "/pnpm-lock.yaml"))
+        lock = read_member(source, archive_member(source, "/jaeger-ui/pnpm-lock.yaml"))
         provides = lockfile_provides(lock)
         workspace_packages = []
         for importer in sorted(lockfile_importers(lock)):
             package = json.loads(
-                read_member(source, archive_member(source, f"/{importer}/package.json"))
+                read_member(
+                    source,
+                    archive_member(source, f"/jaeger-ui/{importer}/package.json"),
+                )
             )
             if package.get("name") and package.get("version"):
                 workspace_packages.append((package["name"], package["version"]))

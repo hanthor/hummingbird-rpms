@@ -3,122 +3,28 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "jaeger-${VERSION}.tar.gz"
+    submodules: full
   - type: vendor
     ecosystem: go
     archive_name: "jaeger-${VERSION}-vendor.tar.bz2"
+  - type: vendor
+    ecosystem: pnpm
+    modules:
+      - path: jaeger-ui
+    archive_name: "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
+    offline-cache: true
+    metadata-packages:
+      - "@adobe/css-tools"
 
 toolchain:
   - name: node
     version: "24"
     minimum-version: "24.16.0"
 
-transform:
-  - type: run
-    path: "."
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        root="$(pwd)"
-
-        # The Jaeger UI lives in a separate repo, pinned as a submodule --
-        # resolve its commit for this tag rather than assuming a matching
-        # jaeger-ui release tag exists.
-        ui_workdir="$(mktemp -d)"
-        trap 'rm -rf "${ui_workdir}"' EXIT
-        git clone --quiet --depth 1 --filter=blob:none --no-checkout \
-          --branch "v${VERSION}" https://github.com/jaegertracing/jaeger.git \
-          "${ui_workdir}/jaeger-git"
-        ui_commit="$(git -C "${ui_workdir}/jaeger-git" ls-tree HEAD jaeger-ui | \
-          awk '$1 == "160000" && $2 == "commit" { print $3 }')"
-        if [[ ! "${ui_commit}" =~ ^[0-9a-f]{40}$ ]]; then
-          echo "Could not resolve Jaeger UI submodule for v${VERSION}" >&2
-          exit 1
-        fi
-
-        ui_archive="jaeger-ui-${VERSION}.tar.gz"
-        curl -fSL -o "${ui_archive}" \
-          "https://github.com/jaegertracing/jaeger-ui/archive/${ui_commit}/${ui_archive}"
-
-        mkdir "${root}/.jaeger-ui-src"
-        tar -xzf "${ui_archive}" -C "${root}/.jaeger-ui-src" --strip-components=1
-        patch -d "${root}/.jaeger-ui-src" -p1 < "${PACKAGE_DIR}/jaeger-ui-pnpm-cache.patch"
-
-        # Follow the exact pnpm version selected by Jaeger UI. pnpm 12's
-        # generated .bin/pnpm wrapper requires a lifecycle script, which is
-        # intentionally disabled here, so invoke its JavaScript entry point.
-        pnpm_spec="$(node -e '
-        const declared = require(process.argv[1]).packageManager
-        const spec = declared?.split("+")[0]
-        if (!/^pnpm@[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(spec)) {
-          console.error(`Invalid or missing pnpm packageManager declaration: ${declared}`)
-          process.exit(1)
-        }
-        process.stdout.write(spec)
-        ' "${root}/.jaeger-ui-src/package.json")"
-        pnpm_version="${pnpm_spec#pnpm@}"
-        pnpm_major="${pnpm_version%%.*}"
-        if ((pnpm_major >= 12)); then
-          # npm filters pnpm's optional native executable to the host
-          # architecture. Cache both Hummingbird build targets explicitly.
-          npm install --prefix "${root}/.pnpm" --ignore-scripts --force \
-            "${pnpm_spec}" \
-            "@pnpm/exe.linux-x64@${pnpm_version}" \
-            "@pnpm/exe.linux-arm64@${pnpm_version}"
-        else
-          npm install --prefix "${root}/.pnpm" --ignore-scripts "${pnpm_spec}"
-        fi
-        pnpm_mjs="${root}/.pnpm/node_modules/pnpm/bin/pnpm.mjs"
-        pnpm_wrapper="${root}/.pnpm/node_modules/.bin/pnpm"
-        if [[ -f "${pnpm_mjs}" ]]; then
-          run_pnpm() { node "${pnpm_mjs}" "$@"; }
-        elif [[ -x "${pnpm_wrapper}" ]]; then
-          run_pnpm() { "${pnpm_wrapper}" "$@"; }
-        else
-          echo "pnpm entry point not found: ${pnpm_mjs} or ${pnpm_wrapper}" >&2
-          exit 1
-        fi
-        pnpm_store="${root}/.pnpm-store"
-        export XDG_CACHE_HOME="${root}/.pnpm-cache"
-        # Force includes optional packages for every platform in the lockfile.
-        (cd "${root}/.jaeger-ui-src" && run_pnpm install \
-          --force \
-          --ignore-scripts \
-          --frozen-lockfile \
-          --store-dir "${pnpm_store}")
-
-        # Preserve registry packument needed to resolve this new transitive dependency offline.
-        metadata_dir="${root}/.pnpm-cache/pnpm/v11/metadata-full/registry.npmjs.org/@adobe"
-        mkdir -p "${metadata_dir}"
-        metadata_headers="$(mktemp)"
-        metadata_body="$(mktemp)"
-        metadata_file="${metadata_dir}/css-tools.jsonl"
-        curl -fSL --retry 3 -D "${metadata_headers}" -o "${metadata_body}" \
-          "https://registry.npmjs.org/@adobe%2Fcss-tools"
-        node - "${metadata_headers}" "${metadata_body}" "${metadata_file}" <<'NODE'
-        const fs = require("node:fs")
-        const [headersPath, bodyPath, outputPath] = process.argv.slice(2)
-        const headers = fs.readFileSync(headersPath, "utf8")
-        const etag = headers.match(/^etag:\s*(.+?)\r?$/im)?.[1]
-        const lastModified = headers.match(/^last-modified:\s*(.+?)\r?$/im)?.[1]
-        const body = fs.readFileSync(bodyPath)
-        const packument = JSON.parse(body.toString("utf8"))
-        if (!etag || !lastModified || packument.name !== "@adobe/css-tools") {
-          throw new Error("Invalid @adobe/css-tools registry metadata")
-        }
-        const modified = new Date(lastModified).toISOString()
-        fs.writeFileSync(outputPath, `${JSON.stringify({ etag, modified })}\n`)
-        fs.appendFileSync(outputPath, body)
-        fs.appendFileSync(outputPath, "\n")
-        NODE
-        rm -f "${metadata_headers}" "${metadata_body}"
-        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store .pnpm-cache
-    outputs:
-      - "jaeger-ui-${VERSION}.tar.gz"
-      - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
-
 accepted-checksums:
+  - file: "jaeger-2.21.0.tar.gz"
+    checksum: "615646026b7cdd91c37fdba0bcab0a9bdf6f8c1747b08428f7b8b7caeac8de59ba012c151092914405cc139922abbb14f05fe2b9ca00cd374f9188e1803e5d02"
+    reason: "Regenerated Source0 with the v2.21.0 jaeger-ui submodule included."
   - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
-    checksum: "cffefe1eea03ada6235034ff6f55fc70140509a1a3f9f4f97e57ef5b9aba57fe3f7cf51075008065bcb09b9a2b6b23a5dfd0f471c9b5bb76bbc93b89902794e0"
-    reason: "Regenerated from Jaeger UI v2.21.0 lockfile with all 883 package entries and bundled @adobe/css-tools offline metadata."
+    checksum: "fbba37bfaf022a5fdd8a137dcf53563f39d7aa2c6a931fe50c829e207da1835d8fc9b0fff149be37ba3cffd61af1d097ec623f9aed1fd9b8b94a6db72e8b9bf2"
+    reason: "Regenerated with the pinned pnpm CLI and @adobe/css-tools registry metadata."
