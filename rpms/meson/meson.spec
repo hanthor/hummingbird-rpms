@@ -4,8 +4,8 @@
 %bcond docs 1
 
 Name:           meson
-Version:        1.12.0
-Release:        2%{?dist}
+Version:        1.12.1
+Release:        1%{?dist}
 Summary:        High productivity build system
 
 License:        Apache-2.0
