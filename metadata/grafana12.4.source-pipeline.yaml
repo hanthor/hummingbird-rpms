@@ -56,6 +56,10 @@ transform:
         # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-3.4.13-cve.patch"
+        # CVE-2026-9496: backport fix into vendored pacote 21.0.1 and 21.0.4.
+        # Updates yarn.lock checksums to match the patched zip files in the
+        # yarn cache tarball.
+        patch -p1 < "${PACKAGE_DIR}/grafana-pacote-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
@@ -80,6 +84,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "3c2c017ec5f12fccf19c483d12a4d9fea186f2f238a7e353127517baba083db1e6d0376a81ca7992611c28da6bcdedc8a48ed896f20234f760cface9db4fd510"
+    reason: "grafana-pacote-cve.patch backports CVE-2026-9496 fix into vendored pacote 21.0.1 and 21.0.4; yarn cache zips patched in-place, checksums updated in yarn.lock"
   - file: "grafana-yarn-cache-12.4.10.tar.bz2"
     checksum: "8dbf6be3a1f3ac7b27d13b61dcd26662117a8786167cb9f0037189542001aead3109c029a35a3f92b38da6885b5de2bcbfe6c2e6e1f4ed18aaea49b1a21f7797"
     reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; includes fast-uri-npm-3.1.8 in place of 3.1.7"
