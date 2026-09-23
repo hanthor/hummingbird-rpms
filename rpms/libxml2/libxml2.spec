@@ -108,7 +108,10 @@ find doc -type f -executable -print -exec chmod 0644 {} ';'
 %meson_install
 
 %check
+# Tests require the XML conformance suite.
+tar -xzvf %{SOURCE1}
 %meson_test
+rm -rf xmlconf
 
 %files
 %license Copyright
