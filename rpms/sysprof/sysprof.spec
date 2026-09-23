@@ -1,15 +1,17 @@
 %global glib2_version 2.80.0
-
-%global tarball_version %%(echo %{version} | tr '~' '.')
+%global gtk_version 4.19.4
+%global polkit_version 0.105
 
 Name:           sysprof
-Version:        50~rc
-Release:        2.2%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        A system-wide Linux profiler
 
 License:        GPL-2.0-or-later AND GPL-3.0-or-later AND CC-BY-SA-4.0 AND CC0-1.0 AND BSD-2-Clause-Patent
 URL:            http://www.sysprof.com
-Source0:        https://download.gnome.org/sources/sysprof/50/sysprof-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/%{name}/%{gnome_major_version}/%{name}-%{gnome_tarball_version}.tar.xz
+
+%gnome_check_version
 
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -20,7 +22,7 @@ BuildRequires:  pkgconfig(gio-2.0) >= %{glib2_version}
 BuildRequires:  pkgconfig(gio-unix-2.0) >= %{glib2_version}
 BuildRequires:  pkgconfig(glib-2.0) >= %{glib2_version}
 BuildRequires:  pkgconfig(gobject-2.0)
-BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(gtk4) >= %{gtk_version}
 BuildRequires:  pkgconfig(json-glib-1.0)
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(libdebuginfod)
@@ -29,7 +31,7 @@ BuildRequires:  pkgconfig(libdw)
 BuildRequires:  pkgconfig(libpanel-1)
 BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(libunwind-generic)
-BuildRequires:  pkgconfig(polkit-gobject-1)
+BuildRequires:  pkgconfig(polkit-gobject-1) >= %{polkit_version}
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  /usr/bin/appstream-util
 BuildRequires:  /usr/bin/desktop-file-validate
@@ -92,7 +94,7 @@ developing applications that use %{name}.
 
 
 %prep
-%autosetup -p1 -n sysprof-%{tarball_version}
+%autosetup -p1 -n %{name}-%{gnome_tarball_version}
 
 
 %build
