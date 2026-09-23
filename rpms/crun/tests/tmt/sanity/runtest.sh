@@ -25,7 +25,7 @@ fi
 # create the top most bundle and rootfs directory
 mkdir -p "$TEMPDIR"/rootfs
 
-# export busybox via podman into the rootfs directory.
+# export busybox via podman into the rootfs directory
 if ! (podman export "$(podman create $TESTIMG)" | tar -C "$TEMPDIR"/rootfs -xvf -); then
     exit 1
 fi
