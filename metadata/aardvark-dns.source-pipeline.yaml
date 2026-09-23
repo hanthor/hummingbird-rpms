@@ -1,0 +1,5 @@
+fetch:
+  - type: url
+    url: "https://github.com/containers/aardvark-dns/archive/refs/tags/v${VERSION}.tar.gz"
+  - type: url
+    url: "https://github.com/containers/aardvark-dns/releases/download/v${VERSION}/aardvark-dns-v${VERSION}-vendor.tar.gz"
