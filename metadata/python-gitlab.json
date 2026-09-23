@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "4",
-  "sha": "ac6e25c71f84e8a20ec3cc7c278e85929f96674d",
+  "release": "2",
+  "sha": "ebfca1d69815aef8a3d25c1e06435753de3b9b95",
   "source": "https://src.fedoraproject.org/rpms/python-gitlab.git",
   "upstream_repo": "https://github.com/python-gitlab/python-gitlab",
-  "version": "8.4.0"
+  "version": "8.5.0"
 }
