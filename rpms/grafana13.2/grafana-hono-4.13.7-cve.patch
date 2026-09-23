@@ -15,7 +15,12 @@ Yarn cache regenerated and uploaded to lookaside.
 
 --- a/yarn.lock
 +++ b/yarn.lock
-@@ -20141,10 +20141,10 @@ __metadata:
+@@ -20129,16 +20129,16 @@ __metadata:
+   resolution: "homedir-polyfill@npm:1.0.3"
+   dependencies:
+     parse-passwd: "npm:^1.0.0"
+   checksum: 10c0/3c099844f94b8b438f124bd5698bdcfef32b2d455115fb8050d7148e7f7b95fc89ba9922586c491f0e1cdebf437b1053c84ecddb8d596e109e9ac69c5b4a9e27
+   languageName: node
    linkType: hard
  
  "hono@npm:^4.11.4":

@@ -32,6 +32,12 @@ transform:
         # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
+        # CVE-2026-86472: bump vendored fast-uri 3.1.7 -> 3.1.8.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
+        # CVE-2026-93981: bump vendored hono 4.12.34 -> 4.13.7.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.7-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -53,6 +59,12 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.2.1.tar.bz2"
+    checksum: "c7aa961ba0bf44bc628c28c4c2712520025fad4852f34a5544db950cdf2d6ee51696ab6fdcac121ea1a06c12ce0b18e5c816af3f5bf6f6ddd84158fce3c92fc6"
+    reason: "grafana-fast-uri-3.1.8-cve.patch and grafana-hono-4.13.7-cve.patch bump fast-uri 3.1.7->3.1.8 (CVE-2026-86472) and hono 4.12.34->4.13.7 (CVE-2026-93981); yarn cache manually regenerated"
+  - file: "grafana-yarn-cache-13.2.1.tar.bz2"
+    checksum: "00c54f618b7f60d6ed0317de2d64e8d5862330a2c777afdb2881d971e0444898aeab7ac98670a260bfbeaccdcba96bcec6c6d61b8fd816b9b0f7948f83386799"
+    reason: "grafana-fast-uri-3.1.8-cve.patch and grafana-hono-4.13.7-cve.patch bump fast-uri 3.1.7->3.1.8 (CVE-2026-86472) and hono 4.12.34->4.13.7 (CVE-2026-93981); reproducible yarn cache via source-pipeline transform"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "43fa274487225454b99922a87ca9138610e352dff6e7d742afd76166f862517109754cc98d8579c4ad1a6fa15499360d087f21a739d565c64593a82883619121"
     reason: "grafana-dompurify-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; yarn cache regenerated to replace dompurify 3.4.12 zip with 3.4.13"
