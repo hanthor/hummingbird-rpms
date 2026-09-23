@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "be972983253db1dfbe250f6ce755fe72640594f7",
+  "release": "1",
+  "sha": "c1155534939c1ab355723db41687aad4a7d93657",
   "source": "https://src.fedoraproject.org/rpms/perl-podlators.git",
   "upstream_repo": "https://github.com/rra/podlators",
-  "version": "6.1.0"
+  "version": "6.1.1"
 }
