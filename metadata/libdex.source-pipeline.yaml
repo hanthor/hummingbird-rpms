@@ -1,0 +1,4 @@
+fetch:
+  # Resolve GNOME's version macros from the spec when constructing Source0 URL.
+  - type: spec-source
+    index: 0

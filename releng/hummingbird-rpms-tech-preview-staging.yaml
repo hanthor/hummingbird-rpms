@@ -508,6 +508,8 @@ spec:
           contentType: rpm
         - name: libcomps-main
           contentType: rpm
+        - name: libdex-main
+          contentType: rpm
         - name: libdnf-main
           contentType: rpm
         - name: libeconf-main
