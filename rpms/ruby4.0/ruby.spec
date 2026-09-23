@@ -1,6 +1,6 @@
 %global major_version 4
 %global minor_version 0
-%global teeny_version 6
+%global teeny_version 7
 %global major_minor_version %{major_version}.%{minor_version}
 %global ruby_major_minor %{major_version}.%{minor_version}
 %global _rubygem_pkg rubygem%{ruby_major_minor}
@@ -45,19 +45,18 @@
 ## BUNDLED_GEMS_VERSIONS
 
 # Bundled libraries versions
-%global rubygems_version 4.0.16
+%global rubygems_version 4.0.20
 %global rubygems_molinillo_version 0.8.0
 %global rubygems_net_http_version 0.7.0
 %global rubygems_net_protocol_version 0.2.2
 %global rubygems_optparse_version 0.8.0
-%global rubygems_resolv_version 0.7.2
 %global rubygems_securerandom_version 0.4.1
 %global rubygems_timeout_version 0.4.4
 %global rubygems_tsort_version 0.2.0
 %global rubygems_uri_version 1.1.1
 
 # Default gems.
-%global bundler_version 4.0.16
+%global bundler_version 4.0.20
 %global bundler_connection_pool_version 2.5.4
 %global bundler_fileutils_version 1.8.0
 %global bundler_net_http_persistent_version 4.0.6
@@ -71,7 +70,7 @@
 %global did_you_mean_version 2.0.0
 %global digest_version 3.2.1
 %global english_version 0.8.1
-%global erb_version 6.0.1.1
+%global erb_version 6.0.7
 %global error_highlight_version 0.7.2
 %global etc_version 1.4.6
 %global fcntl_version 1.3.0
@@ -204,7 +203,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 38%{?dist}
+Release: 40%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -313,10 +312,13 @@ Patch8: ruby-4.0.1-Support-customizable-rustc_flags-for-rustc-builds.patch
 # Fix error with `gem install --document=rdoc,ri`
 # Fixed in rdoc 7.1.0 but not in 7.0.4
 Patch9: rdoc-pr1531-fix-mutilple-document-installation.patch
-# Backport from ruby_4_0 branch to update resolv to 0.7.2 (fixes CVE-2026-80212 CVE-2026-80213)
-# https://github.com/ruby/ruby/pull/18528
-# Also copied the patch to apply the fix also for vendored resolv
-Patch10: ruby-4_0-pr18528-update-resolv-0_7_2.patch
+# Stop vendoring resolv for two regexps to stop showing up as an outdated copy in security
+# audits of the Ruby tarball
+# https://github.com/ruby/ruby/commit/0b8e0b1c28bc839095e2c0e884313f0f5ef1fc53
+# ref: https://github.com/ruby/rubygems/pull/9877/commits/9f2bd5f66cd7e71ee140efb68c19a3a2661720aa
+# This change is included in rubygems 4.0.21
+Patch10: ruby-4.0.7-rubygems-pr9877-stop-vendoring-resolv.patch
+
 # Fix heap buffer overflow when streaming JSON to an IO (CVE-2026-54696).
 # https://github.com/ruby/json/security/advisories/GHSA-x2f5-4prf-w687
 Patch11: ruby-4.0.6-json-CVE-2026-54696-fbuffer-capa.patch
@@ -437,7 +439,6 @@ Version:    %{rubygems_version}
 #   lib/rubygems/net-http/
 #   lib/rubygems/net-protocol/
 #   lib/rubygems/optparse/
-#   lib/rubygems/resolv/
 #   lib/rubygems/timeout/
 #   lib/rubygems/tsort/
 # MIT: lib/rubygems/resolver/molinillo
@@ -456,7 +457,6 @@ Provides:   bundled(rubygem-molinillo) = %{rubygems_molinillo_version}
 Provides:   bundled(rubygem-net-http) = %{rubygems_net_http_version}
 Provides:   bundled(rubygem-net-protocol) = %{rubygems_net_protocol_version}
 Provides:   bundled(rubygem-optparse) = %{rubygems_optparse_version}
-Provides:   bundled(rubygem-resolv) = %{rubygems_resolv_version}
 Provides:   bundled(rubygem-securerandom) = %{rubygems_securerandom_version}
 Provides:   bundled(rubygem-timeout) = %{rubygems_timeout_version}
 Provides:   bundled(rubygem-tsort) = %{rubygems_tsort_version}
@@ -894,6 +894,9 @@ pushd %{_vpath_builddir}
         --enable-shared \
         --with-ruby-version='' \
         --enable-multiarch \
+%ifarch x86_64
+        --with-coroutine=ucontext \
+%endif
         %{?with_yjit: --enable-yjit} \
         %{?with_zjit: --enable-zjit} \
         %{?with_rust: rustc_flags='%{build_rustflags}'} \
@@ -1120,16 +1123,6 @@ make -C %{_vpath_builddir} -s runruby TESTRUN_SCRIPT="-e \" \
   puts '%%{rubygems_optparse_version}: %{rubygems_optparse_version}'; \
   puts %Q[Gem::OptionParser::Version: #{Gem::OptionParser::Version}]; \
   exit 1 if Gem::OptionParser::Version != '%{rubygems_optparse_version}'; \
-\""
-
-# Resolv.
-make -C %{_vpath_builddir} -s runruby TESTRUN_SCRIPT="-e \" \
-  module Gem; end; \
-  require 'rbconfig'; \
-  require 'rubygems/vendor/resolv/lib/resolv'; \
-  puts '%%{rubygems_resolv_version}: %{rubygems_resolv_version}'; \
-  puts %Q[Gem::Resolv::VERSION: #{Gem::Resolv::VERSION}]; \
-  exit 1 if Gem::Resolv::VERSION != '%{rubygems_resolv_version}'; \
 \""
 
 # SecureRandom.
@@ -2028,6 +2021,13 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
+* Thu Sep 17 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.7-40
+- Update to Ruby 4.0.7
+- Backport rubygems side change to stop vendoring resolv in rubygems tree
+
+* Thu Sep 10 2026 Arjun Shankar <arjun@redhat.com> - 4.0.6-39
+- x86_64: Use ucontext based coroutines for CET compatibility
+
 * Thu Sep 03 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.6-38
 - Backport upstream patch to update resolv to 0.7.2
 - Resolves: CVE-2026-80212 (rhbz#2527308)
