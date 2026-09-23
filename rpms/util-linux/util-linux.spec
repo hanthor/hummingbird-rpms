@@ -109,7 +109,6 @@ Provides:       /usr/sbin/sfdisk
 ### Fedora specific patches
 Patch0: 0000-login-use-O_CREAT-on-lastlog.patch
 Patch1: 0001-login-add-run-motd.d-to-the-hardcoded-MOTD_FILE.patch
-Patch8: 0008-libmount-skip-post-mount-hooks-after-failed-mount-h.patch
 
 %description
 The util-linux package contains a large variety of low-level system
