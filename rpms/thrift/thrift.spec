@@ -71,7 +71,7 @@
 # change is a SONAME change and dependencies need to be rebuilt
 Name:    thrift
 Version: 0.24.0
-Release: 0.1%{?dist}
+Release: 1%{?dist}
 Summary: Software framework for cross-language services development
 
 # Parts of the source are used under the BSD and zlib licenses, but
@@ -87,10 +87,13 @@ URL:     https://thrift.apache.org/
 Source0: https://archive.apache.org/dist/%{name}/%{version}/%{name}-%{version}.tar.gz
 
 Source1: https://repo1.maven.org/maven2/org/apache/thrift/lib%{name}/%{version}/lib%{name}-%{version}.pom
-Source2: https://raw.githubusercontent.com/apache/%{name}/v%{version}/bootstrap.sh
+Source2: https://raw.githubusercontent.com/apache/%{name}/%{version}/bootstrap.sh
 
 # fix configure.ac insistence on using /usr/local/lib for JAVA_PREFIX
-Patch2: configure-java-prefix.patch
+Patch: configure-java-prefix.patch
+# fix python install to not require pip (not in buildroot)
+Patch: no-pip-install.patch
+
 
 # BuildRequires for language-specific bindings are listed under these
 # subpackages, to facilitate enabling or disabling individual language
@@ -111,7 +114,7 @@ BuildRequires: glib2-devel
 BuildRequires: libevent-devel
 BuildRequires: libstdc++-devel
 BuildRequires: libtool
-BuildRequires: openssl-devel
+BuildRequires: openssl3-devel
 BuildRequires: qt5-qtbase-devel
 BuildRequires: zlib-devel
 
@@ -447,6 +450,13 @@ find %{buildroot} -name \*.py -exec grep -q /usr/bin/env {} \; -print | xargs -r
 
 
 %changelog
+* Wed Aug 5 2026 Kaleb S. KEITHLEY <kkeithle[at]redhat.com> - 0.24.0-1
+- Thrift 0.24.0 GA, h/t to Justin Caratzas <jcaratza@ibm.com>
+  https://src.fedoraproject.org/rpms/thrift/pull-request/7
+ 
+* Wed Aug 5 2026 Kaleb S. KEITHLEY <kkeithle[at]redhat.com> - 0.20.0-13
+- rhbz#2491640, failing to build w/ openssl4, revert to openssl3
+ 
 * Fri Jul 17 2026 Fedora Release Engineering <releng@fedoraproject.org> - 0.20.0-12
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
