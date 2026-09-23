@@ -3,9 +3,10 @@
   "modification_reason": "Update to upstream version 0.24.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 5581,
-  "sha": "07a3ace795101f8133798d0ae32e00bce0c1c281",
+  "sha": "69bea475609ed0f32394196c7da87e594e87e8f9",
   "source": "https://src.fedoraproject.org/rpms/thrift.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/apache/thrift",
-  "version": "0.24.0"
+  "version": "0.24.0",
+  "release": "1"
 }
