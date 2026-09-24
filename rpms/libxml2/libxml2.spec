@@ -116,7 +116,6 @@ rm -rf xmlconf
 %files
 %license Copyright
 %doc NEWS README.md
-%{_libdir}/libxml2.so.16{,.*}
 %{_bindir}/xmlcatalog
 %{_bindir}/xmllint
 %{_mandir}/man1/xmlcatalog.1*
@@ -124,7 +123,7 @@ rm -rf xmlconf
 
 %files -n libxml2-%{soversion}
 %license Copyright
-%{_libdir}/libxml2.so.%{soversion}*
+%{_libdir}/libxml2.so.%{soversion}{,.*}
 
 %files devel
 %doc %{_docdir}/libxml2/*.html
