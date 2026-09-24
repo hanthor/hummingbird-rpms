@@ -2565,6 +2565,50 @@ def test_update_spec_version_pipeline_takes_priority_over_hooks(
     )
 
 
+def test_update_spec_version_pipeline_keeps_update_spec_hook(
+    cuv_module, workdir: Path,
+) -> None:
+    """A source pipeline replaces source download, not the persistent spec hook."""
+    pkg_dir = _create_package(
+        workdir, 'pkg', '1.0',
+        sources={'pkg-1.0.tar.gz': 'oldhash'},
+        metadata={'version': '1.0', 'release': '1'},
+    )
+    spec_path = pkg_dir / 'pkg.spec'
+    spec_path.write_text(
+        spec_path.read_text().replace(
+            'Version: 1.0',
+            '%global pkg_version 1.0\nVersion: %{pkg_version}',
+        )
+    )
+
+    import yaml
+    (workdir / 'metadata' / 'pkg.update-hooks.yaml').write_text(
+        yaml.dump({
+            'update_spec': (
+                'sed -Ei "s/^%global pkg_version .*/%global pkg_version '
+                '${UPDATE_NEW_VERSION}/" "${UPDATE_SPEC_FILE}"'
+            ),
+        })
+    )
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch:\n  - type: spec-update\n')
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, '_run_gorget_pipeline', return_value=[]) \
+            as mock_pipeline:
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    spec_content = spec_path.read_text()
+    assert '%global pkg_version 2.0' in spec_content
+    assert 'Version: %{pkg_version}' in spec_content
+    assert 'Release: 1%{?dist}' in spec_content
+    mock_pipeline.assert_called_once_with('pkg', '1.0', '2.0', pipeline_file)
+
+
 def test_update_spec_version_skip_pipeline_forces_legacy_path(
     cuv_module, workdir: Path,
 ) -> None:
