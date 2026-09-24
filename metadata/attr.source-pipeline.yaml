@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://download.savannah.nongnu.org/releases/attr/attr-${VERSION}.tar.xz"
+  - type: url
+    url: "https://download.savannah.nongnu.org/releases/attr/attr-${VERSION}.tar.xz.sig"
+
+verify:
+  - type: gpg-signature
+    target: "attr-${VERSION}.tar.xz"
+    signature: "attr-${VERSION}.tar.xz.sig"
+    keyring: "agruen-key.gpg"
