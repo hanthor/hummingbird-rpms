@@ -1,6 +1,6 @@
 Name:           maven3.9
 Version:        3.9.16
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Java project management and comprehension tool
 
 %global homedir %{_datadir}/maven
@@ -17,7 +17,7 @@ Source1:        maven-%{version}-repository.tar.zst
 
 BuildArch:      noarch
 BuildRequires:  java-25-openjdk-devel
-BuildRequires:  maven
+BuildRequires:  maven3.9
 BuildRequires:  tar
 BuildRequires:  zstd
 Requires:       java-headless >= 1:1.8
@@ -31,6 +31,8 @@ Apache Maven command-line tools for Maven 3.9.
 
 %package lib
 Summary:        Core libraries for Maven 3.9
+
+Provides:       maven-lib
 
 # Third-party libraries shipped in lib/ and boot/. Maven modules built by
 # this package are not listed as bundled dependencies.
