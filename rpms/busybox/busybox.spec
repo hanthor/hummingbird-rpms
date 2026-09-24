@@ -58,7 +58,7 @@
 
 Name:		busybox
 Version:	1.37.0
-Release:	9%{?dist}
+Release:        9.1%{?dist}
 Epoch:		1
 Summary:	Statically linked binary providing simplified versions of system commands
 License:	GPL-2.0-only
@@ -98,6 +98,13 @@ Patch7:		busybox-1.37.0-CVE-2026-38754-ifsbreakup-bounds.patch
 Patch8:		busybox-1.37.0-CVE-2026-38752-awk-evaluate-recursion-limit.patch
 # CVE-2026-38755: stack overflow in ash evalfun()
 Patch9:		busybox-1.37.0-CVE-2026-38755-ash-evalfun-recursion-limit.patch
+# CVE-2026-88832: romfs volume ID unbounded memcpy heap overflow
+# CVE-2026-88831: httpd CIDR deny-rule fail-open on invalid prefix
+# CVE-2026-88837: httpd yescrypt hash misidentified as plaintext
+# CVE-2026-88835: dpkg read_package_field() OOB read past NUL
+# CVE-2026-88839: passwd/group tokenize() stale end pointer OOB write
+# Upstream commits: 9073c1d15c99, 339e3c62f5bc, 9f5cbdcaa597, f5a4a02a157e, c2dec52d3738
+Patch10:	busybox-1.37.0-CVE-2026-88832-CVE-2026-88831-CVE-2026-88837-CVE-2026-88835-CVE-2026-88839.patch
 BuildRequires:	gcc
 BuildRequires:	libselinux-devel >= 1.27.7-2
 BuildRequires:	libsepol-devel
@@ -161,6 +168,7 @@ package is build against shared libraries, most notably glibc.
 %patch -P7 -p1 -b .ifsbreakup-bounds-fix
 %patch -P8 -p1 -b .awk-evaluate-recursion-fix
 %patch -P9 -p1 -b .ash-evalfun-recursion-fix
+%patch -P10 -p1 -b .cve-2026-88832-88831-88837-88835-88839
 
 %build
 # Fix architecture name maps
