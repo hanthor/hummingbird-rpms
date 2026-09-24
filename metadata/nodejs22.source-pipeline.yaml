@@ -63,6 +63,9 @@ transform:
       - "--owner=0"
       - "--group=0"
       - "--numeric-owner"
+      # GitLab's checkout volume may make Git's 0644/0755 files 0666/0777.
+      # Store canonical modes so this source archive is reproducible.
+      - "--mode=go-w"
       - "-czf"
       - "packaging-scripts.tar.gz"
       - "-C"
