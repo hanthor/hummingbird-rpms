@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "HUM-7003: Backport CVE-2026-82474 execveat intercept policy bypass fix",
+  "modification_reason": "HUM-7003: Backport CVE-2026-82474 execveat intercept policy bypass fix; HUM-8418: Backport CVE-2026-96512 TZ environment bypass fix",
   "modification_status": "modified",
   "release": "16.p2",
   "release_monitoring_project_id": 4906,
