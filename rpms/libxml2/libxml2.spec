@@ -7,7 +7,7 @@ Version:        2.15.4
 # version instead of major.minor (see metadata/libxml2.source-pipeline.yaml
 # and HUM-6191 for how this broke Source0).
 %global majorminor %(echo %{version} | cut -d. -f1-2)
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Library providing XML and HTML support
 
 # list.c, dict.c and few others use ISC-Veillard
@@ -116,7 +116,6 @@ rm -rf xmlconf
 %files
 %license Copyright
 %doc NEWS README.md
-%{_libdir}/libxml2.so.16{,.*}
 %{_bindir}/xmlcatalog
 %{_bindir}/xmllint
 %{_mandir}/man1/xmlcatalog.1*
@@ -124,7 +123,7 @@ rm -rf xmlconf
 
 %files -n libxml2-%{soversion}
 %license Copyright
-%{_libdir}/libxml2.so.%{soversion}*
+%{_libdir}/libxml2.so.%{soversion}{,.*}
 
 %files devel
 %doc %{_docdir}/libxml2/*.html

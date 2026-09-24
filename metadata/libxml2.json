@@ -1,12 +1,12 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 2.15.4",
+  "modification_reason": "Keep ABI-versioned shared library in libxml2-16 subpackage after 2.15.4 update",
   "modification_status": "modified",
+  "release": "1",
   "release_monitoring_project_id": 1783,
   "sha": "11d668601290cb1d9c63bd09e2e2342833499b78",
   "source": "https://src.fedoraproject.org/rpms/libxml2.git",
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.gnome.org/GNOME/libxml2",
-  "version": "2.15.4",
-  "release": "1"
+  "version": "2.15.4"
 }
