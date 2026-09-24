@@ -3,8 +3,8 @@
   "modification_status": "clean",
   "release": "1",
   "release_monitoring_project_id": 96792,
-  "sha": "d3390a893f7814f8c6cb5126c8439f3418e7c296",
+  "sha": "54562a0e5a6d4f6fe24512fe309985ec002ef523",
   "source": "https://src.fedoraproject.org/rpms/crun.git",
   "upstream_repo": "https://github.com/containers/crun",
-  "version": "1.29.1"
+  "version": "1.30"
 }
