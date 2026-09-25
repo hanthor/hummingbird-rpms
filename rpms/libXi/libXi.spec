@@ -5,7 +5,7 @@
 Summary: X.Org X11 libXi runtime library
 Name: libXi
 Version: 1.8.3
-Release: 2%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
+Release: 2%{?gitdate:.%{gitdate}git%{gitversion}}.1%{?dist}
 License: MIT-open-group AND SMLNJ AND MIT
 URL: http://www.x.org
 
@@ -15,6 +15,8 @@ Source1:    make-git-snapshot.sh
 %else
 Source0: https://www.x.org/pub/individual/lib/%{name}-%{version}.tar.xz
 %endif
+Patch1: 0001-CVE-2026-93541-check-valuator-length.patch
+Patch2: 0002-CVE-2026-libXi-xinput-reply-bounds.patch
 
 BuildRequires: make
 BuildRequires: autoconf automake libtool
@@ -42,6 +44,8 @@ X.Org X11 libXi development package
 
 %prep
 %setup -q -n %{tarball}-%{?gitdate:%{gitdate}}%{!?gitdate:%{version}}
+%patch1 -p1
+%patch2 -p1
 
 %build
 autoreconf -v --install || exit 1
