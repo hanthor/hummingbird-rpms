@@ -1,13 +1,13 @@
 # ftp.vim.org has been fully decommissioned (NXDOMAIN) with no HTTPS/mirror
-# replacement -- the original release tarball (vim-9.2-967.tar.bz2) is
+# replacement -- the original release tarball (vim-9.2-1129.tar.bz2) is
 # permanently unavailable, so unlike other packages in this migration there
 # is no way to verify byte-identical content against it. Fetches the
 # equivalent git tag instead, and manually confirmed the extracted tree is
-# genuinely vim 9.2.967 (src/version.c's included_patches[] top entry is
-# 967, matching this package's patchlevel).
+# genuinely vim 9.2.1129 (src/version.c's included_patches[] top entry is
+# 1129, matching this package's patchlevel).
 #
-# vim's git tags zero-pad the patchlevel (v9.2.0967) but this package's
-# metadata `version` does not (9.2.967), so the ref can't be templated from
+# vim's git tags zero-pad the patchlevel (v9.2.1129) but this package's
+# metadata `version` does not (9.2.1129), so the ref can't be templated from
 # ${VERSION} -- pinned literally instead, same manual-update model as
 # glibc's source-pipeline.yaml: update `ref` here together with
 # `baseversion`/`patchlevel` in vim.spec on each version bump.
@@ -18,17 +18,14 @@
 fetch:
   - type: git
     repo: "${UPSTREAM_REPO}"
-    ref: "v9.2.0967"
+    ref: "v9.2.1129"
     archive_name: "vim92.tar.gz"
 
 accepted-checksums:
+  # New upstream git tag for v9.2.1129; archive_name stays vim92.tar.gz
+  # to match %{vimdir} in vim.spec.
   - file: "vim92.tar.gz"
-    checksum: "76a02091664426f69f87e6e1adca1d7b1a939164d9a5a0203c25553702f836b75f9fab85e423796af99831692dee0e5502a4be5bca6b70df071553bdcb96e5cb"
-    reason: "One-time transition from ftp.vim.org (decommissioned, no
-      mirror) to gorget's git-based fetch. Unlike other transitions in
-      this migration, the original artifact could not be retrieved for a
-      byte-for-byte diff -- verified instead by confirming the extracted
-      tree's src/version.c included_patches[] top entry is 967, matching
-      this package's patchlevel. Checksum re-verified stable across two
-      independent gorget runs."
+    checksum: "10f18f052d341e8545c5ca4721f9a9845b52313660aa5184cf2bf0b1e093a81476054c3de46987e07e438a9f68326614d1f0279cce43d16767570bdc44278aea"
+    reason: "Update from v9.2.0967 to v9.2.1129 for HUM-8569
+      (CVE: Ex command injection in sign_jump())."
 
