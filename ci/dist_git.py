@@ -44,6 +44,7 @@ RELEASES_JSON = ROOT_DIR / 'upstream-releases.json'
 PACKAGE_OVERRIDES_YAML = ROOT_DIR / 'ci' / 'package-overrides.yaml'
 RENAMED_PACKAGES_JSON = ROOT_DIR / 'ci' / 'renamed_packages.json'
 UPDATE_STATE_FILE = ROOT_DIR / '.dist_git_update_state.json'
+KERNEL_ARK_URL = 'https://gitlab.com/cki-project/kernel-ark.git'
 
 # release-monitoring.org (Anitya) API base URL and search URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
@@ -113,6 +114,8 @@ class PackageMetadata(TypedDict):
     upstream_version_transform: NotRequired[str]  # Named Anitya-to-RPM version transform (e.g., "openjdk_to_rpm")
     source_availability_check: NotRequired[str | SourceAvailabilityProbe]
     version_from_ref: NotRequired[dict[str, str]]  # How to derive a fixed-ref pipeline's gorget --version (e.g. gcc)
+    kernel_ark_ref: NotRequired[str]  # Immutable tag or commit used for a kernel-ark import
+    kernel_ark_sha: NotRequired[str]  # Resolved kernel-ark commit
 
 
 class KojiBuild(TypedDict, total=False):
@@ -1176,6 +1179,167 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
         run_git('add', '-f', f'rpms/{dir_name}', f'metadata/{dir_name}.json',
                 'konflux-templates', '.tekton', 'releng', cwd=ROOT_DIR)
         commit_msg = f"Import {package_name}-{version}-{release}\n\nBranch: {branch}\nUpstream: {sha}"
+        run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
+
+
+def _prepare_kernel_ark_upstream(checkout: Path) -> str:
+    """Provide kernel-ark's source generator with its pinned upstream baseline."""
+    variables_file = checkout / 'redhat' / 'Makefile.variables'
+    if not variables_file.exists():
+        sys.exit(f'ERROR: kernel-ark is missing {variables_file.relative_to(checkout)}')
+    match = re.search(
+        r'^UPSTREAM_BRANCH\s*\?=\s*(\S+)\s*$',
+        variables_file.read_text(),
+        flags=re.MULTILINE,
+    )
+    if match is None:
+        sys.exit('ERROR: kernel-ark does not declare UPSTREAM_BRANCH')
+    branch = match.group(1)
+    if not re.fullmatch(r'(?:linux-[0-9]+\.[0-9]+\.y|master)', branch):
+        sys.exit(f'ERROR: unsupported kernel-ark UPSTREAM_BRANCH: {branch}')
+
+    merges = run_git('rev-list', '--first-parent', '--merges', 'HEAD', cwd=checkout).stdout.splitlines()
+    for merge in merges:
+        subject = run_git('show', '-s', '--format=%s', merge, cwd=checkout).stdout.strip()
+        if subject.startswith('Merge Linux v'):
+            upstream_sha = run_git('rev-parse', f'{merge}^2', cwd=checkout).stdout.strip()
+            upstream_tag = subject.removeprefix('Merge Linux ').strip()
+            if not re.fullmatch(r'v[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:-rc[0-9]+)?', upstream_tag):
+                sys.exit(f'ERROR: unsupported kernel-ark upstream tag: {upstream_tag}')
+            tag_exists = run_git(
+                'show-ref', '--verify', '--quiet', f'refs/tags/{upstream_tag}',
+                cwd=checkout, check=False,
+            ).returncode == 0
+            if not tag_exists:
+                run_git(
+                    'fetch', '--quiet', '--depth=1', 'origin',
+                    f'refs/tags/{upstream_tag}:refs/tags/{upstream_tag}', cwd=checkout,
+                )
+            run_git('update-ref', f'refs/remotes/origin/{branch}', upstream_sha, cwd=checkout)
+            return branch
+    sys.exit(
+        'ERROR: kernel-ark ref does not contain a recent "Merge Linux v*" commit; '
+        'use a kernel-ark release tag'
+    )
+
+
+def _write_kernel_rpkg_adapter(path: Path) -> None:
+    """Create the local rpkg subset required by kernel-ark's dist-git target."""
+    path.write_text(
+        '#!/bin/bash\n'
+        'set -euo pipefail\n'
+        'case "${1:-}" in\n'
+        '  clone)\n'
+        '    package=${2:?missing package name}\n'
+        '    mkdir "$package"\n'
+        '    git -C "$package" init --quiet\n'
+        '    git -C "$package" config user.name "Hummingbird Kernel Import"\n'
+        '    git -C "$package" config user.email noreply@hummingbird-project.io\n'
+        '    touch "$package/sources" "$package/.gitignore"\n'
+        '    git -C "$package" add sources .gitignore\n'
+        '    git -C "$package" commit --quiet -m "Initialize local dist-git"\n'
+        '    ;;\n'
+        '  switch-branch) ;;\n'
+        '  *) echo "Unsupported local rpkg command: ${1:-}" >&2; exit 2 ;;\n'
+        'esac\n'
+    )
+    path.chmod(0o755)
+
+
+def _configure_kernel_override() -> None:
+    """Give kernel builds enough time and appropriately sized workers."""
+    lines = PACKAGE_OVERRIDES_YAML.read_text().splitlines(keepends=True)
+    if _find_top_level_yaml_block(lines, 'kernel') is not None:
+        sys.exit('ERROR: ci/package-overrides.yaml already contains a kernel entry')
+    block = (
+        'kernel:\n'
+        '  timeout_hours: 12\n'
+        '  build_platforms:\n'
+        '    - "linux-d160-c8xlarge/arm64"\n'
+        '    - "linux-d160-c8xlarge/amd64"\n'
+    )
+    PACKAGE_OVERRIDES_YAML.write_text(''.join(_insert_top_level_yaml_block(lines, 'kernel', block)))
+
+
+def import_kernel_ark(ref: str, url: str = KERNEL_ARK_URL, dry_run: bool = False) -> None:
+    """Generate and import the kernel package from an immutable kernel-ark ref."""
+    package_dir = RPMS_DIR / 'kernel'
+    metadata_file = METADATA_DIR / 'kernel.json'
+    if package_dir.exists() or metadata_file.exists():
+        sys.exit('ERROR: kernel is already imported')
+    if not (re.fullmatch(r'[0-9a-fA-F]{40}', ref) or ref.startswith('kernel-')):
+        sys.exit("ERROR: --ref must be a full commit SHA or a 'kernel-' release tag")
+
+    with tempfile.TemporaryDirectory(prefix='kernel-ark-') as tmp:
+        checkout = Path(tmp) / 'kernel-ark'
+        staged_package = Path(tmp) / 'package'
+        dist_git_output = Path(tmp) / 'dist-git-output'
+        rpkg_adapter = Path(tmp) / 'rpkg-local'
+        checkout.mkdir()
+        dist_git_output.mkdir()
+        run_git('init', '--quiet', cwd=checkout)
+        run_git('remote', 'add', 'origin', url, cwd=checkout)
+        run_git('config', 'user.name', 'Hummingbird Kernel Import', cwd=checkout)
+        run_git('config', 'user.email', 'noreply@hummingbird-project.io', cwd=checkout)
+        logging.info('Fetching kernel-ark ref %s', ref)
+        run_git('fetch', '--quiet', '--filter=blob:none', '--depth=64', 'origin', ref, cwd=checkout)
+        run_git('checkout', '--quiet', '--detach', 'FETCH_HEAD', cwd=checkout)
+        sha = run_git('rev-parse', 'HEAD', cwd=checkout).stdout.strip()
+
+        upstream_branch = _prepare_kernel_ark_upstream(checkout)
+        logging.info('Using kernel-ark upstream baseline %s', upstream_branch)
+
+        logging.info('Generating the kernel dist-git payload')
+        localversion = checkout / 'localversion'
+        localversion.unlink(missing_ok=True)
+        localversion.touch()
+        _write_kernel_rpkg_adapter(rpkg_adapter)
+        subprocess.run(
+            [
+                'make', 'DIST=.hum1', 'RH_DIST_GIT_TEST=1',
+                f'RHPKG_BIN={rpkg_adapter}', f'RHDISTGIT_TMP={dist_git_output}',
+                'RHDISTGIT_BRANCH=local', 'dist-git',
+            ],
+            cwd=checkout,
+            check=True,
+        )
+        generated_dirs = list(dist_git_output.glob('RHEL*/kernel'))
+        if len(generated_dirs) != 1:
+            sys.exit(
+                f'ERROR: kernel-ark generated {len(generated_dirs)} dist-git directories; '
+                'expected one'
+            )
+        generated_dir = generated_dirs[0]
+        spec_files = list(generated_dir.glob('*.spec'))
+        if len(spec_files) != 1:
+            sys.exit(f'ERROR: kernel-ark generated {len(spec_files)} spec files; expected one')
+
+        version, release = parse_spec_version(generated_dir)
+        shutil.copytree(generated_dir, staged_package, ignore=shutil.ignore_patterns('.git'))
+        shutil.copytree(staged_package, package_dir)
+
+    metadata: PackageMetadata = {
+        'version': version,
+        'release': release,
+        'modification_status': 'independent',
+        'upstream_repo': url.removesuffix('.git'),
+        'kernel_ark_ref': ref,
+        'kernel_ark_sha': sha,
+    }
+    save_package_metadata('kernel', metadata)
+    imports['kernel'] = metadata
+    _configure_kernel_override()
+
+    check_jinja2_available()
+    subprocess.run([sys.executable, ROOT_DIR / 'ci/generate_resources.py', 'all'], check=True)
+
+    logging.info('Imported kernel-%s-%s from kernel-ark %s', version, release, sha)
+    if not dry_run:
+        run_git(
+            'add', '-f', 'rpms/kernel', 'metadata/kernel.json', 'ci/package-overrides.yaml',
+            'konflux-templates', '.tekton', 'releng', cwd=ROOT_DIR,
+        )
+        commit_msg = f'Import kernel-{version}-{release} from kernel-ark\n\nUpstream: {sha}'
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
@@ -3204,6 +3368,9 @@ Examples:
 
   # Import CentOS Stream golang as golang-fips
   %(prog)s import --branch c10s --directory golang-fips centos/golang
+
+  # Import a released kernel directly from kernel-ark
+  %(prog)s import-kernel-ark --ref kernel-7.2.2-0
 """
     )
 
@@ -3223,6 +3390,19 @@ Examples:
                                help='Specific commit/tag to import (default: latest on branch)')
     import_parser.add_argument('--directory',
                                help='Directory name in rpms/ (default: package name from URL)')
+
+    kernel_parser = subparsers.add_parser(
+        'import-kernel-ark',
+        help='Import a released kernel directly from kernel-ark',
+    )
+    kernel_parser.add_argument(
+        '--ref', required=True,
+        help="Immutable kernel-ark release tag ('kernel-*') or full commit SHA",
+    )
+    kernel_parser.add_argument(
+        '--url', default=KERNEL_ARK_URL,
+        help=f'kernel-ark repository URL (default: {KERNEL_ARK_URL})',
+    )
 
     # update command
     update_parser = subparsers.add_parser('update', help='Update packages from upstream (merges local modifications)')
@@ -3381,6 +3561,8 @@ Examples:
     match args.command:
         case 'import':
             import_(args.url, args.branch, args.ref, args.directory, args.dry_run)
+        case 'import-kernel-ark':
+            import_kernel_ark(args.ref, args.url, args.dry_run)
         case 'update':
             if args.continue_:
                 continue_update(dry_run=args.dry_run)

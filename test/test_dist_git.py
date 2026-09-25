@@ -234,6 +234,7 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
     dist_git_module.RPMS_DIR = workdir / 'rpms'
     dist_git_module.METADATA_DIR = workdir / 'metadata'
     dist_git_module.RELEASES_JSON = workdir / 'upstream-releases.json'
+    dist_git_module.PACKAGE_OVERRIDES_YAML = workdir / 'ci' / 'package-overrides.yaml'
 
     old_argv = sys.argv
     try:
@@ -246,6 +247,114 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
 #
 # Tests
 #
+
+def test_import_kernel_ark(workdir: Path, tmp_path: Path, dist_git_module) -> None:
+    """Import generated kernel sources without using Fedora dist-git."""
+    upstream = tmp_path / 'kernel-ark'
+    upstream.mkdir()
+    subprocess.run(['git', 'init'], cwd=upstream, check=True)
+    subprocess.run(['git', 'config', 'user.name', 'Test'], cwd=upstream, check=True)
+    subprocess.run(['git', 'config', 'user.email', 'test@example.com'], cwd=upstream, check=True)
+    (upstream / 'makefile').write_text(
+        'dist-git:\n'
+        '\tmkdir -p $(RHDISTGIT_TMP)/RHEL.test/kernel\n'
+        '\tprintf "Name: kernel\\nVersion: 7.2.2\\nRelease: 0%%{?dist}\\n'
+        'Summary: Test kernel\\nLicense: GPL-2.0-only\\n%%description\\nTest kernel\\n%%files\\n" '
+        '> $(RHDISTGIT_TMP)/RHEL.test/kernel/kernel.spec\n'
+        '\tprintf auxiliary > $(RHDISTGIT_TMP)/RHEL.test/kernel/kernel-local\n'
+        '\tprintf archive > $(RHDISTGIT_TMP)/RHEL.test/kernel/linux-7.2.2.tar.xz\n'
+        '\ttouch $(RHDISTGIT_TMP)/RHEL.test/kernel/sources\n'
+    )
+    (upstream / 'redhat').mkdir()
+    (upstream / 'redhat' / 'Makefile.variables').write_text(
+        'UPSTREAM_BRANCH ?= linux-7.2.y\n'
+    )
+    subprocess.run(['git', 'add', '.'], cwd=upstream, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Kernel release'], cwd=upstream, check=True)
+    subprocess.run(['git', 'branch', 'linux-7.2.y'], cwd=upstream, check=True)
+    subprocess.run(['git', 'tag', 'kernel-7.2.2-0'], cwd=upstream, check=True)
+    sha = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=upstream, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+
+    with patch.object(dist_git_module, '_prepare_kernel_ark_upstream', return_value='linux-7.2.y'):
+        run_dist_git(
+            dist_git_module, workdir, 'import-kernel-ark',
+            '--ref', 'kernel-7.2.2-0', '--url', str(upstream),
+        )
+
+    package_dir = workdir / 'rpms' / 'kernel'
+    assert (package_dir / 'kernel.spec').exists()
+    assert (package_dir / 'kernel-local').read_text() == 'auxiliary'
+    assert (package_dir / 'linux-7.2.2.tar.xz').read_text() == 'archive'
+    assert (package_dir / 'sources').read_text() == ''
+
+    metadata = json.loads((workdir / 'metadata' / 'kernel.json').read_text())
+    assert metadata == {
+        'kernel_ark_ref': 'kernel-7.2.2-0',
+        'kernel_ark_sha': sha,
+        'modification_status': 'independent',
+        'release': '0',
+        'upstream_repo': str(upstream),
+        'version': '7.2.2',
+    }
+    overrides = yaml.safe_load((workdir / 'ci' / 'package-overrides.yaml').read_text())
+    assert overrides['kernel']['timeout_hours'] == 12
+
+    subject, body = get_last_commit_info(workdir)
+    assert subject == 'Import kernel-7.2.2-0 from kernel-ark'
+    assert f'Upstream: {sha}' in body
+    assert subprocess.run(
+        ['git', 'status', '--porcelain'], cwd=workdir, check=True,
+        capture_output=True, text=True,
+    ).stdout == ''
+
+
+def test_import_kernel_ark_rejects_moving_ref(workdir: Path, dist_git_module) -> None:
+    """A kernel import requires an immutable release tag or full SHA."""
+    with pytest.raises(SystemExit, match='full commit SHA'):
+        run_dist_git(dist_git_module, workdir, 'import-kernel-ark', '--ref', 'fedora-7.2')
+
+
+def test_prepare_kernel_ark_upstream(tmp_path: Path, dist_git_module) -> None:
+    """Use the stable merge parent instead of fetching a moving branch tip."""
+    repo = tmp_path / 'kernel-ark'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '--initial-branch=master'], cwd=repo, check=True)
+    subprocess.run(['git', 'config', 'user.name', 'Test'], cwd=repo, check=True)
+    subprocess.run(['git', 'config', 'user.email', 'test@example.com'], cwd=repo, check=True)
+    (repo / 'redhat').mkdir()
+    (repo / 'redhat' / 'Makefile.variables').write_text(
+        'UPSTREAM_BRANCH ?= linux-7.2.y\n'
+    )
+    subprocess.run(['git', 'add', '.'], cwd=repo, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Base'], cwd=repo, check=True)
+    subprocess.run(['git', 'branch', 'fedora'], cwd=repo, check=True)
+    (repo / 'stable-fix').write_text('fix')
+    subprocess.run(['git', 'add', '.'], cwd=repo, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Linux 7.2.2'], cwd=repo, check=True)
+    upstream_sha = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=repo, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    subprocess.run(['git', 'tag', 'v7.2.2'], cwd=repo, check=True)
+    subprocess.run(['git', 'checkout', 'fedora'], cwd=repo, check=True)
+    (repo / 'redhat' / 'fedora-config').write_text('config')
+    subprocess.run(['git', 'add', '.'], cwd=repo, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Fedora config'], cwd=repo, check=True)
+    subprocess.run(
+        ['git', 'merge', '--no-ff', 'master', '-m', 'Merge Linux v7.2.2'],
+        cwd=repo, check=True,
+    )
+
+    assert dist_git_module._prepare_kernel_ark_upstream(repo) == 'linux-7.2.y'
+    resolved = subprocess.run(
+        ['git', 'rev-parse', 'refs/remotes/origin/linux-7.2.y'], cwd=repo, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    assert resolved == upstream_sha
+
 
 def test_import(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Import a new package."""

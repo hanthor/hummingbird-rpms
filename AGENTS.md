@@ -19,6 +19,7 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | Command | When to use |
 | ------- | ----------- |
 | `./ci/dist_git.py import fedora/<pkg>` | Import a new package from Fedora rawhide (default) or another branch (`--branch f42`) |
+| `./ci/dist_git.py import-kernel-ark --ref <tag-or-sha>` | Import a released kernel directly from kernel-ark without Fedora dist-git |
 | `./ci/dist_git.py update [<pkg>]` | Pull latest Fedora changes into one or all packages (merges local modifications) |
 | `./ci/dist_git.py sync <pkg>` | Force-sync a package to upstream, discarding local changes |
 | `./ci/dist_git.py rebuild <pkg> --reason "..."` | Bump Release to trigger a no-change rebuild (use `--all` for every package, plus `--exclude pkg1,pkg2` to skip specific ones) |
@@ -48,6 +49,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Operation                      | `dist_git.py` command                                           | Documentation                                                                                   | When to use                                                            |
 |--------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
 | Import dist-git package        | `import fedora/<pkg>`                                           | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Add a new package from Fedora dist-git                                 |
+| Import kernel from kernel-ark  | `import-kernel-ark --ref <tag-or-sha>`                          | [Kernel import][kernel-import]                                                                  | Add a pinned kernel without using Fedora dist-git                      |
 | Add independent package        | _(manual — not from Fedora)_                                    | [Adding Independent Packages](documentation/operating/adding-independent-packages.md)           | Add new package not imported from Fedora                               |
 | Rebuild package (no-change)    | `rebuild <pkg> --reason "..."` (or `--all --exclude pkg1,pkg2`) | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Faulty RPM published; need to bump Release for rebuild                 |
 | Backport a patch               | Add patch, bump Release, run `mark-modified`                    | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
@@ -69,6 +71,8 @@ Common operational tasks that users or AI agents may need to perform:
 | Add private product            | `add-private-product <product> --packages ...`                  | [Private RPM Repositories](documentation/operating/private-rpm-repositories.md)                 | Create a private product with Pulp repos, RPA, and packages            |
 | Rebase buildroot to new Fedora | _(multi-step; see runbook)_                                     | [Rebasing Buildroot to New Fedora](documentation/operating/rebasing-buildroot-to-new-fedora.md) | Move mock.cfg, core toolchain, and package set to a new Fedora release |
 | Add/rotate GPG source keys     | _(edit `metadata/gpg-keys/` + pipeline YAML)_                   | [GPG Source Verification](documentation/operating/gpg-source-verification.md)                   | Add, rotate, or revoke an upstream signing key for source verification |
+
+[kernel-import]: documentation/operating/building-kernel-from-kernel-ark.md
 
 ## Post-Import / Post-Add Requirements
 

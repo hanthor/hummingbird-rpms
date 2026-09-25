@@ -182,6 +182,9 @@ which are meant to be released. You can disable this check with `--skip-build-ch
 All of these commands automatically commit changes with descriptive commit messages including the
 upstream SHA. To avoid that, you can use the `--dry-run` option.
 
+The kernel is imported directly from a pinned kernel-ark release rather than Fedora dist-git. See
+[Building the Kernel from kernel-ark](documentation/operating/building-kernel-from-kernel-ark.md).
+
 - Enable upstream version tracking for a package (used by `check_upstream_versions.py check`). These
   commands modify the metadata file but do not create a git commit:
 
