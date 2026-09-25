@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "22",
+  "release": "23",
   "release_monitoring_project_id": 10500,
-  "sha": "5189e540bb92582d95feaff4a72fa34efe0ecd48",
+  "sha": "49c2277a42847de428c75d4b2e5d25ecb0e7761c",
   "source": "https://src.fedoraproject.org/rpms/re2.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/google/re2",

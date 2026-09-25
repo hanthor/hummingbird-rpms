@@ -13,7 +13,7 @@ Name:           re2
 %global py_version 1.1.%{base_version}
 Version:        %{base_version}
 Epoch:          2
-Release:        22%{?dist}
+Release:        23%{?dist}
 Summary:        C++ fast alternative to backtracking RE engines
 
 # The entire source is BSD-3-Clause, except:
