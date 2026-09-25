@@ -22,12 +22,11 @@ diff -up gperftools-2.17/configure.ac.dynload gperftools-2.17/configure.ac
 diff -up gperftools-2.17/src/base/basictypes.h.dynload gperftools-2.17/src/base/basictypes.h
 --- gperftools-2.17/src/base/basictypes.h.dynload	2025-08-05 13:05:59.341787961 -0400
 +++ gperftools-2.17/src/base/basictypes.h	2025-08-05 13:06:52.289818648 -0400
-@@ -84,7 +84,7 @@
- # define ATTRIBUTE_UNUSED
+ #define ATTRIBUTE_UNUSED
  #endif
  
 -#if defined(HAVE___ATTRIBUTE__)
 +#if defined(HAVE___ATTRIBUTE__) && defined(ENABLE_GENERIC_DYNAMIC_TLS)
- #define ATTR_INITIAL_EXEC __attribute__ ((tls_model ("initial-exec")))
+ #define ATTR_INITIAL_EXEC __attribute__((tls_model("initial-exec")))
  #else
  #define ATTR_INITIAL_EXEC
