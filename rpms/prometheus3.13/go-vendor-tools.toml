@@ -29,6 +29,8 @@ pre_commands = [
    "github.com/go-openapi/swag/stringutils@v0.27.1",
    "github.com/go-openapi/swag/typeutils@v0.27.1",
    "github.com/go-openapi/swag/yamlutils@v0.27.1"],
+  # Sync all workspace members so modules.txt is consistent with go.mod
+  ["go", "work", "sync"],
 ]
 
 [licensing]
