@@ -5,7 +5,7 @@
 
 Name:           meson
 Version:        1.12.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        High productivity build system
 
 License:        Apache-2.0
@@ -118,6 +118,7 @@ unit tests, coverage reports, Valgrind, CCache and the like.
 
 %package srpm-macros
 Summary:        rpm macros to build projects using meson
+Conflicts:      meson < 1.12.0-2
 
 %description srpm-macros
 This package contains %{summary}.
