@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.0.116
+%global openshell_version 0.1.0
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -286,6 +286,10 @@ touch %{buildroot}%{python3_sitelib}/%{name}-%{openshell_python_version}.dist-in
 #   shared socket ownership" denial instead of the specific denial reason
 #   the test expects. The proxy still denies the connection correctly either
 #   way; only the asserted denial reason differs.
+# - binary identity tests inspect live /proc executable and ancestor state,
+#   which the hermetic mock chroot cannot expose reliably.
+# - seccomp notification and network broker tests need kernel listener and
+#   process privileges that can be unavailable in the hermetic build chroot.
 skip="${skip-} --skip compute::lease::tests::concurrent_steal_exactly_one_wins"
 skip="${skip-} --skip proxy::tests::test_forward_public_ip_allowed_without_allowed_ips"
 skip="${skip-} --skip proxy::tests::test_resolve_check_allowed_ips_rejects_outside_allowlist"
@@ -293,6 +297,11 @@ skip="${skip-} --skip runtime::tests::gvproxy_socket_base_is_per_sandbox_overlay
 skip="${skip-} --skip proxy::tests::connect_handler_returns_ssrf_403_for_internal_address_not_503"
 skip="${skip-} --skip proxy::tests::connect_handler_refuses_terminating_route_with_503_before_200"
 skip="${skip-} --skip proxy::tests::connect_handler_tls_skip_route_is_not_refused"
+skip="${skip-} --skip tests::resolves_current_process_from_live_executable"
+skip="${skip-} --skip tests::resolver_cache_is_owned_and_only_explicit_clones_share_it"
+skip="${skip-} --skip tests::resolves_child_and_hashes_ancestor_chain"
+skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_output_writes"
+skip="${skip-} --skip network_broker::tests::accepted_loopback_stream_is_registered_for_notified_operations"
 %cargo_test -- -- ${skip-}
 
 # Smoke-test the CLI binary
