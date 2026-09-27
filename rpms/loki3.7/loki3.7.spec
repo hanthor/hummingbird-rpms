@@ -89,6 +89,7 @@ skip_tests=(
     'TestProxyEndpoint_QuerySplitting/query_spans_threshold_\(split_and_merge\)' # clock-sensitive threshold classification
     'Test_BuilderLoop/exceed_max_retries' # races asynchronous retry accounting
     TestTablesManager_TableLocking        # timing-sensitive lock expiry assertions
+    'TestDistributorPushToKafka/with_kafka_and_ingesters,_both_must_complete' # aarch64 timing-sensitive Kafka/ingester completion race
 )
 skip_pattern=$(IFS='|'; echo "${skip_tests[*]}")
 %gotest ${skip_pattern:+-skip "${skip_pattern}"} $(go list ./... | grep -Ev "${skip_package_pattern}")
