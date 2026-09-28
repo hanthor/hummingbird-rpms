@@ -65,6 +65,9 @@ post_commands = [
   ],
 ]
 
+[archive.dependency_overrides]
+# CVE-2026-93450
+"github.com/go-openapi/swag" = "v0.27.1"
 
 [licensing]
 exclude_directories = [
