@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "HUM-6146: relax Trio test dependency for Fedora 44",
+  "modification_status": "modified",
   "release": "1",
   "sha": "ad60097e073beca78666ba4861767a5a2711c606",
   "source": "https://src.fedoraproject.org/rpms/python-gitlab.git",
