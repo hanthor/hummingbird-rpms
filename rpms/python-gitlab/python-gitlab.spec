@@ -2,8 +2,8 @@
 %global pypi_name gitlab
 
 Name:           python-%{pypi_name}
-Version:        8.5.0
-Release:        2%{?dist}
+Version:        8.6.0
+Release:        1%{?dist}
 Summary:        Interact with GitLab API
 
 License:        LGPL-3.0-only
