@@ -586,6 +586,9 @@ trivy:
 ucx:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+utf8proc:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 unbound:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
