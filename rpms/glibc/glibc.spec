@@ -153,7 +153,7 @@ Version: %{glibcversion}
 #   generator to make the generated requires interchangeable between Rawhide
 #   and ELN (.elnYY < .fcXX).
 %global baserelease 8
-Release: %{baserelease}.6%{?dist}
+Release: %{baserelease}.7%{?dist}
 
 # Licenses:
 #
@@ -358,6 +358,7 @@ Patch28: glibc-CVE-2026-80489-euc-jisx0213.patch
 Patch29: glibc-jisx0213-progress-test.patch
 Patch30: glibc-CVE-2026-18374-fopen-ccs.patch
 Patch31: glibc-CVE-2026-8674-resolv-search-list.patch
+Patch32: glibc-CVE-2026-86805-CVE-2026-95818-origin-rpath.patch
 # https://bugs.winehq.org/show_bug.cgi?id=58523
 # revert 3d3572f59059e2b19b8541ea648a6172136ec42e to fix wine build
 # applied with PP powers as we really need to build wine to fix scriptlet problems
