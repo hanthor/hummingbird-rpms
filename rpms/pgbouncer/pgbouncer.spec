@@ -7,14 +7,13 @@
 
 Name:       pgbouncer
 Version:    1.26.0
-Release:    0.1%{?dist}
+Release:    1%{?dist}
 Summary:    Lightweight connection pooler for PostgreSQL
 License:    ISC and BSD-2-Clause
 URL:        https://www.pgbouncer.org
 
 Source0:    %{url}/downloads/files/%{version}/%{name}-%{version}.tar.gz
 Patch0:     %{name}-ini.patch
-
 
 BuildRequires:  c-ares-devel >= 1.11
 BuildRequires:  make
