@@ -470,6 +470,9 @@ prometheus3.5:
 protobuf:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+protobuf-c:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prrte:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
