@@ -1,0 +1,4 @@
+fetch:
+  - type: url
+    url: "https://github.com/JuliaLang/utf8proc/archive/v${VERSION}.tar.gz"
+    filename: "utf8proc-v${VERSION}.tar.gz"
