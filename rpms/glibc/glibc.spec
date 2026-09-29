@@ -1,4 +1,4 @@
-%global glibcsrcdir glibc-2.43-47-gbc95068f5f
+%global glibcsrcdir glibc-2.43-71-g9cda6fc96a
 %global glibcversion 2.43
 # Pre-release tarballs are pulled in from git using a command that is
 # effectively:
@@ -152,8 +152,8 @@ Version: %{glibcversion}
 # - It allows using the Release number without the %%dist tag in the dependency
 #   generator to make the generated requires interchangeable between Rawhide
 #   and ELN (.elnYY < .fcXX).
-%global baserelease 8
-Release: %{baserelease}.7%{?dist}
+%global baserelease 9
+Release: %{baserelease}.1%{?dist}
 
 # Licenses:
 #
@@ -351,13 +351,6 @@ Patch13: glibc-fedora-localedata-rh61908.patch
 Patch17: glibc-cs-path.patch
 Patch23: glibc-python3.patch
 Patch24: glibc-rh2426825.patch
-Patch25: glibc-CVE-2026-19542-tdelete.patch
-Patch26: glibc-CVE-2026-19499-strfmon.patch
-Patch27: glibc-CVE-2026-77117-shift-jisx0213.patch
-Patch28: glibc-CVE-2026-80489-euc-jisx0213.patch
-Patch29: glibc-jisx0213-progress-test.patch
-Patch30: glibc-CVE-2026-18374-fopen-ccs.patch
-Patch31: glibc-CVE-2026-8674-resolv-search-list.patch
 Patch32: glibc-CVE-2026-86805-CVE-2026-95818-origin-rpath.patch
 # https://bugs.winehq.org/show_bug.cgi?id=58523
 # revert 3d3572f59059e2b19b8541ea648a6172136ec42e to fix wine build
@@ -2410,6 +2403,34 @@ update_gconv_modules_cache ()
 %endif
 
 %changelog
+* Tue Sep 29 2026 Frédéric Bérat <fberat@redhat.com> - 2.43-9
+- Auto-sync with upstream branch release/2.43/master,
+  commit 9cda6fc96abd035d9cbe68482138d4a78a51a7d5:
+- stdlib: Don't call clearenv from __libc_setenv_freemem (Mark Wielaard)
+- resolv: Fix assertion failure on search list truncation [BZ 31026, CVE-2026-8674] (Adhemerval Zanella)
+- zic: keep needed last transition to new type (bug 34618) (Paul Eggert)
+- nptl: Skip pretty-printer tests without python3 [BZ #34507] (Hemanth Kumar M D)
+- hesiod: use booleans in parser macro calls (Adhemerval Zanella)
+- hesiod: fix swapped arguments in service parser (Adhemerval Zanella)
+- nss_files: use booleans in parser macro calls (Andreas Schwab)
+- nss_files: fix swapped arguments in service parser (Andreas Schwab)
+- libio: Add test for fopen with an empty ", ccs=" value [BZ #34574] (Shamil Abdulaev)
+- libio: Fix CVE-2026-18374 heap buffer overflow in ccs= handling (Dongkyun Son)
+- alpha: expect test-float32x-float64-div to fail (Matt Turner)
+- alpha: add the denormal trap enable bit to FE_NOMASK_ENV (Matt Turner)
+- alpha: Fix stack alignment in makecontext (Magnus Lindholm)
+- alpha: fix setrlimit compat symbol for negative rlim values besides -1 (Matt Turner)
+- iconvdata: Test case for bug 34556, bug 34568 (Florian Weimer)
+- iconvdata: EUC_JISX0213 decoding lacks pending character reset (CVE-2026-80489) (Florian Weimer)
+- iconvdata: SHIFT_JISX0213 decoding lacks pending character reset (CVE-2026-77117) (Florian Weimer)
+- stdlib: Fix right-justification in strfmon (bug 34510, CVE-2026-19499) (Florian Weimer)
+- posix: Remove unnecessary overflow check in wordexp (BZ 34090) (Adhemerval Zanella)
+- m68k: remove sysdeps/m68k/m680x0/fpu/w_fmod_compat.c (bug 34559) (Andreas Schwab)
+- misc: Fix out-of-bounds array write in tdelete (bug 34506) (Florian Weimer)
+- malloc: Show hugetlb tunable default in --list-tunables (Wilco Dijkstra)
+- m68k: Fix fmod/fmodf infinite recursion (BZ 34508) (Adhemerval Zanella)
+- posix: Fix wordexp WRDE_APPEND to preserve state on non-NOSPACE errors (BZ 34090, CVE-2026-6368) (Adhemerval Zanella)
+
 * Tue Aug 04 2026 Frédéric Bérat <fberat@redhat.com> - 2.43-8
 - Auto-sync with upstream branch release/2.43/master,
   commit bc95068f5f9d7f57d0f01757fed0900893b122b8:
