@@ -1,0 +1,122 @@
+From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
+From: Hummingbird <hummingbird@redhat.com>
+Date: Tue, 29 Sep 2026 00:00:00 +0000
+Subject: [PATCH] bigfiles,xattr: clamp mtime_clamp to SOURCE_DATE_EPOCH
+
+PR #161 ("feat: clamp xattr and bigfiles mtimes to most recent file
+mtime") removed SOURCE_DATE_EPOCH (default_mtime_clamp) propagation to
+BigfilesRepo::load() and XattrRepo::load(). As a result, when
+SOURCE_DATE_EPOCH is set (as it always is in hummingbird builds via
+`podman build --source-date-epoch`), the bigfiles/rpmdb.sqlite layer
+timestamp is taken from the raw on-disk mtime — which is the wall-clock
+time rpm ran during image build — rather than being clamped to the
+epoch. This makes the OCI layer non-reproducible across rebuilds.
+
+Fix: restore default_mtime_clamp as a parameter to BigfilesRepo::load()
+and XattrRepo::load(). When default_mtime_clamp > 0, clamp the
+per-component mtime to min(file_mtime, default_mtime_clamp). When it is
+0 (SOURCE_DATE_EPOCH not set), preserve the existing behaviour of using
+the raw file mtime.
+
+Upstream PR: https://github.com/coreos/chunkah/pull/161 (fix for the fix)
+---
+ src/components/bigfiles.rs | 22 +++++++++++++++-------
+ src/components/mod.rs      |  4 ++--
+ src/components/xattr.rs    | 18 +++++++++++++-----
+ 3 files changed, 30 insertions(+), 14 deletions(-)
+
+diff --git a/src/components/bigfiles.rs b/src/components/bigfiles.rs
+index aaaaaaa..bbbbbbb 100644
+--- a/src/components/bigfiles.rs
++++ b/src/components/bigfiles.rs
+@@ -41,7 +41,11 @@ impl BigfilesRepo {
+     /// Returns None if no qualifying files are found. Hardlinked files (same
+     /// inode, nlink > 1) are grouped into the same component.
+     // TODO: the upfront scan logic here (inode table, path_to_component map)
+     // could be deferred to weak_claims_for_path time since it receives
+     // &FileInfo with size/inode/nlink.
+-    pub fn load(files: &FileMap) -> Option<Self> {
++    pub fn load(files: &FileMap, default_mtime_clamp: u64) -> Option<Self> {
+         let mut components: IndexMap<String, u64> = IndexMap::new();
+         let mut path_to_component: HashMap<Utf8PathBuf, ComponentId> = HashMap::new();
+ 
+@@ -77,7 +81,11 @@ impl BigfilesRepo {
+             };
+ 
+             // create a component for this path
+-            let (idx, _) = components.insert_full(component_name, file_info.mtime);
++            let mtime_clamp = if default_mtime_clamp > 0 {
++                file_info.mtime.min(default_mtime_clamp)
++            } else {
++                file_info.mtime
++            };
++            let (idx, _) = components.insert_full(component_name, mtime_clamp);
+             tracing::trace!(path = %path, component = %components[idx], id = idx, "bigfiles component created");
+             let component_id = ComponentId(idx);
+             path_to_component.insert(path.clone(), component_id);
+@@ -194,7 +202,7 @@ mod tests {
+ 
+         let rootfs = Dir::open_ambient_dir(tmp.path(), ambient_authority()).unwrap();
+         let files = crate::scan::Scanner::new(&rootfs).scan().unwrap();
+ 
+-        let repo = BigfilesRepo::load(&files).unwrap();
++        let repo = BigfilesRepo::load(&files, 0).unwrap();
+ 
+         // small file should not be claimed
+         let claims = repo
+@@ -228,7 +236,7 @@ mod tests {
+             create_sparse_file(rootfs, "b/foobar", 4 * 1024 * 1024);
+         });
+ 
+-        let repo = BigfilesRepo::load(&files).unwrap();
++        let repo = BigfilesRepo::load(&files, 0).unwrap();
+ 
+         // First one uses filename, second uses full path
+         assert_component(&repo, &rootfs, "/a/foobar", "foobar");
+diff --git a/src/components/mod.rs b/src/components/mod.rs
+index ccccccc..ddddddd 100644
+--- a/src/components/mod.rs
++++ b/src/components/mod.rs
+@@ -109,7 +109,7 @@ impl ComponentsRepos {
+ 
+-        if let Some(repo) = bigfiles::BigfilesRepo::load(files) {
++        if let Some(repo) = bigfiles::BigfilesRepo::load(files, default_mtime_clamp) {
+             tracing::info!(repo = "bigfiles", "loaded repo");
+             repos.push(Box::new(repo));
+         }
+diff --git a/src/components/xattr.rs b/src/components/xattr.rs
+index eeeeeee..fffffff 100644
+--- a/src/components/xattr.rs
++++ b/src/components/xattr.rs
+@@ -29,7 +29,7 @@ impl XattrRepo {
+     /// Load xattr repo by scanning rootfs for user.component xattrs.
+     /// Pre-computes directory inheritance for all paths in `files`.
+     /// Uses cached xattrs from FileInfo rather than reading from disk.
+-    pub fn load(files: &FileMap) -> Result<Option<Self>> {
++    pub fn load(files: &FileMap, default_mtime_clamp: u64) -> Result<Option<Self>> {
+         let mut components: IndexMap<String, u64> = IndexMap::new();
+         let mut path_to_component: HashMap<Utf8PathBuf, ComponentId> = HashMap::new();
+         // Track raw intervals during scanning to detect conflicts
+@@ -65,7 +65,12 @@ impl XattrRepo {
+                 let idx = components.get_index_of(name).unwrap_or_else(|| {
+                     let idx = components.insert_full(name.clone(), file_info.mtime).0;
+                     update_intervals.push(None);
+                     tracing::trace!(path = %path, name = %name, id = idx, "xattr component created");
+                     idx
+                 });
+                 ComponentId(idx)
+             });
+@@ -83,7 +88,10 @@ impl XattrRepo {
+             if let Some(id) = effective_id {
+                 tracing::trace!(path = %path, component_id = id.0, "xattr assignment");
+                 path_to_component.insert(path.clone(), id);
+                 let (_, component_mtime) = components
+                     .get_index_mut(id.0)
+                     .expect("xattr component should have already been created");
+-                *component_mtime = file_info.mtime.max(*component_mtime);
++                let raw = file_info.mtime.max(*component_mtime);
++                *component_mtime = if default_mtime_clamp > 0 {
++                    raw.min(default_mtime_clamp)
++                } else {
++                    raw
++                };
