@@ -123,13 +123,14 @@ index 6c74b65cef..8bcb78cd2d 100644
  Operation = ENCRYPT
  Unapproved = 1
 diff --git a/test/recipes/30-test_evp_data/evpmac_cmac_des.txt b/test/recipes/30-test_evp_data/evpmac_cmac_des.txt
-index a11e5ffe54..e4a7cbe75e 100644
+index a3de7c88e0..bc0becefc1 100644
 --- a/test/recipes/30-test_evp_data/evpmac_cmac_des.txt
 +++ b/test/recipes/30-test_evp_data/evpmac_cmac_des.txt
-@@ -35,13 +35,3 @@ Algorithm = DES-EDE3-CBC
+@@ -42,25 +42,4 @@
+ Algorithm = DES-EDE3-CBC
  Key = 89BCD952A8C8AB371AF48AC7D07085D5EFF702E6D62CDC23
  Input = FA620C1BBE97319E9A0CF0492121F7A20EB08A6A709DCBD00AAF38E4F99E754E
- Result = MAC_INIT_ERROR
+-Result = DIGESTSIGNINIT_ERROR
 -
 -Availablein = fips
 -FIPSversion = >=3.4.0
@@ -140,6 +141,18 @@ index a11e5ffe54..e4a7cbe75e 100644
 -Key = 89BCD952A8C8AB371AF48AC7D07085D5EFF702E6D62CDC23
 -Input = FA620C1BBE97319E9A0CF0492121F7A20EB08A6A709DCBD00AAF38E4F99E754E
 -Output = 8F49A1B7D6AA2258
+-
+-# Test that the legacy bridge propagates the unapproved TDES-CMAC indicator
+-Availablein = fips
+-FIPSversion = >=3.5.0
+-MAC = CMAC by EVP_PKEY
+-Unapproved = 1
+-CtrlInit = encrypt-check:0
+-Algorithm = DES-EDE3-CBC
+-Key = 89BCD952A8C8AB371AF48AC7D07085D5EFF702E6D62CDC23
+-Input = FA620C1BBE97319E9A0CF0492121F7A20EB08A6A709DCBD00AAF38E4F99E754E
+-Output = 8F49A1B7D6AA2258
++Result = MAC_KEY_CREATE_ERROR
 diff --git a/test/recipes/80-test_cms.t b/test/recipes/80-test_cms.t
 index beadb43cf4..71ab4a3910 100644
 --- a/test/recipes/80-test_cms.t
