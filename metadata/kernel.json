@@ -1,0 +1,8 @@
+{
+  "kernel_ark_ref": "kernel-7.2.2-0",
+  "kernel_ark_sha": "097d708cb25c13ae099f3eaa226b39ecbb436997",
+  "modification_status": "independent",
+  "release": "0",
+  "upstream_repo": "https://gitlab.com/cki-project/kernel-ark",
+  "version": "7.2.2"
+}

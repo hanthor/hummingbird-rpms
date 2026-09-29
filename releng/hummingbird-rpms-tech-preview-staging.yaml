@@ -452,6 +452,8 @@ spec:
           contentType: rpm
         - name: kbd-main
           contentType: rpm
+        - name: kernel-main
+          contentType: rpm
         - name: kernel-headers-main
           contentType: rpm
         - name: kernel-srpm-macros-main
