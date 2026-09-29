@@ -512,10 +512,10 @@ index 18e11bdaa9..17ceb59148 100644
  # an otherwise valid plaintext, but with null separator missing
  Decrypt = RSA-3072
  Input = a7a5c99e50da48769ecb779d9abe86ef9ec8c38c6f43f17c7f2d7af608a4a1bd6cf695b47e97c191c61fb5a27318d02f495a176b9fae5a55b5d3fabd1d8aae4957e3879cb0c60f037724e11be5f30f08fc51c033731f14b44b414d11278cd3dba7e1c8bfe208d2b2bb7ec36366dacb6c88b24cd79ab394adf19dbbc21dfa5788bacbadc6a62f79cf54fd8cf585c615b5c0eb94c35aa9de25321c8ffefb8916bbaa2697cb2dd82ee98939df9b6704cee77793edd2b4947d82e00e5749664970736c59a84197bd72b5c71e36aae29cd39af6ac73a368edbc1ca792e1309f442aafcd77c992c88f8e4863149f221695cb7b0236e75b2339a02c4ea114854372c306b9412d8eedb600a31532002f2cea07b4df963a093185e4607732e46d753b540974fb5a5c3f9432df22e85bb17611370966c5522fd23f2ad3484341ba7fd8885fc8e6d379a611d13a2aca784fba2073208faad2137bf1979a0fa146c1880d4337db3274269493bab44a1bcd0681f7227ffdf589c2e925ed9d36302509d1109ba4
-@@ -912,9 +932,9 @@ Output=4DE433D5844043EF08D354DA03CB29068780D52706D7D1E4D50EFB7D58C9D547D83A747DD
- 
- # Verify of above signature
+@@ -926,9 +946,9 @@ FIPSversion = >=3.5.0
+ FIPSversion = >=3.5.0
  Verify = RSA-2048-PUBLIC
+ Unapproved = 1
 +Ctrl = digest:sha256
  Ctrl = rsa_padding_mode:pss
  Ctrl = rsa_pss_saltlen:0
@@ -982,4 +982,3 @@ index f7be2e1872..568a1ddba4
              next if $protocol eq "-tls1_3";
 -- 
 2.52.0
-
