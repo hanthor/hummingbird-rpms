@@ -1,6 +1,6 @@
 {
   "branch": "f44",
-  "modification_reason": "Backport upstream fixes for tdelete OOB write (CVE-2026-19542), strfmon right-justification overflow (CVE-2026-19499), SHIFT_JISX0213 pending-char DoS (CVE-2026-77117), EUC_JISX0213 pending-char DoS (CVE-2026-80489), fopen ccs heap buffer overflow (CVE-2026-18374), and resolver search-list assertion failure (CVE-2026-8674); origin RPATH validation fixes (CVE-2026-86805 and CVE-2026-95818)",
+  "modification_reason": "Backport origin RPATH validation fixes (CVE-2026-86805 and CVE-2026-95818)",
   "modification_status": "modified",
   "release": "9",
   "sha": "8e9e7eb6e4f312296c6fc451b8e0ca1049725391",

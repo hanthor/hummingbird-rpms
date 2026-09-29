@@ -153,7 +153,7 @@ Version: %{glibcversion}
 #   generator to make the generated requires interchangeable between Rawhide
 #   and ELN (.elnYY < .fcXX).
 %global baserelease 9
-Release: %{baserelease}%{?dist}
+Release: %{baserelease}.1%{?dist}
 
 # Licenses:
 #
@@ -351,13 +351,6 @@ Patch13: glibc-fedora-localedata-rh61908.patch
 Patch17: glibc-cs-path.patch
 Patch23: glibc-python3.patch
 Patch24: glibc-rh2426825.patch
-Patch25: glibc-CVE-2026-19542-tdelete.patch
-Patch26: glibc-CVE-2026-19499-strfmon.patch
-Patch27: glibc-CVE-2026-77117-shift-jisx0213.patch
-Patch28: glibc-CVE-2026-80489-euc-jisx0213.patch
-Patch29: glibc-jisx0213-progress-test.patch
-Patch30: glibc-CVE-2026-18374-fopen-ccs.patch
-Patch31: glibc-CVE-2026-8674-resolv-search-list.patch
 Patch32: glibc-CVE-2026-86805-CVE-2026-95818-origin-rpath.patch
 # https://bugs.winehq.org/show_bug.cgi?id=58523
 # revert 3d3572f59059e2b19b8541ea648a6172136ec42e to fix wine build
