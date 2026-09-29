@@ -1,12 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 3.5.8",
+  "modification_reason": "Update to upstream version 3.5.9",
   "modification_status": "modified",
   "release_monitoring_project_id": 377610,
   "sha": "1bacc805fdec3117ad499c4cad54316ceb5880ec",
   "source": "https://src.fedoraproject.org/rpms/openssl3.git",
   "track_upstream": "3.5",
   "upstream_repo": "https://github.com/openssl/openssl",
-  "version": "3.5.8",
-  "release": "1"
+  "version": "3.5.9"
 }
