@@ -4,7 +4,7 @@
 %global gcc_major 16
 # Note, gcc_release must be integer, if you want to add suffixes to
 # %%{release}, append them after %%{gcc_release} on Release: line.
-%global gcc_release 2
+%global gcc_release 3
 %global nvptx_tools_gitrev 212da2e781ed0f9423824e85eb04819958513f7a
 %global newlib_cygwin_gitrev d35cc82b5ec15bb8a5fe0fe11e183d1887992e99
 %global _unpackaged_files_terminate_build 0
@@ -327,6 +327,7 @@ Patch12: gcc16-pr119006.patch
 Patch50: isl-rh2155127.patch
 
 Patch100: gcc16-fortran-fdec-duplicates.patch
+Patch101: 00101-cve-2026-102010-denial-service-use-after-free-binary-heap.patch
 
 # On ARM EABI systems, we do want -gnueabi to be part of the
 # target triple.
@@ -983,6 +984,7 @@ touch -r isl-0.24/m4/ax_prog_cxx_for_build.m4 isl-0.24/m4/ax_prog_cc_for_build.m
 %if 0%{?rhel} >= 9
 %autopatch -p1 100
 %endif
+%patch -P 101 -p1
 
 %ifarch %{arm}
 rm -f gcc/testsuite/go.test/test/fixedbugs/issue19182.go
