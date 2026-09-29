@@ -4,8 +4,8 @@
 %global crate podman-sequoia
 
 Name:           rust-podman-sequoia
-Version:        0.3.2
-Release:        5%{?dist}
+Version:        0.4.0
+Release:        1%{?dist}
 Summary:        Polyfill to use Sequoia as a signing backend for containers
 
 License:        Apache-2.0
