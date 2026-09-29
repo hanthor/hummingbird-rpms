@@ -2,8 +2,8 @@
 %global pypi_name gitlab
 
 Name:           python-%{pypi_name}
-Version:        8.5.0
-Release:        2%{?dist}
+Version:        8.6.0
+Release:        1.1%{?dist}
 Summary:        Interact with GitLab API
 
 License:        LGPL-3.0-only
@@ -48,6 +48,7 @@ sed -i 's/responses==0.*/responses>=0,<1.0/'           requirements-lint.txt req
 sed -i 's/wheel==0.*/wheel>=0.45.0,<1.0/'              requirements-test.txt
 sed -i 's/build==1.*/build>=1.0.0,<2.0/'               requirements-test.txt
 sed -i 's/anyio==4.*/anyio>=4.0.0,<5.0/'               requirements-test.txt
+sed -i 's/trio==.*/trio>=0.33.0,<1.0/'                  requirements-test.txt
 sed -i 's/requests==2.*/requests>=2.32.0,<3.0/'        requirements.txt
 
 # not available in rawhide 11 Aug 2022
