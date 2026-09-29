@@ -5,6 +5,7 @@ Subject: [PATCH 48/57] FIPS: KDF key lenght errors
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
+ test/recipes/20-test_mac.t                           |  4 ++--
  test/recipes/30-test_evp_data/evpkdf_ss.txt        |  8 ++++----
  test/recipes/30-test_evp_data/evpkdf_tls12_prf.txt |  6 +++---
  test/recipes/30-test_evp_data/evpkdf_tls13_kdf.txt | 11 ++++++-----
@@ -12,8 +13,25 @@ Signed-off-by: Simo Sorce <simo@redhat.com>
  test/recipes/30-test_evp_data/evpkdf_x963.txt      |  6 ++----
  test/recipes/30-test_evp_data/evpmac_common.txt    |  2 +-
  test/recipes/30-test_evp_data/evppkey_kdf_hkdf.txt |  2 +-
- 7 files changed, 18 insertions(+), 20 deletions(-)
+ 8 files changed, 20 insertions(+), 22 deletions(-)
 
+diff --git a/test/recipes/20-test_mac.t b/test/recipes/20-test_mac.t
+index c2c147fb97..454805d333 100644
+--- a/test/recipes/20-test_mac.t
++++ b/test/recipes/20-test_mac.t
+@@ -147,9 +147,9 @@
+         if !$exit;
+ 
+     $ENV{OPENSSL_CONF} = $fipsconf;
+-    ok(!run(app(['openssl', 'dgst', '-provider', 'fips', '-sha256', '-hmac',
+-                 '1234', srctop_file("test", "testec-p112r1.pem")])),
+-        "Checking bad key size fails in FIPS provider");
++    ok(run(app(['openssl', 'dgst', '-provider', 'fips', '-sha256', '-hmac',
++                '1234', srctop_file("test", "testec-p112r1.pem")])),
++       "Checking short key succeeds in FIPS provider");
+     ok(run(app(['openssl', 'dgst', '-provider', 'fips', '-sha256', '-hmac',
+                 '123456789ABCDE', srctop_file("test", "testec-p112r1.pem")])),
+         "Checking good key size passes in FIPS provider");
 diff --git a/test/recipes/30-test_evp_data/evpkdf_ss.txt b/test/recipes/30-test_evp_data/evpkdf_ss.txt
 index 4503af711f..7ef2894ae6 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_ss.txt
@@ -104,10 +122,10 @@ index f2ea9ac44a..0f2f6e3904 100644
  # Test that the key whose length is shorter than 112 bits is reported as
  # unapproved
 diff --git a/test/recipes/30-test_evp_data/evpkdf_x942.txt b/test/recipes/30-test_evp_data/evpkdf_x942.txt
-index b1774592e9..6869fd0f20 100644
+index 0abb7a1459..4c5dae28c8 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_x942.txt
 +++ b/test/recipes/30-test_evp_data/evpkdf_x942.txt
-@@ -124,11 +124,10 @@ Reason = xof digests not allowed
+@@ -124,14 +124,13 @@
  Availablein = fips
  FIPSversion = >=3.4.0
  KDF = X942KDF-ASN1
@@ -120,6 +138,9 @@ index b1774592e9..6869fd0f20 100644
  Output = C2E6A0978C24AF3932F478583ADBFB5F57D491822592EAD3C538875F46EB057A
 -Result = KDF_CTRL_ERROR
 -Reason = invalid key length
+ 
+ # Permit the short secret and confirm that it is reported as unapproved.
+ Availablein = fips
 diff --git a/test/recipes/30-test_evp_data/evpkdf_x963.txt b/test/recipes/30-test_evp_data/evpkdf_x963.txt
 index b8f3cff3d3..74524c4694 100644
 --- a/test/recipes/30-test_evp_data/evpkdf_x963.txt
@@ -145,18 +166,18 @@ index b8f3cff3d3..74524c4694 100644
  # Test that the key whose length is shorter than 112 bits is reported as
  # unapproved
 diff --git a/test/recipes/30-test_evp_data/evpmac_common.txt b/test/recipes/30-test_evp_data/evpmac_common.txt
-index af92ceea98..a1541bf226 100644
+index fba18f7012..4e5f76c76a 100644
 --- a/test/recipes/30-test_evp_data/evpmac_common.txt
 +++ b/test/recipes/30-test_evp_data/evpmac_common.txt
-@@ -271,7 +271,7 @@ MAC = HMAC
+@@ -287,7 +287,7 @@
  Algorithm = SHA256
  Input = "Test Input"
  Key = 0001020304
 -Result = MAC_INIT_ERROR
 +Output = db70da6176d87813b059879ccc27bc53e295c6eca74db8bdc4e77d7e951d894b
  
- Title = HMAC FIPS short key indicator test
- 
+ # Before 3.5, the legacy bridge allowed a short HMAC key
+ Availablein = fips
 diff --git a/test/recipes/30-test_evp_data/evppkey_kdf_hkdf.txt b/test/recipes/30-test_evp_data/evppkey_kdf_hkdf.txt
 index 1fb2472001..93c07ede7c 100644
 --- a/test/recipes/30-test_evp_data/evppkey_kdf_hkdf.txt
