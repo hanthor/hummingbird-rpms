@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.0.116
+%global openshell_version 0.1.0
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -293,6 +293,16 @@ skip="${skip-} --skip runtime::tests::gvproxy_socket_base_is_per_sandbox_overlay
 skip="${skip-} --skip proxy::tests::connect_handler_returns_ssrf_403_for_internal_address_not_503"
 skip="${skip-} --skip proxy::tests::connect_handler_refuses_terminating_route_with_503_before_200"
 skip="${skip-} --skip proxy::tests::connect_handler_tls_skip_route_is_not_refused"
+# Reads the current executable and ancestry through /proc, which mock may hide.
+skip="${skip-} --skip tests::resolves_current_process_from_live_executable"
+# Resolves the current PID through /proc before checking cache ownership.
+skip="${skip-} --skip tests::resolver_cache_is_owned_and_only_explicit_clones_share_it"
+# Races a child process's /proc state while collecting its executable identity.
+skip="${skip-} --skip tests::resolves_child_and_hashes_ancestor_chain"
+# Installs a real seccomp notification listener, which mock may deny.
+skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_output_writes"
+# Starts a sandboxed workload and broker that need kernel notification privileges.
+skip="${skip-} --skip network_broker::tests::accepted_loopback_stream_is_registered_for_notified_operations"
 %cargo_test -- -- ${skip-}
 
 # Smoke-test the CLI binary
