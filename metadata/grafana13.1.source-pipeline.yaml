@@ -84,3 +84,6 @@ accepted-checksums:
   - file: "grafana-yarn-cache-13.1.6.tar.bz2"
     checksum: "5f90cc52c0154c96949eeb94f6813b1cbe7d6905f9dfcedfb4964067da1717c579a8269f9a6e9935d303e2f1a3ed8c4eb7454b91c4128c9af510a1ec8322947f"
     reason: "grafana-fast-uri-3.1.8-cve.patch bumps fast-uri 3.1.7->3.1.8 for CVE-2026-86472; yarn-cache regenerated without stale fast-uri-3.1.7 zip"
+  - file: "grafana-yarn-cache-13.1.6.tar.bz2"
+    checksum: "6758c2e5db81253c213bcfc2e659a465fe5dafe08de7091ff5dc6f9d8e874667dd26ac47cbe1a02b9b7d0e7b1745b130498e55723f64e743f5b2ecaa8cb36735"
+    reason: "grafana-hono-4.13.7-cve.patch bumps hono 4.12.34->4.13.7 for CVE-2026-93981; yarn-cache regenerated without stale hono-4.12.34 zip"
