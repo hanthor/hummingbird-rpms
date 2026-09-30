@@ -1,43 +1,5 @@
 [archive]
-# CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
-# API, so they must move together; bumping otlploggrpc alone leaves the siblings
-# calling symbols that no longer exist. Keep in sync with grafana-otlplog-cve.patch.
 pre_commands = [
-  [
-    "go", "get",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
-  ],
-  # These workspace members also require the exporters. Without bumping them,
-  # `go work vendor` keeps explicit v0.19.0 entries in vendor/modules.txt even
-  # though the vendored source is v0.21.0, and scanners still report the CVE.
-  [
-    "go", "-C", "apps/alerting/historian", "get",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
-  ],
-  [
-    "go", "-C", "apps/iam", "get",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
-  ],
-  [
-    "go", "-C", "apps/quotas", "get",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
-    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
-  ],
-  # CVE-2026-61709. Bumps vendored openfga 1.18.0 -> 1.18.1. Keep in sync
-  # with grafana-openfga-cve.patch.
-  ["go", "get", "github.com/openfga/openfga@v1.18.1"],
-  # apps/iam is a workspace member that also requires openfga (indirect).
-  # Without this, `go work vendor` keeps an explicit v1.18.0 entry in
-  # vendor/modules.txt even though the vendored source is v1.18.1, and
-  # scanners still report the CVE.
-  ["go", "-C", "apps/iam", "get", "github.com/openfga/openfga@v1.18.1"],
   # CVE-2026-93450. Bumps go-openapi/swag jsonutils to v0.27.1 to fix
   # Denial of Service via unbounded JSON recursion.
   ["go", "get", "github.com/go-openapi/swag@v0.27.1",
