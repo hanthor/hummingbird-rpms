@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl
 Version: 3.5.8
-Release: 0.1%{?dist}
+Release:        0.2%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -103,6 +103,17 @@ Patch0054: 0054-Temporarily-disable-SLH-DSA-FIPS-self-tests.patch
 Patch0055: 0055-Add-a-define-to-disable-symver-attributes.patch
 Patch0056: 0056-Add-targets-to-skip-build-of-non-installable-program.patch
 Patch0057: 0057-Disable-RSA-PKCS1.5-FIPS-POST-not-relevant-for-RHEL.patch
+Patch0058: 0058-sm2-scalar-multiplication-constant-time-CVE-2026-54875.patch
+Patch0059: 0059-cmp-guard-null-comparison-CVE-2026-75805.patch
+Patch0060: 0060-tls-reject-undersized-aead-records-CVE-2026-75806.patch
+Patch0061: 0061-defer-crldp-relative-names-CVE-2026-35189.patch
+Patch0062: 0062-dtls-reset-init-off-retransmit-CVE-2026-84782.patch
+Patch0063: 0063-fix-oob-valid-flags-ssl-set-ssl-ctx-CVE-2026-72897.patch
+Patch0064: 0064-ec-scalar-mul-ladder-constant-time-CVE-2026-54872.patch
+Patch0065: 0065-sm2-sig-gen-constant-time-CVE-2026-77696.patch
+Patch0066: 0066-quic-retire-connection-id-backlog-CVE-2026-84784.patch
+Patch0067: 0067-quic-unvalidated-credit-overcounting-CVE-2026-35191.patch
+Patch0068: 0068-quic-connection-flow-control-CVE-2026-75804.patch
 
 License: Apache-2.0
 URL: http://www.openssl.org/

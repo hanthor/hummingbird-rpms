@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 3.5.8",
+  "modification_reason": "Update to upstream version 3.5.8; Backport CVE-2026-54875, CVE-2026-75805, CVE-2026-75806, CVE-2026-35189, CVE-2026-84782, CVE-2026-72897, CVE-2026-54872, CVE-2026-77696, CVE-2026-84784, CVE-2026-35191, CVE-2026-75804",
   "modification_status": "modified",
   "sha": "1ca5a5357a764c48972f417bd3f5a142aed43458",
   "source": "https://src.fedoraproject.org/rpms/openssl.git",
