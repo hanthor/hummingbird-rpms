@@ -14,6 +14,7 @@ help:
 	@echo "  container               - Start interactive container shell (default)"
 	@echo "  help                    - Show this help message"
 	@echo "  check                   - Run linters, type checks, and tests"
+	@echo "  check-hum               - Run linters, type checks, and tests for hum/"
 	@echo "  generate                - Generate Konflux/Tekton resources"
 	@echo "  dist-git                - Run dist-git operations (pass ARGS='...')"
 	@echo "  find-missing-rpms       - List RPMs missing in Pulp that need publishing"
@@ -65,6 +66,18 @@ check-conflict-markers-host:
 	  echo "ERROR: conflict markers found in the files above"; exit 1; \
 	fi
 
+.PHONY: check-hum-host check-hum
+check-hum-host:
+	ruff check hum/
+	mypy hum/
+	if command -v pytest > /dev/null; then \
+	  pytest -v hum/meta/tests/; \
+	else \
+	  echo "pytest not installed, skipping tests"; \
+	fi
+check-hum:
+	$(PODMAN_RUN) $(PODMAN_IMAGE) make check-hum-host
+
 .PHONY: check-host check
 check-host:
 	git ls-files -z 'ci/*.sh' | xargs -0 shellcheck --external-sources --enable=all
@@ -81,6 +94,7 @@ check-host:
 	$(MAKE) markdownlint-host
 	$(MAKE) check-frontmatter-host
 	$(MAKE) check-conflict-markers-host
+	$(MAKE) check-hum-host
 
 check:
 	$(PODMAN_RUN) $(PODMAN_IMAGE) make check-host
