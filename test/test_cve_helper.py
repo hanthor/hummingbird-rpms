@@ -52,6 +52,38 @@ def test_normalize_argv_inserts_show_for_bare_tickets() -> None:
     assert helper.normalize_argv(["bot-mrs", "boost"]) == ["bot-mrs", "boost"]
 
 
+@pytest.mark.parametrize(
+    ("argv", "command"),
+    [
+        (["show", "HUM-1234", "--only"], "show"),
+        (["HUM-1234", "--only"], "show"),
+        (["investigate", "HUM-1234", "--only"], "investigate"),
+        (["show", "HUM-1234", "only"], "show"),
+    ],
+)
+def test_only_disables_related_ticket_discovery(
+    monkeypatch: pytest.MonkeyPatch, argv: list[str], command: str
+) -> None:
+    calls: list[bool] = []
+
+    def gather(
+        tickets: list[str], *, find_related: bool, max_linked: int
+    ) -> lib_models.GatheredTickets:
+        calls.append(find_related)
+        return lib_models.GatheredTickets([], [], [])
+
+    monkeypatch.setattr(helper, "gather_ticket_reports", gather)
+    args = helper.build_parser().parse_args(helper.normalize_argv(argv))
+    assert args.command == command
+    result = (
+        helper.cmd_show(args)
+        if command == "show"
+        else helper.cmd_investigate(args)
+    )
+    assert result == 0
+    assert calls == [False]
+
+
 def test_pulp_sbom_package_dir_replaces_dots() -> None:
     assert lib_sbom.pulp_sbom_package_dir("grafana13.1") == "grafana13-1-main"
     assert lib_sbom.pulp_sbom_package_dir("boost") == "boost-main"

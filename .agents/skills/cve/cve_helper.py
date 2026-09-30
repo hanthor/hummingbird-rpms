@@ -192,6 +192,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=True,
         help="Skip automatic discovery of related tickets with the same CVE IDs.",
     )
+    _show_p.add_argument(
+        "--only",
+        action="store_true",
+        help="Show only the named tickets; skip automatic related-ticket discovery.",
+    )
 
     # ---- Subcommands ----
 
@@ -413,11 +418,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="One-shot ticket recap plus bot-mrs, spec-deps, and GitLab MR search.",
     )
     inv.add_argument(
-        "--only",
-        action="store_true",
-        help="Skip find-related (same as a trailing `only` token).",
-    )
-    inv.add_argument(
         "--sbom", action="store_true", help="Also fetch and search the package SBOM."
     )
 
@@ -555,8 +555,8 @@ def cmd_show(args: argparse.Namespace) -> int:
         print("--max-linked must be >= 0", file=sys.stderr)
         return 2
 
-    tickets, only = strip_only_keyword(list(args.tickets))
-    find_related = args.find_related and not only
+    tickets, only_token = strip_only_keyword(list(args.tickets))
+    find_related = args.find_related and not only_token and not args.only
     gathered = gather_ticket_reports(
         tickets, find_related=find_related, max_linked=args.max_linked
     )
