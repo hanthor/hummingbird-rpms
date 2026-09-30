@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -59,6 +59,9 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
+Patch1:  0001-russh-cve-2026-102824.patch
+Patch2:  0002-russh-cve-2026-102823.patch
+Patch3:  0003-russh-cve-2026-102821.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -125,10 +128,14 @@ Python SDK for OpenShell providing programmatic access to sandbox
 management, agent execution, and inference routing via gRPC.
 
 %prep
-%autosetup -n %{name}-%{version} -p1
+%autosetup -n %{name}-%{version} -p1 -N
+%patch -P 0 -p1
 
 # Extract vendored Cargo dependencies and configure offline build
 tar xf %{SOURCE1}
+%patch -P 1 -p2 -d vendor/russh-0.62.5
+%patch -P 2 -p2 -d vendor/russh-0.62.5
+%patch -P 3 -p2 -d vendor/russh-0.62.5
 %cargo_prep -v vendor
 
 # Upstream Cargo.toml uses "0.0.0" as a version-agnostic workspace placeholder;
