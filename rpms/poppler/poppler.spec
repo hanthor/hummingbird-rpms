@@ -11,7 +11,7 @@
 Summary: PDF rendering library
 Name:    poppler
 Version: 26.08.0
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 License: (GPL-2.0-only OR GPL-3.0-only) AND GPL-2.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL:     https://poppler.freedesktop.org/
 Source0: https://poppler.freedesktop.org/poppler-%{version}.tar.xz
@@ -27,6 +27,8 @@ Patch2:  poppler-21.01.0-glib-introspection.patch
 
 # CVE-2026-93313: integer overflow in JBIG2Stream::readCodeTableSeg
 Patch3:  poppler-26.08.0-CVE-2026-93313.patch
+Patch4: 00004-cve-2026-102621-denial-service-integer-overflow-splashclip.patch
+Patch5: 0005-CVE-2026-102620-FoFiTrueType-cvtSfnts.patch
 
 BuildRequires: make
 BuildRequires: cmake
