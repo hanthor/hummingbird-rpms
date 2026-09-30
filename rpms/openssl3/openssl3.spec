@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl3
 Version: 3.5.8
-Release: 1%{?dist}
+Release:        1.1%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -103,6 +103,32 @@ Patch0056: 0056-Add-targets-to-skip-build-of-non-installable-program.patch
 Patch0057: 0057-Disable-RSA-PKCS1.5-FIPS-POST-not-relevant-for-RHEL.patch
 Patch0058: 0058-separate-provider-folder.patch
 Patch0059: 0059-RH-Rename-openssl.cnf-to-openssl3.cnf.patch
+Patch0060: 0060-sm2-scalar-multiplication-constant-time-CVE-2026-54875.patch
+Patch0061: 0061-cmp-guard-null-comparison-CVE-2026-75805.patch
+Patch0062: 0062-tls-reject-undersized-aead-records-CVE-2026-75806.patch
+Patch0063: 0063-defer-crldp-relative-names-CVE-2026-35189.patch
+Patch0064: 0064-dtls-reset-init-off-retransmit-CVE-2026-84782.patch
+Patch0065: 0065-fix-oob-valid-flags-ssl-set-ssl-ctx-CVE-2026-72897.patch
+Patch0066: 0066-ec-scalar-mul-ladder-constant-time-CVE-2026-54872.patch
+Patch0067: 0067-sm2-sig-gen-constant-time-CVE-2026-77696.patch
+Patch0068: 0068-quic-retire-connection-id-backlog-CVE-2026-84784.patch
+Patch0069: 0069-quic-unvalidated-credit-overcounting-CVE-2026-35191.patch
+Patch0070: 0070-quic-connection-flow-control-CVE-2026-75804.patch
+Patch0071: 0071-add-red-black-tree-implementation.patch
+Patch0072: 0072-quic-move-rxe-definition-to-local-header.patch
+Patch0073: 0073-quic-test-cover-packet-pinning-path.patch
+Patch0074: 0074-quic-test-cover-long-lagging-read.patch
+Patch0075: 0075-quic-test-reassemble-out-of-order-frames.patch
+Patch0076: 0076-quic-stream-reassembly-rewrite-CVE-2026-42772.patch
+Patch0077: 0077-quic-packet-buffer-overhead-limit-CVE-2026-54873.patch
+Patch0078: 0078-quic-enforce-final-size-for-streams.patch
+Patch0079: 0079-quic-test-explicit-reassembly-situations.patch
+Patch0080: 0080-quic-test-cover-fin-final-size.patch
+Patch0081: 0081-quic-test-cover-zero-length-read.patch
+Patch0082: 0082-quic-test-cover-two-sided-overlap.patch
+Patch0083: 0083-quic-test-cover-cleansing-dropped-bytes.patch
+Patch0084: 0084-quic-test-cover-sc-data-trim-right.patch
+Patch0085: 0085-quic-fix-ch-cleanup-for-test-safety.patch
 
 License: Apache-2.0
 URL: http://www.openssl.org/
