@@ -1,0 +1,24 @@
+---
+# PRRTE's configure explicitly strips all -flto* flags (see
+# _PRTE_CHECK_LTO_FLAG in config/prte_check_cflags.m4) because LTO's
+# whole-program view conflicts with PRRTE's MCA plugin architecture,
+# where components are dlopen()'d at runtime. So none of PRRTE's
+# binaries are ever built with LTO, by design. Skip annocheck's lto
+# test rather than waiving it file by file.
+# TODO: Try to remove this in the future after rebasing to at least upstream
+# v4.0.0 containing commit 2f9b12bee564 ("Add static component pointers")
+# and building against PMIx with PMIX_CAP_LTO capability in pmix_version.h.
+annocheck:
+  jobs:
+    - hardened: --skip-lto
+
+# prrte's oob/tcp and ras/slurm components use legacy IPv4-only functions
+# (src/mca/oob/tcp/oob_tcp_component.c, src/mca/ras/slurm/ras_slurm_module.c).
+# These are upstream code paths that would need a real IPv6-aware rewrite
+# upstream; waive the false-positive-style badfuncs finding for now.
+badfuncs:
+  allowed:
+    /usr/lib64/libprrte.so*:
+       - gethostbyname
+       - inet_addr
+       - inet_ntoa

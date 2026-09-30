@@ -3,9 +3,10 @@
   "modification_reason": "Update to upstream version 4.1.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 391462,
-  "sha": "4fa73361844e70928568bf674594e097c0ca36bf",
+  "sha": "d1373fef79508a814f55aba4e3cfa1b0664f08dc",
   "source": "https://src.fedoraproject.org/rpms/prrte.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/openpmix/prrte",
-  "version": "4.1.0"
+  "version": "4.1.0",
+  "release": "1"
 }
