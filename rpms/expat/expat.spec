@@ -1,13 +1,14 @@
 Summary: An XML parser library
 Name: expat
 Version: 2.8.4
-Release: 0.2%{?dist}
+Release: 0.3%{?dist}
 Source0: https://github.com/libexpat/libexpat/releases/download/R_2_8_4/expat-%{version}.tar.gz
 Source1: https://github.com/libexpat/libexpat/releases/download/R_2_8_4/expat-%{version}.tar.gz.asc
 # Sebastian Pipping's PGP public key
 Source2: https://keys.openpgp.org/vks/v1/by-fingerprint/3176EF7DB2367F1FCA4F306B1F9B0E909AF37285
 Patch0: 0001-CVE-2026-93990-reject-invalid-UTF-16-surrogates.patch
 Patch1: 0002-CVE-2026-93990-test-UTF-16-surrogates.patch
+Patch2: 00002-cve-2026-102633-denial-service-integer-overflow-expat-realloc.patch
 
 URL: https://libexpat.github.io/
 VCS: git:https://github.com/libexpat/libexpat.git
