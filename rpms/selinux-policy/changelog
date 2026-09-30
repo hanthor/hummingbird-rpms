@@ -1,3 +1,16 @@
+* Tue Sep 29 2026 Zdenek Pytela <zpytela@redhat.com> - 45.20-1
+- Allow gnome-remote-desktop use kerberos
+- Allow gnome-remote-desktop read password files
+- Add new interfaces for rhc-worker-playbook
+- Allow virtqemud getattr fuse filesystem conditionally
+- Allow cloud-init the setgid capability
+- Allow bootupd read proc dirs
+- Allow bootupd read /proc/swaps
+- Allow login_userdomain dbus chat with power-profiles-daemon
+- Allow icecast create and use unix dgram sockets
+- Allow systemd-coredump send a null signal to unconfined services
+- Allow samba_dcerpcd_t signull smbd_t
+
 * Mon Sep 21 2026 Zdenek Pytela <zpytela@redhat.com> - 45.19-1
 - Make post-te statement extraction tolerant of leading whitespace
 - Allow login/pam_systemd started by kmscon to access env vars
