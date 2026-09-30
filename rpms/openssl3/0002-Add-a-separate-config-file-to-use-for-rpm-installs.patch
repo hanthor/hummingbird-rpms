@@ -1,7 +1,7 @@
-From dc4488c19469cb95d7bb1c4f7ff62a5d57cdde95 Mon Sep 17 00:00:00 2001
+From e718945263e5944ed001bf8e01bf4b9e403849c0 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 6 Mar 2025 08:40:29 -0500
-Subject: [PATCH 02/57] Add a separate config file to use for rpm installs
+Subject: [PATCH 02/58] Add a separate config file to use for rpm installs
 
 In RHEL/Fedora systems we want to use a slightly different set
 of defaults, but we do not want to change the standard config file

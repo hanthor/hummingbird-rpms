@@ -1,7 +1,7 @@
-From 005e6daf6097a420efdb869e641f2708a9d0c551 Mon Sep 17 00:00:00 2001
+From de62c49d3ba6f27867113241bffbf265d2fce16c Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 07/57] RH: Add FIPS_mode compatibility macro
+Subject: [PATCH 07/58] RH: Add FIPS_mode compatibility macro
 
 Patch-name: 0008-Add-FIPS_mode-compatibility-macro.patch
 Patch-id: 8

@@ -1,7 +1,7 @@
-From 80977968258324654798a2cc7be3e8c56407004a Mon Sep 17 00:00:00 2001
+From 36d835496fddd59f9d95d260852a22a6f9a6dda1 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:14 +0100
-Subject: [PATCH 06/57] RH: Add support for PROFILE SYSTEM system default
+Subject: [PATCH 06/58] RH: Add support for PROFILE SYSTEM system default
  cipher
 
 Patch-name: 0007-Add-support-for-PROFILE-SYSTEM-system-default-cipher.patch
@@ -283,7 +283,7 @@ index fd2c4b0833..cce1dde0dc 100644
  
  char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 diff --git a/ssl/ssl_lib.c b/ssl/ssl_lib.c
-index ba494f5fc0..e8207e1ee9 100644
+index b1b36c80a8..672c30f5f1 100644
 --- a/ssl/ssl_lib.c
 +++ b/ssl/ssl_lib.c
 @@ -678,7 +678,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)

@@ -1,7 +1,7 @@
-From c98ce75030b35047955a8f531a02eb3efb220b65 Mon Sep 17 00:00:00 2001
+From e076af9c60562cd26c49fc888b141f6a99f696d2 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 20 Feb 2025 15:30:32 -0500
-Subject: [PATCH 21/57] FIPS: INTEG-CHECK: Add script to hmac-ify fips.so
+Subject: [PATCH 21/58] FIPS: INTEG-CHECK: Add script to hmac-ify fips.so
 
 This script rewrites the fips.so binary to embed the hmac result into it
 so that after a build it can be called to make the fips.so as modified

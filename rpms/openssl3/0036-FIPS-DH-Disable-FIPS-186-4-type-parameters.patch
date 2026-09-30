@@ -1,7 +1,7 @@
-From 0f6a3214e4eecd4de0bac7b44e39f5293bc26f19 Mon Sep 17 00:00:00 2001
+From adc1053a52da4e5c9d39e346aefa6dc3cb17106e Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:17 +0100
-Subject: [PATCH 36/57] FIPS: DH: Disable FIPS 186-4 type parameters
+Subject: [PATCH 36/58] FIPS: DH: Disable FIPS 186-4 type parameters
 
 For DH parameter and key pair generation/verification, the DSA
 procedures specified in FIPS 186-4 are used. With the release of FIPS
@@ -184,10 +184,10 @@ index dd36dce281..21ac48c1de 100644
          DH_free(ret);
          return NULL;
 diff --git a/providers/implementations/keymgmt/dh_kmgmt.c b/providers/implementations/keymgmt/dh_kmgmt.c
-index eac99a4fed..46a8e8066d 100644
+index 54c31e2e86..ed5e1f9fd5 100644
 --- a/providers/implementations/keymgmt/dh_kmgmt.c
 +++ b/providers/implementations/keymgmt/dh_kmgmt.c
-@@ -420,6 +420,11 @@ static int dh_validate(const void *keydata, int selection, int checktype)
+@@ -421,6 +421,11 @@ static int dh_validate(const void *keydata, int selection, int checktype)
      if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
          return 1; /* nothing to validate */
  

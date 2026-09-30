@@ -1,7 +1,7 @@
-From 398109b4775fc42f1f5d1bdfc34068a51f2b7cc8 Mon Sep 17 00:00:00 2001
+From 1d4231796711774e648bd762646c516507b7f87d Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:14 +0100
-Subject: [PATCH 04/57] RH: apps ca fix md option help text.patch - DROP?
+Subject: [PATCH 04/58] RH: apps ca fix md option help text.patch - DROP?
 
 Patch-name: 0005-apps-ca-fix-md-option-help-text.patch
 Patch-id: 5

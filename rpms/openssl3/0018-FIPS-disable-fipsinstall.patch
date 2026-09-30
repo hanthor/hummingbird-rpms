@@ -1,7 +1,7 @@
-From 4a470b2effd2473d876a85941b13a6318a500c4e Mon Sep 17 00:00:00 2001
+From 699bac215ef95912b1f23759f20a58e1211a925c Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 18/57] FIPS: disable fipsinstall
+Subject: [PATCH 18/58] FIPS: disable fipsinstall
 
 Patch-name: 0034.fipsinstall_disable.patch
 Patch-id: 34
@@ -790,10 +790,10 @@ index c3f7b8f3ab..2505938c13 100644
  =head1 COPYRIGHT
  
 diff --git a/doc/man7/OSSL_PROVIDER-FIPS.pod b/doc/man7/OSSL_PROVIDER-FIPS.pod
-index d14005a89a..c3797f5682 100644
+index eb762fb72b..c4891cb20c 100644
 --- a/doc/man7/OSSL_PROVIDER-FIPS.pod
 +++ b/doc/man7/OSSL_PROVIDER-FIPS.pod
-@@ -574,7 +574,6 @@ process.
+@@ -577,7 +577,6 @@ process.
  
  =head1 SEE ALSO
  

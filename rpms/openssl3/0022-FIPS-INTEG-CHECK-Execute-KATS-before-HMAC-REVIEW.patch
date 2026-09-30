@@ -1,7 +1,7 @@
-From f63a893a787ce689ac83803dbe7fdc6b3a12fc50 Mon Sep 17 00:00:00 2001
+From a638dec5beae8c0b6d52badaff5974ac2cca81b3 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 22/57] FIPS: INTEG-CHECK: Execute KATS before HMAC - REVIEW
+Subject: [PATCH 22/58] FIPS: INTEG-CHECK: Execute KATS before HMAC - REVIEW
 
 Patch-name: 0047-FIPS-early-KATS.patch
 Patch-id: 47

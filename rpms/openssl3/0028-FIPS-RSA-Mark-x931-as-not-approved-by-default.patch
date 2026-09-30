@@ -1,7 +1,7 @@
-From 965b25cd50def49f4b5160cb2dc39fe270df63c2 Mon Sep 17 00:00:00 2001
+From 0ab45d920a687289a9ca2cbeb06cf4b1f8164354 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Mon, 24 Mar 2025 11:03:45 -0400
-Subject: [PATCH 28/57] FIPS: RSA: Mark x931 as not approved by default
+Subject: [PATCH 28/58] FIPS: RSA: Mark x931 as not approved by default
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---

@@ -1,7 +1,7 @@
-From 39add9b309bac2f393cf757be6d562def249a145 Mon Sep 17 00:00:00 2001
+From d76441df9e8bf84365966e47bc451c9affde9d96 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Mon, 24 Mar 2025 10:50:06 -0400
-Subject: [PATCH 41/57] FIPS: EC: DH/DSA PCTs
+Subject: [PATCH 41/58] FIPS: EC: DH/DSA PCTs
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
@@ -100,7 +100,7 @@ index 1d740307f6..80c13b3076 100644
      EC_GROUP_free(gctx->gen_group);
      BN_free(gctx->p);
 diff --git a/providers/implementations/signature/ecdsa_sig.c b/providers/implementations/signature/ecdsa_sig.c
-index b65e7d58a0..65f294135f 100644
+index 5fe595b2dd..c45afd17d6 100644
 --- a/providers/implementations/signature/ecdsa_sig.c
 +++ b/providers/implementations/signature/ecdsa_sig.c
 @@ -33,7 +33,7 @@
@@ -139,7 +139,7 @@ index b65e7d58a0..65f294135f 100644
  {
      PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
  
-@@ -851,6 +851,35 @@ static const OSSL_PARAM *ecdsa_settable_ctx_md_params(void *vctx)
+@@ -852,6 +852,35 @@ static const OSSL_PARAM *ecdsa_settable_ctx_md_params(void *vctx)
      return EVP_MD_settable_ctx_params(ctx->md);
  }
  
