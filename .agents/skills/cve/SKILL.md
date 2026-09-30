@@ -30,7 +30,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | Command | Use |
 | --- | --- |
 | `investigate HUM-XXXX` | Show + recap + bot-mrs + spec-deps + GitLab MR search |
-| `investigate HUM-XXXX only` | Named tickets only (`--no-find-related`) |
+| `investigate HUM-XXXX --only` | Named tickets only; skip related-ticket discovery |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
 | `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Push the branch and open a `glab` MR; `--title` and `--message` are required. |
@@ -49,26 +49,31 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
 
 1. **Embargo.** If the summary starts with `EMBARGOED`, stop. Do not
    analyze or write.
-2. **Investigate.** `cve_helper.py investigate HUM-XXXX` (add `only` if
+2. **Investigate.** `cve_helper.py investigate HUM-XXXX` (add `--only` if
    the user said only those keys). Bare numbers are HUM tickets. Call
    `rename_chat` with the printed `Suggested chat title`.
-3. **Read the recap.** It leads with assignee (user vs bot), labels, and
-   FIB. User-named tickets are in-scope. Discovered same-CVE siblings
-   require a scope choice. Ask whether to include all related tickets or
-   only the named tickets. Each ticket line ends with a
-   `resolution_hint` tag and a `recommended_next` command — a suggestion,
-   not a decision; still gather evidence and still ask before closing.
-   If FIB and a task/MR already exist, leave for advisory automation. If
-   FIB is set with no task/MR, ask whether to create the task.
-4. **Wait** for the user's Step 3 direction.
+3. **Verify applicability.** Read the recap, then gather evidence for every
+   named ticket before asking the user what to do: published Hummingbird NVR
+   and artifacts, component version and binary presence, target architecture
+   and configuration, and whether the vulnerable path is reachable. For
+   product-mismatch CVEs, follow the `spec-deps` and SBOM rules below first.
+   Report the evidence-backed affected/not-affected assessment per ticket.
+   Each `resolution_hint` and `recommended_next` is a suggestion, not a
+   decision.
+4. **Choose scope and resolution.** User-named tickets are in-scope.
+   Discovered same-CVE siblings require a scope choice: ask whether to
+   include all related tickets or only the named tickets. Ask before any
+   closure. If FIB and a task/MR already exist, leave for advisory automation.
+   If FIB is set with no task/MR, ask whether to create the task.
 5. **Act** with the matching helper (below). Comment before state
    changes. Ask before any close. After acting, call `rename_chat` again
    with the resolution's **Chat prefix** (below) prepended — get the
    exact string via
    `cve_helper.py show HUM-XXXX --title-only --title-prefix "<prefix>"`.
 
-For product-mismatch CVEs, run `spec-deps` before version comparison or
-SBOM. If the component is not in the spec, treat an SBOM hit as a false
+For product-mismatch CVEs, search `spec-deps` and the SBOM using the tracker’s
+**Upstream Affected Component** field, not the CVE-reported product. If the
+component is not in the spec, treat an SBOM hit as a false
 positive and close as NAB (`Component not Present`) without further
 SBOM work. If the spec has the component, inspect the source for the
 vulnerable pattern; if that path is not used, close as NAB
@@ -119,7 +124,15 @@ Chat prefix `NAB`.
 **Duplicate versioned ticket (3c):** ask, then close as Duplicate
 (still ask first).
 
-**Version bump or backport (3d/3e):** prefer a version bump.
+**Version, dependency update, or backport (3d/3e):** Prefer a package version
+update. For Rust, Go, and Node dependencies, prefer a compatible fixed
+dependency update when scanner-visible metadata would otherwise keep reporting
+the vendored vulnerable version. Update direct requirements, the lockfile, and
+the matching generated vendor/cache artifact together. Generate that artifact
+from the checkout containing the updated lockfile, then inspect it to confirm
+the fixed version is present; never pair an updated Source0 with a vendor/cache
+archive generated from the old lockfile. Backport only when no compatible fixed
+dependency release is available or the update is unsuitable.
 
 **If this is a version bump (package update, not a backport):** before starting
 any update work, send a Slack warning to `#hummingbird-pipeline-notifications`.
@@ -159,8 +172,14 @@ For each package backport:
 
 1. Put provenance in the patch header. Use `Upstream: <direct commit URL>`. Add
    `Origin: <original commit URL>` only when the direct commit is a backport or adaptation.
-2. Apply the patch to the exact packaged source release. Confirm that any adaptation changes only
-   context, not the security fix or its tests.
+2. Inspect the exact packaged source archive before choosing patch paths or
+   strip levels. Use `make dist-git ARGS='ls-sources PKG'` (or the documented
+   Lima fallback) to inspect Source0/Source1, then test the exact `%patch`
+   command with `--dry-run --batch --fuzz=0`. For vendor archives, verify the
+   actual crate directory instead of inferring a `name-version` path. Confirm
+   that any adaptation changes only context, not the security fix or its tests.
+   Generate adaptations with `git diff --binary` against the packaged source;
+   do not hand-edit diff hunk headers or counts.
 3. Run `release-bump PKG --apply`. Do not use `dist_git.py rebuild`; its commit message describes a
    no-change rebuild.
 4. Run `make dist-git ARGS='mark-modified PKG --modified --reason "... CVE-ID ..."'` for a
@@ -172,12 +191,23 @@ If `dist_git.py update` reports *"upstream branch rawhide is retired"*,
 retry with `--branch f44` (or `--branch f43`). The `--dry-run` flag is
 top-level: `./ci/dist_git.py --dry-run update PKG`.
 
-Always invoke `open-mr` from the **main repo**'s helper even when the
-agent is inside a worktree:
+Run spec, source, vendor, and `release-bump` operations through the helper in
+the active worktree. Before editing a gorget source-pipeline YAML, check the
+installed `gorget --program-version`, its supported schema, and whether vendor
+generation runs before or after transforms; do not assume current docs match
+the installed tool.
+
+Always invoke `open-mr` from the **main repo**'s helper even when the agent is
+inside a worktree:
 `python /path/to/rpms/.agents/skills/cve/cve_helper.py open-mr …`
 
 `open-mr` uses the current branch's upstream remote, then `origin` if the branch has no upstream.
-Use `--push-remote NAME` to override this choice. Do not create or add a remote.
+Use `--push-remote NAME` to override this choice. If the current branch differs
+from the task key, pass `--source-branch "$(git branch --show-current)"`. Do not
+create or add a remote.
+
+**Pre-MR check:** Do not add `%changelog` entries to spec files. CI rejects
+them because they create merge-conflict risks with Fedora updates.
 
 **Multi-CVE same-package pattern:** when multiple CVEs share the same
 package and fix version, use **one task and one MR** for all of them.
