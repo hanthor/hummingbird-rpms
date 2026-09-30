@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -59,15 +59,16 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
+Patch1:  0001-russh-0.63.3-dependency-update.patch
 
 ExclusiveArch:  x86_64 aarch64
 
 # Rust build dependencies
-# NOTE: MSRV is 1.88 (Rust edition 2024). As of mid-2025, this requires
+# NOTE: MSRV is 1.89 (russh 0.63.3; Rust edition 2024). As of mid-2025, this requires
 # Fedora Rawhide or newer. Stable Fedora and EPEL-10 may ship older Rust;
 # adjust targets in .packit.yaml accordingly or provide a supplementary
 # Rust toolchain via additional_repos in the COPR build config.
-BuildRequires:  rust >= 1.88
+BuildRequires:  rust >= 1.89
 BuildRequires:  cargo
 BuildRequires:  cargo-rpm-macros >= 25
 BuildRequires:  git-core
