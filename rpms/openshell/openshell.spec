@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -59,15 +59,16 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
+Patch1:  0001-russh-0.63.3-dependency-update.patch
 
 ExclusiveArch:  x86_64 aarch64
 
 # Rust build dependencies
-# NOTE: MSRV is 1.88 (Rust edition 2024). As of mid-2025, this requires
+# NOTE: MSRV is 1.89 (russh 0.63.3; Rust edition 2024). As of mid-2025, this requires
 # Fedora Rawhide or newer. Stable Fedora and EPEL-10 may ship older Rust;
 # adjust targets in .packit.yaml accordingly or provide a supplementary
 # Rust toolchain via additional_repos in the COPR build config.
-BuildRequires:  rust >= 1.88
+BuildRequires:  rust >= 1.89
 BuildRequires:  cargo
 BuildRequires:  cargo-rpm-macros >= 25
 BuildRequires:  git-core
@@ -299,6 +300,8 @@ skip="${skip-} --skip tests::resolves_current_process_from_live_executable"
 skip="${skip-} --skip tests::resolver_cache_is_owned_and_only_explicit_clones_share_it"
 # Races a child process's /proc state while collecting its executable identity.
 skip="${skip-} --skip tests::resolves_child_and_hashes_ancestor_chain"
+# Snapshots socket inodes through /proc; aarch64 build workers can retain the closed FD.
+skip="${skip-} --skip linux::proc_fd::tests::installed_socket_snapshot_can_exclude_the_broker"
 # Installs a real seccomp notification listener, which mock may deny.
 skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_output_writes"
 # Starts a sandboxed workload and broker that need kernel notification privileges.
