@@ -67,7 +67,7 @@ Epoch: 5
 Version: 6.1.2
 # The `AND` needs to be uppercase in the License for SPDX compatibility
 License: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 %if %{defined golang_arches_future}
 ExclusiveArch: %{golang_arches_future}
 %else
@@ -77,6 +77,11 @@ Summary: Manage Pods, Containers and Container Images
 URL: https://%{name}.io/
 # All SourceN files fetched from upstream
 Source0: https://github.com/containers/%{name}/archive/v%{version_no_tilde}.tar.gz
+# CVE-2026-94603: podman run on a checkpoint image ignores user-specified
+# security options (--cap-drop, etc). Fixed upstream in v6.1.3 by removing
+# checkpoint image support from `podman run`.
+Patch0: 0001-CVE-2026-94603-revert-checkpoint-run.patch
+Patch1: 0002-CVE-2026-94603-error-on-checkpoint-run.patch
 Provides: %{name}-manpages = %{epoch}:%{version}-%{release}
 BuildRequires: %{_bindir}/envsubst
 %if %{defined build_with_btrfs}
