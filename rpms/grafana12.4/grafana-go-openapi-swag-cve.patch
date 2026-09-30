@@ -1,0 +1,79 @@
+# Backport the go-openapi/swag 0.27.1 module set for CVE-2026-93450.
+# Keep this in sync with go-vendor-tools.toml's matching pre_command.
+--- a/go.mod
++++ b/go.mod
+@@ -428 +428 @@ require (
+-	github.com/go-openapi/jsonpointer v0.23.1 // indirect
++	github.com/go-openapi/jsonpointer v1.0.0 // indirect
+@@ -431,4 +431,4 @@ require (
+-	github.com/go-openapi/swag v0.26.0 // indirect
+-	github.com/go-openapi/swag/cmdutils v0.26.0 // indirect
+-	github.com/go-openapi/swag/conv v0.26.0 // indirect
+-	github.com/go-openapi/swag/fileutils v0.26.0 // indirect
++	github.com/go-openapi/swag v0.27.1 // indirect
++	github.com/go-openapi/swag/cmdutils v0.27.1 // indirect
++	github.com/go-openapi/swag/conv v0.27.1 // indirect
++	github.com/go-openapi/swag/fileutils v0.27.1 // indirect
+@@ -436,7 +436,7 @@ require (
+-	github.com/go-openapi/swag/jsonutils v0.26.0 // indirect
+-	github.com/go-openapi/swag/loading v0.26.0 // indirect
+-	github.com/go-openapi/swag/mangling v0.26.0 // indirect
+-	github.com/go-openapi/swag/netutils v0.26.0 // indirect
+-	github.com/go-openapi/swag/stringutils v0.26.0 // indirect
+-	github.com/go-openapi/swag/typeutils v0.26.0 // indirect
+-	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
++	github.com/go-openapi/swag/jsonutils v0.27.1 // indirect
++	github.com/go-openapi/swag/loading v0.27.1 // indirect
++	github.com/go-openapi/swag/mangling v0.27.1 // indirect
++	github.com/go-openapi/swag/netutils v0.27.1 // indirect
++	github.com/go-openapi/swag/stringutils v0.27.1 // indirect
++	github.com/go-openapi/swag/typeutils v0.27.1 // indirect
++	github.com/go-openapi/swag/yamlutils v0.27.1 // indirect
+@@ -692,0 +693 @@ require (
++	github.com/go-openapi/swag/pools v0.27.1 // indirect
+--- a/go.sum
++++ b/go.sum
+@@ -1329,0 +1330,2 @@ github.com/go-openapi/jsonpointer v0.23.1/go.mod h1:iWRmZTrGn7XwYhtPt/fvdSFj1OfN
++github.com/go-openapi/jsonpointer v1.0.0 h1:kR9tHqY0CtZaOPVFm622dPVNhrvYpwr4uCxgL3h1H8s=
++github.com/go-openapi/jsonpointer v1.0.0/go.mod h1:Z3rw7dWu1p9IgitXCFamSlA5lmDiklEB6vkaxcNZW5Y=
+@@ -1382,0 +1385,2 @@ github.com/go-openapi/swag v0.26.0/go.mod h1:82g3193sZJRbocs7bNCqGfIgq8pkuwVwCfh
++github.com/go-openapi/swag v0.27.1 h1:VotvOLWW8q/EAxB0YdsBBGC8XYyeL1YwBj2ungAGPNg=
++github.com/go-openapi/swag v0.27.1/go.mod h1:GTkJPwHfhJp6MWr4/rCh64HVI3Ofu+tcsbfjfHmTxpE=
+@@ -1384,0 +1389,2 @@ github.com/go-openapi/swag/cmdutils v0.26.0/go.mod h1:Sm1MVFMkF6guJJ+pQqHnQA3N0j
++github.com/go-openapi/swag/cmdutils v0.27.1 h1:I7sYqaWVl5mq0NEmNQkAmFDyNin9ufvMX/p2zwtQaOE=
++github.com/go-openapi/swag/cmdutils v0.27.1/go.mod h1:Sm1MVFMkF6guJJ+pQqHnQA3N0j9qALV3NxzDSv6bETM=
+@@ -1386,0 +1393,2 @@ github.com/go-openapi/swag/conv v0.26.0/go.mod h1:tpAmIL7X58VPnHHiSO4uE3jBeRamGs
++github.com/go-openapi/swag/conv v0.27.1 h1:8wi9ZG+olmY1wXphl93EWniPtbSPkXM/feH7FgjsvrU=
++github.com/go-openapi/swag/conv v0.27.1/go.mod h1:QbqMivkpKhC3g1B1GGGOJ6ANewI3S62dbzYu3Duowqs=
+@@ -1388,0 +1397,2 @@ github.com/go-openapi/swag/fileutils v0.26.0/go.mod h1:0WDJ7lp67eNjPMO50wAWYlKvh
++github.com/go-openapi/swag/fileutils v0.27.1 h1:QQqBSoi5mW4XpU85nS0mLcA+zAE6vLzrb0QkmLKf9oM=
++github.com/go-openapi/swag/fileutils v0.27.1/go.mod h1:VvJFZLTZS0AI854gEQz5tk7dBESdLjiNUMSZ/th2ry8=
+@@ -1392,0 +1403,2 @@ github.com/go-openapi/swag/jsonutils v0.26.0/go.mod h1:2VmA0CJlyFqgawOaPI9psnjFD
++github.com/go-openapi/swag/jsonutils v0.27.1 h1:SVgK3i4USzCU5mibOOS/l4ea2h9UQXy7J7RNLTjuXjU=
++github.com/go-openapi/swag/jsonutils v0.27.1/go.mod h1:tdlEpZqdcQ17uj6J4YdK9vd8It5qWMwjWXOs0tjpRlk=
+@@ -1394,0 +1407 @@ github.com/go-openapi/swag/jsonutils/fixtures_test v0.26.0/go.mod h1:AyM6QT8uz5I
++github.com/go-openapi/swag/jsonutils/fixtures_test v0.27.1 h1:mJu3COL9WEaZVp/Kf2PRMi7tPszPEJfSr/OO75ynCs8=
+@@ -1396,0 +1410,2 @@ github.com/go-openapi/swag/loading v0.26.0/go.mod h1:dBxQ/6V2uBaAQdevN18VELE6xSp
++github.com/go-openapi/swag/loading v0.27.1 h1:/DxUgDXKbBX4bcn7r9uEXfJyzN5XpiJmZplzQTjrRCY=
++github.com/go-openapi/swag/loading v0.27.1/go.mod h1:jvGh3iA2+zyUUycB5fgJWzeHnhrpvGnJJM0RVE9ZShE=
+@@ -1398,0 +1414,2 @@ github.com/go-openapi/swag/mangling v0.26.0/go.mod h1:jifS7W9vbg+pw63bT+GI53otlu
++github.com/go-openapi/swag/mangling v0.27.1 h1:yC9D0HyUE8gbP+BfmGx9+AA89ikwZTMjESK3OnnoaqA=
++github.com/go-openapi/swag/mangling v0.27.1/go.mod h1:jtBE2+V+3pILxOR7Vgce+Cwp6A2PgZbvVqfNntbVs0w=
+@@ -1400,0 +1418,4 @@ github.com/go-openapi/swag/netutils v0.26.0/go.mod h1:5iK+Ok3ZohWWex1C50BFTPexi0
++github.com/go-openapi/swag/netutils v0.27.1 h1:mICMFoS82F5TZ4Zy3cqmcQk+BFeCp3Uyq3Np7GI0/qU=
++github.com/go-openapi/swag/netutils v0.27.1/go.mod h1:J+WYyFMLtvtCGqa6jLv+YNUmIKI3ZRQRrvfNDMoQoEQ=
++github.com/go-openapi/swag/pools v0.27.1 h1:9LeadcMyb2GJCbXX5hVQDbZ2Lq9TL4dCs/nx1j5DO0E=
++github.com/go-openapi/swag/pools v0.27.1/go.mod h1:kVQefhSK5RWuRe7BXsL8htgBPAMpN7HDGpGEknqugeE=
+@@ -1402,0 +1424,2 @@ github.com/go-openapi/swag/stringutils v0.26.0/go.mod h1:sWn5uY+QIIspwPhvgnqJsH8
++github.com/go-openapi/swag/stringutils v0.27.1 h1:ZXePZ0r2p1qSjo8tD3Un4vFj8+FqlCkczxDrJIhYUp8=
++github.com/go-openapi/swag/stringutils v0.27.1/go.mod h1:lzRN95CxXmA03XcDWHLOb6nOMcxCqR5rGY0lOgsfRoM=
+@@ -1404,0 +1428,2 @@ github.com/go-openapi/swag/typeutils v0.26.0/go.mod h1:oovDuIUvTrEHVMqWilQzKzV4Y
++github.com/go-openapi/swag/typeutils v0.27.1 h1:KSTdFlfnse4r6dP9IrEnwMldjE+zs71UeEB3//PtVXc=
++github.com/go-openapi/swag/typeutils v0.27.1/go.mod h1:Srm0xFNRZ1Y+vCxJclo5qzx8aj+1pAKda/YfFPrG0dQ=
+@@ -1406,0 +1432,2 @@ github.com/go-openapi/swag/yamlutils v0.26.0/go.mod h1:1evKEGAtP37Pkwcc7EWMF0hed
++github.com/go-openapi/swag/yamlutils v0.27.1 h1:ftxv6xvXb1E3zohUc+okZ9nSqNb9StQX/FXnKZ98sQA=
++github.com/go-openapi/swag/yamlutils v0.27.1/go.mod h1:bnxFIB1qewGRiZHypXGZ3fNgf13/0HfRgnS/iZBDrOo=
+@@ -1408,0 +1436 @@ github.com/go-openapi/testify/enable/yaml/v2 v2.4.2/go.mod h1:XVevPw5hUXuV+5AkI1
++github.com/go-openapi/testify/enable/yaml/v2 v2.6.0 h1:gGHwAJ0R/5jU8BEGDbfRNR3hL68dAVi84WuOApp29B0=
+@@ -1410,0 +1439 @@ github.com/go-openapi/testify/v2 v2.5.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf4
++github.com/go-openapi/testify/v2 v2.6.0 h1:5PKH2HE7YJ/LuRPQGvSxBRlFXNQhSetBLlGAgUEu3ug=

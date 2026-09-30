@@ -51,6 +51,8 @@ transform:
         # Bumps the same fast-uri dependency again (3.1.7 -> 3.1.8) for
         # CVE-2026-86472 (same order as Patch13 in the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
+        # Keep Source0's Go module graph aligned with the vendor archive.
+        patch -p1 < "${PACKAGE_DIR}/grafana-go-openapi-swag-cve.patch"
         # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-3.4.13-cve.patch"
