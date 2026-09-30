@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        12.4.11
+Version:        12.4.12
 
 %gometa -L -f
 
@@ -1200,7 +1200,7 @@ Provides:       bundled(npm(history)) = 4.10.1
 Provides:       bundled(npm(history)) = 5.3.0
 Provides:       bundled(npm(hoist-non-react-statics)) = 3.3.2
 Provides:       bundled(npm(homedir-polyfill)) = 1.0.3
-Provides:       bundled(npm(hono)) = 4.13.7
+Provides:       bundled(npm(hono)) = 4.12.7
 Provides:       bundled(npm(html-element-attributes)) = 1.3.1
 Provides:       bundled(npm(html-entities)) = 2.4.0
 Provides:       bundled(npm(html-escaper)) = 2.0.2
