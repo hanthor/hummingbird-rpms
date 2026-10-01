@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "Build JIT stencils from source with LLVM 21, matching python3.14",
+  "modification_status": "modified",
   "release": "1",
   "release_monitoring_project_id": 13254,
   "sha": "0ef36f99812e73e57804b4cb40e2b0dfe76a40a9",

@@ -50,7 +50,7 @@ URL: https://www.python.org/
 %global prerel rc2
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -87,15 +87,8 @@ License: Python-2.0.1
 # The freethreading build (when enabled) does not support JIT yet:
 # https://github.com/python/cpython/issues/133171
 %bcond jit %[("%{_arch}" == "x86_64" || "%{_arch}" == "aarch64") && %{without bootstrap}]
-# Whether to build the JIT stencils (or else use the prebuilt ones)
-# We can only do this on Fedora 43+, where clang 21 is available
-# We don't do it in RHEL, see https://github.com/fedora-eln/eln/issues/207
-# On F43 it should be possible to build stencils, but the pregenerated stencils
-# for aarch64 debug build don't match the built ones
-# (the build never reaches optimized build - no data there),
-# hence the increased lower bound in the bcond.
-# https://discuss.python.org/t/building-the-jit-with-pre-built-stencils/91838/17
-%bcond jit_build_stencils %[%{with jit} && 0%{?fedora} >= 44]
+# Build JIT stencils from source, matching python3.14.
+%bcond jit_build_stencils %{with jit}
 %if %{with jit}
 # When built with JIT, it still needs to be enabled on runtime via PYTHON_JIT=1
 %global jit_flag --enable-experimental-jit=yes-off %{!?with_jit_build_stencils:--enable-prebuilt-jit-stencils}
