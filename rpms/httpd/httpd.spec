@@ -28,8 +28,8 @@
 
 Summary: Apache HTTP Server
 Name: httpd
-Version: 2.4.68
-Release: 8%{?dist}
+Version: 2.4.69
+Release: 0.1%{?dist}
 URL: https://httpd.apache.org/
 Source0: https://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
 Source1: https://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2.asc
@@ -101,7 +101,6 @@ Patch30: httpd-2.4.64-separate-systemd-fns.patch
 # Bug fixes
 # https://bugzilla.redhat.com/show_bug.cgi?id=1397243
 Patch60: httpd-2.4.43-enable-sslv3.patch
-Patch61: httpd-2.4.68-proxyhtml.patch
 
 # Security fixes
 # Patch200: ...
