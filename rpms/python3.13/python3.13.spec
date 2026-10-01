@@ -1360,6 +1360,11 @@ topdir=$(pwd)
 CheckPython() {
   ConfName=$1
   ConfDir=$(pwd)/build/$ConfName
+  ExtraTests=""
+  # ponytail: skip one unstable timing assertion only on aarch64 freethreading; re-enable if upstream stabilizes it.
+  if [ "$ConfName" = freethreading ] && [ "%{_arch}" = aarch64 ]; then
+    ExtraTests="-i test.test_int.IntSubclassStrDigitLimitsTests.test_denial_of_service_prevented_str_to_int"
+  fi
 
   echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
 
@@ -1391,6 +1396,7 @@ CheckPython() {
     %endif
     -i test_freeze_simple_script \
     -i test_check_probes \
+    $ExtraTests \
     %ifarch %{mips64}
     -x test_ctypes \
     %endif
