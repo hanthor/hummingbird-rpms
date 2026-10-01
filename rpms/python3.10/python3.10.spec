@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.4%{?dist}
+Release:        1.5%{?dist}
 License: Python-2.0.1
 
 
@@ -401,6 +401,7 @@ Patch503: 00503-cve-2026-82049.patch
 # CVE-2026-7210
 # gh-149018: Use XML_SetHashSalt16Bytes in pyexpat/_elementtree when possible
 Patch504: 00504-cve-2026-7210.patch
+Patch505: 00505-cve-2026-19553.patch
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
