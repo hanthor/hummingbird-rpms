@@ -120,6 +120,8 @@ DEFAULT_DISTRO = "Fedora"
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+_STALE_PATCH_PREFIX = "STALE PATCH: "
+
 # Global sign-off flag, set from command line
 sign_off: bool = False
 
@@ -963,6 +965,64 @@ def mark_package_modified(
     logger.info(f"{package}: marked as modified in metadata")
 
 
+def _check_updated_patches(package: str) -> None:
+    """Drop exact upstreamed patches; require review for patches that no longer apply."""
+    import dist_git
+
+    package_dir = RPMS_DIR / package
+    spec = next(package_dir.glob("*.spec"), None)
+    if spec is None:
+        raise RuntimeError(f"{package}: no spec file found in {package_dir}")
+    patches = dist_git.get_spec_patches(spec)
+    if not patches:
+        return
+
+    source = _get_spec_sources(str(spec), str(package_dir)).get(0, "")
+    filename = Path(urllib.parse.urlsplit(source).path).name
+    archive = package_dir / filename
+    if not filename or not archive.is_file() or not filename.endswith(
+        (".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tgz", ".tar", ".zip")
+    ):
+        raise RuntimeError(f"{package}: cannot check patches: Source0 archive is unavailable")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        extract_dir = Path(tmp)
+        command = (["unzip", "-q", str(archive), "-d", tmp]
+                   if filename.endswith(".zip") else ["tar", "xf", str(archive), "-C", tmp])
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode:
+            raise RuntimeError(f"{package}: cannot extract Source0 for patch check: {result.stderr}")
+        source_root = dist_git._find_source_root(extract_dir)
+        stale = []
+        # Match dist_git.detect_stale_patches: check every patch against the
+        # untouched upstream tree, before applying any local patches to it.
+        for number, name in patches:
+            patch_file = package_dir / name
+            if not patch_file.is_file():
+                raise RuntimeError(f"{package}: Patch{number} ({name}) is missing")
+            if subprocess.run(["git", "apply", "--check", "-R", str(patch_file)],
+                              cwd=source_root, capture_output=True).returncode == 0:
+                stale.append((number, name))
+
+        for number, name in patches:
+            if (number, name) in stale:
+                continue
+            patch_file = package_dir / name
+            if subprocess.run(["git", "apply", "--check", str(patch_file)],
+                              cwd=source_root, capture_output=True).returncode == 0:
+                subprocess.run(["git", "apply", str(patch_file)], cwd=source_root, check=True)
+            else:
+                raise RuntimeError(
+                    f"{package}: Patch{number} ({name}) neither applies nor reverses "
+                    "against new Source0; review whether it needs rebasing or dropping"
+                )
+
+    if stale:
+        dist_git.drop_stale_patches(package_dir, stale)
+        logger.info("%s: dropped patches already upstream: %s", package,
+                    ", ".join(name for _, name in stale))
+
+
 # ---------------------------------------------------------------------------
 # Per-package update hooks
 # ---------------------------------------------------------------------------
@@ -1224,6 +1284,8 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
     if hooks and hooks.post_update:
         env = _build_hook_env(package, old_version, new_version)
         _run_hook("post_update", hooks.post_update, package, env)
+
+    _check_updated_patches(package)
 
     # --- Metadata bookkeeping ------------------------------------------------
     # Persist the resolved version. The spec's release is not a Fedora
@@ -1957,12 +2019,12 @@ def _build_workqueue_file_actions(
 ) -> list[dict[str, str]]:
     """Build file_actions for an upstream version update.
 
-    Includes the spec file, sources, .gitignore (if modified), and
-    metadata JSON.  Source archives are excluded -- they live in the
-    lookaside cache and are listed in .gitignore.
+    Includes the spec file, sources, .gitignore (if modified), metadata
+    JSON, and any tracked patch files removed during the update. Source
+    archives live in the lookaside cache and are listed in .gitignore.
     """
     package_dir = RPMS_DIR / package
-    return workqueue_submit.collect_update_actions(
+    actions = workqueue_submit.collect_update_actions(
         [
             *[(s, True) for s in package_dir.glob("*.spec")],
             (package_dir / "sources", True),
@@ -1971,6 +2033,11 @@ def _build_workqueue_file_actions(
         ],
         root=ROOT_DIR,
     )
+    deleted = run_git("ls-files", "--deleted", "--", f"rpms/{package}",
+                      cwd=ROOT_DIR).stdout.splitlines()
+    actions.extend(workqueue_submit.file_action("delete", path)
+                   for path in deleted if path.endswith(".patch"))
+    return actions
 
 
 def run_check(args: argparse.Namespace) -> None:
@@ -2079,19 +2146,31 @@ def run_check(args: argparse.Namespace) -> None:
                         result.package,
                         downloaded,
                     )
+                    stale_patches = any(action["action"] == "delete" and
+                                        action["file_path"].endswith(".patch")
+                                        for action in actions)
+                    if stale_patches:
+                        commit_msg = f"{_STALE_PATCH_PREFIX}{commit_msg}"
                     workqueue_submit.submit(
                         package=result.package,
                         project="redhat/hummingbird/rpms",
                         change_kind="upstream-sync",
                         commit_message=commit_msg,
                         source_branch=f"chore/upstream-update-{result.package}",
-                        mr_title=f"chore(rpms): Update {result.package}"
-                        f" to {result.upstream_version}",
+                        mr_title=(_STALE_PATCH_PREFIX if stale_patches else "") +
+                        f"chore(rpms): Update {result.package} to {result.upstream_version}",
                         idempotency_key=f"upstream-update/{result.package}/{result.upstream_version}",
                         file_actions=actions,
-                        auto_merge=True,
+                        auto_merge=not stale_patches,
+                        draft=stale_patches,
+                        mr_description=("Exact upstreamed patches were removed; "
+                                        "please review before merging." if stale_patches else ""),
                     )
                 else:
+                    deleted = run_git("ls-files", "--deleted", "--", f"rpms/{result.package}",
+                                      cwd=ROOT_DIR).stdout.splitlines()
+                    if any(path.endswith(".patch") for path in deleted):
+                        commit_msg = f"{_STALE_PATCH_PREFIX}{commit_msg}"
                     # Commit the changes (no -f so .gitignore is respected)
                     run_git(
                         "add",

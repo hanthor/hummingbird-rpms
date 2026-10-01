@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import tarfile
 import types
 import urllib.error
 from email.message import Message
@@ -2144,6 +2145,149 @@ def test_run_gorget_pipeline_missing_declared_artifact(
 #
 # Tests — update_spec_version
 #
+
+
+@pytest.mark.parametrize(('source_text', 'patch_text', 'dropped'), [
+    ('old\nfixed\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', True),
+    ('old\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', False),
+])
+def test_update_spec_version_checks_patches(
+    cuv_module, workdir: Path, source_text: str, patch_text: str, dropped: bool,
+) -> None:
+    """Source0 is checked even when gorget lists the vendor archive first."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch1: fix.patch\n\n%description'))
+    (pkg / 'fix.patch').write_text(patch_text)
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text(source_text)
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    subprocess.run(['git', 'add', 'rpms/pkg/pkg.spec', 'rpms/pkg/fix.patch'],
+                   cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package patch'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=[
+        'pkg-2.0-vendor.tar.bz2', 'pkg-2.0.tar.gz',
+    ]):
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    assert (pkg / 'fix.patch').exists() is not dropped
+    assert ('Patch1: fix.patch' in spec.read_text()) is not dropped
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+               for a in actions) is dropped
+
+
+def test_update_spec_version_rejects_incompatible_patch(cuv_module, workdir: Path) -> None:
+    """A superseded but non-identical patch must reach the diagnostic-MR path."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch3: fix.patch\n\n%description'))
+    (pkg / 'fix.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('new\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
+         pytest.raises(RuntimeError, match='Patch3 .*neither applies nor reverses'):
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    assert (pkg / 'fix.patch').exists()
+    assert 'Patch3: fix.patch' in spec.read_text()
+
+
+def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:
+    """Earlier local patches must not hide a later patch already upstream."""
+    import dist_git
+
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '%description', 'Patch1: local.patch\nPatch2: upstream.patch\n\n%description',
+    ))
+    (pkg / 'local.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1,2 +1,2 @@\n-base\n+BASE\n fixed\n')
+    (pkg / 'upstream.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n base\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('base\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    assert dist_git.detect_stale_patches(pkg, ['pkg-2.0.tar.gz']) == [
+        (2, 'upstream.patch'),
+    ]
+    cuv_module._check_updated_patches('pkg')
+    assert (pkg / 'local.patch').exists()
+    assert not (pkg / 'upstream.patch').exists()
+    assert 'Patch2:' not in spec.read_text()
+
+
+@pytest.mark.parametrize('workqueue', [False, True])
+@pytest.mark.parametrize('stale', [False, True])
+def test_upstream_update_stale_patch_requires_review(
+    cuv_module, workdir: Path, workqueue: bool, stale: bool,
+) -> None:
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={'version': '1.0'})
+    patch_file = pkg / 'fix.patch'
+    patch_file.write_text('patch')
+    subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    result = cuv_module.VersionCheckResult('pkg', '1.0', '2.0', True)
+    args = types.SimpleNamespace(
+        verbose=False, quiet=True, json=True, packages=['pkg'], all=False,
+        update=True, workqueue=workqueue, distro='Fedora', delay=0,
+    )
+
+    def fake_update(_package: str, _version: str) -> list[str]:
+        if stale:
+            patch_file.unlink()
+        return []
+
+    old_log_level = cuv_module.logger.level
+    try:
+        with patch.object(cuv_module, 'check_package_version', return_value=result), \
+             patch.object(cuv_module, 'update_spec_version', side_effect=fake_update), \
+             patch.object(cuv_module, 'discard_package_changes'), \
+             patch.object(cuv_module.workqueue_submit, 'submit') as submit, \
+             pytest.raises(SystemExit):
+            cuv_module.run_check(args)
+    finally:
+        cuv_module.logger.setLevel(old_log_level)
+
+    if workqueue:
+        kwargs = submit.call_args.kwargs
+        assert kwargs['draft'] is stale
+        assert kwargs['auto_merge'] is not stale
+        assert kwargs['mr_title'].startswith('STALE PATCH:') is stale
+        assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+                   for a in kwargs['file_actions']) is stale
+    else:
+        subject = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%s'], cwd=workdir, text=True)
+        assert subject.startswith('STALE PATCH:') is stale
 
 
 def test_update_spec_version(cuv_module, workdir: Path) -> None:

@@ -576,10 +576,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
     COMMIT_MSG=$(git log -1 --format=%s "${COMMIT_SHA}")
 
     # Extract package name and version from commit message
-    # Format: "Update <package> to <version>"
-    if [[ ${COMMIT_MSG} =~ ^Update\ ([^\ ]+)\ to\ (.+)$ ]]; then
-        PACKAGE="${BASH_REMATCH[1]}"
-        VERSION="${BASH_REMATCH[2]}"
+    # Keep the optional prefix in sync with _STALE_PATCH_PREFIX in check_upstream_versions.py.
+    # Format: "Update <package> to <version>" (optionally prefixed for stale patches)
+    if [[ ${COMMIT_MSG} =~ ^(STALE\ PATCH:\ )?Update\ ([^\ ]+)\ to\ (.+)$ ]]; then
+        STALE_PATCH="${BASH_REMATCH[1]}"
+        PACKAGE="${BASH_REMATCH[2]}"
+        VERSION="${BASH_REMATCH[3]}"
     else
         echo "----------------------------------------"
         echo "Skipping commit ${COMMIT_SHA:0:8}: cannot parse from: ${COMMIT_MSG}"
@@ -593,7 +595,7 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
 
     # Create package-specific branch
     BRANCH_NAME="chore/upstream-update-${PACKAGE}"
-    MR_TITLE="chore(rpms): Update ${PACKAGE} to ${VERSION}"
+    MR_TITLE="${STALE_PATCH}chore(rpms): Update ${PACKAGE} to ${VERSION}"
 
     # Create a new branch from START_COMMIT and cherry-pick this commit
     if ! git checkout --quiet "${START_COMMIT}"; then
@@ -633,7 +635,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
         # --create-mrs: actually create the MR
         echo "  Creating MR: ${MR_TITLE}"
 
-        MR_ARGS=(--branch "${BRANCH_NAME}" --title "${MR_TITLE}" --auto-merge)
+        MR_ARGS=(--branch "${BRANCH_NAME}" --title "${MR_TITLE}")
+        if [[ -n "${STALE_PATCH}" ]]; then
+            MR_ARGS+=(--draft --description "Exact upstreamed patches were removed; please review before merging.")
+        else
+            MR_ARGS+=(--auto-merge)
+        fi
 
         # Create MR using existing create_mr.sh
         # Exit codes: 0 = created, 2 = already exists, 1 = failure

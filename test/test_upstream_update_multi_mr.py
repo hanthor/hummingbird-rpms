@@ -337,3 +337,29 @@ def test_git_push_cleanup_waits_for_successful_mr_creation(tmp_path: Path) -> No
 
     assert existing_result.returncode == 0, existing_result.stderr
     assert "Closed resolved diagnostic MR !4493" in existing_result.stdout
+
+
+def test_stale_patch_update_creates_review_required_mr(tmp_path: Path) -> None:
+    repo, ci_dir = _create_success_fixture(tmp_path)
+    checker = ci_dir / "check_upstream_versions.py"
+    checker.write_text(checker.read_text().replace(
+        "exit 1\n", 'echo updated > protobuf.txt\n'
+        'git add protobuf.txt\n'
+        'git commit -m "STALE PATCH: Update protobuf to 36.2" >/dev/null\n'
+        "exit 1\n",
+    ))
+    args_log = tmp_path / "mr-args.txt"
+    create_mr = ci_dir / "create_mr.sh"
+    create_mr.write_text(f'#!/bin/bash\nprintf "%s\\n" "$@" > "{args_log}"\n')
+    create_mr.chmod(0o755)
+
+    result = subprocess.run(
+        [str(ci_dir / UPDATE_SCRIPT.name), "--create-mrs"], cwd=repo,
+        capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    args = args_log.read_text().splitlines()
+    assert "--draft" in args
+    assert "--auto-merge" not in args
+    assert "STALE PATCH: chore(rpms): Update protobuf to 36.2" in args
