@@ -1,7 +1,8 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 9.0",
-  "modification_status": "clean",
+  "modification_reason": "backport CVE-2026-69304 fix (unbounded request decompression on IIS out-of-process)",
+  "modification_status": "modified",
   "release": "2",
   "sha": "1a9f8800e932757725244ea369bc98b15c3da1ca",
   "source": "https://src.fedoraproject.org/rpms/dotnet9.0.git",
