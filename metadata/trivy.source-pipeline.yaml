@@ -6,3 +6,10 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "trivy-${VERSION}-vendor.tar.bz2"
+
+accepted-checksums:
+  - file: "trivy-0.75.0-vendor.tar.bz2"
+    checksum: "dc259d362c8ff81c887c539bf6fac4b21eacf53b5cc38b3c859f7bce997ac2ae2175eee19b61be98bdb5b5ea95a0faecb3f787226ada9880ea92fa2a5a87c30a"
+    reason: "Regenerate the vendor archive after removing obsolete BuildKit, x/text,
+      and Swag CVE pins that downgraded upstream dependencies. Preserve containerd
+      v2.4.1 with its matching API v1.12.0 to fix the missing UpdateSandbox build error."
