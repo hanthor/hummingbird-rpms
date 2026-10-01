@@ -1,6 +1,5 @@
 {
-  "modification_reason": "CVE-2026-86472 (fast-uri 3.1.8), CVE-2026-93981 (hono 4.13.7), CVE-2026-75838 (DOMPurify 3.4.13)",
-  "modification_status": "modified",
+  "modification_status": "independent",
   "release_monitoring_project_id": 13916,
   "track_upstream": "13.2",
   "upstream_repo": "https://github.com/grafana/grafana",

@@ -1,6 +1,5 @@
 {
-  "modification_reason": "Update to upstream version 26.10.0; Backport CVE-2026-102278; Backport CVE-2026-102276 and CVE-2026-102277",
-  "modification_status": "modified",
+  "modification_status": "independent",
   "release_monitoring_project_id": 8251,
   "track_upstream": "26",
   "upstream_branch": "v26.x",
