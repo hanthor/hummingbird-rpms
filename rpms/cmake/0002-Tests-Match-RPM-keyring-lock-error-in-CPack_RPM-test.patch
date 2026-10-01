@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Marcin Juszkiewicz <mjuszkiewicz@redhat.com>
+Date: Wed, 23 Sep 2026 12:00:02 +0200
+Subject: [PATCH] Tests: Match RPM keyring lock error in CPack_RPM test
+
+Newer RPM versions (Fedora 46+) emit "can't create keyring lock"
+instead of "can't create transaction lock". Accept both.
+
+Upstream: https://gitlab.kitware.com/cmake/cmake/-/commit/98d9cddffe03432e6bcd88ab69abf669deff8d7c
+---
+ Tests/RunCMake/CPack_RPM/Basic-verify-stderr.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Tests/RunCMake/CPack_RPM/Basic-verify-stderr.txt b/Tests/RunCMake/CPack_RPM/Basic-verify-stderr.txt
+index 059e62937b..919632def6 100644
+--- a/Tests/RunCMake/CPack_RPM/Basic-verify-stderr.txt
++++ b/Tests/RunCMake/CPack_RPM/Basic-verify-stderr.txt
+@@ -1,2 +1,2 @@
+-^(error: can't create transaction lock[^
++^(error: can't create (transaction|keyring) lock[^
+ ]*)?$
