@@ -13,11 +13,11 @@ URL: https://www.python.org/
 
 #  WARNING  When rebasing to a new Python version,
 #           remember to update the python3-docs package as well
-%global general_version %{pybasever}.16
+%global general_version %{pybasever}.17
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release:        1.5%{?dist}
+Release: 1%{?dist}
 License: Python-2.0.1
 
 
@@ -367,7 +367,7 @@ Patch474: 00474-cve-2025-15366.patch
 # (cherry-picked from commit b234a2b67539f787e191d2ef19a7cbdce32874e7)
 Patch475: 00475-cve-2025-15367.patch
 
-# 00494 # 430aab133397ed44cc9ee621fd311e02fee317b5
+# 00494 # 5985102102cd00494ea5412c1abb40d18c92b104
 # Increase the timeout of test_large_content_length_truncated
 #
 # It has started to fail randomly when run on s390x architecture.
@@ -408,28 +408,6 @@ Patch489: 00489-cve-2026-6019.patch
 # (cherry-picked from commit 1f9958f909c1b41a4ffc0b613ef8ec8fa5e7c474)
 Patch495: 00495-cve-2026-3446.patch
 
-# CVE-2026-17084
-# gh-155292: Use Unicode 3.2.0 attributes for RFC 3454 stringprep tables
-Patch496: 00496-cve-2026-17084.patch
-
-# CVE-2026-19672
-# gh-155999: tarfile must not create intermediate directories outside destination
-Patch497: 00497-cve-2026-19672.patch
-
-# CVE-2026-15806
-# gh-155694: scope HTTPPasswordMgr credentials by URL scheme
-Patch498: 00498-cve-2026-15806.patch
-
-# CVE-2026-15310
-# gh-156002: bound zipfile bzip2, LZMA, and Zstandard decompression
-Patch499: 00499-cve-2026-15310.patch
-Patch500: 00500-cve-2026-87910.patch
-Patch501: 00501-cve-2026-87910-windows-test-adjustment.patch
-
-# CVE-2026-82049
-# gh-157190: follow symlinks when extracting tarfile hard links
-Patch502: 00502-cve-2026-82049.patch
-Patch503: 00503-cve-2026-19553.patch
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
@@ -1753,6 +1731,17 @@ CheckPython optimized
 # ======================================================
 
 %changelog
+* Thu Oct 01 2026 Karolina Surma <ksurma@redhat.com> - 3.11.17-1
+- Update to Python 3.11.17
+- Security fix for CVE-2026-15310
+- Security fix for CVE-2026-15806
+- Security fix for CVE-2026-17084
+- Security fix for CVE-2026-19445
+- Security fix for CVE-2026-19553
+- Security fix for CVE-2026-19672
+- Security fix for CVE-2026-82049
+- Security fix for CVE-2026-87910
+
 * Thu Aug 13 2026 Karolina Surma <ksurma@redhat.com> - 3.11.16-1
 - Update to Python 3.11.16
 
