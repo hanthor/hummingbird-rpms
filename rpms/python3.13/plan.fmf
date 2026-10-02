@@ -24,11 +24,10 @@ discover:
       test: "PYTHON=python${pybasever}d TOX=false VERSION=${pybasever} CYTHON=false ./venv.sh"
     - name: selftest
       path: /selftest
-      # test_subparser_inherits_reparse_deferral fails on EPEL9: https://github.com/python/cpython/issues/155485
-      test: "VERSION=${pybasever} X='-i test_check_probes -i test_subparser_inherits_reparse_deferral' ./parallel.sh"
+      test: "VERSION=${pybasever} X='-i test_check_probes' ./parallel.sh"
     - name: debugtest
       path: /selftest
-      test: "VERSION=${pybasever} PYTHON=python${pybasever}d X='-i test_check_probes -i test_subparser_inherits_reparse_deferral' ./parallel.sh"
+      test: "VERSION=${pybasever} PYTHON=python${pybasever}d X='-i test_check_probes' ./parallel.sh"
     - name: optimizedflags
       path: /flags
       test: "python${pybasever} ./assertflags.py -O3 CFLAGS PY_BUILTIN_MODULE_CFLAGS PY_CFLAGS PY_CORE_CFLAGS PY_CFLAGS_NODIST PY_STDMODULE_CFLAGS"
