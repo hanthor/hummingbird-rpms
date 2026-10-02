@@ -5,6 +5,7 @@
   "release_monitoring_project_id": 7134,
   "sha": "27834164f9ef07b30ab3833427ff057cda29bff5",
   "source": "https://src.fedoraproject.org/rpms/userspace-rcu.git",
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/urcu/userspace-rcu",
   "version": "0.15.7"
 }
