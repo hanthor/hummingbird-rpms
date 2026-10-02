@@ -1,0 +1,27 @@
+# Spelling-checker false positives on RDMA/InfiniBand jargon, vendor and
+# driver names that are not real English words.
+addFilter(r"spelling-error .*'(lookups|librdmacm|subnet|libibmad|iWarp|iWARP|datagram|Chelsio|libefa|libhns|libipathverbs|QLogic|libirdma|Mellanox|libmthca|libocrdma|Emulex|libqedr|librxe|libsiw|libvmw|pvrdma|VMware|paravirtual|devinfo|libibverbs|modprobe|ndd|subpackages|ib)'")
+
+# Vendor driver plugin shared objects are dlopen()'d at runtime by
+# libibverbs, not linked against at build time, so they are correctly
+# shipped in the runtime package rather than -devel.
+addFilter(r"libibverbs.*: W: devel-file-in-non-devel-package /usr/lib(64)?/libibverbs/lib.*-rdmav65\.so")
+
+# These renamed/split packages intentionally do not carry Obsoletes for
+# their long-retired predecessors.
+addFilter(r"W: obsolete-not-provided (openib-diags|libibverbs-core|openib-srptools)")
+
+# infiniband-diags-compat only ships compatibility symlinks/scripts, no
+# ELF binaries of its own.
+addFilter(r"infiniband-diags-compat.*: E: no-binary")
+
+# rdma-core-common only ships license/shared files, not documentation.
+addFilter(r"rdma-core-common.*: W: no-documentation")
+
+# infiniband-diags-compat ships legacy compatibility symlinks/scripts;
+# nobody is going to write man pages for these deprecated tools.
+addFilter(r"infiniband-diags-compat.*: W: no-manual-page-for-binary")
+
+# "iWarp" is the correct stylization of the protocol name (lowercase i,
+# like iSCSI), so the leading lowercase letter is intentional here.
+addFilter(r"iwpmd.*: W: summary-not-capitalized")

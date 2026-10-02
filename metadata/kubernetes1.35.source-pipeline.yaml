@@ -1,12 +1,4 @@
 fetch:
-  - type: spec-update
-    set-version: false
-    reset-release: "0.1"
-    substitutions:
-      - pattern: "^%global k8s_ver\\s+[0-9.]+"
-        replacement: "%global k8s_ver ${VERSION}"
-      - pattern: "^%global k8s_tag\\s+v[0-9.]+"
-        replacement: "%global k8s_tag v${VERSION}"
   - type: git
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
@@ -14,3 +6,16 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "kubernetes-${VERSION}-vendor.tar.bz2"
+
+post:
+  - type: run
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        if [ "$(grep -Ec '^%global k8s_tag[[:space:]]+v[0-9.]+$' "${SPEC_FILE}")" -ne 1 ]; then
+          echo "Expected one k8s_tag macro in ${SPEC_FILE}" >&2
+          exit 1
+        fi
+        sed -Ei 's/^(%global k8s_tag[[:space:]]+)v[0-9.]+$/\1v${VERSION}/' "${SPEC_FILE}"

@@ -1,7 +1,7 @@
-From 1002a35e98ba6d0ac275ccbce1a7352e01cdc0ed Mon Sep 17 00:00:00 2001
+From 13df14017a530856a20dcc0208a67e126178d392 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:25:21 +0200
-Subject: [PATCH 51/54] gssapi-s4u
+Subject: [PATCH 51/53] gssapi-s4u
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ---
@@ -41,10 +41,10 @@ index 2e3c1c80f..9cd3618b2 100644
  		ret = krb5_cc_new_unique(ctx, type, NULL, ccache);
  		free(type);
 diff --git a/configure.ac b/configure.ac
-index 4df1a3204..918ccd5df 100644
+index d6274328b..b2c959ff3 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5136,11 +5136,17 @@ AC_ARG_WITH([kerberos5],
+@@ -5075,11 +5075,17 @@ AC_ARG_WITH([kerberos5],
  # include <gssapi_generic.h>
  #elif defined(HAVE_GSSAPI_GSSAPI_GENERIC_H)
  # include <gssapi/gssapi_generic.h>
@@ -712,10 +712,10 @@ index 237a3c40a..d7206499d 100644
  /* As user */
  int
 diff --git a/servconf.c b/servconf.c
-index 03b84ecb8..ab7327a2a 100644
+index 8746a2417..667468590 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -1500,6 +1500,43 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1498,6 +1498,43 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (options->gss_indicators == NULL)
  			options->gss_indicators = xstrdup(arg);
  		break;
@@ -759,7 +759,7 @@ index 03b84ecb8..ab7327a2a 100644
  #endif /* GSSAPI */
  
  	case sPasswordAuthentication:
-@@ -4291,6 +4328,15 @@ dump_config(ServerOptions *o)
+@@ -4290,6 +4327,15 @@ dump_config(ServerOptions *o)
  	dump_cfg_fmtint(sGSSAPIStoreCredentialsOnRekey, o->gss_store_rekey);
  	dump_cfg_string(sGSSAPIKexAlgorithms, o->gss_kex_algorithms);
  	dump_cfg_string(sGSSAPIIndicators, o->gss_indicators);
@@ -776,7 +776,7 @@ index 03b84ecb8..ab7327a2a 100644
  	dump_cfg_fmtint(sPasswordAuthentication, o->password_authentication);
  	dump_cfg_fmtint(sKbdInteractiveAuthentication,
 diff --git a/servconf.h b/servconf.h
-index c1bbd82b8..61565f0ae 100644
+index 4e5f7edc6..9ee4a089d 100644
 --- a/servconf.h
 +++ b/servconf.h
 @@ -329,7 +329,9 @@ SSHCONF_INTFLAG(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE
@@ -833,10 +833,10 @@ index 1506719a9..a0d51c9be 100644
  
  char *ssh_gssapi_server_mechanisms(void);
 diff --git a/sshd-session.c b/sshd-session.c
-index 0284c8e42..29971dc70 100644
+index adf5b1b49..7d0e25ca1 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -1394,6 +1394,104 @@ main(int ac, char **av)
+@@ -1396,6 +1396,104 @@ main(int ac, char **av)
  		authctxt->krb5_set_env = ssh_gssapi_storecreds();
  		restore_uid();
  	}
@@ -942,7 +942,7 @@ index 0284c8e42..29971dc70 100644
  #ifdef WITH_SELINUX
  	sshd_selinux_setup_exec_context(authctxt->pw->pw_name,
 diff --git a/sshd_config.5 b/sshd_config.5
-index 8cbe5ecba..c16d7f5b0 100644
+index bf9efc897..ca8a8131e 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
 @@ -857,6 +857,76 @@ FIDO2-based pre-authentication in FreeIPA, using FIDO2 USB and NFC tokens

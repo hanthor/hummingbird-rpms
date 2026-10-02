@@ -3,7 +3,7 @@
 %global goipath github.com/oauth2-proxy/oauth2-proxy/v7
 
 Name:           oauth2-proxy
-Version:        7.15.4
+Version:        7.15.5
 Release:        0.1%{?dist}
 Summary:        Reverse proxy providing authentication with OAuth2/OIDC providers
 

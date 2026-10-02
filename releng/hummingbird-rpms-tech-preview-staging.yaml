@@ -158,6 +158,8 @@ spec:
           contentType: rpm
         - name: chkconfig-main
           contentType: rpm
+        - name: chrony-main
+          contentType: rpm
         - name: chunkah-main
           contentType: rpm
         - name: cloud-init-main
@@ -507,6 +509,8 @@ spec:
         - name: libcbor-main
           contentType: rpm
         - name: libcomps-main
+          contentType: rpm
+        - name: libdex-main
           contentType: rpm
         - name: libdnf-main
           contentType: rpm
@@ -999,6 +1003,8 @@ spec:
         - name: python3-13-main
           contentType: rpm
         - name: python3-14-main
+          contentType: rpm
+        - name: python3-15-main
           contentType: rpm
         - name: qt5-main
           contentType: rpm

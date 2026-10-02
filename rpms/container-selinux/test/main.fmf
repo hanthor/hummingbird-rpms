@@ -36,6 +36,6 @@ recommend:
         - when: distro == centos-stream
           environment+:
             ROOTLESS_USER: "ec2-user"
-        - when: distro == rhel
+        - when: distro == rhel or distro == fedora-eln
           environment+:
             ROOTLESS_USER: "cloud-user"

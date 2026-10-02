@@ -17,8 +17,8 @@
 Summary: A documentation system for C/C++
 Name:    doxygen
 Epoch:   2
-Version: 1.17.0
-Release: 3%{?dist}
+Version: 1.18.0
+Release: 2%{?dist}
 # No version is specified.
 License: GPL-2.0-or-later
 Url: https://github.com/doxygen
@@ -31,7 +31,6 @@ Source3: README.rpm-packaging
 Source4: doxygen-unbundler
 
 # upstream fixes
-Patch100: doxygen-1.17-0-fix-test-tagfile-failure.patch
 
 BuildRequires: %{_bindir}/python3
 BuildRequires: perl-interpreter, perl-open
@@ -169,7 +168,9 @@ source files.
 %package -n js-doxygen
 Summary: Javascript files used by Doxygen
 Requires: web-assets-filesystem
+Requires: %{name} = %{epoch}:%{version}-%{release}
 BuildArch: noarch
+
 %description -n js-doxygen
 Javascript files for use by locally installed Doxygen documentation.
 
@@ -375,6 +376,12 @@ install -m755 -D --target-directory=%{buildroot}%{_rpmconfigdir}/redhat %{SOURCE
 %endif
 
 %changelog
+* Tue Sep 29 2026 Than Ngo <than@redhat.com> - 2:1.18.0-2
+- Add a missing requirement in js-doxygen
+
+* Tue Sep 22 2026 Than Ngo <than@redhat.com> - 2:1.18.0-1
+- Fix rhbz#2515301, Update to 1.18.0
+
 * Wed Jul 15 2026 Fedora Release Engineering <releng@fedoraproject.org> - 2:1.17.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 

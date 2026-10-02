@@ -180,9 +180,12 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             # Extra path changes
             extra_paths = []
 
-            # Add package-specific test file if it exists
+            # Add package-specific test file if it exists (pull-request only —
+            # on-push rebuilds must not be triggered by test-only changes, as
+            # the NEVR would be unchanged and Pulp would reject a re-publish
+            # with "same NEVR but different digest").
             test_file = ROOT_DIR / "test" / "rpms" / f"{dname}.yml"
-            if test_file.exists():
+            if test_file.exists() and resource_type == "pull-request":
                 extra_paths.append(f"test/rpms/{dname}.yml")
 
             # Add ci/ and mock/ path changes for canary rpm

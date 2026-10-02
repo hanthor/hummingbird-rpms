@@ -3,14 +3,14 @@
 # https://github.com/caddyserver/caddy
 %global goipath         github.com/caddyserver/caddy/v2
 %global forgeurl        https://github.com/caddyserver/caddy
-Version:                2.11.4
+Version:                2.11.6
 
 %gometa -L
 %forgemeta
 
 
 Name:           caddy
-Release:        0.4%{?dist}
+Release:        0.1%{?dist}
 Summary:        Web server with automatic HTTPS
 
 # main source code is Apache-2.0
@@ -33,9 +33,6 @@ Source31:       poweredby-black.png
 
 # downstream only patch to disable commands that can alter the binary
 Patch1:         0001-Disable-commands-that-can-alter-the-binary.patch
-# update OpenTelemetry log exporters for CVE-2026-81871; this also pulls
-# golang.org/x/text to v0.40.0, superseding the former CVE-2026-56852 bump
-Patch3:         0003-CVE-2026-81871.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  systemd-rpm-macros
@@ -117,7 +114,8 @@ install -d -m 0755 %{buildroot}%{fish_completions_dir}
 [[ "$(%{gobuilddir}/bin/caddy version)" == "v%{version}" ]] || exit 1
 %if %{with check}
 # caddytest/integration requires network and starts real servers
-%gotest $(go list ./... | grep -v caddytest/integration)
+# Test packages share the Caddy data directory and PKI state.
+%gotest -p 1 $(go list ./... | grep -v caddytest/integration)
 %endif
 
 

@@ -173,7 +173,7 @@ together).
 | `release_monitoring_project_id` | Anitya project ID (int) or upstream name (str)                    | `13254`, `"golang"`                      |
 | `version_suffix_strip`          | Suffix to strip from Anitya-reported versions                     | `"-RELEASE"`                             |
 | `upstream_version_transform`    | Named transform from Anitya version to RPM scheme                 | `"openjdk_to_rpm"`                       |
-| `source_availability_check`     | Named source checker to HEAD-probe before selecting a version     | `"openjdk_osci"`                         |
+| `source_availability_check`     | Source probe to run before selecting a version                    | `{"type": "http", "urls": [...]}`        |
 
 These fields affect two systems:
 
@@ -212,10 +212,26 @@ allowed). Use `version_suffix_strip` to remove it before comparison and update:
 ```
 
 Some upstream projects publish source tarballs independently of tag creation, and Anitya may report
-a version before the tarball is available. Use `source_availability_check` to name a checker
-function (registered in `SOURCE_AVAILABILITY_CHECKERS` in `check_upstream_versions.py`) that
-HEAD-probes the source URL before selecting a version. Versions whose source returns 404 are
-skipped in favour of the next available version. Available checkers:
+a version before the tarball is available. Use `source_availability_check` to HEAD-probe one or more
+required source URLs before selecting a version. Versions whose source returns 404 are skipped in
+favour of the next available version. The skip is reported as a warning in the scheduled-job summary
+and Slack notification, but does not fail the update job.
+
+The general HTTP probe accepts a non-empty `urls` list. Every URL must be available. URL templates
+may use `${VERSION}`, `${UPSTREAM_REPO}`, and `${TRACK_UPSTREAM}`:
+
+```json
+{
+  "source_availability_check": {
+    "type": "http",
+    "urls": [
+      "${UPSTREAM_REPO}/releases/download/v${VERSION}/libfabric-${VERSION}.tar.bz2"
+    ]
+  }
+}
+```
+
+Legacy named checkers remain available for source layouts that need package-specific logic:
 
 - `openjdk_osci` — probes `https://openjdk-sources.osci.io/openjdk{feature}/openjdk-{version}.tar.xz`
 - `tomcat_apache` — probes the Tomcat source archive on `downloads.apache.org`, and its

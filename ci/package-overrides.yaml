@@ -123,6 +123,9 @@ erlang27:
 etcd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+environment-modules:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 expat:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -222,6 +225,9 @@ helm4:
 httpd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+hwloc:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 hugo:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -271,6 +277,9 @@ kubernetes1.35:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 kubernetes1.36:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+libdex:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 libevent:
@@ -461,6 +470,9 @@ prometheus3.5:
 protobuf:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+protobuf-c:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prrte:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -481,6 +493,12 @@ python3.13:
     - "linux-d160-c8xlarge/amd64"
 
 python3.14:
+  build_platforms:
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
+
+python3.15:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
@@ -575,6 +593,9 @@ trivy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 ucx:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+utf8proc:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 unbound:

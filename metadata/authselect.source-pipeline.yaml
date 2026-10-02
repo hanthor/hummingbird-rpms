@@ -1,0 +1,4 @@
+fetch:
+  - type: url
+    url: "https://github.com/authselect/authselect/archive/refs/tags/${VERSION}.tar.gz"
+    filename: "authselect-${VERSION}.tar.gz"

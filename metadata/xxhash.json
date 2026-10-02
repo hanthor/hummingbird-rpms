@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "5",
-  "sha": "978a5e8162591c4ccaf0cd4b81b5b31f50c2ed55",
+  "release": "1",
+  "sha": "3f3a464f5143a18dac97e19ad22f80cbcd1f78b8",
   "source": "https://src.fedoraproject.org/rpms/xxhash.git",
   "upstream_repo": "https://github.com/Cyan4973/xxHash",
-  "version": "0.8.3"
+  "version": "0.8.4"
 }

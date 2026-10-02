@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Backport CVE-2026-19025 (mismatched chunk/dataspace rank at open); previously updated to upstream 2.2.0",
+  "modification_reason": "Backport CVE-2026-19025 (mismatched chunk/dataspace rank at open); backport CVE-2026-19026, CVE-2026-19027, CVE-2026-19028 (N-Bit/Fletcher32 filter decode crashes); previously updated to upstream 2.2.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 1303,
   "sha": "1e302c76d38e567d7f856d27eb233da2b0f41fe2",

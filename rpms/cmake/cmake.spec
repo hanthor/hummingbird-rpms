@@ -16,6 +16,16 @@
 # Run git tests
 %bcond_without git_test
 
+# Hummingbird: permanently build without cmake-gui. Its Qt6 BuildRequires
+# pull in qt6-rpm-macros, which requires cmake, so cmake needs an installable
+# copy of itself to build. That deadlocks when a library cmake links changes
+# soname (e.g. libjsoncpp.so.26 -> .27). Nothing in Hummingbird uses
+# cmake-gui. ccmake depends on the ncurses bcond and is still built.
+# Override the default here rather than editing Fedora's bcond line below:
+# Fedora flips that line during its own bootstraps, and those flips should
+# keep merging cleanly.
+%bcond_override_default gui 0
+
 # Set to bcond_with or use --without gui to disable qt gui build
 %bcond_without gui
 
@@ -93,7 +103,7 @@
 
 Name:           %{orig_name}%{?name_suffix}
 Version:        %{pkg_version}
-Release:        %{baserelease}.1%{?dist}
+Release:        %{baserelease}.3%{?dist}
 Summary:        Cross-platform make system
 
 # most sources are BSD
@@ -127,6 +137,11 @@ Patch100:       %{name}-findruby.patch
 %if 0%{?name_suffix:1}
 Patch1:         %{name}-rename.patch
 %endif
+
+# Hummingbird: backport of upstream 98d9cddffe. rpm 6.1 reports "can't
+# create keyring lock" where 6.0 said "transaction lock", which fails
+# RunCMake.CPack_RPM. Drop once Fedora's cmake includes it.
+Patch2:         0002-Tests-Match-RPM-keyring-lock-error-in-CPack_RPM-test.patch
 
 BuildRequires:  coreutils
 BuildRequires:  findutils

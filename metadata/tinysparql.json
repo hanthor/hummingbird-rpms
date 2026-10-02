@@ -1,10 +1,10 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "5bc023b9d016cf3199323176ea18ef66caa5f9c0",
+  "release": "1",
+  "sha": "ffec16c5b53c7b07988dc5d039790f1d40a7f38b",
   "source": "https://src.fedoraproject.org/rpms/tinysparql.git",
-  "upstream_repo": "https://gitlab.gnome.org/GNOME/tinysparql",
   "upstream_branch": "tinysparql-3.11",
-  "version": "3.11.1"
+  "upstream_repo": "https://gitlab.gnome.org/GNOME/tinysparql",
+  "version": "3.12.0"
 }

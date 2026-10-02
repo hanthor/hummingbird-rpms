@@ -1,7 +1,7 @@
-From 7c4e22aaa8d7651e9ba3bc4030f5235ebadf6714 Mon Sep 17 00:00:00 2001
+From 3bb305e252bed53087559ccedfe631a09b870a9c Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:59:26 +0200
-Subject: [PATCH 49/54] Fix ssh-pkcs11-client helper termination
+Subject: [PATCH 49/53] Fix ssh-pkcs11-client helper termination
 
 Don't terminate the PKCS#11 helper when SSH2_AGENT_FAILURE is returned.
 This is a legitimate response when a token requires PIN authentication.

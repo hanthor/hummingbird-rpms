@@ -1,19 +1,18 @@
 ### Header
 Summary: Collection of basic system utilities
 Name: util-linux
-Version: 2.42.2
+Version: 2.42.4
 # -p -e rc1
-Release: 3.4%{?dist}
+Release: 2%{?dist}
 License: GPL-1.0-or-later AND GPL-2.0-only AND GPL-2.0-or-later AND GPL-3.0-or-later AND LGPL-2.1-or-later AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause-UC AND LicenseRef-Fedora-Public-Domain
 URL: https://en.wikipedia.org/wiki/Util-linux
 
 ### Macros
 %global upstream_version %{version}
 # Was `sed -e 's/\([[:digit:]]*\)\.\([[:digit:]]*\)\.[[:digit:]]*$/\1.\2/'`, but
-# RPM's %global storage of a %(shell) body mishandles sed backreferences
-# (\1/\2) regardless of ordering relative to Version: -- confirmed broken even
-# with %global placed after Version: (see HUM-6191). cut has no backreferences
-# and needs no eval; verified against both 2- and 3-component version strings.
+# RPM mishandles sed backreferences (\1/\2) in shell macro bodies regardless
+# of definition order relative to Version: (HUM-6191). cut has no backreferences
+# or eval and works with both 2- and 3-component version strings.
 %global upstream_major %(echo %{version} | cut -d. -f1-2)
 
 %global compldir %{_datadir}/bash-completion/completions/
@@ -110,13 +109,6 @@ Provides:       /usr/sbin/sfdisk
 ### Fedora specific patches
 Patch0: 0000-login-use-O_CREAT-on-lastlog.patch
 Patch1: 0001-login-add-run-motd.d-to-the-hardcoded-MOTD_FILE.patch
-Patch2: 0002-nsenter-unshare-add-O_CLOEXEC-to-all-open-calls.patch
-Patch3: 0003-lib-fileutils-add-ul_openat_resolve-openat2-wrapper.patch
-Patch4: 0004-libmount-add-mnt_open_tree-helper-for-safe-tree-ope.patch
-Patch5: 0005-libmount-fix-X-mount.subdir-symlink-following-on-de.patch
-Patch6: 0006-libmount-restrict-source-path-canonicalization-for-.patch
-Patch7: 0007-libmount-pin-source-path-with-openat2-for-restricte.patch
-Patch8: 0008-libmount-skip-post-mount-hooks-after-failed-mount-h.patch
 
 %description
 The util-linux package contains a large variety of low-level system

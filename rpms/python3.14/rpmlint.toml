@@ -6,7 +6,7 @@ Filters = [
 
 
     # TESTS:
-    '(zero-length|pem-certificate|uncompressed-zip) /usr/lib(64)?/python3\.\d+t?/test',
+    '(zero-length|pem-certificate|uncompressed-zip|file-not-in-%lang) /usr/lib(64)?/python3\.\d+t?/test',
 
 
     # OTHER DELIBERATES:
@@ -20,6 +20,9 @@ Filters = [
     'unversioned-explicit-obsoletes python',
     'unversioned Obsoletes: Obsoletes: python3\.\d+$',
     'self-obsoletion python3\.\d+(-\S+)? obsoletes python3\.\d+(-\S+)?',
+
+    # freethreading subpackages obsolete python3.X-freethreading, but don't provide it
+    '^python3(\.\d+)?-freethreading(-\w+)?\.[^:]+: (E|W): obsolete-not-provided python3(\.\d+)?-freethreading$',
 
     # intentionally hardcoded
     'hardcoded-library-path in %{_prefix}/lib/(debug/%{_libdir}|python%{pybasever})',
@@ -58,7 +61,10 @@ Filters = [
     'no-manual-page-for-binary python3\.\d+t?dm?$',
 
     # missing documentation from subpackages
-    '^python3(\.\d+)?-(freethreading(-debug)?|debug|tkinter|test|idle)\.[^:]+: (E|W): no-documentation',
+    '^python3(\.\d+)?-(freethreading(-\w+)?|debug|tkinter|test|idle)\.[^:]+: (E|W): no-documentation',
+
+    # idle subpackages have no binaries
+    '^python3(\.\d+)?-(freethreading-)?idle\.[^:]+: (E|W): no-binary',
 
     # platform python is obsoleted, but not provided
     'obsolete-not-provided platform-python',
@@ -104,6 +110,6 @@ Filters = [
     '\bpython3(\.\d+)?\.(src|spec): (E|W): specfile-error\s+$',
 
     # SPELLING ERRORS
-    'spelling-error .* en_US (bytecode|pyc|filename|tkinter|namespaces|pytest|unittest|gil) ',
+    'spelling-error .*\b(bytecode|pyc|filename|tkinter|namespaces|pytest|unittest|gil|CPython)\b',
 
 ]

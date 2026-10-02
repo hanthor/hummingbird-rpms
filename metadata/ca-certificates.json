@@ -2,9 +2,9 @@
   "branch": "rawhide",
   "modification_reason": "Add ca-certificates-bundle subpackage for minimal container images",
   "modification_status": "modified",
-  "release": "9",
-  "sha": "5183efe86efe1997d86e3913df773ac7e3523cad",
+  "release": "1",
+  "sha": "725690846ee1ae1cd46e62c3a336c84820390d27",
   "source": "https://src.fedoraproject.org/rpms/ca-certificates.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/ca-certificates",
-  "version": "2025.2.80_v9.0.304"
+  "version": "2026.2.90_v9.0.317"
 }

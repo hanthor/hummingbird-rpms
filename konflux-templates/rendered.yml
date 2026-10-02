@@ -1639,6 +1639,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- chrony ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: chrony-main
+spec:
+  application: rpms-main
+  componentName: chrony-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/chrony-main
+  source:
+    git:
+      context: rpms/chrony
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: chrony-main
+  name: chrony-main
+spec:
+  image:
+    name: hummingbird-tenant/chrony-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- chunkah ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -8602,6 +8641,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/libcomps-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- libdex ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: libdex-main
+spec:
+  application: rpms-main
+  componentName: libdex-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/libdex-main
+  source:
+    git:
+      context: rpms/libdex
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: libdex-main
+  name: libdex-main
+spec:
+  image:
+    name: hummingbird-tenant/libdex-main
     visibility: public
   notifications:
   - config:
@@ -18399,6 +18477,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/python3-14-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python3.15 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-15-main
+spec:
+  application: rpms-main
+  componentName: python3-15-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-15-main
+  source:
+    git:
+      context: rpms/python3.15
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-15-main
+  name: python3-15-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-15-main
     visibility: public
   notifications:
   - config:

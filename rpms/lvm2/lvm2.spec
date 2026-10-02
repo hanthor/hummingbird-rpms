@@ -1,4 +1,4 @@
-%global device_mapper_version 1.02.216
+%global device_mapper_version 1.02.217
 
 %global enable_cache 1
 %global enable_lvmdbusd 1
@@ -50,7 +50,7 @@ Name: lvm2
 %if 0%{?rhel}
 Epoch: %{rhel}
 %endif
-Version: 2.03.42
+Version: 2.03.43
 Release: 1%{?dist}
 License: GPL-2.0-only
 URL: https://sourceware.org/lvm2
@@ -99,6 +99,7 @@ Requires: module-init-tools
 %if %{enable_thin} || %{enable_cache}
 Requires: device-mapper-persistent-data >= %{persistent_data_version}
 %endif
+Requires: jq
 
 %if "%{_sbindir}" == "%{_bindir}"
 # Compat symlinks for Requires in other packages.

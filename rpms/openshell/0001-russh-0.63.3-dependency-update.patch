@@ -1,0 +1,153 @@
+Subject: [PATCH] update OpenShell to russh 0.63.3
+
+Source: https://crates.io/crates/russh/0.63.3
+Reason: CVE-2026-102824, CVE-2026-102821, CVE-2026-102823
+
+diff --git a/Cargo.lock b/Cargo.lock
+index c6330b8..7222f8f 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -1572,7 +1572,7 @@ dependencies = [
+  "asn1-rs",
+  "displaydoc",
+  "nom",
+- "num-bigint",
++ "num-bigint 0.4.6",
+  "num-traits",
+  "rusticata-macros",
+ ]
+@@ -2930,18 +2930,6 @@ dependencies = [
+  "hybrid-array",
+ ]
+ 
+-[[package]]
+-name = "internal-russh-num-bigint"
+-version = "0.5.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "ae8e22120c32fb4d19ec55fba35015f57095cd95a2e3b732e44457f5915b2ee8"
+-dependencies = [
+- "num-integer",
+- "num-traits",
+- "rand 0.10.2",
+- "rand_core 0.10.1",
+-]
+-
+ [[package]]
+ name = "ipnet"
+ version = "2.12.0"
+@@ -3784,6 +3772,18 @@ dependencies = [
+  "num-traits",
+ ]
+ 
++[[package]]
++name = "num-bigint"
++version = "0.5.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0"
++dependencies = [
++ "num-integer",
++ "num-traits",
++ "rand 0.10.2",
++ "rand_core 0.10.1",
++]
++
+ [[package]]
+ name = "num-bigint-dig"
+ version = "0.8.6"
+@@ -5972,7 +5972,7 @@ dependencies = [
+  "globset",
+  "lazy_static",
+  "msvc_spectre_libs",
+- "num-bigint",
++ "num-bigint 0.4.6",
+  "num-traits",
+  "rand 0.9.4",
+  "serde",
+@@ -6151,9 +6151,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "russh"
+-version = "0.62.5"
++version = "0.63.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "da7c230e0ed9cbeb92fbad6c8848985d6df2a1464c0dc247a021abd666e9005e"
++checksum = "036204edbd199552a5b3832f63c60dcdf395dc44c7f06b4af1c0e8139cc11bce"
+ dependencies = [
+  "aes",
+  "aws-lc-rs",
+@@ -6182,13 +6182,12 @@ dependencies = [
+  "hex-literal",
+  "hmac 0.13.0",
+  "inout",
+- "internal-russh-num-bigint",
+  "keccak",
+  "log",
+  "md5",
+  "ml-kem",
+  "module-lattice",
+- "num-bigint",
++ "num-bigint 0.5.1",
+  "p256 0.14.0",
+  "p384 0.14.0",
+  "p521",
+@@ -6882,7 +6881,7 @@ version = "0.6.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0d585997b0ac10be3c5ee635f1bab02d512760d14b7c468801ac8a01d9ae5f1d"
+ dependencies = [
+- "num-bigint",
++ "num-bigint 0.4.6",
+  "num-traits",
+  "thiserror 2.0.20",
+  "time",
+diff --git a/crates/openshell-server/Cargo.toml b/crates/openshell-server/Cargo.toml
+index 54c44a7..e341ab3 100644
+--- a/crates/openshell-server/Cargo.toml
++++ b/crates/openshell-server/Cargo.toml
+@@ -104,7 +104,7 @@ async-trait = "0.1"
+ url = { workspace = true }
+ glob = { workspace = true }
+ hex = "0.4"
+-russh = "0.62"
++russh = "0.63.3"
+ rand = { workspace = true }
+ petname = "2"
+ ipnet = "2"
+diff --git a/crates/openshell-server/src/grpc/sandbox.rs b/crates/openshell-server/src/grpc/sandbox.rs
+index 1fd4a24..8049ccd 100644
+--- a/crates/openshell-server/src/grpc/sandbox.rs
++++ b/crates/openshell-server/src/grpc/sandbox.rs
+@@ -3696,7 +3696,7 @@ impl russh::client::Handler for SandboxSshClientHandler {
+ 
+     async fn check_server_key(
+         &mut self,
+-        _server_public_key: &russh::keys::PublicKey,
++        _server_public_key: &russh::keys::PublicKeyOrCertificate,
+     ) -> Result<bool, Self::Error> {
+         Ok(true)
+     }
+diff --git a/crates/openshell-supervisor-process/Cargo.toml b/crates/openshell-supervisor-process/Cargo.toml
+index db56a1f..b6f7b05 100644
+--- a/crates/openshell-supervisor-process/Cargo.toml
++++ b/crates/openshell-supervisor-process/Cargo.toml
+@@ -23,7 +23,7 @@ hex = "0.4"
+ miette = { workspace = true }
+ nix = { workspace = true }
+ rand = "0.10"
+-russh = "0.62"
++russh = "0.63.3"
+ serde_json = { workspace = true }
+ sha2 = { workspace = true }
+ tokio = { workspace = true }
+diff --git a/crates/openshell-supervisor-process/src/ssh.rs b/crates/openshell-supervisor-process/src/ssh.rs
+index 01be34b..6cb6f78 100644
+--- a/crates/openshell-supervisor-process/src/ssh.rs
++++ b/crates/openshell-supervisor-process/src/ssh.rs
+@@ -1224,7 +1224,7 @@ mod tests {
+ 
+         async fn check_server_key(
+             &mut self,
+-            _server_public_key: &russh::keys::PublicKey,
++            _server_public_key: &russh::keys::PublicKeyOrCertificate,
+         ) -> Result<bool, Self::Error> {
+             Ok(true)
+         }

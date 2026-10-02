@@ -1,7 +1,7 @@
-From ca19ae776b8ce786809f5778a7f08342ff87746d Mon Sep 17 00:00:00 2001
+From 90f47f37aa1b16d2039f3ed1a37ab418be09a2e1 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 53/54] gssapi-tests
+Subject: [PATCH 53/53] gssapi-tests
 
 ---
  regress/Makefile   |   1 +
@@ -10,7 +10,7 @@ Subject: [PATCH 53/54] gssapi-tests
  create mode 100644 regress/gss-kex.sh
 
 diff --git a/regress/Makefile b/regress/Makefile
-index 98a653256..6d050a4de 100644
+index 492112e80..2011f87a7 100644
 --- a/regress/Makefile
 +++ b/regress/Makefile
 @@ -127,6 +127,7 @@ INTEROP_TESTS+=	dropbear-ciphers dropbear-kex dropbear-server

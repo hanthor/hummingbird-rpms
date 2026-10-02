@@ -428,9 +428,9 @@ end
 Name:		%{pkg_name_llvm}
 Version:	%{maj_ver}.%{min_ver}.%{patch_ver}%{?rc_ver:~%{rc_ver}}%{?llvm_snapshot_version_suffix:~%{llvm_snapshot_version_suffix}}
 %if 0%{?rhel} == 8
-Release:	4.1%{?dist}
+Release:	1%{?dist}
 %else
-Release:	4.1%{?dist}
+Release:	5%{?dist}
 %endif
 Summary:	The Low Level Virtual Machine
 
@@ -529,6 +529,10 @@ Patch2102: 0001-20-polly-shared-libs.patch
 Patch2202: 0001-22-polly-shared-libs.patch
 Patch2302: 0001-22-polly-shared-libs.patch
 #endregion polly patches
+
+#region libclc patches
+Patch2217: 207264.patch
+#endregion libclc patches
 
 #region RHEL patches
 # RHEL 8 only

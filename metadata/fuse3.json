@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "0908028bf83e19354cf349fb38bcbf40ea7487fd",
+  "release": "1",
+  "sha": "23a2264a45de15e362b5b3134fa0d55a214ed1a9",
   "source": "https://src.fedoraproject.org/rpms/fuse3.git",
   "upstream_repo": "https://github.com/libfuse/libfuse",
-  "version": "3.18.2"
+  "version": "3.18.3"
 }

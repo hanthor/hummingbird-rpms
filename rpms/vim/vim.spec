@@ -28,9 +28,9 @@
 %define baseversion 9.2
 # get bug url from /etc/os-release
 %define bugurl %(source /etc/os-release; echo ${BUG_REPORT_URL})
-%define patchlevel 967
+%define patchlevel 1129
 %define vimdir vim92
-# metadata/vim.source-pipeline.yaml is pinned to git tag v9.2.0967 (zero-padded
+# metadata/vim.source-pipeline.yaml is pinned to git tag v9.2.1129 (zero-padded
 # patchlevel, unlike baseversion/patchlevel above) -- update both together.
 
 %if %{with desktop_file}
@@ -42,7 +42,7 @@ Summary: The VIM editor
 URL:     https://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 1.1%{?dist}
+Release: 1%{?dist}
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -1063,6 +1063,15 @@ install -p -m644 %{SOURCE11} %{buildroot}/%{_datadir}/fish/vendor_conf.d/vim-def
 
 
 %changelog
+* Fri Sep 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.1129-1
+- patchlevel 1129
+
+* Fri Sep 18 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.1119-1
+- patchlevel 1119
+
+* Thu Sep 10 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.1061-1
+- patchlevel 1061
+
 * Tue Aug 18 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.967-1
 - patchlevel 967
 

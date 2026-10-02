@@ -1,7 +1,7 @@
-From 4580b0efc21a6965f304ae5e0ada4e8ce41eb7ae Mon Sep 17 00:00:00 2001
+From dc4d137cc79b3ec45ed7624c437e86409808438e Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 15 Dec 2025 14:24:07 +0100
-Subject: [PATCH 52/54] openssh-10.2p1-pkcs11-uri
+Subject: [PATCH 52/53] openssh-10.2p1-pkcs11-uri
 
 ---
  .depend                          |   1 +
@@ -29,10 +29,10 @@ Subject: [PATCH 52/54] openssh-10.2p1-pkcs11-uri
  create mode 100644 ssh-pkcs11-uri.h
 
 diff --git a/.depend b/.depend
-index 7e5f3dcd3..9037c6ef6 100644
+index 45ad2bf4e..b430c7e77 100644
 --- a/.depend
 +++ b/.depend
-@@ -144,6 +144,7 @@ ssh-mldsa-eddsa.o: includes.h config.h defines.h platform.h openbsd-compat/openb
+@@ -145,6 +145,7 @@ ssh-mldsa-eddsa.o: includes.h config.h defines.h platform.h openbsd-compat/openb
  ssh-pkcs11-client.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h pathnames.h xmalloc.h sshbuf.h log.h ssherr.h misc.h sshkey.h authfd.h atomicio.h ssh-pkcs11.h
  ssh-pkcs11-helper.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h xmalloc.h sshbuf.h log.h ssherr.h misc.h sshkey.h authfd.h ssh-pkcs11.h
  ssh-pkcs11.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h log.h ssherr.h sshkey.h ssh-pkcs11.h
@@ -41,7 +41,7 @@ index 7e5f3dcd3..9037c6ef6 100644
  ssh-sk-client.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h log.h ssherr.h sshbuf.h sshkey.h msg.h pathnames.h ssh-sk.h misc.h
  ssh-sk-helper.o: includes.h config.h defines.h platform.h openbsd-compat/openbsd-compat.h openbsd-compat/base64.h openbsd-compat/sigact.h openbsd-compat/readpassphrase.h openbsd-compat/vis.h openbsd-compat/getrrsetbyname.h openbsd-compat/sha1.h openbsd-compat/bsd-sha2.h openbsd-compat/md5.h openbsd-compat/blf.h openbsd-compat/fnmatch.h openbsd-compat/getopt.h openbsd-compat/bsd-signal.h openbsd-compat/bsd-misc.h openbsd-compat/bsd-setres_id.h openbsd-compat/bsd-statvfs.h openbsd-compat/bsd-waitpid.h openbsd-compat/bsd-poll.h openbsd-compat/fake-rfc2553.h openbsd-compat/bsd-cygwin_util.h openbsd-compat/port-aix.h openbsd-compat/port-irix.h openbsd-compat/port-linux.h openbsd-compat/port-solaris.h openbsd-compat/port-net.h openbsd-compat/port-uw.h openbsd-compat/bsd-nextstep.h entropy.h xmalloc.h log.h ssherr.h sshkey.h authfd.h misc.h sshbuf.h msg.h uidswap.h ssh-sk.h ssh-pkcs11.h
 diff --git a/Makefile.in b/Makefile.in
-index 56c4c88cf..23cf085a5 100644
+index f61f89e4d..23d5f908a 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -113,12 +113,12 @@ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
@@ -127,7 +127,7 @@ index 56c4c88cf..23cf085a5 100644
  tests:	file-tests t-exec interop-tests extra-tests unit
  	echo all tests passed
 diff --git a/configure.ac b/configure.ac
-index 918ccd5df..8e679f770 100644
+index b2c959ff3..c37b02efb 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -2305,12 +2305,14 @@ AC_LINK_IFELSE(
@@ -186,7 +186,7 @@ index 918ccd5df..8e679f770 100644
  # IRIX has a const char return value for gai_strerror()
  AC_CHECK_FUNCS([gai_strerror], [
  	AC_DEFINE([HAVE_GAI_STRERROR])
-@@ -5982,6 +6018,7 @@ echo "                  BSD Auth support: $BSD_AUTH_MSG"
+@@ -5921,6 +5957,7 @@ echo "                  BSD Auth support: $BSD_AUTH_MSG"
  echo "              Random number source: $RAND_MSG"
  echo "             Privsep sandbox style: $SANDBOX_STYLE"
  echo "                   PKCS#11 support: $enable_pkcs11"
@@ -195,7 +195,7 @@ index 918ccd5df..8e679f770 100644
  
  echo ""
 diff --git a/regress/Makefile b/regress/Makefile
-index a6f81bef4..98a653256 100644
+index fa19ada28..492112e80 100644
 --- a/regress/Makefile
 +++ b/regress/Makefile
 @@ -118,6 +118,7 @@ LTESTS= 	connect \
@@ -1012,7 +1012,7 @@ index 000000000..89ba45c4e
 +}
 +
 diff --git a/ssh-add.c b/ssh-add.c
-index 7ce451036..5eb564a7e 100644
+index 9231c5277..1b34baffa 100644
 --- a/ssh-add.c
 +++ b/ssh-add.c
 @@ -70,6 +70,7 @@
@@ -1023,7 +1023,7 @@ index 7ce451036..5eb564a7e 100644
  
  #define CERT_EXPIRY_GRACE	(5*60)
  
-@@ -272,6 +273,38 @@ check_cert_lifetime(const struct sshkey *cert, int cert_lifetime)
+@@ -271,6 +272,38 @@ check_cert_lifetime(const struct sshkey *cert, int cert_lifetime)
  	return MINIMUM(cert_lifetime, (int)n);
  }
  
@@ -1062,7 +1062,7 @@ index 7ce451036..5eb564a7e 100644
  static int
  add_file(int agent_fd, const char *filename, int key_only, int cert_only,
      int qflag, int Nflag, const char *skprovider,
-@@ -462,15 +495,14 @@ static int
+@@ -461,15 +494,14 @@ static int
  update_card(int agent_fd, int add, const char *id, int qflag,
      int key_only, int cert_only,
      struct dest_constraint **dest_constraints, size_t ndest_constraints,
@@ -1080,7 +1080,7 @@ index 7ce451036..5eb564a7e 100644
  		if ((pin = read_passphrase("Enter passphrase for PKCS#11: ",
  		    RP_ALLOW_STDIN)) == NULL)
  			return -1;
-@@ -652,6 +684,14 @@ do_file(int agent_fd, int deleting, int key_only, int cert_only,
+@@ -651,6 +683,14 @@ do_file(int agent_fd, int deleting, int key_only, int cert_only,
      char *file, int qflag, int Nflag, const char *skprovider,
      struct dest_constraint **dest_constraints, size_t ndest_constraints)
  {
@@ -1095,7 +1095,7 @@ index 7ce451036..5eb564a7e 100644
  	if (deleting) {
  		if (delete_file(agent_fd, file, key_only,
  		    cert_only, qflag) == -1)
-@@ -1004,7 +1044,7 @@ main(int argc, char **argv)
+@@ -1003,7 +1043,7 @@ main(int argc, char **argv)
  		if (update_card(agent_fd, !deleting, pkcs11provider,
  		    qflag, key_only, cert_only,
  		    dest_constraints, ndest_constraints,
@@ -1105,7 +1105,7 @@ index 7ce451036..5eb564a7e 100644
  		for (n = 0; n < ncerts; n++)
  			sshkey_free(certs[n]);
 diff --git a/ssh-agent.c b/ssh-agent.c
-index 17b2a96c0..1f1fc024d 100644
+index 4c8e1a4da..28f5c95f9 100644
 --- a/ssh-agent.c
 +++ b/ssh-agent.c
 @@ -1553,10 +1553,75 @@ add_p11_identity(struct sshkey *key, char *comment, const char *provider,
@@ -1299,10 +1299,10 @@ index 17b2a96c0..1f1fc024d 100644
  }
  #endif /* ENABLE_PKCS11 */
 diff --git a/ssh-keygen.c b/ssh-keygen.c
-index eb880dbc0..25906f3c1 100644
+index ed1932ff0..342b0c57d 100644
 --- a/ssh-keygen.c
 +++ b/ssh-keygen.c
-@@ -835,8 +835,11 @@ do_download(struct passwd *pw)
+@@ -820,8 +820,11 @@ do_download(struct passwd *pw)
  			free(fp);
  		} else {
  			(void) sshkey_write(keys[i], stdout); /* XXX check */
@@ -1875,7 +1875,7 @@ index 000000000..bc758e760
 +char	*pkcs11_uri_get(struct pkcs11_uri *uri);
 +#endif /* _SSH_PKCS11_URI_H */
 diff --git a/ssh-pkcs11.c b/ssh-pkcs11.c
-index 7a7d3b8ea..6f23fc38b 100644
+index bd45ef090..2d308ed60 100644
 --- a/ssh-pkcs11.c
 +++ b/ssh-pkcs11.c
 @@ -36,6 +36,7 @@
@@ -2248,7 +2248,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	if ((siglen = EVP_PKEY_size(key->pkey)) <= 0)
  		return SSH_ERR_INVALID_ARGUMENT;
-@@ -658,8 +797,8 @@ pkcs11_sign_ecdsa(struct sshkey *key,
+@@ -657,8 +796,8 @@ pkcs11_sign_ecdsa(struct sshkey *key,
  	debug3_f("sign using provider %s slotidx %lu",
  	    k11->provider->name, (u_long)k11->slotidx);
  
@@ -2259,7 +2259,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	/* Prepare digest to be signed */
  	if ((hashalg = sshkey_ec_nid_to_hash_alg(key->ecdsa_nid)) == -1)
-@@ -743,8 +882,8 @@ pkcs11_sign_ed25519(struct sshkey *key,
+@@ -741,8 +880,8 @@ pkcs11_sign_ed25519(struct sshkey *key,
  	debug3_f("sign using provider %s slotidx %lu",
  	    k11->provider->name, (u_long)k11->slotidx);
  
@@ -2270,7 +2270,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	xdata = xmalloc(datalen);
  	memcpy(xdata, data, datalen);
-@@ -772,7 +911,8 @@ pkcs11_sign_ed25519(struct sshkey *key,
+@@ -770,7 +909,8 @@ pkcs11_sign_ed25519(struct sshkey *key,
  	return ret;
  }
  
@@ -2280,7 +2280,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  static char *
  rmspace(u_char *buf, size_t len)
  {
-@@ -804,8 +944,8 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin,
+@@ -802,8 +942,8 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin,
  	CK_SESSION_HANDLE	session;
  	int			login_required, ret;
  
@@ -2291,7 +2291,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	login_required = si->token.flags & CKF_LOGIN_REQUIRED;
  
-@@ -815,9 +955,9 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin,
+@@ -813,9 +953,9 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin,
  		error("pin required");
  		return (-SSH_PKCS11_ERR_PIN_REQUIRED);
  	}
@@ -2303,7 +2303,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		return (-1);
  	}
  	if (login_required && pin != NULL && strlen(pin) != 0) {
-@@ -854,7 +994,8 @@ static struct sshkey *
+@@ -851,7 +991,8 @@ static struct sshkey *
  pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
      CK_OBJECT_HANDLE *obj)
  {
@@ -2313,7 +2313,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -867,14 +1008,15 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -864,14 +1005,15 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  
  	memset(&key_attr, 0, sizeof(key_attr));
  	key_attr[0].type = CKA_ID;
@@ -2334,7 +2334,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		return (NULL);
-@@ -885,19 +1027,19 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -882,19 +1024,19 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	 * ensure that none of the others are zero length.
  	 * XXX assumes CKA_ID is always first.
  	 */
@@ -2358,7 +2358,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		goto fail;
-@@ -909,8 +1051,8 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -906,8 +1048,8 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		goto fail;
  	}
  
@@ -2369,7 +2369,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (group == NULL) {
  		ossl_error("d2i_ECPKParameters failed");
  		goto fail;
-@@ -921,13 +1063,13 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -918,13 +1060,13 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		goto fail;
  	}
  
@@ -2386,7 +2386,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (octet == NULL) {
  		ossl_error("d2i_ASN1_OCTET_STRING failed");
  		goto fail;
-@@ -989,7 +1131,8 @@ static struct sshkey *
+@@ -985,7 +1127,8 @@ static struct sshkey *
  pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
      CK_OBJECT_HANDLE *obj)
  {
@@ -2396,7 +2396,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -1000,14 +1143,15 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -996,14 +1139,15 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  
  	memset(&key_attr, 0, sizeof(key_attr));
  	key_attr[0].type = CKA_ID;
@@ -2417,7 +2417,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		return (NULL);
-@@ -1018,19 +1162,19 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1014,19 +1158,19 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	 * ensure that none of the others are zero length.
  	 * XXX assumes CKA_ID is always first.
  	 */
@@ -2441,7 +2441,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		goto fail;
-@@ -1042,8 +1186,8 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1038,8 +1182,8 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		goto fail;
  	}
  
@@ -2452,7 +2452,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rsa_n == NULL || rsa_e == NULL) {
  		error("BN_bin2bn failed");
  		goto fail;
-@@ -1075,7 +1219,7 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1071,7 +1215,7 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	/* success */
  	success = 0;
  fail:
@@ -2461,7 +2461,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		free(key_attr[i].pValue);
  	RSA_free(rsa);
  	if (success != 0) {
-@@ -1090,7 +1234,8 @@ static struct sshkey *
+@@ -1086,7 +1230,8 @@ static struct sshkey *
  pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
      CK_OBJECT_HANDLE *obj)
  {
@@ -2471,7 +2471,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -1110,14 +1255,15 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1106,14 +1251,15 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  
  	memset(&key_attr, 0, sizeof(key_attr));
  	key_attr[0].type = CKA_ID;
@@ -2492,7 +2492,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		return (NULL);
-@@ -1128,28 +1274,28 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1124,28 +1270,28 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	 * ensure that none of the others are zero length.
  	 * XXX assumes CKA_ID is always first.
  	 */
@@ -2527,7 +2527,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if ((len != sizeof(id1) || memcmp(d, id1, sizeof(id1)) != 0) &&
  	    (len != sizeof(id2) || memcmp(d, id2, sizeof(id2)) != 0)) {
  		hex = tohex(d, len);
-@@ -1161,16 +1307,16 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1157,16 +1303,16 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	 * Expect either a raw 32 byte pubkey or an OCTET STRING with
  	 * a 32 byte pubkey in CKA_VALUE
  	 */
@@ -2548,7 +2548,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		goto fail;
  	}
  
-@@ -1190,7 +1336,7 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1186,7 +1332,7 @@ pkcs11_fetch_ed25519_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		key = NULL;
  	}
  	free(hex);
@@ -2557,7 +2557,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		free(key_attr[i].pValue);
  	return key;
  }
-@@ -1200,7 +1346,8 @@ static int
+@@ -1196,7 +1342,8 @@ static int
  pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
      CK_OBJECT_HANDLE *obj, struct sshkey **keyp, char **labelp)
  {
@@ -2567,7 +2567,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -1226,14 +1373,15 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1218,14 +1365,15 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  
  	memset(&cert_attr, 0, sizeof(cert_attr));
  	cert_attr[0].type = CKA_ID;
@@ -2588,7 +2588,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		return -1;
-@@ -1245,18 +1393,19 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1237,18 +1385,19 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  	 * XXX assumes CKA_ID is always first.
  	 */
  	if (cert_attr[1].ulValueLen == 0 ||
@@ -2611,7 +2611,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_GetAttributeValue failed: %lu", rv);
  		goto out;
-@@ -1270,8 +1419,8 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1262,8 +1411,8 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		subject = xstrdup("invalid subject");
  	X509_NAME_free(x509_name);
  
@@ -2622,7 +2622,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		error("d2i_x509 failed");
  		goto out;
  	}
-@@ -1381,7 +1530,7 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1371,7 +1520,7 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
  		goto out;
  	}
   out:
@@ -2631,7 +2631,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  		free(cert_attr[i].pValue);
  	X509_free(x509);
  	RSA_free(rsa);
-@@ -1424,11 +1573,12 @@ note_key(struct pkcs11_provider *p, CK_ULONG slotidx, const char *context,
+@@ -1412,11 +1561,12 @@ note_key(struct pkcs11_provider *p, CK_ULONG slotidx, const char *context,
   */
  static int
  pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
@@ -2646,7 +2646,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -1445,10 +1595,23 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1433,10 +1583,23 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
  	key_attr[0].pValue = &key_class;
  	key_attr[0].ulValueLen = sizeof(key_class);
  
@@ -2673,7 +2673,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_FindObjectsInit failed: %lu", rv);
  		goto fail;
-@@ -1521,6 +1684,13 @@ fail:
+@@ -1509,6 +1672,13 @@ fail:
  
  	return (ret);
  }
@@ -2687,7 +2687,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  #endif /* WITH_OPENSSL */
  
  /*
-@@ -1530,11 +1700,12 @@ fail:
+@@ -1518,11 +1688,12 @@ fail:
   */
  static int
  pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
@@ -2702,7 +2702,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	CK_SESSION_HANDLE	 session;
  	CK_FUNCTION_LIST	*f = NULL;
  	CK_RV			 rv;
-@@ -1550,10 +1721,23 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1538,10 +1709,23 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
  	key_attr[0].pValue = &key_class;
  	key_attr[0].ulValueLen = sizeof(key_class);
  
@@ -2729,7 +2729,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	if (rv != CKR_OK) {
  		error("C_FindObjectsInit failed: %lu", rv);
  		goto fail;
-@@ -1841,16 +2025,10 @@ pkcs11_ecdsa_generate_private_key(struct pkcs11_provider *p, CK_ULONG slotidx,
+@@ -1827,16 +2011,10 @@ pkcs11_ecdsa_generate_private_key(struct pkcs11_provider *p, CK_ULONG slotidx,
  }
  #endif /* WITH_PKCS11_KEYGEN */
  
@@ -2748,7 +2748,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	int ret = -1;
  	struct pkcs11_provider *p = NULL;
  	void *handle = NULL;
-@@ -1859,128 +2037,126 @@ pkcs11_register_provider(char *provider_id, char *pin,
+@@ -1845,128 +2023,126 @@ pkcs11_register_provider(char *provider_id, char *pin,
  	CK_FUNCTION_LIST *f = NULL;
  	CK_TOKEN_INFO *token;
  	CK_ULONG i;
@@ -2954,7 +2954,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	/* now owned by caller */
  	*providerp = p;
-@@ -1988,21 +2164,22 @@ pkcs11_register_provider(char *provider_id, char *pin,
+@@ -1974,21 +2150,22 @@ pkcs11_register_provider(char *provider_id, char *pin,
  	TAILQ_INSERT_TAIL(&pkcs11_providers, p, next);
  	p->refcount++;	/* add to provider list */
  
@@ -2983,7 +2983,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  	return (ret);
  }
  
-@@ -2038,18 +2215,163 @@ pkcs11_terminate(void)
+@@ -2024,18 +2201,163 @@ pkcs11_terminate(void)
  }
  
  /*
@@ -3153,7 +3153,7 @@ index 7a7d3b8ea..6f23fc38b 100644
  
  	/* no keys found or some other error, de-register provider */
  	if (nkeys <= 0 && p != NULL) {
-@@ -2058,11 +2380,38 @@ pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp,
+@@ -2044,11 +2366,38 @@ pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp,
  		pkcs11_provider_unref(p);
  	}
  	if (nkeys == 0)
@@ -3215,10 +3215,10 @@ index 1d0277a6d..13459644c 100644
  	    const u_char *, size_t, const char *, const char *,
  	    const char *, u_int);
 diff --git a/ssh.c b/ssh.c
-index c319d08af..c79d69ef0 100644
+index 0182cc567..c8f3545af 100644
 --- a/ssh.c
 +++ b/ssh.c
-@@ -844,6 +844,14 @@ main(int ac, char **av)
+@@ -848,6 +848,14 @@ main(int ac, char **av)
  			options.gss_deleg_creds = 1;
  			break;
  		case 'i':
@@ -3233,7 +3233,7 @@ index c319d08af..c79d69ef0 100644
  			p = tilde_expand_filename(optarg, getuid());
  			if (stat(p, &st) == -1)
  				fprintf(stderr, "Warning: Identity file %s "
-@@ -1823,6 +1831,7 @@ main(int ac, char **av)
+@@ -1832,6 +1840,7 @@ main(int ac, char **av)
  
  #ifdef ENABLE_PKCS11
  	(void)pkcs11_del_provider(options.pkcs11_provider);
@@ -3241,7 +3241,7 @@ index c319d08af..c79d69ef0 100644
  #endif
  
   skip_connect:
-@@ -2334,6 +2343,45 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
+@@ -2356,6 +2365,45 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
  	    options.escape_char : SSH_ESCAPECHAR_NONE, id);
  }
  
@@ -3287,7 +3287,7 @@ index c319d08af..c79d69ef0 100644
  /* Loads all IdentityFile and CertificateFile keys */
  static void
  load_public_identity_files(const struct ssh_conn_info *cinfo)
-@@ -2348,11 +2396,6 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
+@@ -2370,11 +2418,6 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
  	char *certificate_files[SSH_MAX_CERTIFICATE_FILES];
  	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
  	int certificate_file_userprovided[SSH_MAX_CERTIFICATE_FILES];
@@ -3299,7 +3299,7 @@ index c319d08af..c79d69ef0 100644
  
  	n_ids = n_certs = 0;
  	memset(identity_files, 0, sizeof(identity_files));
-@@ -2365,33 +2408,46 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
+@@ -2387,33 +2430,46 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
  	    sizeof(certificate_file_userprovided));
  
  #ifdef ENABLE_PKCS11
@@ -3366,10 +3366,10 @@ index c319d08af..c79d69ef0 100644
  		free(cp);
  		check_load(sshkey_load_public(filename, &public, NULL),
 diff --git a/ssh_config.5 b/ssh_config.5
-index 67d52d874..12cd3f7e1 100644
+index f2ff8585c..f16eb61ea 100644
 --- a/ssh_config.5
 +++ b/ssh_config.5
-@@ -1301,6 +1301,21 @@ may also be used in conjunction with
+@@ -1304,6 +1304,21 @@ may also be used in conjunction with
  .Cm CertificateFile
  in order to provide any certificate also needed for authentication with
  the identity.
@@ -3392,10 +3392,10 @@ index 67d52d874..12cd3f7e1 100644
  Specifies a pattern-list of unknown options to be ignored if they are
  encountered in configuration parsing.
 diff --git a/sshkey.c b/sshkey.c
-index e3fb29e70..82ef1c8da 100644
+index 2380c8081..084ff3b55 100644
 --- a/sshkey.c
 +++ b/sshkey.c
-@@ -868,8 +868,10 @@ sshkey_free_contents(struct sshkey *k)
+@@ -852,8 +852,10 @@ sshkey_free_contents(struct sshkey *k)
  
  	if (k == NULL)
  		return;
@@ -3406,7 +3406,7 @@ index e3fb29e70..82ef1c8da 100644
  	if ((impl = sshkey_impl_from_type(k->type)) != NULL &&
  	    impl->funcs->cleanup != NULL)
  		impl->funcs->cleanup(k);
-@@ -2316,9 +2318,11 @@ sshkey_sign(struct sshkey *key,
+@@ -2300,9 +2302,11 @@ sshkey_sign(struct sshkey *key,
  	if (sshkey_is_sk(key)) {
  		r = sshsk_sign(sk_provider, key, sigp, lenp, data,
  		    datalen, compat, sk_pin);

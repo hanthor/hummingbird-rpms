@@ -70,13 +70,15 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from string import Template
 from typing import Callable, Optional
 
 import requests
 import sentry_sdk
 import workqueue_submit
+from package_paths import portable_component, sanitize_package_paths
 import yaml
 
 # Try to import rpm for version comparison; fall back to packaging if unavailable
@@ -118,6 +120,8 @@ DEFAULT_DISTRO = "Fedora"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+_STALE_PATCH_PREFIX = "STALE PATCH: "
 
 # Global sign-off flag, set from command line
 sign_off: bool = False
@@ -179,6 +183,7 @@ class VersionCheckResult:
     update_error: Optional[str] = None
     downloaded_sources: Optional[list[str]] = None
     version_source: Optional[str] = None
+    warnings: list[str] = field(default_factory=list)
 
 
 def compare_versions(current: str, upstream: str) -> int:
@@ -961,6 +966,64 @@ def mark_package_modified(
     logger.info(f"{package}: marked as modified in metadata")
 
 
+def _check_updated_patches(package: str) -> None:
+    """Drop exact upstreamed patches; require review for patches that no longer apply."""
+    import dist_git
+
+    package_dir = RPMS_DIR / package
+    spec = next(package_dir.glob("*.spec"), None)
+    if spec is None:
+        raise RuntimeError(f"{package}: no spec file found in {package_dir}")
+    patches = dist_git.get_spec_patches(spec)
+    if not patches:
+        return
+
+    source = _get_spec_sources(str(spec), str(package_dir)).get(0, "")
+    filename = Path(urllib.parse.urlsplit(source).path).name
+    archive = package_dir / filename
+    if not filename or not archive.is_file() or not filename.endswith(
+        (".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tgz", ".tar", ".zip")
+    ):
+        raise RuntimeError(f"{package}: cannot check patches: Source0 archive is unavailable")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        extract_dir = Path(tmp)
+        command = (["unzip", "-q", str(archive), "-d", tmp]
+                   if filename.endswith(".zip") else ["tar", "xf", str(archive), "-C", tmp])
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode:
+            raise RuntimeError(f"{package}: cannot extract Source0 for patch check: {result.stderr}")
+        source_root = dist_git._find_source_root(extract_dir)
+        stale = []
+        # Match dist_git.detect_stale_patches: check every patch against the
+        # untouched upstream tree, before applying any local patches to it.
+        for number, name in patches:
+            patch_file = package_dir / name
+            if not patch_file.is_file():
+                raise RuntimeError(f"{package}: Patch{number} ({name}) is missing")
+            if subprocess.run(["git", "apply", "--check", "-R", str(patch_file)],
+                              cwd=source_root, capture_output=True).returncode == 0:
+                stale.append((number, name))
+
+        for number, name in patches:
+            if (number, name) in stale:
+                continue
+            patch_file = package_dir / name
+            if subprocess.run(["git", "apply", "--check", str(patch_file)],
+                              cwd=source_root, capture_output=True).returncode == 0:
+                subprocess.run(["git", "apply", str(patch_file)], cwd=source_root, check=True)
+            else:
+                raise RuntimeError(
+                    f"{package}: Patch{number} ({name}) neither applies nor reverses "
+                    "against new Source0; review whether it needs rebasing or dropping"
+                )
+
+    if stale:
+        dist_git.drop_stale_patches(package_dir, stale)
+        logger.info("%s: dropped patches already upstream: %s", package,
+                    ", ".join(name for _, name in stale))
+
+
 # ---------------------------------------------------------------------------
 # Per-package update hooks
 # ---------------------------------------------------------------------------
@@ -1222,6 +1285,10 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
     if hooks and hooks.post_update:
         env = _build_hook_env(package, old_version, new_version)
         _run_hook("post_update", hooks.post_update, package, env)
+
+    sanitize_package_paths(package_dir)
+
+    _check_updated_patches(package)
 
     # --- Metadata bookkeeping ------------------------------------------------
     # Persist the resolved version. The spec's release is not a Fedora
@@ -1566,12 +1633,59 @@ SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]
 }
 
 
-def check_source_available(version: str, checker_name: str, metadata: dict[str, object]) -> bool:
-    """Check if a source tarball is available using a named checker."""
-    fn = SOURCE_AVAILABILITY_CHECKERS.get(checker_name)
-    if fn is None:
-        raise ValueError(f"unknown source_availability_check {checker_name!r}")
-    return fn(version, metadata)
+def _http_source_check(
+    version: str,
+    config: dict[str, object],
+    metadata: dict[str, object],
+) -> bool:
+    """HEAD-probe every configured, version-templated source URL."""
+    urls = config.get("urls")
+    if not isinstance(urls, list) or not urls:
+        raise ValueError("http source_availability_check requires a non-empty urls list")
+    if not all(isinstance(url, str) and url for url in urls):
+        raise ValueError("http source_availability_check urls must be non-empty strings")
+
+    substitutions = {
+        "VERSION": version,
+        "UPSTREAM_REPO": str(metadata.get("upstream_repo") or "").rstrip("/"),
+        "TRACK_UPSTREAM": str(metadata.get("track_upstream") or ""),
+    }
+    for url_template in urls:
+        try:
+            url = Template(url_template).substitute(substitutions)
+        except KeyError as e:
+            raise ValueError(
+                f"unknown source_availability_check variable {e.args[0]!r}"
+            ) from e
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise ValueError(
+                "source_availability_check url expanded to a non-HTTP URL: "
+                f"{url!r}"
+            )
+        if not _check_source_exists(url):
+            return False
+    return True
+
+
+def check_source_available(
+    version: str,
+    checker: object,
+    metadata: dict[str, object],
+) -> bool:
+    """Check source availability using a legacy named checker or probe config."""
+    if isinstance(checker, str):
+        fn = SOURCE_AVAILABILITY_CHECKERS.get(checker)
+        if fn is None:
+            raise ValueError(f"unknown source_availability_check {checker!r}")
+        return fn(version, metadata)
+
+    if not isinstance(checker, dict):
+        raise ValueError("source_availability_check must be a name or probe object")
+    probe_type = checker.get("type")
+    if probe_type == "http":
+        return _http_source_check(version, checker, metadata)
+    raise ValueError(f"unknown source_availability_check type {probe_type!r}")
 
 
 def check_package_version(
@@ -1683,19 +1797,23 @@ def check_package_version(
         if tracked_candidates:
             source_candidates = tracked_candidates
 
+    source_warnings: list[str] = []
+
     # Filter out leading versions whose source tarball is not yet published.
     # Probes only until a published version is found; older versions are
     # assumed available.
-    if source_checker and meta is not None:
+    if source_checker is not None and meta is not None:
         skip = 0
         for v in source_candidates:
             try:
                 if check_source_available(v, source_checker, meta):
                     break
-                logger.info(
-                    "%s: skipping %s (source not published)",
-                    package, v,
+                warning = (
+                    f"skipped upstream version {v}: required source artifact "
+                    "is not published"
                 )
+                source_warnings.append(warning)
+                logger.warning("%s: %s", package, warning)
                 skip += 1
             except urllib.error.URLError as e:
                 logger.warning(
@@ -1756,6 +1874,16 @@ def check_package_version(
                 upstream_version = None
 
     if not upstream_version:
+        if source_warnings:
+            return VersionCheckResult(
+                package=package,
+                current_version=current_version,
+                upstream_version=None,
+                has_update=False,
+                anitya_project_id=anitya_data.get("id"),
+                version_source=version_source,
+                warnings=source_warnings,
+            )
         return VersionCheckResult(
             package=package,
             current_version=current_version,
@@ -1780,6 +1908,7 @@ def check_package_version(
         has_update=has_update,
         anitya_project_id=anitya_data.get("id"),
         version_source=version_source,
+        warnings=source_warnings,
     )
 
 
@@ -1836,6 +1965,9 @@ def list_all(args: argparse.Namespace) -> None:
         elif result.has_update:
             status = "update available"
             upstream_display = result.upstream_version or "-"
+        elif result.warnings:
+            status = "; ".join(result.warnings)
+            upstream_display = "-"
         else:
             status = "up-to-date"
             upstream_display = result.upstream_version or "-"
@@ -1890,12 +2022,12 @@ def _build_workqueue_file_actions(
 ) -> list[dict[str, str]]:
     """Build file_actions for an upstream version update.
 
-    Includes the spec file, sources, .gitignore (if modified), and
-    metadata JSON.  Source archives are excluded -- they live in the
-    lookaside cache and are listed in .gitignore.
+    Includes the spec file, sources, .gitignore (if modified), metadata
+    JSON, and any tracked patch files removed during the update. Source
+    archives live in the lookaside cache and are listed in .gitignore.
     """
     package_dir = RPMS_DIR / package
-    return workqueue_submit.collect_update_actions(
+    actions = workqueue_submit.collect_update_actions(
         [
             *[(s, True) for s in package_dir.glob("*.spec")],
             (package_dir / "sources", True),
@@ -1904,6 +2036,23 @@ def _build_workqueue_file_actions(
         ],
         root=ROOT_DIR,
     )
+    changed = run_git("ls-files", "-z", "--modified", "--others", "--exclude-standard",
+                      "--", f"rpms/{package}", cwd=ROOT_DIR).stdout.split('\0')
+    included = {action['file_path'] for action in actions}
+    actions.extend(workqueue_submit.file_action('update', path, ROOT_DIR / path)
+                   for path in dict.fromkeys(changed)
+                   if path and path not in included and (ROOT_DIR / path).is_file()
+                   and Path(path).name not in downloaded)
+    deleted = run_git("ls-files", "--deleted", "--", f"rpms/{package}",
+                      cwd=ROOT_DIR).stdout.splitlines()
+    actions.extend(workqueue_submit.file_action("delete", path) for path in deleted)
+    included = {action['file_path'] for action in actions}
+    for path in deleted:
+        portable = '/'.join(portable_component(part) for part in Path(path).parts)
+        if portable not in included and (ROOT_DIR / portable).is_file():
+            actions.append(workqueue_submit.file_action('update', portable, ROOT_DIR / portable))
+            included.add(portable)
+    return actions
 
 
 def run_check(args: argparse.Namespace) -> None:
@@ -1940,6 +2089,7 @@ def run_check(args: argparse.Namespace) -> None:
     results: list[VersionCheckResult] = []
     updates_found = 0
     errors_found = 0
+    warnings_found = 0
 
     for i, package in enumerate(packages):
         if not args.quiet and not args.json:
@@ -1955,10 +2105,17 @@ def run_check(args: argparse.Namespace) -> None:
             updates_found += 1
         if result.error:
             errors_found += 1
+        warnings_found += len(result.warnings)
 
         # Rate limiting
         if i < len(packages) - 1:
             time.sleep(args.delay)
+
+    skipped_found = sum(
+        1 for result in results
+        if result.warnings and not result.has_update and not result.error
+    )
+    up_to_date_found = len(results) - updates_found - errors_found - skipped_found
 
     # Clear progress line
     if not args.quiet and not args.json:
@@ -2004,19 +2161,31 @@ def run_check(args: argparse.Namespace) -> None:
                         result.package,
                         downloaded,
                     )
+                    stale_patches = any(action["action"] == "delete" and
+                                        action["file_path"].endswith(".patch")
+                                        for action in actions)
+                    if stale_patches:
+                        commit_msg = f"{_STALE_PATCH_PREFIX}{commit_msg}"
                     workqueue_submit.submit(
                         package=result.package,
                         project="redhat/hummingbird/rpms",
                         change_kind="upstream-sync",
                         commit_message=commit_msg,
                         source_branch=f"chore/upstream-update-{result.package}",
-                        mr_title=f"chore(rpms): Update {result.package}"
-                        f" to {result.upstream_version}",
+                        mr_title=(_STALE_PATCH_PREFIX if stale_patches else "") +
+                        f"chore(rpms): Update {result.package} to {result.upstream_version}",
                         idempotency_key=f"upstream-update/{result.package}/{result.upstream_version}",
                         file_actions=actions,
-                        auto_merge=True,
+                        auto_merge=not stale_patches,
+                        draft=stale_patches,
+                        mr_description=("Exact upstreamed patches were removed; "
+                                        "please review before merging." if stale_patches else ""),
                     )
                 else:
+                    deleted = run_git("ls-files", "--deleted", "--", f"rpms/{result.package}",
+                                      cwd=ROOT_DIR).stdout.splitlines()
+                    if any(path.endswith(".patch") for path in deleted):
+                        commit_msg = f"{_STALE_PATCH_PREFIX}{commit_msg}"
                     # Commit the changes (no -f so .gitignore is respected)
                     run_git(
                         "add",
@@ -2061,6 +2230,7 @@ def run_check(args: argparse.Namespace) -> None:
             "updates_available": updates_found,
             "updates_applied": updates_applied,
             "errors": errors_found,
+            "warnings": warnings_found,
             "results": [
                 {
                     "package": r.package,
@@ -2072,9 +2242,10 @@ def run_check(args: argparse.Namespace) -> None:
                     "error": r.error,
                     "update_error": r.update_error,
                     "anitya_project_id": r.anitya_project_id,
+                    "warnings": r.warnings,
                 }
                 for r in results
-                if args.all or r.has_update or r.error
+                if args.all or r.has_update or r.error or r.warnings
             ],
         }
         print(json.dumps(output, indent=2))
@@ -2113,7 +2284,10 @@ def run_check(args: argparse.Namespace) -> None:
 
         if args.all:
             # Show up-to-date packages
-            up_to_date = [r for r in results if not r.has_update and not r.error]
+            up_to_date = [
+                r for r in results
+                if not r.has_update and not r.error and not r.warnings
+            ]
             if up_to_date:
                 print("\nUp-to-date packages:")
                 print("-" * 70)
@@ -2127,6 +2301,13 @@ def run_check(args: argparse.Namespace) -> None:
                 if r.error:
                     print(f"{r.package:<30} {r.error}")
 
+        if warnings_found > 0:
+            print("\nSource availability warnings:")
+            print("-" * 70)
+            for r in results:
+                for warning in r.warnings:
+                    print(f"{r.package:<30} {warning}")
+
         # Summary
         print()
         if args.update:
@@ -2134,14 +2315,18 @@ def run_check(args: argparse.Namespace) -> None:
             print(
                 f"Summary: {updates_applied} specs updated, "
                 f"{update_failures} update failures, "
-                f"{len(results) - updates_found - errors_found} up-to-date, "
-                f"{errors_found} errors"
+                f"{up_to_date_found} up-to-date, "
+                f"{skipped_found} skipped (source unavailable), "
+                f"{errors_found} errors, "
+                f"{warnings_found} source version warnings"
             )
         else:
             print(
                 f"Summary: {updates_found} updates available, "
-                f"{len(results) - updates_found - errors_found} up-to-date, "
-                f"{errors_found} errors"
+                f"{up_to_date_found} up-to-date, "
+                f"{skipped_found} skipped (source unavailable), "
+                f"{errors_found} errors, "
+                f"{warnings_found} source version warnings"
             )
 
     # Exit code: 0 if no updates, 1 if updates found, 2 if errors

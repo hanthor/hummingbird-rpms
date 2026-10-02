@@ -1,7 +1,7 @@
-From f442f305469242d587cdebc28e31ac5ad5252643 Mon Sep 17 00:00:00 2001
+From 9e952349b6b64ff2916199323b1db909c3f1d6f3 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 12 Dec 2025 15:35:14 +0100
-Subject: [PATCH 48/54] openssh-7.3p1-x11-max-displays
+Subject: [PATCH 48/53] openssh-7.3p1-x11-max-displays
 
 Move MAX_DISPLAYS to a configuration option (#1341302)
 ---
@@ -62,10 +62,10 @@ index f69096498..bc3b52aa2 100644
  	    const char *, const char *, const char *, int);
  int      x11_channel_used_recently(struct ssh *ssh);
 diff --git a/servconf.c b/servconf.c
-index 90c5839a2..03b84ecb8 100644
+index d9cccc17c..8746a2417 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -1535,6 +1535,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1533,6 +1533,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  			*intptr = value;
  		break;
  
@@ -76,7 +76,7 @@ index 90c5839a2..03b84ecb8 100644
  	case sX11UseLocalhost:
  		intptr = &options->x11_use_localhost;
  		goto parse_flag;
-@@ -4250,6 +4254,7 @@ dump_config(ServerOptions *o)
+@@ -4249,6 +4253,7 @@ dump_config(ServerOptions *o)
  #endif
  	dump_cfg_int(sLoginGraceTime, o->login_grace_time);
  	dump_cfg_int(sX11DisplayOffset, o->x11_display_offset);
@@ -85,7 +85,7 @@ index 90c5839a2..03b84ecb8 100644
  	dump_cfg_int(sMaxSessions, o->max_sessions);
  	dump_cfg_int(sClientAliveInterval, o->client_alive_interval);
 diff --git a/servconf.h b/servconf.h
-index a8e90e5a9..c1bbd82b8 100644
+index 81e699655..4e5f7edc6 100644
 --- a/servconf.h
 +++ b/servconf.h
 @@ -40,6 +40,7 @@ struct sshbuf;
@@ -121,10 +121,10 @@ index bd8dc808c..e2cf13bdc 100644
  		return 0;
  	}
 diff --git a/sshd_config.5 b/sshd_config.5
-index 8fed58d5c..8cbe5ecba 100644
+index 2a8f3abea..bf9efc897 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -1427,6 +1427,7 @@ Available keywords are
+@@ -1430,6 +1430,7 @@ Available keywords are
  .Cm TrustedUserCAKeys ,
  .Cm UnusedConnectionTimeout ,
  .Cm X11DisplayOffset ,
@@ -132,7 +132,7 @@ index 8fed58d5c..8cbe5ecba 100644
  .Cm X11Forwarding
  and
  .Cm X11UseLocalhost .
-@@ -2144,6 +2145,12 @@ Specifies the first display number available for
+@@ -2147,6 +2148,12 @@ Specifies the first display number available for
  X11 forwarding.
  This prevents sshd from interfering with real X11 servers.
  The default is 10.

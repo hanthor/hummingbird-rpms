@@ -1,4 +1,17 @@
 [archive]
+# CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
+# API, so they must move together. otelzap is pinned to v0.20.0 because that is the
+# newest release still built against otel/log v0.21.0; v0.20.1 would drag otel to
+# v1.46/log v0.22. Keep in sync with CVE-2026-81871.patch.
+pre_commands = [
+  [
+    "go", "get",
+    "go.opentelemetry.io/contrib/bridges/otelzap@v0.20.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+]
 
 [licensing]
 detector = "askalono"

@@ -8,7 +8,7 @@ Version:                3.13.3
 %gometa -L -f
 
 Name:           prometheus3.13
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Monitoring system and time series database
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
 URL:            %{gourl}
@@ -25,6 +25,8 @@ Patch0:         0001-Disable-pprof-debug-endpoints.patch
 Patch2:         0003-pnpm-cache-both-rpm-architectures.patch
 Patch3:         0004-cve-2026-53669-bump-react-router-to-7.18.0.patch
 Patch4:         0005-cve-2026-69153-bump-postcss-to-8.5.19.patch
+# CVE-2026-93450: sync go.mod/go.sum with vendor archive go-openapi/swag v0.27.1 bump
+Patch5:         0006-bump-go-openapi-swag-to-0.27.1-gomod.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25

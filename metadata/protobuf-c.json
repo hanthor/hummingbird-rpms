@@ -1,8 +1,9 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
-  "release": "5",
-  "sha": "d6c8e2c388a8b847178391ecef3630a8f7b288b4",
+  "modification_reason": "Backport protobuf 34+ FieldDescriptor API compatibility",
+  "modification_status": "modified",
+  "release": "6",
+  "sha": "67fb019f7d7e40aaeeeefa5743066e3b3b2e8954",
   "source": "https://src.fedoraproject.org/rpms/protobuf-c.git",
   "upstream_repo": "https://github.com/protobuf-c/protobuf-c",
   "version": "1.5.2"

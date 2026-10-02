@@ -46,13 +46,18 @@ default:
     when: manual
     allow_failure: true # allow to merge MR without running this job
 
-.notify_schedule_failure: &notify_schedule_failure
+.notify_schedule_result: &notify_schedule_result
   - |
-    if [ "$CI_JOB_STATUS" == "failed" ] && [ "$CI_PIPELINE_SOURCE" == "schedule" ]; then
+    if [ "$CI_PIPELINE_SOURCE" == "schedule" ] && \
+      { [ "$CI_JOB_STATUS" == "failed" ] || [ -s .ci_upstream_update_warnings.txt ]; }; then
       if [ -z "$SLACK_WEBHOOK_URL" ]; then
         echo "WARNING: SLACK_WEBHOOK_URL is not set, skipping Slack notification"
       else
-        MSG="⚠️ ${CI_JOB_NAME} scheduled pipeline failed: ${CI_JOB_URL}"
+        if [ "$CI_JOB_STATUS" == "failed" ]; then
+          MSG="⚠️ ${CI_JOB_NAME} scheduled pipeline failed: ${CI_JOB_URL}"
+        else
+          MSG="⚠️ ${CI_JOB_NAME} scheduled pipeline completed with warnings: ${CI_JOB_URL}"
+        fi
         # .ci_conflict_mrs.txt lists any MRs the job created that need manual
         # conflict resolution (see e.g. ci/dist_git_update_multi_mr.sh); the
         # job can still fail overall even when such MRs were created.
@@ -79,6 +84,10 @@ default:
           while IFS= read -r line; do
             MSG="${MSG}"$'\n'"- ${line}"
           done < .ci_upstream_update_draft_mrs.txt
+        fi
+        if [ -s .ci_upstream_update_warnings.txt ]; then
+          WARNING_SUMMARY=$(<.ci_upstream_update_warnings.txt)
+          MSG="${MSG}"$'\n'"Source availability warnings: ${WARNING_SUMMARY}"
         fi
 
         # dist_git_update_multi_mr.sh records package updates and MR creation
@@ -234,7 +243,7 @@ dist_git_update:
       export AWS_ROLE_ARN="arn:aws:iam::${LOOKASIDE_UPLOAD_AWS_ACCOUNT_ID}:role/${LOOKASIDE_UPLOAD_AWS_ROLE_NAME}"
       export AWS_ROLE_SESSION_NAME="gitlab-ci-${CI_JOB_ID}"
       ./ci/dist_git_update_multi_mr.sh
-  after_script: *notify_schedule_failure
+  after_script: *notify_schedule_result
   rules:
     - !reference [.rules, schedule]
     - !reference [.rules, mr_manual]
@@ -279,7 +288,7 @@ upstream_version_update:
       export AWS_ROLE_ARN="arn:aws:iam::${LOOKASIDE_UPLOAD_AWS_ACCOUNT_ID}:role/${LOOKASIDE_UPLOAD_AWS_ROLE_NAME}"
       export AWS_ROLE_SESSION_NAME="gitlab-ci-${CI_JOB_ID}"
       ./ci/upstream_update_multi_mr.sh --create-mrs
-  after_script: *notify_schedule_failure
+  after_script: *notify_schedule_result
   rules:
     - !reference [.rules, schedule]
     - !reference [.rules, mr_manual]

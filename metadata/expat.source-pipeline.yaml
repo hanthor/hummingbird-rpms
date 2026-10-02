@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://github.com/libexpat/libexpat/releases/download/R_${VERSION_MAJOR}_${VERSION_MINOR}_${VERSION_PATCH}/expat-${VERSION}.tar.gz"
+  - type: url
+    url: "https://github.com/libexpat/libexpat/releases/download/R_${VERSION_MAJOR}_${VERSION_MINOR}_${VERSION_PATCH}/expat-${VERSION}.tar.gz.asc"
+
+verify:
+  - type: gpg-signature
+    target: "expat-${VERSION}.tar.gz"
+    signature: "expat-${VERSION}.tar.gz.asc"
+    keyring: "expat.gpg"

@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "4",
-  "sha": "0203ae3331b42db8331f17d3dccdc3ea0b68d013",
+  "release": "1",
+  "sha": "501abc43ff51834f3a773dcf759f41ec8db8320b",
   "source": "https://src.fedoraproject.org/rpms/rust-podman-sequoia.git",
   "upstream_repo": "https://github.com/ueno/podman-sequoia",
-  "version": "0.3.2"
+  "version": "0.4.0"
 }

@@ -2,12 +2,13 @@
 
 Name:           protobuf-c
 Version:        1.5.2
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        C bindings for Google's Protocol Buffers
 
 License:        BSD-2-Clause
 URL:            https://github.com/protobuf-c/protobuf-c
 Source0:        %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Patch0:         0001-fix-protobuf-34-compatibility.patch
 
 BuildRequires:  autoconf
 BuildRequires:  automake

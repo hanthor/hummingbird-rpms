@@ -1,0 +1,208 @@
+From 955e4cbcef3825484af96dc1d1dcf0b54bed6402 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Sun, 20 Sep 2026 22:21:26 +0100
+Subject: [PATCH] Support flat Swift toolchain installation prefixes
+
+Swift Build assumes that a toolchain root contains usr/bin and usr/lib. This prevents SwiftPM from selecting a toolchain that uses a conventional flat prefix with bin and lib directories.
+
+Determine the installation prefix from the location of swiftc. Use that prefix for executable and library search paths, testing support, and compiler plug-ins. Preserve the existing /usr and /usr/local layouts and their search order.
+
+Accept the same flat prefix when the generic Unix platform discovers the Swift installation.
+---
+ Sources/SWBCore/Settings/Settings.swift     |  6 +-
+ Sources/SWBCore/ToolchainRegistry.swift     | 74 +++++++++++++++++----
+ Sources/SWBGenericUnixPlatform/Plugin.swift | 25 +++----
+ 3 files changed, 75 insertions(+), 30 deletions(-)
+
+diff --git a/Sources/SWBCore/Settings/Settings.swift b/Sources/SWBCore/Settings/Settings.swift
+index 5c531d0..8e51432 100644
+--- a/Sources/SWBCore/Settings/Settings.swift
++++ b/Sources/SWBCore/Settings/Settings.swift
+@@ -4739,12 +4739,12 @@ private class SettingsBuilder: ProjectMatchLookup {
+             }
+         }
+ 
+-        let testingPluginsPath = "/usr/lib/swift/host/plugins/testing"
+         switch (ToolchainStyle(toolchain)) {
+         case let .xcode(isDefault):
+             // This target is using a built-in Xcode toolchain, and that should
+             // match the toolchain which was used to build the testing libraries
+             // this target is using, so it can use non-external plugin flags.
++            let testingPluginsPath = "/usr/lib/swift/host/plugins/testing"
+             let toolchainPathPrefix = isDefault ? "$(TOOLCHAIN_DIR)" : defaultToolchain.path.str
+             return ["-plugin-path", "\(toolchainPathPrefix)\(testingPluginsPath)"]
+         case .other:
+@@ -4752,7 +4752,9 @@ private class SettingsBuilder: ProjectMatchLookup {
+             // which were built using the XcodeDefault toolchain, but it's using
+             // a different toolchain itself. Use external plugin flags which
+             // reference plugins from the XcodeDefault toolchain.
+-            return ["-external-plugin-path", "\(toolchain.path.str)\(testingPluginsPath)#\(toolchain.path.str)/usr/bin/swift-plugin-server"]
++            let testingPluginsPath = toolchain.installationPrefix.join("lib/swift/host/plugins/testing")
++            let pluginServerPath = toolchain.installationPrefix.join("bin/swift-plugin-server")
++            return ["-external-plugin-path", "\(testingPluginsPath.str)#\(pluginServerPath.str)"]
+         }
+     }
+ 
+diff --git a/Sources/SWBCore/ToolchainRegistry.swift b/Sources/SWBCore/ToolchainRegistry.swift
+index 2421228..b75d82b 100644
+--- a/Sources/SWBCore/ToolchainRegistry.swift
++++ b/Sources/SWBCore/ToolchainRegistry.swift
+@@ -47,6 +47,9 @@ public final class Toolchain: Hashable, Sendable {
+     /// The path of the toolchain.
+     public let path: Path
+ 
++    /// The installation prefix containing the toolchain's bin and lib directories.
++    let installationPrefix: Path
++
+     /// The display name of the toolchain.
+     public let displayName: String
+ 
+@@ -83,14 +86,19 @@ public final class Toolchain: Hashable, Sendable {
+         assert(!aliases.contains{ $0.lowercased() != $0 })
+         self.aliases = aliases
+ 
++        let installationPrefix = Self.findInstallationPrefix(toolchainPath: path, fs: fs)
+         self.path = path
++        self.installationPrefix = installationPrefix
+         self.displayName = displayName
+         self.defaultSettings = defaultSettings
+         self.overrideSettings = overrideSettings
+         self.defaultSettingsWhenPrimary = defaultSettingsWhenPrimary
+         self.executableSearchPaths = StackedSearchPath(paths: executableSearchPaths, fs: fs)
+         self.librarySearchPaths = StackedSearchPath(
+-            paths: [path.join("usr/lib"), path.join("usr/local/lib")],
++            paths: Self.librarySearchPaths(
++                toolchainPath: path,
++                installationPrefix: installationPrefix
++            ),
+             fs: fs
+         )
+         let frameworkSearchPaths = frameworkPaths.map { path.join($0) }
+@@ -106,6 +114,47 @@ public final class Toolchain: Hashable, Sendable {
+         self.testingLibraryPlatformNames = testingLibraryPlatformNames
+     }
+ 
++    package static func findInstallationPrefix(toolchainPath: Path, fs: any FSProxy) -> Path {
++        let candidates = [
++            toolchainPath.join("usr"),
++            toolchainPath.join("usr/local"),
++            toolchainPath,
++        ]
++        return candidates.first { candidate in
++            fs.exists(candidate.join("bin/swiftc")) || fs.exists(candidate.join("bin/swiftc.exe"))
++        } ?? toolchainPath.join("usr")
++    }
++
++    package static func executableSearchPaths(
++        toolchainPath: Path,
++        installationPrefix: Path,
++        additionalPaths: [Path]
++    ) -> [Path] {
++        if installationPrefix == toolchainPath {
++            return [installationPrefix.join("bin")]
++                + additionalPaths
++                + [installationPrefix.join("libexec")]
++        }
++
++        return [toolchainPath.join("usr/bin")]
++            + additionalPaths
++            + [
++                toolchainPath.join("usr/local/bin"),
++                toolchainPath.join("usr/libexec"),
++            ]
++    }
++
++    package static func librarySearchPaths(toolchainPath: Path, installationPrefix: Path) -> [Path] {
++        if installationPrefix == toolchainPath {
++            return [installationPrefix.join("lib")]
++        }
++
++        return [
++            toolchainPath.join("usr/lib"),
++            toolchainPath.join("usr/local/lib"),
++        ]
++    }
++
+     convenience init(path: Path, operatingSystem: OperatingSystem, aliases additionalAliases: Set<String>, fs: any FSProxy, pluginManager: any PluginManager, platformRegistry: PlatformRegistry?, synthesizeMetadataIfNeeded: Bool) async throws {
+         let data: PropertyListItem
+ 
+@@ -289,21 +338,18 @@ public final class Toolchain: Hashable, Sendable {
+         defaultSettingsWhenPrimary["TOOLCHAIN_DIR"] = .plString(path.str)
+         defaultSettingsWhenPrimary["TOOLCHAIN_VERSION"] = .plString(version.description)
+ 
+-        var executableSearchPaths = [
+-            path.join("usr").join("bin"),
+-        ]
+-
+-        for platformExtension in pluginManager.extensions(of: PlatformInfoExtensionPoint.self) {
+-            executableSearchPaths.append(contentsOf: platformExtension.additionalToolchainExecutableSearchPaths(toolchainIdentifier: identifier, toolchainPath: path))
++        let installationPrefix = Self.findInstallationPrefix(toolchainPath: path, fs: fs)
++        let additionalExecutableSearchPaths = pluginManager.extensions(of: PlatformInfoExtensionPoint.self).flatMap {
++            $0.additionalToolchainExecutableSearchPaths(toolchainIdentifier: identifier, toolchainPath: path)
+         }
+-
+-        executableSearchPaths.append(contentsOf: [
+-            path.join("usr").join("local").join("bin"),
+-            path.join("usr").join("libexec")
+-        ])
++        let executableSearchPaths = Self.executableSearchPaths(
++            toolchainPath: path,
++            installationPrefix: installationPrefix,
++            additionalPaths: additionalExecutableSearchPaths
++        )
+ 
+         // Testing library platform names
+-        let testingLibrarySearchDir = path.join("usr").join("lib").join("swift")
++        let testingLibrarySearchDir = installationPrefix.join("lib").join("swift")
+         let testingLibraryPlatformNames: Set<String> = if let platformRegistry, fs.exists(testingLibrarySearchDir) {
+             Set(try fs.listdir(testingLibrarySearchDir).filter {
+                 platformRegistry.lookup(name: $0) != nil && fs.exists(testingLibrarySearchDir.join($0).join("testing"))
+@@ -394,7 +440,7 @@ public final class Toolchain: Hashable, Sendable {
+ 
+     func testingLibrarySearchPath(forPlatformNamed platformName: String) -> Path? {
+         if testingLibraryPlatformNames.contains(platformName) {
+-            path.join("usr").join("lib").join("swift").join(platformName).join("testing")
++            installationPrefix.join("lib").join("swift").join(platformName).join("testing")
+         } else {
+             nil
+         }
+diff --git a/Sources/SWBGenericUnixPlatform/Plugin.swift b/Sources/SWBGenericUnixPlatform/Plugin.swift
+index 2658c81..d46c301 100644
+--- a/Sources/SWBGenericUnixPlatform/Plugin.swift
++++ b/Sources/SWBGenericUnixPlatform/Plugin.swift
+@@ -62,22 +62,19 @@ struct GenericUnixDeveloperDirectoryExtension: DeveloperDirectoryExtension {
+             return nil
+         }
+ 
+-        let realSwiftPath = try fs.realpath(swift).dirname.normalize()
+-        let hasUsrBin = realSwiftPath.str.hasSuffix("/usr/bin")
+-        let hasUsrLocalBin = realSwiftPath.str.hasSuffix("/usr/local/bin")
+-        let path: Path
+-        switch (hasUsrBin, hasUsrLocalBin) {
+-        case (true, false):
+-            path = realSwiftPath.dirname.dirname
+-        case (false, true):
+-            path = realSwiftPath.dirname.dirname.dirname
+-        case (false, false):
+-            throw StubError.error("Unexpected toolchain layout for Swift installation path: \(realSwiftPath)")
+-        case (true, true):
+-            preconditionFailure()
++        let binDir = try fs.realpath(swift).dirname.normalize()
++        guard binDir.basename == "bin" else {
++            throw StubError.error("Unexpected toolchain layout for Swift installation path: \(binDir)")
+         }
+ 
+-        return .swiftToolchain(path, xcodeDeveloperPath: nil)
++        let installationPrefix = binDir.dirname
++        if installationPrefix.basename == "usr" {
++            return .swiftToolchain(installationPrefix.dirname, xcodeDeveloperPath: nil)
++        }
++        if installationPrefix.basename == "local", installationPrefix.dirname.basename == "usr" {
++            return .swiftToolchain(installationPrefix.dirname.dirname, xcodeDeveloperPath: nil)
++        }
++        return .swiftToolchain(installationPrefix, xcodeDeveloperPath: nil)
+     }
+ }
+ 
+-- 
+2.55.0

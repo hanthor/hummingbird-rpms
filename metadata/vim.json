@@ -1,10 +1,10 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): ftp.vim.org is fully decommissioned (NXDOMAIN) with no HTTPS/mirror alternative -- switched to fetching the equivalent git tag instead. Content verified as genuinely vim 9.2.967 (src/version.c's included_patches[] top entry), though not byte-identical to the original since that artifact no longer exists anywhere to compare against.",
+  "modification_reason": "gorget source-pipeline.yaml (HUM-4620): ftp.vim.org decommissioned, fetching from git tag instead",
   "modification_status": "modified",
   "release": "1",
-  "sha": "8829e438cdc8b5f33c25dd60101f04df612cde07",
+  "sha": "0a97d98c98a7362617ad826630b95df9d782d524",
   "source": "https://src.fedoraproject.org/rpms/vim.git",
   "upstream_repo": "https://github.com/vim/vim",
-  "version": "9.2.967"
+  "version": "9.2.1129"
 }

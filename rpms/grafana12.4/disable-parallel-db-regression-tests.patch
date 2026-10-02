@@ -50,10 +50,14 @@ index dfbcd93aea7a9..408ae15e67693 100644
  
  		db, err := sql.Open(driverWithIsolationLevelName, "")
  		require.NoError(t, err)
-@@ -48,18 +48,14 @@ func TestReproIncident2144IndependentOfGrafanaDB(t *testing.T) {
+@@ -48,20 +48,16 @@ func TestReproIncident2144IndependentOfGrafanaDB(t *testing.T) {
  }
  
  func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
+-	t.Skip("flaky test")
++	t.Skip("flaky test")
+-
++
 -	t.Parallel()
  	txOpts := &sql.TxOptions{
  		Isolation: sql.LevelSerializable,

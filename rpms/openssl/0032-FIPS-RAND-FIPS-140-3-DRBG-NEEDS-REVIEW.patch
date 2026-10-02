@@ -1,7 +1,7 @@
-From 80a4d4da42db9711d06953f4dcd6e9f29c001292 Mon Sep 17 00:00:00 2001
+From efa924558db0986cbd7f800a3eb54434d654ea7f Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:16 +0100
-Subject: [PATCH 32/57] FIPS: RAND: FIPS-140-3 DRBG - NEEDS REVIEW
+Subject: [PATCH 32/58] FIPS: RAND: FIPS-140-3 DRBG - NEEDS REVIEW
 
 providers/implementations/rands/crngt.c is gone
 
@@ -68,7 +68,7 @@ index f9d90d5d43..6b23d55cf5 100644
      if (reseed_required || prediction_resistance) {
          if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
 diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/implementations/rands/seeding/rand_unix.c
-index 80ae817313..1e73a1ec28 100644
+index 0b8a9ec341..5af3c76d64 100644
 --- a/providers/implementations/rands/seeding/rand_unix.c
 +++ b/providers/implementations/rands/seeding/rand_unix.c
 @@ -47,12 +47,14 @@
@@ -87,7 +87,8 @@ index 80ae817313..1e73a1ec28 100644
  
  static uint64_t get_time_stamp(void);
  
-@@ -339,69 +339,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
+@@ -338,70 +340,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
+      * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
       * between size_t and ssize_t is safe even without a range check.
       */
 -
@@ -160,4 +161,5 @@ index 80ae817313..1e73a1ec28 100644
  #endif /* defined(OPENSSL_RAND_SEED_GETRANDOM) */
  
 -- 
-2.52.0
+2.55.0
+

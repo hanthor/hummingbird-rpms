@@ -52,3 +52,14 @@ sha256sum = "b8eff858879438dbaefa6f153553230337c4776a861b8d658f295636a88050ec"
 expression = "MIT AND BSD-3-Clause"
 
 [archive]
+# CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
+# API, so they must move together; bumping otlploggrpc alone leaves the siblings
+# calling symbols that no longer exist. Keep in sync with CVE-2026-81871.patch.
+pre_commands = [
+  [
+    "go", "get",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
+    "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
+  ],
+]

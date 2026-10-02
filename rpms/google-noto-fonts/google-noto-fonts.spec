@@ -9,11 +9,7 @@ between multiple scripts. Noto family supports almost all scripts available\
 in Unicode.\
 %{nil}
 
-%global srcver	2026.06.01
-%global majorver	%{lua: v, _ = string.gsub(rpm.expand("%{srcver}"), "(%d+)%.%d+%.%d+", "%1"); print(v)}
-%global minorver	%{lua: v, _ = string.gsub(rpm.expand("%{srcver}"), "%d+%.(%d+)%.%d+", "%1"); print(v)}
-%global patchver	%{lua: v, _ = string.gsub(rpm.expand("%{srcver}"), "%d+%.%d+%.(%d+)", "%1"); print(v)}
-%global rpmver	%{lua: print(string.format("%04d%02d%02d", tonumber(rpm.expand("%{majorver}")), tonumber(rpm.expand("%{minorver}")), tonumber(rpm.expand("%{patchver}"))))}
+%global srcver	2026.09.01
 # for default font
 %global hprio	56
 # for default font but static
@@ -32,8 +28,8 @@ in Unicode.\
 %global	nlat_lprio	67
 
 Name:           %{fontname}-fonts
-Version:        %{rpmver}
-Release:        3%{?dist}
+Version:        %{gsub %{srcver} %. %{quote:}}
+Release:        4%{?dist}
 Summary:        Hinted and Non Hinted OpenType fonts for Unicode scripts
 License:        OFL-1.1
 URL:            https://notofonts.github.io/
@@ -457,9 +453,7 @@ local subpackages = {
     { alias="serif",      family="Serif Armenian", lang={ "hy" },
       default=true
     },
-    { alias="serif",      family="Serif Balinese", lang={ "ban" },
-      obsoletes={ "sans-balinese" }
-    },
+    { alias="serif",      family="Serif Balinese", lang={ "ban" } },
     { alias="serif",      family="Serif Bengali", lang={ "as", "bn", "mni" },
       default=true
     },
@@ -632,7 +626,7 @@ local subpackages = {
       default=true
     },
     { alias="sans-serif", variable=true, family="Sans Myanmar", lang={ "my" },
-      obsoletes={ "serif-myanmar-vf", "sans-myanmar-ui-vf" }
+      obsoletes={ "sans-myanmar-ui-vf" }
     },
     { alias="sans-serif", variable=true, family="Sans New Tai Lue", lang={ "khb" } },
     { alias="sans-serif", variable=true, family="Sans NKo Unjoined", lang={ "nqo" },
@@ -1086,6 +1080,32 @@ Requires:   %{name}-common = %{version}-%{release}
 %config(noreplace) %{_fontconfig_confdir}/]] .. fcconf .. "\n" .. [[
 %{_fontconfig_templatedir}/]] .. fcconf .. "\n" .. [[
 %{_metainfodir}/]] .. metaname .. "\n"))
+end
+
+-- Sanity check: an obsoletes token expands into both a Provides: and an
+-- Obsoletes: of %{_fontname}-<token>-fonts. If <token> matches a real
+-- subpackage name, the obsoleting package would Provides/Obsoletes a live
+-- package, so google-noto-fonts-all's dependency on it gets satisfied by the
+-- wrong package and the real one is never pulled in. Fail the build early.
+local realpnames = {}
+for i = 1, #subpackages do
+    local t = subpackages[i]
+    local pname = string.lower(t.family):gsub(' ', '-') .. (t.variable and '-vf' or '')
+    realpnames[pname] = true
+end
+local dups = ''
+for i = 1, #subpackages do
+    local t = subpackages[i]
+    if t.obsoletes then
+        for j = 1, #t.obsoletes do
+            if realpnames[t.obsoletes[j]] then
+                dups = dups .. "\n  obsoletes '" .. t.obsoletes[j] .. "' in '" .. t.family .. "' collides with real subpackage " .. rpm.expand('%{_fontname}-') .. t.obsoletes[j] .. "-fonts"
+            end
+        end
+    end
+end
+if dups ~= '' then
+    error("Duplicate package name(s) via obsoletes:" .. dups)
 end
 
 local all_deps = ''

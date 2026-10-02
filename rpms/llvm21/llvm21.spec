@@ -11,12 +11,19 @@
 %endif
 #endregion version
 
-# Components enabled if supported by target architecture:
+# LLVMgold is a BFD plugin, not specific to the (deprecated) gold linker;
+# however, some of its tests do use gold, which is packaged separately
+# since RHEL 9 but dropped in RHEL 11 and Fedora 46.
+# Since LLVM 24, most tests use ld.bfd instead, and gold is no longer needed.
+%if %{maj_ver} < 24
+%if (0%{?rhel} > 8 && 0%{?rhel} < 11) || (%{defined fedora} && 0%{?fedora} < 46)
 %define gold_arches %{ix86} x86_64 aarch64 %{power64} s390x
 %ifarch %{gold_arches}
   %bcond_without gold
 %else
   %bcond_with gold
+%endif
+%endif
 %endif
 
 # Enable this in order to disable a lot of features and get to clang as fast
@@ -414,7 +421,7 @@ Version:	%{maj_ver}.%{min_ver}.%{patch_ver}%{?rc_ver:~%{rc_ver}}%{?llvm_snapshot
 %if 0%{?rhel} == 8
 Release:	1%{?dist}
 %else
-Release:	8%{?dist}
+Release:	10%{?dist}
 %endif
 Summary:	The Low Level Virtual Machine
 

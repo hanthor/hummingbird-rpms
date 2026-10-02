@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import tarfile
 import types
 import urllib.error
 from email.message import Message
@@ -967,7 +968,7 @@ def test_check_package_version_skips_unavailable_source(
         'stable_versions': ['21.0.12.1+0', '21.0.12+8', '21.0.11+10'],
     }
 
-    def fake_check(version: str, _checker: str, _meta: dict) -> bool:
+    def fake_check(version: str, _checker: object, _meta: dict) -> bool:
         return version != '21.0.12.1+0'
 
     with (
@@ -980,6 +981,12 @@ def test_check_package_version_skips_unavailable_source(
 
     assert result.has_update is True
     assert result.upstream_version == '21.0.12.0.8'
+    assert result.warnings == [
+        (
+            'skipped upstream version 21.0.12.1+0: required source artifact '
+            'is not published'
+        ),
+    ]
 
 
 def test_check_package_version_all_sources_unavailable(
@@ -1009,12 +1016,93 @@ def test_check_package_version_all_sources_unavailable(
         result = cuv_module.check_package_version('java-21-openjdk-portable')
 
     assert result.has_update is False
+    assert result.upstream_version is None
+    assert result.error is None
+    assert result.warnings == [
+        (
+            'skipped upstream version 21.0.12.1+0: required source artifact '
+            'is not published'
+        ),
+    ]
 
 
 def test_check_source_available_unknown(cuv_module) -> None:
     """check_source_available raises ValueError for unknown checker name."""
     with pytest.raises(ValueError, match="unknown source_availability_check"):
         cuv_module.check_source_available('1.0', 'nonexistent', {})
+
+
+def test_http_source_check_expands_metadata_variables(cuv_module) -> None:
+    """The generic HTTP probe expands version and package metadata variables."""
+    config = {
+        'type': 'http',
+        'urls': [
+            (
+                '${UPSTREAM_REPO}/releases/download/v${VERSION}/'
+                'libfabric-${VERSION}.tar.bz2'
+            ),
+        ],
+    }
+    metadata = {
+        'upstream_repo': 'https://github.com/ofiwg/libfabric/',
+        'track_upstream': 'latest',
+    }
+
+    with patch.object(cuv_module, '_check_source_exists', return_value=True) as check:
+        assert cuv_module.check_source_available('2.7.0', config, metadata) is True
+
+    check.assert_called_once_with(
+        'https://github.com/ofiwg/libfabric/releases/download/v2.7.0/'
+        'libfabric-2.7.0.tar.bz2',
+    )
+
+
+def test_http_source_check_requires_every_url(cuv_module) -> None:
+    """A release is unavailable when any required source URL is missing."""
+    config = {
+        'type': 'http',
+        'urls': [
+            'https://example.com/project-${VERSION}.tar.gz',
+            'https://example.com/project-${VERSION}.tar.gz.asc',
+        ],
+    }
+
+    with patch.object(
+        cuv_module, '_check_source_exists', side_effect=[True, False],
+    ) as check:
+        assert cuv_module.check_source_available('1.2.3', config, {}) is False
+
+    assert [call.args[0] for call in check.call_args_list] == [
+        'https://example.com/project-1.2.3.tar.gz',
+        'https://example.com/project-1.2.3.tar.gz.asc',
+    ]
+
+
+@pytest.mark.parametrize(
+    ('config', 'message'),
+    [
+        ({'type': 'ftp', 'urls': ['https://example.com/a']}, 'unknown.*type'),
+        ({'type': 'http', 'urls': []}, 'requires a non-empty urls list'),
+        ({'type': 'http', 'urls': [42]}, 'urls must be non-empty strings'),
+        (
+            {'type': 'http', 'urls': ['https://example.com/${MISSING}']},
+            'unknown source_availability_check variable',
+        ),
+        (
+            {
+                'type': 'http',
+                'urls': ['${UPSTREAM_REPO}/releases/download/v${VERSION}/a.tar.gz'],
+            },
+            'url expanded to a non-HTTP URL',
+        ),
+    ],
+)
+def test_source_availability_probe_rejects_invalid_config(
+    cuv_module, config: dict[str, object], message: str,
+) -> None:
+    """Invalid source probe configurations fail with actionable errors."""
+    with pytest.raises(ValueError, match=message):
+        cuv_module.check_source_available('1.0', config, {})
 
 
 def test_openjdk_source_check_url_construction(cuv_module) -> None:
@@ -2059,6 +2147,149 @@ def test_run_gorget_pipeline_missing_declared_artifact(
 #
 
 
+@pytest.mark.parametrize(('source_text', 'patch_text', 'dropped'), [
+    ('old\nfixed\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', True),
+    ('old\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', False),
+])
+def test_update_spec_version_checks_patches(
+    cuv_module, workdir: Path, source_text: str, patch_text: str, dropped: bool,
+) -> None:
+    """Source0 is checked even when gorget lists the vendor archive first."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch1: fix.patch\n\n%description'))
+    (pkg / 'fix.patch').write_text(patch_text)
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text(source_text)
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    subprocess.run(['git', 'add', 'rpms/pkg/pkg.spec', 'rpms/pkg/fix.patch'],
+                   cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package patch'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=[
+        'pkg-2.0-vendor.tar.bz2', 'pkg-2.0.tar.gz',
+    ]):
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    assert (pkg / 'fix.patch').exists() is not dropped
+    assert ('Patch1: fix.patch' in spec.read_text()) is not dropped
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+               for a in actions) is dropped
+
+
+def test_update_spec_version_rejects_incompatible_patch(cuv_module, workdir: Path) -> None:
+    """A superseded but non-identical patch must reach the diagnostic-MR path."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch3: fix.patch\n\n%description'))
+    (pkg / 'fix.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('new\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
+         pytest.raises(RuntimeError, match='Patch3 .*neither applies nor reverses'):
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    assert (pkg / 'fix.patch').exists()
+    assert 'Patch3: fix.patch' in spec.read_text()
+
+
+def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:
+    """Earlier local patches must not hide a later patch already upstream."""
+    import dist_git
+
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '%description', 'Patch1: local.patch\nPatch2: upstream.patch\n\n%description',
+    ))
+    (pkg / 'local.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1,2 +1,2 @@\n-base\n+BASE\n fixed\n')
+    (pkg / 'upstream.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n base\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('base\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    assert dist_git.detect_stale_patches(pkg, ['pkg-2.0.tar.gz']) == [
+        (2, 'upstream.patch'),
+    ]
+    cuv_module._check_updated_patches('pkg')
+    assert (pkg / 'local.patch').exists()
+    assert not (pkg / 'upstream.patch').exists()
+    assert 'Patch2:' not in spec.read_text()
+
+
+@pytest.mark.parametrize('workqueue', [False, True])
+@pytest.mark.parametrize('stale', [False, True])
+def test_upstream_update_stale_patch_requires_review(
+    cuv_module, workdir: Path, workqueue: bool, stale: bool,
+) -> None:
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={'version': '1.0'})
+    patch_file = pkg / 'fix.patch'
+    patch_file.write_text('patch')
+    subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    result = cuv_module.VersionCheckResult('pkg', '1.0', '2.0', True)
+    args = types.SimpleNamespace(
+        verbose=False, quiet=True, json=True, packages=['pkg'], all=False,
+        update=True, workqueue=workqueue, distro='Fedora', delay=0,
+    )
+
+    def fake_update(_package: str, _version: str) -> list[str]:
+        if stale:
+            patch_file.unlink()
+        return []
+
+    old_log_level = cuv_module.logger.level
+    try:
+        with patch.object(cuv_module, 'check_package_version', return_value=result), \
+             patch.object(cuv_module, 'update_spec_version', side_effect=fake_update), \
+             patch.object(cuv_module, 'discard_package_changes'), \
+             patch.object(cuv_module.workqueue_submit, 'submit') as submit, \
+             pytest.raises(SystemExit):
+            cuv_module.run_check(args)
+    finally:
+        cuv_module.logger.setLevel(old_log_level)
+
+    if workqueue:
+        kwargs = submit.call_args.kwargs
+        assert kwargs['draft'] is stale
+        assert kwargs['auto_merge'] is not stale
+        assert kwargs['mr_title'].startswith('STALE PATCH:') is stale
+        assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+                   for a in kwargs['file_actions']) is stale
+    else:
+        subject = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%s'], cwd=workdir, text=True)
+        assert subject.startswith('STALE PATCH:') is stale
+
+
 def test_update_spec_version(cuv_module, workdir: Path) -> None:
     """Updates spec version, downloads sources, marks modified."""
     _create_package(workdir, 'pkg', '1.0',
@@ -2478,6 +2709,50 @@ def test_update_spec_version_pipeline_takes_priority_over_hooks(
     )
 
 
+def test_update_spec_version_pipeline_keeps_update_spec_hook(
+    cuv_module, workdir: Path,
+) -> None:
+    """A source pipeline replaces source download, not the persistent spec hook."""
+    pkg_dir = _create_package(
+        workdir, 'pkg', '1.0',
+        sources={'pkg-1.0.tar.gz': 'oldhash'},
+        metadata={'version': '1.0', 'release': '1'},
+    )
+    spec_path = pkg_dir / 'pkg.spec'
+    spec_path.write_text(
+        spec_path.read_text().replace(
+            'Version: 1.0',
+            '%global pkg_version 1.0\nVersion: %{pkg_version}',
+        )
+    )
+
+    import yaml
+    (workdir / 'metadata' / 'pkg.update-hooks.yaml').write_text(
+        yaml.dump({
+            'update_spec': (
+                'sed -Ei "s/^%global pkg_version .*/%global pkg_version '
+                '${UPDATE_NEW_VERSION}/" "${UPDATE_SPEC_FILE}"'
+            ),
+        })
+    )
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch:\n  - type: spec-update\n')
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, '_run_gorget_pipeline', return_value=[]) \
+            as mock_pipeline:
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    spec_content = spec_path.read_text()
+    assert '%global pkg_version 2.0' in spec_content
+    assert 'Version: %{pkg_version}' in spec_content
+    assert 'Release: 1%{?dist}' in spec_content
+    mock_pipeline.assert_called_once_with('pkg', '1.0', '2.0', pipeline_file)
+
+
 def test_update_spec_version_skip_pipeline_forces_legacy_path(
     cuv_module, workdir: Path,
 ) -> None:
@@ -2582,6 +2857,88 @@ def test_cli_check_json_output(cuv_module, workdir: Path) -> None:
         cuv_module.main()
 
     assert exc_info.value.code == 1  # updates found
+
+
+def test_cli_check_json_reports_source_warnings(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """JSON output exposes skipped sources without failing the check."""
+    _create_package(
+        workdir, 'pkg', '1.0',
+        metadata={
+            'version': '1.0',
+            'track_upstream': 'latest',
+            'source_availability_check': {
+                'type': 'http',
+                'urls': ['https://example.com/pkg-${VERSION}.tar.gz'],
+            },
+        },
+    )
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    mock_response = {
+        'version': '2.0',
+        'stable_versions': ['2.0'],
+        'id': 42,
+    }
+
+    with (
+        patch.object(cuv_module, 'query_anitya', return_value=mock_response),
+        patch.object(cuv_module, '_check_source_exists', return_value=False),
+        patch('sys.argv', [
+            'check_upstream_versions.py', 'check', '--quiet', '--json', 'pkg',
+        ]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert exc_info.value.code == 0
+    assert output['warnings'] == 1
+    assert output['errors'] == 0
+    assert output['results'][0]['package'] == 'pkg'
+    assert output['results'][0]['warnings'] == [
+        'skipped upstream version 2.0: required source artifact is not published',
+    ]
+
+
+def test_cli_warning_only_package_is_not_counted_as_up_to_date(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The text summary distinguishes source-skipped packages from current ones."""
+    _create_package(
+        workdir, 'pkg', '1.0',
+        metadata={
+            'version': '1.0',
+            'track_upstream': 'latest',
+            'source_availability_check': {
+                'type': 'http',
+                'urls': ['https://example.com/pkg-${VERSION}.tar.gz'],
+            },
+        },
+    )
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with (
+        patch.object(cuv_module, 'query_anitya', return_value={
+            'version': '2.0', 'stable_versions': ['2.0'], 'id': 42,
+        }),
+        patch.object(cuv_module, '_check_source_exists', return_value=False),
+        patch('sys.argv', [
+            'check_upstream_versions.py', 'check', '--quiet', '--all', 'pkg',
+        ]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    output = capsys.readouterr().out
+    assert 'Up-to-date packages:' not in output
+    assert (
+        'Summary: 0 updates available, 0 up-to-date, '
+        '1 skipped (source unavailable), 0 errors, 1 source version warnings'
+    ) in output
 
 
 def test_cli_no_updates_exit_zero(cuv_module, workdir: Path) -> None:
@@ -2835,6 +3192,51 @@ def test_list_subcommand_shows_not_found(
     output = capsys.readouterr().out
     assert 'missing-pkg' in output
     assert 'not found in release-monitoring.org' in output
+
+
+def test_list_subcommand_shows_source_warning(
+    cuv_module, workdir: Path, capsys
+) -> None:
+    """Warning-only packages are not labelled up-to-date by list."""
+    _create_package(
+        workdir, 'pending-source', '1.0',
+        metadata={
+            'version': '1.0',
+            'release': '1',
+            'track_upstream': 'latest',
+        },
+    )
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    warning = (
+        'skipped upstream version 2.0: required source artifact is not published'
+    )
+    result = cuv_module.VersionCheckResult(
+        package='pending-source',
+        current_version='1.0',
+        upstream_version=None,
+        has_update=False,
+        warnings=[warning],
+    )
+
+    with patch.object(cuv_module, 'check_package_version', return_value=result), \
+         patch('sys.argv', ['check_upstream_versions.py', 'list',
+                            '--quiet', '--json']), \
+         pytest.raises(SystemExit) as exc_info:
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data == [
+        {
+            'package': 'pending-source',
+            'current_version': '1.0',
+            'upstream_version': '-',
+            'tracking': 'yes',
+            'status': warning,
+        },
+    ]
 
 
 def test_list_subcommand_json_output(
@@ -3440,3 +3842,31 @@ def test_git_clone_env_private_repo_injects_config_rewrite(cuv_module) -> None:
         'url.https://oauth2:s3cr3t@gitlab.com/redhat/hummingbird/src/.insteadOf'
     )
     assert env['GIT_CONFIG_VALUE_0'] == 'https://gitlab.com/redhat/hummingbird/src/'
+
+
+def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, workdir: Path) -> None:
+    package = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    (package / '.gitignore').write_text('*.patch\n')
+    (package / 'old:fix.patch').write_bytes(b'old payload')
+    spec = package / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch: old:fix.patch\n%description'))
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Package'], cwd=workdir, check=True)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
+         patch.object(cuv_module, '_check_updated_patches'):
+        cuv_module.update_spec_version('pkg', '2.0')
+    assert (package / 'old~3afix.patch').read_bytes() == b'old payload'
+    assert 'Patch: old~3afix.patch' in spec.read_text()
+    metadata = json.loads((workdir / 'metadata' / 'pkg.json').read_text())
+    assert 'path_map' not in metadata
+    assert metadata['modification_status'] == 'independent'
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(action['action'] == 'delete' and action['file_path'] == 'rpms/pkg/old:fix.patch'
+               for action in actions)
+    assert any(action['action'] == 'update' and action['file_path'] == 'rpms/pkg/old~3afix.patch'
+               and action['content'] for action in actions)

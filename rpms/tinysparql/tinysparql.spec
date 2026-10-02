@@ -1,8 +1,5 @@
 %global systemd_units tinysparql-xdg-portal-3.service
 
-%global tarball_version %%(echo %%{version} | tr '~' '.')
-%global major_minor_version %%(echo %%{tarball_version} | cut -d "." -f 1-2)
-
 %global tracker_obsoletes_version 3.8
 
 %if 0%{?rhel}
@@ -12,13 +9,15 @@
 %endif
 
 Name:           tinysparql
-Version:        3.11.1
-Release:        2.1%{?dist}
+Version:        3.12.0
+Release:        1%{?dist}
 Summary:        Desktop-neutral metadata database and search tool
 
 License:        GPL-2.0-or-later
 URL:            https://gnome.pages.gitlab.gnome.org/tinysparql/
-Source0:        https://download.gnome.org/sources/%{name}/%{major_minor_version}/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/%{name}/%{gnome_major_minor_version}/%{name}-%{gnome_tarball_version}.tar.xz
+
+%gnome_check_version
 
 BuildRequires:  asciidoc
 BuildRequires:  gcc
@@ -96,17 +95,14 @@ developing applications that use %{name}.
 Summary:        Documentation for %{name}
 BuildArch:      noarch
 # docs/reference/COPYING
-License:        LicenceRef-Fedora-Public-Domain AND LGPL-2.1-or-later AND GPL-2.0-or-later
+License:        LicenseRef-Fedora-Public-Domain AND LGPL-2.1-or-later AND GPL-2.0-or-later
 
 %description doc
 This package contains the documentation for %{name}.
 
 
 %prep
-# check for human errors
-if [ `echo "%{version}" | grep -cE "\.alpha|\.beta|\.rc"` = "1" ]; then echo "Error: Use tilde in Version field in front of alpha/beta/rc; checked '%{version}'" 1>&2; exit 1; fi
-
-%autosetup -p1 -n %{name}-%{tarball_version}
+%autosetup -p1 -n %{name}-%{gnome_tarball_version}
 
 
 %build

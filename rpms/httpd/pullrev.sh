@@ -5,8 +5,11 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-repo="https://svn.apache.org/repos/asf/httpd/httpd/trunk"
-repo="https://svn.apache.org/repos/asf/httpd/httpd/branches/2.4.x"
+if [ x$REPO = xtrunk ]; then
+    repo="https://svn.apache.org/repos/asf/httpd/httpd/trunk"
+else
+    repo="https://svn.apache.org/repos/asf/httpd/httpd/branches/2.4.x"
+fi
 ver=$(rpm -q --specfile httpd.spec --qf '%{VERSION}\n' | sed 1q)
 prefix="httpd-${ver}"
 suffix="${SUFFIX:-r$1${2:++}}"

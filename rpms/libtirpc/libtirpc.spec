@@ -1,8 +1,8 @@
 %define _root_libdir    /%{_lib}
 
 Name:			libtirpc
-Version:		1.3.7
-Release:		3%{?dist}
+Version:		1.3.8
+Release:		0%{?dist}
 Summary:		Transport Independent RPC Library
 License:		SISSL AND BSD-3-Clause
 URL:  			http://git.linux-nfs.org/?p=steved/libtirpc.git;a=summary
@@ -114,6 +114,12 @@ mv %{buildroot}%{_mandir}/man3 %{buildroot}%{_mandir}/man3t
 %{_mandir}/*/*
 
 %changelog
+* Mon Sep 14 2026 Steve Dickson <steved@redhat.com> - 1.3.8-0
+- Updated to the latest upstream release: libtirpc-1-3-8 (bz 2532721)
+
+* Sat Sep  5 2026 Steve Dickson <steved@redhat.com> - 1.3.7-3-rc1 
+- Updated to the latest upstream RC release: libtirpc-1-3-8-rc1
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.7-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 

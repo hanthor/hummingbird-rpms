@@ -3,9 +3,10 @@
   "modification_reason": "Update to upstream version 8.22.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 381,
-  "sha": "2c2712eef598ef945ea87a70cbc1d09fdd62c25e",
+  "sha": "a01a4306ce528ce6f153c15b30da4dfce8d88b88",
   "source": "https://src.fedoraproject.org/rpms/curl.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/curl/curl",
-  "version": "8.22.0"
+  "version": "8.22.0",
+  "release": "1"
 }

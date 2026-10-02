@@ -129,7 +129,9 @@ to the next package. In the scheduled upstream-version-update job, the wrapper a
 reuses) a draft diagnostic MR for a per-package update failure. That MR contains the full error
 and no partial package changes, so a maintainer can reproduce and resolve the problem safely.
 Transient failures (exit 1) may self-heal on the next scheduled run; verification and policy
-failures (exit 2) require human intervention.
+failures (exit 2) require human intervention. When a later scheduled run successfully processes the
+same package, it closes and removes the still-empty diagnostic MR branch. A diagnostic MR with
+maintainer changes is left open for manual handling.
 
 ## Pipeline Stages
 

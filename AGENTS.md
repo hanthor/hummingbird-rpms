@@ -4,10 +4,17 @@
 
 **All package operations must go through `ci/dist_git.py`.** Do not manually edit spec
 files, metadata JSON, or Konflux/Tekton resources to perform operations that the script
-handles — it coordinates all of those changes atomically and commits them.
+handles. Some commands commit their changes. `mark-modified` only updates metadata, so include
+that metadata file in the package commit that needs it.
 
-Run the script inside `limactl shell fedora` (or a container) because it needs Python
-dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
+Use the repository container target because the script needs Python dependencies that are not
+available on all hosts:
+
+```bash
+make dist-git ARGS='<command and arguments>'
+```
+
+Use `limactl shell fedora` only when the Makefile container is unavailable.
 
 | Command | When to use |
 | ------- | ----------- |
@@ -22,6 +29,8 @@ dependencies (`specfile`, `packaging`, `jinja2`) that are installed there.
 | `./ci/dist_git.py set-upstream <pkg> --track-version <prefix>` | Pin a versioned package to a version line (e.g., `1.26`) |
 | `./ci/dist_git.py list [--clean\|--modified\|--independent\|--prerelease]` | List packages by status |
 | `./ci/dist_git.py diff [<pkg>…\|--all]` | Show what changed locally vs Fedora upstream |
+| `./ci/dist_git.py sanitize-paths <pkg> (or --all)` | Make package filenames Windows-safe, leaving changes for review, use either `<pkg>` or `--all` |
+| `./ci/dist_git.py check-paths` | Reject tracked filenames incompatible with Windows |
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
@@ -43,13 +52,15 @@ Common operational tasks that users or AI agents may need to perform:
 | Import dist-git package        | `import fedora/<pkg>`                                           | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Add a new package from Fedora dist-git                                 |
 | Add independent package        | _(manual — not from Fedora)_                                    | [Adding Independent Packages](documentation/operating/adding-independent-packages.md)           | Add new package not imported from Fedora                               |
 | Rebuild package (no-change)    | `rebuild <pkg> --reason "..."` (or `--all --exclude pkg1,pkg2`) | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Faulty RPM published; need to bump Release for rebuild                 |
-| Backport a patch               | `mark-modified` then edit spec                                  | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
+| Backport a patch               | Add patch, bump Release, run `mark-modified`                    | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
 | Configure metadata fields      | _(edit `metadata/<pkg>.json`)_                                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)                   | Understand `release` and `modification_status` configuration           |
 | Debug build failures           | _(see docs)_                                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Investigate and fix failed package builds                              |
 | Mark package modified          | `mark-modified <pkg> --modified --reason "..."`                 | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Track local changes; prevent automatic Fedora updates                  |
 | Set package basename           | `set-upstream <pkg> --track-version <prefix>`                   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Set basename/track_version for versioned packages                      |
 | Track upstream versions        | `set-upstream <pkg>`                                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Enable/disable upstream version checking for a package                 |
 | List upstream version status   | `list`                                                          | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See all packages with upstream version and tracking info               |
+| Sanitize package filenames     | `sanitize-paths <pkg>` or `sanitize-paths --all`                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Migrate existing paths without changing package status                 |
+| Check repository filenames     | `check-paths`                                                   | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Validate Windows checkout compatibility, also run by `make check`      |
 | View package differences       | `diff <pkg>`                                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See what changed in modified packages vs Fedora                        |
 | Add per-package update hooks   | _(edit metadata hooks YAML)_                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Customize spec update, source download, or post-update steps           |
 | Update dist-git packages       | `update [<pkg>]`                                                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Test or trigger automated package updates from Fedora                  |
@@ -71,7 +82,7 @@ import` command does not set this field automatically.
 
 To populate it:
 
-1. Use the `/generate-package-map` Cursor skill (`.cursor/skills/generate-package-map/SKILL.md`),
+1. Use the `/generate-package-map` skill (`.agents/skills/generate-package-map/SKILL.md`),
    which searches for the canonical upstream git repository and handles mirror canonicalization,
    known overrides, and versioned-package branches.
 2. Or manually add the field to `metadata/<package>.json`:

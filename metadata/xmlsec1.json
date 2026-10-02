@@ -1,8 +1,8 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "6",
-  "sha": "1f72e780ec85a585de8f6e1996cd007bea130582",
+  "release": "7",
+  "sha": "9eb8a26d3035ef6bb87a5eb6c6da3587d405850e",
   "source": "https://src.fedoraproject.org/rpms/xmlsec1.git",
   "upstream_repo": "https://github.com/lsh123/xmlsec",
   "version": "1.3.11"

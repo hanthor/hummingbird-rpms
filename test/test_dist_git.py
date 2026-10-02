@@ -7,8 +7,9 @@ import shutil
 import subprocess
 import sys
 import types
+import xmlrpc.client
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 import yaml
@@ -635,18 +636,19 @@ def test_update_unbuilt(workdir: Path, upstream_repos: dict[str, Path], dist_git
     # Update upstream chocolate
     add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
 
-    # Mock Koji to return no build found (for both current and fallback)
+    # Mock Koji to return no build found.
     with patch('xmlrpc.client.ServerProxy') as mock_server_class:
         mock_server = MagicMock()
         mock_server.getBuild.return_value = None  # Build not found
+        mock_server.search.return_value = []
         mock_server_class.return_value = mock_server
 
         # Run update in-process
         run_dist_git(dist_git_module, workdir, 'update', 'chocolate')
-        # Should try fc99 first, then fallback to fc40 (both not found)
-        assert mock_server.getBuild.call_count == 2
-        mock_server.getBuild.assert_any_call('chocolate-11-1.fc99')
-        mock_server.getBuild.assert_any_call('chocolate-11-1.fc40')
+        mock_server.getBuild.assert_called_once_with('chocolate-11-1.fc99')
+        mock_server.search.assert_called_once_with(
+            'chocolate-11-1.*', 'build', 'glob'
+        )
         chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
         with open(chocolate_import_json) as f:
             import_data = json.load(f)
@@ -729,11 +731,10 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
     # Update upstream vanilla
     new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
 
-    # Mock Koji to:
-    # 1. Return None for fc99 (current rawhide)
-    # 2. Return successful build for fc40 (previous release fallback)
+    # Mock Koji to return no fc99 build and find an fc40 build through search.
     with patch('xmlrpc.client.ServerProxy') as mock_server_class:
         mock_server = MagicMock()
+        mock_server.search.return_value = [{'name': 'vanilla-2.0-1.fc40'}]
 
         def getBuild_side_effect(nvr):
             if nvr == 'vanilla-2.0-1.fc99':
@@ -757,6 +758,9 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
         assert mock_server.getBuild.call_count == 2
         mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc99')
         mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc40')
+        mock_server.search.assert_called_once_with(
+            'vanilla-2.0-1.*', 'build', 'glob'
+        )
 
         # Package should be updated using the fallback
         vanilla_import_json = workdir / 'metadata' / 'vanilla.json'
@@ -764,6 +768,92 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
             import_data = json.load(f)
         assert import_data['version'] == '2.0'
         assert import_data['sha'] == new_sha
+
+
+def test_update_rawhide_finds_build_for_unknown_dist_tag(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module
+) -> None:
+    """Update finds the rawhide build when the local release list is stale."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import',
+         f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        unknown_nvr = 'vanilla-2.0-1.fc100'
+        el_nvr = 'vanilla-2.0-1.el10'
+        mock_server.search.return_value = [
+            {'name': el_nvr},
+            {'name': unknown_nvr},
+        ]
+
+        def getBuild_side_effect(nvr):
+            if nvr == 'vanilla-2.0-1.fc99':
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': 'git+https://example.com/vanilla.git#' + 'a' * 40,
+                }
+            if nvr == unknown_nvr:
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': f'git+https://example.com/vanilla.git#{new_sha}',
+                }
+            return None
+
+        mock_server.getBuild.side_effect = getBuild_side_effect
+        mock_server_class.return_value = mock_server
+
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+
+        mock_server.getBuild.assert_any_call('vanilla-2.0-1.fc99')
+        mock_server.getBuild.assert_any_call(unknown_nvr)
+        assert call(el_nvr) not in mock_server.getBuild.call_args_list
+        mock_server.search.assert_called_once_with(
+            'vanilla-2.0-1.*', 'build', 'glob'
+        )
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        import_data = json.load(f)
+    assert import_data['version'] == '2.0'
+    assert import_data['sha'] == new_sha
+
+
+def test_check_koji_build_finds_numbered_eln_suffix(dist_git_module) -> None:
+    """ELN lookup accepts numbered ELN build suffixes, but not Fedora builds."""
+    expected_commit = 'a' * 40
+    eln_nvr = 'vanilla-2.0-1.eln159'
+    fedora_nvr = 'vanilla-2.0-1.fc46'
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        mock_server.search.return_value = [
+            {'name': fedora_nvr},
+            {'name': eln_nvr},
+        ]
+
+        def getBuild_side_effect(nvr):
+            if nvr == eln_nvr:
+                return {
+                    'nvr': nvr,
+                    'state': 1,
+                    'source': f'git+https://example.com/vanilla.git#{expected_commit}',
+                }
+            return None
+
+        mock_server.getBuild.side_effect = getBuild_side_effect
+        mock_server_class.return_value = mock_server
+
+        assert dist_git_module.check_koji_build(
+            'vanilla', '2.0', '1', expected_commit, 'eln', 'eln'
+        )
+        assert call(fedora_nvr) not in mock_server.getBuild.call_args_list
+        mock_server.getBuild.assert_any_call(eln_nvr)
 
 
 def test_koji_retry_on_transient_error(dist_git_module) -> None:
@@ -2777,6 +2867,235 @@ def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
         metadata = json.load(f)
     assert metadata['version'] == '2.0'
     assert metadata['release'] == '1'
+
+
+def _koji_search_server(builds: list[dict]) -> MagicMock:
+    """Build a mock Koji server whose search()/getBuild() return the given builds."""
+    server = MagicMock()
+    server.search.return_value = [{'id': i, 'name': b['nvr']} for i, b in enumerate(builds)]
+    server.getBuild.side_effect = lambda nvr: next(
+        (b for b in builds if b['nvr'] == nvr), None)
+    return server
+
+
+def test_resolve_release_from_koji_matches_commit(dist_git_module) -> None:
+    """Release comes from the completed Koji build whose source commit matches."""
+    sha = 'a' * 40
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+        'release': '1.fc46', 'source': f'git+https://example.com/nginx.git#{sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '1'
+
+
+def test_resolve_release_from_koji_rejects_other_commit(dist_git_module) -> None:
+    """A build of the right version but a different commit is not accepted."""
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+        'release': '1.fc46', 'source': 'git+https://example.com/nginx.git#' + 'b' * 40,
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', 'a' * 40) is None
+
+
+def test_resolve_release_from_koji_skips_incomplete_build(dist_git_module) -> None:
+    """Builds that are not COMPLETE (state != 1) are ignored."""
+    sha = 'a' * 40
+    server = _koji_search_server([{
+        'nvr': 'nginx-1.30.5-1.fc46', 'state': 0, 'version': '1.30.5',
+        'release': '1.fc46', 'source': f'git+https://example.com/nginx.git#{sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) is None
+
+
+def test_resolve_release_from_koji_no_builds(dist_git_module) -> None:
+    """No search hits returns None so the caller skips the update.
+
+    There is deliberately no MDAPI fallback; see resolve_release_from_koji().
+    """
+    server = MagicMock()
+    server.search.return_value = []
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', 'a' * 40) is None
+
+
+def test_resolve_release_from_koji_takes_highest_release(dist_git_module) -> None:
+    """One commit built on several branches: never number below Fedora."""
+    sha = 'a' * 40
+    src = f'git+https://example.com/nginx.git#{sha}'
+    server = _koji_search_server([
+        {'nvr': 'nginx-1.30.5-1.fc45', 'state': 1, 'version': '1.30.5',
+         'release': '1.fc45', 'source': src},
+        {'nvr': 'nginx-1.30.5-2.fc46', 'state': 1, 'version': '1.30.5',
+         'release': '2.fc46', 'source': src},
+    ])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '2'
+
+
+def test_resolve_release_from_koji_ignores_module_build(dist_git_module) -> None:
+    """A module build reuses the dist-git commit but its release is not %autorelease.
+
+    Left unfiltered it survives the dist-suffix strip and wins max(), producing an
+    NVR that never existed.
+    """
+    sha = 'a' * 40
+    src = f'git+https://example.com/nginx.git#{sha}'
+    server = _koji_search_server([
+        {'nvr': 'nginx-1.30.5-1.module_f38+1234+abcdef', 'state': 1, 'version': '1.30.5',
+         'release': '1.module_f38+1234+abcdef', 'source': src},
+        {'nvr': 'nginx-1.30.5-1.fc46', 'state': 1, 'version': '1.30.5',
+         'release': '1.fc46', 'source': src},
+    ])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '1'
+
+
+def test_update_autorelease_prefers_koji_over_stale_mdapi(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """Regression: a lagging MDAPI must not block an update Koji already has.
+
+    MDAPI reflects a later compose, so right after a version bump it still
+    reports the previous version's release. Pairing that with the new spec
+    version yields an NVR that never existed and the update was skipped
+    (observed on nginx 1.30.5). Koji is authoritative and must win.
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    new_sha = add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    # Koji has the real build (2.0-1); MDAPI still reports the old version (1.0-2).
+    server = _koji_search_server([{
+        'nvr': 'vanilla-2.0-1.fc99', 'state': 1, 'version': '2.0',
+        'release': '1.fc99', 'source': f'git+https://example.com/vanilla.git#{new_sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server), \
+            patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+        # Koji answered, so the stale MDAPI must never be consulted
+        mock_mdapi.assert_not_called()
+
+    spec_content = (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+    assert 'Version: 2.0' in spec_content
+    assert 'Release: 1%{?dist}\n' in spec_content
+    assert '%autorelease' not in spec_content
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '2.0'
+    assert metadata['release'] == '1'
+    assert metadata['sha'] == new_sha
+
+
+def test_call_koji_with_retry_offline_raises_koji_offline(dist_git_module) -> None:
+    """A ServerOffline fault becomes KojiOfflineError and is not retried."""
+    method = MagicMock(side_effect=xmlrpc.client.Fault(
+        dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline'))
+    with pytest.raises(dist_git_module.KojiOfflineError):
+        dist_git_module.call_koji_with_retry(method, 'x', method_name='test')
+    assert method.call_count == 1  # retrying a planned outage is pointless
+
+
+def test_call_koji_with_retry_other_fault_still_raises_fault(dist_git_module) -> None:
+    """Non-offline faults keep their existing behaviour."""
+    method = MagicMock(side_effect=xmlrpc.client.Fault(1000, 'boom'))
+    with pytest.raises(xmlrpc.client.Fault):
+        dist_git_module.call_koji_with_retry(method, 'x', method_name='test')
+
+
+def test_update_skips_cleanly_when_koji_offline(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """A planned Koji outage is a skip, not a failure.
+
+    The hub returns ServerOffline on every call during e.g. a mass rebuild.
+    We cannot verify the build, so we must not update -- but it is expected and
+    self-healing, so it must not fail the scheduled job or page anyone.
+    """
+    run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["chocolate"]}')
+    new_sha = add_upstream_commit(upstream_repos['chocolate'], 'chocolate', '10', '11')
+
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+        mock_server = MagicMock()
+        mock_server.getBuild.side_effect = xmlrpc.client.Fault(
+            dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline')
+        mock_server_class.return_value = mock_server
+
+        # Must return normally rather than propagating the fault
+        run_dist_git(dist_git_module, workdir, 'update', 'chocolate')
+
+    # Nothing was updated: metadata still points at the pre-update commit
+    with open(workdir / 'metadata' / 'chocolate.json') as f:
+        metadata = json.load(f)
+    assert metadata['sha'] != new_sha
+    assert metadata['version'] == '10'
+
+
+def test_update_autorelease_skips_when_koji_offline(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """Same planned outage, but hit while resolving %autorelease.
+
+    Covers the second KojiOfflineError handler: the one around
+    resolve_release_from_koji(), which runs before check_koji_build().
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '1.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    new_sha = add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    server = MagicMock()
+    server.search.side_effect = xmlrpc.client.Fault(
+        dist_git_module.KOJI_SERVER_OFFLINE, 'server is offline')
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        # Must return normally rather than propagating the fault
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '1.0', "Should not update while Koji is offline"
+    assert metadata['sha'] != new_sha
+
+
+def test_update_autorelease_no_koji_build_skips_without_mdapi(
+        workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+    """No matching Koji build means skip, with no MDAPI fallback.
+
+    Falling back to MDAPI here would only resolve a release the build check is
+    about to reject, and would report a misleading reason for the skip.
+    """
+    vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
+    vanilla_spec.write_text(vanilla_spec.read_text().replace('Release: 1', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream_repos['vanilla'], check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        mock_mdapi.return_value = {'version': '1.0', 'release': '2.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    server = MagicMock()
+    server.search.return_value = []  # Koji has no build for this version yet
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server), \
+            patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi:
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla')
+        mock_mdapi.assert_not_called()
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['version'] == '1.0', "Should not update without a Koji build"
 
 
 def test_update_autorelease_modified(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
@@ -5630,3 +5949,187 @@ def test_fetch_sources_for_stale_check_no_sources_file(tmp_path: Path, dist_git_
 
     assert result == []
     run.assert_not_called()
+
+
+@pytest.mark.parametrize(('upstream', 'portable'), [
+    ('fix:one.patch', 'fix~3aone.patch'),
+    ('a~3ab.patch', 'a~3ab.patch'),
+    ('CON.txt', '~43ON.txt'),
+    ('com¹.log', '~63om¹.log'),
+    ('name. ', 'name~2e~20'),
+    ('a?b*"<>|\\c', 'a~3fb~2a~22~3c~3e~7c~5cc'),
+    ('a\x01b', 'a~01b'),
+    ('ordinary.patch', 'ordinary.patch'),
+])
+def test_portable_path_components(dist_git_module, upstream, portable) -> None:
+    from package_paths import portable_component
+    assert portable_component(upstream) == portable
+    assert not dist_git_module.path_problem(portable)
+
+
+def test_sanitize_paths_is_idempotent(dist_git_module, tmp_path: Path) -> None:
+    payload = b'--- a/source.c\n+++ b/source.c\n+const char *s = "fix:one.patch";\n'
+    (tmp_path / 'fix:one.patch').write_bytes(payload)
+    (tmp_path / 'ordinary.patch').write_bytes(b'other patch')
+    (tmp_path / 'a:b.patch').write_bytes(b'colon patch')
+    spec = 'Patch: fix:one.patch\r\nPatch1: a:b.patch\r\nSource: https://example.org/fix:one.patch\r\nSource1: ftp://example.org/fix:one.patch\r\n'
+    (tmp_path / 'test.spec').write_bytes(spec.encode())
+    (tmp_path / 'sources').write_text('SHA512 (archive:1.tar.xz) = abc\n')
+    (tmp_path / 'archive:1.tar.xz').write_bytes(b'lookaside data')
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'fix~3aone.patch').read_bytes() == payload
+    assert (tmp_path / 'a~3ab.patch').read_bytes() == b'colon patch'
+    assert (tmp_path / 'ordinary.patch').read_bytes() == b'other patch'
+    assert b'Patch: fix~3aone.patch\r\n' in (tmp_path / 'test.spec').read_bytes()
+    assert b'https://example.org/fix:one.patch#/fix~3aone.patch' in (tmp_path / 'test.spec').read_bytes()
+    assert b'ftp://example.org/fix:one.patch#/fix~3aone.patch' in (tmp_path / 'test.spec').read_bytes()
+    assert (tmp_path / 'archive:1.tar.xz').read_bytes() == b'lookaside data'
+    assert mapping['fix:one.patch'] == 'fix~3aone.patch'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+def test_sanitize_nested_paths_and_symlinks(dist_git_module, tmp_path: Path) -> None:
+    directory = tmp_path / 'dir:one'
+    directory.mkdir()
+    (directory / 'file:one').write_bytes(b'payload')
+    (tmp_path / 'link').symlink_to('dir:one/file:one')
+    (tmp_path / 'outside').symlink_to('../dir:one/file:one')
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'link').read_bytes() == b'payload'
+    assert (tmp_path / 'outside').readlink().as_posix() == '../dir:one/file:one'
+    assert mapping['dir:one/file:one'] == 'dir~3aone/file~3aone'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+    (tmp_path / 'dir~3aone' / 'new').write_bytes(b'new')
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+    assert (tmp_path / 'dir~3aone/new').read_bytes() == b'new'
+    assert (tmp_path / 'link').readlink().as_posix() == 'dir~3aone/file~3aone'
+
+
+@pytest.mark.parametrize(('first', 'second'), [('Fix.patch', 'fix.patch'), ('a:b.patch', 'a~3ab.patch')])
+def test_sanitize_paths_collision_is_atomic(dist_git_module, tmp_path: Path, first: str, second: str) -> None:
+    (tmp_path / first).write_bytes(b'one')
+    (tmp_path / second).write_bytes(b'two')
+    (tmp_path / 'unsafe:name').write_bytes(b'three')
+    with pytest.raises(ValueError, match='Portable path collision'):
+        dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'unsafe:name').read_bytes() == b'three'
+
+
+def test_sanitize_paths_command_dry_run(dist_git_module, workdir: Path) -> None:
+    package = workdir / 'rpms' / 'test'
+    package.mkdir()
+    (package / 'fix:one.patch').write_bytes(b'patch')
+    metadata = {'version': '1', 'modification_status': 'independent'}
+    metadata_path = workdir / 'metadata' / 'test.json'
+    metadata_path.write_text(json.dumps(metadata))
+    run_dist_git(dist_git_module, workdir, '--dry-run', 'sanitize-paths', '--all')
+    assert (package / 'fix:one.patch').exists()
+    assert json.loads(metadata_path.read_text()) == metadata
+    run_dist_git(dist_git_module, workdir, 'sanitize-paths', 'test')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'patch'
+    assert json.loads(metadata_path.read_text()) == metadata
+
+
+def test_check_paths_rejects_windows_paths(dist_git_module, tmp_path: Path) -> None:
+    with patch.object(dist_git_module, 'run_git') as git:
+        git.return_value.stdout = 'good/file\0bad/name:one\0CON.txt\0Case/file\0case/other\0'
+        with pytest.raises(SystemExit, match='Paths incompatible with Windows') as error:
+            dist_git_module.check_paths()
+        assert 'bad/name:one' in str(error.value)
+        assert 'CON.txt' in str(error.value)
+        assert 'collides with' in str(error.value)
+        git.return_value.stdout = 'good/file\0good/other\0'
+        dist_git_module.check_paths()
+
+
+def test_import_update_and_merge_portable_paths(workdir: Path, upstream_repos: dict[str, Path], dist_git_module, monkeypatch) -> None:
+    monkeypatch.chdir(workdir)
+    upstream = upstream_repos['chocolate']
+    spec = upstream / 'chocolate.spec'
+    spec.write_text(spec.read_text().replace('Summary:', 'Patch: fix:one.patch\nSummary:'))
+    (upstream / '.gitignore').write_text('*.patch\n')
+    (upstream / 'fix:one.patch').write_bytes(b'upstream patch\n')
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=upstream, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add colon patch'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'lookup_anitya_project_id', return_value=None):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+    package = workdir / 'rpms' / 'chocolate'
+    assert (package / 'fix~3aone.patch').read_bytes() == b'upstream patch\n'
+    metadata = json.loads((workdir / 'metadata' / 'chocolate.json').read_text())
+    assert dist_git_module.is_package_unmodified('chocolate', metadata, upstream)
+    assert dist_git_module.diff_package('chocolate', capture=True) == ''
+    assert dist_git_module.diff_package('chocolate', capture=True, raw=True)
+    (package / 'local:fix.patch').write_bytes(b'local patch\n')
+    local_spec = package / 'chocolate.spec'
+    local_spec.write_text(local_spec.read_text().replace('Summary:', 'Patch1: local:fix.patch\nSummary:'))
+    run_dist_git(dist_git_module, workdir, 'mark-modified', 'chocolate', '--modified', '--reason', 'Local patch')
+    run_dist_git(dist_git_module, workdir, 'sanitize-paths', 'chocolate')
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Local patch'], cwd=workdir, check=True)
+    (upstream / 'fix:one.patch').write_bytes(b'new upstream patch\n')
+    subprocess.run(['git', 'add', 'fix:one.patch'], cwd=upstream, check=True)
+    add_upstream_commit(upstream, 'chocolate', '10', '11')
+    run_dist_git(dist_git_module, workdir, 'update', 'chocolate', '--skip-build-check')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'new upstream patch\n'
+    assert (package / 'local~3afix.patch').read_bytes() == b'local patch\n'
+    assert 'Patch1: local~3afix.patch' in local_spec.read_text()
+    assert not (package / 'fix:one.patch').exists()
+    metadata = json.loads((workdir / 'metadata' / 'chocolate.json').read_text())
+    assert metadata['modification_status'] == 'modified'
+    run_dist_git(dist_git_module, workdir, 'sync', 'chocolate', '--ref', 'HEAD~1')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'upstream patch\n'
+    assert not (package / 'local~3afix.patch').exists()
+    assert dist_git_module.is_package_unmodified('chocolate', dist_git_module.imports['chocolate'], upstream)
+
+
+def test_sanitize_macro_patch_declaration(dist_git_module, tmp_path: Path) -> None:
+    (tmp_path / 'fix:1.patch').write_bytes(b'patch')
+    original = ('Version: 1\nPatch: fix:%{version}.patch\n'
+                'Patch1: https://example.org/fix:%{version}.patch\n')
+    spec = tmp_path / 'test.spec'
+    spec.write_text(original)
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert 'Patch: fix~3a%{version}.patch' in spec.read_text()
+    assert 'https://example.org/fix:%{version}.patch#/fix~3a%{version}.patch' in spec.read_text()
+    assert mapping['fix:1.patch'] == 'fix~3a1.patch'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+@pytest.mark.parametrize(('filename', 'reference', 'portable', 'rewritten'), [
+    ('CON.patch', 'CON%{empty}.patch', '~43ON.patch', '~43ON%{empty}.patch'),
+    ('CON1.patch', 'CON%{version}.patch', 'CON1.patch', 'CON%{version}.patch'),
+    ('CON1:fix.patch', 'CON%{version}:fix.patch', 'CON1~3afix.patch', 'CON%{version}~3afix.patch'),
+    ('CON.1.patch', 'CON.%{version}.patch', '~43ON.1.patch', '~43ON.%{version}.patch'),
+])
+def test_sanitize_reserved_macro_patch_declaration(
+        dist_git_module, tmp_path: Path, filename: str, reference: str,
+        portable: str, rewritten: str) -> None:
+    payload = b'unchanged patch payload'
+    (tmp_path / filename).write_bytes(payload)
+    spec = tmp_path / 'test.spec'
+    spec.write_text(f'Patch: {reference}\nPatch1: https://example.org/{reference}\n')
+
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+
+    assert mapping == ({filename: portable} if filename != portable else {})
+    url = f'https://example.org/{reference}'
+    if filename != portable:
+        url += '#/' + rewritten
+    assert spec.read_text() == f'Patch: {rewritten}\nPatch1: {url}\n'
+    assert (tmp_path / portable).read_bytes() == payload
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+def test_sanitize_ambiguous_reserved_macro_is_atomic(dist_git_module, tmp_path: Path) -> None:
+    (tmp_path / 'CON.patch').write_bytes(b'reserved patch')
+    (tmp_path / 'CON1.patch').write_bytes(b'valid patch')
+    spec = tmp_path / 'test.spec'
+    original = 'Patch: CON%{version}.patch\n'
+    spec.write_text(original)
+
+    with pytest.raises(ValueError, match='Ambiguous reserved filename'):
+        dist_git_module.sanitize_package_paths(tmp_path)
+
+    assert spec.read_text() == original
+    assert (tmp_path / 'CON.patch').read_bytes() == b'reserved patch'
+    assert (tmp_path / 'CON1.patch').read_bytes() == b'valid patch'

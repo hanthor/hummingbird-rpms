@@ -78,3 +78,8 @@ accepted-checksums:
   - file: "packaging-scripts.tar.gz"
     checksum: "61e6cb6154734971319b5d57112fcb4796c239b3006bfa48f3ad91c53ad3b009bff19099a3fe0e8aa6d36c3ff7e72625d07537563d1f9572e4a4388f5be9c71c"
     reason: "One-time transition: now built by gorget's own pack: step (Python tarfile/gzip) instead of a run: step shelling out to the system tar/gzip binaries, whose compressed output isn't byte-reproducible across environments. Content is identical; only the archive's container bytes differ."
+  - file: "packaging-scripts.tar.gz"
+    checksum: "3885517ee2cd23d9abb6d3367daf6bd4a5c91f40a2559a79336507b21e8f1c9f80b4cd3eebbeae2f84a3d1a317b97c035ed54f19fda90c7aecfd59b277b88ff4"
+    reason: >-
+      Node 24.21.0 update changes the npm subpackage epoch from 1 to 2 in
+      packaging/fill-versions.sh; this archive includes that updated script.

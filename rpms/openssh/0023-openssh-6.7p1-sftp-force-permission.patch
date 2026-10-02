@@ -1,7 +1,7 @@
-From 44beb498b44626a5b3896d832cd3a6ab63839253 Mon Sep 17 00:00:00 2001
+From 71b2ca7bbf39514e96da573758d157a7d52625bc Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 23/54] openssh-6.7p1-sftp-force-permission
+Subject: [PATCH 23/53] openssh-6.7p1-sftp-force-permission
 
 # Add sftp option to force mode of created files (#1191055)
 ---

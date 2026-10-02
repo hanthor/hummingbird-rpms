@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "95e479e541df6da96c1913f8f98bd666fc1d3f65",
+  "release": "1",
+  "sha": "9624ab45683799dfd76af7db04bba68aaaf1914c",
   "source": "https://src.fedoraproject.org/rpms/xz.git",
   "upstream_repo": "https://github.com/tukaani-project/xz",
-  "version": "5.8.3"
+  "version": "5.8.4"
 }

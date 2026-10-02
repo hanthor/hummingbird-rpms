@@ -18,8 +18,9 @@
 #   ./ci/upstream_update_multi_mr.sh --only-package=curl                      # Check only curl
 #
 # Environment variables:
-#   CHORE_MR_GITLAB_TOKEN    - GitLab API token with write_repository scope (required for git-push in clone mode)
+#   CHORE_MR_GITLAB_TOKEN    - GitLab token with api and write_repository scopes
 #   GITLAB_REMOTE_URL        - GitLab repo URL (default: https://gitlab.com/redhat/hummingbird/rpms.git)
+#   GITLAB_PROJECT_ID        - Numeric GitLab project ID fallback outside GitLab CI (optional)
 #   WORKQUEUE_SERVICE_URL    - Workqueue service URL (enables workqueue method when set)
 #   WORKQUEUE_OIDC_TOKEN     - GitLab CI OIDC token for workqueue auth
 #
@@ -78,6 +79,96 @@ fi
 
 # Configuration
 TARGET_BRANCH=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH:-main}}}
+
+cleanup_resolved_failure_mr() {
+    local package=$1
+
+    if [[ "${CREATE_METHOD}" == "dry-run" ]]; then
+        return
+    fi
+
+    local token=${CHORE_MR_GITLAB_TOKEN:-}
+    local project_id=${CI_PROJECT_ID:-${GITLAB_PROJECT_ID:-}}
+    local api_url=${CI_API_V4_URL:-https://${GITLAB_HOST:-gitlab.com}/api/v4}
+    local branch_name="chore/upstream-update-failure-${package}"
+    local expected_title="Draft: investigate failed upstream update for ${package}"
+
+    if [[ -z "${token}" || -z "${project_id}" ]]; then
+        echo "WARNING: Cannot clean up resolved diagnostic MR for ${package}: " \
+            "CHORE_MR_GITLAB_TOKEN and CI_PROJECT_ID (or GITLAB_PROJECT_ID) are required" >&2
+        return
+    fi
+
+    local open_mrs
+    if ! open_mrs=$(curl --silent --show-error --fail-with-body \
+        --header "PRIVATE-TOKEN: ${token}" \
+        --get \
+        --data-urlencode "source_branch=${branch_name}" \
+        --data-urlencode "state=opened" \
+        "${api_url}/projects/${project_id}/merge_requests"); then
+        echo "WARNING: Failed to query resolved diagnostic MR for ${package}; leaving it open" >&2
+        return
+    fi
+
+    local mr_iid
+    if ! mr_iid=$(jq -r --arg title "${expected_title}" --arg project_id "${project_id}" \
+        '[.[] | select(
+            (.source_project_id | tostring) == $project_id
+            and .draft == true
+            and .title == $title
+        )][0].iid // empty' \
+        <<<"${open_mrs}"); then
+        echo "WARNING: Failed to parse diagnostic MR query for ${package}; leaving it open" >&2
+        return
+    fi
+    if [[ -z "${mr_iid}" ]]; then
+        return
+    fi
+
+    # Never close a diagnostic branch that a maintainer has started turning
+    # into a real fix. Bot-created diagnostic MRs have an empty diff.
+    local mr_diffs
+    if ! mr_diffs=$(curl --silent --show-error --fail-with-body \
+        --header "PRIVATE-TOKEN: ${token}" \
+        "${api_url}/projects/${project_id}/merge_requests/${mr_iid}/diffs"); then
+        echo "WARNING: Failed to inspect diagnostic MR !${mr_iid} for ${package}; leaving it open" >&2
+        return
+    fi
+
+    local diff_count
+    if ! diff_count=$(jq -er \
+        'if type == "array" then length else error("expected diff array") end' \
+        <<<"${mr_diffs}"); then
+        echo "WARNING: Failed to parse diagnostic MR !${mr_iid} diffs for ${package}; leaving it open" >&2
+        return
+    fi
+    if [[ ${diff_count} -ne 0 ]]; then
+        echo "WARNING: Resolved diagnostic MR !${mr_iid} for ${package} has changes; leaving it open" >&2
+        return
+    fi
+
+    if ! curl --silent --show-error --fail-with-body --output /dev/null \
+        --request PUT \
+        --header "PRIVATE-TOKEN: ${token}" \
+        --data-urlencode "state_event=close" \
+        "${api_url}/projects/${project_id}/merge_requests/${mr_iid}"; then
+        echo "WARNING: Failed to close resolved diagnostic MR !${mr_iid} for ${package}" >&2
+        return
+    fi
+
+    local encoded_branch
+    encoded_branch=$(jq -rn --arg branch "${branch_name}" '$branch | @uri')
+    if ! curl --silent --show-error --fail-with-body --output /dev/null \
+        --request DELETE \
+        --header "PRIVATE-TOKEN: ${token}" \
+        "${api_url}/projects/${project_id}/repository/branches/${encoded_branch}"; then
+        echo "WARNING: Closed resolved diagnostic MR !${mr_iid} for ${package}, " \
+            "but failed to delete ${branch_name}" >&2
+        return
+    fi
+
+    echo "Closed resolved diagnostic MR !${mr_iid} and deleted ${branch_name}"
+}
 
 # Cleanup function for clone mode
 # shellcheck disable=SC2329  # Function is invoked via EXIT trap
@@ -174,6 +265,8 @@ PACKAGES_UPDATED=0
 MR_FAILURES=0
 EXISTING_UPDATES=0
 CHECK_FAILURES=0
+CHECK_WARNINGS=0
+CHECK_WARNING_PACKAGES=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
 DRAFT_FAILURE_MR_URLS=()
@@ -182,6 +275,11 @@ DRAFT_FAILURE_MR_URLS=()
 # updates do not create a conflict MR when Gorget or source processing fails.
 UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
 rm -f "${UPSTREAM_FAILURES_FILE}"
+# Source versions skipped because their required artifacts are not published
+# are warnings, not checker failures. Detailed warnings remain in the checker
+# output; this file carries only aggregate counts for Slack.
+UPSTREAM_WARNINGS_FILE=".ci_upstream_update_warnings.txt"
+rm -f "${UPSTREAM_WARNINGS_FILE}"
 # Keep draft-MR links separately so the scheduled Slack notification can
 # direct maintainers to the corresponding investigation branch.
 UPSTREAM_DRAFT_FAILURE_MRS_FILE=".ci_upstream_update_draft_mrs.txt"
@@ -254,10 +352,32 @@ if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
+if ! CHECK_WARNINGS=$(jq '[.results[] | .warnings[]?] | length' "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not parse source availability warnings"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${CHECK_WARNINGS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable warning count"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! CHECK_WARNING_PACKAGES=$(jq \
+    '[.results[] | select((.warnings // []) | length > 0)] | length' \
+    "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not count packages with source availability warnings"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${CHECK_WARNING_PACKAGES}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable warning package count"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
 
-# Preserve a short, one-line-per-package summary for both the job log and the
-# scheduled-job Slack notification.  The full error (which can contain Gorget
-# JSON and remediation guidance) remains in the job log linked from Slack.
+# Preserve a short, one-line-per-package failure summary for both the job log
+# and the scheduled-job Slack notification. The full error (which can contain
+# Gorget JSON and remediation guidance) remains in the job log linked from Slack.
 if ! jq -r '
     .results[]
     | select(.error != null or .update_error != null)
@@ -269,6 +389,15 @@ if ! jq -r '
 fi
 if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     rm -f "${UPSTREAM_FAILURES_FILE}"
+fi
+
+if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
+    # Avoid flooding Slack when several unpublished candidates exist for each
+    # package. The checker stderr and JSON above retain every detailed warning.
+    printf '%s skipped candidate version(s) across %s package(s); see job log for details\n' \
+        "${CHECK_WARNINGS}" "${CHECK_WARNING_PACKAGES}" > "${UPSTREAM_WARNINGS_FILE}"
+else
+    rm -f "${UPSTREAM_WARNINGS_FILE}"
 fi
 
 # Keep update-processing failures separate from version-discovery failures.
@@ -294,9 +423,19 @@ COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..${UPDATE_COMMIT_HEAD}" 
 mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..${UPDATE_COMMIT_HEAD}")
 
 UPDATES_APPLIED=$(jq '[.results[] | select(.updated == true)] | length' "${CHECK_OUTPUT}")
+# shellcheck disable=SC2312  # Command substitution in mapfile is intentional
+mapfile -t SUCCESSFUL_PACKAGES < <(
+    jq -r '.results[] | select(.updated == true) | .package' "${CHECK_OUTPUT}"
+)
 
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
+
+if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
+    for PACKAGE in "${SUCCESSFUL_PACKAGES[@]}"; do
+        cleanup_resolved_failure_mr "${PACKAGE}"
+    done
+fi
 
 echo ""
 if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
@@ -304,6 +443,13 @@ if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     while IFS= read -r failure; do
         echo "  - ${failure}"
     done < "${UPSTREAM_FAILURES_FILE}"
+    echo ""
+fi
+if [[ -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
+    echo "Upstream source availability warnings:"
+    while IFS= read -r warning; do
+        echo "  - ${warning}"
+    done < "${UPSTREAM_WARNINGS_FILE}"
     echo ""
 fi
 
@@ -379,7 +525,11 @@ done
 #   1 = updates found and applied
 #   2 = errors occurred
 if [[ ${CHECK_EXIT_CODE} -eq 0 ]]; then
-    echo "No upstream version updates available. All tracked packages are up-to-date."
+    if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
+        echo "No updates available; ${CHECK_WARNINGS} source warning(s) reported."
+    else
+        echo "No upstream version updates available. All tracked packages are up-to-date."
+    fi
     exit 0
 elif [[ ${CHECK_EXIT_CODE} -eq 2 ]]; then
     echo "Warning: check_upstream_versions.py reported errors (exit code 2)"
@@ -390,7 +540,7 @@ fi
 # ── Workqueue path: submission already happened in Python ───────────
 
 if [[ "${CREATE_METHOD}" == "workqueue" ]]; then
-    echo "Workqueue: ${UPDATES_APPLIED} submitted, ${CHECK_FAILURES} failure(s)"
+    echo "Workqueue: ${UPDATES_APPLIED} submitted, ${CHECK_FAILURES} failure(s), ${CHECK_WARNINGS} warning(s)"
     if [[ ${CHECK_FAILURES} -gt 0 ]]; then
         exit 1
     fi
@@ -426,10 +576,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
     COMMIT_MSG=$(git log -1 --format=%s "${COMMIT_SHA}")
 
     # Extract package name and version from commit message
-    # Format: "Update <package> to <version>"
-    if [[ ${COMMIT_MSG} =~ ^Update\ ([^\ ]+)\ to\ (.+)$ ]]; then
-        PACKAGE="${BASH_REMATCH[1]}"
-        VERSION="${BASH_REMATCH[2]}"
+    # Keep the optional prefix in sync with _STALE_PATCH_PREFIX in check_upstream_versions.py.
+    # Format: "Update <package> to <version>" (optionally prefixed for stale patches)
+    if [[ ${COMMIT_MSG} =~ ^(STALE\ PATCH:\ )?Update\ ([^\ ]+)\ to\ (.+)$ ]]; then
+        STALE_PATCH="${BASH_REMATCH[1]}"
+        PACKAGE="${BASH_REMATCH[2]}"
+        VERSION="${BASH_REMATCH[3]}"
     else
         echo "----------------------------------------"
         echo "Skipping commit ${COMMIT_SHA:0:8}: cannot parse from: ${COMMIT_MSG}"
@@ -443,7 +595,7 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
 
     # Create package-specific branch
     BRANCH_NAME="chore/upstream-update-${PACKAGE}"
-    MR_TITLE="chore(rpms): Update ${PACKAGE} to ${VERSION}"
+    MR_TITLE="${STALE_PATCH}chore(rpms): Update ${PACKAGE} to ${VERSION}"
 
     # Create a new branch from START_COMMIT and cherry-pick this commit
     if ! git checkout --quiet "${START_COMMIT}"; then
@@ -483,7 +635,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
         # --create-mrs: actually create the MR
         echo "  Creating MR: ${MR_TITLE}"
 
-        MR_ARGS=(--branch "${BRANCH_NAME}" --title "${MR_TITLE}" --auto-merge)
+        MR_ARGS=(--branch "${BRANCH_NAME}" --title "${MR_TITLE}")
+        if [[ -n "${STALE_PATCH}" ]]; then
+            MR_ARGS+=(--draft --description "Exact upstreamed patches were removed; please review before merging.")
+        else
+            MR_ARGS+=(--auto-merge)
+        fi
 
         # Create MR using existing create_mr.sh
         # Exit codes: 0 = created, 2 = already exists, 1 = failure
@@ -506,6 +663,12 @@ for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
             echo "  Failed to create MR for ${PACKAGE}"
             MR_FAILURES=$((MR_FAILURES + 1))
             FAILED_PACKAGES+=("${PACKAGE} (MR creation failed)")
+        fi
+
+        # A local checker commit is not enough to consider the diagnostic MR
+        # resolved. Wait until create_mr.sh has created or found the replacement.
+        if [[ ${MR_EXIT_CODE} -eq 0 || ${MR_EXIT_CODE} -eq 2 ]]; then
+            cleanup_resolved_failure_mr "${PACKAGE}"
         fi
     fi
 done
@@ -530,6 +693,7 @@ echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
 echo "  Update/check failures:   ${CHECK_FAILURES}"
+echo "  Source warnings:         ${CHECK_WARNINGS}"
 echo "  Draft failure MRs:       ${#DRAFT_FAILURE_MR_URLS[@]}"
 echo "  MR failures:             ${MR_FAILURES}"
 

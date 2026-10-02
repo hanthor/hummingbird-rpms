@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
-  "sha": "6cdb4f865ab0890a74bc5467e3c5974ee7ab95ca",
+  "release": "1",
+  "sha": "68c92643f2ec23d3d0bfcd4ed1f35b18a19e93ad",
   "source": "https://src.fedoraproject.org/rpms/container-selinux.git",
   "upstream_repo": "https://github.com/containers/container-selinux",
-  "version": "2.250.0"
+  "version": "2.251.0"
 }
