@@ -118,10 +118,10 @@ def test_grafana13_2_frontend_patch_order_matches_spec() -> None:
 @pytest.mark.parametrize("patch_name", [
     "grafana-yarn-cache.patch", "grafana-xorm-go122-build-constraint.patch",
 ])
-def test_grafana13_2_patch_hunk_counts_are_valid(patch_name: str) -> None:
+def test_grafana13_2_patch_hunk_counts_are_valid(tmp_path: Path, patch_name: str) -> None:
     patch = ROOT_DIR / "rpms" / "grafana13.2" / patch_name
     result = subprocess.run(
         ["git", "apply", "--numstat", str(patch)],
-        capture_output=True, text=True, check=False,
+        cwd=tmp_path, capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
