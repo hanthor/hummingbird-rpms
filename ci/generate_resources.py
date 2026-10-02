@@ -146,6 +146,11 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
                 #   - rpms/ruby3.3 -> source: .../ruby.git -> upstream_name: ruby
                 #   - rpms/tomcat10 -> source: .../tomcat.git -> upstream_name: tomcat
                 upstream_name = Path(metadata["source"]).stem
+            elif metadata and isinstance(metadata.get("fedora"), dict):
+                # TODO: remove this branch once generate_resources.py is ported to hum.meta
+                git_url = metadata["fedora"].get("git_url", "")
+                if git_url:
+                    upstream_name = Path(git_url).stem
 
             # Store upstream package name for use in pipeline
             rpm_data["package_name"] = upstream_name
