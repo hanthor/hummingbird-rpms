@@ -3,6 +3,7 @@
   "modification_reason": "Update to upstream version 17.11",
   "modification_status": "modified",
   "release": "1",
+  "release_monitoring_project_id": 381406,
   "sha": "4612e2fc3ac80285f55de96fcf1803e3cca3ddef",
   "source": "https://src.fedoraproject.org/rpms/postgresql17.git",
   "track_upstream": "17",
