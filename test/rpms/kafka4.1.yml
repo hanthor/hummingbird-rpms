@@ -74,6 +74,7 @@ kafka-produce-consume:
           > /etc/yum.repos.d/local.repo
         dnf install -y kafka4.1
 
+        export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
         export PATH=/usr/lib/kafka4.1/bin:$PATH
         KAFKA_PID=""
         cleanup_broker() {

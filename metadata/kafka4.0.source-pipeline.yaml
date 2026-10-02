@@ -9,6 +9,7 @@ transform:
   - type: vendor
     ecosystem: gradle
     task: releaseTarGz
+    max-workers: 1
     archive-name: "kafka-${VERSION}-gradle-vendor.tar.gz"
     outputs:
       - path: "core/build/distributions/kafka_*-${VERSION}.tgz"
