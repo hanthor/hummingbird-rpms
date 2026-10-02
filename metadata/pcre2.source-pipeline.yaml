@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${VERSION}/pcre2-${VERSION}.tar.bz2"
+  - type: url
+    url: "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${VERSION}/pcre2-${VERSION}.tar.bz2.sig"
+
+verify:
+  - type: gpg-signature
+    target: "pcre2-${VERSION}.tar.bz2"
+    signature: "pcre2-${VERSION}.tar.bz2.sig"
+    keyring: "pcre2.gpg"
