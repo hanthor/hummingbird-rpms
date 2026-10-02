@@ -53,7 +53,7 @@ bash:
 bind:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
-blackbox-exporter:
+prometheus-blackbox-exporter:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bootc:

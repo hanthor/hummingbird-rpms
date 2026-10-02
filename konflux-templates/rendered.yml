@@ -976,45 +976,6 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
-# --- blackbox-exporter ---
----
-apiVersion: appstudio.redhat.com/v1alpha1
-kind: Component
-metadata:
-  annotations:
-    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
-    git-provider: gitlab
-    git-provider-url: https://gitlab.com
-    mintmaker.appstudio.redhat.com/disabled: "true"
-    test.appstudio.openshift.io/comment_strategy: disable_all
-  name: blackbox-exporter-main
-spec:
-  application: rpms-main
-  componentName: blackbox-exporter-main
-  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/blackbox-exporter-main
-  source:
-    git:
-      context: rpms/blackbox-exporter
-      revision: main
-      url: https://gitlab.com/redhat/hummingbird/rpms.git
----
-apiVersion: appstudio.redhat.com/v1alpha1
-kind: ImageRepository
-metadata:
-  labels:
-    appstudio.redhat.com/application: rpms-main
-    appstudio.redhat.com/component: blackbox-exporter-main
-  name: blackbox-exporter-main
-spec:
-  image:
-    name: hummingbird-tenant/blackbox-exporter-main
-    visibility: public
-  notifications:
-  - config:
-      url: https://bombino.api.redhat.com/v1/sbom/quay/push
-    event: repo_push
-    method: webhook
-    title: SBOM-event-to-Bombino
 # --- boost ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -16420,6 +16381,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/procps-ng-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- prometheus-blackbox-exporter ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: prometheus-blackbox-exporter-main
+spec:
+  application: rpms-main
+  componentName: prometheus-blackbox-exporter-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/prometheus-blackbox-exporter-main
+  source:
+    git:
+      context: rpms/prometheus-blackbox-exporter
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: prometheus-blackbox-exporter-main
+  name: prometheus-blackbox-exporter-main
+spec:
+  image:
+    name: hummingbird-tenant/prometheus-blackbox-exporter-main
     visibility: public
   notifications:
   - config:

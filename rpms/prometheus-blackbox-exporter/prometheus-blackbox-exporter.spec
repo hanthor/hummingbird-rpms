@@ -6,7 +6,7 @@ Version: 0.28.0
 
 %gometa -L -f
 
-Name: blackbox-exporter
+Name: prometheus-blackbox-exporter
 %global forgesetupargs -n %{name}-%{version}
 %global gosourcedir %{_builddir}/%{name}-%{version}
 Release: 0.1%{?dist}

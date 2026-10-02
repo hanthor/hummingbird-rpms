@@ -124,8 +124,6 @@ spec:
           contentType: rpm
         - name: binutils-main
           contentType: rpm
-        - name: blackbox-exporter-main
-          contentType: rpm
         - name: boost-main
           contentType: rpm
         - name: bootc-main
@@ -901,6 +899,8 @@ spec:
         - name: postgresql18-main
           contentType: rpm
         - name: procps-ng-main
+          contentType: rpm
+        - name: prometheus-blackbox-exporter-main
           contentType: rpm
         - name: prometheus3-13-main
           contentType: rpm
