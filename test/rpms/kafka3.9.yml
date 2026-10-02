@@ -18,7 +18,7 @@ kafka-files-installed:
       /usr/lib/kafka3.9/bin/kafka-console-consumer.sh \
       /usr/lib/kafka3.9/bin/kafka-storage.sh \
       /usr/lib/kafka3.9/config/kraft/server.properties; do
-      if ! echo "${file_list}" | grep -qF "${expected}"; then
+      if ! grep -qF "${expected}" <<< "${file_list}"; then
         TEST_FAIL "Expected file not found in RPM: ${expected}"
       fi
     done
@@ -34,10 +34,10 @@ no-windows-files:
     fi
 
     file_list=$(rpm -qlp "${TEST_RPM}")
-    if echo "${file_list}" | grep -q '\.bat$'; then
+    if grep -q '\.bat$' <<< "${file_list}"; then
       TEST_FAIL "Windows .bat files found in RPM"
     fi
-    if echo "${file_list}" | grep -q '/windows/'; then
+    if grep -q '/windows/' <<< "${file_list}"; then
       TEST_FAIL "Windows directory found in RPM"
     fi
 
