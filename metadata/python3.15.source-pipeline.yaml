@@ -1,0 +1,7 @@
+# Source0 resolves Python's RPM prerelease notation (3.15.0~rc2) to the
+# upstream filename (Python-3.15.0rc2.tar.xz).
+# JIT stencils are compiled from this source during the RPM build with
+# LLVM 21, rather than fetched as prebuilt headers from Fedora.
+fetch:
+  - type: spec-source
+    index: 0
