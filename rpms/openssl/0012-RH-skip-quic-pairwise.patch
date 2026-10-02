@@ -1,23 +1,23 @@
-From 48b4a63db033730ef98eb9968e45ba66688598c9 Mon Sep 17 00:00:00 2001
+From 872fcf41ee970f2dfb08ec2bd8e3a6b8f8153e4e Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <dbelyavs@redhat.com>
 Date: Thu, 7 Mar 2024 17:37:09 +0100
-Subject: [PATCH 12/57] RH: skip quic pairwise
+Subject: [PATCH 12/58] RH: skip quic pairwise
 
 Patch-name: 0115-skip-quic-pairwise.patch
 Patch-id: 115
 Patch-status: |
     # skip quic and pairwise tests temporarily
 ---
- test/quicapitest.c                     |  4 +++-
- test/recipes/01-test_symbol_presence.t |  1 +
- test/recipes/30-test_pairwise_fail.t   |  2 +-
- 3 files changed, 5 insertions(+), 2 deletions(-)
+ test/quicapitest.c                     | 4 +++-
+ test/recipes/01-test_symbol_presence.t | 1 +
+ test/recipes/30-test_pairwise_fail.t   | 6 ++++--
+ 3 files changed, 8 insertions(+), 3 deletions(-)
 
 diff --git a/test/quicapitest.c b/test/quicapitest.c
-index 6b9ee8e69a..96cd735819 100644
+index c5515a0366..9c91554fd3 100644
 --- a/test/quicapitest.c
 +++ b/test/quicapitest.c
-@@ -3015,7 +3015,9 @@ int setup_tests(void)
+@@ -3710,7 +3710,9 @@ int setup_tests(void)
      ADD_TEST(test_cipher_find);
      ADD_TEST(test_version);
  #if defined(DO_SSL_TRACE_TEST)
@@ -29,10 +29,10 @@ index 6b9ee8e69a..96cd735819 100644
      ADD_TEST(test_quic_forbidden_apis_ctx);
      ADD_TEST(test_quic_forbidden_apis);
 diff --git a/test/recipes/01-test_symbol_presence.t b/test/recipes/01-test_symbol_presence.t
-index 6c8de64b0b..79a5584099 100644
+index c1d9c8541f..46a55c6b99 100644
 --- a/test/recipes/01-test_symbol_presence.t
 +++ b/test/recipes/01-test_symbol_presence.t
-@@ -187,6 +187,7 @@ foreach (sort keys %stlibname) {
+@@ -190,6 +190,7 @@ foreach (sort keys %stlibname) {
      }
  }
  my @duplicates = sort grep { $symbols{$_} > 1 } keys %symbols;
@@ -41,17 +41,22 @@ index 6c8de64b0b..79a5584099 100644
      note "Duplicates:";
      note join('\n', @duplicates);
 diff --git a/test/recipes/30-test_pairwise_fail.t b/test/recipes/30-test_pairwise_fail.t
-index eaf0dbbb42..21864ad319 100644
+index 1b3269a982..6455f3de8b 100644
 --- a/test/recipes/30-test_pairwise_fail.t
 +++ b/test/recipes/30-test_pairwise_fail.t
-@@ -39,14 +39,14 @@ SKIP: {
+@@ -37,8 +37,10 @@ SKIP: {
+ }
+ 
  SKIP: {
++    use Config;
++    my $is_s390 = ($Config{archname} =~ /^s390/) ? 1 : 0;
      skip "Skip EC test because of no ec in this build", 1
-         if disabled("ec");
+-        if disabled("ec");
++        if (disabled("ec") || $is_s390);
      ok(run(test(["pairwise_fail_test", "-config", $provconf,
                   "-pairwise", "ec"])),
         "fips provider ec keygen pairwise failure test");
- }
+@@ -46,7 +48,7 @@ SKIP: {
  
  SKIP: {
      skip "Skip DSA tests because of no dsa in this build", 2
@@ -61,4 +66,5 @@ index eaf0dbbb42..21864ad319 100644
                   "-pairwise", "dsa", "-dsaparam", data_file("dsaparam.pem")])),
         "fips provider dsa keygen pairwise failure test");
 -- 
-2.52.0
+2.55.0
+
