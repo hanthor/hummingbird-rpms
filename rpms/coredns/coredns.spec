@@ -1,3 +1,5 @@
+%bcond check 1
+
 %global goipath github.com/coredns/coredns
 
 Name:           coredns
@@ -37,6 +39,11 @@ install -Dpm 0755 coredns %{buildroot}%{_bindir}/coredns
 %go_vendor_license_check -c %{S:2}
 ./coredns -version | grep -F 'CoreDNS-%{version}'
 ./coredns -plugins | grep -Fx 'kubernetes'
+%if %{with check}
+# Match upstream's core and plugin test suites. The end-to-end suite also
+# requires the external faillint tool.
+%gotest ./request/... ./core/... ./coremain/... ./plugin/...
+%endif
 
 %files -f %{go_vendor_license_filelist}
 %license LICENSE
