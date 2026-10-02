@@ -29,6 +29,8 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py set-upstream <pkg> --track-version <prefix>` | Pin a versioned package to a version line (e.g., `1.26`) |
 | `./ci/dist_git.py list [--clean\|--modified\|--independent\|--prerelease]` | List packages by status |
 | `./ci/dist_git.py diff [<pkg>…\|--all]` | Show what changed locally vs Fedora upstream |
+| `./ci/dist_git.py sanitize-paths <pkg> (or --all)` | Make package filenames Windows-safe, leaving changes for review, use either `<pkg>` or `--all` |
+| `./ci/dist_git.py check-paths` | Reject tracked filenames incompatible with Windows |
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
@@ -57,6 +59,8 @@ Common operational tasks that users or AI agents may need to perform:
 | Set package basename           | `set-upstream <pkg> --track-version <prefix>`                   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Set basename/track_version for versioned packages                      |
 | Track upstream versions        | `set-upstream <pkg>`                                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Enable/disable upstream version checking for a package                 |
 | List upstream version status   | `list`                                                          | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See all packages with upstream version and tracking info               |
+| Sanitize package filenames     | `sanitize-paths <pkg>` or `sanitize-paths --all`                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Migrate existing paths without changing package status                 |
+| Check repository filenames     | `check-paths`                                                   | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Validate Windows checkout compatibility, also run by `make check`      |
 | View package differences       | `diff <pkg>`                                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See what changed in modified packages vs Fedora                        |
 | Add per-package update hooks   | _(edit metadata hooks YAML)_                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Customize spec update, source download, or post-update steps           |
 | Update dist-git packages       | `update [<pkg>]`                                                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Test or trigger automated package updates from Fedora                  |

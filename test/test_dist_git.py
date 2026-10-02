@@ -5949,3 +5949,187 @@ def test_fetch_sources_for_stale_check_no_sources_file(tmp_path: Path, dist_git_
 
     assert result == []
     run.assert_not_called()
+
+
+@pytest.mark.parametrize(('upstream', 'portable'), [
+    ('fix:one.patch', 'fix~3aone.patch'),
+    ('a~3ab.patch', 'a~3ab.patch'),
+    ('CON.txt', '~43ON.txt'),
+    ('com¹.log', '~63om¹.log'),
+    ('name. ', 'name~2e~20'),
+    ('a?b*"<>|\\c', 'a~3fb~2a~22~3c~3e~7c~5cc'),
+    ('a\x01b', 'a~01b'),
+    ('ordinary.patch', 'ordinary.patch'),
+])
+def test_portable_path_components(dist_git_module, upstream, portable) -> None:
+    from package_paths import portable_component
+    assert portable_component(upstream) == portable
+    assert not dist_git_module.path_problem(portable)
+
+
+def test_sanitize_paths_is_idempotent(dist_git_module, tmp_path: Path) -> None:
+    payload = b'--- a/source.c\n+++ b/source.c\n+const char *s = "fix:one.patch";\n'
+    (tmp_path / 'fix:one.patch').write_bytes(payload)
+    (tmp_path / 'ordinary.patch').write_bytes(b'other patch')
+    (tmp_path / 'a:b.patch').write_bytes(b'colon patch')
+    spec = 'Patch: fix:one.patch\r\nPatch1: a:b.patch\r\nSource: https://example.org/fix:one.patch\r\nSource1: ftp://example.org/fix:one.patch\r\n'
+    (tmp_path / 'test.spec').write_bytes(spec.encode())
+    (tmp_path / 'sources').write_text('SHA512 (archive:1.tar.xz) = abc\n')
+    (tmp_path / 'archive:1.tar.xz').write_bytes(b'lookaside data')
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'fix~3aone.patch').read_bytes() == payload
+    assert (tmp_path / 'a~3ab.patch').read_bytes() == b'colon patch'
+    assert (tmp_path / 'ordinary.patch').read_bytes() == b'other patch'
+    assert b'Patch: fix~3aone.patch\r\n' in (tmp_path / 'test.spec').read_bytes()
+    assert b'https://example.org/fix:one.patch#/fix~3aone.patch' in (tmp_path / 'test.spec').read_bytes()
+    assert b'ftp://example.org/fix:one.patch#/fix~3aone.patch' in (tmp_path / 'test.spec').read_bytes()
+    assert (tmp_path / 'archive:1.tar.xz').read_bytes() == b'lookaside data'
+    assert mapping['fix:one.patch'] == 'fix~3aone.patch'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+def test_sanitize_nested_paths_and_symlinks(dist_git_module, tmp_path: Path) -> None:
+    directory = tmp_path / 'dir:one'
+    directory.mkdir()
+    (directory / 'file:one').write_bytes(b'payload')
+    (tmp_path / 'link').symlink_to('dir:one/file:one')
+    (tmp_path / 'outside').symlink_to('../dir:one/file:one')
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'link').read_bytes() == b'payload'
+    assert (tmp_path / 'outside').readlink().as_posix() == '../dir:one/file:one'
+    assert mapping['dir:one/file:one'] == 'dir~3aone/file~3aone'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+    (tmp_path / 'dir~3aone' / 'new').write_bytes(b'new')
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+    assert (tmp_path / 'dir~3aone/new').read_bytes() == b'new'
+    assert (tmp_path / 'link').readlink().as_posix() == 'dir~3aone/file~3aone'
+
+
+@pytest.mark.parametrize(('first', 'second'), [('Fix.patch', 'fix.patch'), ('a:b.patch', 'a~3ab.patch')])
+def test_sanitize_paths_collision_is_atomic(dist_git_module, tmp_path: Path, first: str, second: str) -> None:
+    (tmp_path / first).write_bytes(b'one')
+    (tmp_path / second).write_bytes(b'two')
+    (tmp_path / 'unsafe:name').write_bytes(b'three')
+    with pytest.raises(ValueError, match='Portable path collision'):
+        dist_git_module.sanitize_package_paths(tmp_path)
+    assert (tmp_path / 'unsafe:name').read_bytes() == b'three'
+
+
+def test_sanitize_paths_command_dry_run(dist_git_module, workdir: Path) -> None:
+    package = workdir / 'rpms' / 'test'
+    package.mkdir()
+    (package / 'fix:one.patch').write_bytes(b'patch')
+    metadata = {'version': '1', 'modification_status': 'independent'}
+    metadata_path = workdir / 'metadata' / 'test.json'
+    metadata_path.write_text(json.dumps(metadata))
+    run_dist_git(dist_git_module, workdir, '--dry-run', 'sanitize-paths', '--all')
+    assert (package / 'fix:one.patch').exists()
+    assert json.loads(metadata_path.read_text()) == metadata
+    run_dist_git(dist_git_module, workdir, 'sanitize-paths', 'test')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'patch'
+    assert json.loads(metadata_path.read_text()) == metadata
+
+
+def test_check_paths_rejects_windows_paths(dist_git_module, tmp_path: Path) -> None:
+    with patch.object(dist_git_module, 'run_git') as git:
+        git.return_value.stdout = 'good/file\0bad/name:one\0CON.txt\0Case/file\0case/other\0'
+        with pytest.raises(SystemExit, match='Paths incompatible with Windows') as error:
+            dist_git_module.check_paths()
+        assert 'bad/name:one' in str(error.value)
+        assert 'CON.txt' in str(error.value)
+        assert 'collides with' in str(error.value)
+        git.return_value.stdout = 'good/file\0good/other\0'
+        dist_git_module.check_paths()
+
+
+def test_import_update_and_merge_portable_paths(workdir: Path, upstream_repos: dict[str, Path], dist_git_module, monkeypatch) -> None:
+    monkeypatch.chdir(workdir)
+    upstream = upstream_repos['chocolate']
+    spec = upstream / 'chocolate.spec'
+    spec.write_text(spec.read_text().replace('Summary:', 'Patch: fix:one.patch\nSummary:'))
+    (upstream / '.gitignore').write_text('*.patch\n')
+    (upstream / 'fix:one.patch').write_bytes(b'upstream patch\n')
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=upstream, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add colon patch'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'lookup_anitya_project_id', return_value=None):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+    package = workdir / 'rpms' / 'chocolate'
+    assert (package / 'fix~3aone.patch').read_bytes() == b'upstream patch\n'
+    metadata = json.loads((workdir / 'metadata' / 'chocolate.json').read_text())
+    assert dist_git_module.is_package_unmodified('chocolate', metadata, upstream)
+    assert dist_git_module.diff_package('chocolate', capture=True) == ''
+    assert dist_git_module.diff_package('chocolate', capture=True, raw=True)
+    (package / 'local:fix.patch').write_bytes(b'local patch\n')
+    local_spec = package / 'chocolate.spec'
+    local_spec.write_text(local_spec.read_text().replace('Summary:', 'Patch1: local:fix.patch\nSummary:'))
+    run_dist_git(dist_git_module, workdir, 'mark-modified', 'chocolate', '--modified', '--reason', 'Local patch')
+    run_dist_git(dist_git_module, workdir, 'sanitize-paths', 'chocolate')
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Local patch'], cwd=workdir, check=True)
+    (upstream / 'fix:one.patch').write_bytes(b'new upstream patch\n')
+    subprocess.run(['git', 'add', 'fix:one.patch'], cwd=upstream, check=True)
+    add_upstream_commit(upstream, 'chocolate', '10', '11')
+    run_dist_git(dist_git_module, workdir, 'update', 'chocolate', '--skip-build-check')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'new upstream patch\n'
+    assert (package / 'local~3afix.patch').read_bytes() == b'local patch\n'
+    assert 'Patch1: local~3afix.patch' in local_spec.read_text()
+    assert not (package / 'fix:one.patch').exists()
+    metadata = json.loads((workdir / 'metadata' / 'chocolate.json').read_text())
+    assert metadata['modification_status'] == 'modified'
+    run_dist_git(dist_git_module, workdir, 'sync', 'chocolate', '--ref', 'HEAD~1')
+    assert (package / 'fix~3aone.patch').read_bytes() == b'upstream patch\n'
+    assert not (package / 'local~3afix.patch').exists()
+    assert dist_git_module.is_package_unmodified('chocolate', dist_git_module.imports['chocolate'], upstream)
+
+
+def test_sanitize_macro_patch_declaration(dist_git_module, tmp_path: Path) -> None:
+    (tmp_path / 'fix:1.patch').write_bytes(b'patch')
+    original = ('Version: 1\nPatch: fix:%{version}.patch\n'
+                'Patch1: https://example.org/fix:%{version}.patch\n')
+    spec = tmp_path / 'test.spec'
+    spec.write_text(original)
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+    assert 'Patch: fix~3a%{version}.patch' in spec.read_text()
+    assert 'https://example.org/fix:%{version}.patch#/fix~3a%{version}.patch' in spec.read_text()
+    assert mapping['fix:1.patch'] == 'fix~3a1.patch'
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+@pytest.mark.parametrize(('filename', 'reference', 'portable', 'rewritten'), [
+    ('CON.patch', 'CON%{empty}.patch', '~43ON.patch', '~43ON%{empty}.patch'),
+    ('CON1.patch', 'CON%{version}.patch', 'CON1.patch', 'CON%{version}.patch'),
+    ('CON1:fix.patch', 'CON%{version}:fix.patch', 'CON1~3afix.patch', 'CON%{version}~3afix.patch'),
+    ('CON.1.patch', 'CON.%{version}.patch', '~43ON.1.patch', '~43ON.%{version}.patch'),
+])
+def test_sanitize_reserved_macro_patch_declaration(
+        dist_git_module, tmp_path: Path, filename: str, reference: str,
+        portable: str, rewritten: str) -> None:
+    payload = b'unchanged patch payload'
+    (tmp_path / filename).write_bytes(payload)
+    spec = tmp_path / 'test.spec'
+    spec.write_text(f'Patch: {reference}\nPatch1: https://example.org/{reference}\n')
+
+    mapping = dist_git_module.sanitize_package_paths(tmp_path)
+
+    assert mapping == ({filename: portable} if filename != portable else {})
+    url = f'https://example.org/{reference}'
+    if filename != portable:
+        url += '#/' + rewritten
+    assert spec.read_text() == f'Patch: {rewritten}\nPatch1: {url}\n'
+    assert (tmp_path / portable).read_bytes() == payload
+    assert dist_git_module.sanitize_package_paths(tmp_path) == {}
+
+
+def test_sanitize_ambiguous_reserved_macro_is_atomic(dist_git_module, tmp_path: Path) -> None:
+    (tmp_path / 'CON.patch').write_bytes(b'reserved patch')
+    (tmp_path / 'CON1.patch').write_bytes(b'valid patch')
+    spec = tmp_path / 'test.spec'
+    original = 'Patch: CON%{version}.patch\n'
+    spec.write_text(original)
+
+    with pytest.raises(ValueError, match='Ambiguous reserved filename'):
+        dist_git_module.sanitize_package_paths(tmp_path)
+
+    assert spec.read_text() == original
+    assert (tmp_path / 'CON.patch').read_bytes() == b'reserved patch'
+    assert (tmp_path / 'CON1.patch').read_bytes() == b'valid patch'

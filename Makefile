@@ -67,6 +67,7 @@ check-conflict-markers-host:
 
 .PHONY: check-host check
 check-host:
+	./ci/dist_git.py check-paths
 	git ls-files -z 'ci/*.sh' | xargs -0 shellcheck --external-sources --enable=all
 	git ls-files -z 'ci/*.py' 'test/*.py' '.agents/skills/**/*.py' | xargs -0 -r ruff check
 	git ls-files -z 'ci/*.py' 'test/*.py' '.agents/skills/**/*.py' | xargs -0 -r mypy
