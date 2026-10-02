@@ -1,0 +1,7 @@
+{
+  "modification_status": "independent",
+  "release_monitoring_project_id": 18356,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/prometheus/blackbox_exporter",
+  "version": "0.28.0"
+}

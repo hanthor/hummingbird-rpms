@@ -124,6 +124,8 @@ spec:
           contentType: rpm
         - name: binutils-main
           contentType: rpm
+        - name: blackbox-exporter-main
+          contentType: rpm
         - name: boost-main
           contentType: rpm
         - name: bootc-main
