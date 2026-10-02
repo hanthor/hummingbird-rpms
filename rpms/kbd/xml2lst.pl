@@ -20,9 +20,14 @@ parse('', $doc);
 for $i (@layouts) {
    ($name) = node_by_name($i, 'name');
    @variants = node_by_name($i, '../variantList/variant/configItem');
-   for $v (@variants) {
-      ($variant) = node_by_name($v, 'name');
-      printf("%s %s\n", text_child($name), text_child($variant));
+   if (@variants) {
+      for $v (@variants) {
+         ($variant) = node_by_name($v, 'name');
+         printf("%s %s\n", text_child($name), text_child($variant));
+      }
+   }
+   else {
+      printf("%s\n", text_child($name));
    }
 }
 
