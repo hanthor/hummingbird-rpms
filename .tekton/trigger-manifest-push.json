@@ -161,6 +161,9 @@
       "containers-common--rpms": [
         "^rpms/containers\\-common/"
       ],
+      "coredns--rpms": [
+        "^rpms/coredns/"
+      ],
       "coreutils--rpms": [
         "^rpms/coreutils/"
       ],

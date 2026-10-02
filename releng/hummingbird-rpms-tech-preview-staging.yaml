@@ -187,6 +187,8 @@ spec:
           contentType: rpm
         - name: containers-common-main
           contentType: rpm
+        - name: coredns-main
+          contentType: rpm
         - name: coreutils-main
           contentType: rpm
         - name: cosign-main

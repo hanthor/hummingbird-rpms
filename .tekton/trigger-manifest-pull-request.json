@@ -213,6 +213,10 @@
         "^rpms/containers\\-common/",
         "^test/rpms/containers\\-common\\.yml$"
       ],
+      "coredns--rpms": [
+        "^rpms/coredns/",
+        "^test/rpms/coredns\\.yml$"
+      ],
       "coreutils--rpms": [
         "^rpms/coreutils/",
         "^test/rpms/coreutils\\.yml$"
