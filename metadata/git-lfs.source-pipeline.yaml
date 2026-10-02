@@ -1,0 +1,41 @@
+fetch:
+  # The checkout supplies gorget's built-in vendor step. Keep the signed
+  # release archive separate because %prep verifies its upstream checksum.
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "v${VERSION}"
+    archive_name: "${PACKAGE}-${VERSION}-git-source.tar.gz"
+  - type: spec-source
+    index: 0
+  - type: spec-source
+    index: 2
+    rename: "sha256sums-${VERSION}.asc"
+  - type: spec-source
+    index: 3
+    rename: "core-gpg-keys.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: go
+    archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+
+publish:
+  files:
+    - "${PACKAGE}-v${VERSION}.tar.gz"
+    - "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    - "sha256sums-${VERSION}.asc"
+    - "core-gpg-keys.tar.gz"
+
+accepted-checksums:
+  - file: "git-lfs-3.8.0-vendor.tar.bz2"
+    checksum: "472cdf9b26fd3b606a5397a0718f404cb7aad25cebb145d016fe5b20a26de759652807f7e79ba4f30c9cef65b460df4b12ba6b981bdcee99616b9f4092980706"
+    reason: >-
+      Regenerated with gorget's built-in Go vendor step from upstream tag
+      v3.8.0 and the package's go-vendor-tools.toml. The signed upstream
+      release archive remains unchanged.
+  - file: "core-gpg-keys.tar.gz"
+    checksum: "489476721d6b84e01d1b975db58f6422f612ebf4b86d620ca0c6c59e151cd51dc4a8d32d98820288956926690d08733345060c3863860100faeb00aa86e2e8ef"
+    reason: >-
+      GitHub regenerated the archive for the same core-gpg-keys commit
+      f79789e. Compared with the previously published Fedora lookaside
+      archive, keys.asc is byte-identical.

@@ -160,6 +160,9 @@ gettext:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+git-lfs:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 git-sync:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
