@@ -15,8 +15,8 @@
 %global selinux_policy_version 41.41
 
 Name:		passt
-Version:	0^20260925.gdf90211
-Release:	1%{?dist}
+Version:	2026_09_25.df90211
+Release:	0.1%{?dist}
 Summary:	User-mode networking daemons for virtual machines and namespaces
 License:	GPL-2.0-or-later AND BSD-3-Clause
 Group:		System Environment/Daemons
