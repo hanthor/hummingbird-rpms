@@ -1,7 +1,7 @@
-From af4e864805feef1a6431bde880ddb6b09c5f1a1f Mon Sep 17 00:00:00 2001
+From 7fe14c824191527138ab4e6a6f0bf2fa49e4555d Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:17 +0100
-Subject: [PATCH 13/57] RH: version aliasing
+Subject: [PATCH 13/58] RH: version aliasing
 
 Patch-name: 0116-version-aliasing.patch
 Patch-id: 116
@@ -53,10 +53,10 @@ index 109412b342..b4cfe2b809 100644
      EVP_CIPHER_CTX *out = EVP_CIPHER_CTX_new();
  
 diff --git a/test/recipes/01-test_symbol_presence.t b/test/recipes/01-test_symbol_presence.t
-index 79a5584099..a70ebef431 100644
+index 46a55c6b99..3a6ef96b91 100644
 --- a/test/recipes/01-test_symbol_presence.t
 +++ b/test/recipes/01-test_symbol_presence.t
-@@ -133,6 +133,7 @@ foreach (sort keys %stlibname) {
+@@ -136,6 +136,7 @@ foreach (sort keys %stlibname) {
                    s| .*||;
                    # Drop OpenSSL dynamic version information if there is any
                    s|\@\@.+$||;

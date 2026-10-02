@@ -1,7 +1,7 @@
-From d6b81a69dfbf084b4dcb1405eb109caaee18569d Mon Sep 17 00:00:00 2001
+From d4d4973c8931fd1b0f39139050734cc835da5731 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 17 Jul 2025 09:40:34 -0400
-Subject: [PATCH 55/57] Add a define to disable symver attributes
+Subject: [PATCH 55/58] Add a define to disable symver attributes
 
 Defininig RHEL_NO_SYMVER_ATTRIBUTES for a build now prevents adding
 compatibility symver attributes.

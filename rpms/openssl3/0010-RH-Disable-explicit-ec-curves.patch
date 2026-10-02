@@ -1,7 +1,7 @@
-From 1c73ee172cf5c48088b0f939dc75f3ce9d9f525a Mon Sep 17 00:00:00 2001
+From a90d73cd16e62ec77bfe8e986516fdd485a431b5 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 10/57] RH: Disable explicit ec curves
+Subject: [PATCH 10/58] RH: Disable explicit ec curves
 
 Patch-name: 0012-Disable-explicit-ec.patch
 Patch-id: 12
@@ -228,10 +228,10 @@ index 64701d32b8..93347bed40 100644
      FREE_DOMAIN_KEYS(ECExplicitTri2G);
  #endif
 diff --git a/test/recipes/30-test_evp_data/evppkey_ecdsa.txt b/test/recipes/30-test_evp_data/evppkey_ecdsa.txt
-index 07dc4b4298..4c47fa68c2 100644
+index 3667e269a1..89ed9fa7f8 100644
 --- a/test/recipes/30-test_evp_data/evppkey_ecdsa.txt
 +++ b/test/recipes/30-test_evp_data/evppkey_ecdsa.txt
-@@ -133,18 +133,6 @@ AAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgiUTxtr5vLVjj
+@@ -137,18 +137,6 @@ AAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgiUTxtr5vLVjj
  3ev1gTwRBduzqqlwd54AUSgI+pjttW8zrWNitO8H1sf59MPWOESKxNtZ1+Nl
  -----END PRIVATE KEY-----
  

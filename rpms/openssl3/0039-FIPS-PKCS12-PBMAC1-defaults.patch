@@ -1,7 +1,7 @@
-From 2bbf046d3610da70df48eafd372f7742b2f665e3 Mon Sep 17 00:00:00 2001
+From aa442e6b06a84670986ead0ceada8cf3c1e24322 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 13 Feb 2025 18:16:29 -0500
-Subject: [PATCH 39/57] FIPS: PKCS12: PBMAC1 defaults
+Subject: [PATCH 39/58] FIPS: PKCS12: PBMAC1 defaults
 
 From-dist-git-commit: 8fc2d4842385584094d57f6f66fcbc2a07865708
 ---

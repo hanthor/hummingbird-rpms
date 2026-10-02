@@ -1,7 +1,7 @@
-From 7f7ac4e921f70a9cad079ca9475561f355c085bf Mon Sep 17 00:00:00 2001
+From 955201c80e1add99ef6cabd48ba4b74306abe81e Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:14 +0100
-Subject: [PATCH 03/57] RH: Do not install html docs
+Subject: [PATCH 03/58] RH: Do not install html docs
 
 Patch-name: 0003-Do-not-install-html-docs.patch
 Patch-id: 3

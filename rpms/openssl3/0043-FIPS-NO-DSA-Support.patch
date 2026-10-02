@@ -1,7 +1,7 @@
-From f56be05d41df23c0d87b4090730f9acbd12829db Mon Sep 17 00:00:00 2001
+From 922f94f8f22482d0436ae269410da8da911502f0 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Fri, 7 Mar 2025 18:10:52 -0500
-Subject: [PATCH 43/57] FIPS: NO DSA Support
+Subject: [PATCH 43/58] FIPS: NO DSA Support
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---
@@ -83,10 +83,10 @@ index 4a0ce24cbb..84b0b1c5c1 100644
  #ifndef OPENSSL_NO_ML_DSA
      {
 diff --git a/test/acvp_test.c b/test/acvp_test.c
-index 15c87c57a7..e3321874c2 100644
+index 8e6a8b4a5c..1224d5a762 100644
 --- a/test/acvp_test.c
 +++ b/test/acvp_test.c
-@@ -1749,6 +1749,7 @@ int setup_tests(void)
+@@ -1808,6 +1808,7 @@ int setup_tests(void)
          OSSL_NELEM(dh_safe_prime_keyver_data));
  #endif /* OPENSSL_NO_DH */
  
@@ -94,7 +94,7 @@ index 15c87c57a7..e3321874c2 100644
  #ifndef OPENSSL_NO_DSA
      dsasign_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
      ADD_ALL_TESTS(dsa_keygen_test, OSSL_NELEM(dsa_keygen_data));
-@@ -1757,6 +1758,7 @@ int setup_tests(void)
+@@ -1816,6 +1817,7 @@ int setup_tests(void)
      ADD_ALL_TESTS(dsa_siggen_test, OSSL_NELEM(dsa_siggen_data));
      ADD_ALL_TESTS(dsa_sigver_test, OSSL_NELEM(dsa_sigver_data));
  #endif /* OPENSSL_NO_DSA */
@@ -152,10 +152,10 @@ index fd8842b867..64935ca824 100644
 diff --git a/test/recipes/30-test_evp.t b/test/recipes/30-test_evp.t
 old mode 100644
 new mode 100755
-index a86456157b..05a61c8abe
+index 474a9f83a9..51764cc8e7
 --- a/test/recipes/30-test_evp.t
 +++ b/test/recipes/30-test_evp.t
-@@ -83,10 +83,6 @@ push @files, qw(
+@@ -85,10 +85,6 @@ push @files, qw(
                  evppkey_slh_dsa_siggen.txt
                  evppkey_slh_dsa_sigver.txt
                 ) unless $no_slh_dsa;
@@ -166,7 +166,7 @@ index a86456157b..05a61c8abe
  push @files, qw(
                  evppkey_ecx.txt
                  evppkey_ecx_sigalg.txt
-@@ -166,11 +162,12 @@ my @defltfiles = qw(
+@@ -170,11 +166,12 @@ my @defltfiles = qw(
  push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
  push @defltfiles, qw(evppkey_ecdsa_rfc6979.txt) unless $no_ec;
  push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;

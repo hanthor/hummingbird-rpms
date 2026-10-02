@@ -1,7 +1,7 @@
-From 365f4de8ff84e3dc77551a0038652bb7973a18f2 Mon Sep 17 00:00:00 2001
+From 99ada5999ec2489a44aff350cd1a091799027fbf Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 13 Feb 2025 16:09:09 -0500
-Subject: [PATCH 14/57] RH: Export two symbols for OPENSSL_str[n]casecmp
+Subject: [PATCH 14/58] RH: Export two symbols for OPENSSL_str[n]casecmp
 
 We accidentally exported the symbols with the incorrect verison number
 in an early version of RHEL-9 so we need to keep the wrong symbols for
@@ -77,10 +77,10 @@ index 154393c7b3..b221ba789e 100644
 diff --git a/test/recipes/01-test_symbol_presence.t b/test/recipes/01-test_symbol_presence.t
 old mode 100644
 new mode 100755
-index a70ebef431..a095239652
+index 3a6ef96b91..357f1a0743
 --- a/test/recipes/01-test_symbol_presence.t
 +++ b/test/recipes/01-test_symbol_presence.t
-@@ -188,7 +188,7 @@ foreach (sort keys %stlibname) {
+@@ -191,7 +191,7 @@ foreach (sort keys %stlibname) {
      }
  }
  my @duplicates = sort grep { $symbols{$_} > 1 } keys %symbols;

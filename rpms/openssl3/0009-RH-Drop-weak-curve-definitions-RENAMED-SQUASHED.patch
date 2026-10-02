@@ -1,7 +1,7 @@
-From abb90da4c709dab8c919dde2f73d5643da95a332 Mon Sep 17 00:00:00 2001
+From 54892e1a045ce95de203e320b22b434be3a881d1 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 09/57] RH: Drop weak curve definitions - RENAMED/SQUASHED
+Subject: [PATCH 09/58] RH: Drop weak curve definitions - RENAMED/SQUASHED
 
 Patch-name: 0010-Add-changes-to-ectest-and-eccurve.patch
 Patch-id: 10

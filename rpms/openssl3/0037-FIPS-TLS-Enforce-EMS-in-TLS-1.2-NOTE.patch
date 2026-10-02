@@ -1,7 +1,7 @@
-From 8a8136eaa70356abf2ea095e10dfb4f0ed6ea2d6 Mon Sep 17 00:00:00 2001
+From b80abc2e67a9b85a86fce7459dc7cfe87da5b9fb Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:17 +0100
-Subject: [PATCH 37/57] FIPS: TLS: Enforce EMS in TLS 1.2 - NOTE
+Subject: [PATCH 37/58] FIPS: TLS: Enforce EMS in TLS 1.2 - NOTE
 
 NOTE: Enforcement of EMS in non-FIPS mode has been dropped due to code
 change the option to enforce it seem to be available only in FIPS build
@@ -177,7 +177,7 @@ index 50944328cb..edb2e81273 100644
  KDF = TLS1-PRF
  Ctrl.digest = digest:SHA256
 diff --git a/test/sslapitest.c b/test/sslapitest.c
-index f0aeaf8b89..1873b4ab83 100644
+index 856a46536b..7eddb26b46 100644
 --- a/test/sslapitest.c
 +++ b/test/sslapitest.c
 @@ -582,7 +582,7 @@ static int test_client_cert_verify_cb(void)

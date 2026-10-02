@@ -1,7 +1,7 @@
-From df6335c8de7d4a81ac2a6d3c721d6236f11eb300 Mon Sep 17 00:00:00 2001
+From 936fda2553ede96ddedc21b3eab7773bdf7391f7 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Pavol=20=C5=BD=C3=A1=C4=8Dik?= <zacik.pa@gmail.com>
 Date: Tue, 19 Aug 2025 14:26:07 +0200
-Subject: [PATCH 56/57] Add targets to skip build of non-installable programs
+Subject: [PATCH 56/58] Add targets to skip build of non-installable programs
 
 These make it possible to split the build into two
 parts, e.g., when tests should be built with different

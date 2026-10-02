@@ -1,7 +1,7 @@
-From 9c744fee11aee9290b471b671f1205331928bc33 Mon Sep 17 00:00:00 2001
+From 051b0b4f49d85911bdb7a2f28dc4fa7a90e62ec4 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Wed, 21 Jan 2026 18:13:43 +0100
-Subject: [PATCH 57/57] Disable RSA-PKCS1.5 FIPS POST, not relevant for RHEL
+Subject: [PATCH 57/58] Disable RSA-PKCS1.5 FIPS POST, not relevant for RHEL
 
 ---
  providers/fips/self_test_kats.c | 4 ++--

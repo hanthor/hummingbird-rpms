@@ -1,7 +1,7 @@
-From 2ba303329dd0f2a156a7a586ae81634ac779f01a Mon Sep 17 00:00:00 2001
+From f5571dc354c75535afd3fd851bb54ab51a22f82a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <dbelyavs@redhat.com>
 Date: Mon, 21 Aug 2023 13:07:07 +0200
-Subject: [PATCH 16/57] RH: Allow disabling of SHA1 signatures
+Subject: [PATCH 16/58] RH: Allow disabling of SHA1 signatures
 
 Patch-name: 0049-Allow-disabling-of-SHA1-signatures.patch
 Patch-id: 49
@@ -398,7 +398,7 @@ index 48237d7eb9..64e677015e 100644
          if (md == NULL) {
              ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
 diff --git a/providers/implementations/signature/ecdsa_sig.c b/providers/implementations/signature/ecdsa_sig.c
-index 3ce4cd0d2a..758b11210e 100644
+index 3cbceed8a2..1d5731449e 100644
 --- a/providers/implementations/signature/ecdsa_sig.c
 +++ b/providers/implementations/signature/ecdsa_sig.c
 @@ -197,13 +197,15 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
@@ -421,7 +421,7 @@ index 3ce4cd0d2a..758b11210e 100644
      if (EVP_MD_xof(md)) {
          ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
 diff --git a/providers/implementations/signature/rsa_sig.c b/providers/implementations/signature/rsa_sig.c
-index 4980474ac0..c92e7ca6ef 100644
+index e29a065657..bf34664fba 100644
 --- a/providers/implementations/signature/rsa_sig.c
 +++ b/providers/implementations/signature/rsa_sig.c
 @@ -26,6 +26,7 @@
@@ -450,7 +450,7 @@ index 4980474ac0..c92e7ca6ef 100644
              ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                  "digest=%s", mdname);
              goto err;
-@@ -1785,8 +1788,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
+@@ -1786,8 +1789,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
      prsactx->pad_mode = pad_mode;
  
      if (prsactx->md == NULL && pmdname == NULL

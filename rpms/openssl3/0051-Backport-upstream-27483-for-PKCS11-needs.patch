@@ -1,7 +1,7 @@
-From f5f2478cf04960619344dcbe647fb699ed621a6c Mon Sep 17 00:00:00 2001
+From 115b2b8c56f3cde793ea6464682516c9ca1eb04a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 12 May 2025 14:34:39 +0200
-Subject: [PATCH 51/57] Backport upstream #27483 for PKCS11 needs
+Subject: [PATCH 51/58] Backport upstream #27483 for PKCS11 needs
 
 ---
  .../implementations/skeymgmt/aes_skmgmt.c     |  2 +

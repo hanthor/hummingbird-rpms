@@ -1,7 +1,7 @@
-From ac6d6209d562fe7f4845b8d685336fc027635bb6 Mon Sep 17 00:00:00 2001
+From 1d795f62dff5c443cf340823f7ab755b330f5ef9 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 9 May 2025 15:09:46 +0200
-Subject: [PATCH 50/57] Make `openssl speed` run in FIPS mode
+Subject: [PATCH 50/58] Make `openssl speed` run in FIPS mode
 
 ---
  apps/speed.c | 44 ++++++++++++++++++++++----------------------

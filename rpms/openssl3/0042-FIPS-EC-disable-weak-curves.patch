@@ -1,7 +1,7 @@
-From fc9f1fdf78d78e2628e1a407a11dfdc4535e80f4 Mon Sep 17 00:00:00 2001
+From 89256f7228f47891d3abce828491401adac1c358 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Fri, 7 Mar 2025 18:06:36 -0500
-Subject: [PATCH 42/57] FIPS: EC: disable weak curves
+Subject: [PATCH 42/58] FIPS: EC: disable weak curves
 
 Signed-off-by: Simo Sorce <simo@redhat.com>
 ---

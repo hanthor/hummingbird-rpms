@@ -1,7 +1,7 @@
-From c607becfce55f1b62e8afc0ceebeab08e193036f Mon Sep 17 00:00:00 2001
+From 6f05fb2be515b2363436376a5ca1ebc8ba2d46c4 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:15 +0100
-Subject: [PATCH 11/57] RH: skipped tests EC curves
+Subject: [PATCH 11/58] RH: skipped tests EC curves
 
 Patch-name: 0013-skipped-tests-EC-curves.patch
 Patch-id: 13

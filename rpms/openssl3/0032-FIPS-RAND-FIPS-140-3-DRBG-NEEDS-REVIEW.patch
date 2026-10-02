@@ -1,7 +1,7 @@
-From a0493c058ee5d891f7d61b35b131f722c5d81d87 Mon Sep 17 00:00:00 2001
+From efa924558db0986cbd7f800a3eb54434d654ea7f Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:16 +0100
-Subject: [PATCH 32/57] FIPS: RAND: FIPS-140-3 DRBG - NEEDS REVIEW
+Subject: [PATCH 32/58] FIPS: RAND: FIPS-140-3 DRBG - NEEDS REVIEW
 
 providers/implementations/rands/crngt.c is gone
 

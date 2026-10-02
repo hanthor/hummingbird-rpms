@@ -1,7 +1,7 @@
-From e062487edbdcf3fdb05de59f1926899dfe6997eb Mon Sep 17 00:00:00 2001
+From 8ef95d527e4c275c8e86544533141141770de927 Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:17 +0100
-Subject: [PATCH 25/57] FIPS: RSA: encapsulate limits
+Subject: [PATCH 25/58] FIPS: RSA: encapsulate limits
 
 Patch-name: 0091-FIPS-RSA-encapsulate.patch
 Patch-id: 91

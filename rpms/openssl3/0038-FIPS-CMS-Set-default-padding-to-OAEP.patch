@@ -1,7 +1,7 @@
-From c341480581a25da55196ba0b466ffad50d08ee34 Mon Sep 17 00:00:00 2001
+From e09115a1ac1345a97f19821610ec1feaa6898fde Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 13 Feb 2025 18:08:34 -0500
-Subject: [PATCH 38/57] FIPS: CMS: Set default padding to OAEP
+Subject: [PATCH 38/58] FIPS: CMS: Set default padding to OAEP
 
 From-dist-git-commit: d508cbed930481c1960d6a6bc1e1a9593252dbbe
 ---
