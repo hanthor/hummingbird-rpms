@@ -70,6 +70,9 @@ cloud-init:
 composer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+coredns:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 cosign:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
