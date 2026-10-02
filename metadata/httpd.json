@@ -1,7 +1,7 @@
 {
   "branch": "rawhide",
   "cve_product": "Apache Software Foundation / Apache HTTP Server",
-  "modification_reason": "Wrap ssl.conf Listen/VirtualHost in IfFile for graceful startup without certs",
+  "modification_reason": "Wrap ssl.conf Listen/VirtualHost in IfFile for graceful startup without certs; disable mod_mime_libmagic for minimal Hummingbird containers",
   "modification_status": "modified",
   "release": "1",
   "release_monitoring_project_id": 387502,

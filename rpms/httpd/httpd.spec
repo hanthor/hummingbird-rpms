@@ -16,7 +16,8 @@
 %bcond engine %[0%{?fedora} < 41 && 0%{?rhel} < 10]
 %bcond worker %[0%{?fedora} < 44 && 0%{?rhel} < 11]
 %bcond wstunnel %[0%{?fedora} < 45 && 0%{?rhel} < 11]
-%bcond libmagic %[0%{?fedora} > 44 || 0%{?rhel} > 10]
+# Keep libmagic disabled for Hummingbird's minimal container distribution.
+%bcond libmagic %[(0%{?fedora} > 44 || 0%{?rhel} > 10) && !0%{?hummingbird}]
 
 %if %{with worker}
 %global mpms event prefork worker
