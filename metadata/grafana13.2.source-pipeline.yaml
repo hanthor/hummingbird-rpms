@@ -15,35 +15,7 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression.patch"
-        # CVE-2026-76172, CVE-2026-75975, CVE-2026-75931, CVE-2026-75899: bump
-        # vendored fast-uri to 3.1.6. Must be applied here too, or the offline
-        # yarn cache this step generates goes stale on the next version bump.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.6.patch"
-        # CVE-2026-82562, CVE-2026-82417: bump vendored qs to 6.16.0. Must be
-        # applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-qs-6.16.0.patch"
-        # CVE-2026-84375: bump vendored js-yaml to 3.15.2 and 4.3.2.
-        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
-        # CVE-2026-84394, CVE-2026-84292: bump vendored fast-uri to 3.1.7.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7.patch"
-        # Match the spec's patch order: the later axios patch expects the Joi
-        # resolutions, and the offline cache must contain both patched versions.
-        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
-        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
-        # CVE-2026-86472: bump vendored fast-uri 3.1.7 -> 3.1.8.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
-        # CVE-2026-93981: bump vendored hono 4.12.34 -> 4.13.7.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.7-cve.patch"
-        # CVE-2026-101903: bump vendored axios 1.18.1 -> 1.20.0.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" "$PWD"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to

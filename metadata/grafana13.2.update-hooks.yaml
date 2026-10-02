@@ -1,7 +1,11 @@
 # Fetch/vendor/yarn-cache generation is handled by gorget (see
 # metadata/grafana13.2.source-pipeline.yaml). This just refreshes the
-# bundled npm Provides block afterward, which needs write access to the
-# spec file that gorget's sandboxed run: steps don't have.
+# bundled npm Provides block from the same patched source tree afterward.
 post_update: |
   set -euo pipefail
-  ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}"
+  provides_workdir=$(mktemp -d)
+  trap 'rm -rf "${provides_workdir}"' EXIT
+  tar -xf "grafana-${UPDATE_NEW_VERSION}.tar.gz" -C "${provides_workdir}"
+  source_dir="${provides_workdir}/grafana-${UPDATE_NEW_VERSION}"
+  bash ./prepare-yarn-cache-source.sh "${source_dir}"
+  ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}" "${source_dir}"

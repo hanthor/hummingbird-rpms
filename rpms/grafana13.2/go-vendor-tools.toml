@@ -1,7 +1,9 @@
 [archive]
 # CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
 # API, so they must move together; bumping otlploggrpc alone leaves the siblings
-# calling symbols that no longer exist. Keep in sync with grafana-otlplog-cve.patch.
+# calling symbols that no longer exist. Grafana 13.2.3 already carries these
+# versions upstream; the commands remain idempotent. Keep any module changes
+# in sync with grafana-otlplog-cve.patch.
 pre_commands = [
   [
     "go", "get",

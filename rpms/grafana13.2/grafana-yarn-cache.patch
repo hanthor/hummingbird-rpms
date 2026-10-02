@@ -2,7 +2,7 @@ diff --git a/.yarnrc.yml b/.yarnrc.yml
 index 78c709f..2c9b76f 100644
 --- a/.yarnrc.yml
 +++ b/.yarnrc.yml
-@@ -4,9 +4,21 @@
+@@ -4,8 +4,20 @@
 
  compressionLevel: mixed
 

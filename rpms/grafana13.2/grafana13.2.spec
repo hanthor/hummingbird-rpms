@@ -39,9 +39,9 @@ Patch7:         grafana-fast-uri-3.1.7.patch
 # Generated against the post-Patch7 lockfile. Bumps vendored joi
 # 17.13.3 -> 17.13.8 and joi 18.2.1 -> 18.2.9 for CVE-2026-90771.
 Patch8:         grafana-joi-cve.patch
-# Update the OTLP log exporters to v0.21.0 for CVE-2026-81871. Also bumps the
-# apps/quotas workspace module, which otherwise keeps requiring v0.19.0 and
-# leaves a stale entry in the vendor archive's modules.txt.
+# Grafana 13.2.3 includes the OTLP v0.21.0 fix for CVE-2026-81871.
+# Keep this dependency patch in sync with go-vendor-tools.toml: bump the
+# go-openapi/swag modules to v0.27.1 for CVE-2026-93450.
 Patch9:         grafana-otlplog-cve.patch
 # Generated against the post-Patch9 lockfile. Bumps vendored DOMPurify
 # 3.4.12 -> 3.4.13 (CVE-2026-75838).
