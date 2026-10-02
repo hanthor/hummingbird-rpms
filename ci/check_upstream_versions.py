@@ -78,6 +78,7 @@ from typing import Callable, Optional
 import requests
 import sentry_sdk
 import workqueue_submit
+from package_paths import portable_component, sanitize_package_paths
 import yaml
 
 # Try to import rpm for version comparison; fall back to packaging if unavailable
@@ -1285,6 +1286,8 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
         env = _build_hook_env(package, old_version, new_version)
         _run_hook("post_update", hooks.post_update, package, env)
 
+    sanitize_package_paths(package_dir)
+
     _check_updated_patches(package)
 
     # --- Metadata bookkeeping ------------------------------------------------
@@ -2033,10 +2036,22 @@ def _build_workqueue_file_actions(
         ],
         root=ROOT_DIR,
     )
+    changed = run_git("ls-files", "-z", "--modified", "--others", "--exclude-standard",
+                      "--", f"rpms/{package}", cwd=ROOT_DIR).stdout.split('\0')
+    included = {action['file_path'] for action in actions}
+    actions.extend(workqueue_submit.file_action('update', path, ROOT_DIR / path)
+                   for path in dict.fromkeys(changed)
+                   if path and path not in included and (ROOT_DIR / path).is_file()
+                   and Path(path).name not in downloaded)
     deleted = run_git("ls-files", "--deleted", "--", f"rpms/{package}",
                       cwd=ROOT_DIR).stdout.splitlines()
-    actions.extend(workqueue_submit.file_action("delete", path)
-                   for path in deleted if path.endswith(".patch"))
+    actions.extend(workqueue_submit.file_action("delete", path) for path in deleted)
+    included = {action['file_path'] for action in actions}
+    for path in deleted:
+        portable = '/'.join(portable_component(part) for part in Path(path).parts)
+        if portable not in included and (ROOT_DIR / portable).is_file():
+            actions.append(workqueue_submit.file_action('update', portable, ROOT_DIR / portable))
+            included.add(portable)
     return actions
 
 

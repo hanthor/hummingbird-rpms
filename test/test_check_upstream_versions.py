@@ -3842,3 +3842,31 @@ def test_git_clone_env_private_repo_injects_config_rewrite(cuv_module) -> None:
         'url.https://oauth2:s3cr3t@gitlab.com/redhat/hummingbird/src/.insteadOf'
     )
     assert env['GIT_CONFIG_VALUE_0'] == 'https://gitlab.com/redhat/hummingbird/src/'
+
+
+def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, workdir: Path) -> None:
+    package = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    (package / '.gitignore').write_text('*.patch\n')
+    (package / 'old:fix.patch').write_bytes(b'old payload')
+    spec = package / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch: old:fix.patch\n%description'))
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Package'], cwd=workdir, check=True)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
+         patch.object(cuv_module, '_check_updated_patches'):
+        cuv_module.update_spec_version('pkg', '2.0')
+    assert (package / 'old~3afix.patch').read_bytes() == b'old payload'
+    assert 'Patch: old~3afix.patch' in spec.read_text()
+    metadata = json.loads((workdir / 'metadata' / 'pkg.json').read_text())
+    assert 'path_map' not in metadata
+    assert metadata['modification_status'] == 'independent'
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(action['action'] == 'delete' and action['file_path'] == 'rpms/pkg/old:fix.patch'
+               for action in actions)
+    assert any(action['action'] == 'update' and action['file_path'] == 'rpms/pkg/old~3afix.patch'
+               and action['content'] for action in actions)
