@@ -240,6 +240,11 @@ packages:
   - jq
   - json-c
   - jsoncpp
+  - kafka3.9
+  - kafka4.0
+  - kafka4.1
+  - kafka4.2
+  - kafka4.3
   - kde4-macros
   - kernel
   - kernel-headers

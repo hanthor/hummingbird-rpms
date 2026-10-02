@@ -1,0 +1,38 @@
+# Fetch the upstream git tag and vendor its Gradle dependency cache.
+# Gorget's Gradle backend vendors the wrapper distribution and dependency cache.
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "${VERSION}"
+    archive-name: "kafka-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: gradle
+    task: releaseTarGz
+    archive-name: "kafka-${VERSION}-gradle-vendor.tar.gz"
+
+post:
+  # Rebuild from the emitted inputs offline. This also gives us the precise
+  # runtime jar list, rather than all build/test dependencies in the cache.
+  - type: run
+    artifacts:
+      - "kafka-${VERSION}.tar.gz"
+      - "kafka-${VERSION}-gradle-vendor.tar.gz"
+    command:
+      - bash
+      - -c
+      - |
+        set -euo pipefail
+        work_dir=$(mktemp -d)
+        trap 'rm -rf "$work_dir"' EXIT
+        tar -xzf "kafka-${VERSION}.tar.gz" -C "$work_dir"
+        source_dir="$work_dir/kafka-${VERSION}"
+        tar -xzf "kafka-${VERSION}-gradle-vendor.tar.gz" -C "$source_dir"
+        export GRADLE_USER_HOME="$source_dir/vendor"
+        # The wrapper bootstraps its jar from the network before --offline applies.
+        gradle_bin=$(find "$GRADLE_USER_HOME/wrapper/dists" -path '*/bin/gradle' -type f)
+        test -x "$gradle_bin"
+        (cd "$source_dir" && "$gradle_bin" --offline --no-daemon --max-workers=4 releaseTarGz)
+        ./generate-bundled-provides.sh \
+          "$source_dir/core/build/distributions/kafka_2.13-${VERSION}.tgz"

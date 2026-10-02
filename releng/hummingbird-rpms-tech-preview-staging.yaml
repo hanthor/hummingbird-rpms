@@ -450,6 +450,16 @@ spec:
           contentType: rpm
         - name: k6v2-main
           contentType: rpm
+        - name: kafka3-9-main
+          contentType: rpm
+        - name: kafka4-0-main
+          contentType: rpm
+        - name: kafka4-1-main
+          contentType: rpm
+        - name: kafka4-2-main
+          contentType: rpm
+        - name: kafka4-3-main
+          contentType: rpm
         - name: kbd-main
           contentType: rpm
         - name: kernel-headers-main
