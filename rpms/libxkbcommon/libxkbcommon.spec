@@ -1,8 +1,8 @@
 %global tarball_name xkbcommon
 
 Name:           libxkbcommon
-Version:        1.13.1
-Release:        4%{?gitdate:.%{gitdate}}.1%{?dist}
+Version:        1.13.2
+Release:        0.1%{?dist}
 Summary:        X.Org X11 XKB parsing library
 License:        MIT AND X11 AND MIT-CMU
 URL:            http://www.x.org
@@ -110,6 +110,7 @@ Requires:       %{name}-utils%{?_isa} = %{version}-%{release}
 %{_libexecdir}/xkbcommon/xkbcli-dump-keymap
 %{_libexecdir}/xkbcommon/xkbcli-dump-keymap-wayland
 %{_libexecdir}/xkbcommon/xkbcli-how-to-type
+%{_libexecdir}/xkbcommon/xkbcli-info
 %{_libexecdir}/xkbcommon/xkbcli-interactive
 %{_libexecdir}/xkbcommon/xkbcli-interactive-evdev
 %{_libexecdir}/xkbcommon/xkbcli-interactive-wayland
@@ -118,6 +119,7 @@ Requires:       %{name}-utils%{?_isa} = %{version}-%{release}
 %{_mandir}/man1/xkbcli-compile-keymap.1.gz
 %{_mandir}/man1/xkbcli-dump-keymap-wayland.1.gz
 %{_mandir}/man1/xkbcli-how-to-type.1.gz
+%{_mandir}/man1/xkbcli-info.1.gz
 %{_mandir}/man1/xkbcli-interactive-evdev.1.gz
 %{_mandir}/man1/xkbcli-interactive-wayland.1.gz
 %{_mandir}/man1/xkbcli-list.1.gz

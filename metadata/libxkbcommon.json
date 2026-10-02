@@ -5,9 +5,10 @@
     "release": "4",
     "sha": "87c0d29da5312b74222b727f6d28b5834e8394f7"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.13.2",
+  "modification_status": "modified",
   "release_monitoring_project_id": 1780,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/xkbcommon/libxkbcommon",
-  "version": "1.13.1"
+  "version": "1.13.2"
 }
