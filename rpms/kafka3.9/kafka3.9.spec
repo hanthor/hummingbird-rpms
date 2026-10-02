@@ -17,7 +17,7 @@ Source2:        bundled-provides.inc
 
 BuildArch:      noarch
 
-BuildRequires:  java-25-openjdk-devel
+BuildRequires:  java-21-openjdk-devel
 
 Requires:       java-25-openjdk-headless
 
@@ -37,7 +37,7 @@ tar -xf %{SOURCE1}
 
 
 %build
-export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 export GRADLE_USER_HOME=$(pwd)/vendor
 
 # Kafka's wrapper downloads its jar even with --offline. Use the distribution
