@@ -1,14 +1,14 @@
 # comment out if no extra version
-%global extraver p2
+#%%global extraver p2
 
 Summary: Allows restricted root access for specified users
 Name: sudo
-Version: 1.9.17
+Version: 1.9.17p2
 # Remove "-b 3" after rebase !!!
 # use "-p -e % {?extraver}" when beta
 # use "-e % {?extraver}" when patch version
 # use nothing special when normal version
-Release:        16.p2.2%{?dist}
+Release: 0.1%{?dist}
 License: ISC
 URL: https://www.sudo.ws
 Source0: %{url}/dist/%{name}-%{version}%{?extraver}.tar.gz
