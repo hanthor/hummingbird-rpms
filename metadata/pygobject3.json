@@ -1,11 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
-  "release": "6",
+  "modification_reason": "Update to upstream version 3.58.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 13158,
   "sha": "2f607e80212f54f69fb720ba3404d570449898a1",
   "source": "https://src.fedoraproject.org/rpms/pygobject3.git",
   "track_upstream": "3",
   "upstream_repo": "https://gitlab.gnome.org/GNOME/pygobject",
-  "version": "3.57.1"
+  "version": "3.58.0"
 }
