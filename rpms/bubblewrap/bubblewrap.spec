@@ -1,6 +1,6 @@
 Name:    bubblewrap
-Version: 0.12.0
-Release: 1%{?dist}
+Version: 0.13.0
+Release: 0.1%{?dist}
 Summary: Core execution tool for unprivileged containers
 
 License: LGPL-2.1-or-later
