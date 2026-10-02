@@ -330,8 +330,10 @@ Every hook receives these environment variables:
 
 ### Example
 
-See [`metadata/nodejs25.update-hooks.yaml`](../../../metadata/nodejs25.update-hooks.yaml) for a
+See [`metadata/nodejs25.update-hooks.yaml`][nodejs25-hooks] for a
 working example that uses all three hook phases.
+
+[nodejs25-hooks]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/metadata/nodejs25.update-hooks.yaml
 
 ## How Auto-Updates Work
 
@@ -593,7 +595,7 @@ For CI and daily development, fast mode is sufficient. Use thorough mode when:
 
 ### Backporting a Patch
 
-1. Add patch file and modify spec (see [Rebuilding Packages](../rebuilding-packages))
+1. Add patch file and modify spec (see [Rebuilding Packages](rebuilding-packages.md))
 2. Commit the changes
 3. **Mark as modified:**
 
@@ -696,5 +698,5 @@ This is expected for modified packages. Options:
 
 - [Package Metadata Fields](package-metadata-fields.md) - `modification_status` and `release`
   configuration
-- [Rebuilding Packages](../rebuilding-packages) - How to rebuild and backport patches
-- [Updating Dist-git Packages](../updating-dist-git-packages) - How automatic updates work
+- [Rebuilding Packages](rebuilding-packages.md) - How to rebuild and backport patches
+- [Updating Dist-git Packages](updating-dist-git-packages.md) - How automatic updates work

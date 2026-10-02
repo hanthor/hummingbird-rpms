@@ -173,7 +173,7 @@ to only those matching the prefix. This means `check_upstream_versions.py check`
 When `--update` is used, the script updates the spec file, downloads new sources, and commits the
 result. Packages that need custom update logic can provide a hooks file at
 `metadata/<package>.update-hooks.yaml` to override the spec update, source download, or add a
-post-update step. See [Package Modification Tracking](../package-modification-tracking) for details.
+post-update step. See [Package Modification Tracking](package-modification-tracking.md) for details.
 
 ### Setting Up Version Constraints
 

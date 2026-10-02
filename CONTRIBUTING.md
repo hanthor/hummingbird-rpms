@@ -134,8 +134,12 @@ expect most packages to not have (permanent) Hummingbird specific changes, so mo
 syncing with upstream dist-gits. In most cases that will be Fedora rawhide, but for some packages we
 may pick a different upstream, e.g. stable Fedora or even CentOS Stream.
 
-The status of all imports is tracked in [imports.json](./imports.json). Active Fedora releases are
-tracked in [upstream-releases.json](./upstream-releases.json), which is updated from the Bodhi API.
+The status of all imports is tracked in [imports.json][imports-json]. Active Fedora releases are
+tracked in [upstream-releases.json][upstream-releases-json], which is updated from the Bodhi API.
+
+[imports-json]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/imports.json
+[upstream-releases-json]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/upstream-releases.json
+
 Note that `rawhide` is automatically resolved to the highest numbered Fedora release at runtime and
 is not stored in the JSON file.
 
