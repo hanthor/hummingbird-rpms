@@ -3,11 +3,11 @@
   "cve_product": "Apache Software Foundation / Apache HTTP Server",
   "modification_reason": "Wrap ssl.conf Listen/VirtualHost in IfFile for graceful startup without certs",
   "modification_status": "modified",
-  "release": "8",
+  "release": "1",
   "release_monitoring_project_id": 387502,
-  "sha": "88e5d7f905d87a4eea6bfc08781f3f0e3f714bfd",
+  "sha": "417e8d51c0e5ec5ef6b54aedb64ca79bf074071b",
   "source": "https://src.fedoraproject.org/rpms/httpd.git",
   "track_upstream": "2.4",
   "upstream_repo": "https://github.com/apache/httpd",
-  "version": "2.4.68"
+  "version": "2.4.69"
 }
