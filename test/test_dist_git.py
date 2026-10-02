@@ -5665,6 +5665,33 @@ Test
     assert patches == [(0, 'fix-build.patch'), (1, 'CVE-2026-12345.patch'), (100, 'test-i18n.patch')]
 
 
+def test_get_spec_patches_expands_macros(tmp_path: Path, dist_git_module) -> None:
+    """Resolve Version and nested spec macros without rewriting declarations."""
+    spec = tmp_path / 'test.spec'
+    content = """\
+%global fipsver e1780dd5d390
+%global fipspatch fips-17u-%{fipsver}.patch
+Name: test
+Version: 13.1.7
+Release: 1%{?dist}
+Summary: Test package
+License: MIT
+Patch0: grafana-yarn-cache-compression-%{version}.patch
+Patch100: %{fipspatch}
+
+%description
+Test
+%files
+"""
+    spec.write_text(content)
+
+    assert dist_git_module.get_spec_patches(spec) == [
+        (0, 'grafana-yarn-cache-compression-13.1.7.patch'),
+        (100, 'fips-17u-e1780dd5d390.patch'),
+    ]
+    assert spec.read_text() == content
+
+
 def test_drop_patches_from_spec_autosetup(tmp_path: Path, dist_git_module) -> None:
     """drop_patches_from_spec removes Patch declarations and preceding comments (%autosetup)."""
     spec = tmp_path / 'test.spec'
@@ -5808,7 +5835,13 @@ def _make_source_tarball(tmp_path: Path, name: str, files: dict[str, str]) -> Pa
     return tarball
 
 
-def test_detect_stale_patches(tmp_path: Path, dist_git_module) -> None:
+@pytest.mark.parametrize(('patch_name', 'filename'), [
+    ('fix.patch', 'fix.patch'),
+    ('fix-%{version}.patch', 'fix-1.0.patch'),
+])
+def test_detect_stale_patches(
+    tmp_path: Path, dist_git_module, patch_name: str, filename: str,
+) -> None:
     """detect_stale_patches identifies patches already present in upstream sources."""
     # Create a "new upstream" source tree with the fix already applied
     tarball = _make_source_tarball(tmp_path / 'src', 'test-1.0', {
@@ -5827,7 +5860,7 @@ def test_detect_stale_patches(tmp_path: Path, dist_git_module) -> None:
  #include <stdio.h>
 +int main() { return 0; }
 """
-    (pkg_dir / 'fix.patch').write_text(patch_content)
+    (pkg_dir / filename).write_text(patch_content)
     (pkg_dir / 'unrelated.patch').write_text("""\
 --- a/other.c
 +++ b/other.c
@@ -5840,13 +5873,15 @@ def test_detect_stale_patches(tmp_path: Path, dist_git_module) -> None:
 Name: test
 Version: 1.0
 Release: 1%{?dist}
+Summary: Test package
+License: MIT
 Patch0: fix.patch
 Patch1: unrelated.patch
 
 %description
 Test
 %files
-""")
+""".replace('Patch0: fix.patch', f'Patch0: {patch_name}'))
 
     # Copy tarball into package dir (simulating gorget download)
     shutil.copy(tarball, pkg_dir / 'test-1.0.tar.gz')
@@ -5857,6 +5892,7 @@ Test
     stale_nums = [num for num, _ in stale]
     assert 0 in stale_nums, "fix.patch should be detected as stale"
     assert 1 not in stale_nums, "unrelated.patch should NOT be detected as stale"
+    assert (0, filename) in stale
 
 
 def test_drop_stale_patches_deletes_files(tmp_path: Path, dist_git_module) -> None:
