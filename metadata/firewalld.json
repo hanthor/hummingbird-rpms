@@ -5,6 +5,7 @@
   "release_monitoring_project_id": 9989,
   "sha": "3fe82b7aded61c84813926df7a2737d3a6ad8c5c",
   "source": "https://src.fedoraproject.org/rpms/firewalld.git",
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/firewalld/firewalld",
   "version": "2.5.2"
 }

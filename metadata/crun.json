@@ -5,6 +5,7 @@
   "release_monitoring_project_id": 96792,
   "sha": "2f0211ca3d9b97dab41dc319473606cd75b35edd",
   "source": "https://src.fedoraproject.org/rpms/crun.git",
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/containers/crun",
   "version": "1.30.1"
 }
