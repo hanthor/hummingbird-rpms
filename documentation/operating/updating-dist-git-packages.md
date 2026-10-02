@@ -2,6 +2,7 @@
 title: Updating Dist-git Packages
 description: How packages are automatically updated from Fedora dist-git
 weight: 40
+aliases: [/l/updating-dist-git-packages]
 ---
 
 Packages are automatically updated from Fedora dist-git. Each update creates a separate MR that is
