@@ -72,8 +72,9 @@ kafka-produce-consume:
         set -euo pipefail
         printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
           > /etc/yum.repos.d/local.repo
-        dnf install -y kafka3.9
+        dnf install -y kafka3.9 java-25-openjdk-headless
 
+        export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
         export PATH=/usr/lib/kafka3.9/bin:$PATH
         KAFKA_PID=""
         cleanup_broker() {

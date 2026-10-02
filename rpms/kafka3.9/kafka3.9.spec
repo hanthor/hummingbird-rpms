@@ -19,7 +19,7 @@ BuildArch:      noarch
 
 BuildRequires:  java-21-openjdk-devel
 
-Requires:       java-25-openjdk-headless
+Requires:       (java-headless >= 1:1.8 or java >= 1:1.8)
 
 
 %description
