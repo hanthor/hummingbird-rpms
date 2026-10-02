@@ -1,6 +1,6 @@
 Name:           rhash
-Version:        1.4.5
-Release:        5.1%{?dist}
+Version:        1.4.6
+Release:        0.1%{?dist}
 Summary:        Great utility for computing hash sums
 
 License:        MIT
