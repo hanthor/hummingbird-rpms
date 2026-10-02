@@ -50,8 +50,8 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
 1. **Embargo.** If the summary starts with `EMBARGOED`, stop. Do not
    analyze or write.
 2. **Investigate.** `cve_helper.py investigate HUM-XXXX` (add `--only` if
-   the user said only those keys). Bare numbers are HUM tickets. Call
-   `rename_chat` with the printed `Suggested chat title`.
+   the user said only those keys). Bare numbers are HUM tickets. Rename the
+   chat using the environment's title tool with the printed `Suggested chat title`.
 3. **Verify applicability.** Read the recap, then gather evidence for every
    named ticket before asking the user what to do: published Hummingbird NVR
    and artifacts, component version and binary presence, target architecture
@@ -66,9 +66,9 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    closure. If FIB and a task/MR already exist, leave for advisory automation.
    If FIB is set with no task/MR, ask whether to create the task.
 5. **Act** with the matching helper (below). Comment before state
-   changes. Ask before any close. After acting, call `rename_chat` again
-   with the resolution's **Chat prefix** (below) prepended — get the
-   exact string via
+   changes. Ask before any close. After acting, rename the chat again using
+   the same environment-specific title tool, with the resolution's **Chat
+   prefix** (below) prepended — get the exact string via
    `cve_helper.py show HUM-XXXX --title-only --title-prefix "<prefix>"`.
 
 For product-mismatch CVEs, search `spec-deps` and the SBOM using the tracker’s
@@ -182,10 +182,16 @@ For each package backport:
    do not hand-edit diff hunk headers or counts.
 3. Run `release-bump PKG --apply`. Do not use `dist_git.py rebuild`; its commit message describes a
    no-change rebuild.
-4. Run `make dist-git ARGS='mark-modified PKG --modified --reason "... CVE-ID ..."'` for a
-   Fedora-imported package. Preserve existing reasons. Do not mark independent packages modified.
-5. Make one commit per package. Include the patch, spec, and metadata in that commit. Use
-   `Backport CVE-ID fix to PKG` as the subject. Do not create a separate metadata commit.
+4. For a clean Fedora-imported package receiving a CVE backport, run
+   `make dist-git ARGS='mark-modified PKG --modified --reason "Backport CVE-ID"'`.
+   Use a concise CVE-based reason such as `Backport CVE-ID`; no vulnerability
+   description is needed. For an already modified package, retain an adequate
+   existing reason; update it only if it no longer explains why automatic
+   updates are blocked (see [Package Metadata Fields](../../../documentation/operating/package-metadata-fields.md)).
+   Leave independent packages unchanged and without a reason.
+5. Make one commit per package. Include any changed metadata with the patch and
+   spec in that commit. Use `Backport CVE-ID fix to PKG` as the subject. Do not
+   create a separate metadata commit.
 
 If `dist_git.py update` reports *"upstream branch rawhide is retired"*,
 retry with `--branch f44` (or `--branch f43`). The `--dry-run` flag is
@@ -283,15 +289,15 @@ If the session log file cannot be located in the current environment, omit this 
    the user overrides.
 7. Comment first, then change state.
 8. Named tickets are the write set; `only` means named tickets only.
-9. `modification_reason` must include the CVE ID for Fedora-imported
-   packages that are (or become) `modified`. Never set it on
-   `independent`.
-10. Metadata `release` follows package-metadata-fields.md; do not change
-    it for FIB/advisory reasons alone.
+9. Package metadata semantics follow [ADR-0003](https://hummingbird-project.io/docs/adrs/0003-metadata-and-versioning/).
+   Use the explicit CVE rules above for clean Fedora-imported and independent
+   packages; consult [Package Metadata Fields](../../../documentation/operating/package-metadata-fields.md)
+   for states not covered here rather than inferring metadata behavior.
+10. Do not change the Fedora release baseline for local backports or
+    FIB/advisory reasons alone; see [ADR-0003](https://hummingbird-project.io/docs/adrs/0003-metadata-and-versioning/).
 11. When your work on a ticket is done for the session — not waiting on
-    MR merge — attach the session log automatically:
-    `cve_helper.py log-message HUM-XXXX /path/to/log` (omit if not found,
-    no need to ask).
+    MR merge — attach the relevant session log following the retention rules above:
+    `cve_helper.py log-message HUM-XXXX /path/to/log` (omit if not found, no need to ask).
 
 ## Worktree cleanup
 
