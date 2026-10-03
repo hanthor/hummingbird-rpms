@@ -1,11 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 2026_09_25.df90211",
+  "modification_reason": "Update to upstream version 2026_10_02.cba3570",
   "modification_status": "modified",
   "release_monitoring_project_id": 372091,
   "sha": "ac574cb19c0f59c9695cd5a0cc63a79b4ba8d027",
   "source": "https://src.fedoraproject.org/rpms/passt.git",
   "track_upstream": "latest",
   "upstream_repo": "https://passt.top/passt",
-  "version": "2026_09_25.df90211"
+  "version": "2026_10_02.cba3570"
 }
