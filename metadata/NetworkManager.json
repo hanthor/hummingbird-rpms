@@ -1,9 +1,9 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "2",
+  "release": "3",
   "release_monitoring_project_id": 21197,
-  "sha": "dc1a1642fdad3506c0516adaa8a538b95de01b97",
+  "sha": "70e922587425e20046be320fe0b15a74078834bb",
   "source": "https://src.fedoraproject.org/rpms/NetworkManager.git",
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.freedesktop.org/NetworkManager/NetworkManager",
