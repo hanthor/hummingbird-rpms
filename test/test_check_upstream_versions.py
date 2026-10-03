@@ -2151,22 +2151,31 @@ def test_run_gorget_pipeline_missing_declared_artifact(
     ('old\nfixed\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', True),
     ('old\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', False),
 ])
+@pytest.mark.parametrize(('patch_name', 'filename'), [
+    ('fix.patch', 'fix.patch'),
+    ('grafana-yarn-cache-compression-%{version}.patch',
+     'grafana-yarn-cache-compression-2.0.patch'),
+    ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
+])
 def test_update_spec_version_checks_patches(
     cuv_module, workdir: Path, source_text: str, patch_text: str, dropped: bool,
+    patch_name: str, filename: str,
 ) -> None:
-    """Source0 is checked even when gorget lists the vendor archive first."""
+    """Check expanded patch names against Source0, not the first downloaded archive."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
     })
     spec = pkg / 'pkg.spec'
-    spec.write_text(spec.read_text().replace('%description', 'Patch1: fix.patch\n\n%description'))
-    (pkg / 'fix.patch').write_text(patch_text)
+    spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
+        '%description', f'Patch1: {patch_name}\n\n%description',
+    ))
+    (pkg / filename).write_text(patch_text)
     src_dir = workdir / 'pkg-2.0'
     src_dir.mkdir()
     (src_dir / 'main.c').write_text(source_text)
     with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
         tar.add(src_dir, arcname='pkg-2.0')
-    subprocess.run(['git', 'add', 'rpms/pkg/pkg.spec', 'rpms/pkg/fix.patch'],
+    subprocess.run(['git', 'add', 'rpms/pkg/pkg.spec', f'rpms/pkg/{filename}'],
                    cwd=workdir, check=True)
     subprocess.run(['git', 'commit', '-m', 'Add package patch'], cwd=workdir,
                    check=True, stdout=subprocess.DEVNULL)
@@ -2179,21 +2188,31 @@ def test_update_spec_version_checks_patches(
     ]):
         cuv_module.update_spec_version('pkg', '2.0')
 
-    assert (pkg / 'fix.patch').exists() is not dropped
-    assert ('Patch1: fix.patch' in spec.read_text()) is not dropped
+    assert (pkg / filename).exists() is not dropped
+    assert (f'Patch1: {patch_name}' in spec.read_text()) is not dropped
     actions = cuv_module._build_workqueue_file_actions('pkg', [])
-    assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+    assert any(a['action'] == 'delete' and a['file_path'] == f'rpms/pkg/{filename}'
                for a in actions) is dropped
 
 
-def test_update_spec_version_rejects_incompatible_patch(cuv_module, workdir: Path) -> None:
+@pytest.mark.parametrize(('patch_name', 'filename'), [
+    ('fix.patch', 'fix.patch'),
+    ('grafana-yarn-cache-compression-%{version}.patch',
+     'grafana-yarn-cache-compression-2.0.patch'),
+    ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
+])
+def test_update_spec_version_rejects_incompatible_patch(
+    cuv_module, workdir: Path, patch_name: str, filename: str,
+) -> None:
     """A superseded but non-identical patch must reach the diagnostic-MR path."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
     })
     spec = pkg / 'pkg.spec'
-    spec.write_text(spec.read_text().replace('%description', 'Patch3: fix.patch\n\n%description'))
-    (pkg / 'fix.patch').write_text(
+    spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
+        '%description', f'Patch3: {patch_name}\n\n%description',
+    ))
+    (pkg / filename).write_text(
         '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n')
     src_dir = workdir / 'pkg-2.0'
     src_dir.mkdir()
@@ -2208,8 +2227,30 @@ def test_update_spec_version_rejects_incompatible_patch(cuv_module, workdir: Pat
          pytest.raises(RuntimeError, match='Patch3 .*neither applies nor reverses'):
         cuv_module.update_spec_version('pkg', '2.0')
 
-    assert (pkg / 'fix.patch').exists()
-    assert 'Patch3: fix.patch' in spec.read_text()
+    assert (pkg / filename).exists()
+    assert f'Patch3: {patch_name}' in spec.read_text()
+
+
+def test_check_updated_patches_reports_expanded_missing_filename(
+    cuv_module, workdir: Path,
+) -> None:
+    """Expansion must not silently skip a genuinely missing patch."""
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '%description', 'Patch3: fix-%{version}.patch\n\n%description',
+    ))
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('old\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    with pytest.raises(RuntimeError, match=r'Patch3 \(fix-2\.0\.patch\) is missing'):
+        cuv_module._check_updated_patches('pkg')
+
+    assert 'Patch3: fix-%{version}.patch' in spec.read_text()
 
 
 def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:
