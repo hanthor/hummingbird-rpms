@@ -13,8 +13,9 @@ requires a service account with credentials stored in the vault.
 
 The public Pulp service account credentials are stored in the vault at
 `rhel-primitives/PULP_PUBLIC_RHEL_PRIMITIVES_CONFIG_FILE`. Retrieve the `cli.toml` field
-and save it locally (see [ci/pulp-setup/README.md](../../ci/pulp-setup/README.md) for
-usage).
+and save it locally (see [ci/pulp-setup/README.md][pulp-setup-readme] for usage).
+
+[pulp-setup-readme]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/ci/pulp-setup/README.md
 
 ## Creating a new Pulp service account
 
@@ -62,4 +63,4 @@ Store the credentials in the vault at `apps/hummingbird` with the key
 
 - [Lookaside Cache Access](lookaside-cache-access.md) — AWS credentials for source tarball uploads
 - [Private RPM Repositories](private-rpm-repositories.md) — setting up private per-product Pulp repos
-- [ci/pulp-setup/README.md](../../ci/pulp-setup/README.md) — Pulp domain and repository creation script
+- [ci/pulp-setup/README.md][pulp-setup-readme] — Pulp domain and repository creation script

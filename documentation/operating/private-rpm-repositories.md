@@ -126,8 +126,10 @@ Pulp credentials.
 
 Use the existing Pulp setup script to create the private domains, RPM repositories, and
 file repositories (for SBOMs and attestations). See
-[ci/pulp-setup/README.md](../../ci/pulp-setup/README.md#prerequisites) for the required
+[ci/pulp-setup/README.md][pulp-setup-readme] for the required
 `pulp-cli-console` plugin install before running these commands:
+
+[pulp-setup-readme]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/ci/pulp-setup/README.md#prerequisites
 
 ```bash
 # Unsigned (staging) - RPM repos
