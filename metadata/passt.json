@@ -3,9 +3,10 @@
   "modification_reason": "Update to upstream version 2026_09_25.df90211",
   "modification_status": "modified",
   "release_monitoring_project_id": 372091,
-  "sha": "ac574cb19c0f59c9695cd5a0cc63a79b4ba8d027",
+  "sha": "85a9436a815f01b38662fcb54011b93e96563ae1",
   "source": "https://src.fedoraproject.org/rpms/passt.git",
   "track_upstream": "latest",
   "upstream_repo": "https://passt.top/passt",
-  "version": "2026_09_25.df90211"
+  "version": "0^20261002.gcba3570",
+  "release": "1"
 }
