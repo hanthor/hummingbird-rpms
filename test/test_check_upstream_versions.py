@@ -2201,10 +2201,10 @@ def test_update_spec_version_checks_patches(
      'grafana-yarn-cache-compression-2.0.patch'),
     ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
 ])
-def test_update_spec_version_rejects_incompatible_patch(
+def test_update_spec_version_leaves_patch_applicability_to_build(
     cuv_module, workdir: Path, patch_name: str, filename: str,
 ) -> None:
-    """A superseded but non-identical patch must reach the diagnostic-MR path."""
+    """Non-upstreamed patches are retained without forward checks or application."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
     })
@@ -2224,9 +2224,14 @@ def test_update_spec_version_rejects_incompatible_patch(
     cuv_module.ROOT_DIR = workdir
 
     with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
-         pytest.raises(RuntimeError, match='Patch3 .*neither applies nor reverses'):
+         patch.object(cuv_module.subprocess, 'run', wraps=subprocess.run) as run:
         cuv_module.update_spec_version('pkg', '2.0')
 
+    patch_commands = [
+        invocation.args[0] for invocation in run.call_args_list
+        if invocation.args[0][0] == 'patch' or invocation.args[0][:2] == ['git', 'apply']
+    ]
+    assert patch_commands == [['git', 'apply', '--check', '-R', str(pkg / filename)]]
     assert (pkg / filename).exists()
     assert f'Patch3: {patch_name}' in spec.read_text()
 
