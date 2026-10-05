@@ -1,6 +1,6 @@
 Name:           nftables
-Version:        1.1.6
-Release:        4%{?dist}
+Version:        1.1.7
+Release:        0.1%{?dist}
 # Upstream released a 0.100 version, then 0.4. Need Epoch to get back on track.
 Epoch:          1
 Summary:        Netfilter Tables userspace utilities
@@ -16,8 +16,6 @@ Source5:        main.nft
 Source6:        router.nft
 Source7:        nat.nft
 
-Patch01: 0001-build-fix-.-configure-with-non-bash-shell.patch
-Patch02: 0002-doc-fix-typo-in-man-page.patch
 
 #BuildRequires: autogen
 BuildRequires: autoconf

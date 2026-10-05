@@ -345,6 +345,9 @@ nats-server2.12:
 nats-server2.14:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+nftables:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
