@@ -80,8 +80,16 @@ transform:
           exit 1
         fi
         pnpm_store="${root}/.pnpm-store"
+        # Preserve registry metadata and verified lockfile results for offline builds.
+        export XDG_CACHE_HOME="${root}/.pnpm-cache"
         (cd "${root}/.jaeger-ui-src" && run_pnpm fetch --store-dir "${pnpm_store}")
-        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store
+        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store .pnpm-cache
     outputs:
       - "jaeger-ui-${VERSION}.tar.gz"
       - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
+
+# Same-version regeneration adds pnpm's registry and lockfile-verification cache.
+accepted-checksums:
+  - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
+    checksum: "fb05150fc12d3e3f80cdf8381c05f08c3823678838d4116ca4889f3a85a3d6467a3f15cbc149d3aa166ac7b3410512faa291289cbf9825cd8c2b931ba7af94fa"
+    reason: "Regenerated offline cache with registry metadata and verified-lockfile results required by pnpm 12; dependency versions and package contents are unchanged."
