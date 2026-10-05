@@ -261,6 +261,9 @@ java-25-openjdk-portable:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+jsoncpp:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 k6v1:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
