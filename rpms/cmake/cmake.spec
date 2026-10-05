@@ -103,7 +103,7 @@
 
 Name:           %{orig_name}%{?name_suffix}
 Version:        %{pkg_version}
-Release:        %{baserelease}.3%{?dist}
+Release:        %{baserelease}.4%{?dist}
 Summary:        Cross-platform make system
 
 # most sources are BSD
