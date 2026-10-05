@@ -26,7 +26,9 @@ post:
         set -euo pipefail
         runtime_version="$(jq -er .runtimeVersion release.json)"
         aspnetcore_version="$(jq -er .aspNetCoreVersion release.json)"
+        # Use the emitted filename so the updater can find Source0 for patch checks.
         sed -i -E \
+          -e 's|^Source0:[[:blank:]]+https://github.com/dotnet/dotnet/archive/.*|Source0:        dotnet-%{sdk_version}.tar.gz|' \
           -e 's|^%global upstream_tag .*|%global upstream_tag v${VERSION}|' \
           -e 's|^%global sdk_version .*|%global sdk_version ${VERSION}|' \
           -e "s@^(%global (host_version|runtime_version)) .*@\1 $runtime_version@" \
