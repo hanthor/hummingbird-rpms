@@ -9,6 +9,7 @@
     event_type='pull_request',
     cancel_in_progress='true',
     output_image_tag='on-mr-{{pull_request_number}}-{{revision}}',
+    build_architectures=rpm.build_architectures,
     build_platforms=rpm.build_platforms,
     extra_params=rpm.extra_params if rpm.extra_params is defined else {},
     extra_annotations={'build.appstudio.redhat.com/pull_request_number': '{{pull_request_number}}'},

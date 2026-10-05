@@ -18,6 +18,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 # Default configuration
 DEFAULT_TIMEOUT_HOURS = 4
+DEFAULT_BUILD_ARCHITECTURES = ["aarch64", "x86_64"]
 DEFAULT_BUILD_PLATFORMS = ["linux/x86_64", "linux/arm64"]
 BUILD_TRIGGER_RPM_NAME = "setup"
 
@@ -150,7 +151,10 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             if "timeout_hours" in pkg_config:
                 rpm_data["timeout_hours"] = pkg_config["timeout_hours"]
 
-            # Always include build_platforms, using override or defaults
+            # Always include build targets, using overrides or defaults
+            rpm_data["build_architectures"] = pkg_config.get(
+                "build_architectures", DEFAULT_BUILD_ARCHITECTURES
+            )
             rpm_data["build_platforms"] = pkg_config.get(
                 "build_platforms", DEFAULT_BUILD_PLATFORMS
             )
