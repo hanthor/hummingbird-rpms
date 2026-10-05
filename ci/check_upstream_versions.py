@@ -967,7 +967,7 @@ def mark_package_modified(
 
 
 def _check_updated_patches(package: str) -> None:
-    """Drop exact upstreamed patches; require review for patches that no longer apply."""
+    """Drop patches that reverse exactly against pristine upstream sources."""
     import dist_git
 
     package_dir = RPMS_DIR / package
@@ -995,8 +995,8 @@ def _check_updated_patches(package: str) -> None:
             raise RuntimeError(f"{package}: cannot extract Source0 for patch check: {result.stderr}")
         source_root = dist_git._find_source_root(extract_dir)
         stale = []
-        # Match dist_git.detect_stale_patches: check every patch against the
-        # untouched upstream tree, before applying any local patches to it.
+        # Match dist_git.detect_stale_patches: check against the untouched
+        # upstream tree. Forward applicability is validated by the RPM build.
         for number, name in patches:
             patch_file = package_dir / name
             if not patch_file.is_file():
@@ -1004,19 +1004,6 @@ def _check_updated_patches(package: str) -> None:
             if subprocess.run(["git", "apply", "--check", "-R", str(patch_file)],
                               cwd=source_root, capture_output=True).returncode == 0:
                 stale.append((number, name))
-
-        for number, name in patches:
-            if (number, name) in stale:
-                continue
-            patch_file = package_dir / name
-            if subprocess.run(["git", "apply", "--check", str(patch_file)],
-                              cwd=source_root, capture_output=True).returncode == 0:
-                subprocess.run(["git", "apply", str(patch_file)], cwd=source_root, check=True)
-            else:
-                raise RuntimeError(
-                    f"{package}: Patch{number} ({name}) neither applies nor reverses "
-                    "against new Source0; review whether it needs rebasing or dropping"
-                )
 
     if stale:
         dist_git.drop_stale_patches(package_dir, stale)
