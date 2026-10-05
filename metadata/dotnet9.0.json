@@ -1,13 +1,12 @@
 {
   "branch": "rawhide",
   "cve_product": "Microsoft / .NET 9.0",
-  "modification_reason": "backport CVE-2026-69304 fix (unbounded request decompression on IIS out-of-process)",
+  "modification_reason": "update to SDK 9.0.121 / Runtime 9.0.20 for CVE-2026-58649; local build patches retained",
   "modification_status": "modified",
-  "release": "2",
   "sha": "1a9f8800e932757725244ea369bc98b15c3da1ca",
   "source": "https://src.fedoraproject.org/rpms/dotnet9.0.git",
   "upstream_branch": "release/9.0",
   "upstream_repo": "https://github.com/dotnet/runtime",
-  "version": "9.0.119",
+  "version": "9.0.121",
   "version_transform": "dotnet_sdk_to_runtime"
 }
