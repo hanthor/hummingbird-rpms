@@ -1,12 +1,11 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Disable libssh2 for FIPS compliance, following RHEL; backport fixes for CVE-2026-58494, CVE-2026-59869, CVE-2026-59887; backport fix for CVE-2026-50185",
+  "modification_reason": "Update to upstream version 1.99.0; adapt debugger, system library, SHSTK and vendored security patches to the release sources",
   "modification_status": "modified",
-  "release": "1",
   "release_monitoring_project_id": 7635,
   "sha": "8fa23f4607c1e1edb262079c7bf00e58dfdb12a9",
   "source": "https://src.fedoraproject.org/rpms/rust.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rust-lang/rust",
-  "version": "1.98.1"
+  "version": "1.99.0"
 }
