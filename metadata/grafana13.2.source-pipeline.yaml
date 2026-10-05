@@ -29,6 +29,9 @@ transform:
         # CVE-2026-84394, CVE-2026-84292: bump vendored fast-uri to 3.1.7.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7.patch"
+        # CVE-2026-90771: bump vendored joi to 17.13.8 and 18.2.9.
+        # The later axios patch depends on this resolution block.
+        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
         # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
