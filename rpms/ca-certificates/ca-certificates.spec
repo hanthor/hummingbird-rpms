@@ -38,7 +38,7 @@ Name: ca-certificates
 Version: 2026.2.90_v9.0.317
 # for Rawhide, please always use release >= 2
 # for Fedora release branches, please use release < 2 (1.0, 1.1, ...)
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: MIT AND GPL-2.0-or-later
 
 URL: https://fedoraproject.org/wiki/CA-Certificates
