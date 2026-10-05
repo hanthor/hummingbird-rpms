@@ -44,8 +44,8 @@ index 2f493658ec0..d1ceea0296e 100644
 --- a/src/bootstrap/src/core/config/config.rs
 +++ b/src/bootstrap/src/core/config/config.rs
 @@ -877,6 +877,7 @@ pub(crate) fn parse_inner(
-                     runner: target_runner,
                      optimized_compiler_builtins: target_optimized_compiler_builtins,
+                     allocator: target_allocator,
                      jemalloc: target_jemalloc,
 +                    self_contained: target_self_contained
                  } = cfg;
@@ -66,8 +66,8 @@ index 847b75e696b..cbe36106a6f 100644
 --- a/src/bootstrap/src/core/config/toml/target.rs
 +++ b/src/bootstrap/src/core/config/toml/target.rs
 @@ -48,6 +48,7 @@ struct TomlTarget {
-         runner: Option<String> = "runner",
          optimized_compiler_builtins: Option<CompilerBuiltins> = "optimized-compiler-builtins",
+         allocator: Option<Allocator> = "allocator",
          jemalloc: Option<bool> = "jemalloc",
 +        self_contained: Option<bool> = "self-contained",
      }
@@ -76,7 +76,7 @@ index 847b75e696b..cbe36106a6f 100644
 @@ -82,6 +83,7 @@ pub struct Target {
      pub codegen_backends: Option<Vec<CodegenBackendKind>>,
      pub optimized_compiler_builtins: Option<CompilerBuiltins>,
-     pub jemalloc: Option<bool>,
+     pub allocator: Option<Allocator>,
 +    pub self_contained: bool,
  }
  
