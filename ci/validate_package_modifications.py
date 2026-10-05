@@ -7,7 +7,6 @@ accurately reflects the actual state of packages.
 """
 
 import argparse
-import json
 import logging
 import os
 import subprocess
@@ -20,16 +19,23 @@ import yaml
 
 # Import from dist_git.py
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dist_git import (
     METADATA_DIR,
     PACKAGE_OVERRIDES_YAML,
     RPMS_DIR,
     ROOT_DIR,
-    PackageMetadata,
+    _METADATA_REPO,
     is_package_unmodified,
     run_git,
 )
-
+from hum.meta.model import (
+    CleanPackageMetadata,
+    IndependentPackageMetadata,
+    MalformedMetadataError,
+    ModifiedFedoraPackageMetadata,
+    ModifiedUpstreamPackageMetadata,
+)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 
@@ -458,27 +464,15 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     if not package_dir.exists():
         return False, f"{package_name}: Missing package directory"
 
-    # Load metadata
-    with open(metadata_file) as f:
-        metadata: PackageMetadata = json.load(f)
+    # Load metadata via hum.meta — this validates structure, required fields,
+    # valid modification_status values, and type constraints (e.g. independent
+    # packages must not have fedora fields, clean packages must have release).
+    try:
+        metadata = _METADATA_REPO.load(package_name)
+    except (MalformedMetadataError, OSError) as e:
+        return False, f"{package_name}: {e}"
 
-    # Check 1: Field must exist
-    if 'modification_status' not in metadata:
-        return False, f"{package_name}: Missing modification_status field"
-
-    status = metadata['modification_status']
-
-    # Check 2: Must be valid value
-    if status not in ['clean', 'modified', 'independent']:
-        return False, f"{package_name}: Invalid modification_status '{status}'"
-
-    # Check 3: Independent packages should not have source/branch/sha fields
-    if status == 'independent':
-        if 'source' in metadata or 'branch' in metadata or 'sha' in metadata:
-            return False, f"{package_name}: Independent package should not have source/branch/sha fields"
-        if 'release' in metadata:
-            return False, f"{package_name}: Independent package should not have release field"
-
+    if isinstance(metadata, IndependentPackageMetadata):
         # Check 3.1: An independent package with a non-empty `sources` file has
         # remote sources that need fetching at build time. It has no Fedora
         # dist-git history, so that fetch needs forked_from (fetch from
@@ -505,9 +499,6 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
         # Independent packages don't need further validation
         return True, None
 
-    if 'source' not in metadata and 'release' in metadata:
-        return False, f"{package_name}: Package without Fedora source should not have release field"
-
     # Find the last Sync/Import commit once (used by multiple checks below)
     last_sync_sha = find_last_sync_commit(package_name)
 
@@ -517,47 +508,52 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
         return False, error
 
     # Check 4: track_upstream must be a string if present ("latest" or version prefix)
-    if 'track_upstream' in metadata and not isinstance(metadata['track_upstream'], str):
-        return False, f"{package_name}: track_upstream must be a string, got {type(metadata['track_upstream']).__name__}"
+    if metadata.track_upstream is not None and not isinstance(metadata.track_upstream, str):
+        return False, f"{package_name}: track_upstream must be a string, got {type(metadata.track_upstream).__name__}"
 
     # Check 4.5: release_monitoring_project_id must be an integer if present
-    if 'release_monitoring_project_id' in metadata and not isinstance(metadata['release_monitoring_project_id'], int):
+    if metadata.release_monitoring_project_id is not None and not isinstance(metadata.release_monitoring_project_id, int):
         return False, f"{package_name}: release_monitoring_project_id must be an integer"
 
     # Check 5: Modified packages must have reason
-    if status == 'modified' and not metadata.get('modification_reason'):
-        return False, f"{package_name}: Marked as modified but missing modification_reason"
+    if isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+        if not metadata.modification_reason:
+            return False, f"{package_name}: Marked as modified but missing modification_reason"
 
     # Check 6: Verify git history matches metadata (fast check)
     # Skip if running expensive check (which uses filesystem comparison instead)
-    if not check_actual_state and status in ['clean', 'modified']:
+    is_clean = isinstance(metadata, CleanPackageMetadata)
+    is_modified = isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata))
+
+    if not check_actual_state and (is_clean or is_modified):
         is_clean_by_history, history_error = check_git_history_state(package_name, last_sync_sha)
 
-        if status == 'clean' and not is_clean_by_history:
+        if is_clean and not is_clean_by_history:
             return False, history_error
 
-        if status == 'modified' and is_clean_by_history:
+        if is_modified and is_clean_by_history:
             return False, (
                 f"{package_name}: Marked as modified but git history shows only "
                 f"standard Import/Update/Sync commits. Consider marking as clean."
             )
 
     # Check 7: Verify actual state matches metadata (expensive check, optional)
-    if check_actual_state and status in ['clean', 'modified']:
+    if check_actual_state and (is_clean or is_modified):
+        assert isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata))
         with tempfile.TemporaryDirectory() as tmpdir:
             upstream_dir = Path(tmpdir) / 'upstream'
 
-            logging.debug(f"{package_name}: Cloning {metadata['source']} at {metadata['branch']}...")
-            run_git('clone', '--quiet', '--branch', metadata['branch'],
-                   '--single-branch', metadata['source'], str(upstream_dir))
+            logging.debug(f"{package_name}: Cloning {metadata.fedora.git_url} at {metadata.fedora.branch}...")
+            run_git('clone', '--quiet', '--branch', metadata.fedora.branch,
+                   '--single-branch', metadata.fedora.git_url, str(upstream_dir))
 
             logging.debug(f"{package_name}: Checking if modified...")
             actually_unmodified = is_package_unmodified(package_name, metadata, upstream_dir)
 
-            if status == 'clean' and not actually_unmodified:
+            if is_clean and not actually_unmodified:
                 return False, f"{package_name}: Marked as clean but package has modifications"
 
-            if status == 'modified' and actually_unmodified:
+            if is_modified and actually_unmodified:
                 return False, f"{package_name}: Marked as modified but package is actually clean"
 
     return True, None

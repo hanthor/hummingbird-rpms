@@ -26,15 +26,14 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from dist_git import (
-    METADATA_DIR,
-    ROOT_DIR,
-    diff_package,
-    load_package_metadata,
-)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from dist_git import ROOT_DIR, diff_package
+from hum.meta import MetadataRepository
+from hum.meta.validation import ModificationStatus
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
+_METADATA_REPO = MetadataRepository(ROOT_DIR)
 CACHE_DIR = ROOT_DIR / '.cache'
 CACHE_FILE = CACHE_DIR / 'upstream-diff-analysis.json'
 
@@ -115,18 +114,15 @@ def save_cache(cache: dict) -> None:
         raise
 
 
-def get_all_modified_metadata() -> dict[str, dict]:
-    result = {}
-    for f in sorted(METADATA_DIR.glob('*.json')):
-        pkg = f.stem
-        with open(f) as fh:
-            data = json.load(fh)
-        if data.get('modification_status') == 'modified':
-            result[pkg] = data
-    return result
+def get_all_modified_metadata():
+    all_metadata = _METADATA_REPO.load_all()
+    return {
+        name: md for name, md in all_metadata.items()
+        if md.modification_status == ModificationStatus.MODIFIED
+    }
 
 
-def get_batch(metadata: dict[str, dict], cache: dict,
+def get_batch(metadata, cache: dict,
               batch_size: int) -> tuple[list[str], dict[str, Any]]:
     stale = []
     pending = []
@@ -134,7 +130,7 @@ def get_batch(metadata: dict[str, dict], cache: dict,
     batch_info = {}
 
     for pkg, data in metadata.items():
-        sha = data.get('sha', '')
+        sha = data.fedora.sha
         if pkg in cache.get('packages', {}):
             if cache['packages'][pkg].get('metadata_sha') == sha:
                 cached_count += 1
@@ -259,16 +255,17 @@ def cmd_prepare(args: argparse.Namespace) -> None:
         batch_info = {}
         for pkg in batch:
             if pkg not in metadata:
-                md = load_package_metadata(pkg)
-                if not md:
+                try:
+                    md = _METADATA_REPO.load(pkg)
+                except (OSError, json.JSONDecodeError):
                     print(f'ERROR: Package {pkg} not found', file=sys.stderr)
                     sys.exit(1)
-                if md.get('modification_status') != 'modified':
-                    print(f'ERROR: Package {pkg} is not modified (status: {md.get("modification_status")})',
+                if md.modification_status != ModificationStatus.MODIFIED:
+                    print(f'ERROR: Package {pkg} is not modified (status: {md.modification_status.value})',
                           file=sys.stderr)
                     sys.exit(1)
-                metadata[pkg] = dict(md)
-            sha = metadata[pkg].get('sha', '')
+                metadata[pkg] = md
+            sha = metadata[pkg].fedora.sha
             if pkg in cache.get('packages', {}) and cache['packages'][pkg].get('metadata_sha') == sha:
                 batch_info[pkg] = 'cached (forced re-analysis)'
             elif pkg in cache.get('packages', {}):
@@ -279,7 +276,7 @@ def cmd_prepare(args: argparse.Namespace) -> None:
             'batch_info': batch_info,
             'cached_count': sum(1 for p, m in metadata.items()
                                 if p in cache.get('packages', {})
-                                and cache['packages'][p].get('metadata_sha') == m.get('sha', '')),
+                                and cache['packages'][p].get('metadata_sha') == m.fedora.sha),
             'total_modified': len(metadata),
         }
     else:
@@ -315,10 +312,10 @@ def cmd_prepare(args: argparse.Namespace) -> None:
     for pkg in batch:
         data = metadata[pkg]
         print(f'--- PACKAGE: {pkg} ---')
-        print(f'Source: {data.get("source", "N/A")}')
-        print(f'Branch: {data.get("branch", "N/A")}')
-        print(f'SHA: {data.get("sha", "N/A")}')
-        print(f'Modification reason: {data.get("modification_reason", "N/A")}')
+        print(f'Source: {data.fedora.git_url}')
+        print(f'Branch: {data.fedora.branch}')
+        print(f'SHA: {data.fedora.sha}')
+        print(f'Modification reason: {getattr(data, "modification_reason", "N/A")}')
         print(f'Cache status: {bi.get(pkg, "unknown")}')
         print()
 
@@ -333,9 +330,9 @@ def cmd_prepare(args: argparse.Namespace) -> None:
             print(diff_text)
         print()
 
-        source = data.get('source', '')
-        if source:
-            prs = get_upstream_prs(pkg, source)
+        git_url = data.fedora.git_url
+        if git_url:
+            prs = get_upstream_prs(pkg, git_url)
             print('UPSTREAM PRs:')
             print(format_upstream_prs(prs))
             print()
@@ -345,11 +342,15 @@ def cmd_prepare(args: argparse.Namespace) -> None:
 
 def _resolve_upstream_prs(package: str, pr_ids: list[int]) -> list[dict]:
     """Fetch full PR metadata from upstream and filter to the given IDs."""
-    md = load_package_metadata(package)
-    source = md.get('source', '') if md else ''
-    if not source:
+    try:
+        md = _METADATA_REPO.load(package)
+    except (OSError, json.JSONDecodeError):
         return []
-    all_prs = get_upstream_prs(package, source)
+    fedora = getattr(md, 'fedora', None)
+    git_url = fedora.git_url if fedora else ''
+    if not git_url:
+        return []
+    all_prs = get_upstream_prs(package, git_url)
     found_ids = {p['id'] for p in all_prs}
     missing = [pid for pid in pr_ids if pid not in found_ids]
     if missing:
@@ -390,12 +391,14 @@ def cmd_save(args: argparse.Namespace) -> None:
         return
 
     package = args.package
-    md = load_package_metadata(package)
-    if not md:
+    try:
+        md = _METADATA_REPO.load(package)
+    except (OSError, json.JSONDecodeError):
         print(f'ERROR: Package {package} not found in metadata', file=sys.stderr)
         sys.exit(1)
 
-    sha = md.get('sha', '')
+    fedora = getattr(md, 'fedora', None)
+    sha = fedora.sha if fedora else ''
     recommendation = args.recommendation
 
     if args.category == 'hummingbird-specific' and args.hummingbird_macros:
@@ -571,7 +574,7 @@ def cmd_view(args: argparse.Namespace) -> None:
             print('(none)')
         else:
             for pkg in unanalyzed:
-                reason = all_modified[pkg].get('modification_reason', '')
+                reason = getattr(all_modified[pkg], 'modification_reason', '')
                 print(f'- {pkg}: {reason}' if reason else f'- {pkg}')
 
 
@@ -585,8 +588,11 @@ def cmd_jira_template(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     entry = packages[package]
-    md = load_package_metadata(package)
-    modification_reason = md.get('modification_reason', 'N/A') if md else 'N/A'
+    try:
+        md = _METADATA_REPO.load(package)
+        modification_reason = getattr(md, 'modification_reason', 'N/A')
+    except (OSError, json.JSONDecodeError):
+        modification_reason = 'N/A'
 
     diff_text = get_diff_output(package)
     if diff_text is None:
@@ -631,12 +637,14 @@ def cmd_jira_template(args: argparse.Namespace) -> None:
 
 def cmd_check_prs(args: argparse.Namespace) -> None:
     for pkg in args.packages:
-        md = load_package_metadata(pkg)
-        if not md:
+        try:
+            md = _METADATA_REPO.load(pkg)
+        except (OSError, json.JSONDecodeError):
             print(f'ERROR: Package {pkg} not found', file=sys.stderr)
             sys.exit(1)
-        source = md.get('source', '')
-        prs = get_upstream_prs(pkg, source)
+        fedora = getattr(md, 'fedora', None)
+        git_url = fedora.git_url if fedora else ''
+        prs = get_upstream_prs(pkg, git_url)
         print(f'=== UPSTREAM PRs: {pkg} ===')
         print(format_upstream_prs(prs))
         print()

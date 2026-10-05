@@ -27,7 +27,7 @@ import yaml
 from packaging.version import InvalidVersion, Version
 from pathlib import Path
 from specfile import Specfile
-from typing import Iterator, Literal, NotRequired, TypedDict, cast
+from typing import Iterator, Literal, TypedDict, cast
 
 # check_upstream_versions.py lives alongside this script in ci/, but isn't a
 # proper installed package -- add this script's own directory to sys.path so
@@ -35,10 +35,24 @@ from typing import Iterator, Literal, NotRequired, TypedDict, cast
 # automatically) and when loaded as an in-process module by tests (which
 # doesn't).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import check_upstream_versions as cuv
+from hum.meta import MetadataRepository
+from hum.meta.model import (
+    CleanPackageMetadata,
+    FedoraOriginWithRelease,
+    IndependentPackageMetadata,
+    ModifiedFedoraPackageMetadata,
+    ModifiedUpstreamPackageMetadata,
+    PackageMetadata as HumPackageMetadata,
+    VersionFromRef,
+)
+from hum.meta.repository import _to_raw_dict
+from hum.meta.validation import ModificationStatus
 from package_paths import path_problem, portable_component, sanitize_package_paths
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+_METADATA_REPO = MetadataRepository(ROOT_DIR)
 RPMS_DIR = ROOT_DIR / 'rpms'
 METADATA_DIR = ROOT_DIR / 'metadata'
 RELEASES_JSON = ROOT_DIR / 'upstream-releases.json'
@@ -73,7 +87,7 @@ VIRTUAL_BUILDREQUIRES_PATTERNS = {
 }
 
 # Global imports dict, loaded at startup
-imports: dict[str, 'PackageMetadata'] = {}
+imports: dict[str, HumPackageMetadata] = {}
 
 # Global releases dict, loaded at startup
 releases: dict[str, dict[str, str]] = {}
@@ -96,24 +110,7 @@ class SourceAvailabilityProbe(TypedDict):
     urls: list[str]
 
 
-class PackageMetadata(TypedDict):
-    """Metadata stored in metadata/<package>.json for each package."""
-    source: NotRequired[str]  # Not present for independent packages
-    branch: NotRequired[str]  # Not present for independent packages
-    sha: NotRequired[str]  # Not present for independent packages
-    version: str
-    release: NotRequired[str]  # Present only when shipping Fedora's release
-    modification_status: NotRequired[Literal["clean", "modified", "independent"]]
-    modification_reason: NotRequired[str]  # Only for 'modified'
-    track_upstream: NotRequired[str]  # "latest" or version prefix (e.g., "1.26")
-    release_monitoring_project_id: NotRequired[int | str]  # Anitya project ID (int) or upstream name (str)
-    upstream_repo: NotRequired[str]  # Canonical upstream git repository URL
-    upstream_branch: NotRequired[str]  # Upstream branch (versioned packages sharing a repo)
-    cve_product: NotRequired[str | list[str]]  # CVE vendor/product override; list for multi-product
-    version_transform: NotRequired[str]  # Version transform rule (e.g., "dotnet_sdk_to_runtime")
-    upstream_version_transform: NotRequired[str]  # Named Anitya-to-RPM version transform (e.g., "openjdk_to_rpm")
-    source_availability_check: NotRequired[str | SourceAvailabilityProbe]
-    version_from_ref: NotRequired[dict[str, str]]  # How to derive a fixed-ref pipeline's gorget --version (e.g. gcc)
+PackageMetadata = HumPackageMetadata
 
 
 class KojiBuild(TypedDict, total=False):
@@ -321,40 +318,22 @@ def rename_spec_validate(original_name: str, original_dir: Path) -> str:
     return new_name
 
 
-def load_package_metadata(package_name: str) -> PackageMetadata | None:
+def load_package_metadata(package_name: str) -> HumPackageMetadata | None:
     """Load package metadata from metadata/<package>.json."""
-    import_file = METADATA_DIR / f'{package_name}.json'
-    if not import_file.exists():
+    try:
+        return _METADATA_REPO.load(package_name)
+    except (OSError, json.JSONDecodeError):
         return None
-    with open(import_file) as f:
-        data = json.load(f)
-        if not data:
-            return None
-        return cast(PackageMetadata, data)
 
 
-def save_package_metadata(package_name: str, metadata: PackageMetadata) -> None:
+def save_package_metadata(package_name: str, metadata: HumPackageMetadata) -> None:
     """Save package metadata to metadata/<package>.json."""
-    import_file = METADATA_DIR / f'{package_name}.json'
-    METADATA_DIR.mkdir(exist_ok=True)
-    with open(import_file, 'w') as f:
-        json.dump(metadata, f, indent=2, sort_keys=True)
-        f.write('\n')  # Ensure trailing newline
+    _METADATA_REPO.save(metadata)
 
 
-def get_all_imported_packages() -> dict[str, PackageMetadata]:
+def get_all_imported_packages() -> dict[str, HumPackageMetadata]:
     """Scan metadata/ directory and load all package metadata files."""
-    all_imports: dict[str, PackageMetadata] = {}
-    if not METADATA_DIR.exists():
-        return all_imports
-
-    for metadata_file in METADATA_DIR.glob('*.json'):
-        package_name = metadata_file.stem
-        metadata = load_package_metadata(package_name)
-        if metadata:
-            all_imports[package_name] = metadata
-
-    return all_imports
+    return _METADATA_REPO.load_all()
 
 
 def _parse_sources_file(sources_path: Path) -> Iterator[str]:
@@ -401,14 +380,13 @@ def ls_sources(package: str) -> None:
         logging.info(f"No {sources_path} file")
         sys.exit(0)
 
-    try:
-        source_url = metadata['source']
-    except KeyError:
-        # Independent packages don't have a source URL - use Hummingbird lookaside
-        if metadata.get('modification_status') != 'independent':
-            logging.error(f"Package {package} has no source URL and is not marked as independent")
-            sys.exit(1)
+    if isinstance(metadata, IndependentPackageMetadata):
         source_url = f'https://gitlab.com/redhat/hummingbird/rpms/{package}.git'
+    elif isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+        source_url = metadata.fedora.git_url
+    else:
+        logging.error(f"Package {package} has no source URL")
+        sys.exit(1)
 
     # Download source archives
     subprocess.run(
@@ -1046,14 +1024,17 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
     Local changes that only affect the Release: field in the spec file
     (which we bump for rebuilds) are ignored.
     """
+    if not isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+        raise ValueError(f"Cannot check unmodified status for {type(metadata).__name__}")
+
     package_dir = ROOT_DIR / 'rpms' / package_name
 
     # Clone upstream_dir as we are going to checkout specific sha and remove .git/ for comparison
     with tempfile.TemporaryDirectory() as tmpdir:
         temp_dir = Path(tmpdir) / package_name
-        run_git('clone', '--quiet', '--branch', metadata['branch'], '--single-branch',
+        run_git('clone', '--quiet', '--branch', metadata.fedora.branch, '--single-branch',
                 str(upstream_dir), str(temp_dir))
-        run_git('checkout', '--quiet', metadata['sha'], cwd=temp_dir)
+        run_git('checkout', '--quiet', metadata.fedora.sha, cwd=temp_dir)
         shutil.rmtree(temp_dir / '.git')
         sanitize_package_paths(temp_dir)
 
@@ -1122,27 +1103,10 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
     # We can't have sub .git directories in our repo
     shutil.rmtree(package_dir / '.git')
 
-    # Save package metadata to import.json. The source URL contains the
-    # upstream package name, so we don't need to store it separately.
-    metadata: PackageMetadata = {
-        'source': url,
-        'branch': branch,
-        'sha': sha,
-        'version': version,
-    }
-
-    # Set modification_status based on source
-    if 'gitlab.com/redhat/hummingbird' in url:
-        metadata['modification_status'] = 'independent'
-    else:
-        metadata['modification_status'] = 'clean'
-        metadata['release'] = release
-
     # Look up Anitya (release-monitoring.org) project ID for the package
     logging.info("Looking up release-monitoring.org project ID for %s...", package_name)
     anitya_id = lookup_anitya_project_id(package_name)
     if anitya_id is not None:
-        metadata['release_monitoring_project_id'] = anitya_id
         logging.info("Found release-monitoring.org project ID %d for %s", anitya_id, package_name)
     else:
         search_url = ANITYA_SEARCH_URL.format(package=package_name)
@@ -1155,8 +1119,35 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
         )
 
     sanitize_package_paths(package_dir)
+
+    # Save package metadata. The source URL contains the upstream package
+    # name, so we don't need to store it separately.
+    # Use the Fedora dist-git URL as upstream_repo default until the user
+    # populates it with the real upstream repository.
+    upstream_repo_default = f'https://src.fedoraproject.org/rpms/{package_name}'
+    metadata: PackageMetadata
+    if 'gitlab.com/redhat/hummingbird' in url:
+        metadata = IndependentPackageMetadata(
+            package_name=dir_name,
+            version=version,
+            upstream_repo=upstream_repo_default,
+        )
+    else:
+        fedora = FedoraOriginWithRelease(git_url=url, branch=branch, sha=sha, release=release)
+        metadata = CleanPackageMetadata(
+            package_name=dir_name,
+            version=version,
+            upstream_repo=upstream_repo_default,
+            fedora=fedora,
+        )
+
+    if anitya_id is not None:
+        metadata.enable_upstream_tracking(
+            track_upstream='latest',
+            release_monitoring_project_id=anitya_id,
+        )
+
     save_package_metadata(dir_name, metadata)
-    # Update global imports dict
     imports[dir_name] = metadata
 
     logging.info("Checking prerequisites...")
@@ -1630,12 +1621,9 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
     Returns:
         True if conflicts exist, False if merge succeeded cleanly
     """
-    assert metadata.get('modification_status') == 'modified'
-    assert 'branch' in metadata
-    assert 'sha' in metadata
-    assert 'source' in metadata
+    assert isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata))
 
-    old_sha = metadata['sha']
+    old_sha = metadata.fedora.sha
 
     logging.info("Updating %s: %s -> %s (merging local changes)", package_name, old_sha[:8], new_sha[:8])
 
@@ -1836,8 +1824,8 @@ _GITREV_RE = re.compile(r"^%global\s+gitrev\s+([0-9a-fA-F]{40})\s*$", re.MULTILI
 
 
 def _refresh_fixed_ref_pin(package_name: str, package_dir: Path, pipeline_file: Path,
-                            pipeline: dict, upstream_repo: str | None,
-                            version_from_ref: dict[str, str],
+                            pipeline: dict, upstream_repo: str,
+                            version_from_ref: VersionFromRef,
                             old_version: str) -> tuple[str, Path] | None:
     """Attempt to fully automate a fixed-ref pin refresh, per
     metadata/<package>.json's `version_from_ref` config (see
@@ -1861,7 +1849,7 @@ def _refresh_fixed_ref_pin(package_name: str, package_dir: Path, pipeline_file: 
     the generic fixed-ref safety net (treat as needing manual resolution)
     rather than guessing.
     """
-    ref_type = version_from_ref.get('type')
+    ref_type = version_from_ref.type
     if ref_type != 'commit-date':
         logging.warning("%s: unsupported version_from_ref type %r", package_name, ref_type)
         return None
@@ -1973,11 +1961,11 @@ def _run_gorget_for_updated_package(package_name: str, package_dir: Path,
     drifted = _fixed_ref_pipeline_drift(package_dir, pipeline)
 
     if drifted:
-        version_from_ref = metadata.get('version_from_ref')
+        version_from_ref = metadata.version_from_ref
         if version_from_ref:
             refresh_result = _refresh_fixed_ref_pin(
                 package_name, package_dir, pipeline_file, pipeline,
-                metadata.get('upstream_repo'), version_from_ref, old_version,
+                metadata.upstream_repo, version_from_ref, old_version,
             )
             if refresh_result is None:
                 return (f"{package_name}: pipeline ref(s) {', '.join(drifted)} no longer "
@@ -2062,16 +2050,15 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
     metadata = imports[package_name]
 
     # Block independent packages from being updated (they have no upstream)
-    status = metadata.get('modification_status', 'clean')
-    if status == 'independent':
+    if isinstance(metadata, IndependentPackageMetadata):
         sys.exit(f"ERROR: Cannot update independent package {package_name}\n")
 
-    if not all(key in metadata for key in ('source', 'branch', 'sha')):
+    if not isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
         logging.info("Skipping %s: no Fedora upstream configured", package_name)
         return
 
     # Resolve effective branch: --branch override or current metadata branch
-    old_branch = metadata['branch']
+    old_branch = metadata.fedora.branch
     if branch and branch != old_branch:
         branch_changed = True
         effective_branch = branch
@@ -2083,20 +2070,20 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
 
     # Extract the upstream package name from the source URL (for Koji queries)
     # This may differ from the directory name
-    upstream_package_name = Path(metadata['source']).stem
+    upstream_package_name = Path(metadata.fedora.git_url).stem
 
     if ref:
         # When ref is provided, we'll verify it exists when we clone
         latest_sha = ref  # Will be resolved to full SHA during clone
     else:
         # Use ls-remote to get latest commit (fast, no clone needed)
-        result = run_git('ls-remote', metadata['source'], effective_branch)
+        result = run_git('ls-remote', metadata.fedora.git_url, effective_branch)
         if not result.stdout.strip():
             sys.exit(f"ERROR: Unable to query remote for {package_name}")
         latest_sha = result.stdout.split()[0]
 
     # Check if there's an update
-    if latest_sha == metadata['sha'] and not branch_changed:
+    if latest_sha == metadata.fedora.sha and not branch_changed:
         if sync and not mark:
             sys.exit(f"ERROR: Package {package_name} is already at upstream {latest_sha[:8]}")
         if not mark:
@@ -2109,7 +2096,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             clone_args = ['clone', '--quiet', '--branch', effective_branch]
             if not branch_changed:
                 clone_args.append('--single-branch')
-            clone_args.extend([metadata['source'], str(upstream_dir)])
+            clone_args.extend([metadata.fedora.git_url, str(upstream_dir)])
             run_git(*clone_args)
 
             if not is_package_unmodified(package_name, metadata, upstream_dir):
@@ -2118,15 +2105,29 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
 
             # Parse spec file to get version-release for commit message
             version, release = parse_spec_version(upstream_dir)
-            upstream_package_name = Path(metadata['source']).stem
-            old_version = metadata['version']
+            upstream_package_name = Path(metadata.fedora.git_url).stem
+            old_version = metadata.version
 
         # Reset modification status to clean
-        metadata['modification_status'] = 'clean'
-        if 'modification_reason' in metadata:
-            del metadata['modification_reason']
-        if branch_changed:
-            metadata['branch'] = effective_branch
+        if isinstance(metadata, ModifiedFedoraPackageMetadata):
+            metadata = metadata.to_clean()
+        elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
+            new_fedora = FedoraOriginWithRelease(
+                git_url=metadata.fedora.git_url,
+                branch=metadata.fedora.branch,
+                sha=metadata.fedora.sha,
+                release=release,
+            )
+            metadata = metadata.to_clean(fedora=new_fedora, version=version)
+        if branch_changed and isinstance(metadata, CleanPackageMetadata):
+            new_fedora = FedoraOriginWithRelease(
+                git_url=metadata.fedora.git_url,
+                branch=effective_branch,
+                sha=metadata.fedora.sha,
+                release=metadata.fedora.release,
+            )
+            metadata.update(fedora=new_fedora, version=metadata.version)
+        imports[package_name] = metadata
 
         # Create empty commit with proper Upstream: trailer
         if not dry_run:
@@ -2142,14 +2143,14 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         return
 
     # There's an update available
-    logging.info("Update available for %s: %s -> %s", package_name, metadata['sha'][:8], latest_sha[:8])
+    logging.info("Update available for %s: %s -> %s", package_name, metadata.fedora.sha[:8], latest_sha[:8])
 
     with tempfile.TemporaryDirectory() as tmpdir:
         upstream_dir = Path(tmpdir) / package_name
         clone_args = ['clone', '--quiet', '--branch', effective_branch]
         if not branch_changed:
             clone_args.append('--single-branch')
-        clone_args.extend([metadata['source'], str(upstream_dir)])
+        clone_args.extend([metadata.fedora.git_url, str(upstream_dir)])
         run_git(*clone_args)
         if branch_changed:
             # Create a local branch for the old branch so is_package_unmodified()
@@ -2209,16 +2210,16 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # Skip if upstream version is older than current version (unless sync or forward branch move)
         if not sync and not _is_forward_branch_move(branch_changed, old_branch, effective_branch):
             try:
-                if Version(version) < Version(metadata['version']):
+                if Version(version) < Version(metadata.version):
                     logging.warning(
                         "Skipping %s: upstream version %s is older than current %s",
-                        package_name, version, metadata['version'])
+                        package_name, version, metadata.version)
                     return
             except InvalidVersion:
                 logging.debug("Could not compare versions for %s, proceeding", package_name)
 
         # Check track_upstream constraint - skip if upstream version doesn't match prefix
-        tv = metadata.get('track_upstream')
+        tv = metadata.track_upstream
         if not sync and not branch_changed and tv and tv != 'latest':
             if not (version == tv or version.startswith(tv + '.')):
                 logging.warning(
@@ -2257,14 +2258,14 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         has_conflicts = False
         took_merge_path = False
 
-        if not sync and metadata.get('modification_status') == 'modified' and has_modifications:
+        if not sync and isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)) and has_modifications:
             has_conflicts = merge_local_modifications(package_name, package_dir, Path(tmpdir),
                                                      metadata, upstream_dir, latest_sha)
             took_merge_path = True
         else:
             # No modifications or sync mode - simple update
             action = "Syncing" if sync else "Updating"
-            logging.info("%s %s: %s -> %s", action, package_name, metadata['sha'][:8], latest_sha[:8])
+            logging.info("%s %s: %s -> %s", action, package_name, metadata.fedora.sha[:8], latest_sha[:8])
             shutil.rmtree(package_dir)
             shutil.rmtree(upstream_dir / '.git')
             shutil.copytree(upstream_dir, package_dir)
@@ -2276,8 +2277,8 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         logging.info("Updated to %s-%s", version, release)
 
         # Capture old version-release for commit message
-        old_version = metadata['version']
-        old_release = metadata.get('release', '(none)')
+        old_version = metadata.version
+        old_release = metadata.fedora.release if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)) else '(none)'
 
         sanitize_package_paths(package_dir)
 
@@ -2338,13 +2339,13 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         stale_patches: list[tuple[int, str]] = []
         if not has_conflicts and not dry_run and has_modifications:
             source_filenames_for_check = new_source_filenames
-            if not source_filenames_for_check and 'source' in metadata and cuv._load_source_pipeline(package_name) is None:
+            if not source_filenames_for_check and not isinstance(metadata, IndependentPackageMetadata) and cuv._load_source_pipeline(package_name) is None:
                 # Non-gorget dist-git package: download sources into a tempdir
                 # so nothing is left behind in package_dir after the check.
                 with tempfile.TemporaryDirectory() as fetch_tmpdir:
                     fetch_dir = Path(fetch_tmpdir)
                     source_filenames_for_check = _fetch_sources_for_stale_check(
-                        package_dir, metadata['source'], fetch_dir)
+                        package_dir, metadata.fedora.git_url, fetch_dir)
                     stale_patches = detect_stale_patches(
                         package_dir, source_filenames_for_check, archive_dir=fetch_dir)
             else:
@@ -2358,18 +2359,34 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
 
         sanitize_package_paths(package_dir)
 
-        # Update package metadata
-        imports[package_name]['sha'] = latest_sha
-        imports[package_name]['version'] = version
-        imports[package_name]['release'] = release
-        if branch_changed:
-            imports[package_name]['branch'] = effective_branch
+        # Update package metadata via library transitions
+        new_fedora = FedoraOriginWithRelease(
+            git_url=metadata.fedora.git_url,
+            branch=effective_branch if branch_changed else metadata.fedora.branch,
+            sha=latest_sha,
+            release=release,
+        )
 
         if sync or not has_modifications:
             # Reset modification_status to clean after successful update/sync
-            imports[package_name]['modification_status'] = 'clean'
-            imports[package_name].pop('modification_reason', None)
-        # In merge mode with local modifications, keep modification_status as 'modified'
+            if isinstance(metadata, CleanPackageMetadata):
+                metadata.update(fedora=new_fedora, version=version)
+            elif isinstance(metadata, ModifiedFedoraPackageMetadata):
+                metadata = metadata.to_clean()
+                metadata.update(fedora=new_fedora, version=version)
+            elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
+                metadata = metadata.to_clean(fedora=new_fedora, version=version)
+        else:
+            # Keep modified status (merge path with local modifications)
+            if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
+                metadata.update(fedora=new_fedora, version=version)
+            elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
+                reason = metadata.modification_reason
+                metadata = metadata.to_modified_fedora(fedora=new_fedora, reason=reason)
+                if metadata.version != version:
+                    metadata.update(fedora=new_fedora, version=version)
+
+        imports[package_name] = metadata
 
         # Commit the changes (or stage for manual resolution on conflict)
         stale_patch_prefix = "STALE PATCH: " if stale_patches else ""
@@ -2401,7 +2418,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                     json.dump({
                         'package': package_name,
                         'commit_msg': commit_msg,
-                        'metadata': imports[package_name],
+                        'metadata': _to_raw_dict(imports[package_name]),
                         'old_version': old_version,
                     }, f)
 
@@ -2466,9 +2483,10 @@ def continue_update(dry_run: bool = False) -> None:
     gorget_failure_reason = None
     new_source_filenames: list[str] = []
     if not dry_run and 'metadata' in state and 'old_version' in state:
+        restored_metadata = HumPackageMetadata._from_raw_dict(package_name, state['metadata'])
         gorget_failure_reason, new_source_filenames = _run_gorget_for_updated_package(
             package_name, package_dir, state['old_version'],
-            state['metadata']['version'], cast(PackageMetadata, state['metadata']),
+            state['metadata']['version'], restored_metadata,
         )
         if gorget_failure_reason:
             sys.exit(
@@ -2487,8 +2505,8 @@ def continue_update(dry_run: bool = False) -> None:
             orphans = detect_orphaned_patch_directives(spec_candidates[0])
             if orphans:
                 detail = _format_orphan_patches(orphans)
-                status = state.get('metadata', {}).get('modification_status', 'modified')
-                if status == 'modified':
+                status = state.get('metadata', {}).get('modification_status', ModificationStatus.MODIFIED.value)
+                if status == ModificationStatus.MODIFIED.value:
                     strip_orphaned_patch_directives(spec_candidates[0])
                     logging.info("Stripped orphaned %s with no Patch<N>: declaration", detail)
                     commit_msg += f"\n\nStripped orphaned {detail} with no Patch<N>: declaration"
@@ -2500,7 +2518,7 @@ def continue_update(dry_run: bool = False) -> None:
 
         # Restore the updated metadata saved during the conflict exit
         if 'metadata' in state:
-            metadata = cast(PackageMetadata, state['metadata'])
+            metadata = HumPackageMetadata._from_raw_dict(package_name, state['metadata'])
             sanitize_package_paths(package_dir)
             save_package_metadata(package_name, metadata)
 
@@ -2553,12 +2571,11 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
         metadata = load_package_metadata(package_name)
         if not metadata:
             sys.exit(f"ERROR: Could not load metadata for {package_name}")
-        # Independent packages don't have 'source' field and can't query MDAPI
-        if 'source' not in metadata:
+        if isinstance(metadata, IndependentPackageMetadata):
             sys.exit(f"ERROR: Package {package_name} is independent and uses %autorelease - "
                      f"cannot resolve via MDAPI. Please handle this rebuild manually.")
-        else:
-            branch = metadata.get('branch', 'rawhide')
+        elif isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+            branch = metadata.fedora.branch
             release = query_autorelease_from_mdapi(package_name, branch, '1')
             if not release:
                 sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
@@ -2577,7 +2594,10 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
     # - Base is 3.1 -> first rebuild should be 3.1.1
     # - We already rebuilt base 3 to 3.1 -> next rebuild should be 3.2
     # For independent packages, don't pass a base — they have no Fedora upstream.
-    upstream_release = metadata.get('release') if 'source' in metadata else None
+    if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
+        upstream_release = metadata.fedora.release
+    else:
+        upstream_release = None
 
     # Bump release with base-release awareness
     new_release = bump_release(current_release, upstream_release)
@@ -2625,9 +2645,6 @@ def mark_modified(package_name: str, modified: bool, reason: str | None = None) 
     metadata = imports[package_name]
 
     if modified:
-        # Mark as modified
-        metadata['modification_status'] = 'modified'
-
         # Get reason (prompt if not provided)
         if not reason:
             try:
@@ -2637,12 +2654,29 @@ def mark_modified(package_name: str, modified: bool, reason: str | None = None) 
             except (EOFError, KeyboardInterrupt):
                 sys.exit("\nAborted")
 
-        metadata['modification_reason'] = reason
+        # Mark as modified via state transition
+        if isinstance(metadata, CleanPackageMetadata):
+            metadata = metadata.to_modified_fedora(reason=reason)
+        elif isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+            metadata.modification_reason = reason
+        elif isinstance(metadata, IndependentPackageMetadata):
+            sys.exit(f"ERROR: Cannot mark independent package {package_name} as modified")
         logging.info("Marked %s as modified: %s", package_name, reason)
     else:
-        # Mark as clean
-        metadata['modification_status'] = 'clean'
-        metadata.pop('modification_reason', None)
+        # Mark as clean via state transition
+        if isinstance(metadata, ModifiedFedoraPackageMetadata):
+            metadata = metadata.to_clean()
+        elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
+            version, release = parse_spec_version(RPMS_DIR / package_name)
+            new_fedora = FedoraOriginWithRelease(
+                git_url=metadata.fedora.git_url,
+                branch=metadata.fedora.branch,
+                sha=metadata.fedora.sha,
+                release=release,
+            )
+            metadata = metadata.to_clean(fedora=new_fedora, version=version)
+        elif isinstance(metadata, IndependentPackageMetadata):
+            sys.exit(f"ERROR: Cannot mark independent package {package_name} as clean")
         logging.info("Marked %s as clean (auto-updates enabled)", package_name)
 
     # Save updated metadata
@@ -2677,21 +2711,39 @@ def set_upstream(
 
     metadata = imports[package_name]
 
-    if track_version is not _UNSET:
-        if track_version is None:
-            metadata.pop('track_upstream', None)
-            logging.info("Disabled upstream version tracking for %s", package_name)
-        else:
-            metadata['track_upstream'] = track_version
-            logging.info("Set track_upstream=%s for %s", track_version, package_name)
+    # Determine final values (start from current, apply overrides)
+    final_track = metadata.track_upstream if track_version is _UNSET else track_version
+    final_pid = metadata.release_monitoring_project_id if project_id is _UNSET else project_id
 
-    if project_id is not _UNSET:
-        if project_id is None:
-            metadata.pop('release_monitoring_project_id', None)
+    # Configure tracking based on the computed final state
+    if final_track is None and final_pid is None:
+        metadata.disable_upstream_tracking()
+        if track_version is not _UNSET:
+            logging.info("Disabled upstream version tracking for %s", package_name)
+        if project_id is not _UNSET:
             logging.info("Removed release_monitoring_project_id for %s", package_name)
-        else:
-            metadata['release_monitoring_project_id'] = project_id
-            logging.info("Set release_monitoring_project_id=%s for %s", project_id, package_name)
+    elif metadata.version_source == "gitlab_tags":
+        metadata.enable_upstream_tracking_gitlab_tags(
+            track_upstream=final_track,
+            tag_strip_prefix=metadata.tag_strip_prefix,
+        )
+        if track_version is not _UNSET:
+            logging.info("Set track_upstream=%s for %s", final_track, package_name)
+    elif final_track is not None and final_pid is not None:
+        metadata.enable_upstream_tracking(
+            track_upstream=final_track,
+            release_monitoring_project_id=final_pid,
+        )
+        if track_version is not _UNSET:
+            logging.info("Set track_upstream=%s for %s", final_track, package_name)
+        if project_id is not _UNSET:
+            logging.info("Set release_monitoring_project_id=%s for %s", final_pid, package_name)
+    elif final_track is not None and final_pid is None:
+        sys.exit(f"ERROR: track_upstream requires release_monitoring_project_id for {package_name}.\n"
+                 f"       Set it with --project-id or disable tracking entirely.")
+    elif final_track is None and final_pid is not None:
+        sys.exit(f"ERROR: release_monitoring_project_id requires track_upstream for {package_name}.\n"
+                 f"       Set it with --track-version or remove the project ID with --project-id none.")
 
     save_package_metadata(package_name, metadata)
     imports[package_name] = metadata
@@ -2703,8 +2755,9 @@ def sanitize_paths(packages: list[str], dry_run: bool = False) -> None:
     Leave changes in the working tree for review, like mark-modified.
     """
     for package in packages:
-        metadata = load_package_metadata(package)
-        if not metadata:
+        try:
+            _METADATA_REPO.load(package)
+        except OSError:
             sys.exit(f"ERROR: Package {package} not found")
         files = run_git('ls-files', '-z', '--cached', '--others', '--exclude-standard',
                         '--', f'rpms/{package}', cwd=ROOT_DIR).stdout.split('\0')
@@ -2754,26 +2807,31 @@ def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False
     if capture and output_mode != 'full':
         raise ValueError(f"capture=True is only supported with output_mode='full', got {output_mode!r}")
 
-    metadata = load_package_metadata(package_name)
-    if not metadata:
+    try:
+        metadata = _METADATA_REPO.load(package_name)
+    except OSError:
         sys.exit(f"ERROR: Package {package_name} not found")
 
     # Skip independent packages
-    if metadata.get('modification_status') == 'independent':
+    if isinstance(metadata, IndependentPackageMetadata):
         print(f"{package_name}: Independent package (no upstream to diff against)")
         return None
+
+    if not isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+        sys.exit(f"ERROR: Unknown metadata type for {package_name}: {type(metadata).__name__}")
 
     # Clone upstream to temp directory
     with tempfile.TemporaryDirectory() as tmpdir:
         upstream_dir = Path(tmpdir) / 'upstream'
 
         logging.info("Cloning %s from %s (branch: %s, SHA: %s)",
-                    package_name, metadata['source'], metadata['branch'], metadata['sha'][:8])
+                    package_name, metadata.fedora.git_url, metadata.fedora.branch,
+                    metadata.fedora.sha[:8])
 
         # Clone and checkout exact SHA
-        run_git('clone', '--quiet', '--branch', metadata['branch'],
-                '--single-branch', metadata['source'], str(upstream_dir))
-        run_git('checkout', '--quiet', metadata['sha'], cwd=upstream_dir)
+        run_git('clone', '--quiet', '--branch', metadata.fedora.branch,
+                '--single-branch', metadata.fedora.git_url, str(upstream_dir))
+        run_git('checkout', '--quiet', metadata.fedora.sha, cwd=upstream_dir)
 
         # Remove .git to avoid comparing git metadata
         shutil.rmtree(upstream_dir / '.git')
@@ -3013,27 +3071,24 @@ def list_packages(status_filter: str | None = None, prerelease_filter: bool = Fa
         prerelease_filter: If True, show only packages with pre-release versions
         name_only: If True, show only package names without formatting (useful for shell scripting)
     """
-    metadata_files = sorted(METADATA_DIR.glob('*.json'))
+    all_metadata = _METADATA_REPO.load_all()
 
-    if not metadata_files:
+    if not all_metadata:
         print("No packages found")
         return
 
     # Collect packages with their status
     packages: list[tuple[str, str, str | None, str]] = []  # (name, status, reason, version)
 
-    for metadata_file in metadata_files:
-        package_name = metadata_file.stem
-        with open(metadata_file) as f:
-            metadata: PackageMetadata = json.load(f)
-
-        status = metadata.get('modification_status', 'unknown')
-        reason = metadata.get('modification_reason')
-        version = metadata.get('version', '')
-        release = metadata.get('release', '')
+    for package_name, metadata in sorted(all_metadata.items()):
+        status = metadata.modification_status
+        reason = getattr(metadata, 'modification_reason', None)
+        version = metadata.version
+        fedora = getattr(metadata, 'fedora', None)
+        release = getattr(fedora, 'release', '') if fedora is not None else ''
 
         # Apply status filter if specified
-        if status_filter and status != status_filter:
+        if status_filter and status.value != status_filter:
             continue
 
         # Apply prerelease filter if specified
@@ -3042,7 +3097,7 @@ def list_packages(status_filter: str | None = None, prerelease_filter: bool = Fa
             if not is_pre:
                 continue
 
-        packages.append((package_name, status, reason, version))
+        packages.append((package_name, status.value, reason, version))
 
     if name_only:
         for name, _, _, _ in packages:
@@ -3068,20 +3123,22 @@ def list_packages(status_filter: str | None = None, prerelease_filter: bool = Fa
     print()
 
     # Print packages
-    for name, status, reason, version in packages:
-        status_indicator = {
-            'clean': '✓',
-            'modified': '⚠',
-            'independent': '●',
-        }.get(status, '?')
+    _STATUS_INDICATORS = {
+        ModificationStatus.CLEAN: '✓',
+        ModificationStatus.MODIFIED: '⚠',
+        ModificationStatus.INDEPENDENT: '●',
+    }
+
+    for name, status_value, reason, version in packages:
+        status_indicator = _STATUS_INDICATORS.get(
+            ModificationStatus(status_value), '?')
 
         if prerelease_filter:
-            # Show version for pre-release packages
-            print(f"  {status_indicator} {name:<40} [{status}] v{version}")
+            print(f"  {status_indicator} {name:<40} [{status_value}] v{version}")
         else:
-            print(f"  {status_indicator} {name:<40} [{status}]")
+            print(f"  {status_indicator} {name:<40} [{status_value}]")
 
-        if reason and status == 'modified':
+        if reason and status_value == ModificationStatus.MODIFIED.value:
             print(f"    → {reason}")
 
 
@@ -3599,7 +3656,7 @@ Examples:
                 # Diff all modified packages
                 packages = [
                     pkg for pkg, meta in imports.items()
-                    if meta.get('modification_status') == 'modified'
+                    if isinstance(meta, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata))
                 ]
                 if not packages:
                     print("No modified packages found")

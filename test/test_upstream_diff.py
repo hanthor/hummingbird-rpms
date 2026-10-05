@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
+from hum.meta import MetadataRepository
+
 
 @pytest.fixture
 def upstream_diff_module(tmp_path):
@@ -20,58 +22,70 @@ def upstream_diff_module(tmp_path):
 
     module.CACHE_DIR = tmp_path / '.cache'
     module.CACHE_FILE = tmp_path / '.cache' / 'upstream-diff-analysis.json'
-    module.METADATA_DIR = tmp_path / 'metadata'
+    module._METADATA_REPO = MetadataRepository(tmp_path)
 
     module.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    module.METADATA_DIR.mkdir(parents=True, exist_ok=True)
+    (tmp_path / 'metadata').mkdir(parents=True, exist_ok=True)
 
     return module
 
 
 @pytest.fixture
 def sample_metadata(upstream_diff_module, tmp_path):
-    """Create sample metadata files."""
+    """Create sample metadata files using the nested fedora schema."""
     metadata_dir = tmp_path / 'metadata'
     packages = {
         'caddy': {
-            'branch': 'rawhide',
+            'fedora': {
+                'git_url': 'https://src.fedoraproject.org/rpms/caddy.git',
+                'branch': 'rawhide',
+                'sha': 'abc123',
+                'release': '1',
+            },
             'modification_status': 'modified',
             'modification_reason': 'Weaken systemd dependency',
-            'sha': 'abc123',
-            'source': 'https://src.fedoraproject.org/rpms/caddy.git',
             'version': '2.9.0',
-            'release': '1',
+            'upstream_repo': 'https://github.com/caddyserver/caddy',
         },
         'automake': {
-            'branch': 'rawhide',
+            'fedora': {
+                'git_url': 'https://src.fedoraproject.org/rpms/automake.git',
+                'branch': 'rawhide',
+                'sha': 'def456',
+                'release': '4',
+            },
             'modification_status': 'modified',
             'modification_reason': 'Exclude gcc-objc BuildRequires',
-            'sha': 'def456',
-            'source': 'https://src.fedoraproject.org/rpms/automake.git',
             'version': '1.18.1',
-            'release': '4',
+            'upstream_repo': 'https://git.savannah.gnu.org/git/automake.git',
         },
         'curl': {
-            'branch': 'rawhide',
+            'fedora': {
+                'git_url': 'https://src.fedoraproject.org/rpms/curl.git',
+                'branch': 'rawhide',
+                'sha': 'ghi789',
+                'release': '1',
+            },
             'modification_status': 'modified',
             'modification_reason': 'Test parallelism tuning',
-            'sha': 'ghi789',
-            'source': 'https://src.fedoraproject.org/rpms/curl.git',
             'version': '8.12.0',
-            'release': '1',
+            'upstream_repo': 'https://github.com/curl/curl',
         },
         'PyYAML': {
-            'branch': 'rawhide',
+            'fedora': {
+                'git_url': 'https://src.fedoraproject.org/rpms/PyYAML.git',
+                'branch': 'rawhide',
+                'sha': 'jkl012',
+                'release': '1',
+            },
             'modification_status': 'clean',
-            'sha': 'jkl012',
-            'source': 'https://src.fedoraproject.org/rpms/PyYAML.git',
             'version': '6.0.3',
-            'release': '1',
+            'upstream_repo': 'https://github.com/yaml/pyyaml',
         },
         'independent-pkg': {
             'modification_status': 'independent',
             'version': '1.0',
-            'release': '1',
+            'upstream_repo': 'https://example.com/independent-pkg',
         },
     }
     for name, data in packages.items():
@@ -214,9 +228,7 @@ class TestCmdSave:
     def test_save_valid_category(self, upstream_diff_module, sample_metadata):
         for cat in upstream_diff_module.VALID_CATEGORIES:
             args = self._make_args(category=cat)
-            with patch.object(upstream_diff_module, 'load_package_metadata',
-                              return_value=sample_metadata['caddy']):
-                upstream_diff_module.cmd_save(args)
+            upstream_diff_module.cmd_save(args)
             cache = upstream_diff_module.load_cache()
             assert cache['packages']['caddy']['category'] == cat
 
@@ -227,9 +239,7 @@ class TestCmdSave:
             recommendation='Cannot upstream as-is',
             hummingbird_macros=True,
         )
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['automake']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         rec = cache['packages']['automake']['recommendation']
         assert 'Revisit if Fedora packaging guidelines' in rec
@@ -243,9 +253,7 @@ class TestCmdSave:
             recommendation=f'Cannot upstream as-is. {suffix}',
             hummingbird_macros=True,
         )
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['automake']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         rec = cache['packages']['automake']['recommendation']
         assert rec.count('Revisit if Fedora packaging guidelines') == 1
@@ -255,32 +263,26 @@ class TestCmdSave:
             category='no-diff',
             recommendation='',
         )
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['recommendation'] == 'Consider unmarking as modified'
 
     def test_no_diff_recommendation_from_cli(self, upstream_diff_module, sample_metadata, capsys):
         """Verify the CLI accepts a no-diff save without an explicit --recommendation."""
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch('sys.argv', [
-                'upstream_diff.py', 'save', 'caddy',
-                '--category', 'no-diff',
-                '--changes-summary', 'No diff found',
-                '--reasoning', 'Empty diff',
-                '--upstream-prs', '',
-            ]):
-                upstream_diff_module.main()
+        with patch('sys.argv', [
+            'upstream_diff.py', 'save', 'caddy',
+            '--category', 'no-diff',
+            '--changes-summary', 'No diff found',
+            '--reasoning', 'Empty diff',
+            '--upstream-prs', '',
+        ]):
+            upstream_diff_module.main()
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['recommendation'] == 'Consider unmarking as modified'
 
     def test_preserves_jira_issue(self, upstream_diff_module, sample_metadata, sample_cache):
         args = self._make_args(jira_issue=None)
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['jira_issue'] == 'HUM-1679'
 
@@ -298,9 +300,8 @@ class TestCmdSave:
 
     def test_save_missing_package_errors(self, upstream_diff_module):
         args = self._make_args(package='nonexistent')
-        with patch.object(upstream_diff_module, 'load_package_metadata', return_value=None):
-            with pytest.raises(SystemExit):
-                upstream_diff_module.cmd_save(args)
+        with pytest.raises(SystemExit):
+            upstream_diff_module.cmd_save(args)
 
     def test_save_with_related_prs(self, upstream_diff_module, sample_metadata):
         all_prs = [
@@ -310,27 +311,21 @@ class TestCmdSave:
              'branch': 'rawhide', 'url': 'https://example.com/pr/5'},
         ]
         args = self._make_args(upstream_prs=['4'])
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=all_prs):
-                upstream_diff_module.cmd_save(args)
+        with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=all_prs):
+            upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert len(cache['packages']['caddy']['upstream_prs']) == 1
         assert cache['packages']['caddy']['upstream_prs'][0]['id'] == 4
 
     def test_save_with_no_related_prs(self, upstream_diff_module, sample_metadata):
         args = self._make_args(upstream_prs=[''])
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['upstream_prs'] == []
 
     def test_save_with_empty_upstream_prs_list(self, upstream_diff_module, sample_metadata):
         args = self._make_args(upstream_prs=[])
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            upstream_diff_module.cmd_save(args)
+        upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['upstream_prs'] == []
 
@@ -343,10 +338,8 @@ class TestCmdSave:
              'branch': 'rawhide', 'url': 'https://example.com/pr/118'},
         ]
         args = self._make_args(set_upstream_prs=['caddy', '118'])
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=all_prs):
-                upstream_diff_module.cmd_save(args)
+        with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=all_prs):
+            upstream_diff_module.cmd_save(args)
         cache = upstream_diff_module.load_cache()
         assert cache['packages']['caddy']['category'] == 'upstreamable'
         assert len(cache['packages']['caddy']['upstream_prs']) == 1
@@ -521,11 +514,9 @@ class TestCmdJiraTemplate:
         return argparse.Namespace(package=package, epic=epic)
 
     def test_description_contains_reason_and_diff(self, upstream_diff_module, sample_cache, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output',
-                              return_value='--- a/caddy.spec\n+++ b/caddy.spec\n-old\n+new'):
-                upstream_diff_module.cmd_jira_template(self._make_args())
+        with patch.object(upstream_diff_module, 'get_diff_output',
+                          return_value='--- a/caddy.spec\n+++ b/caddy.spec\n-old\n+new'):
+            upstream_diff_module.cmd_jira_template(self._make_args())
         captured = capsys.readouterr()
         assert '## Modification Reason' in captured.out
         assert 'Weaken systemd dependency' in captured.out
@@ -533,20 +524,16 @@ class TestCmdJiraTemplate:
         assert '--- a/caddy.spec' in captured.out
 
     def test_comment_contains_analysis(self, upstream_diff_module, sample_cache, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff text'):
-                upstream_diff_module.cmd_jira_template(self._make_args())
+        with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff text'):
+            upstream_diff_module.cmd_jira_template(self._make_args())
         captured = capsys.readouterr()
         assert '## Analysis' in captured.out
         assert '**Category:** upstreamable' in captured.out
         assert '**Recommendation:** Submit Fedora PR' in captured.out
 
     def test_custom_epic(self, upstream_diff_module, sample_cache, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
-                upstream_diff_module.cmd_jira_template(self._make_args(epic='HUM-9999'))
+        with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
+            upstream_diff_module.cmd_jira_template(self._make_args(epic='HUM-9999'))
         captured = capsys.readouterr()
         assert 'Parent: HUM-9999' in captured.out
 
@@ -572,10 +559,8 @@ class TestCmdJiraTemplate:
             },
         }
         (tmp_path / '.cache' / 'upstream-diff-analysis.json').write_text(json.dumps(cache))
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
-                upstream_diff_module.cmd_jira_template(self._make_args())
+        with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
+            upstream_diff_module.cmd_jira_template(self._make_args())
         captured = capsys.readouterr()
         assert '=== JIRA PR COMMENT ===' in captured.out
         assert '## Related Upstream PRs' in captured.out
@@ -584,10 +569,8 @@ class TestCmdJiraTemplate:
 
     def test_jira_template_no_pr_comment_when_empty(self, upstream_diff_module,
                                                     sample_cache, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
-                upstream_diff_module.cmd_jira_template(self._make_args())
+        with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
+            upstream_diff_module.cmd_jira_template(self._make_args())
         captured = capsys.readouterr()
         assert '=== JIRA PR COMMENT ===' not in captured.out
 
@@ -612,10 +595,8 @@ class TestCmdPrepare:
         assert '=== END PREPARE ===' in captured.out
 
     def test_specific_packages(self, upstream_diff_module, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff text'):
-                upstream_diff_module.cmd_prepare(self._make_args(packages=['caddy']))
+        with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff text'):
+            upstream_diff_module.cmd_prepare(self._make_args(packages=['caddy']))
         captured = capsys.readouterr()
         assert '--- PACKAGE: caddy ---' in captured.out
         assert 'diff text' in captured.out
@@ -646,7 +627,7 @@ class TestCmdPrepare:
         metadata = upstream_diff_module.get_all_modified_metadata()
         for pkg, data in metadata.items():
             cache['packages'][pkg] = {
-                'metadata_sha': data['sha'],
+                'metadata_sha': data.fedora.sha,
                 'category': 'complex',
             }
         upstream_diff_module.save_cache(cache)
@@ -655,9 +636,8 @@ class TestCmdPrepare:
         assert 'already cached and up to date' in captured.out
 
     def test_nonexistent_package_errors(self, upstream_diff_module, sample_metadata):
-        with patch.object(upstream_diff_module, 'load_package_metadata', return_value=None):
-            with pytest.raises(SystemExit):
-                upstream_diff_module.cmd_prepare(self._make_args(packages=['nonexistent']))
+        with pytest.raises(SystemExit):
+            upstream_diff_module.cmd_prepare(self._make_args(packages=['nonexistent']))
 
     def test_shows_modification_reason(self, upstream_diff_module, sample_metadata, capsys):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
@@ -749,27 +729,22 @@ class TestCmdCheckPrs:
         mock_prs = [{'id': 4, 'title': 'Fix dep', 'status': 'Open', 'user': 'dev1',
                      'branch': 'rawhide',
                      'url': 'https://src.fedoraproject.org/rpms/caddy/pull-request/4'}]
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=mock_prs):
-                upstream_diff_module.cmd_check_prs(self._make_args(['caddy']))
+        with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=mock_prs):
+            upstream_diff_module.cmd_check_prs(self._make_args(['caddy']))
         captured = capsys.readouterr()
         assert '=== UPSTREAM PRs: caddy ===' in captured.out
         assert 'Open:' in captured.out
         assert 'PR #4: Fix dep (by dev1, -> rawhide)' in captured.out
 
     def test_no_open_prs(self, upstream_diff_module, sample_metadata, capsys):
-        with patch.object(upstream_diff_module, 'load_package_metadata',
-                          return_value=sample_metadata['caddy']):
-            with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=[]):
-                upstream_diff_module.cmd_check_prs(self._make_args(['caddy']))
+        with patch.object(upstream_diff_module, 'get_upstream_prs', return_value=[]):
+            upstream_diff_module.cmd_check_prs(self._make_args(['caddy']))
         captured = capsys.readouterr()
         assert '(no open or recently merged PRs)' in captured.out
 
     def test_missing_package_errors(self, upstream_diff_module):
-        with patch.object(upstream_diff_module, 'load_package_metadata', return_value=None):
-            with pytest.raises(SystemExit):
-                upstream_diff_module.cmd_check_prs(self._make_args(['nonexistent']))
+        with pytest.raises(SystemExit):
+            upstream_diff_module.cmd_check_prs(self._make_args(['nonexistent']))
 
 
 class TestFormatUpstreamPrs:
