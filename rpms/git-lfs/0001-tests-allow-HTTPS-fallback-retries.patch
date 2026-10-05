@@ -1,0 +1,26 @@
+From: Hummingbird maintainers
+Subject: [PATCH] t: allow retries in SSH authentication HTTPS fallback tests
+
+The invalid fallback hostname can produce a retryable DNS error in a
+hermetic build. In that case the Locking and Batch API requests repeat
+SSH authentication and HTTPS fallback, producing ten calls instead of
+two. Require at least one fallback for each API without fixing the total
+number of attempts. Keep checking that the push fails.
+
+Upstream-Status: Pending
+Reference: https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/4781
+
+diff --git a/t/t-ssh.sh b/t/t-ssh.sh
+--- a/t/t-ssh.sh
++++ b/t/t-ssh.sh
+@@ -102,5 +102,7 @@ ssh_authenticate_unavailable_test() {
+   # an HTTPS URL, which should in turn fail because the host name is invalid.
+-  [ 2 -eq "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
+-  [ 2 -eq "$(grep -c -F "ssh: git@$invalid_host does not provide git-lfs-authenticate, falling back to guessed LFS endpoint" push.log)" ]
+-  [ 2 -eq "$(grep -c -F "HTTP: POST https://$invalid_host/$reponame/" push.log)" ]
++  # Retryable DNS failures can repeat these calls. Require both API requests
++  # to fall back without depending on the resolver's error or retry count.
++  [ 2 -le "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
++  [ 2 -le "$(grep -c -F "ssh: git@$invalid_host does not provide git-lfs-authenticate, falling back to guessed LFS endpoint" push.log)" ]
++  [ 2 -le "$(grep -c -F "HTTP: POST https://$invalid_host/$reponame/" push.log)" ]
+ }
