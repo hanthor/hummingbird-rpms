@@ -2,7 +2,7 @@
 
 Name:           publicsuffix-list
 Version:        20260624
-Release:        2%{?dist}
+Release:        2.1%{?dist}
 Summary:        Cross-vendor public domain suffix database
 
 License:        MPL-2.0
