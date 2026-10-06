@@ -100,6 +100,7 @@ from hum.meta import MetadataRepository  # noqa: E402
 from hum.meta.model import (  # noqa: E402
     CleanPackageMetadata,
     IndependentPackageMetadata,
+    InvalidMetadataError,
     MalformedMetadataError,
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
@@ -300,11 +301,19 @@ def parse_spec_version_release(package_dir: Path) -> Optional[tuple[str, str]]:
 
 
 def get_package_metadata(package: str) -> Optional[HumPackageMetadata]:
-    """Get typed metadata object for a package."""
+    """Get typed metadata object for a package.
+
+    Returns None for missing metadata files. Raises MalformedMetadataError
+    for files that exist but cannot be loaded, so callers can distinguish
+    absent from broken.
+    """
+    metadata_path = METADATA_DIR / f"{package}.json"
+    if not metadata_path.exists():
+        return None
     try:
         return _METADATA_REPO.load(package)
-    except (MalformedMetadataError, json.JSONDecodeError, OSError):
-        return None
+    except (MalformedMetadataError, json.JSONDecodeError, OSError) as e:
+        raise MalformedMetadataError(f"{package}: {e}") from e
 
 
 def get_version_from_metadata(package: str) -> Optional[str]:
@@ -987,7 +996,7 @@ def mark_package_modified(
 
     try:
         _METADATA_REPO.save(metadata)
-    except OSError as e:
+    except (OSError, InvalidMetadataError) as e:
         logger.error(f"{package}: failed to write metadata: {e}")
         return
 
@@ -2106,7 +2115,11 @@ def run_check(args: argparse.Namespace) -> None:
         # Filter to only packages with track_upstream set in metadata
         tracked = []
         for pkg in packages:
-            meta = get_package_metadata(pkg)
+            try:
+                meta = get_package_metadata(pkg)
+            except MalformedMetadataError as e:
+                logger.error("%s", e)
+                continue
             if meta and meta.track_upstream:
                 tracked.append(pkg)
         packages = tracked
@@ -2228,6 +2241,8 @@ def run_check(args: argparse.Namespace) -> None:
                 subprocess.CalledProcessError,
                 urllib.error.URLError,
                 requests.HTTPError,
+                InvalidMetadataError,
+                MalformedMetadataError,
             ) as e:
                 result.update_error = str(e)
                 logger.error("%s: failed to apply update: %s", result.package, e)

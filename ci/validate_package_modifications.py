@@ -472,6 +472,11 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     except (MalformedMetadataError, OSError) as e:
         return False, f"{package_name}: {e}"
 
+    result = metadata.validate()
+    if result.violations:
+        messages = "; ".join(v.message for v in result.violations)
+        return False, f"{package_name}: validation failed: {messages}"
+
     if isinstance(metadata, IndependentPackageMetadata):
         # Check 3.1: An independent package with a non-empty `sources` file has
         # remote sources that need fetching at build time. It has no Fedora
@@ -506,14 +511,6 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     is_valid, error = check_local_modifications(package_name, last_sync_sha)
     if not is_valid:
         return False, error
-
-    # Check 4: track_upstream must be a string if present ("latest" or version prefix)
-    if metadata.track_upstream is not None and not isinstance(metadata.track_upstream, str):
-        return False, f"{package_name}: track_upstream must be a string, got {type(metadata.track_upstream).__name__}"
-
-    # Check 4.5: release_monitoring_project_id must be an integer if present
-    if metadata.release_monitoring_project_id is not None and not isinstance(metadata.release_monitoring_project_id, int):
-        return False, f"{package_name}: release_monitoring_project_id must be an integer"
 
     # Check 5: Modified packages must have reason
     if isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):

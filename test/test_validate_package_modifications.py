@@ -115,7 +115,7 @@ def test_track_upstream_boolean_rejected(validator) -> None:
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
     assert 'track_upstream' in error
-    assert 'bool' in error
+    assert 'str' in error
 
 
 def test_track_upstream_string_latest_accepted(validator) -> None:
@@ -127,6 +127,7 @@ def test_track_upstream_string_latest_accepted(validator) -> None:
         'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
         'upstream_repo': 'https://example.com',
         'track_upstream': 'latest',
+        'release_monitoring_project_id': 12345,
     })
     subprocess.run(['git', 'add', '.'], cwd=root, check=True)
     subprocess.run(['git', 'commit', '-m', 'Sync pkg from 1.0-1 to 1.0-1',
@@ -147,6 +148,7 @@ def test_track_upstream_version_prefix_accepted(validator) -> None:
         'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
         'upstream_repo': 'https://example.com',
         'track_upstream': '1.26',
+        'release_monitoring_project_id': 12345,
     })
     subprocess.run(['git', 'add', '.'], cwd=root, check=True)
     subprocess.run(['git', 'commit', '-m', 'Sync pkg from 1.0-1 to 1.0-1',
@@ -177,7 +179,7 @@ def test_track_upstream_integer_rejected(validator) -> None:
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
     assert 'track_upstream' in error
-    assert 'int' in error
+    assert 'str' in error
 
 
 #
