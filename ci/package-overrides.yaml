@@ -670,6 +670,16 @@ k6v2:
 kbd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+keyutils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 kube-state-metrics:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
