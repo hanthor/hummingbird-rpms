@@ -59,6 +59,16 @@ bootc:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+ca-certificates:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 caddy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -132,6 +142,16 @@ expat:
 
 fftw:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+filesystem:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 fontconfig:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -239,6 +259,16 @@ hwloc:
 
 hugo:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+hummingbird-release:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 jaeger:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -558,6 +588,16 @@ rust-rpm-sequoia:
 scap-security-guide:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+setup:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 snappy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -607,6 +647,16 @@ tomcat11:
 
 trivy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+tzdata:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 ucx:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
