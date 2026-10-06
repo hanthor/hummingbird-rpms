@@ -4,7 +4,7 @@
 Summary: SELinux binary policy manipulation library
 Name: libsemanage
 Version: 3.11
-Release: 4%{?dist}
+Release: 4.1%{?dist}
 License: LGPL-2.1-or-later
 Source0: https://github.com/SELinuxProject/selinux/releases/download/%{version}/libsemanage-%{version}.tar.gz
 Source1: https://github.com/SELinuxProject/selinux/releases/download/%{version}/libsemanage-%{version}.tar.gz.asc
