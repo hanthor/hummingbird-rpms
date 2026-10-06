@@ -767,6 +767,14 @@ libevent:
   # tarball at that version is not in Fedora's lookaside cache, only
   # Hummingbird's. Use the Hummingbird lookaside cache instead of Fedora.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libfabric:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
