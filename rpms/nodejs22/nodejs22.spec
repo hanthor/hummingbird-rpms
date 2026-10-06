@@ -45,7 +45,7 @@
 # Version from node-v22.23.3/deps/undici/src/package.json
 %nodejs_define_version nodejs-undici 6.28.1
 # Version from node-v22.23.3/deps/npm/package.json
-%nodejs_define_version npm 1:10.9.9-%{nodejs_subpackage_release}
+%nodejs_define_version npm 2:10.9.9-%{nodejs_subpackage_release}
 # Version from node-v22.23.3/deps/sqlite/sqlite3.h
 %nodejs_define_version sqlite 3.51.3
 # Version from node-v22.23.3/deps/uvwasi/include/uvwasi.h
@@ -60,6 +60,8 @@
 # Use all vendored dependencies when bootstrapping
 %bcond all_deps_bundled %{with bootstrap}
 
+# Generate unversioned names; TODO: figure out the condition
+%bcond rolling_stream 1
 
 # === Additional definitions ===
 # Architecture-dependent suffix for requiring/providing .so names
@@ -180,8 +182,8 @@ Node.js uses an event-driven, non-blocking I/O model that
 makes it lightweight and efficient, perfect for data-intensive
 real-time applications that run across distributed devices.
 
-%package        devel
-Summary:        JavaScript runtime – development headers
+
+%global devel_metadata %{expand:\
 Requires:       nodejs%{node_version_major}%{?_isa} = %{node_evr}
 Requires:       nodejs%{node_version_major}-libs%{?_isa} = %{node_evr}
 Requires:       nodejs-packaging
@@ -198,9 +200,12 @@ Provides: alternative-for(nodejs-devel) = %{node_evr}
 Conflicts: alternative-for(nodejs-devel)
 # previously VP used for the same reason as alternative-for() above
 Conflicts: nodejs-devel-pkg
+}
+
+%package        devel
+Summary:        JavaScript runtime – development headers
+%devel_metadata
 %obsolete_default_stream_rpm devel
-
-
 
 %description    devel
 Development headers for the Node.js JavaScript runtime.
@@ -276,7 +281,6 @@ your node programs. It manages dependencies and does other cool stuff.
 
 %package        bin
 Summary:        Node.js JavaScript runtime – unversioned symlinks
-Group:          Development/Languages
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major} = %{node_evr}
 Provides:       alternative-for(nodejs-bin) = %{node_evr}
@@ -287,7 +291,9 @@ Binary symlinks for Node.js JavaScript runtime.
 
 %package        npm-bin
 Summary:        Node.js Package Manager – binary symlinks
-Group:          Development/Languages
+Epoch:          %{npm_epoch}
+Version:        %{npm_version}
+Release:        %{npm_release}
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
 Requires(meta): nodejs%{node_version_major}-bin = %{node_evr}
@@ -296,6 +302,53 @@ Conflicts:      alternative-for(nodejs-npm-bin)
 
 %description    npm-bin
 Binary symlinks for Node.js Package Manager.
+
+# === Rolling stream metadata ===
+%if %{with rolling_stream}
+
+%package -n     nodejs
+Summary:        Node.js JavaScript runtime – rolling stream
+Requires:       nodejs%{node_version_major} = %{node_evr}
+Recommends:     nodejs-npm = %{npm_evr}
+# For rolling stream, the -bin packages are merged into the main packages,
+# as that was determined to be a better user experience
+Provides:       nodejs-bin = %{node_evr}
+Provides:       alternative-for(nodejs-bin) = %{node_evr}
+Conflicts:      alternative-for(nodejs-bin)
+
+%description -n nodejs
+This is a meta-package that installs the recommended version of Node.js
+JavaScript runtime. It relies on nodejs%{version} to provide all necessary dependencies.
+
+%package -n     nodejs-devel
+Summary:        Node.js development headers – rolling stream
+%devel_metadata
+
+%description -n nodejs-devel
+Meta-package that installs the nodejs%{version}-devel package, which contains
+development headers for the appropriate Node.js JavaScript runtime.
+
+%package -n     nodejs-npm
+Summary:        Node.js Package Manager meta-package
+Epoch:          %{npm_epoch}
+Version:        %{npm_version}
+Release:        %{npm_release}
+
+Requires:       nodejs = %{node_evr}
+Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
+Provides:       npm = %{npm_evr}
+# Similarly to main nodejs package, the nodejs-npm-bin is merged to this one.
+Provides:       nodejs-npm-bin = %{npm_evr}
+Requires(meta): nodejs = %{node_evr}
+Provides:       alternative-for(nodejs-npm-bin) = %{npm_evr}
+Conflicts:      alternative-for(nodejs-npm-bin)
+
+%description -n nodejs-npm
+Meta-package that installs the nodejs%{version}-npm package,
+which contains the appropriate version of Node.js Package Manager.
+
+%endif
+# ↪ %%{with rolling_stream}
 
 %prep
 %autosetup -n node-v%{node_version} -S git_am
@@ -632,10 +685,12 @@ end
 # Versioned man page when -bin is not installed
 %{_mandir}/man1/node-%{node_version_major}.1*
 
-%files      bin
+%global     files_bin %{expand:
 %license    LICENSE
 %{_bindir}/node
 %{_mandir}/man1/node.1*
+}
+%files      bin %{files_bin}
 
 %files      libs
 %license    LICENSE
@@ -644,7 +699,7 @@ end
 %{_libdir}/libv8_libbase.so.%{v8_version_major}.%{v8_version_minor}
 %{_libdir}/libv8_libplatform.so.%{v8_version_major}.%{v8_version_minor}
 
-%files      devel
+%global     files_devel %{expand:
 %license    LICENSE
 %dir        %{nodejs_datadir}/
 %{_includedir}/node/
@@ -655,6 +710,8 @@ end
 %{_rpmconfigdir}/fileattrs/nodejs%{node_version_major}_abi.attr
 %{_rpmconfigdir}/nodejs%{node_version_major}_abi.req
 %{nodejs_datadir}/common.gypi
+}
+%files      devel %{files_devel}
 
 %files -n   v8-%{v8_version_major}.%{v8_version_minor}-devel
 %license    LICENSE
@@ -688,7 +745,7 @@ end
 %{nodejs_private_sitelib}/npm/
 %exclude    %{nodejs_datadir}/man/man1/node*.1*
 
-%files      npm-bin
+%global     files_npm_bin %{expand:
 %license    deps/npm/LICENSE
 %{_bindir}/npm
 %{_bindir}/npx
@@ -697,6 +754,8 @@ end
 %exclude %{_mandir}/man1/node-%{node_version_major}.1*
 %exclude %{_mandir}/man1/npm-%{node_version_major}.1*
 %exclude %{_mandir}/man1/npx-%{node_version_major}.1*
+}
+%files      npm-bin %{files_npm_bin}
 
 %files      docs
 %doc        doc/README.md
@@ -704,6 +763,12 @@ end
 %dir        %{_pkgdocdir}
 %{_pkgdocdir}/html/
 %{_pkgdocdir}/npm/
+
+%if %{with rolling_stream}
+%files -n   nodejs %{files_bin}
+%files -n   nodejs-npm %{files_npm_bin}
+%files -n   nodejs-devel %{files_devel}
+%endif
 
 %changelog
 %autochangelog
