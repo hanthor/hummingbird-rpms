@@ -1495,6 +1495,14 @@ rust:
 rust-rpm-sequoia:
   # Tracked from CentOS Stream c10s instead of Fedora
   forked_from: "https://gitlab.com/redhat/centos-stream/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 scap-security-guide:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
