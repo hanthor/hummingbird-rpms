@@ -5,7 +5,7 @@
 
 Name:		scap-security-guide
 Version:	0.1.81
-Release:	2%{?dist}
+Release:	2.1%{?dist}
 Summary:	Security guidance and baselines in SCAP formats
 License:	BSD-3-Clause
 URL:		https://github.com/ComplianceAsCode/content/
