@@ -3,7 +3,7 @@
 %global goipath github.com/sigstore/fulcio
 
 Name:           fulcio
-Version:        1.8.8
+Version:        1.9.0
 Release:        0.1%{?dist}
 Summary:        Sigstore OIDC certificate authority for code signing
 

@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 391887,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/sigstore/fulcio",
-  "version": "1.8.8"
+  "version": "1.9.0"
 }
