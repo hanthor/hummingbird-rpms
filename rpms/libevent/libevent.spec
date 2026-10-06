@@ -2,7 +2,7 @@
 
 Name:           libevent
 Version:        2.1.13
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Abstract asynchronous event notification library
 
 # arc4random.c, which is used in build, is ISC. The rest is BSD-3-Clause.
