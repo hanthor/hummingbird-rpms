@@ -1370,6 +1370,16 @@ popt:
     - x86_64
     - s390x
   build_platforms:
+    - linux/x86_64
+    - linux/arm64
+    - linux/s390x
+
+procps-ng:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
     - "linux/x86_64"
     - "linux/arm64"
     - "linux/s390x"
