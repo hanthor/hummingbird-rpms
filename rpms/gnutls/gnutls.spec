@@ -13,7 +13,7 @@ print(string.sub(hash, 0, 16))
 }
 
 Version: 3.8.13
-Release: 5%{?dist}
+Release: 5.1%{?dist}
 Patch: gnutls-3.2.7-rpath.patch
 
 # follow https://gitlab.com/gnutls/gnutls/-/issues/1443
