@@ -1,8 +1,8 @@
 %global crate chunkah
 
 Name:           chunkah
-Version:        0.7.0
-Release:        1.1%{?dist}
+Version:        0.7.1
+Release:        1%{?dist}
 Summary:        OCI building tool for content-based container image layers
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -24,8 +24,6 @@ License:        Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND LGPL-2.1-or-la
 URL:            https://github.com/coreos/chunkah
 Source0:        %{url}/releases/download/v%{version}/%{crate}-%{version}.tar.gz
 Source1:        %{url}/releases/download/v%{version}/%{crate}-%{version}-vendor.tar.gz
-
-Patch0:         0001-bigfiles-xattr-clamp-mtime-to-SOURCE-DATE-EPOCH.patch
 
 BuildRequires:  cargo-rpm-macros >= 26
 BuildRequires:  openssl-devel
