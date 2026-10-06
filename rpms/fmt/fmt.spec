@@ -1,6 +1,6 @@
 Name:           fmt
 Version:        12.1.0
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 
 License:        MIT
 Summary:        Small, safe and fast formatting library for C++
