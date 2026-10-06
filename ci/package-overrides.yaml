@@ -214,6 +214,11 @@ curl:
   build_platforms:
     - "linux-c2xlarge/amd64"
     - "linux-c2xlarge/arm64"
+    - "linux/s390x"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
 
 cyrus-sasl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
