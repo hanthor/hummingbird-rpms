@@ -752,6 +752,16 @@ libcbor:
 libdex:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libeconf:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 libevent:
   # Local version bump ahead of Fedora (2.1.13, HUM-6827): the source
   # tarball at that version is not in Fedora's lookaside cache, only
