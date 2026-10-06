@@ -29,7 +29,7 @@
 
 Name:           lib%{libname}
 Version:        0.7.40
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Package dependency solver
 
 # LICENSE.BSD:      BSD-3-Clause text
