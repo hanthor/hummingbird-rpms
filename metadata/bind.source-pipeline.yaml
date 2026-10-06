@@ -1,0 +1,16 @@
+fetch:
+  - type: url
+    url: "https://downloads.isc.org/isc/bind9/${VERSION}/bind-${VERSION}.tar.xz"
+  - type: url
+    url: "https://downloads.isc.org/isc/bind9/${VERSION}/bind-${VERSION}.tar.xz.asc"
+  - type: url
+    url: "https://www.isc.org/docs/isc-keyblock.asc"
+
+# Source17 (named.root) is checked in under rpms/bind; the live InterNIC
+# root-hints URL changes independently of BIND releases.
+
+verify:
+  - type: gpg-signature
+    target: "bind-${VERSION}.tar.xz"
+    signature: "bind-${VERSION}.tar.xz.asc"
+    keyring: "bind.gpg"
