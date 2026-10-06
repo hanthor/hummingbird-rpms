@@ -600,11 +600,13 @@ def apply_release_bump(package: str) -> dict[str, Any]:
 
     def replace_release(m: re.Match) -> str:
         line = m.group(0)
+        ws_match = re.match(r"^Release:(\s*)", line, re.IGNORECASE)
+        ws = ws_match.group(1) if ws_match else " "
         pct_idx = line.find("%")
         if pct_idx != -1:
             dist_part = line[pct_idx:]
-            return f"Release:        {proposed}{dist_part}"
-        return f"Release:        {proposed}"
+            return f"Release:{ws}{proposed}{dist_part}"
+        return f"Release:{ws}{proposed}"
 
     new_text, count = re.subn(
         r"^Release:\s*.+$", replace_release, text, count=1, flags=re.MULTILINE | re.IGNORECASE
