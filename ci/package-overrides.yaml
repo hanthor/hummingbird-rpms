@@ -700,6 +700,16 @@ libsolv:
     - "linux/arm64"
     - "linux/s390x"
 
+libssh:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 libxml2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
