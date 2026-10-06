@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
 Version:        24.21.0
-Release:        1.2%{?dist}
+Release:        1.3%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -272,8 +272,6 @@ Binary symlinks for Node.js JavaScript runtime.
 %package        npm-bin
 Summary:        Node.js Package Manager – binary symlinks
 Epoch:          %{npm_epoch}
-Version:        %{npm_version}
-Release:        %{npm_release}
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
 Requires(meta): nodejs%{node_version_major}-bin = %{node_evr}
