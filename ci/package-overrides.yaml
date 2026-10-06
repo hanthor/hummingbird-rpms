@@ -41,6 +41,14 @@ _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i
 
 acl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 aom:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
