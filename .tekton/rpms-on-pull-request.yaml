@@ -4585,10 +4585,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-c2xlarge/amd64"
         - "linux-c2xlarge/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "curl.spec"
     - name: monorepo-subdir
