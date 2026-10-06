@@ -88,6 +88,34 @@ Test
         f.write('\n')
 
 
+@pytest.mark.parametrize('new_modification', [False, True])
+def test_chunkah_superseded_backports_in_history(validator, monkeypatch, new_modification: bool) -> None:
+    """Ignore the superseded backports, but still reject new local changes."""
+    history = (
+        '25510ac92c400b4340253060931ec9a244a272d4 chunkah: regenerate patch\n'
+        '5cabcd7f5c2214444d3e68b78d401db4bebed2af chunkah: backport mtime clamp\n'
+    )
+    new_sha = '0123456789abcdef0123456789abcdef01234567'
+    if new_modification:
+        history += f'{new_sha} chunkah: new local change\n'
+
+    def fake_run_git(*args, **kwargs):
+        assert args[0] == 'log'
+        return subprocess.CompletedProcess(args, 0, stdout=history)
+
+    monkeypatch.setattr(validator, 'run_git', fake_run_git)
+    monkeypatch.setattr(validator, 'is_release_only_commit', lambda sha, package: False)
+
+    valid, error = validator.check_git_history_state('chunkah', None)
+    assert valid is not new_modification
+    if new_modification:
+        assert error is not None
+        assert new_sha[:8] in error
+        assert "missing 'Upstream:' trailer" in error
+    else:
+        assert error is None
+
+
 #
 # Tests — track_upstream type validation
 #

@@ -1,10 +1,9 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Backport fix for bigfiles/xattr SOURCE_DATE_EPOCH regression from upstream PR #161 (HUM-8922)",
-  "modification_status": "modified",
+  "modification_status": "clean",
   "release": "1",
-  "sha": "db1ce36df99abc2070e6e4c767031183a672baf6",
+  "sha": "823221fb684d012ccd6959718e2a87f20f0f3b75",
   "source": "https://src.fedoraproject.org/rpms/chunkah.git",
   "upstream_repo": "https://github.com/coreos/chunkah",
-  "version": "0.7.0"
+  "version": "0.7.1"
 }

@@ -211,6 +211,11 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
     # has since been superseded by the 0.3.1 update.
     bad_commits = [line for line in bad_commits if not line.startswith('fbd9bdab64f786daada3e54ae795936e8d822075 ')]
 
+    # chunkah HUM-8922 SOURCE_DATE_EPOCH backport and patch-format repair were
+    # superseded by 0.7.1, which caps bigfiles/xattr mtimes against the default clamp.
+    bad_commits = [line for line in bad_commits if not line.startswith('5cabcd7f5c2214444d3e68b78d401db4bebed2af ')]
+    bad_commits = [line for line in bad_commits if not line.startswith('25510ac92c400b4340253060931ec9a244a272d4 ')]
+
     # glibc OPEN_TREE_* backport (bug 33921) superseded by upstream 2.42-14.
     bad_commits = [line for line in bad_commits if not line.startswith('1edd3cab10e1047d6374e2233ede46443776f3c9 ')]
 
