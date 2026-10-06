@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 [archive]
 post_commands = [
     ["cp", "-p",
@@ -5,8 +7,10 @@ post_commands = [
      "vendor/github.com/dlclark/regexp2/LICENSE"],
 ]
 
+>>>>>>> hummingbird-local
 [licensing]
 detector = "askalono"
+
 [[licensing.licenses]]
 path = "docs/LICENSE.md"
 sha256sum = "60619c2bcd9ee1b479943ae5504fed8f55ee63a1abb7c0dc76f96cca4fc019b7"
@@ -46,3 +50,12 @@ expression = "BSD-2-Clause AND BSD-3-Clause"
 path = "livereload/livereload.js"
 sha256sum = "e071a0325051d6bf19fc9c69c97cb7512e600a16e3f63fdd279cc39f72f9e488"
 expression = "Apache-2.0"
+
+[archive]
+post_commands = [
+	[
+		"cp", "-p",
+		"vendor/github.com/dlclark/regexp2/v2/LICENSE",
+		"vendor/github.com/dlclark/regexp2/LICENSE"
+	],
+]
