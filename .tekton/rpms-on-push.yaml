@@ -9301,10 +9301,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnulib-l10n.spec"
     - name: monorepo-subdir
