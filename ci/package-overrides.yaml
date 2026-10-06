@@ -1458,6 +1458,16 @@ readline:
 rekor:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+rpm:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 ruff:
   timeout_hours: 8
   build_platforms:
