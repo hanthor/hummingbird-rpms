@@ -343,6 +343,16 @@ expat:
     - "linux/arm64"
     - "linux/s390x"
 
+fedora-repos:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 fftw:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
