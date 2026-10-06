@@ -1192,6 +1192,16 @@ nss-fips:
 oauth2-proxy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+oniguruma:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 openblas:
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
