@@ -7,7 +7,7 @@ Version:        2.15.4
 # version instead of major.minor (see metadata/libxml2.source-pipeline.yaml
 # and HUM-6191 for how this broke Source0).
 %global majorminor %(echo %{version} | cut -d. -f1-2)
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        Library providing XML and HTML support
 
 # list.c, dict.c and few others use ISC-Veillard
