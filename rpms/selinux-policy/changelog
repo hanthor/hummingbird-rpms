@@ -1,3 +1,12 @@
+* Mon Oct 05 2026 Zdenek Pytela <zpytela@redhat.com> - 45.21-1
+- Label /var/cache/boomaga with cupsd_rw_etc_t
+- Allow dirsrv to read filesystem sysctls
+- Allow cupsd create bluetooth sockets
+- Allow gnome-remote-desktop handle kerberos replay cache files
+- Allow multiple domains read systemd-nsresourced runtime socket file
+- Update mount_nnp_domtrans() with nosuid_transition
+- Label /run/systemd/coredump socket with systemd_coredump_var_run_t
+
 * Tue Sep 29 2026 Zdenek Pytela <zpytela@redhat.com> - 45.20-1
 - Allow gnome-remote-desktop use kerberos
 - Allow gnome-remote-desktop read password files
