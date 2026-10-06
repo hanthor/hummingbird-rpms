@@ -198,6 +198,16 @@ createrepo_c:
     - "linux/arm64"
     - "linux/s390x"
 
+crypto-policies:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 curl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # Larger builders needed for parallel test suite under valgrind
