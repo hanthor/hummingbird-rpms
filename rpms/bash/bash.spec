@@ -6,7 +6,7 @@
 Version: %{baseversion}.%{patchlevel}
 Name: bash
 Summary: The GNU Bourne Again shell
-Release: 2.1%{?dist}
+Release: 2.2%{?dist}
 License: GPL-3.0-or-later
 Url: https://www.gnu.org/software/bash
 # Fetched (from the more reliable ftpmirror.gnu.org, not this literal URL)
