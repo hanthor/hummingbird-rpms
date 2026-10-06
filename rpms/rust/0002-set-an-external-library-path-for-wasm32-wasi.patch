@@ -24,9 +24,9 @@ index d35c3b6bb18..f2a067a9e8c 100644
 +            return file_path;
 +        }
 +    }
-     for search_path in sess.target_filesearch().search_paths(PathKind::Native) {
-         let file_path = search_path.dir.join(name);
-         if file_path.exists() {
+
+     // Note: this is O(n^2), it could be expensive-ish if we lookup many object files for many
+     // search paths
 @@ -2142,6 +2148,10 @@ fn add_library_search_dirs(
          }
          ControlFlow::<()>::Continue(())

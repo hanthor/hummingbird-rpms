@@ -19,13 +19,14 @@ diff --git a/compiler/rustc_codegen_llvm/src/context.rs b/compiler/rustc_codegen
 index 621f2cd3f9fc..30a98ac3e1c3 100644
 --- a/compiler/rustc_codegen_llvm/src/context.rs
 +++ b/compiler/rustc_codegen_llvm/src/context.rs
-@@ -22,12 +22,12 @@
+@@ -21,13 +21,13 @@ use rustc_middle::ty::layout::{
+ use rustc_middle::ty::{self, Instance, Ty, TyCtxt};
  use rustc_middle::{bug, span_bug};
- use rustc_session::Session;
  use rustc_session::config::{
 -    BranchProtection, CFGuard, CFProtection, CrateType, DebugInfo, FunctionReturn, PAuthKey, PacRet,
 +    BranchProtection, CFGuard, CrateType, DebugInfo, FunctionReturn, PAuthKey, PacRet,
  };
+ use rustc_session::{PointerAuthSchema, Session};
  use rustc_span::{DUMMY_SP, Span, Spanned, Symbol, sym};
  use rustc_target::spec::{
 -    Arch, CfgAbi, Env, FramePointer, HasTargetSpec, Os, RelocModel, SmallDataThresholdSupport,
@@ -34,7 +35,7 @@ index 621f2cd3f9fc..30a98ac3e1c3 100644
 +    SmallDataThresholdSupport, Target, TlsModel,
  };
  use smallvec::SmallVec;
- 
+
 @@ -451,7 +451,8 @@ pub(crate) unsafe fn create_module<'ll>(
      }
  
@@ -81,7 +82,7 @@ index 4492cdf2d2f8..51828f4e824b 100644
  #[derive(Clone, Copy, Debug, PartialEq, Hash, StableHash, Encodable, Decodable)]
  pub enum OptLevel {
      /// `-Copt-level=0`
-@@ -3088,13 +3072,13 @@ pub(crate) mod dep_tracking {
+@@ -3327,13 +3311,13 @@ pub(crate) mod dep_tracking {
      use rustc_span::edition::Edition;
      use rustc_span::{RealFileName, RemapPathScopeComponents};
      use rustc_target::spec::{
@@ -92,13 +93,13 @@ index 4492cdf2d2f8..51828f4e824b 100644
 +        RelocModel, RelroLevel, SanitizerSet, SplitDebuginfo, StackProtector, SymbolVisibility,
 +        TargetTuple, TlsModel,
      };
- 
+
      use super::{
 -        AnnotateMoves, AutoDiff, BranchProtection, CFGuard, CFProtection, CodegenRetagOptions,
 +        AnnotateMoves, AutoDiff, BranchProtection, CFGuard, CodegenRetagOptions,
          CoverageOptions, CrateType, DebugInfo, DebugInfoCompression, ErrorOutputType, FmtDebug,
-         FunctionReturn, InliningThreshold, InstrumentCoverage, InstrumentMcount, InstrumentXRay,
-         LinkerPluginLto, LocationDetail, LtoCli, MirStripDebugInfo, NextSolverConfig, Offload,
+         FunctionReturn, InliningThreshold, InstrumentCoverage, InstrumentMcount,
+         InstrumentMcountOpts, InstrumentXRay, LinkerPluginLto, LocationDetail, LtoCli,
 diff --git a/compiler/rustc_session/src/options.rs b/compiler/rustc_session/src/options.rs
 index e8e405f4a3df..412722cab01a 100644
 --- a/compiler/rustc_session/src/options.rs
@@ -178,17 +179,17 @@ index 986dababf770..7252700d0e96 100644
  };
  
  use crate::code_stats::CodeStats;
-@@ -775,6 +775,10 @@ pub fn stack_protector(&self) -> StackProtector {
+@@ -992,6 +992,10 @@ impl Session {
          }
      }
- 
+
 +    pub fn cf_protection(&self) -> CFProtection {
 +        self.opts.unstable_opts.cf_protection.unwrap_or(self.target.options.cf_protection)
 +    }
 +
-     pub fn must_emit_unwind_tables(&self) -> bool {
-         // This is used to control the emission of the `uwtable` attribute on
-         // LLVM functions. The `uwtable` attribute according to LLVM is:
+     /// Returns the `-Zbranch-protection` info. Note that it is adjusted to the current target, e.g.
+     /// some targets only support certain Pointer Authentication Code keys.
+     ///
 diff --git a/compiler/rustc_target/src/spec/json.rs b/compiler/rustc_target/src/spec/json.rs
 index 922b1fb3dff8..da14f40f9189 100644
 --- a/compiler/rustc_target/src/spec/json.rs

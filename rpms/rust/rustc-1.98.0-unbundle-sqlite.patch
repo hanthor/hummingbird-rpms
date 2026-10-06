@@ -20,4 +20,4 @@ diff -up rustc-beta-src/src/tools/cargo/Cargo.toml.orig rustc-beta-src/src/tools
 +rusqlite = { version = "0.40.0", features = [] }
  rustc-hash = "2.1.2"
  rustc-stable-hash = "0.1.2"
- rustfix = { version = "0.9.7", path = "crates/rustfix" }
+ rustfix = { version = "0.9.8", path = "crates/rustfix" }
