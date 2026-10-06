@@ -42,12 +42,14 @@ from hum.meta.model import (
     CleanPackageMetadata,
     FedoraOriginWithRelease,
     IndependentPackageMetadata,
+    InvalidMetadataError,
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
     PackageMetadata as HumPackageMetadata,
     VersionFromRef,
 )
 from hum.meta.repository import _to_raw_dict
+from hum.meta.spec import bump_release as spec_bump_release
 from hum.meta.validation import ModificationStatus
 from package_paths import path_problem, portable_component, sanitize_package_paths
 
@@ -1185,130 +1187,6 @@ def normalize_release_in_specs(directory: Path) -> None:
         spec_file.write_text(normalized)
 
 
-def bump_release(current_release: str, upstream_release: str | None = None) -> str:
-    """Bump release number using .N suffix pattern.
-
-    If upstream_release is provided and matches current_release, this is the first
-    rebuild against that base, so we append .1. Otherwise, if the release already
-    has a .N suffix, we increment it.
-
-    This handles the edge case where the base is Release: 3.1 (e.g. Fedora ships
-    3.1%{?dist}) - we need to know if the current 3.1 is
-    that base (should become 3.1.1) or from our previous rebuild of base 3
-    (should become 3.2).
-
-    Examples:
-        "3" -> "3.1"
-        "3.1" -> "3.2" (if upstream_release is None or "3")
-        "3.1" -> "3.1.1" (if upstream_release is "3.1" - first rebuild of that base)
-        "3.1.1" -> "3.1.2" (if upstream_release is "3.1" - second rebuild)
-        "8.%{revision}" -> "8.%{revision}.1"
-
-    Args:
-        current_release: Current release string (without %{?dist})
-        upstream_release: Fedora release from metadata (without %{?dist}), if
-            the package ships Fedora's release.
-
-    Returns:
-        Bumped release string
-    """
-    # If current matches upstream exactly, this is first rebuild - append .1
-    if upstream_release and current_release == upstream_release:
-        return f"{current_release}.1"
-
-    # Pattern: if ends with .N where N is a digit, increment N
-    # Otherwise, append .1
-    match = re.match(r'^(.+)\.(\d+)$', current_release)
-    if match:
-        base, num = match.groups()
-        return f"{base}.{int(num) + 1}"
-    else:
-        return f"{current_release}.1"
-
-
-def update_release_in_spec(package_dir: Path, new_release: str) -> None:
-    """Update Release: line in spec file.
-
-    Handles both simple numeric releases and macro-based releases that end with %{?dist}.
-
-    Args:
-        package_dir: Package directory containing spec file
-        new_release: New release value (without %{?dist}) - only used for non-macro releases
-    """
-    spec_files = list(package_dir.glob('*.spec'))
-    if len(spec_files) != 1:
-        sys.exit(f"ERROR: Expected exactly one .spec file in {package_dir}")
-
-    spec_file = spec_files[0]
-    content = spec_file.read_text()
-
-    # Check if Release contains %{?dist} or %{dist}
-    # May have content after dist (e.g., unbound: "11.1%{?dist} %{?extra_version:-e %{extra_version}}")
-    release_match = re.search(r'^Release:\s+(.*)%\{\??dist\}(.*)$', content, flags=re.MULTILINE)
-
-    if release_match:
-        release_before_dist = release_match.group(1)
-        release_after_dist = release_match.group(2)  # May be empty string
-
-        # Check if it contains macros (e.g., %{baserelease})
-        if '%{' in release_before_dist:
-            # Macro-based release - add/increment .N suffix before %{?dist}
-            # Don't expand macros, just manipulate the string directly
-            # Examples:
-            #   %{baserelease}%{?dist} -> %{baserelease}.1%{?dist}
-            #   %{?snapver:0.%{snapver}.}%{baserelease}%{?dist} -> %{?snapver:0.%{snapver}.}%{baserelease}.1%{?dist}
-            #   %{baserelease}.1%{?dist} -> %{baserelease}.2%{?dist}
-            #   11.1%{?dist} %{?extra:-e %{extra}} -> 11.2%{?dist} %{?extra:-e %{extra}}
-
-            # Check if there's already a .N suffix
-            suffix_match = re.match(r'^(.*)\.(\d+)$', release_before_dist)
-            if suffix_match:
-                # Already has .N suffix, increment it
-                base = suffix_match.group(1)
-                num = int(suffix_match.group(2))
-                new_release_line = f'{base}.{num + 1}'
-            else:
-                # No .N suffix yet, add .1
-                new_release_line = f'{release_before_dist}.1'
-
-            # Reconstruct the full Release line with anything after dist preserved
-            # Preserve the original whitespace after "Release:"
-            new_content = re.sub(
-                r'^Release:(\s+).*%\{\??dist\}.*$',
-                lambda m: f'Release:{m.group(1)}{new_release_line}%{{?dist}}{release_after_dist}',
-                content,
-                flags=re.MULTILINE
-            )
-            spec_file.write_text(new_content)
-            logging.info("Updated Release: to %s%%{?dist}%s in %s (macro-based)",
-                        new_release_line, release_after_dist, spec_file.name)
-            return
-
-    # Check if Release uses macros but does NOT end with dist
-    # These packages need manual handling (e.g., nodejs25 with %{node_release})
-    release_match_no_dist = re.search(r'^Release:\s+.*%\{[^}]+\}', content, flags=re.MULTILINE)
-    if release_match_no_dist and not release_match:
-        sys.exit(
-            f"ERROR: {spec_file.name} uses macros in Release field without %%{{?dist}}: {release_match_no_dist.group(0)}\n"
-            f"This package requires manual rebuild - the simple rebuild command cannot handle complex macro systems."
-        )
-
-    # Standard case: no macros before dist
-    # Preserve whitespace after "Release:", the dist macro variant, and any trailing content
-    new_content = re.sub(
-        r'^Release:(\s+).*?(%\{\??dist\})(.*)$',
-        lambda m: f'Release:{m.group(1)}{new_release}{m.group(2)}{m.group(3)}',
-        content,
-        flags=re.MULTILINE
-    )
-
-    if new_content == content:
-        sys.exit(f"ERROR: Failed to update Release: in {spec_file.name} - "
-                 f"Release field missing %{{?dist}}. This should not happen; "
-                 f"please investigate the spec file.")
-
-    spec_file.write_text(new_content)
-    logging.info("Updated Release: to %s%%{?dist} in %s", new_release, spec_file.name)
 
 
 # --- Post-update spec sanitizer ----------------------------------------------
@@ -2414,11 +2292,15 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                     # as the gorget case, so a human removes the stale line rather
                     # than us rewriting a spec that must match Fedora upstream.
                     commit_msg = f"NEEDS MANUAL PATCH CLEANUP: {commit_msg}\n\n{patch_cleanup_reason}"
+                staged_metadata = imports[package_name]
+                validation = staged_metadata.validate()
+                if validation.violations:
+                    raise InvalidMetadataError(validation)
                 with open(UPDATE_STATE_FILE, 'w') as f:
                     json.dump({
                         'package': package_name,
                         'commit_msg': commit_msg,
-                        'metadata': _to_raw_dict(imports[package_name]),
+                        'metadata': _to_raw_dict(staged_metadata),
                         'old_version': old_version,
                     }, f)
 
@@ -2581,30 +2463,15 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
                 sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
             replace_autorelease_in_spec(package_dir, release)
 
-    # Parse current version and release
-    version, current_release = parse_spec_version(package_dir)
-
-    # Load the Fedora release for smart .N bumping when the package ships it.
     metadata = load_package_metadata(package_name)
     if not metadata:
         sys.exit(f"ERROR: Could not load metadata for {package_name}")
 
-    # Pass metadata release as the base for packages with a Fedora source.
-    # This allows us to distinguish between:
-    # - Base is 3.1 -> first rebuild should be 3.1.1
-    # - We already rebuilt base 3 to 3.1 -> next rebuild should be 3.2
-    # For independent packages, don't pass a base — they have no Fedora upstream.
-    if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
-        upstream_release = metadata.fedora.release
-    else:
-        upstream_release = None
-
-    # Bump release with base-release awareness
-    new_release = bump_release(current_release, upstream_release)
-    logging.info("Bumping release: %s -> %s", current_release, new_release)
-
-    # Update spec file
-    update_release_in_spec(package_dir, new_release)
+    try:
+        new_release = spec_bump_release(metadata, package_dir)
+    except (FileNotFoundError, ValueError) as e:
+        sys.exit(f"ERROR: {e}")
+    logging.info("Bumped release to %s", new_release)
 
     # Commit the changes
     if not dry_run:
@@ -2667,14 +2534,12 @@ def mark_modified(package_name: str, modified: bool, reason: str | None = None) 
         if isinstance(metadata, ModifiedFedoraPackageMetadata):
             metadata = metadata.to_clean()
         elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
-            version, release = parse_spec_version(RPMS_DIR / package_name)
-            new_fedora = FedoraOriginWithRelease(
-                git_url=metadata.fedora.git_url,
-                branch=metadata.fedora.branch,
-                sha=metadata.fedora.sha,
-                release=release,
+            sys.exit(
+                f"ERROR: Cannot mark upstream-modified package {package_name} as clean.\n"
+                f"       This package has moved ahead of Fedora and needs a verified\n"
+                f"       Fedora version/release to transition back. Use 'dist_git.py\n"
+                f"       sync {package_name}' to force-sync to upstream Fedora instead."
             )
-            metadata = metadata.to_clean(fedora=new_fedora, version=version)
         elif isinstance(metadata, IndependentPackageMetadata):
             sys.exit(f"ERROR: Cannot mark independent package {package_name} as clean")
         logging.info("Marked %s as clean (auto-updates enabled)", package_name)
@@ -2716,19 +2581,30 @@ def set_upstream(
     final_pid = metadata.release_monitoring_project_id if project_id is _UNSET else project_id
 
     # Configure tracking based on the computed final state
-    if final_track is None and final_pid is None:
+    if metadata.version_source == "gitlab_tags":
+        if project_id is not _UNSET and final_pid is not None:
+            sys.exit(
+                f"ERROR: {package_name} uses gitlab_tags tracking, which has no project ID.\n"
+                f"       Remove --project-id, or switch to Anitya tracking first."
+            )
+        if track_version is not _UNSET:
+            metadata.enable_upstream_tracking_gitlab_tags(
+                track_upstream=final_track,
+                tag_strip_prefix=metadata.tag_strip_prefix,
+            )
+            logging.info("Set track_upstream=%s for %s", final_track, package_name)
+        else:
+            if project_id is not _UNSET:
+                logging.info(
+                    "No-op: gitlab_tags tracking has no project ID for %s", package_name
+                )
+            return
+    elif final_track is None and final_pid is None:
         metadata.disable_upstream_tracking()
         if track_version is not _UNSET:
             logging.info("Disabled upstream version tracking for %s", package_name)
         if project_id is not _UNSET:
             logging.info("Removed release_monitoring_project_id for %s", package_name)
-    elif metadata.version_source == "gitlab_tags":
-        metadata.enable_upstream_tracking_gitlab_tags(
-            track_upstream=final_track,
-            tag_strip_prefix=metadata.tag_strip_prefix,
-        )
-        if track_version is not _UNSET:
-            logging.info("Set track_upstream=%s for %s", final_track, package_name)
     elif final_track is not None and final_pid is not None:
         metadata.enable_upstream_tracking(
             track_upstream=final_track,

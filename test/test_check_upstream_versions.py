@@ -2507,6 +2507,7 @@ def test_update_spec_version_checks_patches(
     """Check expanded patch names against Source0, not the first downloaded archive."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     spec = pkg / 'pkg.spec'
     spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
@@ -2524,6 +2525,7 @@ def test_update_spec_version_checks_patches(
                    check=True, stdout=subprocess.DEVNULL)
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.ROOT_DIR = workdir
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[
@@ -2550,6 +2552,7 @@ def test_update_spec_version_leaves_patch_applicability_to_build(
     """Non-upstreamed patches are retained without forward checks or application."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     spec = pkg / 'pkg.spec'
     spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
@@ -2564,6 +2567,7 @@ def test_update_spec_version_leaves_patch_applicability_to_build(
         tar.add(src_dir, arcname='pkg-2.0')
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.ROOT_DIR = workdir
 
     with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
@@ -4466,6 +4470,7 @@ def test_git_clone_env_private_repo_injects_config_rewrite(cuv_module) -> None:
 def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, workdir: Path) -> None:
     package = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     (package / '.gitignore').write_text('*.patch\n')
     (package / 'old:fix.patch').write_bytes(b'old payload')
@@ -4476,6 +4481,7 @@ def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, 
     cuv_module.ROOT_DIR = workdir
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
          patch.object(cuv_module, '_check_updated_patches'):
         cuv_module.update_spec_version('pkg', '2.0')
