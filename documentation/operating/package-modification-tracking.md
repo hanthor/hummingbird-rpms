@@ -187,6 +187,13 @@ These fields affect two systems:
   upstream versions to only those matching the prefix. Only packages with `track_upstream` set are
   checked by `check_upstream_versions.py check` when no explicit package arguments are given.
 
+When a successful lookup reports releases but none match the configured version prefix, the
+checker skips that package with a warning instead of failing the job. For example, Python 3.15
+tracking can wait while Anitya only reports Python 3.14 releases. The package is not counted as
+up to date, no spec or source update is attempted, and a warning-only run exits successfully.
+Empty upstream results and HTTP, connection, or JSON parsing failures during lookup remain
+errors. Existing warnings for unpublished source archives remain nonfatal as well.
+
 Find release-monitoring.org project IDs by searching on <https://release-monitoring.org>.
 
 The project ID can be combined with a version prefix to filter versions returned by the project ID

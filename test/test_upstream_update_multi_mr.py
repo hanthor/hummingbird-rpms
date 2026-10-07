@@ -6,6 +6,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 UPDATE_SCRIPT = ROOT / "ci" / "upstream_update_multi_mr.sh"
 
@@ -176,6 +178,15 @@ cat <<'EOF'
       "warnings": [
         "skipped upstream version 3.0: required source artifact is not published"
       ]
+    },
+    {
+      "package": "python3.15",
+      "error": null,
+      "update_error": null,
+      "updated": false,
+      "warnings": [
+        "skipped upstream check: Anitya reported no version matching track_upstream '3.15'"
+      ]
     }
   ]
 }
@@ -199,12 +210,46 @@ EOF
     )
 
     assert result.returncode == 0
-    assert "No updates available; 3 source warning(s) reported." in result.stdout
+    assert "No updates available; 4 upstream warning(s) reported." in result.stdout
     assert "All tracked packages are up-to-date." not in result.stdout
     assert (repo / ".ci_upstream_update_warnings.txt").read_text() == (
-        "3 skipped candidate version(s) across 2 package(s); "
+        "4 upstream warning(s) across 3 package(s); "
         "see job log for details\n"
     )
+
+
+def test_scheduled_notification_labels_upstream_warnings(tmp_path: Path) -> None:
+    """Warning-only runs retain a useful, correctly labeled Slack notification."""
+    config = yaml.compose((ROOT / '.gitlab-ci.yml').read_text())
+    assert isinstance(config, yaml.MappingNode)
+    notifications = next(value for key, value in config.value
+                         if key.value == '.notify_schedule_result')
+    assert isinstance(notifications, yaml.SequenceNode)
+    script = notifications.value[0]
+    assert isinstance(script, yaml.ScalarNode)
+    repo = tmp_path / 'repo'
+    repo.mkdir()
+    summary = '1 upstream warning(s) across 1 package(s); see job log for details'
+    (repo / '.ci_upstream_update_warnings.txt').write_text(summary + '\n')
+    bin_dir, curl_log = _create_fake_curl(tmp_path)
+    env = os.environ.copy()
+    env.update({
+        'PATH': f"{bin_dir}:{env['PATH']}", 'CURL_LOG': str(curl_log),
+        'CI_PIPELINE_SOURCE': 'schedule', 'CI_JOB_STATUS': 'success',
+        'CI_JOB_NAME': 'upstream_version_update', 'CI_JOB_URL': 'https://gitlab.example/job/1',
+        'SLACK_WEBHOOK_URL': 'https://slack.example/webhook',
+    })
+
+    result = subprocess.run(['bash', '-eu', '-c', script.value], cwd=repo,
+                            env=env, capture_output=True, text=True, check=False)
+
+    assert result.returncode == 0, result.stderr
+    calls = [json.loads(line) for line in curl_log.read_text().splitlines()]
+    assert len(calls) == 1
+    payload = json.loads(calls[0][calls[0].index('--data') + 1])
+    assert f'Upstream warnings: {summary}' in payload['text']
+    assert 'completed with warnings' in payload['text']
+    assert 'Source availability warnings' not in payload['text']
 
 
 def test_successful_update_closes_empty_diagnostic_mr_and_deletes_branch(
