@@ -1,6 +1,6 @@
 Name:           libpsl
 Version:        0.23.3
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        C library for the Publix Suffix List
 License:        MIT
 URL:            https://rockdaboot.github.io/libpsl
