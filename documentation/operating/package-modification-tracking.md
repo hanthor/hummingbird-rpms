@@ -281,6 +281,14 @@ pinned `ref:` no longer matches the merged spec and refuses to auto-commit -- it
 draft, `no-test`-labeled MR for manual resolution instead, the same way a real git merge conflict
 is, rather than silently committing a `sources` file gorget was never actually run against.
 
+## Sudo Patchlevel Comparisons
+
+For sudo, upstream version comparisons include the spec's optional `extraver` macro.
+Fedora's `Version: 1.9.17` with `extraver p2` therefore compares as `1.9.17p2`, preventing
+an unnecessary update and a doubled `p2` in the source URL. This comparison does not change
+the spec, the RPM version/release, or the version stored in package metadata. Other packages'
+`extraver` macros are not treated as upstream version suffixes.
+
 ## Per-Package Update Hooks
 
 When `check_upstream_versions.py check --update` updates a package, by default it sets `Version:` to
