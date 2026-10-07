@@ -1166,7 +1166,7 @@ def test_release_bump_payload(tmp_path: Path, monkeypatch) -> None:
     assert applied["writes"] is True
     assert "updated mypkg.spec Release to 3.1.1" in applied["hint"]
     spec_content = (tmp_path / "rpms" / pkg / f"{pkg}.spec").read_text(encoding="utf-8")
-    assert "Release:        3.1.1%{?dist}" in spec_content
+    assert "Release: 3.1.1%{?dist}" in spec_content
 
 
 def test_release_bump_autorelease(tmp_path: Path, monkeypatch) -> None:
