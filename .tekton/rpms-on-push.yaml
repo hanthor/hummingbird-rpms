@@ -7090,10 +7090,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "file.spec"
     - name: monorepo-subdir
@@ -7228,10 +7230,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "findutils.spec"
     - name: monorepo-subdir
@@ -7373,10 +7377,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "fmt.spec"
     - name: monorepo-subdir
@@ -7859,10 +7865,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "fsverity-utils.spec"
     - name: monorepo-subdir
@@ -8277,10 +8285,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-d160-c8xlarge/amd64"
         - "linux-d160-c8xlarge/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gcc.spec"
     - name: monorepo-subdir
@@ -8560,10 +8570,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gdbm.spec"
     - name: monorepo-subdir
@@ -9003,10 +9015,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "glib2.spec"
     - name: monorepo-subdir
@@ -9151,10 +9165,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gmp.spec"
     - name: monorepo-subdir
@@ -9287,10 +9303,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnulib-l10n.spec"
     - name: monorepo-subdir
@@ -9358,10 +9376,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnupg2.spec"
     - name: monorepo-subdir
@@ -9426,10 +9446,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnutls.spec"
     - name: monorepo-subdir
@@ -10757,10 +10779,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "grep.spec"
     - name: monorepo-subdir
@@ -11971,10 +11995,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "ima-evm-utils.spec"
     - name: monorepo-subdir
@@ -12951,10 +12977,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "jq.spec"
     - name: monorepo-subdir
@@ -13019,10 +13047,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "json-c.spec"
     - name: monorepo-subdir
@@ -13517,10 +13547,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "keyutils.spec"
     - name: monorepo-subdir
@@ -13653,10 +13685,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "krb5.spec"
     - name: monorepo-subdir
@@ -14756,10 +14790,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libarchive.spec"
     - name: monorepo-subdir
@@ -14824,10 +14860,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libassuan.spec"
     - name: monorepo-subdir
@@ -15096,10 +15134,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcap.spec"
     - name: monorepo-subdir
@@ -15164,10 +15204,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcap-ng.spec"
     - name: monorepo-subdir
@@ -15232,10 +15274,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcbor.spec"
     - name: monorepo-subdir
