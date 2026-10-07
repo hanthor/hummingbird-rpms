@@ -1177,7 +1177,7 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
     # Commit the changes
     if not dry_run:
         run_git('add', '-f', f'rpms/{dir_name}', f'metadata/{dir_name}.json',
-                'konflux-templates', '.tekton', 'releng', cwd=ROOT_DIR)
+                'konflux-templates', '.tekton', 'releng', '.gitattributes', cwd=ROOT_DIR)
         commit_msg = f"Import {package_name}-{version}-{release}\n\nBranch: {branch}\nUpstream: {sha}"
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
@@ -3266,7 +3266,7 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
         run_git('add',
                 str(rpa_config_path.relative_to(ROOT_DIR)),
                 str(overrides_path.relative_to(ROOT_DIR)),
-                'konflux-templates', '.tekton', 'releng', cwd=ROOT_DIR)
+                'konflux-templates', '.tekton', 'releng', '.gitattributes', cwd=ROOT_DIR)
         commit_msg = f"Add private product '{product}' with packages: {', '.join(packages)}"
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
