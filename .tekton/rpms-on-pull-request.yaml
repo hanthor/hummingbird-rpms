@@ -30339,10 +30339,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "procps-ng.spec"
     - name: monorepo-subdir
@@ -30859,10 +30861,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "publicsuffix-list.spec"
     - name: monorepo-subdir
@@ -32398,10 +32402,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "python-pip.spec"
     - name: monorepo-subdir
@@ -34965,10 +34971,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "readline.spec"
     - name: monorepo-subdir
@@ -35327,10 +35335,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "rpm.spec"
     - name: monorepo-subdir
@@ -36419,10 +36429,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "rust-rpm-sequoia.spec"
     - name: monorepo-subdir
@@ -36494,10 +36506,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "scap-security-guide.spec"
     - name: monorepo-subdir
@@ -36569,10 +36583,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sdbus-cpp.spec"
     - name: monorepo-subdir
@@ -36640,10 +36656,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sed.spec"
     - name: monorepo-subdir
@@ -36855,10 +36873,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sgml-common.spec"
     - name: monorepo-subdir
@@ -36926,10 +36946,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "shadow-utils.spec"
     - name: monorepo-subdir
@@ -37441,10 +37463,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sqlite.spec"
     - name: monorepo-subdir
@@ -38853,10 +38877,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "tpm2-tss.spec"
     - name: monorepo-subdir
@@ -39656,10 +39682,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "util-linux.spec"
     - name: monorepo-subdir
@@ -40239,10 +40267,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xmlsec1.spec"
     - name: monorepo-subdir
@@ -40385,10 +40415,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xxhash.spec"
     - name: monorepo-subdir
@@ -40456,10 +40488,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xz.spec"
     - name: monorepo-subdir
@@ -40527,10 +40561,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "yq.spec"
     - name: monorepo-subdir
@@ -40598,10 +40634,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zchunk.spec"
     - name: monorepo-subdir
@@ -40882,10 +40920,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zlib-ng.spec"
     - name: monorepo-subdir
@@ -40953,10 +40993,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zstd.spec"
     - name: monorepo-subdir

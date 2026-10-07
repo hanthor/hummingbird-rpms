@@ -15,7 +15,7 @@
 Summary: Library providing support for "XML Signature" and "XML Encryption" standards
 Name: xmlsec1
 Version: 1.3.11
-Release: 7%{?dist}
+Release: 7.1%{?dist}
 Epoch: 1
 License: MIT
 Source0: https://github.com/lsh123/xmlsec/releases/download/%{version}/xmlsec1-%{version}.tar.gz
