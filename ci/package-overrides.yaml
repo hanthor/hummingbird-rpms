@@ -1008,6 +1008,24 @@ libxml2:
 
 libxslt:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libyaml:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libyuv:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1030,11 +1048,41 @@ loki3.6:
 loki3.7:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+lua:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+lz4:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 maven3.9:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 memcached:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+mpdecimal:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 nats-server2.12:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1042,8 +1090,58 @@ nats-server2.12:
 nats-server2.14:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+ncurses:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nettle:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 nftables:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+nghttp2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nghttp3:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+ngtcp2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1077,6 +1175,26 @@ nodejs26:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+npth:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nss:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 nss-fips:
   # Use hummingbird lookaside cache instead of Fedora
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1084,10 +1202,50 @@ nss-fips:
 oauth2-proxy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+oniguruma:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 openblas:
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
+
+opendbx:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+openldap:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+openscap:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 openshell:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1117,6 +1275,14 @@ openshell:
 
 openssl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 openssl-fips-provider:
   # Use hummingbird lookaside cache instead of Fedora
@@ -1155,8 +1321,36 @@ oras:
 openmpi:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+p11-kit:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+pam:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 pcre2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 pgbouncer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1169,6 +1363,16 @@ pmix:
 
 poppler:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+popt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 prometheus3.13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
