@@ -8,6 +8,7 @@ avoids spawning thousands of yq subprocesses.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -399,6 +400,71 @@ def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     return render_template(template_path, macros_dir, variables)
 
 
+def build_trigger_manifest(branch: str, event_type: str) -> dict:
+    """Build trigger manifest for push or pull_request events."""
+    packages = get_all_packages()
+    package_overrides = load_yaml_file(ROOT_DIR / "ci" / "package-overrides.yaml") or {}
+    default_application = f"rpms-{branch}"
+    applications: dict[str, dict[str, list[str]]] = {}
+
+    for dname in packages:
+        if not (ROOT_DIR / "rpms" / dname).is_dir():
+            continue
+
+        component_name = f"{sanitize_component_name(dname)}--rpms"
+        triggers = [f"^rpms/{dname}/"]
+
+        if event_type == "pull_request":
+            test_file = ROOT_DIR / "test" / "rpms" / f"{dname}.yml"
+            if test_file.exists():
+                triggers.append(f"^test/rpms/{dname}\\.yml$")
+
+            if dname == BUILD_TRIGGER_RPM_NAME:
+                triggers.extend(["^ci/", "^mock/"])
+
+        pkg_config = package_overrides.get(dname, {})
+        private_product = pkg_config.get("private_product") if isinstance(pkg_config, dict) else None
+        if private_product:
+            application_name = f"private-{private_product}-rpms-{branch}"
+        else:
+            application_name = default_application
+        applications.setdefault(application_name, {})[component_name] = triggers
+
+    return {
+        "type": event_type,
+        "excludes": [],
+        "applications": applications,
+    }
+
+
+def generate_trigger_manifests(branch: str) -> dict[str, str]:
+    """Generate push and pull_request trigger manifest JSON strings."""
+    results = {}
+    for event_type in ("push", "pull_request"):
+        manifest = build_trigger_manifest(branch, event_type)
+        results[event_type] = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    return results
+
+
+def generate_gitattributes() -> str:
+    """Generate .gitattributes marking all generated files as gitlab-generated."""
+    releng_config = load_releng_config()
+    rpa_names = [rpa["name"] for rpa in releng_config["rpas"]]
+
+    lines = [
+        ".gitattributes gitlab-generated",
+        ".tekton/rpms-on-pull-request.yaml gitlab-generated",
+        ".tekton/rpms-on-push.yaml gitlab-generated",
+        ".tekton/trigger-manifest-pull-request.json gitlab-generated",
+        ".tekton/trigger-manifest-push.json gitlab-generated",
+        "konflux-templates/rendered.yml gitlab-generated",
+    ]
+    for name in sorted(rpa_names):
+        lines.append(f"releng/{name}.yaml gitlab-generated")
+
+    return "\n".join(lines) + "\n"
+
+
 def generate_konflux(branch: str, tenant: str, git_repo: str) -> str:
     """Generate Konflux resources."""
     print("Building template variables...", file=sys.stderr)
@@ -461,6 +527,11 @@ def main():
         pac_pr = generate_pac("pull-request", args.branch, args.tenant)
         (ROOT_DIR / ".tekton" / "rpms-on-pull-request.yaml").write_text(pac_pr)
 
+        print("Generating trigger manifests...", file=sys.stderr)
+        manifests = generate_trigger_manifests(args.branch)
+        (ROOT_DIR / ".tekton" / "trigger-manifest-push.json").write_text(manifests["push"])
+        (ROOT_DIR / ".tekton" / "trigger-manifest-pull-request.json").write_text(manifests["pull_request"])
+
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)
 
@@ -469,6 +540,9 @@ def main():
         releng_dir.mkdir(exist_ok=True)
         for name, content in releng_results.items():
             (releng_dir / f"{name}.yaml").write_text(content)
+
+        print("Generating .gitattributes...", file=sys.stderr)
+        (ROOT_DIR / ".gitattributes").write_text(generate_gitattributes())
 
         print("Generated all resources.", file=sys.stderr)
 
