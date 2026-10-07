@@ -564,7 +564,7 @@ def test_check_package_version_track_version_filters_stable(cuv_module, workdir:
 
 
 def test_check_package_version_track_version_no_match(cuv_module, workdir: Path) -> None:
-    """Reports no upstream version when no stable versions match track_version."""
+    """Warns when reported releases do not match the tracked version line."""
     _create_package(workdir, 'pkg', '1.24.0',
                     metadata={'version': '1.24.0', 'release': '1',
                               'track_upstream': '1.24'})
@@ -584,7 +584,187 @@ def test_check_package_version_track_version_no_match(cuv_module, workdir: Path)
     # version field (2.0) also doesn't match 1.24 prefix
     assert result.upstream_version is None
     assert result.has_update is False
-    assert result.error == "No upstream version reported by Anitya"
+    assert result.error is None
+    assert result.warnings == [
+        "skipped upstream check: Anitya reported no version matching track_upstream '1.24'",
+    ]
+
+
+@pytest.mark.parametrize('response', [
+    {'version': '3.14.8', 'stable_versions': ['3.14.8']},
+    {'version': '3.14.8', 'stable_versions': []},
+    {'version': None, 'stable_versions': ['3.14.8']},
+    {'version': '3.150.0', 'stable_versions': ['3.150.0']},
+])
+def test_check_package_version_missing_tracked_release_warns(
+    cuv_module, workdir: Path, response: dict, caplog,
+) -> None:
+    """Other release lines are not errors or eligible update candidates."""
+    _create_package(workdir, 'python3.15', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value=response):
+        result = cuv_module.check_package_version('python3.15')
+
+    assert result.current_version == '3.15.0~rc2'
+    assert result.upstream_version is None
+    assert result.has_update is False
+    assert result.error is None
+    assert result.warnings == [
+        "skipped upstream check: Anitya reported no version matching track_upstream '3.15'",
+    ]
+    assert result.warnings[0] in caplog.text
+
+
+@pytest.mark.parametrize('response', [{}, {'version': None, 'stable_versions': []}])
+@pytest.mark.parametrize('track', ['3.15', 'latest'])
+def test_check_package_version_empty_response_remains_error(
+    cuv_module, workdir: Path, response: dict, track: str,
+) -> None:
+    """An empty upstream response is not proof of a missing release line."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': track, 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value=response):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == 'No upstream version reported by Anitya'
+    assert result.warnings == []
+    assert result.has_update is False
+
+
+@pytest.mark.parametrize('failure', [
+    ValueError('Project not found'),
+    ConnectionError('Connection failed'),
+    urllib.error.URLError('Request timed out'),
+    urllib.error.HTTPError('https://example.com', 429, 'Rate limited', Message(), None),
+    urllib.error.HTTPError('https://example.com', 503, 'Unavailable', Message(), None),
+    json.JSONDecodeError('Malformed upstream JSON', '', 0),
+])
+def test_check_package_version_tracked_lookup_failure_remains_error(
+    cuv_module, workdir: Path, failure: Exception,
+) -> None:
+    """Lookup failures remain errors even when a version line is pinned."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', side_effect=failure):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == str(failure)
+    assert result.warnings == []
+    assert result.has_update is False
+
+
+def test_check_package_version_tracked_matching_fallback_is_selected(
+    cuv_module, workdir: Path,
+) -> None:
+    """A matching fallback remains eligible even if stable releases mismatch."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': '3.15.0', 'stable_versions': ['3.14.8'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.upstream_version == '3.15.0'
+    assert result.has_update is True
+    assert result.error is None
+    assert result.warnings == []
+
+
+def test_check_package_version_untransformable_tracked_versions_remain_error(
+    cuv_module, workdir: Path,
+) -> None:
+    """Discarding invalid version data is not a missing-release warning."""
+    _create_package(workdir, 'pkg', '21.0.11.0.10', metadata={
+        'track_upstream': '21', 'upstream_version_transform': 'openjdk_to_rpm',
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', return_value={
+        'version': 'invalid', 'stable_versions': ['invalid'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == 'No upstream version reported by Anitya'
+    assert result.warnings == []
+
+
+def test_check_package_version_tracked_programming_error_propagates(
+    cuv_module, workdir: Path,
+) -> None:
+    """Unexpected errors must not be hidden as warnings or skipped checks."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={'track_upstream': '3.15'})
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', side_effect=TypeError('lookup bug')), \
+         pytest.raises(TypeError, match='lookup bug'):
+        cuv_module.check_package_version('pkg')
+
+
+def test_check_package_version_unpublished_tracked_source_keeps_warning_reason(
+    cuv_module, workdir: Path,
+) -> None:
+    """An unpublished matching release is not mislabeled as an absent line."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15',
+        'source_availability_check': {
+            'type': 'http', 'urls': ['https://example.com/pkg-${VERSION}.tar.gz'],
+        },
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', return_value={
+        'version': '3.15.0', 'stable_versions': ['3.15.0', '3.14.8'],
+    }), patch.object(cuv_module, '_check_source_exists', return_value=False):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error is None
+    assert result.has_update is False
+    assert result.warnings == [
+        'skipped upstream version 3.15.0: required source artifact is not published',
+    ]
+
+
+def test_check_package_version_gitlab_missing_tracked_release_warning(
+    cuv_module, workdir: Path,
+) -> None:
+    """The warning names the actual upstream provider."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'version_source': 'gitlab_tags',
+        'upstream_repo': 'https://gitlab.com/example/project',
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_gitlab_tags', return_value={
+        'version': '3.14.8', 'stable_versions': ['3.14.8'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error is None
+    assert result.has_update is False
+    assert result.version_source == 'gitlab_tags'
+    assert result.warnings == [
+        "skipped upstream check: GitLab tags reported no version matching track_upstream '3.15'",
+    ]
 
 
 def test_check_package_version_track_version_exact_match(cuv_module, workdir: Path) -> None:
@@ -2948,6 +3128,77 @@ def test_cli_check_json_reports_source_warnings(
     ]
 
 
+@pytest.mark.parametrize('json_output', [True, False])
+def test_cli_missing_tracked_release_warns_without_updating(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str], json_output: bool,
+) -> None:
+    """A missing tracked release exits zero, warns, and never applies an update."""
+    pkg_dir = _create_package(workdir, 'python3.15', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    spec_file = pkg_dir / 'python3.15.spec'
+    original = spec_file.read_text()
+    metadata_file = workdir / 'metadata' / 'python3.15.json'
+    original_metadata = metadata_file.read_text()
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    argv = ['check_upstream_versions.py', 'check', '--update', '--all', 'python3.15']
+    if json_output:
+        argv.append('--json')
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+            'version': '3.14.8', 'stable_versions': ['3.14.8'],
+        }),
+        patch.object(cuv_module, 'update_spec_version',
+                     side_effect=AssertionError('no eligible release')) as update,
+        patch('sys.argv', argv),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    update.assert_not_called()
+    output = capsys.readouterr().out
+    warning = "skipped upstream check: Anitya reported no version matching track_upstream '3.15'"
+    if json_output:
+        result = json.loads(output)
+        assert result['updates_available'] == result['updates_applied'] == result['errors'] == 0
+        assert result['warnings'] == 1
+        assert result['results'][0]['warnings'] == [warning]
+        assert result['results'][0]['upstream_version'] is None
+    else:
+        assert 'Upstream warnings:' in output
+        assert warning in output
+        assert 'Up-to-date packages:' not in output
+        assert '1 skipped, 0 errors, 1 warnings' in output
+    assert spec_file.read_text() == original
+    assert metadata_file.read_text() == original_metadata
+
+
+def test_cli_tracked_lookup_failure_remains_nonzero(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Transport errors still fail CLI checks of tracked version lines."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id',
+                      side_effect=urllib.error.URLError('Request timed out')), \
+         patch('sys.argv', ['check_upstream_versions.py', 'check', '--json', 'pkg']), \
+         pytest.raises(SystemExit) as exc_info:
+        cuv_module.main()
+
+    assert exc_info.value.code == 2
+    output = json.loads(capsys.readouterr().out)
+    assert output['errors'] == 1
+    assert output['warnings'] == 0
+
+
 def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -2983,7 +3234,7 @@ def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     assert 'Up-to-date packages:' not in output
     assert (
         'Summary: 0 updates available, 0 up-to-date, '
-        '1 skipped (source unavailable), 0 errors, 1 source version warnings'
+        '1 skipped, 0 errors, 1 warnings'
     ) in output
 
 

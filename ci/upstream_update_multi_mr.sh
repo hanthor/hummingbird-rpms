@@ -275,9 +275,9 @@ DRAFT_FAILURE_MR_URLS=()
 # updates do not create a conflict MR when Gorget or source processing fails.
 UPSTREAM_FAILURES_FILE=".ci_upstream_update_failures.txt"
 rm -f "${UPSTREAM_FAILURES_FILE}"
-# Source versions skipped because their required artifacts are not published
-# are warnings, not checker failures. Detailed warnings remain in the checker
-# output; this file carries only aggregate counts for Slack.
+# Unpublished sources and missing tracked release lines are warnings, not
+# checker failures. Detailed warnings remain in the checker output; this
+# file carries only aggregate counts for Slack.
 UPSTREAM_WARNINGS_FILE=".ci_upstream_update_warnings.txt"
 rm -f "${UPSTREAM_WARNINGS_FILE}"
 # Keep draft-MR links separately so the scheduled Slack notification can
@@ -353,7 +353,7 @@ if ! [[ "${CHECK_FAILURES}" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 if ! CHECK_WARNINGS=$(jq '[.results[] | .warnings[]?] | length' "${CHECK_OUTPUT}"); then
-    echo "ERROR: Could not parse source availability warnings"
+    echo "ERROR: Could not parse upstream warnings"
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
@@ -365,7 +365,7 @@ fi
 if ! CHECK_WARNING_PACKAGES=$(jq \
     '[.results[] | select((.warnings // []) | length > 0)] | length' \
     "${CHECK_OUTPUT}"); then
-    echo "ERROR: Could not count packages with source availability warnings"
+    echo "ERROR: Could not count packages with upstream warnings"
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
@@ -392,9 +392,9 @@ if [[ ! -s "${UPSTREAM_FAILURES_FILE}" ]]; then
 fi
 
 if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
-    # Avoid flooding Slack when several unpublished candidates exist for each
+    # Avoid flooding Slack when several upstream warnings exist for each
     # package. The checker stderr and JSON above retain every detailed warning.
-    printf '%s skipped candidate version(s) across %s package(s); see job log for details\n' \
+    printf '%s upstream warning(s) across %s package(s); see job log for details\n' \
         "${CHECK_WARNINGS}" "${CHECK_WARNING_PACKAGES}" > "${UPSTREAM_WARNINGS_FILE}"
 else
     rm -f "${UPSTREAM_WARNINGS_FILE}"
@@ -446,7 +446,7 @@ if [[ -s "${UPSTREAM_FAILURES_FILE}" ]]; then
     echo ""
 fi
 if [[ -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
-    echo "Upstream source availability warnings:"
+    echo "Upstream warnings:"
     while IFS= read -r warning; do
         echo "  - ${warning}"
     done < "${UPSTREAM_WARNINGS_FILE}"
@@ -526,7 +526,7 @@ done
 #   2 = errors occurred
 if [[ ${CHECK_EXIT_CODE} -eq 0 ]]; then
     if [[ ${CHECK_WARNINGS} -gt 0 ]]; then
-        echo "No updates available; ${CHECK_WARNINGS} source warning(s) reported."
+        echo "No updates available; ${CHECK_WARNINGS} upstream warning(s) reported."
     else
         echo "No upstream version updates available. All tracked packages are up-to-date."
     fi
@@ -693,7 +693,7 @@ echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
 echo "  Update/check failures:   ${CHECK_FAILURES}"
-echo "  Source warnings:         ${CHECK_WARNINGS}"
+echo "  Upstream warnings:       ${CHECK_WARNINGS}"
 echo "  Draft failure MRs:       ${#DRAFT_FAILURE_MR_URLS[@]}"
 echo "  MR failures:             ${MR_FAILURES}"
 

@@ -1784,7 +1784,7 @@ def check_package_version(
         if tracked_candidates:
             source_candidates = tracked_candidates
 
-    source_warnings: list[str] = []
+    version_warnings: list[str] = []
 
     # Filter out leading versions whose source tarball is not yet published.
     # Probes only until a published version is found; older versions are
@@ -1799,7 +1799,7 @@ def check_package_version(
                     f"skipped upstream version {v}: required source artifact "
                     "is not published"
                 )
-                source_warnings.append(warning)
+                version_warnings.append(warning)
                 logger.warning("%s: %s", package, warning)
                 skip += 1
             except urllib.error.URLError as e:
@@ -1837,6 +1837,7 @@ def check_package_version(
     # Prefer stable_versions[0] over version field, as version can sometimes
     # contain incorrect data (e.g., development tags that aren't real releases)
     stable_versions = anitya_data.get("stable_versions", [])
+    reported_versions_available = bool(stable_versions or anitya_data.get("version"))
 
     # If track_version is set, filter stable_versions to matching prefix
     if track_version and stable_versions:
@@ -1861,7 +1862,18 @@ def check_package_version(
                 upstream_version = None
 
     if not upstream_version:
-        if source_warnings:
+        # A successful lookup containing only other release lines is a skip,
+        # not a failed lookup. Empty responses and failed transforms remain
+        # errors; unpublished sources retain their existing warning reason.
+        if not version_warnings and track_version and reported_versions_available:
+            source_name = "GitLab tags" if version_source == "gitlab_tags" else "Anitya"
+            warning = (
+                f"skipped upstream check: {source_name} reported no version "
+                f"matching track_upstream {track_version!r}"
+            )
+            version_warnings.append(warning)
+            logger.warning("%s: %s", package, warning)
+        if version_warnings:
             return VersionCheckResult(
                 package=package,
                 current_version=current_version,
@@ -1869,7 +1881,7 @@ def check_package_version(
                 has_update=False,
                 anitya_project_id=anitya_data.get("id"),
                 version_source=version_source,
-                warnings=source_warnings,
+                warnings=version_warnings,
             )
         return VersionCheckResult(
             package=package,
@@ -1895,7 +1907,7 @@ def check_package_version(
         has_update=has_update,
         anitya_project_id=anitya_data.get("id"),
         version_source=version_source,
-        warnings=source_warnings,
+        warnings=version_warnings,
     )
 
 
@@ -2289,7 +2301,7 @@ def run_check(args: argparse.Namespace) -> None:
                     print(f"{r.package:<30} {r.error}")
 
         if warnings_found > 0:
-            print("\nSource availability warnings:")
+            print("\nUpstream warnings:")
             print("-" * 70)
             for r in results:
                 for warning in r.warnings:
@@ -2303,17 +2315,17 @@ def run_check(args: argparse.Namespace) -> None:
                 f"Summary: {updates_applied} specs updated, "
                 f"{update_failures} update failures, "
                 f"{up_to_date_found} up-to-date, "
-                f"{skipped_found} skipped (source unavailable), "
+                f"{skipped_found} skipped, "
                 f"{errors_found} errors, "
-                f"{warnings_found} source version warnings"
+                f"{warnings_found} warnings"
             )
         else:
             print(
                 f"Summary: {updates_found} updates available, "
                 f"{up_to_date_found} up-to-date, "
-                f"{skipped_found} skipped (source unavailable), "
+                f"{skipped_found} skipped, "
                 f"{errors_found} errors, "
-                f"{warnings_found} source version warnings"
+                f"{warnings_found} warnings"
             )
 
     # Exit code: 0 if no updates, 1 if updates found, 2 if errors
