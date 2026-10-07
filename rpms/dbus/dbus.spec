@@ -22,7 +22,7 @@
 Name:    dbus
 Epoch:   1
 Version: 1.16.2
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 Summary: D-BUS message bus
 
 # The effective license of the majority of the package, including the shared
