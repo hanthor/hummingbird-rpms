@@ -1,0 +1,2254 @@
+{
+  "applications": {
+    "private-example-rpms-main": {
+      "hello--rpms": [
+        "^rpms/hello/",
+        "^test/rpms/hello\\.yml$"
+      ]
+    },
+    "private-nodejs20-rpms-main": {
+      "nodejs20-lts--rpms": [
+        "^rpms/nodejs20\\-lts/",
+        "^test/rpms/nodejs20\\-lts\\.yml$"
+      ]
+    },
+    "rpms-main": {
+      "aardvark-dns--rpms": [
+        "^rpms/aardvark\\-dns/",
+        "^test/rpms/aardvark\\-dns\\.yml$"
+      ],
+      "abattis-cantarell-fonts--rpms": [
+        "^rpms/abattis\\-cantarell\\-fonts/",
+        "^test/rpms/abattis\\-cantarell\\-fonts\\.yml$"
+      ],
+      "acl--rpms": [
+        "^rpms/acl/",
+        "^test/rpms/acl\\.yml$"
+      ],
+      "alsa-lib--rpms": [
+        "^rpms/alsa\\-lib/",
+        "^test/rpms/alsa\\-lib\\.yml$"
+      ],
+      "annobin--rpms": [
+        "^rpms/annobin/",
+        "^test/rpms/annobin\\.yml$"
+      ],
+      "ansible-packaging--rpms": [
+        "^rpms/ansible\\-packaging/",
+        "^test/rpms/ansible\\-packaging\\.yml$"
+      ],
+      "aom--rpms": [
+        "^rpms/aom/",
+        "^test/rpms/aom\\.yml$"
+      ],
+      "apr--rpms": [
+        "^rpms/apr/",
+        "^test/rpms/apr\\.yml$"
+      ],
+      "apr-util--rpms": [
+        "^rpms/apr\\-util/",
+        "^test/rpms/apr\\-util\\.yml$"
+      ],
+      "apt--rpms": [
+        "^rpms/apt/",
+        "^test/rpms/apt\\.yml$"
+      ],
+      "attr--rpms": [
+        "^rpms/attr/",
+        "^test/rpms/attr\\.yml$"
+      ],
+      "audit--rpms": [
+        "^rpms/audit/",
+        "^test/rpms/audit\\.yml$"
+      ],
+      "authselect--rpms": [
+        "^rpms/authselect/",
+        "^test/rpms/authselect\\.yml$"
+      ],
+      "autoconf--rpms": [
+        "^rpms/autoconf/",
+        "^test/rpms/autoconf\\.yml$"
+      ],
+      "automake--rpms": [
+        "^rpms/automake/",
+        "^test/rpms/automake\\.yml$"
+      ],
+      "avahi--rpms": [
+        "^rpms/avahi/",
+        "^test/rpms/avahi\\.yml$"
+      ],
+      "babeltrace--rpms": [
+        "^rpms/babeltrace/",
+        "^test/rpms/babeltrace\\.yml$"
+      ],
+      "bash--rpms": [
+        "^rpms/bash/",
+        "^test/rpms/bash\\.yml$"
+      ],
+      "bash-completion--rpms": [
+        "^rpms/bash\\-completion/",
+        "^test/rpms/bash\\-completion\\.yml$"
+      ],
+      "bind--rpms": [
+        "^rpms/bind/",
+        "^test/rpms/bind\\.yml$"
+      ],
+      "binutils--rpms": [
+        "^rpms/binutils/",
+        "^test/rpms/binutils\\.yml$"
+      ],
+      "boost--rpms": [
+        "^rpms/boost/",
+        "^test/rpms/boost\\.yml$"
+      ],
+      "bootc--rpms": [
+        "^rpms/bootc/",
+        "^test/rpms/bootc\\.yml$"
+      ],
+      "brotli--rpms": [
+        "^rpms/brotli/",
+        "^test/rpms/brotli\\.yml$"
+      ],
+      "btrfs-progs--rpms": [
+        "^rpms/btrfs\\-progs/",
+        "^test/rpms/btrfs\\-progs\\.yml$"
+      ],
+      "bubblewrap--rpms": [
+        "^rpms/bubblewrap/",
+        "^test/rpms/bubblewrap\\.yml$"
+      ],
+      "buildah--rpms": [
+        "^rpms/buildah/",
+        "^test/rpms/buildah\\.yml$"
+      ],
+      "busybox--rpms": [
+        "^rpms/busybox/",
+        "^test/rpms/busybox\\.yml$"
+      ],
+      "bzip2--rpms": [
+        "^rpms/bzip2/",
+        "^test/rpms/bzip2\\.yml$"
+      ],
+      "c-ares--rpms": [
+        "^rpms/c\\-ares/",
+        "^test/rpms/c\\-ares\\.yml$"
+      ],
+      "ca-certificates--rpms": [
+        "^rpms/ca\\-certificates/",
+        "^test/rpms/ca\\-certificates\\.yml$"
+      ],
+      "caddy--rpms": [
+        "^rpms/caddy/",
+        "^test/rpms/caddy\\.yml$"
+      ],
+      "capstone--rpms": [
+        "^rpms/capstone/",
+        "^test/rpms/capstone\\.yml$"
+      ],
+      "cargo-rpm-macros--rpms": [
+        "^rpms/cargo\\-rpm\\-macros/",
+        "^test/rpms/cargo\\-rpm\\-macros\\.yml$"
+      ],
+      "cargo2rpm--rpms": [
+        "^rpms/cargo2rpm/",
+        "^test/rpms/cargo2rpm\\.yml$"
+      ],
+      "catatonit--rpms": [
+        "^rpms/catatonit/",
+        "^test/rpms/catatonit\\.yml$"
+      ],
+      "checkpolicy--rpms": [
+        "^rpms/checkpolicy/",
+        "^test/rpms/checkpolicy\\.yml$"
+      ],
+      "chkconfig--rpms": [
+        "^rpms/chkconfig/",
+        "^test/rpms/chkconfig\\.yml$"
+      ],
+      "chrony--rpms": [
+        "^rpms/chrony/",
+        "^test/rpms/chrony\\.yml$"
+      ],
+      "chunkah--rpms": [
+        "^rpms/chunkah/",
+        "^test/rpms/chunkah\\.yml$"
+      ],
+      "cloud-init--rpms": [
+        "^rpms/cloud\\-init/",
+        "^test/rpms/cloud\\-init\\.yml$"
+      ],
+      "cloud-utils--rpms": [
+        "^rpms/cloud\\-utils/",
+        "^test/rpms/cloud\\-utils\\.yml$"
+      ],
+      "cmake--rpms": [
+        "^rpms/cmake/",
+        "^test/rpms/cmake\\.yml$"
+      ],
+      "composefs--rpms": [
+        "^rpms/composefs/",
+        "^test/rpms/composefs\\.yml$"
+      ],
+      "composer--rpms": [
+        "^rpms/composer/",
+        "^test/rpms/composer\\.yml$"
+      ],
+      "conmon--rpms": [
+        "^rpms/conmon/",
+        "^test/rpms/conmon\\.yml$"
+      ],
+      "container-selinux--rpms": [
+        "^rpms/container\\-selinux/",
+        "^test/rpms/container\\-selinux\\.yml$"
+      ],
+      "containernetworking-plugins--rpms": [
+        "^rpms/containernetworking\\-plugins/",
+        "^test/rpms/containernetworking\\-plugins\\.yml$"
+      ],
+      "containers-common--rpms": [
+        "^rpms/containers\\-common/",
+        "^test/rpms/containers\\-common\\.yml$"
+      ],
+      "coreutils--rpms": [
+        "^rpms/coreutils/",
+        "^test/rpms/coreutils\\.yml$"
+      ],
+      "cosign--rpms": [
+        "^rpms/cosign/",
+        "^test/rpms/cosign\\.yml$"
+      ],
+      "cpio--rpms": [
+        "^rpms/cpio/",
+        "^test/rpms/cpio\\.yml$"
+      ],
+      "cracklib--rpms": [
+        "^rpms/cracklib/",
+        "^test/rpms/cracklib\\.yml$"
+      ],
+      "createrepo-c--rpms": [
+        "^rpms/createrepo_c/",
+        "^test/rpms/createrepo_c\\.yml$"
+      ],
+      "crun--rpms": [
+        "^rpms/crun/",
+        "^test/rpms/crun\\.yml$"
+      ],
+      "crypto-policies--rpms": [
+        "^rpms/crypto\\-policies/",
+        "^test/rpms/crypto\\-policies\\.yml$"
+      ],
+      "cryptsetup--rpms": [
+        "^rpms/cryptsetup/",
+        "^test/rpms/cryptsetup\\.yml$"
+      ],
+      "ctags--rpms": [
+        "^rpms/ctags/",
+        "^test/rpms/ctags\\.yml$"
+      ],
+      "cups--rpms": [
+        "^rpms/cups/",
+        "^test/rpms/cups\\.yml$"
+      ],
+      "curl--rpms": [
+        "^rpms/curl/",
+        "^test/rpms/curl\\.yml$"
+      ],
+      "cyrus-sasl--rpms": [
+        "^rpms/cyrus\\-sasl/",
+        "^test/rpms/cyrus\\-sasl\\.yml$"
+      ],
+      "dav1d--rpms": [
+        "^rpms/dav1d/",
+        "^test/rpms/dav1d\\.yml$"
+      ],
+      "dbus--rpms": [
+        "^rpms/dbus/",
+        "^test/rpms/dbus\\.yml$"
+      ],
+      "dbus-broker--rpms": [
+        "^rpms/dbus\\-broker/",
+        "^test/rpms/dbus\\-broker\\.yml$"
+      ],
+      "dbus-python--rpms": [
+        "^rpms/dbus\\-python/",
+        "^test/rpms/dbus\\-python\\.yml$"
+      ],
+      "debugedit--rpms": [
+        "^rpms/debugedit/",
+        "^test/rpms/debugedit\\.yml$"
+      ],
+      "dex--rpms": [
+        "^rpms/dex/",
+        "^test/rpms/dex\\.yml$"
+      ],
+      "diffutils--rpms": [
+        "^rpms/diffutils/",
+        "^test/rpms/diffutils\\.yml$"
+      ],
+      "distribution--rpms": [
+        "^rpms/distribution/",
+        "^test/rpms/distribution\\.yml$"
+      ],
+      "dnf--rpms": [
+        "^rpms/dnf/",
+        "^test/rpms/dnf\\.yml$"
+      ],
+      "dnf5--rpms": [
+        "^rpms/dnf5/",
+        "^test/rpms/dnf5\\.yml$"
+      ],
+      "dns-root-data--rpms": [
+        "^rpms/dns\\-root\\-data/",
+        "^test/rpms/dns\\-root\\-data\\.yml$"
+      ],
+      "dosfstools--rpms": [
+        "^rpms/dosfstools/",
+        "^test/rpms/dosfstools\\.yml$"
+      ],
+      "dotnet10-0--rpms": [
+        "^rpms/dotnet10\\.0/",
+        "^test/rpms/dotnet10\\.0\\.yml$"
+      ],
+      "dotnet8-0--rpms": [
+        "^rpms/dotnet8\\.0/",
+        "^test/rpms/dotnet8\\.0\\.yml$"
+      ],
+      "dotnet9-0--rpms": [
+        "^rpms/dotnet9\\.0/",
+        "^test/rpms/dotnet9\\.0\\.yml$"
+      ],
+      "doxygen--rpms": [
+        "^rpms/doxygen/",
+        "^test/rpms/doxygen\\.yml$"
+      ],
+      "dracut--rpms": [
+        "^rpms/dracut/",
+        "^test/rpms/dracut\\.yml$"
+      ],
+      "drpm--rpms": [
+        "^rpms/drpm/",
+        "^test/rpms/drpm\\.yml$"
+      ],
+      "duktape--rpms": [
+        "^rpms/duktape/",
+        "^test/rpms/duktape\\.yml$"
+      ],
+      "dwz--rpms": [
+        "^rpms/dwz/",
+        "^test/rpms/dwz\\.yml$"
+      ],
+      "e2fsprogs--rpms": [
+        "^rpms/e2fsprogs/",
+        "^test/rpms/e2fsprogs\\.yml$"
+      ],
+      "ecj--rpms": [
+        "^rpms/ecj/",
+        "^test/rpms/ecj\\.yml$"
+      ],
+      "ed--rpms": [
+        "^rpms/ed/",
+        "^test/rpms/ed\\.yml$"
+      ],
+      "efi-rpm-macros--rpms": [
+        "^rpms/efi\\-rpm\\-macros/",
+        "^test/rpms/efi\\-rpm\\-macros\\.yml$"
+      ],
+      "efibootmgr--rpms": [
+        "^rpms/efibootmgr/",
+        "^test/rpms/efibootmgr\\.yml$"
+      ],
+      "efivar--rpms": [
+        "^rpms/efivar/",
+        "^test/rpms/efivar\\.yml$"
+      ],
+      "elfutils--rpms": [
+        "^rpms/elfutils/",
+        "^test/rpms/elfutils\\.yml$"
+      ],
+      "emacs-filesystem--rpms": [
+        "^rpms/emacs\\-filesystem/",
+        "^test/rpms/emacs\\-filesystem\\.yml$"
+      ],
+      "environment-modules--rpms": [
+        "^rpms/environment\\-modules/",
+        "^test/rpms/environment\\-modules\\.yml$"
+      ],
+      "erlang-rpm-macros--rpms": [
+        "^rpms/erlang\\-rpm\\-macros/",
+        "^test/rpms/erlang\\-rpm\\-macros\\.yml$"
+      ],
+      "erlang27--rpms": [
+        "^rpms/erlang27/",
+        "^test/rpms/erlang27\\.yml$"
+      ],
+      "etcd--rpms": [
+        "^rpms/etcd/",
+        "^test/rpms/etcd\\.yml$"
+      ],
+      "expat--rpms": [
+        "^rpms/expat/",
+        "^test/rpms/expat\\.yml$"
+      ],
+      "fedora-logos--rpms": [
+        "^rpms/fedora\\-logos/",
+        "^test/rpms/fedora\\-logos\\.yml$"
+      ],
+      "fedora-repos--rpms": [
+        "^rpms/fedora\\-repos/",
+        "^test/rpms/fedora\\-repos\\.yml$"
+      ],
+      "fftw--rpms": [
+        "^rpms/fftw/",
+        "^test/rpms/fftw\\.yml$"
+      ],
+      "file--rpms": [
+        "^rpms/file/",
+        "^test/rpms/file\\.yml$"
+      ],
+      "filesystem--rpms": [
+        "^rpms/filesystem/",
+        "^test/rpms/filesystem\\.yml$"
+      ],
+      "findutils--rpms": [
+        "^rpms/findutils/",
+        "^test/rpms/findutils\\.yml$"
+      ],
+      "firewalld--rpms": [
+        "^rpms/firewalld/",
+        "^test/rpms/firewalld\\.yml$"
+      ],
+      "fmt--rpms": [
+        "^rpms/fmt/",
+        "^test/rpms/fmt\\.yml$"
+      ],
+      "fontconfig--rpms": [
+        "^rpms/fontconfig/",
+        "^test/rpms/fontconfig\\.yml$"
+      ],
+      "fonts-rpm-macros--rpms": [
+        "^rpms/fonts\\-rpm\\-macros/",
+        "^test/rpms/fonts\\-rpm\\-macros\\.yml$"
+      ],
+      "forge-srpm-macros--rpms": [
+        "^rpms/forge\\-srpm\\-macros/",
+        "^test/rpms/forge\\-srpm\\-macros\\.yml$"
+      ],
+      "fpc-srpm-macros--rpms": [
+        "^rpms/fpc\\-srpm\\-macros/",
+        "^test/rpms/fpc\\-srpm\\-macros\\.yml$"
+      ],
+      "freetype--rpms": [
+        "^rpms/freetype/",
+        "^test/rpms/freetype\\.yml$"
+      ],
+      "fstrm--rpms": [
+        "^rpms/fstrm/",
+        "^test/rpms/fstrm\\.yml$"
+      ],
+      "fsverity-utils--rpms": [
+        "^rpms/fsverity\\-utils/",
+        "^test/rpms/fsverity\\-utils\\.yml$"
+      ],
+      "fulcio--rpms": [
+        "^rpms/fulcio/",
+        "^test/rpms/fulcio\\.yml$"
+      ],
+      "fuse-overlayfs--rpms": [
+        "^rpms/fuse\\-overlayfs/",
+        "^test/rpms/fuse\\-overlayfs\\.yml$"
+      ],
+      "fuse3--rpms": [
+        "^rpms/fuse3/",
+        "^test/rpms/fuse3\\.yml$"
+      ],
+      "gap-srpm-macros--rpms": [
+        "^rpms/gap\\-srpm\\-macros/",
+        "^test/rpms/gap\\-srpm\\-macros\\.yml$"
+      ],
+      "gawk--rpms": [
+        "^rpms/gawk/",
+        "^test/rpms/gawk\\.yml$"
+      ],
+      "gcc--rpms": [
+        "^rpms/gcc/",
+        "^test/rpms/gcc\\.yml$"
+      ],
+      "gcc13--rpms": [
+        "^rpms/gcc13/",
+        "^test/rpms/gcc13\\.yml$"
+      ],
+      "gd--rpms": [
+        "^rpms/gd/",
+        "^test/rpms/gd\\.yml$"
+      ],
+      "gdb--rpms": [
+        "^rpms/gdb/",
+        "^test/rpms/gdb\\.yml$"
+      ],
+      "gdbm--rpms": [
+        "^rpms/gdbm/",
+        "^test/rpms/gdbm\\.yml$"
+      ],
+      "gettext--rpms": [
+        "^rpms/gettext/",
+        "^test/rpms/gettext\\.yml$"
+      ],
+      "ghc-srpm-macros--rpms": [
+        "^rpms/ghc\\-srpm\\-macros/",
+        "^test/rpms/ghc\\-srpm\\-macros\\.yml$"
+      ],
+      "git--rpms": [
+        "^rpms/git/",
+        "^test/rpms/git\\.yml$"
+      ],
+      "git-lfs--rpms": [
+        "^rpms/git\\-lfs/",
+        "^test/rpms/git\\-lfs\\.yml$"
+      ],
+      "git-sync--rpms": [
+        "^rpms/git\\-sync/",
+        "^test/rpms/git\\-sync\\.yml$"
+      ],
+      "glib2--rpms": [
+        "^rpms/glib2/",
+        "^test/rpms/glib2\\.yml$"
+      ],
+      "glibc--rpms": [
+        "^rpms/glibc/",
+        "^test/rpms/glibc\\.yml$"
+      ],
+      "gmp--rpms": [
+        "^rpms/gmp/",
+        "^test/rpms/gmp\\.yml$"
+      ],
+      "gnat-srpm-macros--rpms": [
+        "^rpms/gnat\\-srpm\\-macros/",
+        "^test/rpms/gnat\\-srpm\\-macros\\.yml$"
+      ],
+      "gnulib-l10n--rpms": [
+        "^rpms/gnulib\\-l10n/",
+        "^test/rpms/gnulib\\-l10n\\.yml$"
+      ],
+      "gnupg2--rpms": [
+        "^rpms/gnupg2/",
+        "^test/rpms/gnupg2\\.yml$"
+      ],
+      "gnutls--rpms": [
+        "^rpms/gnutls/",
+        "^test/rpms/gnutls\\.yml$"
+      ],
+      "go-fdo-client--rpms": [
+        "^rpms/go\\-fdo\\-client/",
+        "^test/rpms/go\\-fdo\\-client\\.yml$"
+      ],
+      "go-fdo-server--rpms": [
+        "^rpms/go\\-fdo\\-server/",
+        "^test/rpms/go\\-fdo\\-server\\.yml$"
+      ],
+      "go-md2man--rpms": [
+        "^rpms/go\\-md2man/",
+        "^test/rpms/go\\-md2man\\.yml$"
+      ],
+      "go-rpm-macros--rpms": [
+        "^rpms/go\\-rpm\\-macros/",
+        "^test/rpms/go\\-rpm\\-macros\\.yml$"
+      ],
+      "golang1-25--rpms": [
+        "^rpms/golang1\\.25/",
+        "^test/rpms/golang1\\.25\\.yml$"
+      ],
+      "golang1-26--rpms": [
+        "^rpms/golang1\\.26/",
+        "^test/rpms/golang1\\.26\\.yml$"
+      ],
+      "golang1-27--rpms": [
+        "^rpms/golang1\\.27/",
+        "^test/rpms/golang1\\.27\\.yml$"
+      ],
+      "golist--rpms": [
+        "^rpms/golist/",
+        "^test/rpms/golist\\.yml$"
+      ],
+      "google-noto-fonts--rpms": [
+        "^rpms/google\\-noto\\-fonts/",
+        "^test/rpms/google\\-noto\\-fonts\\.yml$"
+      ],
+      "gorget--rpms": [
+        "^rpms/gorget/",
+        "^test/rpms/gorget\\.yml$"
+      ],
+      "gperftools--rpms": [
+        "^rpms/gperftools/",
+        "^test/rpms/gperftools\\.yml$"
+      ],
+      "gpgme--rpms": [
+        "^rpms/gpgme/",
+        "^test/rpms/gpgme\\.yml$"
+      ],
+      "gpgverify--rpms": [
+        "^rpms/gpgverify/",
+        "^test/rpms/gpgverify\\.yml$"
+      ],
+      "grafana12-4--rpms": [
+        "^rpms/grafana12\\.4/",
+        "^test/rpms/grafana12\\.4\\.yml$"
+      ],
+      "grafana13-1--rpms": [
+        "^rpms/grafana13\\.1/",
+        "^test/rpms/grafana13\\.1\\.yml$"
+      ],
+      "grafana13-2--rpms": [
+        "^rpms/grafana13\\.2/",
+        "^test/rpms/grafana13\\.2\\.yml$"
+      ],
+      "graphite2--rpms": [
+        "^rpms/graphite2/",
+        "^test/rpms/graphite2\\.yml$"
+      ],
+      "graphviz--rpms": [
+        "^rpms/graphviz/",
+        "^test/rpms/graphviz\\.yml$"
+      ],
+      "grep--rpms": [
+        "^rpms/grep/",
+        "^test/rpms/grep\\.yml$"
+      ],
+      "groff--rpms": [
+        "^rpms/groff/",
+        "^test/rpms/groff\\.yml$"
+      ],
+      "grype--rpms": [
+        "^rpms/grype/",
+        "^test/rpms/grype\\.yml$"
+      ],
+      "gzip--rpms": [
+        "^rpms/gzip/",
+        "^test/rpms/gzip\\.yml$"
+      ],
+      "haproxy--rpms": [
+        "^rpms/haproxy/",
+        "^test/rpms/haproxy\\.yml$"
+      ],
+      "harfbuzz--rpms": [
+        "^rpms/harfbuzz/",
+        "^test/rpms/harfbuzz\\.yml$"
+      ],
+      "hdf5--rpms": [
+        "^rpms/hdf5/",
+        "^test/rpms/hdf5\\.yml$"
+      ],
+      "helm3--rpms": [
+        "^rpms/helm3/",
+        "^test/rpms/helm3\\.yml$"
+      ],
+      "helm4--rpms": [
+        "^rpms/helm4/",
+        "^test/rpms/helm4\\.yml$"
+      ],
+      "hiredis--rpms": [
+        "^rpms/hiredis/",
+        "^test/rpms/hiredis\\.yml$"
+      ],
+      "hostname--rpms": [
+        "^rpms/hostname/",
+        "^test/rpms/hostname\\.yml$"
+      ],
+      "httpd--rpms": [
+        "^rpms/httpd/",
+        "^test/rpms/httpd\\.yml$"
+      ],
+      "hugo--rpms": [
+        "^rpms/hugo/",
+        "^test/rpms/hugo\\.yml$"
+      ],
+      "hummingbird-release--rpms": [
+        "^rpms/hummingbird\\-release/",
+        "^test/rpms/hummingbird\\-release\\.yml$"
+      ],
+      "hwloc--rpms": [
+        "^rpms/hwloc/",
+        "^test/rpms/hwloc\\.yml$"
+      ],
+      "icu--rpms": [
+        "^rpms/icu/",
+        "^test/rpms/icu\\.yml$"
+      ],
+      "ima-evm-utils--rpms": [
+        "^rpms/ima\\-evm\\-utils/",
+        "^test/rpms/ima\\-evm\\-utils\\.yml$"
+      ],
+      "iproute--rpms": [
+        "^rpms/iproute/",
+        "^test/rpms/iproute\\.yml$"
+      ],
+      "iptables--rpms": [
+        "^rpms/iptables/",
+        "^test/rpms/iptables\\.yml$"
+      ],
+      "jaeger--rpms": [
+        "^rpms/jaeger/",
+        "^test/rpms/jaeger\\.yml$"
+      ],
+      "jansson--rpms": [
+        "^rpms/jansson/",
+        "^test/rpms/jansson\\.yml$"
+      ],
+      "java-17-openjdk-portable--rpms": [
+        "^rpms/java\\-17\\-openjdk\\-portable/",
+        "^test/rpms/java\\-17\\-openjdk\\-portable\\.yml$"
+      ],
+      "java-21-openjdk--rpms": [
+        "^rpms/java\\-21\\-openjdk/",
+        "^test/rpms/java\\-21\\-openjdk\\.yml$"
+      ],
+      "java-21-openjdk-portable--rpms": [
+        "^rpms/java\\-21\\-openjdk\\-portable/",
+        "^test/rpms/java\\-21\\-openjdk\\-portable\\.yml$"
+      ],
+      "java-25-openjdk--rpms": [
+        "^rpms/java\\-25\\-openjdk/",
+        "^test/rpms/java\\-25\\-openjdk\\.yml$"
+      ],
+      "java-25-openjdk-portable--rpms": [
+        "^rpms/java\\-25\\-openjdk\\-portable/",
+        "^test/rpms/java\\-25\\-openjdk\\-portable\\.yml$"
+      ],
+      "java-rpm-macros--rpms": [
+        "^rpms/java\\-rpm\\-macros/",
+        "^test/rpms/java\\-rpm\\-macros\\.yml$"
+      ],
+      "javapackages-tools--rpms": [
+        "^rpms/javapackages\\-tools/",
+        "^test/rpms/javapackages\\-tools\\.yml$"
+      ],
+      "jbigkit--rpms": [
+        "^rpms/jbigkit/",
+        "^test/rpms/jbigkit\\.yml$"
+      ],
+      "jemalloc--rpms": [
+        "^rpms/jemalloc/",
+        "^test/rpms/jemalloc\\.yml$"
+      ],
+      "jq--rpms": [
+        "^rpms/jq/",
+        "^test/rpms/jq\\.yml$"
+      ],
+      "json-c--rpms": [
+        "^rpms/json\\-c/",
+        "^test/rpms/json\\-c\\.yml$"
+      ],
+      "jsoncpp--rpms": [
+        "^rpms/jsoncpp/",
+        "^test/rpms/jsoncpp\\.yml$"
+      ],
+      "k6v1--rpms": [
+        "^rpms/k6v1/",
+        "^test/rpms/k6v1\\.yml$"
+      ],
+      "k6v2--rpms": [
+        "^rpms/k6v2/",
+        "^test/rpms/k6v2\\.yml$"
+      ],
+      "kbd--rpms": [
+        "^rpms/kbd/",
+        "^test/rpms/kbd\\.yml$"
+      ],
+      "kernel-headers--rpms": [
+        "^rpms/kernel\\-headers/",
+        "^test/rpms/kernel\\-headers\\.yml$"
+      ],
+      "kernel-srpm-macros--rpms": [
+        "^rpms/kernel\\-srpm\\-macros/",
+        "^test/rpms/kernel\\-srpm\\-macros\\.yml$"
+      ],
+      "keyutils--rpms": [
+        "^rpms/keyutils/",
+        "^test/rpms/keyutils\\.yml$"
+      ],
+      "kmod--rpms": [
+        "^rpms/kmod/",
+        "^test/rpms/kmod\\.yml$"
+      ],
+      "krb5--rpms": [
+        "^rpms/krb5/",
+        "^test/rpms/krb5\\.yml$"
+      ],
+      "kube-state-metrics--rpms": [
+        "^rpms/kube\\-state\\-metrics/",
+        "^test/rpms/kube\\-state\\-metrics\\.yml$"
+      ],
+      "kubernetes1-35--rpms": [
+        "^rpms/kubernetes1\\.35/",
+        "^test/rpms/kubernetes1\\.35\\.yml$"
+      ],
+      "kubernetes1-36--rpms": [
+        "^rpms/kubernetes1\\.36/",
+        "^test/rpms/kubernetes1\\.36\\.yml$"
+      ],
+      "langpacks--rpms": [
+        "^rpms/langpacks/",
+        "^test/rpms/langpacks\\.yml$"
+      ],
+      "less--rpms": [
+        "^rpms/less/",
+        "^test/rpms/less\\.yml$"
+      ],
+      "libaio--rpms": [
+        "^rpms/libaio/",
+        "^test/rpms/libaio\\.yml$"
+      ],
+      "libarchive--rpms": [
+        "^rpms/libarchive/",
+        "^test/rpms/libarchive\\.yml$"
+      ],
+      "libassuan--rpms": [
+        "^rpms/libassuan/",
+        "^test/rpms/libassuan\\.yml$"
+      ],
+      "libavif--rpms": [
+        "^rpms/libavif/",
+        "^test/rpms/libavif\\.yml$"
+      ],
+      "libb2--rpms": [
+        "^rpms/libb2/",
+        "^test/rpms/libb2\\.yml$"
+      ],
+      "libbpf--rpms": [
+        "^rpms/libbpf/",
+        "^test/rpms/libbpf\\.yml$"
+      ],
+      "libcap--rpms": [
+        "^rpms/libcap/",
+        "^test/rpms/libcap\\.yml$"
+      ],
+      "libcap-ng--rpms": [
+        "^rpms/libcap\\-ng/",
+        "^test/rpms/libcap\\-ng\\.yml$"
+      ],
+      "libcbor--rpms": [
+        "^rpms/libcbor/",
+        "^test/rpms/libcbor\\.yml$"
+      ],
+      "libcomps--rpms": [
+        "^rpms/libcomps/",
+        "^test/rpms/libcomps\\.yml$"
+      ],
+      "libdex--rpms": [
+        "^rpms/libdex/",
+        "^test/rpms/libdex\\.yml$"
+      ],
+      "libdnf--rpms": [
+        "^rpms/libdnf/",
+        "^test/rpms/libdnf\\.yml$"
+      ],
+      "libeconf--rpms": [
+        "^rpms/libeconf/",
+        "^test/rpms/libeconf\\.yml$"
+      ],
+      "libedit--rpms": [
+        "^rpms/libedit/",
+        "^test/rpms/libedit\\.yml$"
+      ],
+      "libevent--rpms": [
+        "^rpms/libevent/",
+        "^test/rpms/libevent\\.yml$"
+      ],
+      "libfabric--rpms": [
+        "^rpms/libfabric/",
+        "^test/rpms/libfabric\\.yml$"
+      ],
+      "libffi--rpms": [
+        "^rpms/libffi/",
+        "^test/rpms/libffi\\.yml$"
+      ],
+      "libfido2--rpms": [
+        "^rpms/libfido2/",
+        "^test/rpms/libfido2\\.yml$"
+      ],
+      "libfontenc--rpms": [
+        "^rpms/libfontenc/",
+        "^test/rpms/libfontenc\\.yml$"
+      ],
+      "libgcrypt--rpms": [
+        "^rpms/libgcrypt/",
+        "^test/rpms/libgcrypt\\.yml$"
+      ],
+      "libgit2-1-9--rpms": [
+        "^rpms/libgit2_1\\.9/",
+        "^test/rpms/libgit2_1\\.9\\.yml$"
+      ],
+      "libgpg-error--rpms": [
+        "^rpms/libgpg\\-error/",
+        "^test/rpms/libgpg\\-error\\.yml$"
+      ],
+      "libidn2--rpms": [
+        "^rpms/libidn2/",
+        "^test/rpms/libidn2\\.yml$"
+      ],
+      "libipt--rpms": [
+        "^rpms/libipt/",
+        "^test/rpms/libipt\\.yml$"
+      ],
+      "libjpeg-turbo--rpms": [
+        "^rpms/libjpeg\\-turbo/",
+        "^test/rpms/libjpeg\\-turbo\\.yml$"
+      ],
+      "libkcapi--rpms": [
+        "^rpms/libkcapi/",
+        "^test/rpms/libkcapi\\.yml$"
+      ],
+      "libksba--rpms": [
+        "^rpms/libksba/",
+        "^test/rpms/libksba\\.yml$"
+      ],
+      "liblerc--rpms": [
+        "^rpms/liblerc/",
+        "^test/rpms/liblerc\\.yml$"
+      ],
+      "libmaxminddb--rpms": [
+        "^rpms/libmaxminddb/",
+        "^test/rpms/libmaxminddb\\.yml$"
+      ],
+      "libmnl--rpms": [
+        "^rpms/libmnl/",
+        "^test/rpms/libmnl\\.yml$"
+      ],
+      "libmodulemd--rpms": [
+        "^rpms/libmodulemd/",
+        "^test/rpms/libmodulemd\\.yml$"
+      ],
+      "libmpc--rpms": [
+        "^rpms/libmpc/",
+        "^test/rpms/libmpc\\.yml$"
+      ],
+      "libndp--rpms": [
+        "^rpms/libndp/",
+        "^test/rpms/libndp\\.yml$"
+      ],
+      "libnetfilter-conntrack--rpms": [
+        "^rpms/libnetfilter_conntrack/",
+        "^test/rpms/libnetfilter_conntrack\\.yml$"
+      ],
+      "libnfnetlink--rpms": [
+        "^rpms/libnfnetlink/",
+        "^test/rpms/libnfnetlink\\.yml$"
+      ],
+      "libnftnl--rpms": [
+        "^rpms/libnftnl/",
+        "^test/rpms/libnftnl\\.yml$"
+      ],
+      "libnl3--rpms": [
+        "^rpms/libnl3/",
+        "^test/rpms/libnl3\\.yml$"
+      ],
+      "libnsl2--rpms": [
+        "^rpms/libnsl2/",
+        "^test/rpms/libnsl2\\.yml$"
+      ],
+      "libpipeline--rpms": [
+        "^rpms/libpipeline/",
+        "^test/rpms/libpipeline\\.yml$"
+      ],
+      "libpng--rpms": [
+        "^rpms/libpng/",
+        "^test/rpms/libpng\\.yml$"
+      ],
+      "libpsl--rpms": [
+        "^rpms/libpsl/",
+        "^test/rpms/libpsl\\.yml$"
+      ],
+      "libpsm2--rpms": [
+        "^rpms/libpsm2/",
+        "^test/rpms/libpsm2\\.yml$"
+      ],
+      "libpwquality--rpms": [
+        "^rpms/libpwquality/",
+        "^test/rpms/libpwquality\\.yml$"
+      ],
+      "librepo--rpms": [
+        "^rpms/librepo/",
+        "^test/rpms/librepo\\.yml$"
+      ],
+      "libseccomp--rpms": [
+        "^rpms/libseccomp/",
+        "^test/rpms/libseccomp\\.yml$"
+      ],
+      "libselinux--rpms": [
+        "^rpms/libselinux/",
+        "^test/rpms/libselinux\\.yml$"
+      ],
+      "libsemanage--rpms": [
+        "^rpms/libsemanage/",
+        "^test/rpms/libsemanage\\.yml$"
+      ],
+      "libsepol--rpms": [
+        "^rpms/libsepol/",
+        "^test/rpms/libsepol\\.yml$"
+      ],
+      "libsodium--rpms": [
+        "^rpms/libsodium/",
+        "^test/rpms/libsodium\\.yml$"
+      ],
+      "libsolv--rpms": [
+        "^rpms/libsolv/",
+        "^test/rpms/libsolv\\.yml$"
+      ],
+      "libssh--rpms": [
+        "^rpms/libssh/",
+        "^test/rpms/libssh\\.yml$"
+      ],
+      "libssh2--rpms": [
+        "^rpms/libssh2/",
+        "^test/rpms/libssh2\\.yml$"
+      ],
+      "libtasn1--rpms": [
+        "^rpms/libtasn1/",
+        "^test/rpms/libtasn1\\.yml$"
+      ],
+      "libtiff--rpms": [
+        "^rpms/libtiff/",
+        "^test/rpms/libtiff\\.yml$"
+      ],
+      "libtirpc--rpms": [
+        "^rpms/libtirpc/",
+        "^test/rpms/libtirpc\\.yml$"
+      ],
+      "libtommath--rpms": [
+        "^rpms/libtommath/",
+        "^test/rpms/libtommath\\.yml$"
+      ],
+      "libtool--rpms": [
+        "^rpms/libtool/",
+        "^test/rpms/libtool\\.yml$"
+      ],
+      "libunistring--rpms": [
+        "^rpms/libunistring/",
+        "^test/rpms/libunistring\\.yml$"
+      ],
+      "libunwind--rpms": [
+        "^rpms/libunwind/",
+        "^test/rpms/libunwind\\.yml$"
+      ],
+      "libusb1--rpms": [
+        "^rpms/libusb1/",
+        "^test/rpms/libusb1\\.yml$"
+      ],
+      "libuv--rpms": [
+        "^rpms/libuv/",
+        "^test/rpms/libuv\\.yml$"
+      ],
+      "libverto--rpms": [
+        "^rpms/libverto/",
+        "^test/rpms/libverto\\.yml$"
+      ],
+      "libwebp--rpms": [
+        "^rpms/libwebp/",
+        "^test/rpms/libwebp\\.yml$"
+      ],
+      "libx11--rpms": [
+        "^rpms/libX11/",
+        "^test/rpms/libX11\\.yml$"
+      ],
+      "libxau--rpms": [
+        "^rpms/libXau/",
+        "^test/rpms/libXau\\.yml$"
+      ],
+      "libxcb--rpms": [
+        "^rpms/libxcb/",
+        "^test/rpms/libxcb\\.yml$"
+      ],
+      "libxcomposite--rpms": [
+        "^rpms/libXcomposite/",
+        "^test/rpms/libXcomposite\\.yml$"
+      ],
+      "libxcrypt--rpms": [
+        "^rpms/libxcrypt/",
+        "^test/rpms/libxcrypt\\.yml$"
+      ],
+      "libxext--rpms": [
+        "^rpms/libXext/",
+        "^test/rpms/libXext\\.yml$"
+      ],
+      "libxft--rpms": [
+        "^rpms/libXft/",
+        "^test/rpms/libXft\\.yml$"
+      ],
+      "libxi--rpms": [
+        "^rpms/libXi/",
+        "^test/rpms/libXi\\.yml$"
+      ],
+      "libxkbcommon--rpms": [
+        "^rpms/libxkbcommon/",
+        "^test/rpms/libxkbcommon\\.yml$"
+      ],
+      "libxml2--rpms": [
+        "^rpms/libxml2/",
+        "^test/rpms/libxml2\\.yml$"
+      ],
+      "libxpm--rpms": [
+        "^rpms/libXpm/",
+        "^test/rpms/libXpm\\.yml$"
+      ],
+      "libxrender--rpms": [
+        "^rpms/libXrender/",
+        "^test/rpms/libXrender\\.yml$"
+      ],
+      "libxslt--rpms": [
+        "^rpms/libxslt/",
+        "^test/rpms/libxslt\\.yml$"
+      ],
+      "libxtst--rpms": [
+        "^rpms/libXtst/",
+        "^test/rpms/libXtst\\.yml$"
+      ],
+      "libyaml--rpms": [
+        "^rpms/libyaml/",
+        "^test/rpms/libyaml\\.yml$"
+      ],
+      "libyuv--rpms": [
+        "^rpms/libyuv/",
+        "^test/rpms/libyuv\\.yml$"
+      ],
+      "libzip--rpms": [
+        "^rpms/libzip/",
+        "^test/rpms/libzip\\.yml$"
+      ],
+      "lksctp-tools--rpms": [
+        "^rpms/lksctp\\-tools/",
+        "^test/rpms/lksctp\\-tools\\.yml$"
+      ],
+      "llhttp--rpms": [
+        "^rpms/llhttp/",
+        "^test/rpms/llhttp\\.yml$"
+      ],
+      "llvm--rpms": [
+        "^rpms/llvm/",
+        "^test/rpms/llvm\\.yml$"
+      ],
+      "llvm21--rpms": [
+        "^rpms/llvm21/",
+        "^test/rpms/llvm21\\.yml$"
+      ],
+      "lmdb--rpms": [
+        "^rpms/lmdb/",
+        "^test/rpms/lmdb\\.yml$"
+      ],
+      "logrotate--rpms": [
+        "^rpms/logrotate/",
+        "^test/rpms/logrotate\\.yml$"
+      ],
+      "loki3-6--rpms": [
+        "^rpms/loki3\\.6/",
+        "^test/rpms/loki3\\.6\\.yml$"
+      ],
+      "loki3-7--rpms": [
+        "^rpms/loki3\\.7/",
+        "^test/rpms/loki3\\.7\\.yml$"
+      ],
+      "lua--rpms": [
+        "^rpms/lua/",
+        "^test/rpms/lua\\.yml$"
+      ],
+      "lua-rpm-macros--rpms": [
+        "^rpms/lua\\-rpm\\-macros/",
+        "^test/rpms/lua\\-rpm\\-macros\\.yml$"
+      ],
+      "lujavrite--rpms": [
+        "^rpms/lujavrite/",
+        "^test/rpms/lujavrite\\.yml$"
+      ],
+      "lvm2--rpms": [
+        "^rpms/lvm2/",
+        "^test/rpms/lvm2\\.yml$"
+      ],
+      "lz4--rpms": [
+        "^rpms/lz4/",
+        "^test/rpms/lz4\\.yml$"
+      ],
+      "lzo--rpms": [
+        "^rpms/lzo/",
+        "^test/rpms/lzo\\.yml$"
+      ],
+      "m4--rpms": [
+        "^rpms/m4/",
+        "^test/rpms/m4\\.yml$"
+      ],
+      "mailcap--rpms": [
+        "^rpms/mailcap/",
+        "^test/rpms/mailcap\\.yml$"
+      ],
+      "make--rpms": [
+        "^rpms/make/",
+        "^test/rpms/make\\.yml$"
+      ],
+      "man-db--rpms": [
+        "^rpms/man\\-db/",
+        "^test/rpms/man\\-db\\.yml$"
+      ],
+      "mariadb-connector-c--rpms": [
+        "^rpms/mariadb\\-connector\\-c/",
+        "^test/rpms/mariadb\\-connector\\-c\\.yml$"
+      ],
+      "mariadb10-11--rpms": [
+        "^rpms/mariadb10\\.11/",
+        "^test/rpms/mariadb10\\.11\\.yml$"
+      ],
+      "mariadb11-8--rpms": [
+        "^rpms/mariadb11\\.8/",
+        "^test/rpms/mariadb11\\.8\\.yml$"
+      ],
+      "maven3-9--rpms": [
+        "^rpms/maven3\\.9/",
+        "^test/rpms/maven3\\.9\\.yml$"
+      ],
+      "mawk--rpms": [
+        "^rpms/mawk/",
+        "^test/rpms/mawk\\.yml$"
+      ],
+      "memcached--rpms": [
+        "^rpms/memcached/",
+        "^test/rpms/memcached\\.yml$"
+      ],
+      "meson--rpms": [
+        "^rpms/meson/",
+        "^test/rpms/meson\\.yml$"
+      ],
+      "mkfontscale--rpms": [
+        "^rpms/mkfontscale/",
+        "^test/rpms/mkfontscale\\.yml$"
+      ],
+      "mokutil--rpms": [
+        "^rpms/mokutil/",
+        "^test/rpms/mokutil\\.yml$"
+      ],
+      "mpdecimal--rpms": [
+        "^rpms/mpdecimal/",
+        "^test/rpms/mpdecimal\\.yml$"
+      ],
+      "mpfr--rpms": [
+        "^rpms/mpfr/",
+        "^test/rpms/mpfr\\.yml$"
+      ],
+      "munge--rpms": [
+        "^rpms/munge/",
+        "^test/rpms/munge\\.yml$"
+      ],
+      "nats-server2-12--rpms": [
+        "^rpms/nats\\-server2\\.12/",
+        "^test/rpms/nats\\-server2\\.12\\.yml$"
+      ],
+      "nats-server2-14--rpms": [
+        "^rpms/nats\\-server2\\.14/",
+        "^test/rpms/nats\\-server2\\.14\\.yml$"
+      ],
+      "ncurses--rpms": [
+        "^rpms/ncurses/",
+        "^test/rpms/ncurses\\.yml$"
+      ],
+      "netavark--rpms": [
+        "^rpms/netavark/",
+        "^test/rpms/netavark\\.yml$"
+      ],
+      "nettle--rpms": [
+        "^rpms/nettle/",
+        "^test/rpms/nettle\\.yml$"
+      ],
+      "networkmanager--rpms": [
+        "^rpms/NetworkManager/",
+        "^test/rpms/NetworkManager\\.yml$"
+      ],
+      "nftables--rpms": [
+        "^rpms/nftables/",
+        "^test/rpms/nftables\\.yml$"
+      ],
+      "nghttp2--rpms": [
+        "^rpms/nghttp2/",
+        "^test/rpms/nghttp2\\.yml$"
+      ],
+      "nghttp3--rpms": [
+        "^rpms/nghttp3/",
+        "^test/rpms/nghttp3\\.yml$"
+      ],
+      "nginx--rpms": [
+        "^rpms/nginx/",
+        "^test/rpms/nginx\\.yml$"
+      ],
+      "ngtcp2--rpms": [
+        "^rpms/ngtcp2/",
+        "^test/rpms/ngtcp2\\.yml$"
+      ],
+      "ninja-build--rpms": [
+        "^rpms/ninja\\-build/",
+        "^test/rpms/ninja\\-build\\.yml$"
+      ],
+      "nodejs20--rpms": [
+        "^rpms/nodejs20/",
+        "^test/rpms/nodejs20\\.yml$"
+      ],
+      "nodejs22--rpms": [
+        "^rpms/nodejs22/",
+        "^test/rpms/nodejs22\\.yml$"
+      ],
+      "nodejs24--rpms": [
+        "^rpms/nodejs24/",
+        "^test/rpms/nodejs24\\.yml$"
+      ],
+      "nodejs25--rpms": [
+        "^rpms/nodejs25/",
+        "^test/rpms/nodejs25\\.yml$"
+      ],
+      "nodejs26--rpms": [
+        "^rpms/nodejs26/",
+        "^test/rpms/nodejs26\\.yml$"
+      ],
+      "npth--rpms": [
+        "^rpms/npth/",
+        "^test/rpms/npth\\.yml$"
+      ],
+      "nss--rpms": [
+        "^rpms/nss/",
+        "^test/rpms/nss\\.yml$"
+      ],
+      "nss-fips--rpms": [
+        "^rpms/nss\\-fips/",
+        "^test/rpms/nss\\-fips\\.yml$"
+      ],
+      "numactl--rpms": [
+        "^rpms/numactl/",
+        "^test/rpms/numactl\\.yml$"
+      ],
+      "oauth2-proxy--rpms": [
+        "^rpms/oauth2\\-proxy/",
+        "^test/rpms/oauth2\\-proxy\\.yml$"
+      ],
+      "ocaml-srpm-macros--rpms": [
+        "^rpms/ocaml\\-srpm\\-macros/",
+        "^test/rpms/ocaml\\-srpm\\-macros\\.yml$"
+      ],
+      "oniguruma--rpms": [
+        "^rpms/oniguruma/",
+        "^test/rpms/oniguruma\\.yml$"
+      ],
+      "openblas--rpms": [
+        "^rpms/openblas/",
+        "^test/rpms/openblas\\.yml$"
+      ],
+      "openblas-srpm-macros--rpms": [
+        "^rpms/openblas\\-srpm\\-macros/",
+        "^test/rpms/openblas\\-srpm\\-macros\\.yml$"
+      ],
+      "opendbx--rpms": [
+        "^rpms/opendbx/",
+        "^test/rpms/opendbx\\.yml$"
+      ],
+      "openldap--rpms": [
+        "^rpms/openldap/",
+        "^test/rpms/openldap\\.yml$"
+      ],
+      "openmpi--rpms": [
+        "^rpms/openmpi/",
+        "^test/rpms/openmpi\\.yml$"
+      ],
+      "openscap--rpms": [
+        "^rpms/openscap/",
+        "^test/rpms/openscap\\.yml$"
+      ],
+      "openshell--rpms": [
+        "^rpms/openshell/",
+        "^test/rpms/openshell\\.yml$"
+      ],
+      "openssh--rpms": [
+        "^rpms/openssh/",
+        "^test/rpms/openssh\\.yml$"
+      ],
+      "openssl--rpms": [
+        "^rpms/openssl/",
+        "^test/rpms/openssl\\.yml$"
+      ],
+      "openssl-fips-provider--rpms": [
+        "^rpms/openssl\\-fips\\-provider/",
+        "^test/rpms/openssl\\-fips\\-provider\\.yml$"
+      ],
+      "openssl3--rpms": [
+        "^rpms/openssl3/",
+        "^test/rpms/openssl3\\.yml$"
+      ],
+      "opentelemetry-collector--rpms": [
+        "^rpms/opentelemetry\\-collector/",
+        "^test/rpms/opentelemetry\\-collector\\.yml$"
+      ],
+      "opentelemetry-collector-contrib--rpms": [
+        "^rpms/opentelemetry\\-collector\\-contrib/",
+        "^test/rpms/opentelemetry\\-collector\\-contrib\\.yml$"
+      ],
+      "opentelemetry-collector-k8s--rpms": [
+        "^rpms/opentelemetry\\-collector\\-k8s/",
+        "^test/rpms/opentelemetry\\-collector\\-k8s\\.yml$"
+      ],
+      "opentofu1-10--rpms": [
+        "^rpms/opentofu1\\.10/",
+        "^test/rpms/opentofu1\\.10\\.yml$"
+      ],
+      "opentofu1-11--rpms": [
+        "^rpms/opentofu1\\.11/",
+        "^test/rpms/opentofu1\\.11\\.yml$"
+      ],
+      "opentofu1-12--rpms": [
+        "^rpms/opentofu1\\.12/",
+        "^test/rpms/opentofu1\\.12\\.yml$"
+      ],
+      "orangefs--rpms": [
+        "^rpms/orangefs/",
+        "^test/rpms/orangefs\\.yml$"
+      ],
+      "oras--rpms": [
+        "^rpms/oras/",
+        "^test/rpms/oras\\.yml$"
+      ],
+      "ostree--rpms": [
+        "^rpms/ostree/",
+        "^test/rpms/ostree\\.yml$"
+      ],
+      "p11-kit--rpms": [
+        "^rpms/p11\\-kit/",
+        "^test/rpms/p11\\-kit\\.yml$"
+      ],
+      "package-notes--rpms": [
+        "^rpms/package\\-notes/",
+        "^test/rpms/package\\-notes\\.yml$"
+      ],
+      "pam--rpms": [
+        "^rpms/pam/",
+        "^test/rpms/pam\\.yml$"
+      ],
+      "passt--rpms": [
+        "^rpms/passt/",
+        "^test/rpms/passt\\.yml$"
+      ],
+      "patch--rpms": [
+        "^rpms/patch/",
+        "^test/rpms/patch\\.yml$"
+      ],
+      "pcre2--rpms": [
+        "^rpms/pcre2/",
+        "^test/rpms/pcre2\\.yml$"
+      ],
+      "perl--rpms": [
+        "^rpms/perl/",
+        "^test/rpms/perl\\.yml$"
+      ],
+      "perl-carp--rpms": [
+        "^rpms/perl\\-Carp/",
+        "^test/rpms/perl\\-Carp\\.yml$"
+      ],
+      "perl-constant--rpms": [
+        "^rpms/perl\\-constant/",
+        "^test/rpms/perl\\-constant\\.yml$"
+      ],
+      "perl-data-dumper--rpms": [
+        "^rpms/perl\\-Data\\-Dumper/",
+        "^test/rpms/perl\\-Data\\-Dumper\\.yml$"
+      ],
+      "perl-digest--rpms": [
+        "^rpms/perl\\-Digest/",
+        "^test/rpms/perl\\-Digest\\.yml$"
+      ],
+      "perl-digest-md5--rpms": [
+        "^rpms/perl\\-Digest\\-MD5/",
+        "^test/rpms/perl\\-Digest\\-MD5\\.yml$"
+      ],
+      "perl-encode--rpms": [
+        "^rpms/perl\\-Encode/",
+        "^test/rpms/perl\\-Encode\\.yml$"
+      ],
+      "perl-error--rpms": [
+        "^rpms/perl\\-Error/",
+        "^test/rpms/perl\\-Error\\.yml$"
+      ],
+      "perl-exporter--rpms": [
+        "^rpms/perl\\-Exporter/",
+        "^test/rpms/perl\\-Exporter\\.yml$"
+      ],
+      "perl-file-path--rpms": [
+        "^rpms/perl\\-File\\-Path/",
+        "^test/rpms/perl\\-File\\-Path\\.yml$"
+      ],
+      "perl-file-temp--rpms": [
+        "^rpms/perl\\-File\\-Temp/",
+        "^test/rpms/perl\\-File\\-Temp\\.yml$"
+      ],
+      "perl-getopt-long--rpms": [
+        "^rpms/perl\\-Getopt\\-Long/",
+        "^test/rpms/perl\\-Getopt\\-Long\\.yml$"
+      ],
+      "perl-http-tiny--rpms": [
+        "^rpms/perl\\-HTTP\\-Tiny/",
+        "^test/rpms/perl\\-HTTP\\-Tiny\\.yml$"
+      ],
+      "perl-io-socket-ip--rpms": [
+        "^rpms/perl\\-IO\\-Socket\\-IP/",
+        "^test/rpms/perl\\-IO\\-Socket\\-IP\\.yml$"
+      ],
+      "perl-io-socket-ssl--rpms": [
+        "^rpms/perl\\-IO\\-Socket\\-SSL/",
+        "^test/rpms/perl\\-IO\\-Socket\\-SSL\\.yml$"
+      ],
+      "perl-libnet--rpms": [
+        "^rpms/perl\\-libnet/",
+        "^test/rpms/perl\\-libnet\\.yml$"
+      ],
+      "perl-mime-base32--rpms": [
+        "^rpms/perl\\-MIME\\-Base32/",
+        "^test/rpms/perl\\-MIME\\-Base32\\.yml$"
+      ],
+      "perl-mime-base64--rpms": [
+        "^rpms/perl\\-MIME\\-Base64/",
+        "^test/rpms/perl\\-MIME\\-Base64\\.yml$"
+      ],
+      "perl-net-ssleay--rpms": [
+        "^rpms/perl\\-Net\\-SSLeay/",
+        "^test/rpms/perl\\-Net\\-SSLeay\\.yml$"
+      ],
+      "perl-parent--rpms": [
+        "^rpms/perl\\-parent/",
+        "^test/rpms/perl\\-parent\\.yml$"
+      ],
+      "perl-pathtools--rpms": [
+        "^rpms/perl\\-PathTools/",
+        "^test/rpms/perl\\-PathTools\\.yml$"
+      ],
+      "perl-pod-escapes--rpms": [
+        "^rpms/perl\\-Pod\\-Escapes/",
+        "^test/rpms/perl\\-Pod\\-Escapes\\.yml$"
+      ],
+      "perl-pod-perldoc--rpms": [
+        "^rpms/perl\\-Pod\\-Perldoc/",
+        "^test/rpms/perl\\-Pod\\-Perldoc\\.yml$"
+      ],
+      "perl-pod-simple--rpms": [
+        "^rpms/perl\\-Pod\\-Simple/",
+        "^test/rpms/perl\\-Pod\\-Simple\\.yml$"
+      ],
+      "perl-pod-usage--rpms": [
+        "^rpms/perl\\-Pod\\-Usage/",
+        "^test/rpms/perl\\-Pod\\-Usage\\.yml$"
+      ],
+      "perl-podlators--rpms": [
+        "^rpms/perl\\-podlators/",
+        "^test/rpms/perl\\-podlators\\.yml$"
+      ],
+      "perl-scalar-list-utils--rpms": [
+        "^rpms/perl\\-Scalar\\-List\\-Utils/",
+        "^test/rpms/perl\\-Scalar\\-List\\-Utils\\.yml$"
+      ],
+      "perl-socket--rpms": [
+        "^rpms/perl\\-Socket/",
+        "^test/rpms/perl\\-Socket\\.yml$"
+      ],
+      "perl-srpm-macros--rpms": [
+        "^rpms/perl\\-srpm\\-macros/",
+        "^test/rpms/perl\\-srpm\\-macros\\.yml$"
+      ],
+      "perl-storable--rpms": [
+        "^rpms/perl\\-Storable/",
+        "^test/rpms/perl\\-Storable\\.yml$"
+      ],
+      "perl-term-ansicolor--rpms": [
+        "^rpms/perl\\-Term\\-ANSIColor/",
+        "^test/rpms/perl\\-Term\\-ANSIColor\\.yml$"
+      ],
+      "perl-term-cap--rpms": [
+        "^rpms/perl\\-Term\\-Cap/",
+        "^test/rpms/perl\\-Term\\-Cap\\.yml$"
+      ],
+      "perl-termreadkey--rpms": [
+        "^rpms/perl\\-TermReadKey/",
+        "^test/rpms/perl\\-TermReadKey\\.yml$"
+      ],
+      "perl-text-parsewords--rpms": [
+        "^rpms/perl\\-Text\\-ParseWords/",
+        "^test/rpms/perl\\-Text\\-ParseWords\\.yml$"
+      ],
+      "perl-text-tabs-wrap--rpms": [
+        "^rpms/perl\\-Text\\-Tabs\\+Wrap/",
+        "^test/rpms/perl\\-Text\\-Tabs\\+Wrap\\.yml$"
+      ],
+      "perl-thread-queue--rpms": [
+        "^rpms/perl\\-Thread\\-Queue/",
+        "^test/rpms/perl\\-Thread\\-Queue\\.yml$"
+      ],
+      "perl-threads--rpms": [
+        "^rpms/perl\\-threads/",
+        "^test/rpms/perl\\-threads\\.yml$"
+      ],
+      "perl-threads-shared--rpms": [
+        "^rpms/perl\\-threads\\-shared/",
+        "^test/rpms/perl\\-threads\\-shared\\.yml$"
+      ],
+      "perl-time-hires--rpms": [
+        "^rpms/perl\\-Time\\-HiRes/",
+        "^test/rpms/perl\\-Time\\-HiRes\\.yml$"
+      ],
+      "perl-time-local--rpms": [
+        "^rpms/perl\\-Time\\-Local/",
+        "^test/rpms/perl\\-Time\\-Local\\.yml$"
+      ],
+      "perl-uri--rpms": [
+        "^rpms/perl\\-URI/",
+        "^test/rpms/perl\\-URI\\.yml$"
+      ],
+      "pgbouncer--rpms": [
+        "^rpms/pgbouncer/",
+        "^test/rpms/pgbouncer\\.yml$"
+      ],
+      "php--rpms": [
+        "^rpms/php/",
+        "^test/rpms/php\\.yml$"
+      ],
+      "php-patchwork-jsqueeze--rpms": [
+        "^rpms/php\\-patchwork\\-jsqueeze/",
+        "^test/rpms/php\\-patchwork\\-jsqueeze\\.yml$"
+      ],
+      "php-pecl-zip--rpms": [
+        "^rpms/php\\-pecl\\-zip/",
+        "^test/rpms/php\\-pecl\\-zip\\.yml$"
+      ],
+      "pkgconf--rpms": [
+        "^rpms/pkgconf/",
+        "^test/rpms/pkgconf\\.yml$"
+      ],
+      "pmix--rpms": [
+        "^rpms/pmix/",
+        "^test/rpms/pmix\\.yml$"
+      ],
+      "podman--rpms": [
+        "^rpms/podman/",
+        "^test/rpms/podman\\.yml$"
+      ],
+      "policycoreutils--rpms": [
+        "^rpms/policycoreutils/",
+        "^test/rpms/policycoreutils\\.yml$"
+      ],
+      "polkit--rpms": [
+        "^rpms/polkit/",
+        "^test/rpms/polkit\\.yml$"
+      ],
+      "poppler--rpms": [
+        "^rpms/poppler/",
+        "^test/rpms/poppler\\.yml$"
+      ],
+      "popt--rpms": [
+        "^rpms/popt/",
+        "^test/rpms/popt\\.yml$"
+      ],
+      "postgresql17--rpms": [
+        "^rpms/postgresql17/",
+        "^test/rpms/postgresql17\\.yml$"
+      ],
+      "postgresql18--rpms": [
+        "^rpms/postgresql18/",
+        "^test/rpms/postgresql18\\.yml$"
+      ],
+      "procps-ng--rpms": [
+        "^rpms/procps\\-ng/",
+        "^test/rpms/procps\\-ng\\.yml$"
+      ],
+      "prometheus3-13--rpms": [
+        "^rpms/prometheus3\\.13/",
+        "^test/rpms/prometheus3\\.13\\.yml$"
+      ],
+      "prometheus3-5--rpms": [
+        "^rpms/prometheus3\\.5/",
+        "^test/rpms/prometheus3\\.5\\.yml$"
+      ],
+      "protobuf--rpms": [
+        "^rpms/protobuf/",
+        "^test/rpms/protobuf\\.yml$"
+      ],
+      "protobuf-c--rpms": [
+        "^rpms/protobuf\\-c/",
+        "^test/rpms/protobuf\\-c\\.yml$"
+      ],
+      "prrte--rpms": [
+        "^rpms/prrte/",
+        "^test/rpms/prrte\\.yml$"
+      ],
+      "psmisc--rpms": [
+        "^rpms/psmisc/",
+        "^test/rpms/psmisc\\.yml$"
+      ],
+      "publicsuffix-list--rpms": [
+        "^rpms/publicsuffix\\-list/",
+        "^test/rpms/publicsuffix\\-list\\.yml$"
+      ],
+      "pygobject3--rpms": [
+        "^rpms/pygobject3/",
+        "^test/rpms/pygobject3\\.yml$"
+      ],
+      "pyopenssl--rpms": [
+        "^rpms/pyOpenSSL/",
+        "^test/rpms/pyOpenSSL\\.yml$"
+      ],
+      "pyproject-rpm-macros--rpms": [
+        "^rpms/pyproject\\-rpm\\-macros/",
+        "^test/rpms/pyproject\\-rpm\\-macros\\.yml$"
+      ],
+      "pytest--rpms": [
+        "^rpms/pytest/",
+        "^test/rpms/pytest\\.yml$"
+      ],
+      "python-attrs--rpms": [
+        "^rpms/python\\-attrs/",
+        "^test/rpms/python\\-attrs\\.yml$"
+      ],
+      "python-certifi--rpms": [
+        "^rpms/python\\-certifi/",
+        "^test/rpms/python\\-certifi\\.yml$"
+      ],
+      "python-cffi--rpms": [
+        "^rpms/python\\-cffi/",
+        "^test/rpms/python\\-cffi\\.yml$"
+      ],
+      "python-charset-normalizer--rpms": [
+        "^rpms/python\\-charset\\-normalizer/",
+        "^test/rpms/python\\-charset\\-normalizer\\.yml$"
+      ],
+      "python-cryptography--rpms": [
+        "^rpms/python\\-cryptography/",
+        "^test/rpms/python\\-cryptography\\.yml$"
+      ],
+      "python-gitlab--rpms": [
+        "^rpms/python\\-gitlab/",
+        "^test/rpms/python\\-gitlab\\.yml$"
+      ],
+      "python-idna--rpms": [
+        "^rpms/python\\-idna/",
+        "^test/rpms/python\\-idna\\.yml$"
+      ],
+      "python-iniconfig--rpms": [
+        "^rpms/python\\-iniconfig/",
+        "^test/rpms/python\\-iniconfig\\.yml$"
+      ],
+      "python-jinja2--rpms": [
+        "^rpms/python\\-jinja2/",
+        "^test/rpms/python\\-jinja2\\.yml$"
+      ],
+      "python-jinja2-cli--rpms": [
+        "^rpms/python\\-jinja2\\-cli/",
+        "^test/rpms/python\\-jinja2\\-cli\\.yml$"
+      ],
+      "python-jsonschema--rpms": [
+        "^rpms/python\\-jsonschema/",
+        "^test/rpms/python\\-jsonschema\\.yml$"
+      ],
+      "python-jsonschema-specifications--rpms": [
+        "^rpms/python\\-jsonschema\\-specifications/",
+        "^test/rpms/python\\-jsonschema\\-specifications\\.yml$"
+      ],
+      "python-markupsafe--rpms": [
+        "^rpms/python\\-markupsafe/",
+        "^test/rpms/python\\-markupsafe\\.yml$"
+      ],
+      "python-mypy-extensions--rpms": [
+        "^rpms/python\\-mypy_extensions/",
+        "^test/rpms/python\\-mypy_extensions\\.yml$"
+      ],
+      "python-packaging--rpms": [
+        "^rpms/python\\-packaging/",
+        "^test/rpms/python\\-packaging\\.yml$"
+      ],
+      "python-pathspec--rpms": [
+        "^rpms/python\\-pathspec/",
+        "^test/rpms/python\\-pathspec\\.yml$"
+      ],
+      "python-pip--rpms": [
+        "^rpms/python\\-pip/",
+        "^test/rpms/python\\-pip\\.yml$"
+      ],
+      "python-pluggy--rpms": [
+        "^rpms/python\\-pluggy/",
+        "^test/rpms/python\\-pluggy\\.yml$"
+      ],
+      "python-productmd--rpms": [
+        "^rpms/python\\-productmd/",
+        "^test/rpms/python\\-productmd\\.yml$"
+      ],
+      "python-pycparser--rpms": [
+        "^rpms/python\\-pycparser/",
+        "^test/rpms/python\\-pycparser\\.yml$"
+      ],
+      "python-pygments--rpms": [
+        "^rpms/python\\-pygments/",
+        "^test/rpms/python\\-pygments\\.yml$"
+      ],
+      "python-referencing--rpms": [
+        "^rpms/python\\-referencing/",
+        "^test/rpms/python\\-referencing\\.yml$"
+      ],
+      "python-requests--rpms": [
+        "^rpms/python\\-requests/",
+        "^test/rpms/python\\-requests\\.yml$"
+      ],
+      "python-requests-toolbelt--rpms": [
+        "^rpms/python\\-requests\\-toolbelt/",
+        "^test/rpms/python\\-requests\\-toolbelt\\.yml$"
+      ],
+      "python-rpds-py--rpms": [
+        "^rpms/python\\-rpds\\-py/",
+        "^test/rpms/python\\-rpds\\-py\\.yml$"
+      ],
+      "python-rpm-lockfile-prototype--rpms": [
+        "^rpms/python\\-rpm\\-lockfile\\-prototype/",
+        "^test/rpms/python\\-rpm\\-lockfile\\-prototype\\.yml$"
+      ],
+      "python-rpm-macros--rpms": [
+        "^rpms/python\\-rpm\\-macros/",
+        "^test/rpms/python\\-rpm\\-macros\\.yml$"
+      ],
+      "python-sentry-sdk--rpms": [
+        "^rpms/python\\-sentry\\-sdk/",
+        "^test/rpms/python\\-sentry\\-sdk\\.yml$"
+      ],
+      "python-setuptools--rpms": [
+        "^rpms/python\\-setuptools/",
+        "^test/rpms/python\\-setuptools\\.yml$"
+      ],
+      "python-specfile--rpms": [
+        "^rpms/python\\-specfile/",
+        "^test/rpms/python\\-specfile\\.yml$"
+      ],
+      "python-trustme--rpms": [
+        "^rpms/python\\-trustme/",
+        "^test/rpms/python\\-trustme\\.yml$"
+      ],
+      "python-types-pyyaml--rpms": [
+        "^rpms/python\\-types\\-pyyaml/",
+        "^test/rpms/python\\-types\\-pyyaml\\.yml$"
+      ],
+      "python-types-requests--rpms": [
+        "^rpms/python\\-types\\-requests/",
+        "^test/rpms/python\\-types\\-requests\\.yml$"
+      ],
+      "python-typing-extensions--rpms": [
+        "^rpms/python\\-typing\\-extensions/",
+        "^test/rpms/python\\-typing\\-extensions\\.yml$"
+      ],
+      "python-urllib3--rpms": [
+        "^rpms/python\\-urllib3/",
+        "^test/rpms/python\\-urllib3\\.yml$"
+      ],
+      "python3-10--rpms": [
+        "^rpms/python3\\.10/",
+        "^test/rpms/python3\\.10\\.yml$"
+      ],
+      "python3-11--rpms": [
+        "^rpms/python3\\.11/",
+        "^test/rpms/python3\\.11\\.yml$"
+      ],
+      "python3-12--rpms": [
+        "^rpms/python3\\.12/",
+        "^test/rpms/python3\\.12\\.yml$"
+      ],
+      "python3-13--rpms": [
+        "^rpms/python3\\.13/",
+        "^test/rpms/python3\\.13\\.yml$"
+      ],
+      "python3-14--rpms": [
+        "^rpms/python3\\.14/",
+        "^test/rpms/python3\\.14\\.yml$"
+      ],
+      "python3-15--rpms": [
+        "^rpms/python3\\.15/",
+        "^test/rpms/python3\\.15\\.yml$"
+      ],
+      "python3-mypy--rpms": [
+        "^rpms/python3\\-mypy/",
+        "^test/rpms/python3\\-mypy\\.yml$"
+      ],
+      "pyyaml--rpms": [
+        "^rpms/PyYAML/",
+        "^test/rpms/PyYAML\\.yml$"
+      ],
+      "qt5--rpms": [
+        "^rpms/qt5/",
+        "^test/rpms/qt5\\.yml$"
+      ],
+      "qt5-qtbase--rpms": [
+        "^rpms/qt5\\-qtbase/",
+        "^test/rpms/qt5\\-qtbase\\.yml$"
+      ],
+      "qt6--rpms": [
+        "^rpms/qt6/",
+        "^test/rpms/qt6\\.yml$"
+      ],
+      "qt6-qtbase--rpms": [
+        "^rpms/qt6\\-qtbase/",
+        "^test/rpms/qt6\\-qtbase\\.yml$"
+      ],
+      "qt6-qtsvg--rpms": [
+        "^rpms/qt6\\-qtsvg/",
+        "^test/rpms/qt6\\-qtsvg\\.yml$"
+      ],
+      "r-rpm-macros--rpms": [
+        "^rpms/R\\-rpm\\-macros/",
+        "^test/rpms/R\\-rpm\\-macros\\.yml$"
+      ],
+      "rabbitmq-server4-2--rpms": [
+        "^rpms/rabbitmq\\-server4\\.2/",
+        "^test/rpms/rabbitmq\\-server4\\.2\\.yml$"
+      ],
+      "rabbitmq-server4-3--rpms": [
+        "^rpms/rabbitmq\\-server4\\.3/",
+        "^test/rpms/rabbitmq\\-server4\\.3\\.yml$"
+      ],
+      "rdma-core--rpms": [
+        "^rpms/rdma\\-core/",
+        "^test/rpms/rdma\\-core\\.yml$"
+      ],
+      "re2--rpms": [
+        "^rpms/re2/",
+        "^test/rpms/re2\\.yml$"
+      ],
+      "readline--rpms": [
+        "^rpms/readline/",
+        "^test/rpms/readline\\.yml$"
+      ],
+      "redhat-rpm-config--rpms": [
+        "^rpms/redhat\\-rpm\\-config/",
+        "^test/rpms/redhat\\-rpm\\-config\\.yml$"
+      ],
+      "rekor--rpms": [
+        "^rpms/rekor/",
+        "^test/rpms/rekor\\.yml$"
+      ],
+      "rhash--rpms": [
+        "^rpms/rhash/",
+        "^test/rpms/rhash\\.yml$"
+      ],
+      "rootfiles--rpms": [
+        "^rpms/rootfiles/",
+        "^test/rpms/rootfiles\\.yml$"
+      ],
+      "rpm--rpms": [
+        "^rpms/rpm/",
+        "^test/rpms/rpm\\.yml$"
+      ],
+      "rpm-mpi-hooks--rpms": [
+        "^rpms/rpm\\-mpi\\-hooks/",
+        "^test/rpms/rpm\\-mpi\\-hooks\\.yml$"
+      ],
+      "ruby3-3--rpms": [
+        "^rpms/ruby3\\.3/",
+        "^test/rpms/ruby3\\.3\\.yml$"
+      ],
+      "ruby3-4--rpms": [
+        "^rpms/ruby3\\.4/",
+        "^test/rpms/ruby3\\.4\\.yml$"
+      ],
+      "ruby4-0--rpms": [
+        "^rpms/ruby4\\.0/",
+        "^test/rpms/ruby4\\.0\\.yml$"
+      ],
+      "rubypick--rpms": [
+        "^rpms/rubypick/",
+        "^test/rpms/rubypick\\.yml$"
+      ],
+      "ruff--rpms": [
+        "^rpms/ruff/",
+        "^test/rpms/ruff\\.yml$"
+      ],
+      "rust--rpms": [
+        "^rpms/rust/",
+        "^test/rpms/rust\\.yml$"
+      ],
+      "rust-add-determinism--rpms": [
+        "^rpms/rust\\-add\\-determinism/",
+        "^test/rpms/rust\\-add\\-determinism\\.yml$"
+      ],
+      "rust-archery--rpms": [
+        "^rpms/rust\\-archery/",
+        "^test/rpms/rust\\-archery\\.yml$"
+      ],
+      "rust-bootupd--rpms": [
+        "^rpms/rust\\-bootupd/",
+        "^test/rpms/rust\\-bootupd\\.yml$"
+      ],
+      "rust-imagequant-sys--rpms": [
+        "^rpms/rust\\-imagequant\\-sys/",
+        "^test/rpms/rust\\-imagequant\\-sys\\.yml$"
+      ],
+      "rust-podman-sequoia--rpms": [
+        "^rpms/rust\\-podman\\-sequoia/",
+        "^test/rpms/rust\\-podman\\-sequoia\\.yml$"
+      ],
+      "rust-rav1e--rpms": [
+        "^rpms/rust\\-rav1e/",
+        "^test/rpms/rust\\-rav1e\\.yml$"
+      ],
+      "rust-rpds--rpms": [
+        "^rpms/rust\\-rpds/",
+        "^test/rpms/rust\\-rpds\\.yml$"
+      ],
+      "rust-rpm-sequoia--rpms": [
+        "^rpms/rust\\-rpm\\-sequoia/",
+        "^test/rpms/rust\\-rpm\\-sequoia\\.yml$"
+      ],
+      "scap-security-guide--rpms": [
+        "^rpms/scap\\-security\\-guide/",
+        "^test/rpms/scap\\-security\\-guide\\.yml$"
+      ],
+      "sdbus-cpp--rpms": [
+        "^rpms/sdbus\\-cpp/",
+        "^test/rpms/sdbus\\-cpp\\.yml$"
+      ],
+      "sed--rpms": [
+        "^rpms/sed/",
+        "^test/rpms/sed\\.yml$"
+      ],
+      "selinux-policy--rpms": [
+        "^rpms/selinux\\-policy/",
+        "^test/rpms/selinux\\-policy\\.yml$"
+      ],
+      "setup--rpms": [
+        "^rpms/setup/",
+        "^test/rpms/setup\\.yml$",
+        "^ci/",
+        "^mock/"
+      ],
+      "sgml-common--rpms": [
+        "^rpms/sgml\\-common/",
+        "^test/rpms/sgml\\-common\\.yml$"
+      ],
+      "shadow-utils--rpms": [
+        "^rpms/shadow\\-utils/",
+        "^test/rpms/shadow\\-utils\\.yml$"
+      ],
+      "shellcheck--rpms": [
+        "^rpms/ShellCheck/",
+        "^test/rpms/ShellCheck\\.yml$"
+      ],
+      "skopeo--rpms": [
+        "^rpms/skopeo/",
+        "^test/rpms/skopeo\\.yml$"
+      ],
+      "snappy--rpms": [
+        "^rpms/snappy/",
+        "^test/rpms/snappy\\.yml$"
+      ],
+      "source-highlight--rpms": [
+        "^rpms/source\\-highlight/",
+        "^test/rpms/source\\-highlight\\.yml$"
+      ],
+      "spdlog--rpms": [
+        "^rpms/spdlog/",
+        "^test/rpms/spdlog\\.yml$"
+      ],
+      "spire1-14--rpms": [
+        "^rpms/spire1\\.14/",
+        "^test/rpms/spire1\\.14\\.yml$"
+      ],
+      "spire1-15--rpms": [
+        "^rpms/spire1\\.15/",
+        "^test/rpms/spire1\\.15\\.yml$"
+      ],
+      "sqlite--rpms": [
+        "^rpms/sqlite/",
+        "^test/rpms/sqlite\\.yml$"
+      ],
+      "subversion--rpms": [
+        "^rpms/subversion/",
+        "^test/rpms/subversion\\.yml$"
+      ],
+      "sudo--rpms": [
+        "^rpms/sudo/",
+        "^test/rpms/sudo\\.yml$"
+      ],
+      "svt-av1--rpms": [
+        "^rpms/svt\\-av1/",
+        "^test/rpms/svt\\-av1\\.yml$"
+      ],
+      "swift-lang--rpms": [
+        "^rpms/swift\\-lang/",
+        "^test/rpms/swift\\-lang\\.yml$"
+      ],
+      "syft--rpms": [
+        "^rpms/syft/",
+        "^test/rpms/syft\\.yml$"
+      ],
+      "sysprof--rpms": [
+        "^rpms/sysprof/",
+        "^test/rpms/sysprof\\.yml$"
+      ],
+      "systemd--rpms": [
+        "^rpms/systemd/",
+        "^test/rpms/systemd\\.yml$"
+      ],
+      "systemd-stub--rpms": [
+        "^rpms/systemd\\-stub/",
+        "^test/rpms/systemd\\-stub\\.yml$"
+      ],
+      "tar--rpms": [
+        "^rpms/tar/",
+        "^test/rpms/tar\\.yml$"
+      ],
+      "tbb--rpms": [
+        "^rpms/tbb/",
+        "^test/rpms/tbb\\.yml$"
+      ],
+      "tcl--rpms": [
+        "^rpms/tcl/",
+        "^test/rpms/tcl\\.yml$"
+      ],
+      "tempo2-10--rpms": [
+        "^rpms/tempo2\\.10/",
+        "^test/rpms/tempo2\\.10\\.yml$"
+      ],
+      "tempo3-0--rpms": [
+        "^rpms/tempo3\\.0/",
+        "^test/rpms/tempo3\\.0\\.yml$"
+      ],
+      "thrift--rpms": [
+        "^rpms/thrift/",
+        "^test/rpms/thrift\\.yml$"
+      ],
+      "tinysparql--rpms": [
+        "^rpms/tinysparql/",
+        "^test/rpms/tinysparql\\.yml$"
+      ],
+      "tk--rpms": [
+        "^rpms/tk/",
+        "^test/rpms/tk\\.yml$"
+      ],
+      "tomcat10--rpms": [
+        "^rpms/tomcat10/",
+        "^test/rpms/tomcat10\\.yml$"
+      ],
+      "tomcat11--rpms": [
+        "^rpms/tomcat11/",
+        "^test/rpms/tomcat11\\.yml$"
+      ],
+      "tpm2-tss--rpms": [
+        "^rpms/tpm2\\-tss/",
+        "^test/rpms/tpm2\\-tss\\.yml$"
+      ],
+      "tree-sitter-srpm-macros--rpms": [
+        "^rpms/tree\\-sitter\\-srpm\\-macros/",
+        "^test/rpms/tree\\-sitter\\-srpm\\-macros\\.yml$"
+      ],
+      "trivy--rpms": [
+        "^rpms/trivy/",
+        "^test/rpms/trivy\\.yml$"
+      ],
+      "ttmkfdir--rpms": [
+        "^rpms/ttmkfdir/",
+        "^test/rpms/ttmkfdir\\.yml$"
+      ],
+      "tzdata--rpms": [
+        "^rpms/tzdata/",
+        "^test/rpms/tzdata\\.yml$"
+      ],
+      "ucx--rpms": [
+        "^rpms/ucx/",
+        "^test/rpms/ucx\\.yml$"
+      ],
+      "unbound--rpms": [
+        "^rpms/unbound/",
+        "^test/rpms/unbound\\.yml$"
+      ],
+      "unzip--rpms": [
+        "^rpms/unzip/",
+        "^test/rpms/unzip\\.yml$"
+      ],
+      "uriparser--rpms": [
+        "^rpms/uriparser/",
+        "^test/rpms/uriparser\\.yml$"
+      ],
+      "userspace-rcu--rpms": [
+        "^rpms/userspace\\-rcu/",
+        "^test/rpms/userspace\\-rcu\\.yml$"
+      ],
+      "utf8proc--rpms": [
+        "^rpms/utf8proc/",
+        "^test/rpms/utf8proc\\.yml$"
+      ],
+      "util-linux--rpms": [
+        "^rpms/util\\-linux/",
+        "^test/rpms/util\\-linux\\.yml$"
+      ],
+      "uuid--rpms": [
+        "^rpms/uuid/",
+        "^test/rpms/uuid\\.yml$"
+      ],
+      "valkey--rpms": [
+        "^rpms/valkey/",
+        "^test/rpms/valkey\\.yml$"
+      ],
+      "vim--rpms": [
+        "^rpms/vim/",
+        "^test/rpms/vim\\.yml$"
+      ],
+      "vmaf--rpms": [
+        "^rpms/vmaf/",
+        "^test/rpms/vmaf\\.yml$"
+      ],
+      "which--rpms": [
+        "^rpms/which/",
+        "^test/rpms/which\\.yml$"
+      ],
+      "xcaddy--rpms": [
+        "^rpms/xcaddy/",
+        "^test/rpms/xcaddy\\.yml$"
+      ],
+      "xkeyboard-config--rpms": [
+        "^rpms/xkeyboard\\-config/",
+        "^test/rpms/xkeyboard\\-config\\.yml$"
+      ],
+      "xmlsec1--rpms": [
+        "^rpms/xmlsec1/",
+        "^test/rpms/xmlsec1\\.yml$"
+      ],
+      "xorg-x11-fonts--rpms": [
+        "^rpms/xorg\\-x11\\-fonts/",
+        "^test/rpms/xorg\\-x11\\-fonts\\.yml$"
+      ],
+      "xxhash--rpms": [
+        "^rpms/xxhash/",
+        "^test/rpms/xxhash\\.yml$"
+      ],
+      "xz--rpms": [
+        "^rpms/xz/",
+        "^test/rpms/xz\\.yml$"
+      ],
+      "yq--rpms": [
+        "^rpms/yq/",
+        "^test/rpms/yq\\.yml$"
+      ],
+      "zchunk--rpms": [
+        "^rpms/zchunk/",
+        "^test/rpms/zchunk\\.yml$"
+      ],
+      "zeromq--rpms": [
+        "^rpms/zeromq/",
+        "^test/rpms/zeromq\\.yml$"
+      ],
+      "zig-srpm-macros--rpms": [
+        "^rpms/zig\\-srpm\\-macros/",
+        "^test/rpms/zig\\-srpm\\-macros\\.yml$"
+      ],
+      "zip--rpms": [
+        "^rpms/zip/",
+        "^test/rpms/zip\\.yml$"
+      ],
+      "zlib-ng--rpms": [
+        "^rpms/zlib\\-ng/",
+        "^test/rpms/zlib\\-ng\\.yml$"
+      ],
+      "zstd--rpms": [
+        "^rpms/zstd/",
+        "^test/rpms/zstd\\.yml$"
+      ]
+    }
+  },
+  "excludes": [],
+  "type": "pull_request"
+}
