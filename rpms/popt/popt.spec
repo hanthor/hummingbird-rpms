@@ -6,7 +6,7 @@
 Summary:        C library for parsing command line parameters
 Name:           popt
 Version:        %{ver}%{?snap:~%{snap}}
-Release:        11.1%{?dist}
+Release:        11.2%{?dist}
 # COPYING:      MIT text
 # po/eo.po:     LicenseRef-Fedora-Public-Domain
 # po/fi.po:     MIT AND LicenseRef-Fedora-Public-Domain
@@ -17,6 +17,8 @@ URL:            https://github.com/rpm-software-management/popt/
 Source0:        http://ftp.rpm.org/popt/releases/popt-1.x/%{name}-%{srcver}.tar.gz
 Patch1:         CVE-2026-18743.patch
 Patch2:         CVE-2026-18739.patch
+Patch3:         CVE-2026-18839-1.patch
+Patch4:         CVE-2026-18839-2.patch
 BuildRequires:  gcc
 BuildRequires:  gettext
 BuildRequires:  make
