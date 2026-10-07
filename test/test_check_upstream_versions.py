@@ -171,6 +171,35 @@ def test_parse_spec_version_multiple_specs(cuv_module, tmp_path: Path) -> None:
     assert cuv_module.parse_spec_version(tmp_path) is None
 
 
+@pytest.mark.parametrize(('macro', 'expected'), [
+    ('%global extraver p2\n', '1.9.17p2'),
+    ('%global patchlevel 2\n%global extraver p%{patchlevel}\n', '1.9.17p2'),
+    ('#global extraver p2\n', '1.9.17'),
+    ('%global extraver %{nil}\n', '1.9.17'),
+    ('', '1.9.17'),
+])
+def test_parse_spec_version_sudo_extraver(
+    cuv_module, workdir: Path, macro: str, expected: str,
+) -> None:
+    """Sudo's upstream version includes only an active, expanded extraver."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17')
+    spec_file = pkg_dir / 'sudo.spec'
+    spec_file.write_text(macro + spec_file.read_text())
+
+    assert cuv_module.parse_spec_version(pkg_dir) == expected
+    # RPM metadata must continue to use the actual Version and Release tags.
+    assert cuv_module.parse_spec_version_release(pkg_dir) == ('1.9.17', '1')
+
+
+def test_parse_spec_version_other_extraver(cuv_module, workdir: Path) -> None:
+    """An unrelated package's extraver is not necessarily a source suffix."""
+    pkg_dir = _create_package(workdir, 'pkg', '1.9.17')
+    spec_file = pkg_dir / 'pkg.spec'
+    spec_file.write_text('%global extraver .ea\n' + spec_file.read_text())
+
+    assert cuv_module.parse_spec_version(pkg_dir) == '1.9.17'
+
+
 #
 # Tests — parse_spec_version_release
 #
@@ -426,6 +455,35 @@ def test_check_package_version_up_to_date(cuv_module, workdir: Path) -> None:
     assert result.has_update is False
     assert result.current_version == '2.0'
     assert result.upstream_version == '2.0'
+
+
+@pytest.mark.parametrize(('upstream', 'has_update'), [
+    ('1.9.17p1', False),
+    ('1.9.17p2', False),
+    ('1.9.17p3', True),
+    ('1.9.18', True),
+])
+def test_check_package_version_sudo_patchlevel(
+    cuv_module, workdir: Path, upstream: str, has_update: bool,
+) -> None:
+    """Honor sudo's current patchlevel without suppressing real updates."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
+        'version': '1.9.17', 'release_monitoring_project_id': 4906,
+    })
+    spec_file = pkg_dir / 'sudo.spec'
+    spec_file.write_text('%global extraver p2\n' + spec_file.read_text())
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': upstream, 'stable_versions': [upstream], 'id': 4906,
+    }):
+        result = cuv_module.check_package_version('sudo')
+
+    assert result.current_version == '1.9.17p2'
+    assert result.upstream_version == upstream
+    assert result.has_update is has_update
+    assert result.error is None
 
 
 def test_check_package_version_not_found(cuv_module, workdir: Path) -> None:
@@ -3158,6 +3216,42 @@ def test_main_checks_tracked_packages(cuv_module, workdir: Path) -> None:
 
     # Exit code 1 means updates found
     assert exc_info.value.code == 1
+
+
+def test_main_sudo_current_patchlevel_is_noop(
+    cuv_module, workdir: Path, capsys,
+) -> None:
+    """--update must not rewrite Fedora's spec or download p2p2 sources."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
+        'version': '1.9.17', 'release': '16.p2',
+        'track_upstream': 'latest', 'release_monitoring_project_id': 4906,
+    })
+    spec_file = pkg_dir / 'sudo.spec'
+    original = '%global extraver p2\n' + spec_file.read_text().replace(
+        'Release: 1%{?dist}', 'Release: 16.p2.2%{?dist}',
+    ).replace('%{version}.tar.gz', '%{version}%{?extraver}.tar.gz')
+    spec_file.write_text(original)
+    metadata_file = workdir / 'metadata' / 'sudo.json'
+    original_metadata = metadata_file.read_text()
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': '1.9.17p2', 'stable_versions': ['1.9.17p2'], 'id': 4906,
+    }), patch.object(cuv_module, 'update_spec_version',
+                     side_effect=AssertionError('sudo is already current')) as mock_update, \
+         patch('sys.argv', ['check_upstream_versions.py', 'check', '--update',
+                            '--all', '--json', 'sudo']), \
+         pytest.raises(SystemExit) as exc_info:
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    mock_update.assert_not_called()
+    output = json.loads(capsys.readouterr().out)
+    assert output['results'][0]['current_version'] == '1.9.17p2'
+    assert output['results'][0]['has_update'] is False
+    assert spec_file.read_text() == original
+    assert metadata_file.read_text() == original_metadata
 
 
 def test_main_explicit_args_bypass_track_filter(cuv_module, workdir: Path) -> None:

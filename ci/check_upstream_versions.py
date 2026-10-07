@@ -225,11 +225,27 @@ def compare_versions(current: str, upstream: str) -> int:
 
 
 def parse_spec_version(package_dir: Path) -> Optional[str]:
-    """Extract version from package's spec file using rpmspec."""
+    """Extract the current upstream version for comparison using rpmspec.
+
+    Fedora's sudo spec keeps its upstream patchlevel in ``extraver`` rather
+    than Version. Include that suffix here, but not in RPM metadata queries.
+    Other packages can use extraver for unrelated purposes (e.g. OpenJDK EA).
+    """
     result = parse_spec_version_release(package_dir)
     if result is None:
         return None
-    return result[0]
+    version = result[0]
+    if package_dir.name == "sudo":
+        # Keep this dependency lazy, like the source/update helpers: other
+        # upstream checks can use rpmspec without Python's specfile library.
+        from specfile import Specfile
+
+        # parse_spec_version_release already validated exactly one spec and
+        # parsed it successfully; missing/multiple specs returned above.
+        spec_file = next(package_dir.glob("*.spec"))
+        spec = Specfile(str(spec_file), sourcedir=str(package_dir))
+        version += spec.expand("%{?extraver}")
+    return version
 
 
 def parse_spec_version_release(package_dir: Path) -> Optional[tuple[str, str]]:
