@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "Backport CVE-2026-94283 CVE-2026-94284 CVE-2026-94285",
+  "modification_status": "modified",
   "release": "3",
   "sha": "bcfb1f667006437e073677ede305a08ac543a6ec",
   "source": "https://src.fedoraproject.org/rpms/libX11.git",

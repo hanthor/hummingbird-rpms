@@ -20,6 +20,9 @@ Source0: https://xorg.freedesktop.org/archive/individual/lib/%{name}-%{version}.
 
 Patch2: dont-forward-keycode-0.patch
 Patch0001: 0001-xkb-Check-the-keysym-range-in-_XkbReadKeyActions-CVE.patch
+Patch0002: 0002-ximcp-bound-XIM_OPEN_REPLY-attribute-lengths-to-the-.patch
+Patch0003: 0003-ximcp-bound-XIM_REGISTER_TRIGGERKEYS-keylist-lengths.patch
+Patch0004: 0004-lcGenConv-bound-byteM_parse_codeset-reads-to-remaini.patch
 
 BuildRequires: libtool
 BuildRequires: make
