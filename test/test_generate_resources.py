@@ -448,6 +448,67 @@ class TestPrivateProductKonfluxVariables:
         assert "application_name" not in variables["rpms"][0]
 
 
+class TestBuildTriggerManifest:
+    """Tests for build_trigger_manifest private_product routing."""
+
+    def test_private_product_routed_to_private_application(self, gen_module, tmp_path):
+        """Packages with private_product go under private-{product}-rpms-{branch}."""
+        (tmp_path / "rpms" / "mypkg").mkdir(parents=True)
+        (tmp_path / "rpms" / "normalpkg").mkdir(parents=True)
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text(
+            textwrap.dedent("""\
+            mypkg:
+              private_product: example
+            """)
+        )
+
+        with patch.object(gen_module, "ROOT_DIR", tmp_path):
+            manifest = gen_module.build_trigger_manifest("main", "push")
+
+        apps = manifest["applications"]
+        assert "private-example-rpms-main" in apps
+        assert "mypkg--rpms" in apps["private-example-rpms-main"]
+        assert "rpms-main" in apps
+        assert "normalpkg--rpms" in apps["rpms-main"]
+        assert "mypkg--rpms" not in apps["rpms-main"]
+
+    def test_no_private_product_single_application(self, gen_module, tmp_path):
+        """Packages without private_product all go under rpms-{branch}."""
+        (tmp_path / "rpms" / "alpha").mkdir(parents=True)
+        (tmp_path / "rpms" / "beta").mkdir(parents=True)
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+
+        with patch.object(gen_module, "ROOT_DIR", tmp_path):
+            manifest = gen_module.build_trigger_manifest("main", "push")
+
+        apps = manifest["applications"]
+        assert set(apps.keys()) == {"rpms-main"}
+        assert "alpha--rpms" in apps["rpms-main"]
+        assert "beta--rpms" in apps["rpms-main"]
+
+    def test_pull_request_adds_test_and_canary_triggers(self, gen_module, tmp_path):
+        """pull_request manifests add test-file triggers and setup canary triggers."""
+        (tmp_path / "rpms" / "setup").mkdir(parents=True)
+        (tmp_path / "rpms" / "bash").mkdir(parents=True)
+        (tmp_path / "rpms" / "acl").mkdir(parents=True)
+        (tmp_path / "test" / "rpms").mkdir(parents=True)
+        (tmp_path / "test" / "rpms" / "bash.yml").write_text("")
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+
+        with patch.object(gen_module, "ROOT_DIR", tmp_path), \
+             patch.object(gen_module, "BUILD_TRIGGER_RPM_NAME", "setup"):
+            manifest = gen_module.build_trigger_manifest("main", "pull_request")
+
+        apps = manifest["applications"]["rpms-main"]
+        assert apps["bash--rpms"] == ["^rpms/bash/", "^test/rpms/bash\\.yml$"]
+        assert apps["acl--rpms"] == ["^rpms/acl/"]
+        assert "^ci/" in apps["setup--rpms"]
+        assert "^mock/" in apps["setup--rpms"]
+
+
 class TestValidation:
     """Tests for configuration validation."""
 
