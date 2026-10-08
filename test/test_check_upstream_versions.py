@@ -50,6 +50,21 @@ def workdir(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _base_metadata(name: str, version: str) -> dict:
+    """Minimum valid metadata for the hum.meta library."""
+    return {
+        'modification_status': 'clean',
+        'version': version,
+        'upstream_repo': 'https://example.com',
+        'fedora': {
+            'git_url': f'https://src.fedoraproject.org/rpms/{name}',
+            'branch': 'rawhide',
+            'sha': 'abc123',
+            'release': '1',
+        },
+    }
+
+
 def _create_package(workdir: Path, name: str, version: str,
                     sources: dict | None = None,
                     metadata: dict | None = None) -> Path:
@@ -60,7 +75,8 @@ def _create_package(workdir: Path, name: str, version: str,
         name: Package name
         version: Package version
         sources: Optional dict mapping filename -> hash for the sources file
-        metadata: Optional metadata dict (written to metadata/<name>.json)
+        metadata: Optional metadata dict merged onto a valid base
+                  (written to metadata/<name>.json)
 
     Returns:
         Path to the package directory
@@ -87,9 +103,13 @@ Test package
         (pkg_dir / 'sources').write_text('\n'.join(lines) + '\n')
 
     if metadata is not None:
+        merged = _base_metadata(name, version)
+        merged.update(metadata)
+        if merged.get('modification_status') == 'independent':
+            merged.pop('fedora', None)
         meta_file = workdir / 'metadata' / f'{name}.json'
         with open(meta_file, 'w') as f:
-            json.dump(metadata, f, indent=2, sort_keys=True)
+            json.dump(merged, f, indent=2, sort_keys=True)
             f.write('\n')
 
     return pkg_dir
@@ -3657,7 +3677,9 @@ def test_main_sudo_current_patchlevel_is_noop(
 ) -> None:
     """--update must not rewrite Fedora's spec or download p2p2 sources."""
     pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
-        'version': '1.9.17', 'release': '16.p2',
+        'version': '1.9.17',
+        'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/sudo',
+                   'branch': 'rawhide', 'sha': 'abc123', 'release': '16.p2'},
         'track_upstream': 'latest', 'release_monitoring_project_id': 4906,
     })
     spec_file = pkg_dir / 'sudo.spec'
@@ -4495,3 +4517,72 @@ def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, 
                for action in actions)
     assert any(action['action'] == 'update' and action['file_path'] == 'rpms/pkg/old~3afix.patch'
                and action['content'] for action in actions)
+
+
+#
+# Tests — MalformedMetadataError graceful handling
+#
+
+
+def _write_malformed_metadata(workdir: Path, name: str) -> None:
+    """Write a valid JSON file that the hum.meta library rejects."""
+    meta_file = workdir / 'metadata' / f'{name}.json'
+    meta_file.write_text(json.dumps({'modification_status': 'BOGUS'}) + '\n')
+
+
+def test_get_version_from_metadata_malformed(cuv_module, workdir: Path) -> None:
+    """Returns None when metadata is valid JSON but structurally invalid."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    assert cuv_module.get_version_from_metadata('pkg') is None
+
+
+def test_mark_package_modified_malformed(cuv_module, workdir: Path, caplog) -> None:
+    """Logs error and returns without crashing on malformed metadata."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    with caplog.at_level('ERROR'):
+        cuv_module.mark_package_modified('pkg', 'reason')
+    assert 'malformed metadata' in caplog.text
+
+
+def test_check_package_version_malformed(cuv_module, workdir: Path) -> None:
+    """Returns a result with an error string instead of crashing."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    result = cuv_module.check_package_version('pkg', 'fedora')
+    assert result.error
+    assert 'Malformed metadata' in result.error
+    assert not result.has_update
+
+
+def test_run_gorget_pipeline_malformed_metadata(
+    cuv_module, workdir: Path, caplog,
+) -> None:
+    """Malformed metadata omits --upstream-repo but pipeline still runs."""
+    _create_package(workdir, 'pkg', '1.0', sources={'pkg-1.0.tar.gz': 'oldhash'})
+    _write_malformed_metadata(workdir, 'pkg')
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch: []\n')
+
+    fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
+    with patch.object(cuv_module, '_upload_to_lookaside'), \
+         patch.object(
+             cuv_module, '_run_gorget_command', side_effect=fake_run,
+         ) as mock_run, \
+         caplog.at_level('WARNING'):
+        cuv_module.RPMS_DIR = workdir / 'rpms'
+        cuv_module.METADATA_DIR = workdir / 'metadata'
+        cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+        cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
+
+    cmd = mock_run.call_args.args[0]
+    assert '--upstream-repo' not in cmd
+    assert 'malformed metadata' in caplog.text

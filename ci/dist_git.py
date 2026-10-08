@@ -43,12 +43,12 @@ from hum.meta.model import (
     FedoraOriginWithRelease,
     IndependentPackageMetadata,
     InvalidMetadataError,
+    MalformedMetadataError,
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
     PackageMetadata as HumPackageMetadata,
     VersionFromRef,
 )
-from hum.meta.repository import _to_raw_dict
 from hum.meta.spec import bump_release as spec_bump_release
 from hum.meta.validation import ModificationStatus
 from package_paths import path_problem, portable_component, sanitize_package_paths
@@ -321,9 +321,16 @@ def rename_spec_validate(original_name: str, original_dir: Path) -> str:
 
 
 def load_package_metadata(package_name: str) -> HumPackageMetadata | None:
-    """Load package metadata from metadata/<package>.json."""
+    """Load package metadata from metadata/<package>.json.
+
+    Returns None when the file is absent or unreadable.  Raises
+    MalformedMetadataError for files that exist but fail validation so
+    callers can distinguish missing from corrupt.
+    """
     try:
         return _METADATA_REPO.load(package_name)
+    except MalformedMetadataError:
+        raise
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -2261,8 +2268,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
                 reason = metadata.modification_reason
                 metadata = metadata.to_modified_fedora(fedora=new_fedora, reason=reason)
-                if metadata.version != version:
-                    metadata.update(fedora=new_fedora, version=version)
+                metadata.update(fedora=new_fedora, version=version)
 
         imports[package_name] = metadata
 
@@ -2300,7 +2306,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                     json.dump({
                         'package': package_name,
                         'commit_msg': commit_msg,
-                        'metadata': _to_raw_dict(staged_metadata),
+                        'metadata': staged_metadata.to_dict(),
                         'old_version': old_version,
                     }, f)
 
@@ -2450,7 +2456,10 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
 
     # Handle %autorelease if present (only for non-independent packages)
     if uses_autorelease(package_dir):
-        metadata = load_package_metadata(package_name)
+        try:
+            metadata = load_package_metadata(package_name)
+        except MalformedMetadataError as e:
+            sys.exit(f"ERROR: {e}")
         if not metadata:
             sys.exit(f"ERROR: Could not load metadata for {package_name}")
         if isinstance(metadata, IndependentPackageMetadata):
@@ -2463,7 +2472,10 @@ def rebuild_package(package_name: str, reason: str, dry_run: bool = False) -> No
                 sys.exit(f"ERROR: Could not resolve %autorelease for {package_name}")
             replace_autorelease_in_spec(package_dir, release)
 
-    metadata = load_package_metadata(package_name)
+    try:
+        metadata = load_package_metadata(package_name)
+    except MalformedMetadataError as e:
+        sys.exit(f"ERROR: {e}")
     if not metadata:
         sys.exit(f"ERROR: Could not load metadata for {package_name}")
 
@@ -2633,8 +2645,8 @@ def sanitize_paths(packages: list[str], dry_run: bool = False) -> None:
     for package in packages:
         try:
             _METADATA_REPO.load(package)
-        except OSError:
-            sys.exit(f"ERROR: Package {package} not found")
+        except (OSError, MalformedMetadataError) as e:
+            sys.exit(f"ERROR: Package {package}: {e}")
         files = run_git('ls-files', '-z', '--cached', '--others', '--exclude-standard',
                         '--', f'rpms/{package}', cwd=ROOT_DIR).stdout.split('\0')
         include = set()
@@ -2685,8 +2697,8 @@ def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False
 
     try:
         metadata = _METADATA_REPO.load(package_name)
-    except OSError:
-        sys.exit(f"ERROR: Package {package_name} not found")
+    except (OSError, MalformedMetadataError) as e:
+        sys.exit(f"ERROR: Package {package_name}: {e}")
 
     # Skip independent packages
     if isinstance(metadata, IndependentPackageMetadata):
