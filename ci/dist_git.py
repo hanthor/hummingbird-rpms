@@ -43,6 +43,7 @@ from hum.meta.model import (
     FedoraOriginWithRelease,
     IndependentPackageMetadata,
     InvalidMetadataError,
+    MalformedMetadataError,
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
     PackageMetadata as HumPackageMetadata,
@@ -321,9 +322,16 @@ def rename_spec_validate(original_name: str, original_dir: Path) -> str:
 
 
 def load_package_metadata(package_name: str) -> HumPackageMetadata | None:
-    """Load package metadata from metadata/<package>.json."""
+    """Load package metadata from metadata/<package>.json.
+
+    Returns None when the file is absent or unreadable.  Raises
+    MalformedMetadataError for files that exist but fail validation so
+    callers can distinguish missing from corrupt.
+    """
     try:
         return _METADATA_REPO.load(package_name)
+    except MalformedMetadataError:
+        raise
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -2261,8 +2269,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
                 reason = metadata.modification_reason
                 metadata = metadata.to_modified_fedora(fedora=new_fedora, reason=reason)
-                if metadata.version != version:
-                    metadata.update(fedora=new_fedora, version=version)
+                metadata.update(fedora=new_fedora, version=version)
 
         imports[package_name] = metadata
 

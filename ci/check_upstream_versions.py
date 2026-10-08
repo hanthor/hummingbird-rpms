@@ -107,7 +107,8 @@ from hum.meta.model import (  # noqa: E402
     PackageMetadata as HumPackageMetadata,
 )
 
-_METADATA_REPO = MetadataRepository(ROOT_DIR)
+def _metadata_repo() -> MetadataRepository:
+    return MetadataRepository(METADATA_DIR.parent)
 
 # release-monitoring.org API base URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
@@ -311,7 +312,7 @@ def get_package_metadata(package: str) -> Optional[HumPackageMetadata]:
     if not metadata_path.exists():
         return None
     try:
-        return _METADATA_REPO.load(package)
+        return _metadata_repo().load(package)
     except (MalformedMetadataError, json.JSONDecodeError, OSError) as e:
         raise MalformedMetadataError(f"{package}: {e}") from e
 
@@ -995,8 +996,8 @@ def mark_package_modified(
         metadata.modification_reason = reason
 
     try:
-        _METADATA_REPO.save(metadata)
-    except (OSError, InvalidMetadataError) as e:
+        _metadata_repo().save(metadata)
+    except OSError as e:
         logger.error(f"{package}: failed to write metadata: {e}")
         return
 
@@ -1988,7 +1989,10 @@ def list_all(args: argparse.Namespace) -> None:
         result = check_package_version(package, args.distro)
 
         # Determine tracking status from metadata
-        meta = get_package_metadata(package)
+        try:
+            meta = get_package_metadata(package)
+        except MalformedMetadataError as e:
+            raise SystemExit(f"ERROR: {e}") from e
         tracking = "yes" if (meta and meta.track_upstream) else "no"
 
         # Determine status and upstream version display
@@ -2118,8 +2122,7 @@ def run_check(args: argparse.Namespace) -> None:
             try:
                 meta = get_package_metadata(pkg)
             except MalformedMetadataError as e:
-                logger.error("%s", e)
-                continue
+                raise SystemExit(f"ERROR: {e}") from e
             if meta and meta.track_upstream:
                 tracked.append(pkg)
         packages = tracked
