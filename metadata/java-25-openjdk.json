@@ -1,9 +1,8 @@
 {
   "branch": "rawhide",
   "cve_product": "Oracle Corporation / Oracle Java SE",
-  "modification_reason": "Work around JDK-8385169 C2 SuperWord crash in fastdebug %check; keep cups-libs as Recommends. Also added gorget source-pipeline.yaml (HUM-6085; pattern from HUM-4622): the package has no primary source of its own (repackages java-25-openjdk-portable's build output), but Source31 (nssadapter) is a real, independently-fetchable release asset -- wired that one up, matches the existing recorded checksum exactly, no content change.",
+  "modification_reason": "Update to upstream version 25.0.5.0.6",
   "modification_status": "modified",
-  "release": "1.1",
   "release_monitoring_project_id": 378887,
   "sha": "e55a3d45327b3ef6b16e75c53b41dc4ac4dccbca",
   "source": "https://src.fedoraproject.org/rpms/java-25-openjdk.git",
@@ -11,6 +10,6 @@
   "track_upstream": "25",
   "upstream_repo": "https://github.com/openjdk/jdk25u",
   "upstream_version_transform": "openjdk_to_rpm",
-  "version": "25.0.4.1.1",
+  "version": "25.0.5.0.6",
   "version_transform": "openjdk_to_oracle"
 }
