@@ -292,8 +292,6 @@ Binary symlinks for Node.js JavaScript runtime.
 %package        npm-bin
 Summary:        Node.js Package Manager – binary symlinks
 Epoch:          %{npm_epoch}
-Version:        %{npm_version}
-Release:        %{npm_release}
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
 Requires(meta): nodejs%{node_version_major}-bin = %{node_evr}
