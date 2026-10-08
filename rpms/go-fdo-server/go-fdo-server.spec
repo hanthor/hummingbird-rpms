@@ -13,11 +13,7 @@
 %global debug_package %{nil}
 %endif
 
-<<<<<<< HEAD
 Version:        1.0.2
-=======
-Version:        1.0.1
->>>>>>> hummingbird-local
 
 %gometa -L -f
 
