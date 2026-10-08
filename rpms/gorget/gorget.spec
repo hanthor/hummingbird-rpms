@@ -1,7 +1,7 @@
 %bcond_without check
 
 Name:           gorget
-Version:        0.1.26
+Version:        0.1.28
 Release:        0.1%{?dist}
 Summary:        Containerized source-pipeline tool for RPM package supply-chain trust
 License:        MIT
