@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/e2fsprogs.git",
+    "release": "2",
+    "sha": "48612ca55f3c4853fed82e59aac66100c4b3808c"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "48612ca55f3c4853fed82e59aac66100c4b3808c",
-  "source": "https://src.fedoraproject.org/rpms/e2fsprogs.git",
   "upstream_repo": "https://github.com/tytso/e2fsprogs",
   "version": "1.47.4"
 }

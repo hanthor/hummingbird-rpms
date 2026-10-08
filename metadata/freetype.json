@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/freetype.git",
+    "release": "2",
+    "sha": "d6facd5816a4796f8eee47558239a02291221f3f"
+  },
   "modification_reason": "disable harfbuzz to break circular dep (freetype \u2194 harfbuzz) that blocks ICU SONAME rebuilds; backport fix for CVE-2026-50811; HUM-9230: CVE-2026-95512",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "d6facd5816a4796f8eee47558239a02291221f3f",
-  "source": "https://src.fedoraproject.org/rpms/freetype.git",
   "upstream_repo": "https://gitlab.freedesktop.org/freetype/freetype",
   "version": "2.14.3"
 }

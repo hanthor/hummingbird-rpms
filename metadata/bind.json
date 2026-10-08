@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/bind.git",
+    "sha": "55c3f8e6d3577eeeaa80d74ddf2c872ce213e86d"
+  },
   "modification_reason": "Update to upstream version 9.20.29",
   "modification_status": "modified",
   "release_monitoring_project_id": 383859,
-  "sha": "55c3f8e6d3577eeeaa80d74ddf2c872ce213e86d",
-  "source": "https://src.fedoraproject.org/rpms/bind.git",
   "track_upstream": "9.20",
   "upstream_repo": "https://gitlab.isc.org/isc-projects/bind9",
   "version": "9.20.29"

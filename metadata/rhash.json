@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/rhash.git",
+    "release": "5",
+    "sha": "b675d3a7f797afd0437100fb444794ecf2df2975"
+  },
   "modification_status": "clean",
-  "release": "5",
   "release_monitoring_project_id": 13843,
-  "sha": "b675d3a7f797afd0437100fb444794ecf2df2975",
-  "source": "https://src.fedoraproject.org/rpms/rhash.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rhash/RHash",
   "version": "1.4.5"

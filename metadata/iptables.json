@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/iptables.git",
+    "release": "3",
+    "sha": "9b8cd53fba04480595b3bd933e307dd77b295dd9"
+  },
   "modification_status": "clean",
-  "release": "3",
   "release_monitoring_project_id": 1394,
-  "sha": "9b8cd53fba04480595b3bd933e307dd77b295dd9",
-  "source": "https://src.fedoraproject.org/rpms/iptables.git",
   "track_upstream": "latest",
   "upstream_repo": "https://git.netfilter.org/iptables",
   "version": "1.8.13"

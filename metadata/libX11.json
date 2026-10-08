@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libX11.git",
+    "release": "3",
+    "sha": "bcfb1f667006437e073677ede305a08ac543a6ec"
+  },
   "modification_reason": "HUM-8707: CVE-2026-94283, CVE-2026-94284, CVE-2026-94285",
   "modification_status": "modified",
-  "release": "3",
-  "sha": "bcfb1f667006437e073677ede305a08ac543a6ec",
-  "source": "https://src.fedoraproject.org/rpms/libX11.git",
   "upstream_repo": "https://gitlab.freedesktop.org/xorg/lib/libx11",
   "version": "1.8.13"
 }

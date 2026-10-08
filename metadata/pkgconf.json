@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/pkgconf.git",
+    "release": "2",
+    "sha": "75a6859a46954a834a8a534d339799b1beb82a73"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "75a6859a46954a834a8a534d339799b1beb82a73",
-  "source": "https://src.fedoraproject.org/rpms/pkgconf.git",
   "upstream_repo": "https://github.com/pkgconf/pkgconf",
   "version": "2.5.1"
 }

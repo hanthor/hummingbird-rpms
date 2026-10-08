@@ -1,12 +1,14 @@
 {
-  "branch": "rawhide",
   "cve_product": "Apache Software Foundation / Apache HTTP Server",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/httpd.git",
+    "release": "1",
+    "sha": "417e8d51c0e5ec5ef6b54aedb64ca79bf074071b"
+  },
   "modification_reason": "Wrap ssl.conf Listen/VirtualHost in IfFile for graceful startup without certs; disable mod_mime_libmagic for minimal Hummingbird containers",
   "modification_status": "modified",
-  "release": "1",
   "release_monitoring_project_id": 387502,
-  "sha": "417e8d51c0e5ec5ef6b54aedb64ca79bf074071b",
-  "source": "https://src.fedoraproject.org/rpms/httpd.git",
   "track_upstream": "2.4",
   "upstream_repo": "https://github.com/apache/httpd",
   "version": "2.4.69"

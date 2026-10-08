@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/rust-imagequant-sys.git",
+    "release": "4",
+    "sha": "f31b328a289d740e29dff30a083a7933acb7ed0f"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "f31b328a289d740e29dff30a083a7933acb7ed0f",
-  "source": "https://src.fedoraproject.org/rpms/rust-imagequant-sys.git",
   "upstream_repo": "https://github.com/ImageOptim/libimagequant",
   "version": "4.1.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/sgml-common.git",
+    "release": "70",
+    "sha": "224c456983172348cbf6cfb5587a511c13487a83"
+  },
   "modification_status": "clean",
-  "release": "70",
-  "sha": "224c456983172348cbf6cfb5587a511c13487a83",
-  "source": "https://src.fedoraproject.org/rpms/sgml-common.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/sgml-common",
   "version": "0.6.3"
 }

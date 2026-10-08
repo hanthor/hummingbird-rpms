@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/rust.git",
+    "sha": "8fa23f4607c1e1edb262079c7bf00e58dfdb12a9"
+  },
   "modification_reason": "Update to upstream version 1.99.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 7635,
-  "sha": "8fa23f4607c1e1edb262079c7bf00e58dfdb12a9",
-  "source": "https://src.fedoraproject.org/rpms/rust.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rust-lang/rust",
   "version": "1.99.0"

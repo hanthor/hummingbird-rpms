@@ -1,12 +1,14 @@
 {
+  "cve_product": "Go",
+  "fedora": {
+    "branch": "f43",
+    "git_url": "https://src.fedoraproject.org/rpms/golang.git",
+    "sha": "7364ecef346d2a3abe3c2aa40184774219b617d9"
+  },
   "fix_status": 0,
-  "branch": "f43",
-  "cve_product": "Go ",
   "modification_reason": "Update to upstream version 1.25.14",
   "modification_status": "modified",
   "release_monitoring_project_id": 1227,
-  "sha": "7364ecef346d2a3abe3c2aa40184774219b617d9",
-  "source": "https://src.fedoraproject.org/rpms/golang.git",
   "track_upstream": "1.25",
   "upstream_branch": "release-branch.go1.25",
   "upstream_repo": "https://github.com/golang/go",

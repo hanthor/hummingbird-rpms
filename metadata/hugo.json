@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/hugo.git",
+    "sha": "948282631868ca0a00f8a41baf4f01d99fb732bf"
+  },
   "modification_reason": "Update to upstream version 0.167.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 12959,
-  "sha": "948282631868ca0a00f8a41baf4f01d99fb732bf",
-  "source": "https://src.fedoraproject.org/rpms/hugo.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/gohugoio/hugo",
   "version": "0.167.0"

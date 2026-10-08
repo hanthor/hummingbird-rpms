@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-cffi.git",
+    "release": "1",
+    "sha": "c0e0c9e21e0c07aec11ad22b6334b9af80f9a83c"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "c0e0c9e21e0c07aec11ad22b6334b9af80f9a83c",
-  "source": "https://src.fedoraproject.org/rpms/python-cffi.git",
   "upstream_repo": "https://github.com/python-cffi/cffi",
   "version": "2.1.1"
 }

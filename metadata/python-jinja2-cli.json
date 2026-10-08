@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-jinja2-cli.git",
+    "release": "22",
+    "sha": "a16d4eb1d23632e72b5066b23ca1433ecac7091b"
+  },
   "modification_status": "clean",
-  "release": "22",
-  "sha": "a16d4eb1d23632e72b5066b23ca1433ecac7091b",
-  "source": "https://src.fedoraproject.org/rpms/python-jinja2-cli.git",
   "upstream_repo": "https://github.com/mattrobenolt/jinja2-cli",
   "version": "0.8.2"
 }

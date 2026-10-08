@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/netavark.git",
+    "release": "1",
+    "sha": "31f657e1208c52fef4fb982c3ebf4b49e227c884"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "31f657e1208c52fef4fb982c3ebf4b49e227c884",
-  "source": "https://src.fedoraproject.org/rpms/netavark.git",
   "upstream_repo": "https://github.com/containers/netavark",
   "version": "2.1.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/ttmkfdir.git",
+    "release": "75",
+    "sha": "55bd71fde7bb79428da731ee81a4e17ab9041a2a"
+  },
   "modification_status": "clean",
-  "release": "75",
-  "sha": "55bd71fde7bb79428da731ee81a4e17ab9041a2a",
-  "source": "https://src.fedoraproject.org/rpms/ttmkfdir.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/ttmkfdir",
   "version": "3.0.9"
 }

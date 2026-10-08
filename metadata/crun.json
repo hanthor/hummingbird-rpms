@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/crun.git",
+    "release": "1",
+    "sha": "2f0211ca3d9b97dab41dc319473606cd75b35edd"
+  },
   "modification_status": "clean",
-  "release": "1",
   "release_monitoring_project_id": 96792,
-  "sha": "2f0211ca3d9b97dab41dc319473606cd75b35edd",
-  "source": "https://src.fedoraproject.org/rpms/crun.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/containers/crun",
   "version": "1.30.1"

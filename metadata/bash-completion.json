@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/bash-completion.git",
+    "release": "1",
+    "sha": "97c0c7f63316859ce00a8c4ad3dfa219a5aa5cb5"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "97c0c7f63316859ce00a8c4ad3dfa219a5aa5cb5",
-  "source": "https://src.fedoraproject.org/rpms/bash-completion.git",
   "upstream_repo": "https://github.com/scop/bash-completion",
   "version": "2.18"
 }

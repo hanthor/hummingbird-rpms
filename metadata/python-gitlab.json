@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-gitlab.git",
+    "release": "1",
+    "sha": "ad60097e073beca78666ba4861767a5a2711c606"
+  },
   "modification_reason": "HUM-6146: Allow the Rawhide python-gitlab tests to use Trio available in the Hummingbird buildroot",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "ad60097e073beca78666ba4861767a5a2711c606",
-  "source": "https://src.fedoraproject.org/rpms/python-gitlab.git",
   "upstream_repo": "https://github.com/python-gitlab/python-gitlab",
   "version": "8.6.0"
 }

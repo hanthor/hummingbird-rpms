@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gnutls.git",
+    "release": "5",
+    "sha": "b9f4117f005d12b9b4beb2d4716fe11cf66871bb"
+  },
   "modification_reason": "Disable mingw cross-build on Hummingbird: GCC 16 ICE in mingw32-gcc (GIMPLE strlen pass, localename-unsafe.c) causes rpmbuild failure on x86_64 and aarch64",
   "modification_status": "modified",
-  "release": "5",
-  "sha": "b9f4117f005d12b9b4beb2d4716fe11cf66871bb",
-  "source": "https://src.fedoraproject.org/rpms/gnutls.git",
   "upstream_repo": "https://gitlab.com/gnutls/gnutls",
   "version": "3.8.13"
 }

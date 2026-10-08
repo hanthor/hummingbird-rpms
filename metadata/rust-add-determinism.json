@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/rust-add-determinism.git",
+    "release": "3",
+    "sha": "e2e7cd56c1753c7d36659c448866c520101fd49d"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "e2e7cd56c1753c7d36659c448866c520101fd49d",
-  "source": "https://src.fedoraproject.org/rpms/rust-add-determinism.git",
   "upstream_repo": "https://github.com/keszybz/add-determinism",
   "version": "0.7.3"
 }

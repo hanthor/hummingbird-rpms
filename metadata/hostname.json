@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/hostname.git",
+    "release": "5",
+    "sha": "70c9f0b66581014b6d65170a7e990c38ae864fd5"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "70c9f0b66581014b6d65170a7e990c38ae864fd5",
-  "source": "https://src.fedoraproject.org/rpms/hostname.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/hostname",
   "version": "3.25"
 }

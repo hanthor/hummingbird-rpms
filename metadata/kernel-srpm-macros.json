@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/kernel-srpm-macros.git",
+    "release": "30",
+    "sha": "db789cf0a97f99c7ff9a5f17cd962ea3a7778737"
+  },
   "modification_status": "clean",
-  "release": "30",
-  "sha": "db789cf0a97f99c7ff9a5f17cd962ea3a7778737",
-  "source": "https://src.fedoraproject.org/rpms/kernel-srpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/kernel-srpm-macros",
   "version": "1.0"
 }

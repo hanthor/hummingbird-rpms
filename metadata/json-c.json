@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/json-c.git",
+    "release": "9",
+    "sha": "4d25eb8ae3ed1637a074b96e025b8f223a1baf53"
+  },
   "modification_status": "clean",
-  "release": "9",
-  "sha": "4d25eb8ae3ed1637a074b96e025b8f223a1baf53",
-  "source": "https://src.fedoraproject.org/rpms/json-c.git",
   "upstream_repo": "https://github.com/json-c/json-c",
   "version": "0.18"
 }

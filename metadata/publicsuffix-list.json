@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/publicsuffix-list.git",
+    "release": "2",
+    "sha": "091701a853efdf36660113cbda1e1a87bcd7bdb7"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "091701a853efdf36660113cbda1e1a87bcd7bdb7",
-  "source": "https://src.fedoraproject.org/rpms/publicsuffix-list.git",
   "upstream_repo": "https://github.com/publicsuffix/list",
   "version": "20260624"
 }

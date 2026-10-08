@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/trivy.git",
+    "sha": "1741a090d7d41332bef492d4d294226992a9e4ed"
+  },
   "modification_reason": "Update to upstream version 0.75.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 141362,
-  "sha": "1741a090d7d41332bef492d4d294226992a9e4ed",
-  "source": "https://src.fedoraproject.org/rpms/trivy.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/aquasecurity/trivy",
   "version": "0.75.0"

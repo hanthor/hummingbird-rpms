@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/less.git",
+    "release": "1",
+    "sha": "3f86470ebf972bab0f160b300e30fad0ad1fdca8"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "3f86470ebf972bab0f160b300e30fad0ad1fdca8",
-  "source": "https://src.fedoraproject.org/rpms/less.git",
   "upstream_repo": "https://github.com/gwsw/less",
   "version": "710"
 }

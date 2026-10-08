@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libsepol.git",
+    "release": "2",
+    "sha": "ab5579407fdcf34850357293d090ea09e5b01cb9"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "ab5579407fdcf34850357293d090ea09e5b01cb9",
-  "source": "https://src.fedoraproject.org/rpms/libsepol.git",
   "upstream_repo": "https://github.com/SELinuxProject/selinux",
   "version": "3.11"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/jbigkit.git",
+    "release": "34",
+    "sha": "10207ddd940ed504bd12cbcdb123bf3119b17590"
+  },
   "modification_status": "clean",
-  "release": "34",
-  "sha": "10207ddd940ed504bd12cbcdb123bf3119b17590",
-  "source": "https://src.fedoraproject.org/rpms/jbigkit.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/jbigkit",
   "version": "2.1"
 }

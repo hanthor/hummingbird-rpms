@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/systemd.git",
+    "release": "1",
+    "sha": "94948d9db3fa19630276d3579d7d0f51b0128456"
+  },
   "modification_reason": "Drop 42668.patch (prefer openssl-4): libcrypto.so.4 is not yet available in the test environment",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "94948d9db3fa19630276d3579d7d0f51b0128456",
-  "source": "https://src.fedoraproject.org/rpms/systemd.git",
   "upstream_repo": "https://github.com/systemd/systemd",
   "version": "261.2"
 }

@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/dracut.git",
+    "release": "4",
+    "sha": "b1a1422b7da7699d5612d8ea4d51920f1252fa73"
+  },
   "modification_reason": "Added gorget source-pipeline.yaml (HUM-4622) with an accepted-checksums: entry curing a GitHub archive re-publication -- Fedora's own sources file still has the old checksum.",
   "modification_status": "modified",
-  "release": "4",
-  "sha": "b1a1422b7da7699d5612d8ea4d51920f1252fa73",
-  "source": "https://src.fedoraproject.org/rpms/dracut.git",
   "upstream_repo": "https://github.com/dracut-ng/dracut-ng",
   "version": "111"
 }

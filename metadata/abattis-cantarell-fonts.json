@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/abattis-cantarell-fonts.git",
+    "release": "18",
+    "sha": "c139a6182afdae2b8dd8ccf17d20ae08da0db1c2"
+  },
   "modification_status": "clean",
-  "release": "18",
-  "sha": "c139a6182afdae2b8dd8ccf17d20ae08da0db1c2",
-  "source": "https://src.fedoraproject.org/rpms/abattis-cantarell-fonts.git",
   "upstream_repo": "https://gitlab.gnome.org/GNOME/cantarell-fonts",
   "version": "0.301"
 }

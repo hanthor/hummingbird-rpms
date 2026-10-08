@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/kubernetes1.36.git",
+    "sha": "a49ed80164c9c5bafe0f75ec62bd1a983d35ff1f"
+  },
   "modification_reason": "Update to upstream version 1.36.5",
   "modification_status": "modified",
   "release_monitoring_project_id": 10954,
-  "sha": "a49ed80164c9c5bafe0f75ec62bd1a983d35ff1f",
-  "source": "https://src.fedoraproject.org/rpms/kubernetes1.36.git",
   "track_upstream": "1.36",
   "upstream_branch": "release-1.36",
   "upstream_repo": "https://github.com/kubernetes/kubernetes",

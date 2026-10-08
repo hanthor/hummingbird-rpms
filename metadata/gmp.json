@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gmp.git",
+    "release": "6",
+    "sha": "31c0c024883dd7f4bc3d86281be802993a131ef0"
+  },
   "modification_status": "clean",
-  "release": "6",
-  "sha": "31c0c024883dd7f4bc3d86281be802993a131ef0",
-  "source": "https://src.fedoraproject.org/rpms/gmp.git",
   "upstream_repo": "https://git.savannah.nongnu.org/git/gmp.git",
   "version": "6.3.0"
 }

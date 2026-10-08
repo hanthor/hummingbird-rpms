@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/pyproject-rpm-macros.git",
+    "release": "1",
+    "sha": "dcb7c4300a1b023255d8c2d2c968a413a6148dfc"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "dcb7c4300a1b023255d8c2d2c968a413a6148dfc",
-  "source": "https://src.fedoraproject.org/rpms/pyproject-rpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/pyproject-rpm-macros",
   "version": "1.23.2"
 }

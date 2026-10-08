@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/shadow-utils.git",
+    "release": "1",
+    "sha": "103ee1cc475003e8c32e3f54792aaca0cef33250"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "103ee1cc475003e8c32e3f54792aaca0cef33250",
-  "source": "https://src.fedoraproject.org/rpms/shadow-utils.git",
   "upstream_repo": "https://github.com/shadow-maint/shadow",
   "version": "4.20.0"
 }

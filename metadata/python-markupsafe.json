@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-markupsafe.git",
+    "release": "10",
+    "sha": "d993cd3a231dea976c58f61d0b3559337fe615a6"
+  },
   "modification_status": "clean",
-  "release": "10",
-  "sha": "d993cd3a231dea976c58f61d0b3559337fe615a6",
-  "source": "https://src.fedoraproject.org/rpms/python-markupsafe.git",
   "upstream_repo": "https://github.com/pallets/markupsafe",
   "version": "3.0.2"
 }

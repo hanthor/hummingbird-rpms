@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libgit2_1.9.git",
+    "release": "3",
+    "sha": "017811bb7054950ffc2acb6cfcabdc1d2ecf17de"
+  },
   "modification_status": "clean",
-  "release": "3",
   "release_monitoring_project_id": 1627,
-  "sha": "017811bb7054950ffc2acb6cfcabdc1d2ecf17de",
-  "source": "https://src.fedoraproject.org/rpms/libgit2_1.9.git",
   "track_upstream": "1.9",
   "upstream_repo": "https://github.com/libgit2/libgit2",
   "version": "1.9.7"

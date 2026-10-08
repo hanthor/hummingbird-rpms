@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/go-fdo-client.git",
+    "release": "2",
+    "sha": "e6466c251f8655ce653aca3387a6ec42afcc5934"
+  },
   "modification_reason": "bump vendored golang.org/x/text to v0.39.0 for CVE-2026-56852",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "e6466c251f8655ce653aca3387a6ec42afcc5934",
-  "source": "https://src.fedoraproject.org/rpms/go-fdo-client.git",
   "upstream_repo": "https://github.com/fido-device-onboard/go-fdo-client",
   "version": "1.0.0"
 }

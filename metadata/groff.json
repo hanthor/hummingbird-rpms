@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/groff.git",
+    "release": "1",
+    "sha": "0047e4ca88fa597fdfe8810ada838d75e5496adb"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "0047e4ca88fa597fdfe8810ada838d75e5496adb",
-  "source": "https://src.fedoraproject.org/rpms/groff.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/groff.git",
   "version": "1.24.2"
 }
