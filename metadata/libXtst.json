@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "HUM-8708: CVE-2026-94286",
+  "modification_status": "modified",
   "release": "5",
   "sha": "18e4acaf15db4573f8ce5051536386cda9984cef",
   "source": "https://src.fedoraproject.org/rpms/libXtst.git",
