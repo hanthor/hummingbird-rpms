@@ -1259,3 +1259,33 @@ class TestInvalidMetadataError:
         error = InvalidMetadataError(result)
         assert error.result is result
         assert str(len(result.violations)) in str(error)
+
+
+class TestToDict:
+    def test_clean_round_trips(self) -> None:
+        metadata = CleanPackageMetadata(fedora=clean_fedora(), **base_kwargs())
+        d = metadata.to_dict()
+        assert d["version"] == "5.4.3"
+        assert d["modification_status"] == "clean"
+        assert d["fedora"]["release"] == "3"
+        assert d["upstream_repo"] == "https://git.savannah.gnu.org/git/bash.git"
+
+    def test_independent_has_no_fedora(self) -> None:
+        metadata = IndependentPackageMetadata(**base_kwargs())
+        d = metadata.to_dict()
+        assert d["modification_status"] == "independent"
+        assert "fedora" not in d
+
+    def test_modified_fedora_includes_reason(self) -> None:
+        clean = CleanPackageMetadata(fedora=clean_fedora(), **base_kwargs())
+        modified = clean.to_modified_fedora(reason="backport CVE fix")
+        d = modified.to_dict()
+        assert d["modification_status"] == "modified"
+        assert d["modification_reason"] == "backport CVE fix"
+        assert "release" in d["fedora"]
+
+    def test_optional_fields_omitted_when_none(self) -> None:
+        metadata = IndependentPackageMetadata(**base_kwargs())
+        d = metadata.to_dict()
+        assert "track_upstream" not in d
+        assert "release_monitoring_project_id" not in d

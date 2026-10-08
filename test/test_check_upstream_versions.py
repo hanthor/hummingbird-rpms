@@ -50,6 +50,21 @@ def workdir(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _base_metadata(name: str, version: str) -> dict:
+    """Minimum valid metadata for the hum.meta library."""
+    return {
+        'modification_status': 'clean',
+        'version': version,
+        'upstream_repo': 'https://example.com',
+        'fedora': {
+            'git_url': f'https://src.fedoraproject.org/rpms/{name}',
+            'branch': 'rawhide',
+            'sha': 'abc123',
+            'release': '1',
+        },
+    }
+
+
 def _create_package(workdir: Path, name: str, version: str,
                     sources: dict | None = None,
                     metadata: dict | None = None) -> Path:
@@ -60,7 +75,8 @@ def _create_package(workdir: Path, name: str, version: str,
         name: Package name
         version: Package version
         sources: Optional dict mapping filename -> hash for the sources file
-        metadata: Optional metadata dict (written to metadata/<name>.json)
+        metadata: Optional metadata dict merged onto a valid base
+                  (written to metadata/<name>.json)
 
     Returns:
         Path to the package directory
@@ -87,9 +103,13 @@ Test package
         (pkg_dir / 'sources').write_text('\n'.join(lines) + '\n')
 
     if metadata is not None:
+        merged = _base_metadata(name, version)
+        merged.update(metadata)
+        if merged.get('modification_status') == 'independent':
+            merged.pop('fedora', None)
         meta_file = workdir / 'metadata' / f'{name}.json'
         with open(meta_file, 'w') as f:
-            json.dump(metadata, f, indent=2, sort_keys=True)
+            json.dump(merged, f, indent=2, sort_keys=True)
             f.write('\n')
 
     return pkg_dir
@@ -3657,7 +3677,9 @@ def test_main_sudo_current_patchlevel_is_noop(
 ) -> None:
     """--update must not rewrite Fedora's spec or download p2p2 sources."""
     pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
-        'version': '1.9.17', 'release': '16.p2',
+        'version': '1.9.17',
+        'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/sudo',
+                   'branch': 'rawhide', 'sha': 'abc123', 'release': '16.p2'},
         'track_upstream': 'latest', 'release_monitoring_project_id': 4906,
     })
     spec_file = pkg_dir / 'sudo.spec'

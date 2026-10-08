@@ -899,6 +899,12 @@ class PackageMetadata(abc.ABC):
             )
         return self
 
+    def to_dict(self) -> dict[str, object]:
+        """Serializes this metadata to a plain dict matching the on-disk JSON shape."""
+        from .repository import _to_raw_dict  # noqa: PLC0415
+
+        return _to_raw_dict(self)
+
 
 class CleanPackageMetadata(PackageMetadata, _OnFedoraVersionMixin, _CanBecomeIndependentMixin):
     def __init__(self, *, fedora: FedoraOriginWithRelease, **base_kwargs: object) -> None:
