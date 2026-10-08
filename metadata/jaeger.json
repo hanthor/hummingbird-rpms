@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 371233,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/jaegertracing/jaeger",
-  "version": "2.21.0"
+  "version": "2.22.0"
 }
