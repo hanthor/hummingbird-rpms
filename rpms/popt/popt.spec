@@ -17,6 +17,8 @@ URL:            https://github.com/rpm-software-management/popt/
 Source0:        http://ftp.rpm.org/popt/releases/popt-1.x/%{name}-%{srcver}.tar.gz
 Patch1:         CVE-2026-18743.patch
 Patch2:         CVE-2026-18739.patch
+Patch3:         CVE-2026-18839-1.patch
+Patch4:         CVE-2026-18839-2.patch
 BuildRequires:  gcc
 BuildRequires:  gettext
 BuildRequires:  make
