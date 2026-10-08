@@ -45,7 +45,7 @@
 # Version from node-v22.23.3/deps/undici/src/package.json
 %nodejs_define_version nodejs-undici 6.28.1
 # Version from node-v22.23.3/deps/npm/package.json
-%nodejs_define_version npm 2:10.9.9-%{nodejs_subpackage_release}
+%nodejs_define_version npm 1:10.9.9-%{nodejs_subpackage_release}
 # Version from node-v22.23.3/deps/sqlite/sqlite3.h
 %nodejs_define_version sqlite 3.51.3
 # Version from node-v22.23.3/deps/uvwasi/include/uvwasi.h
