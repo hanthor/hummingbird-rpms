@@ -5,7 +5,7 @@
 Summary: Core X11 protocol client library
 Name: libX11
 Version: 1.8.13
-Release: 3%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
+Release: 3%{?gitdate:.%{gitdate}git%{gitversion}}.1%{?dist}
 License: MIT AND X11
 URL: http://www.x.org
 
@@ -20,6 +20,9 @@ Source0: https://xorg.freedesktop.org/archive/individual/lib/%{name}-%{version}.
 
 Patch2: dont-forward-keycode-0.patch
 Patch0001: 0001-xkb-Check-the-keysym-range-in-_XkbReadKeyActions-CVE.patch
+Patch0003: 0003-cve-2026-94283-denial-service-out-of-bounds-read-xim.patch
+Patch0004: 0004-cve-2026-94284-denial-service-out-of-bounds-read-xim.patch
+Patch0005: 0005-cve-2026-94285-denial-service-out-of-bounds-read-xim.patch
 
 BuildRequires: libtool
 BuildRequires: make
