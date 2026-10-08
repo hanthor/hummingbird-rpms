@@ -10,7 +10,7 @@
 
 Name: hdf5
 Version: 2.2.0
-Release: 0.1.2%{?dist}
+Release: 0.1.3%{?dist}
 Summary: A general purpose library and file format for storing scientific data
 License: BSD-3-Clause
 URL: https://www.hdfgroup.org/solutions/hdf5/
@@ -36,6 +36,11 @@ Patch: hdf5-CVE-2026-19025.patch
 # CVE-2026-19026, CVE-2026-19027, CVE-2026-19028
 # https://github.com/HDFGroup/hdf5/pull/6497
 Patch: hdf5-CVE-2026-19026-19027-19028.patch
+# Fix NULL pointer dereference in H5Pget_fill_value via malformed fill value
+# and SIGSEGV in render_bin_output for vlen binary output
+# CVE-2026-19024
+# https://github.com/HDFGroup/hdf5/pull/6507
+Patch: hdf5-CVE-2026-19024.patch
 
 BuildRequires: cmake
 BuildRequires: gcc-gfortran
