@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -218,38 +219,146 @@ EOF
     )
 
 
-def test_scheduled_notification_labels_upstream_warnings(tmp_path: Path) -> None:
-    """Warning-only runs retain a useful, correctly labeled Slack notification."""
+def _schedule_notifications() -> yaml.SequenceNode:
     config = yaml.compose((ROOT / '.gitlab-ci.yml').read_text())
     assert isinstance(config, yaml.MappingNode)
     notifications = next(value for key, value in config.value
                          if key.value == '.notify_schedule_result')
     assert isinstance(notifications, yaml.SequenceNode)
+    # Both scheduled jobs must use the same tested notification hook.
+    for job_name in ('upstream_version_update', 'dist_git_update'):
+        job = next(value for key, value in config.value if key.value == job_name)
+        assert isinstance(job, yaml.MappingNode)
+        after_script = next(value for key, value in job.value if key.value == 'after_script')
+        assert after_script is notifications
+    return notifications
+
+
+def _run_schedule_notification(
+    tmp_path: Path,
+    *,
+    job_name: str = 'upstream_version_update',
+    status: str = 'success',
+    source: str = 'schedule',
+    webhook: str = 'https://slack.example/webhook',
+    files: dict[str, str] | None = None,
+) -> tuple[subprocess.CompletedProcess[str], list[str]]:
+    notifications = _schedule_notifications()
     script = notifications.value[0]
     assert isinstance(script, yaml.ScalarNode)
     repo = tmp_path / 'repo'
     repo.mkdir()
-    summary = '1 upstream warning(s) across 1 package(s); see job log for details'
-    (repo / '.ci_upstream_update_warnings.txt').write_text(summary + '\n')
+    for name, content in (files or {}).items():
+        (repo / name).write_text(content + '\n')
     bin_dir, curl_log = _create_fake_curl(tmp_path)
     env = os.environ.copy()
     env.update({
         'PATH': f"{bin_dir}:{env['PATH']}", 'CURL_LOG': str(curl_log),
-        'CI_PIPELINE_SOURCE': 'schedule', 'CI_JOB_STATUS': 'success',
-        'CI_JOB_NAME': 'upstream_version_update', 'CI_JOB_URL': 'https://gitlab.example/job/1',
-        'SLACK_WEBHOOK_URL': 'https://slack.example/webhook',
+        'CI_PIPELINE_SOURCE': source, 'CI_JOB_STATUS': status,
+        'CI_JOB_NAME': job_name, 'CI_JOB_URL': 'https://gitlab.example/job/1',
+        'SLACK_WEBHOOK_URL': webhook,
     })
 
     result = subprocess.run(['bash', '-eu', '-c', script.value], cwd=repo,
                             env=env, capture_output=True, text=True, check=False)
 
+    calls = [json.loads(line) for line in curl_log.read_text().splitlines()] \
+        if curl_log.exists() else []
+    messages = [json.loads(call[call.index('--data') + 1])['text'] for call in calls]
+    return result, messages
+
+
+@pytest.mark.parametrize('job_name', ['upstream_version_update', 'dist_git_update'])
+@pytest.mark.parametrize('with_warnings', [False, True])
+def test_successful_schedule_sends_plain_heartbeat(
+    tmp_path: Path, job_name: str, with_warnings: bool,
+) -> None:
+    """Every success sends a heartbeat, without routine warning details."""
+    files = {'.ci_upstream_update_warnings.txt': '37 warnings across 7 packages'} \
+        if with_warnings else {}
+    result, messages = _run_schedule_notification(tmp_path, job_name=job_name, files=files)
+
     assert result.returncode == 0, result.stderr
-    calls = [json.loads(line) for line in curl_log.read_text().splitlines()]
-    assert len(calls) == 1
-    payload = json.loads(calls[0][calls[0].index('--data') + 1])
-    assert f'Upstream warnings: {summary}' in payload['text']
-    assert 'completed with warnings' in payload['text']
-    assert 'Source availability warnings' not in payload['text']
+    assert messages == [
+        f'✅ {job_name} scheduled pipeline succeeded: https://gitlab.example/job/1'
+    ]
+    if with_warnings:
+        assert (tmp_path / 'repo' / '.ci_upstream_update_warnings.txt').read_text() == (
+            '37 warnings across 7 packages\n'
+        )
+
+
+@pytest.mark.parametrize('job_name', ['upstream_version_update', 'dist_git_update'])
+@pytest.mark.parametrize('with_warnings', [False, True])
+def test_failed_schedule_retains_actionable_details(
+    tmp_path: Path, job_name: str, with_warnings: bool,
+) -> None:
+    files = {'.ci_conflict_mrs.txt': 'https://gitlab.example/mr/1'}
+    if job_name == 'upstream_version_update':
+        files['.ci_upstream_update_failures.txt'] = 'protobuf (source download failed)'
+        files['.ci_upstream_update_draft_mrs.txt'] = 'https://gitlab.example/mr/2'
+        details = (
+            '\nUpstream package update/check failures:\n- protobuf (source download failed)'
+            '\nDraft MRs for failed upstream updates:\n- https://gitlab.example/mr/2'
+        )
+    else:
+        files['.ci_dist_git_update_failures.txt'] = 'sudo (MR creation failed)'
+        details = '\nFailed packages:\n- sudo (MR creation failed)'
+    if with_warnings:
+        files['.ci_upstream_update_warnings.txt'] = '37 warnings across 7 packages'
+    result, messages = _run_schedule_notification(
+        tmp_path, job_name=job_name, status='failed', files=files,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert messages == [
+        f'⚠️ {job_name} scheduled pipeline failed: https://gitlab.example/job/1'
+        '\nMRs needing manual resolution:\n- https://gitlab.example/mr/1'
+        + details
+    ]
+
+
+def test_failed_schedule_without_details_still_notifies(tmp_path: Path) -> None:
+    result, messages = _run_schedule_notification(tmp_path, status='failed')
+
+    assert result.returncode == 0, result.stderr
+    assert messages == [
+        '⚠️ upstream_version_update scheduled pipeline failed: https://gitlab.example/job/1'
+    ]
+
+
+@pytest.mark.parametrize('source', ['push', 'web', 'merge_request_event'])
+@pytest.mark.parametrize('status', ['success', 'failed'])
+def test_non_scheduled_run_does_not_notify(tmp_path: Path, source: str, status: str) -> None:
+    result, messages = _run_schedule_notification(
+        tmp_path, source=source, status=status,
+        files={'.ci_upstream_update_warnings.txt': '37 warnings across 7 packages'},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert messages == []
+
+
+@pytest.mark.parametrize('status', ['canceled', 'running', 'pending', 'skipped'])
+def test_unfinished_or_canceled_schedule_does_not_claim_success(
+    tmp_path: Path, status: str,
+) -> None:
+    result, messages = _run_schedule_notification(
+        tmp_path, status=status,
+        files={'.ci_upstream_update_warnings.txt': '37 warnings across 7 packages'},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert messages == []
+
+
+@pytest.mark.parametrize('status', ['success', 'failed'])
+def test_schedule_without_webhook_skips_notification(tmp_path: Path, status: str) -> None:
+    result, messages = _run_schedule_notification(tmp_path, status=status, webhook='')
+
+    assert result.returncode == 0, result.stderr
+    assert messages == []
+    assert 'SLACK_WEBHOOK_URL is not set, skipping Slack notification' in result.stdout
 
 
 def test_successful_update_closes_empty_diagnostic_mr_and_deletes_branch(

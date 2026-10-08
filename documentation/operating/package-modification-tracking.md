@@ -221,8 +221,8 @@ allowed). Use `version_suffix_strip` to remove it before comparison and update:
 Some upstream projects publish source tarballs independently of tag creation, and Anitya may report
 a version before the tarball is available. Use `source_availability_check` to HEAD-probe one or more
 required source URLs before selecting a version. Versions whose source returns 404 are skipped in
-favour of the next available version. The skip is reported as a warning in the scheduled-job summary
-and Slack notification, but does not fail the update job.
+favour of the next available version. The skip is reported as a warning in the scheduled-job log
+and summary, but does not fail the update job. Routine warnings are omitted from Slack notifications.
 
 The general HTTP probe accepts a non-empty `urls` list. Every URL must be available. URL templates
 may use `${VERSION}`, `${UPSTREAM_REPO}`, and `${TRACK_UPSTREAM}`:

@@ -107,6 +107,16 @@ package update fails after a new version has been identified, it creates (or reu
 diagnostic MR instead. The diagnostic MR includes the original error but no partial package
 changes, and must be resolved manually before a package update can be proposed.
 
+Both scheduled update jobs send a Slack completion message when `SLACK_WEBHOOK_URL` is configured:
+success sends a plain success message, including when upstream warnings were logged, while failure
+includes actionable package failures and links to MRs needing attention. Routine upstream warnings
+remain in the job log and summary, not in Slack.
+
+These completion messages also act as a heartbeat. The notification runs in the job's `after_script`,
+so a job that never starts, or a runner failure before `after_script` can run, may send no message.
+A missing expected message is a signal to check the schedule and runner availability; it is not an
+automatic missed-run alert.
+
 ### CI validation
 
 GitLab CI runs validation jobs on every merge request:

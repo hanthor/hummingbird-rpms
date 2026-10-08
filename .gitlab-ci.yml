@@ -48,55 +48,53 @@ default:
 
 .notify_schedule_result: &notify_schedule_result
   - |
+    # Every completed scheduled job sends a heartbeat. Routine upstream
+    # warnings remain in the job log rather than turning success into an alert.
     if [ "$CI_PIPELINE_SOURCE" == "schedule" ] && \
-      { [ "$CI_JOB_STATUS" == "failed" ] || [ -s .ci_upstream_update_warnings.txt ]; }; then
+      { [ "$CI_JOB_STATUS" == "failed" ] || [ "$CI_JOB_STATUS" == "success" ]; }; then
       if [ -z "$SLACK_WEBHOOK_URL" ]; then
         echo "WARNING: SLACK_WEBHOOK_URL is not set, skipping Slack notification"
       else
         if [ "$CI_JOB_STATUS" == "failed" ]; then
           MSG="⚠️ ${CI_JOB_NAME} scheduled pipeline failed: ${CI_JOB_URL}"
-        else
-          MSG="⚠️ ${CI_JOB_NAME} scheduled pipeline completed with warnings: ${CI_JOB_URL}"
-        fi
-        # .ci_conflict_mrs.txt lists any MRs the job created that need manual
-        # conflict resolution (see e.g. ci/dist_git_update_multi_mr.sh); the
-        # job can still fail overall even when such MRs were created.
-        if [ -s .ci_conflict_mrs.txt ]; then
-          # $'\n' is a real newline; a plain "\n" inside double quotes is the
-          # literal two characters backslash+n, which jq would then escape as
-          # the literal text "\n" in Slack instead of a line break.
-          MSG="${MSG}"$'\n'"MRs needing manual resolution:"
-          while IFS= read -r line; do
-            MSG="${MSG}"$'\n'"- ${line}"
-          done < .ci_conflict_mrs.txt
-        fi
-        # The upstream-version wrapper records package-level checker failures
-        # here. The job URL above retains the full diagnostic; Slack gets the
-        # concise list needed to identify which packages need attention.
-        if [ -s .ci_upstream_update_failures.txt ]; then
-          MSG="${MSG}"$'\n'"Upstream package update/check failures:"
-          while IFS= read -r line; do
-            MSG="${MSG}"$'\n'"- ${line}"
-          done < .ci_upstream_update_failures.txt
-        fi
-        if [ -s .ci_upstream_update_draft_mrs.txt ]; then
-          MSG="${MSG}"$'\n'"Draft MRs for failed upstream updates:"
-          while IFS= read -r line; do
-            MSG="${MSG}"$'\n'"- ${line}"
-          done < .ci_upstream_update_draft_mrs.txt
-        fi
-        if [ -s .ci_upstream_update_warnings.txt ]; then
-          WARNING_SUMMARY=$(<.ci_upstream_update_warnings.txt)
-          MSG="${MSG}"$'\n'"Upstream warnings: ${WARNING_SUMMARY}"
-        fi
+          # .ci_conflict_mrs.txt lists any MRs the job created that need manual
+          # conflict resolution (see e.g. ci/dist_git_update_multi_mr.sh); the
+          # job can still fail overall even when such MRs were created.
+          if [ -s .ci_conflict_mrs.txt ]; then
+            # $'\n' is a real newline; a plain "\n" inside double quotes is the
+            # literal two characters backslash+n, which jq would then escape as
+            # the literal text "\n" in Slack instead of a line break.
+            MSG="${MSG}"$'\n'"MRs needing manual resolution:"
+            while IFS= read -r line; do
+              MSG="${MSG}"$'\n'"- ${line}"
+            done < .ci_conflict_mrs.txt
+          fi
+          # The upstream-version wrapper records package-level checker failures
+          # here. The job URL above retains the full diagnostic; Slack gets the
+          # concise list needed to identify which packages need attention.
+          if [ -s .ci_upstream_update_failures.txt ]; then
+            MSG="${MSG}"$'\n'"Upstream package update/check failures:"
+            while IFS= read -r line; do
+              MSG="${MSG}"$'\n'"- ${line}"
+            done < .ci_upstream_update_failures.txt
+          fi
+          if [ -s .ci_upstream_update_draft_mrs.txt ]; then
+            MSG="${MSG}"$'\n'"Draft MRs for failed upstream updates:"
+            while IFS= read -r line; do
+              MSG="${MSG}"$'\n'"- ${line}"
+            done < .ci_upstream_update_draft_mrs.txt
+          fi
 
-        # dist_git_update_multi_mr.sh records package updates and MR creation
-        # failures separately from conflict MRs so both are visible in Slack.
-        if [ -s .ci_dist_git_update_failures.txt ]; then
-          MSG="${MSG}"$'\n'"Failed packages:"
-          while IFS= read -r line; do
-            MSG="${MSG}"$'\n'"- ${line}"
-          done < .ci_dist_git_update_failures.txt
+          # dist_git_update_multi_mr.sh records package updates and MR creation
+          # failures separately from conflict MRs so both are visible in Slack.
+          if [ -s .ci_dist_git_update_failures.txt ]; then
+            MSG="${MSG}"$'\n'"Failed packages:"
+            while IFS= read -r line; do
+              MSG="${MSG}"$'\n'"- ${line}"
+            done < .ci_dist_git_update_failures.txt
+          fi
+        else
+          MSG="✅ ${CI_JOB_NAME} scheduled pipeline succeeded: ${CI_JOB_URL}"
         fi
         curl -f --show-error -X POST -H 'Content-Type: application/json' \
           --data "$(jq -n --arg text "$MSG" '{text: $text}')" \
