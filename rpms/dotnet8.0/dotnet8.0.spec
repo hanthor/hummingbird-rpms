@@ -12,16 +12,16 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.30
-%global runtime_version 8.0.30
-%global aspnetcore_runtime_version 8.0.30
-%global sdk_version 8.0.130
+%global host_version 8.0.31
+%global runtime_version 8.0.31
+%global aspnetcore_runtime_version 8.0.31
+%global sdk_version 8.0.131
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
 # upstream can produce releases with a different tag than the SDK version
-%global upstream_tag v8.0.130
+%global upstream_tag v8.0.131
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
 %global host_rpm_version %{host_version}
@@ -97,8 +97,6 @@ Patch5:         runtime-openssl-sha1.patch
 Patch6:         runtime-119706-clang-21.patch
 # TODO send upstream
 Patch7:         runtime-clang-20-support.patch
-
-
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
 
 

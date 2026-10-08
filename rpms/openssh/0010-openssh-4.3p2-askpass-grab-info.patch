@@ -1,7 +1,7 @@
-From cfdb0456fe83c0df2dacefa8cbe31cde96eca0cf Mon Sep 17 00:00:00 2001
+From 68609eb845515333fe86756dd0d0f1fe866943ef Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 10/54] openssh-4.3p2-askpass-grab-info
+Subject: [PATCH 10/53] openssh-4.3p2-askpass-grab-info
 
 #https://bugzilla.redhat.com/show_bug.cgi?id=198332
 ---

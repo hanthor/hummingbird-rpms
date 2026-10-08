@@ -25,7 +25,7 @@ start() {
 		/usr/sbin/arptables-restore < $ARPTABLES_CONFIG && \
 			success || \
 			failure
-		touch /var/lock/subsys/arptables
+		touch /var/lock/arptables
 	else
 		failure
 		echo "Configuration file /etc/sysconfig/arptables missing"
@@ -43,7 +43,7 @@ stop() {
 		arptables -P OUTPUT ACCEPT && \
 		success || \
 		failure
-	rm -f /var/lock/subsys/arptables
+	rm -f /var/lock/arptables
 }
 
 case "$1" in
@@ -63,7 +63,7 @@ restart|reload)
 	;;
 
 condrestart|try-restart|force-reload)
-	[ -e /var/lock/subsys/arptables ] && start
+	[ -e /var/lock/arptables ] && start
 	;;
 
 *)

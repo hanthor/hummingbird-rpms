@@ -2,7 +2,7 @@
 
 Name:           sdbus-cpp
 Version:        2.3.1
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        High-level C++ D-Bus library
 
 License:        LGPL-2.1-only

@@ -54,8 +54,8 @@ and any associated source files or patches.
 See [Rebuilding Packages][rebuilding] and [Updating Dist-git
 Packages][updating] for detailed workflows.
 
-[rebuilding]: /l/rebuilding-packages
-[updating]: /l/updating-dist-git-packages
+[rebuilding]: https://hummingbird-project.io/l/rebuilding-packages
+[updating]: https://hummingbird-project.io/l/updating-dist-git-packages
 
 ### Package metadata
 
@@ -90,8 +90,8 @@ See [Package Metadata Fields][metadata-fields] for `modification_status` and `re
 configuration, and [Package Modification Tracking][mod-tracking] for managing modification
 status day to day.
 
-[metadata-fields]: /l/package-metadata-fields
-[mod-tracking]: /l/package-modification-tracking
+[metadata-fields]: https://hummingbird-project.io/l/package-metadata-fields
+[mod-tracking]: https://hummingbird-project.io/l/package-modification-tracking
 
 ## Stage 2: Merge Request & Validation
 
@@ -175,8 +175,8 @@ also trigger a `setup` build on pull requests, validating build infrastructure
 changes before they reach main.
 
 [pac]: https://pipelinesascode.com/
-[pr-template]: ../../.tekton/rpms-on-pull-request.yaml.j2
-[pr-pipeline]: ../../.tekton/rpms-on-pull-request.yaml
+[pr-template]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/.tekton/rpms-on-pull-request.yaml.j2
+[pr-pipeline]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/.tekton/rpms-on-pull-request.yaml
 
 ### Build process
 

@@ -3,9 +3,10 @@
   "modification_reason": "Update to upstream version 6.1.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 10931,
-  "sha": "9cbfbc001ae4d6304483597b0f209c66bfa19008",
+  "sha": "a4c6aa2621fc217fad3e9b1de4e3de81fa5a2487",
   "source": "https://src.fedoraproject.org/rpms/pmix.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/openpmix/openpmix",
-  "version": "6.1.0"
+  "version": "6.1.0",
+  "release": "1"
 }

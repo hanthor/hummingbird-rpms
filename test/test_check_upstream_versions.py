@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import tarfile
 import types
 import urllib.error
 from email.message import Message
@@ -168,6 +169,35 @@ def test_parse_spec_version_multiple_specs(cuv_module, tmp_path: Path) -> None:
     (tmp_path / 'a.spec').write_text('Name: a\nVersion: 1\n')
     (tmp_path / 'b.spec').write_text('Name: b\nVersion: 2\n')
     assert cuv_module.parse_spec_version(tmp_path) is None
+
+
+@pytest.mark.parametrize(('macro', 'expected'), [
+    ('%global extraver p2\n', '1.9.17p2'),
+    ('%global patchlevel 2\n%global extraver p%{patchlevel}\n', '1.9.17p2'),
+    ('#global extraver p2\n', '1.9.17'),
+    ('%global extraver %{nil}\n', '1.9.17'),
+    ('', '1.9.17'),
+])
+def test_parse_spec_version_sudo_extraver(
+    cuv_module, workdir: Path, macro: str, expected: str,
+) -> None:
+    """Sudo's upstream version includes only an active, expanded extraver."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17')
+    spec_file = pkg_dir / 'sudo.spec'
+    spec_file.write_text(macro + spec_file.read_text())
+
+    assert cuv_module.parse_spec_version(pkg_dir) == expected
+    # RPM metadata must continue to use the actual Version and Release tags.
+    assert cuv_module.parse_spec_version_release(pkg_dir) == ('1.9.17', '1')
+
+
+def test_parse_spec_version_other_extraver(cuv_module, workdir: Path) -> None:
+    """An unrelated package's extraver is not necessarily a source suffix."""
+    pkg_dir = _create_package(workdir, 'pkg', '1.9.17')
+    spec_file = pkg_dir / 'pkg.spec'
+    spec_file.write_text('%global extraver .ea\n' + spec_file.read_text())
+
+    assert cuv_module.parse_spec_version(pkg_dir) == '1.9.17'
 
 
 #
@@ -427,6 +457,35 @@ def test_check_package_version_up_to_date(cuv_module, workdir: Path) -> None:
     assert result.upstream_version == '2.0'
 
 
+@pytest.mark.parametrize(('upstream', 'has_update'), [
+    ('1.9.17p1', False),
+    ('1.9.17p2', False),
+    ('1.9.17p3', True),
+    ('1.9.18', True),
+])
+def test_check_package_version_sudo_patchlevel(
+    cuv_module, workdir: Path, upstream: str, has_update: bool,
+) -> None:
+    """Honor sudo's current patchlevel without suppressing real updates."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
+        'version': '1.9.17', 'release_monitoring_project_id': 4906,
+    })
+    spec_file = pkg_dir / 'sudo.spec'
+    spec_file.write_text('%global extraver p2\n' + spec_file.read_text())
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': upstream, 'stable_versions': [upstream], 'id': 4906,
+    }):
+        result = cuv_module.check_package_version('sudo')
+
+    assert result.current_version == '1.9.17p2'
+    assert result.upstream_version == upstream
+    assert result.has_update is has_update
+    assert result.error is None
+
+
 def test_check_package_version_not_found(cuv_module, workdir: Path) -> None:
     """Handles package not found in Anitya."""
     _create_package(workdir, 'pkg', '1.0')
@@ -563,7 +622,7 @@ def test_check_package_version_track_version_filters_stable(cuv_module, workdir:
 
 
 def test_check_package_version_track_version_no_match(cuv_module, workdir: Path) -> None:
-    """Reports no upstream version when no stable versions match track_version."""
+    """Warns when reported releases do not match the tracked version line."""
     _create_package(workdir, 'pkg', '1.24.0',
                     metadata={'version': '1.24.0', 'release': '1',
                               'track_upstream': '1.24'})
@@ -583,7 +642,187 @@ def test_check_package_version_track_version_no_match(cuv_module, workdir: Path)
     # version field (2.0) also doesn't match 1.24 prefix
     assert result.upstream_version is None
     assert result.has_update is False
-    assert result.error == "No upstream version reported by Anitya"
+    assert result.error is None
+    assert result.warnings == [
+        "skipped upstream check: Anitya reported no version matching track_upstream '1.24'",
+    ]
+
+
+@pytest.mark.parametrize('response', [
+    {'version': '3.14.8', 'stable_versions': ['3.14.8']},
+    {'version': '3.14.8', 'stable_versions': []},
+    {'version': None, 'stable_versions': ['3.14.8']},
+    {'version': '3.150.0', 'stable_versions': ['3.150.0']},
+])
+def test_check_package_version_missing_tracked_release_warns(
+    cuv_module, workdir: Path, response: dict, caplog,
+) -> None:
+    """Other release lines are not errors or eligible update candidates."""
+    _create_package(workdir, 'python3.15', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value=response):
+        result = cuv_module.check_package_version('python3.15')
+
+    assert result.current_version == '3.15.0~rc2'
+    assert result.upstream_version is None
+    assert result.has_update is False
+    assert result.error is None
+    assert result.warnings == [
+        "skipped upstream check: Anitya reported no version matching track_upstream '3.15'",
+    ]
+    assert result.warnings[0] in caplog.text
+
+
+@pytest.mark.parametrize('response', [{}, {'version': None, 'stable_versions': []}])
+@pytest.mark.parametrize('track', ['3.15', 'latest'])
+def test_check_package_version_empty_response_remains_error(
+    cuv_module, workdir: Path, response: dict, track: str,
+) -> None:
+    """An empty upstream response is not proof of a missing release line."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': track, 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value=response):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == 'No upstream version reported by Anitya'
+    assert result.warnings == []
+    assert result.has_update is False
+
+
+@pytest.mark.parametrize('failure', [
+    ValueError('Project not found'),
+    ConnectionError('Connection failed'),
+    urllib.error.URLError('Request timed out'),
+    urllib.error.HTTPError('https://example.com', 429, 'Rate limited', Message(), None),
+    urllib.error.HTTPError('https://example.com', 503, 'Unavailable', Message(), None),
+    json.JSONDecodeError('Malformed upstream JSON', '', 0),
+])
+def test_check_package_version_tracked_lookup_failure_remains_error(
+    cuv_module, workdir: Path, failure: Exception,
+) -> None:
+    """Lookup failures remain errors even when a version line is pinned."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', side_effect=failure):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == str(failure)
+    assert result.warnings == []
+    assert result.has_update is False
+
+
+def test_check_package_version_tracked_matching_fallback_is_selected(
+    cuv_module, workdir: Path,
+) -> None:
+    """A matching fallback remains eligible even if stable releases mismatch."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': '3.15.0', 'stable_versions': ['3.14.8'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.upstream_version == '3.15.0'
+    assert result.has_update is True
+    assert result.error is None
+    assert result.warnings == []
+
+
+def test_check_package_version_untransformable_tracked_versions_remain_error(
+    cuv_module, workdir: Path,
+) -> None:
+    """Discarding invalid version data is not a missing-release warning."""
+    _create_package(workdir, 'pkg', '21.0.11.0.10', metadata={
+        'track_upstream': '21', 'upstream_version_transform': 'openjdk_to_rpm',
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', return_value={
+        'version': 'invalid', 'stable_versions': ['invalid'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error == 'No upstream version reported by Anitya'
+    assert result.warnings == []
+
+
+def test_check_package_version_tracked_programming_error_propagates(
+    cuv_module, workdir: Path,
+) -> None:
+    """Unexpected errors must not be hidden as warnings or skipped checks."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={'track_upstream': '3.15'})
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', side_effect=TypeError('lookup bug')), \
+         pytest.raises(TypeError, match='lookup bug'):
+        cuv_module.check_package_version('pkg')
+
+
+def test_check_package_version_unpublished_tracked_source_keeps_warning_reason(
+    cuv_module, workdir: Path,
+) -> None:
+    """An unpublished matching release is not mislabeled as an absent line."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15',
+        'source_availability_check': {
+            'type': 'http', 'urls': ['https://example.com/pkg-${VERSION}.tar.gz'],
+        },
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya', return_value={
+        'version': '3.15.0', 'stable_versions': ['3.15.0', '3.14.8'],
+    }), patch.object(cuv_module, '_check_source_exists', return_value=False):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error is None
+    assert result.has_update is False
+    assert result.warnings == [
+        'skipped upstream version 3.15.0: required source artifact is not published',
+    ]
+
+
+def test_check_package_version_gitlab_missing_tracked_release_warning(
+    cuv_module, workdir: Path,
+) -> None:
+    """The warning names the actual upstream provider."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'version_source': 'gitlab_tags',
+        'upstream_repo': 'https://gitlab.com/example/project',
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_gitlab_tags', return_value={
+        'version': '3.14.8', 'stable_versions': ['3.14.8'],
+    }):
+        result = cuv_module.check_package_version('pkg')
+
+    assert result.error is None
+    assert result.has_update is False
+    assert result.version_source == 'gitlab_tags'
+    assert result.warnings == [
+        "skipped upstream check: GitLab tags reported no version matching track_upstream '3.15'",
+    ]
 
 
 def test_check_package_version_track_version_exact_match(cuv_module, workdir: Path) -> None:
@@ -2146,6 +2385,195 @@ def test_run_gorget_pipeline_missing_declared_artifact(
 #
 
 
+@pytest.mark.parametrize(('source_text', 'patch_text', 'dropped'), [
+    ('old\nfixed\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', True),
+    ('old\n', '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n', False),
+])
+@pytest.mark.parametrize(('patch_name', 'filename'), [
+    ('fix.patch', 'fix.patch'),
+    ('grafana-yarn-cache-compression-%{version}.patch',
+     'grafana-yarn-cache-compression-2.0.patch'),
+    ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
+])
+def test_update_spec_version_checks_patches(
+    cuv_module, workdir: Path, source_text: str, patch_text: str, dropped: bool,
+    patch_name: str, filename: str,
+) -> None:
+    """Check expanded patch names against Source0, not the first downloaded archive."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
+        '%description', f'Patch1: {patch_name}\n\n%description',
+    ))
+    (pkg / filename).write_text(patch_text)
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text(source_text)
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    subprocess.run(['git', 'add', 'rpms/pkg/pkg.spec', f'rpms/pkg/{filename}'],
+                   cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package patch'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=[
+        'pkg-2.0-vendor.tar.bz2', 'pkg-2.0.tar.gz',
+    ]):
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    assert (pkg / filename).exists() is not dropped
+    assert (f'Patch1: {patch_name}' in spec.read_text()) is not dropped
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(a['action'] == 'delete' and a['file_path'] == f'rpms/pkg/{filename}'
+               for a in actions) is dropped
+
+
+@pytest.mark.parametrize(('patch_name', 'filename'), [
+    ('fix.patch', 'fix.patch'),
+    ('grafana-yarn-cache-compression-%{version}.patch',
+     'grafana-yarn-cache-compression-2.0.patch'),
+    ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
+])
+def test_update_spec_version_leaves_patch_applicability_to_build(
+    cuv_module, workdir: Path, patch_name: str, filename: str,
+) -> None:
+    """Non-upstreamed patches are retained without forward checks or application."""
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    spec = pkg / 'pkg.spec'
+    spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
+        '%description', f'Patch3: {patch_name}\n\n%description',
+    ))
+    (pkg / filename).write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('new\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
+         patch.object(cuv_module.subprocess, 'run', wraps=subprocess.run) as run:
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    patch_commands = [
+        invocation.args[0] for invocation in run.call_args_list
+        if invocation.args[0][:2] == ['git', 'apply']
+    ]
+    assert patch_commands == [['git', 'apply', '--check', '-R', str(pkg / filename)]]
+    assert (pkg / filename).exists()
+    assert f'Patch3: {patch_name}' in spec.read_text()
+
+
+def test_check_updated_patches_reports_expanded_missing_filename(
+    cuv_module, workdir: Path,
+) -> None:
+    """Expansion must not silently skip a genuinely missing patch."""
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '%description', 'Patch3: fix-%{version}.patch\n\n%description',
+    ))
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('old\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    with pytest.raises(RuntimeError, match=r'Patch3 \(fix-2\.0\.patch\) is missing'):
+        cuv_module._check_updated_patches('pkg')
+
+    assert 'Patch3: fix-%{version}.patch' in spec.read_text()
+
+
+def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:
+    """Earlier local patches must not hide a later patch already upstream."""
+    import dist_git
+
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '%description', 'Patch1: local.patch\nPatch2: upstream.patch\n\n%description',
+    ))
+    (pkg / 'local.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1,2 +1,2 @@\n-base\n+BASE\n fixed\n')
+    (pkg / 'upstream.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n base\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('base\nfixed\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    assert dist_git.detect_stale_patches(pkg, ['pkg-2.0.tar.gz']) == [
+        (2, 'upstream.patch'),
+    ]
+    cuv_module._check_updated_patches('pkg')
+    assert (pkg / 'local.patch').exists()
+    assert not (pkg / 'upstream.patch').exists()
+    assert 'Patch2:' not in spec.read_text()
+
+
+@pytest.mark.parametrize('workqueue', [False, True])
+@pytest.mark.parametrize('stale', [False, True])
+def test_upstream_update_stale_patch_requires_review(
+    cuv_module, workdir: Path, workqueue: bool, stale: bool,
+) -> None:
+    pkg = _create_package(workdir, 'pkg', '1.0', metadata={'version': '1.0'})
+    patch_file = pkg / 'fix.patch'
+    patch_file.write_text('patch')
+    subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add package'], cwd=workdir,
+                   check=True, stdout=subprocess.DEVNULL)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    result = cuv_module.VersionCheckResult('pkg', '1.0', '2.0', True)
+    args = types.SimpleNamespace(
+        verbose=False, quiet=True, json=True, packages=['pkg'], all=False,
+        update=True, workqueue=workqueue, distro='Fedora', delay=0,
+    )
+
+    def fake_update(_package: str, _version: str) -> list[str]:
+        if stale:
+            patch_file.unlink()
+        return []
+
+    old_log_level = cuv_module.logger.level
+    try:
+        with patch.object(cuv_module, 'check_package_version', return_value=result), \
+             patch.object(cuv_module, 'update_spec_version', side_effect=fake_update), \
+             patch.object(cuv_module, 'discard_package_changes'), \
+             patch.object(cuv_module.workqueue_submit, 'submit') as submit, \
+             pytest.raises(SystemExit):
+            cuv_module.run_check(args)
+    finally:
+        cuv_module.logger.setLevel(old_log_level)
+
+    if workqueue:
+        kwargs = submit.call_args.kwargs
+        assert kwargs['draft'] is stale
+        assert kwargs['auto_merge'] is not stale
+        assert kwargs['mr_title'].startswith('STALE PATCH:') is stale
+        assert any(a['action'] == 'delete' and a['file_path'] == 'rpms/pkg/fix.patch'
+                   for a in kwargs['file_actions']) is stale
+    else:
+        subject = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%s'], cwd=workdir, text=True)
+        assert subject.startswith('STALE PATCH:') is stale
+
+
 def test_update_spec_version(cuv_module, workdir: Path) -> None:
     """Updates spec version, downloads sources, marks modified."""
     _create_package(workdir, 'pkg', '1.0',
@@ -2565,6 +2993,50 @@ def test_update_spec_version_pipeline_takes_priority_over_hooks(
     )
 
 
+def test_update_spec_version_pipeline_keeps_update_spec_hook(
+    cuv_module, workdir: Path,
+) -> None:
+    """A source pipeline replaces source download, not the persistent spec hook."""
+    pkg_dir = _create_package(
+        workdir, 'pkg', '1.0',
+        sources={'pkg-1.0.tar.gz': 'oldhash'},
+        metadata={'version': '1.0', 'release': '1'},
+    )
+    spec_path = pkg_dir / 'pkg.spec'
+    spec_path.write_text(
+        spec_path.read_text().replace(
+            'Version: 1.0',
+            '%global pkg_version 1.0\nVersion: %{pkg_version}',
+        )
+    )
+
+    import yaml
+    (workdir / 'metadata' / 'pkg.update-hooks.yaml').write_text(
+        yaml.dump({
+            'update_spec': (
+                'sed -Ei "s/^%global pkg_version .*/%global pkg_version '
+                '${UPDATE_NEW_VERSION}/" "${UPDATE_SPEC_FILE}"'
+            ),
+        })
+    )
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch:\n  - type: spec-update\n')
+
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module.ROOT_DIR = workdir
+
+    with patch.object(cuv_module, '_run_gorget_pipeline', return_value=[]) \
+            as mock_pipeline:
+        cuv_module.update_spec_version('pkg', '2.0')
+
+    spec_content = spec_path.read_text()
+    assert '%global pkg_version 2.0' in spec_content
+    assert 'Version: %{pkg_version}' in spec_content
+    assert 'Release: 1%{?dist}' in spec_content
+    mock_pipeline.assert_called_once_with('pkg', '1.0', '2.0', pipeline_file)
+
+
 def test_update_spec_version_skip_pipeline_forces_legacy_path(
     cuv_module, workdir: Path,
 ) -> None:
@@ -2714,6 +3186,77 @@ def test_cli_check_json_reports_source_warnings(
     ]
 
 
+@pytest.mark.parametrize('json_output', [True, False])
+def test_cli_missing_tracked_release_warns_without_updating(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str], json_output: bool,
+) -> None:
+    """A missing tracked release exits zero, warns, and never applies an update."""
+    pkg_dir = _create_package(workdir, 'python3.15', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    spec_file = pkg_dir / 'python3.15.spec'
+    original = spec_file.read_text()
+    metadata_file = workdir / 'metadata' / 'python3.15.json'
+    original_metadata = metadata_file.read_text()
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    argv = ['check_upstream_versions.py', 'check', '--update', '--all', 'python3.15']
+    if json_output:
+        argv.append('--json')
+
+    with (
+        patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+            'version': '3.14.8', 'stable_versions': ['3.14.8'],
+        }),
+        patch.object(cuv_module, 'update_spec_version',
+                     side_effect=AssertionError('no eligible release')) as update,
+        patch('sys.argv', argv),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    update.assert_not_called()
+    output = capsys.readouterr().out
+    warning = "skipped upstream check: Anitya reported no version matching track_upstream '3.15'"
+    if json_output:
+        result = json.loads(output)
+        assert result['updates_available'] == result['updates_applied'] == result['errors'] == 0
+        assert result['warnings'] == 1
+        assert result['results'][0]['warnings'] == [warning]
+        assert result['results'][0]['upstream_version'] is None
+    else:
+        assert 'Upstream warnings:' in output
+        assert warning in output
+        assert 'Up-to-date packages:' not in output
+        assert '1 skipped, 0 errors, 1 warnings' in output
+    assert spec_file.read_text() == original
+    assert metadata_file.read_text() == original_metadata
+
+
+def test_cli_tracked_lookup_failure_remains_nonzero(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Transport errors still fail CLI checks of tracked version lines."""
+    _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
+        'track_upstream': '3.15', 'release_monitoring_project_id': 13254,
+    })
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id',
+                      side_effect=urllib.error.URLError('Request timed out')), \
+         patch('sys.argv', ['check_upstream_versions.py', 'check', '--json', 'pkg']), \
+         pytest.raises(SystemExit) as exc_info:
+        cuv_module.main()
+
+    assert exc_info.value.code == 2
+    output = json.loads(capsys.readouterr().out)
+    assert output['errors'] == 1
+    assert output['warnings'] == 0
+
+
 def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -2749,7 +3292,7 @@ def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     assert 'Up-to-date packages:' not in output
     assert (
         'Summary: 0 updates available, 0 up-to-date, '
-        '1 skipped (source unavailable), 0 errors, 1 source version warnings'
+        '1 skipped, 0 errors, 1 warnings'
     ) in output
 
 
@@ -2924,6 +3467,42 @@ def test_main_checks_tracked_packages(cuv_module, workdir: Path) -> None:
 
     # Exit code 1 means updates found
     assert exc_info.value.code == 1
+
+
+def test_main_sudo_current_patchlevel_is_noop(
+    cuv_module, workdir: Path, capsys,
+) -> None:
+    """--update must not rewrite Fedora's spec or download p2p2 sources."""
+    pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
+        'version': '1.9.17', 'release': '16.p2',
+        'track_upstream': 'latest', 'release_monitoring_project_id': 4906,
+    })
+    spec_file = pkg_dir / 'sudo.spec'
+    original = '%global extraver p2\n' + spec_file.read_text().replace(
+        'Release: 1%{?dist}', 'Release: 16.p2.2%{?dist}',
+    ).replace('%{version}.tar.gz', '%{version}%{?extraver}.tar.gz')
+    spec_file.write_text(original)
+    metadata_file = workdir / 'metadata' / 'sudo.json'
+    original_metadata = metadata_file.read_text()
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+
+    with patch.object(cuv_module, 'query_anitya_by_project_id', return_value={
+        'version': '1.9.17p2', 'stable_versions': ['1.9.17p2'], 'id': 4906,
+    }), patch.object(cuv_module, 'update_spec_version',
+                     side_effect=AssertionError('sudo is already current')) as mock_update, \
+         patch('sys.argv', ['check_upstream_versions.py', 'check', '--update',
+                            '--all', '--json', 'sudo']), \
+         pytest.raises(SystemExit) as exc_info:
+        cuv_module.main()
+
+    assert exc_info.value.code == 0
+    mock_update.assert_not_called()
+    output = json.loads(capsys.readouterr().out)
+    assert output['results'][0]['current_version'] == '1.9.17p2'
+    assert output['results'][0]['has_update'] is False
+    assert spec_file.read_text() == original
+    assert metadata_file.read_text() == original_metadata
 
 
 def test_main_explicit_args_bypass_track_filter(cuv_module, workdir: Path) -> None:
@@ -3654,3 +4233,31 @@ def test_git_clone_env_private_repo_injects_config_rewrite(cuv_module) -> None:
         'url.https://oauth2:s3cr3t@gitlab.com/redhat/hummingbird/src/.insteadOf'
     )
     assert env['GIT_CONFIG_VALUE_0'] == 'https://gitlab.com/redhat/hummingbird/src/'
+
+
+def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, workdir: Path) -> None:
+    package = _create_package(workdir, 'pkg', '1.0', metadata={
+        'version': '1.0', 'modification_status': 'independent',
+    })
+    (package / '.gitignore').write_text('*.patch\n')
+    (package / 'old:fix.patch').write_bytes(b'old payload')
+    spec = package / 'pkg.spec'
+    spec.write_text(spec.read_text().replace('%description', 'Patch: old:fix.patch\n%description'))
+    subprocess.run(['git', 'add', '-f', '-A'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Package'], cwd=workdir, check=True)
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
+         patch.object(cuv_module, '_check_updated_patches'):
+        cuv_module.update_spec_version('pkg', '2.0')
+    assert (package / 'old~3afix.patch').read_bytes() == b'old payload'
+    assert 'Patch: old~3afix.patch' in spec.read_text()
+    metadata = json.loads((workdir / 'metadata' / 'pkg.json').read_text())
+    assert 'path_map' not in metadata
+    assert metadata['modification_status'] == 'independent'
+    actions = cuv_module._build_workqueue_file_actions('pkg', [])
+    assert any(action['action'] == 'delete' and action['file_path'] == 'rpms/pkg/old:fix.patch'
+               for action in actions)
+    assert any(action['action'] == 'update' and action['file_path'] == 'rpms/pkg/old~3afix.patch'
+               and action['content'] for action in actions)

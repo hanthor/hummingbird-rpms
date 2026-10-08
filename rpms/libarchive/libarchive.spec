@@ -1,8 +1,8 @@
 %bcond_without check
 
 Name:           libarchive
-Version:        3.8.8
-Release:        3.1%{?dist}
+Version:        3.8.9
+Release:        2.1%{?dist}
 Summary:        A library for handling streaming archive formats
 
 # Licenses:
@@ -14,8 +14,6 @@ Summary:        A library for handling streaming archive formats
 License:        BSD-2-Clause AND FSFULLR AND GPL-2.0-or-later WITH Libtool-exception AND BSD-3-Clause AND FSFUL
 URL:            https://www.libarchive.org/
 Source0:        https://libarchive.org/downloads/%{name}-%{version}.tar.gz
-
-Patch:          https://github.com/libarchive/libarchive/pull/3182.patch
 
 BuildRequires:  autoconf
 BuildRequires:  automake
@@ -44,8 +42,6 @@ BuildRequires: make
 # loaded, which breaks the RIPEMD-160 test. This patch disables the RIPEMD-160
 # support explicitly.
 Patch0001: 0001-Drop-rmd160-from-OpenSSL.patch
-Patch0002: libarchive-3.8.8-fix-oob-read-tar-number-parsing.patch
-Patch0003: 3228.patch
 
 %description
 Libarchive is a programming library that can create and read several different
@@ -244,6 +240,12 @@ run_testsuite
 
 
 %changelog
+* Thu Sep 10 2026 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.8.9-2
+- Rebuilt for libxml-2.5.4
+
+* Tue Aug 18 2026 Pavol Sloboda <psloboda@redhat.com> - 3.8.9-1
+- Update to version 3.8.9
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 3.8.8-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 

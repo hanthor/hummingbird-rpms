@@ -1,7 +1,7 @@
-From 62cef37ebf112f4389a520e7277fd7cc30a7019c Mon Sep 17 00:00:00 2001
+From 313333f429aedd5f255643400669204a32e61023 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 11/54] openssh-8.7p1-redhat
+Subject: [PATCH 11/53] openssh-8.7p1-redhat
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=1635 (WONTFIX)
 ---
@@ -57,7 +57,7 @@ index 000000000..8b1b59021
 +# Uncomment this if you want to use .local domain
 +# Host *.local
 diff --git a/sshd_config b/sshd_config
-index 0f4a3a724..608203e4b 100644
+index 57ecabb86..f43aa8093 100644
 --- a/sshd_config
 +++ b/sshd_config
 @@ -10,6 +10,14 @@
@@ -76,10 +76,10 @@ index 0f4a3a724..608203e4b 100644
  #AddressFamily any
  #ListenAddress 0.0.0.0
 diff --git a/sshd_config.0 b/sshd_config.0
-index 9bafd243e..dc685568a 100644
+index 2248006ea..91eda77f4 100644
 --- a/sshd_config.0
 +++ b/sshd_config.0
-@@ -1255,9 +1255,9 @@ DESCRIPTION
+@@ -1265,9 +1265,9 @@ DESCRIPTION
  
       SyslogFacility
               Gives the facility code that is used when logging messages from
@@ -93,10 +93,10 @@ index 9bafd243e..dc685568a 100644
       TCPKeepAlive
               Specifies whether the system should send TCP keepalive messages
 diff --git a/sshd_config.5 b/sshd_config.5
-index 39a864dee..3896d21b0 100644
+index a7d300139..e85cca6eb 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -1979,7 +1979,7 @@ By default no subsystems are defined.
+@@ -1989,7 +1989,7 @@ By default no subsystems are defined.
  .It Cm SyslogFacility
  Gives the facility code that is used when logging messages from
  .Xr sshd 8 .

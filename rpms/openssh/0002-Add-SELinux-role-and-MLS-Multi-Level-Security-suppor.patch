@@ -1,7 +1,7 @@
-From 0ff113d55dffee623a622e081b426e5b7e57c571 Mon Sep 17 00:00:00 2001
+From 3c47f2bb223e4e400fac08c12bf36a2a88fa55ba Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:06:32 +0200
-Subject: [PATCH 02/54] Add SELinux role and MLS (Multi-Level Security) support
+Subject: [PATCH 02/53] Add SELinux role and MLS (Multi-Level Security) support
 
 openssh-7.8p1-role-mls
 
@@ -49,10 +49,10 @@ index 0f11458ca..efe819323 100644
  	/* Method lists for multiple authentication */
  	char		**auth_methods;	/* modified from server config */
 diff --git a/auth2-gss.c b/auth2-gss.c
-index 85251b7d0..dfee5613e 100644
+index 9e9496e53..553fba328 100644
 --- a/auth2-gss.c
 +++ b/auth2-gss.c
-@@ -282,6 +282,7 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
+@@ -280,6 +280,7 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
  	Authctxt *authctxt = ssh->authctxt;
  	Gssctxt *gssctxt;
  	int r, authenticated = 0;
@@ -60,7 +60,7 @@ index 85251b7d0..dfee5613e 100644
  	struct sshbuf *b;
  	gss_buffer_desc mic, gssbuf;
  	u_char *p;
-@@ -299,7 +300,13 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
+@@ -297,7 +298,13 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
  		fatal_f("sshbuf_new failed");
  	mic.value = p;
  	mic.length = len;
@@ -75,7 +75,7 @@ index 85251b7d0..dfee5613e 100644
  	    "gssapi-with-mic", ssh->kex->session_id);
  
  	if ((gssbuf.value = sshbuf_mutable_ptr(b)) == NULL)
-@@ -312,6 +319,8 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
+@@ -310,6 +317,8 @@ input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
  		logit("GSSAPI MIC check failed");
  
  	sshbuf_free(b);
@@ -85,10 +85,10 @@ index 85251b7d0..dfee5613e 100644
  
  	if (!authenticated)
 diff --git a/auth2-hostbased.c b/auth2-hostbased.c
-index 8a1acdec3..a287091ec 100644
+index 564a8d3cc..6a6704d93 100644
 --- a/auth2-hostbased.c
 +++ b/auth2-hostbased.c
-@@ -130,7 +130,16 @@ userauth_hostbased(struct ssh *ssh, const char *method)
+@@ -131,7 +131,16 @@ userauth_hostbased(struct ssh *ssh, const char *method)
  	/* reconstruct packet */
  	if ((r = sshbuf_put_stringb(b, ssh->kex->session_id)) != 0 ||
  	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
@@ -106,7 +106,7 @@ index 8a1acdec3..a287091ec 100644
  	    (r = sshbuf_put_cstring(b, method)) != 0 ||
  	    (r = sshbuf_put_string(b, pkalg, alen)) != 0 ||
 diff --git a/auth2-pubkey.c b/auth2-pubkey.c
-index e446ef412..319e42b2b 100644
+index c15b1ba71..dc07faa92 100644
 --- a/auth2-pubkey.c
 +++ b/auth2-pubkey.c
 @@ -71,6 +71,8 @@
@@ -204,7 +204,7 @@ index 3f353a719..497fa8ed2 100644
  		if ((r = kex_server_update_ext_info(ssh)) != 0)
  			fatal_fr(r, "kex_server_update_ext_info failed");
 diff --git a/misc.c b/misc.c
-index 517fa7a97..c0e16437a 100644
+index 88dc78821..f5275d108 100644
 --- a/misc.c
 +++ b/misc.c
 @@ -869,6 +869,7 @@ char *
@@ -229,7 +229,7 @@ index 517fa7a97..c0e16437a 100644
  	}
  	return NULL;
  }
-@@ -2830,7 +2838,8 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
+@@ -2833,7 +2841,8 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
  pid_t
  subprocess(const char *tag, const char *command,
      int ac, char **av, FILE **child, u_int flags,
@@ -239,7 +239,7 @@ index 517fa7a97..c0e16437a 100644
  {
  	FILE *f = NULL;
  	struct stat st;
-@@ -2963,6 +2972,13 @@ subprocess(const char *tag, const char *command,
+@@ -2966,6 +2975,13 @@ subprocess(const char *tag, const char *command,
  			error("%s: dup2: %s", tag, strerror(errno));
  			_exit(1);
  		}
@@ -254,7 +254,7 @@ index 517fa7a97..c0e16437a 100644
  			execve(av[0], av, env);
  		else
 diff --git a/monitor.c b/monitor.c
-index 73a85408e..6fe9f46fc 100644
+index 0e5871994..c659e99e0 100644
 --- a/monitor.c
 +++ b/monitor.c
 @@ -111,6 +111,9 @@ int mm_answer_sign(struct ssh *, int, struct sshbuf *);
@@ -277,7 +277,7 @@ index 73a85408e..6fe9f46fc 100644
      {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
      {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
  #ifdef USE_PAM
-@@ -920,6 +926,9 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
+@@ -932,6 +938,9 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
  
  	/* Allow service/style information on the auth context */
  	monitor_permit(mon_dispatch, MONITOR_REQ_AUTHSERV, 1);
@@ -287,7 +287,7 @@ index 73a85408e..6fe9f46fc 100644
  	monitor_permit(mon_dispatch, MONITOR_REQ_AUTH2_READ_BANNER, 1);
  
  #ifdef USE_PAM
-@@ -994,6 +1003,26 @@ key_base_type_match(const char *method, const struct sshkey *key,
+@@ -1006,6 +1015,26 @@ key_base_type_match(const char *method, const struct sshkey *key,
  	return found;
  }
  
@@ -314,7 +314,7 @@ index 73a85408e..6fe9f46fc 100644
  int
  mm_answer_authpassword(struct ssh *ssh, int sock, struct sshbuf *m)
  {
-@@ -1366,7 +1395,7 @@ monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
+@@ -1378,7 +1407,7 @@ monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
  	struct sshbuf *b;
  	struct sshkey *hostkey = NULL;
  	const u_char *p;
@@ -323,7 +323,7 @@ index 73a85408e..6fe9f46fc 100644
  	size_t len;
  	u_char type;
  	int hostbound = 0, r, fail = 0;
-@@ -1397,6 +1426,8 @@ monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
+@@ -1409,6 +1438,8 @@ monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
  		fail++;
  	if ((r = sshbuf_get_cstring(b, &cp, NULL)) != 0)
  		fatal_fr(r, "parse userstyle");
@@ -332,7 +332,7 @@ index 73a85408e..6fe9f46fc 100644
  	xasprintf(&userstyle, "%s%s%s", authctxt->user,
  	    authctxt->style ? ":" : "",
  	    authctxt->style ? authctxt->style : "");
-@@ -1447,7 +1478,7 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
+@@ -1459,7 +1490,7 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
  {
  	struct sshbuf *b;
  	const u_char *p;
@@ -341,7 +341,7 @@ index 73a85408e..6fe9f46fc 100644
  	size_t len;
  	int r, fail = 0;
  	u_char type;
-@@ -1468,6 +1499,8 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
+@@ -1480,6 +1511,8 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
  		fail++;
  	if ((r = sshbuf_get_cstring(b, &cp, NULL)) != 0)
  		fatal_fr(r, "parse userstyle");
@@ -366,10 +366,10 @@ index fe0b00b2e..1b46e794e 100644
  	MONITOR_REQ_PAM_ACCOUNT = 102, MONITOR_ANS_PAM_ACCOUNT = 103,
  	MONITOR_REQ_PAM_INIT_CTX = 104, MONITOR_ANS_PAM_INIT_CTX = 105,
 diff --git a/monitor_wrap.c b/monitor_wrap.c
-index e2b9a2802..b5aeb8b2c 100644
+index e9a771b34..af0252964 100644
 --- a/monitor_wrap.c
 +++ b/monitor_wrap.c
-@@ -438,6 +438,27 @@ mm_inform_authserv(char *service, char *style)
+@@ -440,6 +440,27 @@ mm_inform_authserv(char *service, char *style)
  	sshbuf_free(m);
  }
  

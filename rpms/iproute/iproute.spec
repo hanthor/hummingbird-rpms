@@ -1,7 +1,7 @@
 Summary:            Advanced IP routing and network device configuration tools
 Name:               iproute
-Version:            7.0.0
-Release:            2%{?dist}
+Version:            7.2.0
+Release:            1%{?dist}
 URL:                https://kernel.org/pub/linux/utils/net/%{name}2/
 Source0:            https://kernel.org/pub/linux/utils/net/%{name}2/%{name}2-%{version}.tar.xz
 %if 0%{?rhel}
@@ -21,11 +21,6 @@ BuildRequires:      libmnl-devel
 BuildRequires:      libselinux-devel
 BuildRequires:      make
 BuildRequires:      pkgconfig
-%if ! 0%{?_module_build}
-%if 0%{?fedora}
-BuildRequires:      linux-atm-libs-devel
-%endif
-%endif
 Requires:           libbpf
 Requires:           psmisc
 
@@ -145,7 +140,6 @@ fi
 
 %files devel
 %license COPYING
-%{_mandir}/man3/*
 %{_libdir}/libnetlink.a
 %{_includedir}/libnetlink.h
 %{_includedir}/iproute2/bpf_elf.h

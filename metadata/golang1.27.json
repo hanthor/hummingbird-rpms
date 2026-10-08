@@ -4,10 +4,11 @@
   "modification_reason": "Update to upstream version 1.27.1",
   "modification_status": "modified",
   "release_monitoring_project_id": 1227,
-  "sha": "2ba0092327f971a0d8f5706d8e9a1d194d85d00a",
+  "sha": "428dd38cf10e446959cbd2621bc193dda4cd0bbd",
   "source": "https://src.fedoraproject.org/rpms/golang.git",
   "track_upstream": "1.27",
   "upstream_branch": "release-branch.go1.27",
   "upstream_repo": "https://github.com/golang/go",
-  "version": "1.27.1"
+  "version": "1.27.1",
+  "release": "2"
 }

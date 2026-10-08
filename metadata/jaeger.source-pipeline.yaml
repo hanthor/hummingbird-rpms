@@ -4,6 +4,13 @@ fetch:
     ref: "v${VERSION}"
     archive_name: "jaeger-${VERSION}.tar.gz"
     submodules: full
+
+toolchain:
+  - name: node
+    version: "24"
+    minimum-version: "24.16.0"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "jaeger-${VERSION}-vendor.tar.bz2"
@@ -16,15 +23,8 @@ fetch:
     metadata-packages:
       - "@adobe/css-tools"
 
-toolchain:
-  - name: node
-    version: "24"
-    minimum-version: "24.16.0"
-
-accepted-checksums:
-  - file: "jaeger-2.21.0.tar.gz"
-    checksum: "615646026b7cdd91c37fdba0bcab0a9bdf6f8c1747b08428f7b8b7caeac8de59ba012c151092914405cc139922abbb14f05fe2b9ca00cd374f9188e1803e5d02"
-    reason: "Regenerated Source0 with the v2.21.0 jaeger-ui submodule included."
-  - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
-    checksum: "fbba37bfaf022a5fdd8a137dcf53563f39d7aa2c6a931fe50c829e207da1835d8fc9b0fff149be37ba3cffd61af1d097ec623f9aed1fd9b8b94a6db72e8b9bf2"
-    reason: "Regenerated with the pinned pnpm CLI and @adobe/css-tools registry metadata."
+publish:
+  files:
+    - "jaeger-${VERSION}.tar.gz"
+    - "jaeger-${VERSION}-vendor.tar.bz2"
+    - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"

@@ -1,6 +1,5 @@
 {
-  "modification_reason": "Update to upstream version 2.21.0",
-  "modification_status": "modified",
+  "modification_status": "independent",
   "release_monitoring_project_id": 371233,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/jaegertracing/jaeger",

@@ -1,17 +1,16 @@
 %global forgeurl https://github.com/jemalloc/jemalloc
 
 Name:           jemalloc
-Version:        5.3.0
+Version:        5.4.0
 
-Release:        14.2%{?dist}
+Release:        3%{?dist}
 Summary:        General-purpose scalable concurrent malloc implementation
 
 # Automatically converted from old format: BSD - review is highly recommended.
-License:        LicenseRef-Callaway-BSD
+License:        BSD-2-Clause
 URL:            https://jemalloc.net/
 VCS:            git:%{forgeurl}
-Source0:        %{forgeurl}/releases/download/%{version}/%{name}-%{version}.tar.bz2
-Patch1:         jemalloc-5.3.0_fno-builtin.patch
+Source0:	%{forgeurl}/archive/refs/tags/%{version}.tar.gz
 
 BuildRequires:  gcc
 BuildRequires:  /usr/bin/xsltproc
@@ -20,10 +19,24 @@ BuildRequires:  perl-generators
 BuildRequires:  valgrind-devel
 %endif
 BuildRequires: make
+BuildRequires: autoconf
+BuildRequires: automake
+# jemalloc-jeprof subpackage split
+Obsoletes:     %{name} < 5.4.0-2
 
 %description
 General-purpose scalable concurrent malloc(3) implementation.
 This distribution is the stand-alone "portable" implementation of %{name}.
+
+%package jeprof
+Summary:        jeprof tool for %{name}
+License:        BSD-3-Clause
+Requires:       %{name} = %{version}-%{release}
+# jemalloc-jeprof subpackage split
+Obsoletes:     %{name} < 5.4.0-2
+
+%description jeprof
+The jeprof script to process heap profile data.
 
 %package devel
 Summary:        Development files for %{name}
@@ -72,8 +85,16 @@ cat /sys/kernel/mm/transparent_hugepage/enabled || true
 echo "What kernel version and config is this?"
 uname -a
 
+autoreconf -vfi
 %configure %{?disable_thp} %{?lg_page} --enable-prof
-make %{?_smp_mflags}
+
+# https://github.com/jemalloc/jemalloc/issues/2753
+%ifarch s390x
+rm test/unit/retained.c
+sed -i '/test\/unit\/retained\.c/d' Makefile
+%endif
+
+%make_build
 
 
 %check
@@ -82,7 +103,7 @@ make %{?_smp_mflags} check
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot}
+%make_install
 # Install this with doc macro instead
 rm %{buildroot}%{_datadir}/doc/%{name}/jemalloc.html
 
@@ -97,17 +118,38 @@ find %{buildroot}%{_libdir}/ -name '*.a' -exec rm -vf {} ';'
 %doc COPYING README VERSION
 %doc doc/jemalloc.html
 
+%files jeprof
+%{_bindir}/jeprof
+
 %files devel
 %{_includedir}/jemalloc
 %{_bindir}/jemalloc-config
 %{_libdir}/pkgconfig/jemalloc.pc
-%{_bindir}/jeprof
 %{_libdir}/libjemalloc.so
 %{_mandir}/man3/jemalloc.3*
 
 %ldconfig_scriptlets
 
 %changelog
+* Tue Oct 06 2026 Timothée Ravier <tim@siosm.fr> - 5.4.0-3
+- Split jeprof into a subpackage (fedora#2543810)
+- Use make macros: https://fedoraproject.org/wiki/Changes/UseMakeBuildInstallMacro
+
+* Mon Sep 21 2026 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.4.0-2
+- Skipped a check to make s390x build, upstream issue 2753
+
+* Thu Sep 17 2026 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.4.0-1
+- New upstream release
+- Moved jeprof to main package, closing rhbz#2157051
+- Converted license tag to new standard. Included BSD 3-clause for jeprof script
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 5.3.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
+* Tue Apr 14 2026 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.3.1-1
+- New upstream release
+- Removed merged upstream patches
+
 * Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 5.3.0-14
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
 

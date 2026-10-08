@@ -1,0 +1,7 @@
+summary: Tier1 tests from CentOS Stream test repo
+discover:
+    how: fmf
+    url: https://gitlab.com/redhat/centos-stream/tests/gdbm
+    ref: main
+execute:
+    how: tmt

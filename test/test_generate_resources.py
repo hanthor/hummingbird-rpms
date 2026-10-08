@@ -118,6 +118,40 @@ class TestExpandTaskRunSpecs:
         ]
 
 
+class TestBuildPacVariables:
+    def test_build_architecture_override(self, gen_module, tmp_path):
+        package_dir = tmp_path / "rpms" / "glibc"
+        package_dir.mkdir(parents=True)
+        (package_dir / "glibc.spec").write_text("Name: glibc\n")
+        (tmp_path / "metadata").mkdir()
+        (tmp_path / "metadata" / "glibc.json").write_text(
+            '{"source": "https://src.fedoraproject.org/rpms/glibc.git"}\n'
+        )
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text(
+            textwrap.dedent("""\
+            glibc:
+              build_architectures:
+                - aarch64
+                - x86_64
+                - s390x
+                - ppc64le
+            """)
+        )
+
+        with patch.object(gen_module, "ROOT_DIR", tmp_path):
+            variables = gen_module.build_pac_variables(
+                "main", "hummingbird-tenant", "pull-request"
+            )
+
+        assert variables["rpms"][0]["build_architectures"] == [
+            "aarch64",
+            "x86_64",
+            "s390x",
+            "ppc64le",
+        ]
+
+
 def _load_rpa_config(gen_module, index=0):
     """Load RPA config and global config from the config file."""
     config = gen_module.load_releng_config()

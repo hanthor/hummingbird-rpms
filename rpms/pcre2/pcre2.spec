@@ -8,8 +8,8 @@
 # This is stable release:
 #%%global rcversion RC1
 Name:       pcre2
-Version:    10.48
-Release:    0.%{?rcversion:0.}1%{?rcversion:.%rcversion}%{?dist}
+Version:    10.49
+Release:    0.2%{?dist}
 %global     myversion %{version}%{?rcversion:-%rcversion}
 Summary:    Perl-compatible regular expression library
 # the library:                          BSD with exceptions

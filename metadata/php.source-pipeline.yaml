@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://www.php.net/distributions/php-${VERSION}.tar.xz"
+  - type: url
+    url: "https://www.php.net/distributions/php-${VERSION}.tar.xz.asc"
+
+verify:
+  - type: gpg-signature
+    target: "php-${VERSION}.tar.xz"
+    signature: "php-${VERSION}.tar.xz.asc"
+    keyring: "php.gpg"

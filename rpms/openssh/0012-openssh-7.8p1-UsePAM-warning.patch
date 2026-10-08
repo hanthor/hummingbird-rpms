@@ -1,7 +1,7 @@
-From e0b43c6be9a94437c33239455815a70c287ca5f5 Mon Sep 17 00:00:00 2001
+From 10feee43540cbebad70f9903a6cbd59409f9f0c4 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 12/54] openssh-7.8p1-UsePAM-warning
+Subject: [PATCH 12/53] openssh-7.8p1-UsePAM-warning
 
 # warn users for unsupported UsePAM=no (#757545)
 ---
@@ -10,7 +10,7 @@ Subject: [PATCH 12/54] openssh-7.8p1-UsePAM-warning
  2 files changed, 6 insertions(+)
 
 diff --git a/sshd-session.c b/sshd-session.c
-index fea94dc6c..8c6652152 100644
+index 0f41756ff..6e9b28dec 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
 @@ -1076,6 +1076,10 @@ main(int ac, char **av)
@@ -25,10 +25,10 @@ index fea94dc6c..8c6652152 100644
  	if (options.moduli_file != NULL)
  		dh_set_moduli_file(options.moduli_file);
 diff --git a/sshd_config b/sshd_config
-index 608203e4b..48af6321b 100644
+index f43aa8093..f626d5801 100644
 --- a/sshd_config
 +++ b/sshd_config
-@@ -89,6 +89,8 @@ AuthorizedKeysFile	.ssh/authorized_keys
+@@ -90,6 +90,8 @@ AuthorizedKeysFile	.ssh/authorized_keys
  # If you just want the PAM account and session checks to run without
  # PAM authentication, then enable this but set PasswordAuthentication
  # and KbdInteractiveAuthentication to 'no'.

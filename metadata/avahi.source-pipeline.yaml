@@ -1,0 +1,4 @@
+fetch:
+  # Source0 maps RPM 0.9~rc4 to tag v0.9-rc4 and switches URLs for stable releases.
+  - type: spec-source
+    index: 0

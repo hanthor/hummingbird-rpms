@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://download-mirror.savannah.gnu.org/releases/acl/acl-${VERSION}.tar.gz"
+  - type: url
+    url: "https://download-mirror.savannah.gnu.org/releases/acl/acl-${VERSION}.tar.gz.sig"
+
+verify:
+  - type: gpg-signature
+    target: "acl-${VERSION}.tar.gz"
+    signature: "acl-${VERSION}.tar.gz.sig"
+    keyring: "agruen-key.gpg"

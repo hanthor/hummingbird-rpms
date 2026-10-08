@@ -3,8 +3,8 @@
   "modification_reason": "Add doc bcond to disable asciidoctor dependency",
   "modification_status": "modified",
   "release": "1",
-  "sha": "322458e367b91af635f9aa0696cac9a0634c4fd7",
+  "sha": "dccd029b2b8044dacee1e9198a3f7f113b6ccdde",
   "source": "https://src.fedoraproject.org/rpms/cryptsetup.git",
   "upstream_repo": "https://gitlab.com/cryptsetup/cryptsetup",
-  "version": "2.8.7"
+  "version": "2.8.8"
 }

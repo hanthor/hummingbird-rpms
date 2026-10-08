@@ -45,18 +45,34 @@ transform:
         # Generated against the post-fast-uri-3.1.7 lockfile, so this comes
         # after Patch10 (same order as Patch11 in the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-undici-cve.patch"
-        # Note: Patch12 (grafana-joi-cve.patch) is not applied by this
-        # transform -- a pre-existing gap, not introduced here (see
-        # "Known sharp edge: patch-list duplication" in
-        # documentation/background/source-pipeline-tool.md). Applies cleanly
-        # either way (verified against a checkout with and without Patch12).
+        # Generated against the post-Patch11 lockfile; include the Joi bump
+        # before cache generation so the offline cache contains 17.13.8.
+        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
         # Bumps the same fast-uri dependency again (3.1.7 -> 3.1.8) for
-        # CVE-2026-86472.
+        # CVE-2026-86472 (same order as Patch13 in the spec).
         patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
+        # Keep Source0's Go module graph aligned with the vendor archive.
+        patch -p1 < "${PACKAGE_DIR}/grafana-go-openapi-swag-cve.patch"
+        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-3.4.13-cve.patch"
+        # CVE-2026-93981: bump vendored hono 4.12.7 -> 4.13.7.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.7-cve.patch"
+        # CVE-2026-101903: bump vendored axios 1.16.0 -> 1.20.0.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
           node .yarn/releases/yarn-*.cjs install --immutable
+        # CVE-2026-9496 is backported inside the two cached pacote archives.
+        # Patch the freshly generated archives before changing yarn.lock to
+        # expect their new checksums, then verify the result offline.
+        "${PACKAGE_DIR}/patch-pacote-cache.py" .yarn/cache
+        patch -p1 < "${PACKAGE_DIR}/grafana-pacote-cve.patch"
+        CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
+          node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
         # Deterministic flags: yarn's own cache writes carry live wall-clock
         # mtimes and directory listing order isn't guaranteed sorted, so a
         # plain `tar -cjf` here reproduced a different checksum on every
@@ -77,6 +93,24 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.12.tar.bz2"
+    checksum: "d4339aa4dc329dfa24b6e8d5d41b5bae1831bdd07b75837df3ed1e9a33378501da76601be264093851060efab71fa843011b75cd0275eab0503435b0cf58d9d0"
+    reason: "grafana-axios-1.20.0-cve.patch bumps axios 1.16.0->1.20.0 for CVE-2026-101903; yarn-cache regenerated without stale axios-1.16.0 zip"
+  - file: "grafana-yarn-cache-12.4.11.tar.bz2"
+    checksum: "a3e64b96be0dbf9aad1a86f21b329ab6f36fa95a5899d260322f806a3ba1fe43705117434287598c566980de88477035a2b9856e323d31cf7fba3259f6abe5e8"
+    reason: "Regenerated after applying grafana-joi-cve.patch so the cache includes Joi 17.13.8 alongside the DOMPurify and patched pacote archives"
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "1aaa99ef6e8bcee62854f521719126be8464d22d15d3d29fa8d20444c9c6b54e2cf8bb5b1d197f13ab8b6901321e1acb10bad8e9f46c799ffa27afe0bf871777"
+    reason: "grafana-pacote-cve.patch backports CVE-2026-9496 fix into vendored pacote 21.0.1 and 21.0.4; yarn cache zips patched in-place, checksums updated in yarn.lock"
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "fd84e72d641d04ef9876343372ef5f74502f171d0ed400293599ed47b8bf29f1615e7ed58aa89d60f137aec86a2b227ac38eb0199b6c8314235e6d2b985534f8"
+    reason: "grafana-hono-4.13.7-cve.patch bumps hono 4.12.7->4.13.7 for CVE-2026-93981; yarn-cache regenerated without stale hono-4.12.7 zip"
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "8dbf6be3a1f3ac7b27d13b61dcd26662117a8786167cb9f0037189542001aead3109c029a35a3f92b38da6885b5de2bcbfe6c2e6e1f4ed18aaea49b1a21f7797"
+    reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; includes fast-uri-npm-3.1.8 in place of 3.1.7"
+  - file: "grafana-yarn-cache-12.4.10.tar.bz2"
+    checksum: "17d5bad95042cfa2e5f4e66e8f557bc11468809394954a1b694f5dde7a5cf0f9f41672bd71f3377710f3dcc728e050e3e87032008fb571dd4d19cd80f0f3fba4"
+    reason: "grafana-dompurify-3.4.13-cve.patch bumps DOMPurify 3.4.12->3.4.13 for CVE-2026-75838; yarn cache regenerated to replace dompurify 3.4.12 zip with 3.4.13"
   - file: "grafana-yarn-cache-12.4.10.tar.bz2"
     checksum: "8562304852db8d60a12d577c9629226375802a73aa36bce5a9f217e47be1a4a5f38867667802f15e1f1ab824186389c2568af04e8832940ee492d87f48eb0039"
     reason: "grafana-fast-uri-3.1.8-cve.patch bumps fast-uri 3.1.7->3.1.8 for CVE-2026-86472; yarn cache regenerated to include the patched dependency"

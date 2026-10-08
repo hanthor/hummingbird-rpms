@@ -36,6 +36,7 @@ from typing import Iterator, Literal, NotRequired, TypedDict, cast
 # doesn't).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_upstream_versions as cuv
+from package_paths import path_problem, portable_component, sanitize_package_paths
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RPMS_DIR = ROOT_DIR / 'rpms'
@@ -896,25 +897,6 @@ def get_mdapi_latest_build(package_name: str, branch: str) -> MdapiPackageInfo |
         return None
 
 
-def _get_fallback_dist_tags(dist_tag: str) -> list[str]:
-    """Get all active Fedora dist tags except the given one, in descending order."""
-    current_match = re.match(r'^f(\d+)$', dist_tag)
-    if not current_match:
-        return []
-
-    current_num = int(current_match.group(1))
-    fedora_releases = releases.get('fedora', {})
-    other_nums = []
-    for release_dist_tag in fedora_releases.values():
-        if match := re.match(r'^f(\d+)$', release_dist_tag):
-            num = int(match.group(1))
-            if num != current_num:
-                other_nums.append(num)
-
-    other_nums.sort(reverse=True)
-    return [f'f{n}' for n in other_nums]
-
-
 def resolve_release_from_koji(package_name: str, version: str,
                               expected_commit: str) -> str | None:
     """Resolve the Release for a version from its completed Koji build.
@@ -979,70 +961,83 @@ def check_koji_build(package_name: str, version: str, release: str, expected_com
                      dist_tag: str, branch: str) -> bool:
     """Check if a build exists in Koji and matches the expected commit.
 
-    If not found with current dist tag, tries all active Fedora releases in
-    descending order as fallback. This handles packages like OpenJDK portables
-    that are built once for the earliest active release and reused across all.
+    Check the expected dist tag first. If it does not match, search Koji for
+    other dist tags. The search handles a stale local release list during a
+    Fedora branch transition.
     """
     # Transform dist_tag for Koji: Bodhi uses f41, f42, etc. but Koji uses fc41, fc42
     koji_dist_tag = dist_tag
     if match := re.match(r'^f(\d+)$', dist_tag):
         koji_dist_tag = f'fc{match.group(1)}'
 
-    # Construct NVR
-    nvr = f'{package_name}-{version}-{release}.{koji_dist_tag}'
-
     server = get_koji_server()
+    preferred_nvr = f'{package_name}-{version}-{release}.{koji_dist_tag}'
+
+    def build_matches(nvr: str, build_result: object) -> bool:
+        if not build_result:
+            logging.info("Build %s not found in Koji", nvr)
+            return False
+
+        build = cast(KojiBuild, build_result)
+        source = build.get('source', '')
+        if '#' not in source:
+            logging.warning("Build %s has no commit in source: %s", nvr, source)
+            return False
+
+        commit = source.split('#')[1]
+        if commit != expected_commit:
+            logging.warning("Build %s has different commit: %s (expected %s)",
+                            nvr, commit[:8], expected_commit[:8])
+            return False
+
+        if build.get('state') != 1:
+            logging.info("Build %s is not complete (state=%s)", nvr, build.get('state'))
+            return False
+
+        logging.info("Build %s found in Koji (commit %s)", nvr, commit[:8])
+        return True
+
     build_result = call_koji_with_retry(
-        server.getBuild, nvr,
-        method_name=f"Koji getBuild({nvr})"
+        server.getBuild, preferred_nvr,
+        method_name=f"Koji getBuild({preferred_nvr})"
     )
+    if build_matches(preferred_nvr, build_result):
+        return True
 
-    # If build not found, try all active Fedora releases in descending order
-    # Some packages (e.g. OpenJDK portables) are built for one release and reused
-    if not build_result:
-        fallback_dist_tags = _get_fallback_dist_tags(dist_tag)
-        for fallback_tag in fallback_dist_tags:
-            fallback_koji_tag = fallback_tag
-            if match := re.match(r'^f(\d+)$', fallback_tag):
-                fallback_koji_tag = f'fc{match.group(1)}'
+    # A checked-in upstream-releases.json can become stale when Fedora branches.
+    # Search other tags from the requested distribution for the source commit.
+    if branch == 'eln':
+        dist_suffix_pattern = r'eln\d+'
+    elif branch == 'rawhide' or re.fullmatch(r'f\d+', branch):
+        dist_suffix_pattern = r'fc\d+'
+    elif match := re.fullmatch(r'c(\d+)s', branch):
+        dist_suffix_pattern = rf'el{match.group(1)}(?:_\d+)?'
+    else:
+        dist_suffix_pattern = re.escape(koji_dist_tag)
 
-            fallback_nvr = f'{package_name}-{version}-{release}.{fallback_koji_tag}'
-            logging.info("Build %s not found in Koji, trying %s", nvr, fallback_nvr)
-            nvr = fallback_nvr
-            build_result = call_koji_with_retry(
-                server.getBuild, fallback_nvr,
-                method_name=f"Koji getBuild({fallback_nvr})"
-            )
-            if build_result:
-                break
+    pattern = f'{package_name}-{version}-{release}.*'
+    matches = call_koji_with_retry(
+        server.search, pattern, 'build', 'glob',
+        method_name=f"Koji search({pattern})"
+    )
+    nvr_prefix = f'{package_name}-{version}-{release}.'
+    for entry in matches or []:
+        nvr = entry['name']
+        if nvr == preferred_nvr or not nvr.startswith(nvr_prefix):
+            continue
+        dist_suffix = nvr.removeprefix(nvr_prefix)
+        if re.fullmatch(dist_suffix_pattern, dist_suffix) is None:
+            continue
+        build_result = call_koji_with_retry(
+            server.getBuild, nvr,
+            method_name=f"Koji getBuild({nvr})"
+        )
+        if build_matches(nvr, build_result):
+            return True
 
-    if not build_result:
-        logging.info("Build %s not found in Koji", nvr)
-        return False
-
-    build = cast(KojiBuild, build_result)
-
-    # Extract commit from source field
-    source = build.get('source', '')
-    if '#' not in source:
-        logging.warning("Build %s has no commit in source: %s", nvr, source)
-        return False
-
-    commit = source.split('#')[1]
-
-    # Check if commit matches
-    if commit != expected_commit:
-        logging.warning("Build %s has different commit: %s (expected %s)",
-                        nvr, commit[:8], expected_commit[:8])
-        return False
-
-    # Check build state (1 = COMPLETE)
-    if build.get('state') != 1:
-        logging.info("Build %s is not complete (state=%s)", nvr, build.get('state'))
-        return False
-
-    logging.info("Build %s found in Koji (commit %s)", nvr, commit[:8])
-    return True
+    logging.info("No completed Koji build for %s-%s-%s matches commit %s",
+                 package_name, version, release, expected_commit[:8])
+    return False
 
 
 def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream_dir: Path) -> bool:
@@ -1060,6 +1055,7 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
                 str(upstream_dir), str(temp_dir))
         run_git('checkout', '--quiet', metadata['sha'], cwd=temp_dir)
         shutil.rmtree(temp_dir / '.git')
+        sanitize_package_paths(temp_dir)
 
         # First, check all non-spec files are identical
         if subprocess.run(
@@ -1158,6 +1154,7 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
             package_name, dir_name, search_url,
         )
 
+    sanitize_package_paths(package_dir)
     save_package_metadata(dir_name, metadata)
     # Update global imports dict
     imports[dir_name] = metadata
@@ -1417,9 +1414,19 @@ _PATCH_APPLY_RE = re.compile(
 def get_spec_patches(spec_path: Path) -> list[tuple[int, str]]:
     """Parse Patch<N>: declarations from a spec file.
 
-    Returns list of (patch_number, filename) tuples.
+    Returns list of (patch_number, macro-expanded filename) tuples, without
+    rewriting the spec. Literal filenames do not require RPM parsing.
     """
-    return [(int(m.group(1)), m.group(2)) for m in _PATCH_TAG_RE.finditer(spec_path.read_text())]
+    patches = [(int(m.group(1)), m.group(2))
+               for m in _PATCH_TAG_RE.finditer(spec_path.read_text())]
+    if not any('%' in filename for _, filename in patches):
+        return patches
+
+    # Undefined non-optional macros remain literal; empty expansions contribute
+    # no text. Keep the resulting filename so callers still check for missing
+    # patch files rather than silently discarding the declaration.
+    spec = Specfile(str(spec_path), sourcedir=str(spec_path.parent))
+    return [(number, spec.expand(filename)) for number, filename in patches]
 
 
 def _find_source_root(extract_dir: Path) -> Path:
@@ -1597,6 +1604,21 @@ def _fetch_sources_for_stale_check(package_dir: Path, source_url: str,
     return list(_parse_sources_file(tmpdir / 'sources'))
 
 
+def _stage_local_snapshot(package_name: str, snapshot: Path) -> None:
+    """Preserve tracked local files even if Fedora's ignore rules match them."""
+    run_git('add', '-A', cwd=snapshot)
+    files = run_git('ls-files', '-z', '--', f'rpms/{package_name}', cwd=ROOT_DIR).stdout.split('\0')
+    tracked = []
+    for filename in filter(None, files):
+        relative = Path(filename).relative_to(Path('rpms') / package_name)
+        portable = '/'.join(portable_component(part) for part in relative.parts)
+        path = snapshot / portable
+        if path.is_file() or path.is_symlink():
+            tracked.append(portable)
+    if tracked:
+        run_git('add', '-f', '--', *tracked, cwd=snapshot)
+
+
 def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path,
                               metadata: PackageMetadata, upstream_dir: Path,
                               new_sha: str) -> bool:
@@ -1621,9 +1643,18 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
     run_git('config', 'user.name', 'Hummingbird Bot', cwd=upstream_dir)
     run_git('config', 'user.email', 'bot@example.com', cwd=upstream_dir)
 
+    run_git('checkout', '--quiet', new_sha, cwd=upstream_dir)
+    new_snapshot = tmpdir / 'normalized-new'
+    shutil.copytree(upstream_dir, new_snapshot, symlinks=True, ignore=shutil.ignore_patterns('.git'))
+    sanitize_package_paths(new_snapshot)
+
     # Checkout old upstream and create branch for our local modifications
     run_git('checkout', '--quiet', old_sha, cwd=upstream_dir)
     run_git('checkout', '--quiet', '-b', 'hummingbird-local', cwd=upstream_dir)
+    sanitize_package_paths(upstream_dir)
+    run_git('add', '-f', '-A', cwd=upstream_dir)
+    run_git('commit', '--allow-empty', '-m', 'Normalize package paths (temporary)', cwd=upstream_dir)
+    old_sha = run_git('rev-parse', 'HEAD', cwd=upstream_dir).stdout.strip()
 
     # Normalize Release: in old upstream to avoid merge conflicts
     # This is temporary - we'll remove this commit later
@@ -1639,13 +1670,14 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
                 item.unlink()
 
     # Copy our local files with our modifications
-    shutil.copytree(package_dir, upstream_dir, dirs_exist_ok=True)
+    shutil.copytree(package_dir, upstream_dir, symlinks=True, dirs_exist_ok=True)
+    sanitize_package_paths(upstream_dir)
 
     # Normalize Release: in local files too
     normalize_release_in_specs(upstream_dir)
 
     # Commit our local modifications
-    run_git('add', '-A', cwd=upstream_dir)
+    _stage_local_snapshot(package_name, upstream_dir)
     status_result = run_git('status', '--porcelain', cwd=upstream_dir)
     assert status_result.stdout.strip(), "Expected local modifications but git status is clean"
     run_git('commit', '-m', 'Local Hummingbird modifications', cwd=upstream_dir)
@@ -1666,12 +1698,22 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
                     shutil.rmtree(item)
                 else:
                     item.unlink()
-        shutil.copytree(package_dir, upstream_dir, dirs_exist_ok=True)
-        run_git('add', '-A', cwd=upstream_dir)
+        shutil.copytree(package_dir, upstream_dir, symlinks=True, dirs_exist_ok=True)
+        sanitize_package_paths(upstream_dir)
+        _stage_local_snapshot(package_name, upstream_dir)
         run_git('commit', '--allow-empty', '-m', 'Local Hummingbird modifications', cwd=upstream_dir)
 
-    # Checkout new upstream (don't normalize - we want to keep its Release)
-    run_git('checkout', '--quiet', '-b', 'new-upstream', new_sha, cwd=upstream_dir)
+    # Incoming snapshot shares the normalized base, keeping Fedora's Release.
+    run_git('checkout', '--quiet', '-b', 'new-upstream', old_sha, cwd=upstream_dir)
+    for item in upstream_dir.iterdir():
+        if item.name != '.git':
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+    shutil.copytree(new_snapshot, upstream_dir, symlinks=True, dirs_exist_ok=True)
+    run_git('add', '-f', '-A', cwd=upstream_dir)
+    run_git('commit', '--allow-empty', '-m', 'New Fedora snapshot (temporary)', cwd=upstream_dir)
 
     # Merge our local modifications into new upstream
     merge_result = run_git('merge', 'hummingbird-local', cwd=upstream_dir, check=False)
@@ -1686,7 +1728,7 @@ def merge_local_modifications(package_name: str, package_dir: Path, tmpdir: Path
     # Copy merged result (with or without conflict markers) back to package_dir
     shutil.rmtree(package_dir)
     shutil.rmtree(upstream_dir / '.git')
-    shutil.copytree(upstream_dir, package_dir)
+    shutil.copytree(upstream_dir, package_dir, symlinks=True)
 
     return has_conflicts
 
@@ -2237,6 +2279,8 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         old_version = metadata['version']
         old_release = metadata.get('release', '(none)')
 
+        sanitize_package_paths(package_dir)
+
         # Re-run gorget for packages with a source-pipeline.yaml, so `sources`
         # reflects an independently-verified fetch instead of whatever the
         # plain git merge above produced for Fedora's own `sources` changes
@@ -2311,6 +2355,8 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                 stale_names = ', '.join(f'Patch{n}: {f}' for n, f in stale_patches)
                 drop_stale_patches(package_dir, stale_patches)
                 logging.info('Dropped stale patches: %s', stale_names)
+
+        sanitize_package_paths(package_dir)
 
         # Update package metadata
         imports[package_name]['sha'] = latest_sha
@@ -2454,7 +2500,9 @@ def continue_update(dry_run: bool = False) -> None:
 
         # Restore the updated metadata saved during the conflict exit
         if 'metadata' in state:
-            save_package_metadata(package_name, cast(PackageMetadata, state['metadata']))
+            metadata = cast(PackageMetadata, state['metadata'])
+            sanitize_package_paths(package_dir)
+            save_package_metadata(package_name, metadata)
 
         extra_paths = [f'metadata/{package_name}.json']
         pipeline_file = cuv._load_source_pipeline(package_name)
@@ -2649,6 +2697,46 @@ def set_upstream(
     imports[package_name] = metadata
 
 
+def sanitize_paths(packages: list[str], dry_run: bool = False) -> None:
+    """Migrate package paths without changing release or modification status.
+
+    Leave changes in the working tree for review, like mark-modified.
+    """
+    for package in packages:
+        metadata = load_package_metadata(package)
+        if not metadata:
+            sys.exit(f"ERROR: Package {package} not found")
+        files = run_git('ls-files', '-z', '--cached', '--others', '--exclude-standard',
+                        '--', f'rpms/{package}', cwd=ROOT_DIR).stdout.split('\0')
+        include = set()
+        for filename in filter(None, files):
+            relative = Path(filename).relative_to(Path('rpms') / package)
+            include.add(relative.as_posix())
+            include.update(parent.as_posix() for parent in relative.parents if parent != Path('.'))
+        mapping = sanitize_package_paths(RPMS_DIR / package, dry_run, include)
+        for old, new in mapping.items():
+            logging.info("%s: %s -> %s", package, old, new)
+
+
+def check_paths() -> None:
+    """Reject tracked paths that Windows cannot check out."""
+    paths = run_git('ls-files', '-z', cwd=ROOT_DIR).stdout.split('\0')
+    seen: dict[str, str] = {}
+    invalid = []
+    for path in filter(None, paths):
+        if path_problem(path):
+            invalid.append(path)
+        parts = Path(path).parts
+        for count in range(1, len(parts) + 1):
+            prefix = '/'.join(parts[:count])
+            key = prefix.casefold()
+            if key in seen and seen[key] != prefix:
+                invalid.append(f'{prefix} collides with {seen[key]}')
+            seen[key] = prefix
+    if invalid:
+        sys.exit('ERROR: Paths incompatible with Windows:\n' + '\n'.join(sorted(set(invalid))))
+
+
 def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False,
                  capture: bool = False) -> bool | str | None:
     """Show diff between local package and upstream Fedora.
@@ -2689,6 +2777,9 @@ def diff_package(package_name: str, output_mode: str = 'full', raw: bool = False
 
         # Remove .git to avoid comparing git metadata
         shutil.rmtree(upstream_dir / '.git')
+
+        if not raw:
+            sanitize_package_paths(upstream_dir)
 
         # Build diff command based on mode and filters
         diff_cmd = ['diff', '--recursive', '--unified', '--exclude=.git']
@@ -3246,6 +3337,12 @@ Examples:
                               help='Continue a conflicted update after resolving conflicts')
 
 
+    paths_parser = subparsers.add_parser('sanitize-paths', help='Make package paths portable; leave changes for review')
+    paths_group = paths_parser.add_mutually_exclusive_group(required=True)
+    paths_group.add_argument('package', nargs='?')
+    paths_group.add_argument('--all', action='store_true', help='Sanitize all packages')
+    subparsers.add_parser('check-paths', help='Validate tracked paths for Windows checkouts')
+
     # sync command
     sync_parser = subparsers.add_parser('sync', help='Force-sync package to upstream (discards local changes)')
     sync_parser.add_argument('package', help='Package name to sync')
@@ -3381,7 +3478,7 @@ Examples:
         sys.exit("ERROR: --dry-run is not supported with the rename command")
 
     # Check git config for commands that will commit
-    if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources'] and (not args.dry_run or args.command == 'rename'):
+    if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources', 'sanitize-paths', 'check-paths'] and (not args.dry_run or args.command == 'rename'):
         check_git_config()
 
     match args.command:
@@ -3401,6 +3498,10 @@ Examples:
                     update(pkg, args.skip_build_check, dry_run=args.dry_run,
                            allow_prerelease=args.allow_prerelease, ref=args.ref,
                            branch=args.branch)
+        case 'sanitize-paths':
+            sanitize_paths(list(imports) if args.all else [args.package], args.dry_run)
+        case 'check-paths':
+            check_paths()
         case 'sync':
             update(args.package, sync=True, dry_run=args.dry_run, mark=args.mark,
                    ref=args.ref, branch=args.branch)

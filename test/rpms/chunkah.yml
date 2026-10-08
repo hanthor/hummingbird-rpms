@@ -1,0 +1,80 @@
+---
+# Tests for chunkah: verify SOURCE_DATE_EPOCH clamping for bigfiles/xattr layers.
+#
+# Background: chunkah 0.7.0 (upstream PR #161) removed the explicit
+# SOURCE_DATE_EPOCH clamp for bigfiles/xattr layers, causing
+# bigfiles/rpmdb.sqlite layer "created" timestamps to leak wall-clock time.
+# The downstream fix (HUM-8922, rpms !4672) restores the default_mtime_clamp
+# parameter. This test catches any recurrence of the regression.
+# See https://github.com/coreos/chunkah/issues/176
+
+bigfiles-sde-clamp:
+  command: |
+    # Verify that chunkah clamps bigfiles/xattr layer timestamps to SOURCE_DATE_EPOCH.
+    # Installs the RPM under test into a builder container and runs chunkah directly
+    # (no buildah, no --rewrite-timestamp) against a minimal rootfs with "filesystem"
+    # installed. If any bigfiles/* history entry carries a wall-clock timestamp instead
+    # of SOURCE_DATE_EPOCH the test fails with a clear message.
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "chunkah" ]]; then
+      echo "Skipping: only runs on chunkah (got: ${rpm_name})"
+      exit 0
+    fi
+
+    test_files_dir="${TEST_FILES_DIR:-$(git rev-parse --show-toplevel)/test/rpms/chunkah}"
+
+    build_dir=$(mktemp -d)
+    trap 'podman unshare rm -rf "${build_dir}" 2>/dev/null || rm -rf "${build_dir}" 2>/dev/null || true' EXIT
+    chmod 777 "${build_dir}"
+
+    mkdir -p "${build_dir}/local-repo"
+    cp "${TEST_RPM}" "${build_dir}/local-repo/"
+    createrepo_c "${build_dir}/local-repo" || \
+      "${TEST_ENGINE}" run --rm --user 0 -v "${build_dir}/local-repo:/repo:z" \
+        quay.io/hummingbird-ci/hummingbird-builder:latest createrepo_c /repo
+
+    # Fixed epoch so the test is deterministic and self-contained.
+    # 2023-11-14T22:13:20Z — safely in the past, well below any build mtime.
+    SOURCE_DATE_EPOCH=1700000000
+    SDE_RFC=$(date -u -d "@${SOURCE_DATE_EPOCH}" +'%Y-%m-%dT%H:%M:%SZ')
+
+    echo "Testing chunkah SOURCE_DATE_EPOCH clamping (SDE=${SOURCE_DATE_EPOCH} / ${SDE_RFC})"
+
+    # Run inside the builder container so chunkah's dependencies are available.
+    # Install the RPM under test to replace the builder's bundled chunkah binary,
+    # then run chunkah directly (no buildah, no --rewrite-timestamp) so the test
+    # exercises chunkah's own SOURCE_DATE_EPOCH handling without any wrapper masking.
+    "${TEST_ENGINE}" run --rm --privileged \
+      -e SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
+      -v "${build_dir}/local-repo:/tmp/local-repo:ro,z" \
+      -v "${build_dir}:/tmp/out:z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+
+        # Override the bundled chunkah with the version from the RPM under test
+        printf "[local-repo]\nname=Local\nbaseurl=file:///tmp/local-repo\nenabled=1\ngpgcheck=0\npriority=1\n" \
+          > /etc/yum.repos.d/local.repo
+        dnf install -y chunkah
+
+        # Build a minimal rootfs with "filesystem" installed.  The rpmdb.sqlite
+        # that dnf writes there is a large file, so chunkah places it in a
+        # bigfiles/ layer — the exact layer type affected by HUM-8922.
+        TESTROOT=/tmp/testroot
+        mkdir -p "${TESTROOT}"
+        dnf5 install -y --installroot="${TESTROOT}" --use-host-config --nodocs \
+          --setopt=install_weak_deps=False filesystem
+
+        chunkah build --rootfs "${TESTROOT}" --max-layers 32 \
+          > /tmp/out/chunkah-output.ociarchive
+      '
+
+    if [[ ! -s "${build_dir}/chunkah-output.ociarchive" ]]; then
+      TEST_FAIL "chunkah produced empty or missing OCI archive"
+    fi
+
+    # Parse layer timestamps from the image config and verify all bigfiles/*
+    # history entries carry the expected SOURCE_DATE_EPOCH timestamp.
+    python3 "${test_files_dir}/check_sde_clamp.py" \
+      "${build_dir}/chunkah-output.ociarchive" \
+      "${SDE_RFC}"

@@ -1,7 +1,7 @@
-From a10a60403c197128ea6d8076b5111c64594a5026 Mon Sep 17 00:00:00 2001
+From e718945263e5944ed001bf8e01bf4b9e403849c0 Mon Sep 17 00:00:00 2001
 From: Simo Sorce <simo@redhat.com>
 Date: Thu, 6 Mar 2025 08:40:29 -0500
-Subject: [PATCH 02/57] Add a separate config file to use for rpm installs
+Subject: [PATCH 02/58] Add a separate config file to use for rpm installs
 
 In RHEL/Fedora systems we want to use a slightly different set
 of defaults, but we do not want to change the standard config file
@@ -47,7 +47,7 @@ new file mode 100644
 index 0000000000..fe2346eb2b
 --- /dev/null
 +++ b/rh-openssl.cnf
-@@ -0,0 +1,418 @@
+@@ -0,0 +1,403 @@
 +#
 +# OpenSSL example configuration file.
 +# See doc/man5/config.pod for more info.
@@ -122,8 +122,8 @@ index 0000000000..fe2346eb2b
 +##[legacy_sect]
 +##activate = 1
 +
-+##Place the third party provider configuration files into this folder
-+#.include /etc/pki/tls/openssl3.d
++#Place the third party provider configuration files into this folder
++.include /etc/pki/tls/openssl.d
 +
 +
 +[ ssl_module ]
@@ -131,23 +131,8 @@ index 0000000000..fe2346eb2b
 +system_default = crypto_policy
 +
 +[ crypto_policy ]
-+CipherString = @SECLEVEL=2:kEECDH:kRSA:kEDH:kPSK:kDHEPSK:kECDHEPSK:kRSAPSK:-aDSS:-3DES:!DES:!RC4:!RC2:!IDEA:-SEED:!eNULL:!aNULL:!MD5:-SHA384:-CAMELLIA:-ARIA:-AESCCM8
-+Ciphersuites = TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_SHA256
-+TLS.MinProtocol = TLSv1.2
-+TLS.MaxProtocol = TLSv1.3
-+DTLS.MinProtocol = DTLSv1.2
-+DTLS.MaxProtocol = DTLSv1.2
-+SignatureAlgorithms = ?mldsa44:?mldsa65:?mldsa87:?ECDSA+SHA256:?ECDSA+SHA384:?ECDSA+SHA512:?ed25519:?ed448:?rsa_pss_pss_sha256:?rsa_pss_pss_sha384:?rsa_pss_pss_sha512:?rsa_pss_rsae_sha256:?rsa_pss_rsae_sha384:?rsa_pss_rsae_sha512:?RSA+SHA256:?RSA+SHA384:?RSA+SHA512:?ECDSA+SHA224:?RSA+SHA224
-+Groups = *?X25519MLKEM768:?x25519_mlkem768:?SecP256r1MLKEM768:?p256_mlkem768:?SecP384r1MLKEM1024:?p384_mlkem1024/*?X25519:?secp256r1:?X448:?secp521r1:?secp384r1:?ffdhe2048:?ffdhe3072:?ffdhe4096:?ffdhe6144:?ffdhe8192
 +
-+[req]
-+default_bits = 2048
-+
-+[openssl_init]
-+alg_section = evp_properties
-+
-+[evp_properties]
-+rh-allow-sha1-signatures = no
++.include = /etc/crypto-policies/back-ends/opensslcnf.config
 +
 +####################################################################
 +[ ca ]
@@ -467,5 +452,5 @@ index 0000000000..fe2346eb2b
 +cmd = rr
 +oldcert = $insta::certout # insta.cert.pem
 -- 
-2.52.0
+2.55.0
 

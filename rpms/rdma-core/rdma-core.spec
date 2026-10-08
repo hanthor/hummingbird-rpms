@@ -1,6 +1,6 @@
 Name: rdma-core
-Version: 64.0
-Release: 3%{?dist}
+Version: 65.0
+Release: 5%{?dist}
 Summary: RDMA core userspace libraries and daemons
 
 # Almost everything is licensed under the OFA dual GPLv2, 2 Clause BSD license
@@ -11,6 +11,8 @@ License: GPL-2.0-only OR BSD-2-Clause AND BSD-3-Clause
 Url: https://github.com/linux-rdma/rdma-core
 Source: https://github.com/linux-rdma/rdma-core/releases/download/v%{version}/%{name}-%{version}.tar.gz
 Patch0001: 0001-Revert-dracut-do-not-install-dracut-module-in-non-ho.patch
+# https://github.com/linux-rdma/rdma-core/pull/1803
+Patch0002: fix-comp-cntr-uint64.patch
 Patch9998: 9998-kernel-boot-Do-not-perform-device-rename-on-OPA-devi.patch
 Patch9999: 9999-udev-keep-NAME_KERNEL-as-default-interface-naming-co.patch
 # Do not build static libs by default.
@@ -142,7 +144,8 @@ RDMA core development libraries and headers.
 Summary: InfiniBand Diagnostic Tools
 Requires: %{name}-common = %{version}-%{release}
 Requires: libibumad%{?_isa} = %{version}-%{release}
-Provides: perl(IBswcountlimits)
+Requires: libibverbs%{?_isa} = %{version}-%{release}
+Provides: perl(IBswcountlimits) = %{version}-%{release}
 Provides: libibmad = %{version}-%{release}
 Obsoletes: libibmad < %{version}-%{release}
 Obsoletes: openib-diags < 1.3
@@ -163,7 +166,7 @@ often at a reduced performance. These are maintained for the time being for
 compatibility reasons.
 
 %package -n libibverbs
-Summary: A library and drivers for direct userspace use of RDMA (InfiniBand/iWARP/RoCE) hardware
+Summary: A library and drivers for direct userspace use of RDMA hardware
 Requires: %{name}-common = %{version}-%{release}
 Provides: libcxgb4 = %{version}-%{release}
 Obsoletes: libcxgb4 < %{version}-%{release}
@@ -305,6 +308,7 @@ easy, object-oriented access to IB verbs.
 %prep
 %setup -q
 %patch 0001 -p1
+%patch 0002 -p1
 %if 0%{?fedora}
 %patch 9998 -p1
 %endif
@@ -353,7 +357,7 @@ easy, object-oriented access to IB verbs.
 %if %{with_pyverbs}
          -DNO_PYVERBS=0
 %else
-	 -DNO_PYVERBS=1
+         -DNO_PYVERBS=1
 %endif
 %make_jobs
 

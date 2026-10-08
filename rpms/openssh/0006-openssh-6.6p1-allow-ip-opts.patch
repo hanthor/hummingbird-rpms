@@ -1,7 +1,7 @@
-From 87f6d5b0348b109074f77c8f6f9d2ae49d481f68 Mon Sep 17 00:00:00 2001
+From b7b287396f0792287ee4be08702ff70876cd401d Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 06/54] openssh-6.6p1-allow-ip-opts
+Subject: [PATCH 06/53] openssh-6.6p1-allow-ip-opts
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=1644
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 06/54] openssh-6.6p1-allow-ip-opts
  1 file changed, 26 insertions(+), 6 deletions(-)
 
 diff --git a/sshd-session.c b/sshd-session.c
-index d7d4f32c5..fea94dc6c 100644
+index 1a40a43f1..0f41756ff 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
 @@ -727,12 +727,32 @@ check_ip_options(struct ssh *ssh)

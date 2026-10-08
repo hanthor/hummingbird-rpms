@@ -18,6 +18,13 @@ execute:
   discover+:
     filter: "component:nodejs24 & tag:-bins"
   prepare:
+    # the default `dnf install *.rpm` will fail on conflicts between nodejsXY-devel and nodejs-devel
+    # https://docs.testing-farm.io/Testing%20Farm/0.1/faq.html#_how_to_exclude_artifacts_from_installing
+    - &tf-skip-default
+      name: Skip testing farm installation of all built packages
+      how: install
+      exclude:
+        - '.*'
     - name: install tested packages
       how: install
       package:
@@ -30,6 +37,7 @@ execute:
   environment+:
     OTHER_VERSION_TO_TEST_SWAPS: 22
   prepare:
+  - *tf-skip-default
   - name: remove nodejs from previous tests
     how: shell
     script: dnf remove -y 'nodejs*'

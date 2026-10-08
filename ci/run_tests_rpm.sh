@@ -117,7 +117,7 @@ export -f TEST_FAIL
 # Parse command line arguments
 TEST_VERBOSE=false
 TEST_ENGINE=podman
-TEST_IMAGE="${TEST_IMAGE:-quay.io/hummingbird/core-runtime:latest-builder}"
+TEST_IMAGE="${TEST_IMAGE:-registry.access.redhat.com/hi/core-runtime:latest-builder}"
 TEST_SRC_RPM=""
 TEST_REPO_DIR=""
 TEST_JOBS=1

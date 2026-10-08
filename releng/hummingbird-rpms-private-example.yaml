@@ -60,6 +60,11 @@ spec:
           repository_id: private-hummingbird-example-aarch64-rpms
           repository_name: aarch64
           distro: hummingbird-20251124
+        - name: s390x
+          arch: s390x
+          repository_id: private-hummingbird-example-s390x-rpms
+          repository_name: s390x
+          distro: hummingbird-20251124
         - name: src
           arch: src
           repository_id: private-hummingbird-example-source-rpms

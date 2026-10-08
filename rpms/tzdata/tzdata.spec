@@ -1,8 +1,8 @@
 Summary: Timezone data
 Name: tzdata
-Version: 2026c
-%define tzdata_version 2026c
-%define tzcode_version 2026c
+Version: 2026e
+%define tzdata_version 2026e
+%define tzcode_version 2026e
 Release: 1%{?dist}
 License: LicenseRef-Fedora-Public-Domain AND (GPL-2.0-only WITH ClassPath-exception-2.0)
 URL: https://www.iana.org/time-zones
@@ -113,7 +113,9 @@ install -p -m 644 tzdb.dat $RPM_BUILD_ROOT%{_datadir}/javazi-1.8/
 
 %check
 echo ============TESTING===============
-/usr/bin/env LANG=C make -k VALIDATE=':' check && true
+# Use the glibc provided versions of date, zdump, and zic
+for p in date zdump zic ; do cp /usr/bin/$p . ; done
+make -k CC=: CHECK_WEB_PAGES="" check && true
 
 # Create a custom JAVA_HOME, where we can replace tzdb.dat with the
 # one just built, for testing.
@@ -142,6 +144,23 @@ echo ============END TESTING===========
 %{_datadir}/javazi-1.8
 
 %changelog
+* Mon Oct 05 2026 Patsy Griffin <patsy@redhat.com> - 2026e-1
+  Update to tzdata-2026e (#2544693)
+  - Manitoba moves to permanent -05 on 2026-10-31.
+
+* Mon Oct 05 2026 Patsy Griffin <patsy@redhat.com> - 2026d-1
+- Update to tzdata-2026d (#2536971)
+  - Canada's Northwest Territories moved to permanent -06
+    on 2026-08-21.
+  - Obsolescent settings like TZ="EST5EDT" now conform better
+    to POSIX.
+
+* Mon Sep 14 2026 Patsy Griffin <patsy@redhat.com> - 2026c-2
+  Fix 'make check' errors (#2510275)
+  - Use the system installed versions of date, zic, and dump for testing.
+  - Don't try to validate external web pages during 'check'.
+  - VALIDATE is no longer needed.
+
 * Mon Aug 10 2026 Patsy Griffin <patsy@redhat.com> - 2026c-1
   Update to tzdata-2026c (#2498187)
   - Alberta moved to permanent -06 on 2026-06-18.

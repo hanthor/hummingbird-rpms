@@ -1,7 +1,7 @@
-From 9ef48ad3dc898461ee9577edc8e29401a13ee18e Mon Sep 17 00:00:00 2001
+From 76a46dc287ab78071242bbf8f31dd1dd2f805970 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 16/54] openssh-7.2p2-k5login_directory
+Subject: [PATCH 16/53] openssh-7.2p2-k5login_directory
 
 # Respect k5login_directory option in krk5.conf (#1328243)
 ---
@@ -84,10 +84,10 @@ index 415fb1893..7df31c6af 100644
  }
  
 diff --git a/sshd.8 b/sshd.8
-index e2d8ff003..fa33f5232 100644
+index 8ef358cd5..ae22a9ea4 100644
 --- a/sshd.8
 +++ b/sshd.8
-@@ -880,6 +880,10 @@ rlogin/rsh.
+@@ -884,6 +884,10 @@ rlogin/rsh.
  These files enforce GSSAPI/Kerberos authentication access control.
  Further details are described in
  .Xr ksu 1 .

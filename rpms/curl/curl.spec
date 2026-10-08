@@ -13,7 +13,7 @@
 Summary: A utility for getting files from remote servers (FTP, HTTP, and others)
 Name: curl
 Version: 8.22.0
-Release: 0.1%{?dist}
+Release: 1.1%{?dist}
 License: curl
 Source0: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz
 Source1: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz.asc
@@ -241,13 +241,6 @@ be installed.
 %{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
 %autosetup -n %{name}-%{version_no_tilde} -p1
 
-# disable test 1801
-# <https://github.com/bagder/curl/commit/21e82bd6#commitcomment-12226582>
-printf "1801\n" >>tests/data/DISABLED
-
-# temporary disable test 1085 it passes on Fedora but fails on ELN
-printf "1085\n" >>tests/data/DISABLED
-
 # test 303: raise timeout from 8s to 20s so it doesn't expire during TLS
 # handshake under valgrind
 %ifarch x86_64
@@ -391,7 +384,7 @@ for size in minimal full; do (
     export LD_LIBRARY_PATH="${PWD}/lib/.libs"
 
     # tests that must run in serial to avoid intermittent failures under parallel execution
-    serial_tests="766 1399 2402 2404 2500 2502 3300 3301"
+    serial_tests="766 1399 1451 2402 2404 2500 2502 3300 3301"
     serial_excludes=$(for t in $serial_tests; do printf ' !%s' "$t"; done)
     # run the bulk of tests in parallel, excluding serial ones
     # cap at 64 jobs to avoid overwhelming system resources on high-CPU machines
@@ -471,6 +464,16 @@ rm -f ${RPM_BUILD_ROOT}%{_mandir}/man1/wcurl.1*
 %{_libdir}/libcurl.so.4.[0-9].[0-9].minimal
 
 %changelog
+* Tue Sep 08 2026 Jan Macku <jamacku@redhat.com> - 8.22.0-1
+- new upstream release
+
+* Wed Aug 26 2026 Jan Macku <jamacku@redhat.com> - 8.22.0~rc3-1
+- new upstream release candidate
+
+* Thu Aug 20 2026 Jan Macku <jamacku@redhat.com> - 8.22.0~rc2-1
+- new upstream release candidate
+- re-enable some previously disabled tests
+
 * Thu Aug 06 2026 Jan Macku <jamacku@redhat.com> - 8.21.0-5
 - add multi_wakeup_internal for threaded resolving (#2509107)
 

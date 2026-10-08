@@ -1,7 +1,7 @@
-From abea763fed511c64efaea276a6037fb7930dba8e Mon Sep 17 00:00:00 2001
+From dd1871972173c9f4836c4d8096411981d291ff85 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 21/54] openssh-6.6p1-GSSAPIEnablek5users
+Subject: [PATCH 21/53] openssh-6.6p1-GSSAPIEnablek5users
 
 ---
  gss-serv-krb5.c | 3 +--
@@ -32,10 +32,10 @@ index 6f5826ce8..723509409 100644
                                          k5login_exists);
  	}
 diff --git a/servconf.c b/servconf.c
-index fab3b4235..1bfe6a016 100644
+index 5de03f3bf..3dbfccea8 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -2234,6 +2234,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -2233,6 +2233,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		intptr = &options->use_kuserok;
  		goto parse_flag;
  
@@ -46,7 +46,7 @@ index fab3b4235..1bfe6a016 100644
  	case sMatch:
  		if (cmdline)
  			fatal("Match directive not supported as a command-line "
-@@ -4248,6 +4252,7 @@ dump_config(ServerOptions *o)
+@@ -4247,6 +4251,7 @@ dump_config(ServerOptions *o)
  # endif
  	dump_cfg_fmtint(sKerberosUniqueCCache, o->kerberos_unique_ccache);
  	dump_cfg_fmtint(sKerberosUseKuserok, o->use_kuserok);
@@ -55,7 +55,7 @@ index fab3b4235..1bfe6a016 100644
  #ifdef GSSAPI
  	dump_cfg_fmtint(sGSSAPIAuthentication, o->gss_authentication);
 diff --git a/servconf.h b/servconf.h
-index 59e98604a..7e809cfff 100644
+index 7c003b8c5..c55b64c73 100644
 --- a/servconf.h
 +++ b/servconf.h
 @@ -325,7 +325,8 @@ SSHCONF_INTFLAG(gss_deleg_creds, GSSAPIDelegateCredentials, SSHCFG_GLOBAL, 1, SS
@@ -79,10 +79,10 @@ index 59e98604a..7e809cfff 100644
  
  #define SSHD_CONFIG_ENTRIES \
 diff --git a/sshd_config b/sshd_config
-index ea5a878e6..33713c886 100644
+index 76279d795..d38d899a6 100644
 --- a/sshd_config
 +++ b/sshd_config
-@@ -82,6 +82,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
+@@ -83,6 +83,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
  #GSSAPICleanupCredentials yes
  #GSSAPIStrictAcceptorCheck yes
  #GSSAPIKeyExchange no

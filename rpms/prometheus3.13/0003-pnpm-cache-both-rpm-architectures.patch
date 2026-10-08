@@ -2,7 +2,8 @@ diff --git a/web/ui/pnpm-workspace.yaml b/web/ui/pnpm-workspace.yaml
 index 58ac0af..86fd665 100644
 --- a/web/ui/pnpm-workspace.yaml
 +++ b/web/ui/pnpm-workspace.yaml
-@@ -2,4 +2,14 @@ packages:
+@@ -1,6 +1,16 @@
+ packages:
    - "mantine-ui"
    - "module/*"
 +# Populate the offline RPM source cache for both build architectures.
@@ -16,8 +17,8 @@ index 58ac0af..86fd665 100644
 +    - glibc
 +
  allowBuilds:
+   '@parcel/watcher': false
    esbuild: true
-   unrs-resolver: true
 diff --git a/web/ui/react-app/pnpm-workspace.yaml b/web/ui/react-app/pnpm-workspace.yaml
 index 077e43a..c26a33b 100644
 --- a/web/ui/react-app/pnpm-workspace.yaml

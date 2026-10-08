@@ -99,11 +99,12 @@ Run the default and package-specific tests against one or more built RPMs:
 Notes:
 
 - Tests run inside a Podman container.
-- The test image defaults to `quay.io/hummingbird/core-runtime:latest-builder`. You can override via
-  `TEST_IMAGE`:
+- The test image defaults to
+  `registry.access.redhat.com/hi/core-runtime:latest-builder`.
+  You can override via `TEST_IMAGE`:
 
 ```bash
-TEST_IMAGE=quay.io/hummingbird/core-runtime:specific-tag ./ci/run_tests_rpm.sh --rpm /path/to/pkg.rpm <package_name>
+TEST_IMAGE=registry.access.redhat.com/hi/core-runtime:specific-tag ./ci/run_tests_rpm.sh --rpm /path/to/pkg.rpm <package_name>
 ```
 
 - Container execution is performed as root with `HOME=/root` to avoid XDG state permission issues in
@@ -133,8 +134,12 @@ expect most packages to not have (permanent) Hummingbird specific changes, so mo
 syncing with upstream dist-gits. In most cases that will be Fedora rawhide, but for some packages we
 may pick a different upstream, e.g. stable Fedora or even CentOS Stream.
 
-The status of all imports is tracked in [imports.json](./imports.json). Active Fedora releases are
-tracked in [upstream-releases.json](./upstream-releases.json), which is updated from the Bodhi API.
+The status of all imports is tracked in [imports.json][imports-json]. Active Fedora releases are
+tracked in [upstream-releases.json][upstream-releases-json], which is updated from the Bodhi API.
+
+[imports-json]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/imports.json
+[upstream-releases-json]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/upstream-releases.json
+
 Note that `rawhide` is automatically resolved to the highest numbered Fedora release at runtime and
 is not stored in the JSON file.
 

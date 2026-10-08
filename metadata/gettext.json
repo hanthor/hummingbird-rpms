@@ -1,8 +1,8 @@
 {
   "branch": "rawhide",
   "modification_status": "clean",
-  "release": "3",
-  "sha": "5c2653c7ae50d94b19939ddb7f6251b93a191f28",
+  "release": "4",
+  "sha": "5be83e9c1d63daaa2d37a30330335419736e6833",
   "source": "https://src.fedoraproject.org/rpms/gettext.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/gettext.git",
   "version": "1.0"

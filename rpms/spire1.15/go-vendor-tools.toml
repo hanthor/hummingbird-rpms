@@ -9,6 +9,8 @@ post_commands = [
 "golang.org/x/text" = "v0.39.0"
 # CVE-2026-54787
 "github.com/sigstore/sigstore-go" = "v1.2.1"
+# CVE-2026-93450
+"github.com/go-openapi/swag" = "v0.27.1"
 
 [licensing]
 detector = "askalono"

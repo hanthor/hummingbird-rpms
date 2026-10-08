@@ -1,4 +1,37 @@
 [archive]
+pre_commands = [
+  # CVE-2026-93450: bump go-openapi/swag and all sub-modules to v0.27.1 in
+  # both the root module and the documentation/examples/remote_storage workspace
+  # member that also uses go-openapi/swag.
+  ["go", "get",
+   "github.com/go-openapi/swag@v0.27.1",
+   "github.com/go-openapi/swag/cmdutils@v0.27.1",
+   "github.com/go-openapi/swag/conv@v0.27.1",
+   "github.com/go-openapi/swag/fileutils@v0.27.1",
+   "github.com/go-openapi/swag/jsonutils@v0.27.1",
+   "github.com/go-openapi/swag/loading@v0.27.1",
+   "github.com/go-openapi/swag/mangling@v0.27.1",
+   "github.com/go-openapi/swag/netutils@v0.27.1",
+   "github.com/go-openapi/swag/pools@v0.27.1",
+   "github.com/go-openapi/swag/stringutils@v0.27.1",
+   "github.com/go-openapi/swag/typeutils@v0.27.1",
+   "github.com/go-openapi/swag/yamlutils@v0.27.1"],
+  ["go", "-C", "documentation/examples/remote_storage", "get",
+   "github.com/go-openapi/swag@v0.27.1",
+   "github.com/go-openapi/swag/cmdutils@v0.27.1",
+   "github.com/go-openapi/swag/conv@v0.27.1",
+   "github.com/go-openapi/swag/fileutils@v0.27.1",
+   "github.com/go-openapi/swag/jsonutils@v0.27.1",
+   "github.com/go-openapi/swag/loading@v0.27.1",
+   "github.com/go-openapi/swag/mangling@v0.27.1",
+   "github.com/go-openapi/swag/netutils@v0.27.1",
+   "github.com/go-openapi/swag/pools@v0.27.1",
+   "github.com/go-openapi/swag/stringutils@v0.27.1",
+   "github.com/go-openapi/swag/typeutils@v0.27.1",
+   "github.com/go-openapi/swag/yamlutils@v0.27.1"],
+  # The source pipeline and RPM build use GOWORK=off. Gorget tidies and vendors
+  # the root module after these bumps; do not run workspace-only commands here.
+]
 
 [licensing]
 detector = "askalono"

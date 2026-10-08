@@ -60,6 +60,11 @@ spec:
           repository_id: public-hummingbird-aarch64-rpms
           repository_name: aarch64
           distro: hummingbird-20251124
+        - name: s390x
+          arch: s390x
+          repository_id: public-hummingbird-s390x-rpms
+          repository_name: s390x
+          distro: hummingbird-20251124
         - name: src
           arch: src
           repository_id: public-hummingbird-source-rpms
@@ -157,6 +162,8 @@ spec:
         - name: checkpolicy-main
           contentType: rpm
         - name: chkconfig-main
+          contentType: rpm
+        - name: chrony-main
           contentType: rpm
         - name: chunkah-main
           contentType: rpm
@@ -507,6 +514,8 @@ spec:
         - name: libcbor-main
           contentType: rpm
         - name: libcomps-main
+          contentType: rpm
+        - name: libdex-main
           contentType: rpm
         - name: libdnf-main
           contentType: rpm
@@ -999,6 +1008,8 @@ spec:
         - name: python3-13-main
           contentType: rpm
         - name: python3-14-main
+          contentType: rpm
+        - name: python3-15-main
           contentType: rpm
         - name: qt5-main
           contentType: rpm

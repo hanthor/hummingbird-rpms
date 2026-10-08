@@ -1,6 +1,7 @@
 {
   "branch": "rawhide",
-  "modification_status": "clean",
+  "modification_reason": "Permanently build without cmake-gui: its Qt6 BuildRequires pull in qt6-rpm-macros, which requires cmake, so a soname bump in any library cmake links deadlocks the rebuild (HUM-6284). Backport upstream 98d9cddffe so RunCMake.CPack_RPM accepts the rpm keyring lock error.",
+  "modification_status": "modified",
   "release": "5",
   "sha": "b364b92e16af7e83a1e0744112a692e9e5fa05be",
   "source": "https://src.fedoraproject.org/rpms/cmake.git",

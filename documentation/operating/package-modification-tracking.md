@@ -187,6 +187,13 @@ These fields affect two systems:
   upstream versions to only those matching the prefix. Only packages with `track_upstream` set are
   checked by `check_upstream_versions.py check` when no explicit package arguments are given.
 
+When a successful lookup reports releases but none match the configured version prefix, the
+checker skips that package with a warning instead of failing the job. For example, Python 3.15
+tracking can wait while Anitya only reports Python 3.14 releases. The package is not counted as
+up to date, no spec or source update is attempted, and a warning-only run exits successfully.
+Empty upstream results and HTTP, connection, or JSON parsing failures during lookup remain
+errors. Existing warnings for unpublished source archives remain nonfatal as well.
+
 Find release-monitoring.org project IDs by searching on <https://release-monitoring.org>.
 
 The project ID can be combined with a version prefix to filter versions returned by the project ID
@@ -281,6 +288,14 @@ pinned `ref:` no longer matches the merged spec and refuses to auto-commit -- it
 draft, `no-test`-labeled MR for manual resolution instead, the same way a real git merge conflict
 is, rather than silently committing a `sources` file gorget was never actually run against.
 
+## Sudo Patchlevel Comparisons
+
+For sudo, upstream version comparisons include the spec's optional `extraver` macro.
+Fedora's `Version: 1.9.17` with `extraver p2` therefore compares as `1.9.17p2`, preventing
+an unnecessary update and a doubled `p2` in the source URL. This comparison does not change
+the spec, the RPM version/release, or the version stored in package metadata. Other packages'
+`extraver` macros are not treated as upstream version suffixes.
+
 ## Per-Package Update Hooks
 
 When `check_upstream_versions.py check --update` updates a package, by default it sets `Version:` to
@@ -330,8 +345,10 @@ Every hook receives these environment variables:
 
 ### Example
 
-See [`metadata/nodejs25.update-hooks.yaml`](../../../metadata/nodejs25.update-hooks.yaml) for a
+See [`metadata/nodejs25.update-hooks.yaml`][nodejs25-hooks] for a
 working example that uses all three hook phases.
+
+[nodejs25-hooks]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/metadata/nodejs25.update-hooks.yaml
 
 ## How Auto-Updates Work
 
@@ -593,7 +610,7 @@ For CI and daily development, fast mode is sufficient. Use thorough mode when:
 
 ### Backporting a Patch
 
-1. Add patch file and modify spec (see [Rebuilding Packages](../rebuilding-packages))
+1. Add patch file and modify spec (see [Rebuilding Packages](rebuilding-packages.md))
 2. Commit the changes
 3. **Mark as modified:**
 
@@ -696,5 +713,5 @@ This is expected for modified packages. Options:
 
 - [Package Metadata Fields](package-metadata-fields.md) - `modification_status` and `release`
   configuration
-- [Rebuilding Packages](../rebuilding-packages) - How to rebuild and backport patches
-- [Updating Dist-git Packages](../updating-dist-git-packages) - How automatic updates work
+- [Rebuilding Packages](rebuilding-packages.md) - How to rebuild and backport patches
+- [Updating Dist-git Packages](updating-dist-git-packages.md) - How automatic updates work

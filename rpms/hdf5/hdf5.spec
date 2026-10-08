@@ -10,7 +10,7 @@
 
 Name: hdf5
 Version: 2.2.0
-Release: 0.1.1%{?dist}
+Release: 0.1.2%{?dist}
 Summary: A general purpose library and file format for storing scientific data
 License: BSD-3-Clause
 URL: https://www.hdfgroup.org/solutions/hdf5/
@@ -32,6 +32,10 @@ Patch: hdf5-fmoddir.patch
 # Reject chunked datasets with mismatched chunk/dataspace rank at open time
 # https://github.com/HDFGroup/hdf5/pull/6508
 Patch: hdf5-CVE-2026-19025.patch
+# Fix crashes in N-Bit and Fletcher32 filter decode paths
+# CVE-2026-19026, CVE-2026-19027, CVE-2026-19028
+# https://github.com/HDFGroup/hdf5/pull/6497
+Patch: hdf5-CVE-2026-19026-19027-19028.patch
 
 BuildRequires: cmake
 BuildRequires: gcc-gfortran

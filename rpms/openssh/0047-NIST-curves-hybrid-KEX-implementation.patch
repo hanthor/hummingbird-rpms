@@ -1,25 +1,25 @@
-From 93504cc2625494b096134f478b851f140dbd8926 Mon Sep 17 00:00:00 2001
+From 111be4b2ba5e0e2549d21d1ed4c53fe9af90827a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 20 Oct 2025 16:07:31 +0200
-Subject: [PATCH 47/54] NIST curves hybrid KEX implementation
+Subject: [PATCH 47/53] NIST curves hybrid KEX implementation
 
 ---
  compat.c                         |  23 +-
  compat.h                         |   1 +
  crypto_api.h                     |   5 +
- kex-names.c                      |  89 +++-
+ kex-names.c                      |  91 ++++-
  kex.c                            |   1 +
- kex.h                            |  19 +
- kexgen.c                         |  56 ++-
+ kex.h                            |  20 +-
+ kexgen.c                         |  67 ++-
  kexmlkem768x25519.c              | 680 +++++++++++++++++++++++++++++--
  monitor.c                        |   2 +
  myproposal.h                     |   4 +
  regress/unittests/kex/test_kex.c |   4 +
- ssh-keyscan.c                    |   2 +
- ssh_api.c                        |   4 +
- sshconnect2.c                    |   2 +
+ ssh-keyscan.c                    |   3 +-
+ ssh_api.c                        |   6 +-
+ sshconnect2.c                    |   3 +-
  sshd-auth.c                      |   2 +
- 15 files changed, 853 insertions(+), 41 deletions(-)
+ 15 files changed, 852 insertions(+), 60 deletions(-)
 
 diff --git a/compat.c b/compat.c
 index 4312510e5..e6c7935d4 100644
@@ -81,7 +81,7 @@ index 2e6db5bf9..b78e55b69 100644
 +int is_mlkem768_available(void);
  #endif
 diff --git a/crypto_api.h b/crypto_api.h
-index 9095d8292..f91556b2d 100644
+index f8441ed6f..60ea24a3e 100644
 --- a/crypto_api.h
 +++ b/crypto_api.h
 @@ -203,6 +203,11 @@ int crypto_sign_mldsa44_ed25519_verify(const uint8_t sig[MLDSA44_ED25519_SIG_SZ]
@@ -97,7 +97,7 @@ index 9095d8292..f91556b2d 100644
  void sha3_256(uint8_t digest[32], const uint8_t *data, size_t len);
  void sha3_512(uint8_t digest[64], const uint8_t *data, size_t len);
 diff --git a/kex-names.c b/kex-names.c
-index 6cc8ab47c..aa4a5eaab 100644
+index cdd5db90e..f9c51429a 100644
 --- a/kex-names.c
 +++ b/kex-names.c
 @@ -34,6 +34,7 @@
@@ -108,7 +108,16 @@ index 6cc8ab47c..aa4a5eaab 100644
  #endif
  
  #include "kex.h"
-@@ -90,6 +91,10 @@ static const struct kexalg kexalgs[] = {
+@@ -73,8 +74,6 @@ static const struct kexalg kexalgs[] = {
+ 	    SSH_DIGEST_SHA384, KEX_NOT_PQ },
+ 	{ KEX_ECDH_SHA2_NISTP521, KEX_ECDH_SHA2, NID_secp521r1,
+ 	    SSH_DIGEST_SHA512, KEX_NOT_PQ },
+-	{ KEX_MLKEM768NISTP256_SHA256, KEX_KEM_MLKEM768ECDH_SHA256,
+-	    NID_X9_62_prime256v1, SSH_DIGEST_SHA256, KEX_IS_PQ },
+ #endif /* WITH_OPENSSL */
+ #if defined(HAVE_EVP_SHA256) || !defined(WITH_OPENSSL)
+ 	{ KEX_CURVE25519_SHA256, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256, KEX_NOT_PQ },
+@@ -88,6 +87,10 @@ static const struct kexalg kexalgs[] = {
  #ifdef USE_MLKEM768X25519
  	{ KEX_MLKEM768X25519_SHA256, KEX_KEM_MLKEM768X25519_SHA256, 0,
  	    SSH_DIGEST_SHA256, KEX_IS_PQ },
@@ -119,7 +128,7 @@ index 6cc8ab47c..aa4a5eaab 100644
  #endif
  #endif /* HAVE_EVP_SHA256 || !WITH_OPENSSL */
  	{ NULL, 0, -1, -1, 0 },
-@@ -108,14 +113,27 @@ static const struct kexalg gss_kexalgs[] = {
+@@ -106,14 +109,27 @@ static const struct kexalg gss_kexalgs[] = {
  	{ NULL, 0, -1, -1, 0},
  };
  
@@ -150,7 +159,7 @@ index 6cc8ab47c..aa4a5eaab 100644
  	}
  
  	return is_fetched;
-@@ -127,11 +145,32 @@ kex_alg_list_internal(char sep, const struct kexalg *algs)
+@@ -125,11 +141,32 @@ kex_alg_list_internal(char sep, const struct kexalg *algs)
  	char *ret = NULL;
  	const struct kexalg *k;
  	char sep_str[2] = {sep, '\0'};
@@ -186,7 +195,7 @@ index 6cc8ab47c..aa4a5eaab 100644
  		xextendf(&ret, sep_str, "%s", k->name);
  	}
  
-@@ -154,10 +193,30 @@ static const struct kexalg *
+@@ -152,10 +189,30 @@ static const struct kexalg *
  kex_alg_by_name(const char *name)
  {
  	const struct kexalg *k;
@@ -220,7 +229,7 @@ index 6cc8ab47c..aa4a5eaab 100644
  
  	for (k = kexalgs; k->name != NULL; k++) {
  		if (strcmp(k->name, name) == 0)
-@@ -235,8 +294,16 @@ kex_names_valid(const char *names)
+@@ -233,8 +290,16 @@ kex_names_valid(const char *names)
  			return 0;
  		}
  		if (kex_alg_by_name(p) == NULL) {
@@ -240,40 +249,42 @@ index 6cc8ab47c..aa4a5eaab 100644
  				error("Unsupported KEX algorithm \"%.100s\"", p);
  			free(s);
 diff --git a/kex.c b/kex.c
-index a51e26398..136ba318e 100644
+index 62cfa86cd..1e0c29b91 100644
 --- a/kex.c
 +++ b/kex.c
-@@ -762,6 +762,7 @@ kex_free(struct kex *kex)
- #ifdef OPENSSL_HAS_ECC
+@@ -760,6 +760,7 @@ kex_free(struct kex *kex)
+ #ifdef WITH_OPENSSL
+ 	DH_free(kex->dh);
  	EC_KEY_free(kex->ec_client_key);
- #endif /* OPENSSL_HAS_ECC */
 +	EVP_PKEY_free(kex->ec_hybrid_client_key);
  #endif /* WITH_OPENSSL */
  	for (mode = 0; mode < MODE_MAX; mode++) {
  		kex_free_newkeys(kex->newkeys[mode]);
 diff --git a/kex.h b/kex.h
-index d22f6deb3..9b5fe05c4 100644
+index 1fe4bb29b..4e1b2875e 100644
 --- a/kex.h
 +++ b/kex.h
-@@ -72,6 +72,8 @@
+@@ -65,7 +65,8 @@
  #define	KEX_SNTRUP761X25519_SHA512	"sntrup761x25519-sha512"
  #define	KEX_SNTRUP761X25519_SHA512_OLD	"sntrup761x25519-sha512@openssh.com"
  #define	KEX_MLKEM768X25519_SHA256	"mlkem768x25519-sha256"
+-#define	KEX_MLKEM768NISTP256_SHA256	"mlkem768nistp256-sha256"
 +#define	KEX_MLKEM768NISTP256_SHA256     "mlkem768nistp256-sha256"
 +#define	KEX_MLKEM1024NISTP384_SHA384    "mlkem1024nistp384-sha384"
  
  #define COMP_NONE	0
  #define COMP_DELAYED	2
-@@ -110,6 +112,8 @@ enum kex_exchange {
+@@ -104,7 +105,8 @@ enum kex_exchange {
  	KEX_C25519_SHA256,
  	KEX_KEM_SNTRUP761X25519_SHA512,
  	KEX_KEM_MLKEM768X25519_SHA256,
+-	KEX_KEM_MLKEM768ECDH_SHA256,
 +	KEX_KEM_MLKEM768NISTP256_SHA256,
 +	KEX_KEM_MLKEM1024NISTP384_SHA384,
  #ifdef GSSAPI
  	KEX_GSS_GRP1_SHA1,
  	KEX_GSS_GRP14_SHA1,
-@@ -212,6 +216,9 @@ struct kex {
+@@ -207,6 +209,9 @@ struct kex {
  	u_char sntrup761_client_key[crypto_kem_sntrup761_SECRETKEYBYTES]; /* KEM */
  	u_char mlkem768_client_key[crypto_kem_mlkem768_SECRETKEYBYTES]; /* KEM */
  	struct sshbuf *client_pub;
@@ -283,10 +294,10 @@ index d22f6deb3..9b5fe05c4 100644
  };
  
  int	 kex_name_valid(const char *);
-@@ -294,6 +301,18 @@ int	 kex_kem_mlkem768x25519_enc(struct kex *, const struct sshbuf *,
- int	 kex_kem_mlkem768x25519_dec(struct kex *, const struct sshbuf *,
+@@ -297,6 +302,17 @@ int	 kex_kem_mlkem768ecdh_enc(struct kex *, const struct sshbuf *,
+     struct sshbuf **, struct sshbuf **);
+ int	 kex_kem_mlkem768ecdh_dec(struct kex *, const struct sshbuf *,
      struct sshbuf **);
- 
 +int	 kex_kem_mlkem768nistp256_keypair(struct kex *);
 +int	 kex_kem_mlkem768nistp256_enc(struct kex *, const struct sshbuf *,
 +    struct sshbuf **, struct sshbuf **);
@@ -298,15 +309,24 @@ index d22f6deb3..9b5fe05c4 100644
 +    struct sshbuf **, struct sshbuf **);
 +int	 kex_kem_mlkem1024nistp384_dec(struct kex *, const struct sshbuf *,
 +    struct sshbuf **);
-+
+ 
  int	 kex_dh_keygen(struct kex *);
  int	 kex_dh_compute_key(struct kex *, BIGNUM *, struct sshbuf *);
- 
 diff --git a/kexgen.c b/kexgen.c
-index 2f8252488..9a356e298 100644
+index 834073ef1..79ddb5925 100644
 --- a/kexgen.c
 +++ b/kexgen.c
-@@ -133,12 +133,24 @@ kex_gen_client(struct ssh *ssh)
+@@ -114,9 +114,6 @@ kex_gen_client(struct ssh *ssh)
+ 	case KEX_ECDH_SHA2:
+ 		r = kex_ecdh_keypair(kex);
+ 		break;
+-	case KEX_KEM_MLKEM768ECDH_SHA256:
+-		r = kex_kem_mlkem768ecdh_keypair(kex);
+-		break;
+ #endif /* WITH_OPENSSL */
+ 	case KEX_C25519_SHA256:
+ 		if (FIPS_mode()) {
+@@ -136,12 +133,24 @@ kex_gen_client(struct ssh *ssh)
  		break;
  	case KEX_KEM_MLKEM768X25519_SHA256:
  		if (FIPS_mode()) {
@@ -333,7 +353,18 @@ index 2f8252488..9a356e298 100644
  	default:
  		r = SSH_ERR_INVALID_ARGUMENT;
  		break;
-@@ -223,13 +235,28 @@ input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
+@@ -206,10 +215,6 @@ input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
+ 	case KEX_ECDH_SHA2:
+ 		r = kex_ecdh_dec(kex, server_blob, &shared_secret);
+ 		break;
+-	case KEX_KEM_MLKEM768ECDH_SHA256:
+-		r = kex_kem_mlkem768ecdh_dec(kex, server_blob,
+-		    &shared_secret);
+-		break;
+ #endif /* WITH_OPENSSL */
+ 	case KEX_C25519_SHA256:
+ 		if (FIPS_mode()) {
+@@ -230,13 +235,28 @@ input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
  		break;
  	case KEX_KEM_MLKEM768X25519_SHA256:
  		if (FIPS_mode()) {
@@ -364,7 +395,7 @@ index 2f8252488..9a356e298 100644
  	default:
  		r = SSH_ERR_INVALID_ARGUMENT;
  		break;
-@@ -283,6 +310,8 @@ out:
+@@ -290,6 +310,8 @@ out:
  	    sizeof(kex->sntrup761_client_key));
  	explicit_bzero(kex->mlkem768_client_key,
  	    sizeof(kex->mlkem768_client_key));
@@ -373,7 +404,18 @@ index 2f8252488..9a356e298 100644
  	sshbuf_free(server_host_key_blob);
  	free(signature);
  	sshbuf_free(tmp);
-@@ -362,13 +391,28 @@ input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
+@@ -348,10 +370,6 @@ input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
+ 		r = kex_ecdh_enc(kex, client_pubkey, &server_pubkey,
+ 		    &shared_secret);
+ 		break;
+-	case KEX_KEM_MLKEM768ECDH_SHA256:
+-		r = kex_kem_mlkem768ecdh_enc(kex, client_pubkey,
+-		    &server_pubkey, &shared_secret);
+-		break;
+ #endif /* WITH_OPENSSL */
+ 	case KEX_C25519_SHA256:
+ 		if (FIPS_mode()) {
+@@ -373,13 +391,28 @@ input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
  		break;
  	case KEX_KEM_MLKEM768X25519_SHA256:
  		if (FIPS_mode()) {
@@ -1185,10 +1227,10 @@ index 36658120f..03efb788f 100644
 +
  #endif /* USE_MLKEM768X25519 */
 diff --git a/monitor.c b/monitor.c
-index 0393c71aa..63180e2a9 100644
+index 8269e78c3..87df3e9d7 100644
 --- a/monitor.c
 +++ b/monitor.c
-@@ -2024,6 +2024,8 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
+@@ -2034,6 +2034,8 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
  	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
  	kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
@@ -1198,7 +1240,7 @@ index 0393c71aa..63180e2a9 100644
  	kex->load_host_private_key=&get_hostkey_private_by_type;
  	kex->host_key_index=&get_hostkey_index;
 diff --git a/myproposal.h b/myproposal.h
-index 6433e0820..51e3ef5c8 100644
+index f03293f35..db50c5b1c 100644
 --- a/myproposal.h
 +++ b/myproposal.h
 @@ -26,6 +26,8 @@
@@ -1220,10 +1262,10 @@ index 6433e0820..51e3ef5c8 100644
  	"ecdh-sha2-nistp384," \
  	"ecdh-sha2-nistp521," \
 diff --git a/regress/unittests/kex/test_kex.c b/regress/unittests/kex/test_kex.c
-index f4700deeb..99a8e3b46 100644
+index db7cb418b..fad9a634a 100644
 --- a/regress/unittests/kex/test_kex.c
 +++ b/regress/unittests/kex/test_kex.c
-@@ -171,6 +171,8 @@ do_kex_with_key(char *kex, char *cipher, char *mac,
+@@ -169,6 +169,8 @@ do_kex_with_key(char *kex, char *cipher, char *mac,
  	server2->kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  	server2->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
  	server2->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
@@ -1232,7 +1274,7 @@ index f4700deeb..99a8e3b46 100644
  	server2->kex->load_host_public_key = server->kex->load_host_public_key;
  	server2->kex->load_host_private_key = server->kex->load_host_private_key;
  	server2->kex->sign = server->kex->sign;
-@@ -248,6 +250,8 @@ kex_tests(void)
+@@ -242,6 +244,8 @@ kex_tests(void)
  	}
  # ifdef USE_MLKEM768X25519
  	do_kex("mlkem768x25519-sha256");
@@ -1242,58 +1284,62 @@ index f4700deeb..99a8e3b46 100644
  # ifdef USE_SNTRUP761X25519
  	do_kex("sntrup761x25519-sha512");
 diff --git a/ssh-keyscan.c b/ssh-keyscan.c
-index 1f15f3077..ece85c62f 100644
+index 284d4deee..405faf167 100644
 --- a/ssh-keyscan.c
 +++ b/ssh-keyscan.c
-@@ -306,6 +306,8 @@ keygrab_ssh2(con *c)
+@@ -307,7 +307,8 @@ keygrab_ssh2(con *c)
  	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
  	c->c_ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_client;
  	c->c_ssh->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_client;
+-	c->c_ssh->kex->kex[KEX_KEM_MLKEM768ECDH_SHA256] = kex_gen_client;
 +	c->c_ssh->kex->kex[KEX_KEM_MLKEM768NISTP256_SHA256] = kex_gen_client;
 +	c->c_ssh->kex->kex[KEX_KEM_MLKEM1024NISTP384_SHA384] = kex_gen_client;
  	ssh_set_verify_host_key_callback(c->c_ssh, key_print_wrapper);
  	/*
  	 * do the key-exchange until an error occurs or until
 diff --git a/ssh_api.c b/ssh_api.c
-index 38ac17da1..b178582b3 100644
+index d01ac5483..f554b12cd 100644
 --- a/ssh_api.c
 +++ b/ssh_api.c
-@@ -135,6 +135,8 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
+@@ -133,7 +133,8 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
  		ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  		ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
  		ssh->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
+-		ssh->kex->kex[KEX_KEM_MLKEM768ECDH_SHA256] = kex_gen_server;
 +		ssh->kex->kex[KEX_KEM_MLKEM768NISTP256_SHA256] = kex_gen_server;
 +		ssh->kex->kex[KEX_KEM_MLKEM1024NISTP384_SHA384] = kex_gen_server;
  		ssh->kex->load_host_public_key=&_ssh_host_public_key;
  		ssh->kex->load_host_private_key=&_ssh_host_private_key;
  		ssh->kex->sign=&_ssh_host_key_sign;
-@@ -154,6 +156,8 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
+@@ -151,7 +152,8 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
  		ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
  		ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_client;
  		ssh->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_client;
+-		ssh->kex->kex[KEX_KEM_MLKEM768ECDH_SHA256] = kex_gen_client;
 +		ssh->kex->kex[KEX_KEM_MLKEM768NISTP256_SHA256] = kex_gen_client;
 +		ssh->kex->kex[KEX_KEM_MLKEM1024NISTP384_SHA384] = kex_gen_client;
  		ssh->kex->verify_host_key =&_ssh_verify_host_key;
  	}
  	*sshp = ssh;
 diff --git a/sshconnect2.c b/sshconnect2.c
-index 0c82c7782..75d13f54e 100644
+index 3660873a6..b5d63e599 100644
 --- a/sshconnect2.c
 +++ b/sshconnect2.c
-@@ -352,6 +352,8 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr_storage *hostaddr,
+@@ -349,7 +349,8 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr_storage *hostaddr,
  	ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
  	ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_client;
  	ssh->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_client;
+-	ssh->kex->kex[KEX_KEM_MLKEM768ECDH_SHA256] = kex_gen_client;
 +	ssh->kex->kex[KEX_KEM_MLKEM768NISTP256_SHA256] = kex_gen_client;
 +	ssh->kex->kex[KEX_KEM_MLKEM1024NISTP384_SHA384] = kex_gen_client;
  	ssh->kex->verify_host_key=&verify_host_key_callback;
  
  #if defined(GSSAPI) && defined(WITH_OPENSSL)
 diff --git a/sshd-auth.c b/sshd-auth.c
-index 6a5cd0c52..c4df314ef 100644
+index 079063f47..6038758ce 100644
 --- a/sshd-auth.c
 +++ b/sshd-auth.c
-@@ -867,6 +867,8 @@ do_ssh2_kex(struct ssh *ssh)
+@@ -864,6 +864,8 @@ do_ssh2_kex(struct ssh *ssh)
  	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
  	kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;

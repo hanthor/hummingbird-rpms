@@ -1,0 +1,17 @@
+# The official source distribution includes submodules and vendored crates.
+# Keep it intact so the spec's patches apply to the upstream release sources.
+fetch:
+  - type: url
+    url: "https://static.rust-lang.org/dist/rustc-${VERSION}-src.tar.xz"
+  - type: url
+    url: "https://static.rust-lang.org/dist/rustc-${VERSION}-src.tar.xz.asc"
+
+  # Update this ref with %global wasi_libc_ref in rpms/rust/rust.spec.
+  - type: url
+    url: "https://github.com/WebAssembly/wasi-libc/archive/wasi-sdk-33/wasi-libc-wasi-sdk-33.tar.gz"
+
+verify:
+  - type: gpg-signature
+    target: "rustc-${VERSION}-src.tar.xz"
+    signature: "rustc-${VERSION}-src.tar.xz.asc"
+    keyring: "rust.gpg"

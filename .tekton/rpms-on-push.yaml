@@ -446,10 +446,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "acl.spec"
     - name: monorepo-subdir
@@ -930,10 +932,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "apt.spec"
     - name: monorepo-subdir
@@ -1001,10 +1005,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "attr.spec"
     - name: monorepo-subdir
@@ -1073,10 +1079,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "audit.spec"
     - name: monorepo-subdir
@@ -1455,7 +1463,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/bash/***, test/rpms/bash.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/bash/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -1481,10 +1489,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "bash.spec"
     - name: monorepo-subdir
@@ -1897,10 +1907,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "brotli.spec"
     - name: monorepo-subdir
@@ -2237,10 +2249,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "bzip2.spec"
     - name: monorepo-subdir
@@ -2347,7 +2361,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/ca-certificates/***, test/rpms/ca-certificates.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/ca-certificates/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -2373,10 +2387,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "ca-certificates.spec"
     - name: monorepo-subdir
@@ -2721,10 +2737,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "catatonit.spec"
     - name: monorepo-subdir
@@ -2857,10 +2875,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "chkconfig.spec"
     - name: monorepo-subdir
@@ -2878,6 +2898,74 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
   taskRunTemplate:
     serviceAccountName: build-pipeline-chkconfig-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- chrony ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/chrony/***]"
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: chrony-main
+    pipelines.appstudio.openshift.io/type: build
+  name: chrony-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/chrony-main:{{revision}}
+    - name: package-name
+      value: chrony
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+    - name: specfile
+      value: "chrony.spec"
+    - name: monorepo-subdir
+      value: "rpms/chrony"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-chrony-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -2925,10 +3013,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "chunkah.spec"
     - name: monorepo-subdir
@@ -3133,10 +3223,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "cmake.spec"
     - name: monorepo-subdir
@@ -3519,7 +3611,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/containers-common/***, test/rpms/containers-common.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/containers-common/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -3613,10 +3705,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "coreutils.spec"
     - name: monorepo-subdir
@@ -3655,7 +3749,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/cosign/***, test/rpms/cosign.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/cosign/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -3889,10 +3983,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "createrepo_c.spec"
     - name: monorepo-subdir
@@ -3999,7 +4095,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/crypto-policies/***, test/rpms/crypto-policies.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/crypto-policies/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -4025,10 +4121,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "crypto-policies.spec"
     - name: monorepo-subdir
@@ -4297,10 +4395,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-c2xlarge/amd64"
         - "linux-c2xlarge/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "curl.spec"
     - name: monorepo-subdir
@@ -4375,10 +4475,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "cyrus-sasl.spec"
     - name: monorepo-subdir
@@ -4515,10 +4617,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "dbus.spec"
     - name: monorepo-subdir
@@ -5073,10 +5177,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "dnf5.spec"
     - name: monorepo-subdir
@@ -5500,10 +5606,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "doxygen.spec"
     - name: monorepo-subdir
@@ -5640,10 +5748,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "drpm.spec"
     - name: monorepo-subdir
@@ -5848,10 +5958,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "e2fsprogs.spec"
     - name: monorepo-subdir
@@ -6260,10 +6372,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "elfutils.spec"
     - name: monorepo-subdir
@@ -6412,6 +6526,10 @@ spec:
       value: "rpms/environment-modules"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -6512,7 +6630,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/erlang27/***, test/rpms/erlang27.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/erlang27/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -6584,7 +6702,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/etcd/***, test/rpms/etcd.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/etcd/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -6685,10 +6803,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "expat.spec"
     - name: monorepo-subdir
@@ -6828,10 +6948,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "fedora-repos.spec"
     - name: monorepo-subdir
@@ -6968,10 +7090,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "file.spec"
     - name: monorepo-subdir
@@ -7036,10 +7160,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "filesystem.spec"
     - name: monorepo-subdir
@@ -7104,10 +7230,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "findutils.spec"
     - name: monorepo-subdir
@@ -7249,10 +7377,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "fmt.spec"
     - name: monorepo-subdir
@@ -7735,10 +7865,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "fsverity-utils.spec"
     - name: monorepo-subdir
@@ -8153,10 +8285,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-d160-c8xlarge/amd64"
         - "linux-d160-c8xlarge/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gcc.spec"
     - name: monorepo-subdir
@@ -8436,10 +8570,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gdbm.spec"
     - name: monorepo-subdir
@@ -8745,6 +8881,10 @@ spec:
       value: "rpms/git-lfs"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -8777,7 +8917,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/git-sync/***, test/rpms/git-sync.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/git-sync/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -8849,7 +8989,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/glib2/***, test/rpms/glib2.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/glib2/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -8875,10 +9015,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "glib2.spec"
     - name: monorepo-subdir
@@ -8943,10 +9085,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-d160-c8xlarge/arm64"
         - "linux-d160-c8xlarge/amd64"
+        - "linux/s390x"
     - name: specfile
       value: "glibc.spec"
     - name: monorepo-subdir
@@ -9021,10 +9165,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gmp.spec"
     - name: monorepo-subdir
@@ -9157,10 +9303,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnulib-l10n.spec"
     - name: monorepo-subdir
@@ -9228,10 +9376,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnupg2.spec"
     - name: monorepo-subdir
@@ -9296,10 +9446,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "gnutls.spec"
     - name: monorepo-subdir
@@ -9623,7 +9775,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.25/***, test/rpms/golang1.25.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.25/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -9691,7 +9843,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.26/***, test/rpms/golang1.26.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.26/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -9759,7 +9911,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.27/***, test/rpms/golang1.27.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/golang1.27/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -10627,10 +10779,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "grep.spec"
     - name: monorepo-subdir
@@ -10737,7 +10891,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/grype/***, test/rpms/grype.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/grype/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -10892,7 +11046,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/haproxy/***, test/rpms/haproxy.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/haproxy/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11175,7 +11329,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/helm3/***, test/rpms/helm3.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/helm3/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11247,7 +11401,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/helm4/***, test/rpms/helm4.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/helm4/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11393,7 +11547,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/hostname/***, test/rpms/hostname.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/hostname/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11461,7 +11615,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/httpd/***, test/rpms/httpd.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/httpd/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11605,7 +11759,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/hummingbird-release/***, test/rpms/hummingbird-release.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/hummingbird-release/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -11631,10 +11785,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "hummingbird-release.spec"
     - name: monorepo-subdir
@@ -11709,6 +11865,10 @@ spec:
       value: "rpms/hwloc"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -11835,10 +11995,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "ima-evm-utils.spec"
     - name: monorepo-subdir
@@ -12022,7 +12184,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/jaeger/***, test/rpms/jaeger.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/jaeger/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -12234,7 +12396,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/java-21-openjdk/***, test/rpms/java-21-openjdk.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/java-21-openjdk/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -12374,7 +12536,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/java-25-openjdk/***, test/rpms/java-25-openjdk.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/java-25-openjdk/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -12815,10 +12977,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "jq.spec"
     - name: monorepo-subdir
@@ -12883,10 +13047,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "json-c.spec"
     - name: monorepo-subdir
@@ -12961,6 +13127,10 @@ spec:
       value: "rpms/jsoncpp"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -13377,10 +13547,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "keyutils.spec"
     - name: monorepo-subdir
@@ -13513,10 +13685,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "krb5.spec"
     - name: monorepo-subdir
@@ -14616,10 +14790,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libarchive.spec"
     - name: monorepo-subdir
@@ -14684,10 +14860,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libassuan.spec"
     - name: monorepo-subdir
@@ -14956,10 +15134,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcap.spec"
     - name: monorepo-subdir
@@ -15024,10 +15204,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcap-ng.spec"
     - name: monorepo-subdir
@@ -15092,10 +15274,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libcbor.spec"
     - name: monorepo-subdir
@@ -15181,6 +15365,78 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
   taskRunTemplate:
     serviceAccountName: build-pipeline-libcomps-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- libdex ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/libdex/***]"
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: libdex-main
+    pipelines.appstudio.openshift.io/type: build
+  name: libdex-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/libdex-main:{{revision}}
+    - name: package-name
+      value: libdex
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+    - name: specfile
+      value: "libdex.spec"
+    - name: monorepo-subdir
+      value: "rpms/libdex"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-libdex-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -15296,10 +15552,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libeconf.spec"
     - name: monorepo-subdir
@@ -15432,10 +15690,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libevent.spec"
     - name: monorepo-subdir
@@ -15576,10 +15836,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libffi.spec"
     - name: monorepo-subdir
@@ -15644,10 +15906,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libfido2.spec"
     - name: monorepo-subdir
@@ -15780,10 +16044,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libgcrypt.spec"
     - name: monorepo-subdir
@@ -15916,10 +16182,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libgpg-error.spec"
     - name: monorepo-subdir
@@ -15984,10 +16252,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libidn2.spec"
     - name: monorepo-subdir
@@ -16260,10 +16530,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libksba.spec"
     - name: monorepo-subdir
@@ -16532,10 +16804,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libmodulemd.spec"
     - name: monorepo-subdir
@@ -17216,10 +17490,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libpsl.spec"
     - name: monorepo-subdir
@@ -17420,10 +17696,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "librepo.spec"
     - name: monorepo-subdir
@@ -17556,10 +17834,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libselinux.spec"
     - name: monorepo-subdir
@@ -17624,10 +17904,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libsemanage.spec"
     - name: monorepo-subdir
@@ -17692,10 +17974,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libsepol.spec"
     - name: monorepo-subdir
@@ -17828,10 +18112,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libsolv.spec"
     - name: monorepo-subdir
@@ -17896,10 +18182,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libssh.spec"
     - name: monorepo-subdir
@@ -18035,10 +18323,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libtasn1.spec"
     - name: monorepo-subdir
@@ -18307,10 +18597,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libtool.spec"
     - name: monorepo-subdir
@@ -18375,10 +18667,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libunistring.spec"
     - name: monorepo-subdir
@@ -18511,10 +18805,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libusb1.spec"
     - name: monorepo-subdir
@@ -18647,10 +18943,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libverto.spec"
     - name: monorepo-subdir
@@ -18854,10 +19152,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libxcrypt.spec"
     - name: monorepo-subdir
@@ -18990,10 +19290,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libxml2.spec"
     - name: monorepo-subdir
@@ -19062,10 +19364,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libxslt.spec"
     - name: monorepo-subdir
@@ -19134,10 +19438,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "libyaml.spec"
     - name: monorepo-subdir
@@ -19906,10 +20212,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "lua.spec"
     - name: monorepo-subdir
@@ -20178,10 +20486,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "lz4.spec"
     - name: monorepo-subdir
@@ -20631,7 +20941,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/mariadb10.11/***, test/rpms/mariadb10.11.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/mariadb10.11/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -20699,7 +21009,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/mariadb11.8/***, test/rpms/mariadb11.8.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/mariadb11.8/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -20907,7 +21217,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/memcached/***, test/rpms/memcached.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/memcached/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -21257,10 +21567,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "mpdecimal.spec"
     - name: monorepo-subdir
@@ -21444,7 +21756,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/nats-server2.12/***, test/rpms/nats-server2.12.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/nats-server2.12/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -21516,7 +21828,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/nats-server2.14/***, test/rpms/nats-server2.14.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/nats-server2.14/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -21614,10 +21926,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "ncurses.spec"
     - name: monorepo-subdir
@@ -21759,10 +22073,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "nettle.spec"
     - name: monorepo-subdir
@@ -21840,6 +22156,10 @@ spec:
       value: "rpms/nftables"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -21898,10 +22218,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "nghttp2.spec"
     - name: monorepo-subdir
@@ -21966,10 +22288,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "nghttp3.spec"
     - name: monorepo-subdir
@@ -22102,10 +22426,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "ngtcp2.spec"
     - name: monorepo-subdir
@@ -22511,7 +22837,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/nodejs25/***, test/rpms/nodejs25.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/nodejs25/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -22583,7 +22909,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/nodejs26/***, test/rpms/nodejs26.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/nodejs26/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -22681,10 +23007,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "npth.spec"
     - name: monorepo-subdir
@@ -22749,10 +23077,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "nss.spec"
     - name: monorepo-subdir
@@ -22791,7 +23121,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/nss-fips/***, test/rpms/nss-fips.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/nss-fips/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -23103,10 +23433,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "oniguruma.spec"
     - name: monorepo-subdir
@@ -23307,10 +23639,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "opendbx.spec"
     - name: monorepo-subdir
@@ -23375,10 +23709,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "openldap.spec"
     - name: monorepo-subdir
@@ -23518,10 +23854,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "openscap.spec"
     - name: monorepo-subdir
@@ -23560,7 +23898,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/openshell/***, test/rpms/openshell.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/openshell/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -23657,7 +23995,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssh/***, test/rpms/openssh.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssh/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -23725,7 +24063,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssl/***, test/rpms/openssl.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssl/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -23751,10 +24089,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "openssl.spec"
     - name: monorepo-subdir
@@ -23797,7 +24137,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssl-fips-provider/***, test/rpms/openssl-fips-provider.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/openssl-fips-provider/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -23941,7 +24281,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector/***, test/rpms/opentelemetry-collector.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24013,7 +24353,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector-contrib/***, test/rpms/opentelemetry-collector-contrib.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector-contrib/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24085,7 +24425,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector-k8s/***, test/rpms/opentelemetry-collector-k8s.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentelemetry-collector-k8s/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24157,7 +24497,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.10/***, test/rpms/opentofu1.10.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.10/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24229,7 +24569,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.11/***, test/rpms/opentofu1.11.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.11/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24301,7 +24641,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.12/***, test/rpms/opentofu1.12.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/opentofu1.12/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -24607,10 +24947,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "p11-kit.spec"
     - name: monorepo-subdir
@@ -24743,10 +25085,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "pam.spec"
     - name: monorepo-subdir
@@ -24953,10 +25297,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "pcre2.spec"
     - name: monorepo-subdir
@@ -27799,7 +28145,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/pgbouncer/***, test/rpms/pgbouncer.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/pgbouncer/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -28536,10 +28882,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "popt.spec"
     - name: monorepo-subdir
@@ -28646,7 +28994,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/postgresql18/***, test/rpms/postgresql18.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/postgresql18/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -28746,10 +29094,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "procps-ng.spec"
     - name: monorepo-subdir
@@ -28788,7 +29138,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/prometheus3.13/***, test/rpms/prometheus3.13.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/prometheus3.13/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -28860,7 +29210,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/prometheus3.5/***, test/rpms/prometheus3.5.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/prometheus3.5/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -29040,6 +29390,10 @@ spec:
       value: "rpms/protobuf-c"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -29241,10 +29595,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "publicsuffix-list.spec"
     - name: monorepo-subdir
@@ -30717,10 +31073,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "python-pip.spec"
     - name: monorepo-subdir
@@ -32408,10 +32766,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux-d160-c8xlarge/arm64"
         - "linux-d160-c8xlarge/amd64"
+        - "linux/s390x"
     - name: specfile
       value: "python3.14.spec"
     - name: monorepo-subdir
@@ -32429,6 +32789,78 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
   taskRunTemplate:
     serviceAccountName: build-pipeline-python3-14-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python3.15 ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/python3.15/***]"
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-15-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-15-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-15-main:{{revision}}
+    - name: package-name
+      value: python3.15
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+    - name: build-platforms
+      value:
+        - "linux-d160-c8xlarge/arm64"
+        - "linux-d160-c8xlarge/amd64"
+    - name: specfile
+      value: "python3.15.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.15"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-15-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -33105,10 +33537,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "readline.spec"
     - name: monorepo-subdir
@@ -33358,7 +33792,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/rootfiles/***, test/rpms/rootfiles.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/rootfiles/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -33426,7 +33860,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/rpm/***, test/rpms/rpm.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/rpm/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -33452,10 +33886,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "rpm.spec"
     - name: monorepo-subdir
@@ -33565,7 +34001,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby3.3/***, test/rpms/ruby3.3.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby3.3/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -33633,7 +34069,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby3.4/***, test/rpms/ruby3.4.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby3.4/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -33701,7 +34137,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby4.0/***, test/rpms/ruby4.0.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/ruby4.0/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -33944,6 +34380,10 @@ spec:
       value: "rpms/rust"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -34495,10 +34935,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "rust-rpm-sequoia.spec"
     - name: monorepo-subdir
@@ -34567,10 +35009,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "scap-security-guide.spec"
     - name: monorepo-subdir
@@ -34639,10 +35083,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sdbus-cpp.spec"
     - name: monorepo-subdir
@@ -34707,10 +35153,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sed.spec"
     - name: monorepo-subdir
@@ -34817,7 +35265,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/setup/***, test/rpms/setup.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/setup/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -34843,10 +35291,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "setup.spec"
     - name: monorepo-subdir
@@ -34911,10 +35361,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sgml-common.spec"
     - name: monorepo-subdir
@@ -34979,10 +35431,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "shadow-utils.spec"
     - name: monorepo-subdir
@@ -35303,7 +35757,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/spire1.14/***, test/rpms/spire1.14.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/spire1.14/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -35375,7 +35829,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/spire1.15/***, test/rpms/spire1.15.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/spire1.15/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -35473,10 +35927,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "sqlite.spec"
     - name: monorepo-subdir
@@ -35815,7 +36271,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/syft/***, test/rpms/syft.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/syft/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -35981,10 +36437,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "systemd.spec"
     - name: monorepo-subdir
@@ -36660,7 +37118,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/tomcat10/***, test/rpms/tomcat10.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/tomcat10/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -36728,7 +37186,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/tomcat11/***, test/rpms/tomcat11.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/tomcat11/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -36826,10 +37284,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "tpm2-tss.spec"
     - name: monorepo-subdir
@@ -37102,10 +37562,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "tzdata.spec"
     - name: monorepo-subdir
@@ -37532,6 +37994,10 @@ spec:
       value: "rpms/utf8proc"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -37590,10 +38056,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "util-linux.spec"
     - name: monorepo-subdir
@@ -37700,7 +38168,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/valkey/***, test/rpms/valkey.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/valkey/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -37844,7 +38312,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/vmaf/***, test/rpms/vmaf.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/vmaf/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -37983,7 +38451,7 @@ metadata:
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-event: "[push]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/xcaddy/***, test/rpms/xcaddy.yml]"
+    pipelinesascode.tekton.dev/on-path-change: "[rpms/xcaddy/***]"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rpms-main
@@ -38149,10 +38617,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xmlsec1.spec"
     - name: monorepo-subdir
@@ -38289,10 +38759,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xxhash.spec"
     - name: monorepo-subdir
@@ -38357,10 +38829,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "xz.spec"
     - name: monorepo-subdir
@@ -38425,10 +38899,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "yq.spec"
     - name: monorepo-subdir
@@ -38493,10 +38969,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zchunk.spec"
     - name: monorepo-subdir
@@ -38765,10 +39243,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zlib-ng.spec"
     - name: monorepo-subdir
@@ -38833,10 +39313,12 @@ spec:
       value:
         - aarch64
         - x86_64
+        - s390x
     - name: build-platforms
       value:
         - "linux/x86_64"
         - "linux/arm64"
+        - "linux/s390x"
     - name: specfile
       value: "zstd.spec"
     - name: monorepo-subdir

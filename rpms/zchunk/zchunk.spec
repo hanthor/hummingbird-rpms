@@ -1,6 +1,6 @@
 Name:           zchunk
 Version:        1.5.4
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Compressed file format that allows easy deltas
 License:        BSD-2-Clause AND MIT
 URL:            https://github.com/zchunk/zchunk

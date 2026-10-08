@@ -48,3 +48,6 @@
 /git-lfs-v3.7.1.tar.gz
 /sha256sums-3.7.1.asc
 /git-lfs-3.7.1-vendor.tar.bz2
+git-lfs-v3.8.0.tar.gz
+sha256sums-3.8.0.asc
+git-lfs-3.8.0-vendor.tar.bz2

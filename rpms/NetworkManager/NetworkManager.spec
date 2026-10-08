@@ -6,7 +6,7 @@ Group:   System Environment/Base
 
 Epoch:   1
 Version: 1.58.1
-Release: 1%{?dist}
+Release: 3%{?dist}
 
 ###############################################################################
 
@@ -202,6 +202,13 @@ Obsoletes: NetworkManager-initscripts-ifcfg-rh < 1:1.49-3.1
 Obsoletes: NetworkManager-dispatcher-routing-rules < 1:1.49.3-1
 Obsoletes: NetworkManager-initscripts-updown < 1:1.49.3-1
 %endif
+%endif
+
+%if 0%{?fedora}
+Obsoletes: NetworkManager-fortisslvpn < 1.4.1-15
+Obsoletes: NetworkManager-fortisslvpn-gnome < 1.4.1-15
+Obsoletes: NetworkManager-vpnc < 1:1.4.0-8
+Obsoletes: NetworkManager-vpnc-gnome < 1:1.4.0-8
 %endif
 
 Conflicts: NetworkManager-vpnc < 1:0.7.0.99-1
@@ -1063,6 +1070,12 @@ fi
 
 
 %changelog
+* Thu Oct  1 2026 Beniamino Galvani <bgalvani@redhat.com> - 1:1.58.1-3
+- Add Obsoletes: also for the NM-fortisslvpn and NM-vpnc gnome subpackages
+
+* Wed Sep 30 2026 Beniamino Galvani <bgalvani@redhat.com> - 1:1.58.1-2
+- Add Obsoletes: for NM-fortisslvpn and NM-vpnc
+
 * Fri Aug 21 2026 Beniamino Galvani <bgalvani@redhat.com> - 1:1.58.1-1
 - Update to 1.58.1 release
 

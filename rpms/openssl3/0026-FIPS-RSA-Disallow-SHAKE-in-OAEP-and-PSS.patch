@@ -1,7 +1,7 @@
-From 05d9c9154e199bb4a84e215f0b20bd06ac5081d8 Mon Sep 17 00:00:00 2001
+From a5ad4cb90a54b1311444a5b88e38e49fd97d493f Mon Sep 17 00:00:00 2001
 From: rpm-build <rpm-build>
 Date: Wed, 6 Mar 2024 19:17:17 +0100
-Subject: [PATCH 26/57] FIPS: RSA: Disallow SHAKE in OAEP and PSS
+Subject: [PATCH 26/58] FIPS: RSA: Disallow SHAKE in OAEP and PSS
 
 According to FIPS 140-3 IG, section C.C, the SHAKE digest algorithms
 must not be used in higher-level algorithms (such as RSA-OAEP and
@@ -93,5 +93,5 @@ index 98d6e70346..7fe78b9055 100644
      if (hLen <= 0)
          goto err;
 -- 
-2.52.0
+2.55.0
 

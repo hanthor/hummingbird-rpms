@@ -1,12 +1,12 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Optimize PgBouncer package for minimal container images",
+  "modification_reason": "Update to upstream version 1.26.0",
   "modification_status": "modified",
-  "release": "4",
   "release_monitoring_project_id": 7329,
-  "sha": "a25d24a990dadbcdc56264949a0edd76c49708a5",
+  "sha": "84f413679018d24a0cd0071a9c532b020772f085",
   "source": "https://src.fedoraproject.org/rpms/pgbouncer.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pgbouncer/pgbouncer",
-  "version": "1.25.2"
+  "version": "1.26.0",
+  "release": "1"
 }

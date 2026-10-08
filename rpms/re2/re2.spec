@@ -13,7 +13,7 @@ Name:           re2
 %global py_version 1.1.%{base_version}
 Version:        %{base_version}
 Epoch:          2
-Release:        19%{?dist}
+Release:        23%{?dist}
 Summary:        C++ fast alternative to backtracking RE engines
 
 # The entire source is BSD-3-Clause, except:
@@ -25,11 +25,9 @@ URL:            https://github.com/google/re2
 Source:         %{url}/archive/%{tag}/re2-%{tag}.tar.gz
 
 BuildSystem:    cmake
-BuildOption(conf): %{shrink:
-    -DRE2_TEST:BOOL=%{?with_ctest:ON}%{?!with_ctest:OFF}
-    -DRE2_BENCHMARK:BOOL=OFF
-    -DRE2_USE_ICU:BOOL=ON
-    }
+BuildOption(conf): -DRE2_BENCHMARK:BOOL=OFF
+BuildOption(conf): -DRE2_USE_ICU:BOOL=ON
+BuildOption(conf): -DRE2_TEST:BOOL=%{with ctest}
 
 BuildRequires:  gcc-c++
 

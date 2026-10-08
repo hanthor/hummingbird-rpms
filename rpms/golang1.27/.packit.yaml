@@ -14,17 +14,24 @@ actions:
     - bash -c "cd $PACKIT_DOWNSTREAM_REPO && ./update-bundled-provides.sh golang.spec"
 
 jobs:
-  # Fedora 43 follows Go 1.25
+  # Fedora 43 follows Go 1.26
+  # https://forge.fedoraproject.org/fesco/docs/src/branch/main/fesco/modules/ROOT/pages/Updates_Policy.adoc#golang
   - job: pull_from_upstream
     trigger: release
     dist_git_branches: fedora-43
-    upstream_tag_include: "^go1.25.+"
+    upstream_tag_include: "^go1.26.+"
 
   # Fedora 44 follows Go 1.26
   - job: pull_from_upstream
     trigger: release
     dist_git_branches: fedora-44
     upstream_tag_include: "^go1.26.+"
+
+  # Fedora 45 follows Go 1.27
+  - job: pull_from_upstream
+    trigger: release
+    dist_git_branches: fedora-45
+    upstream_tag_include: "^go1.27.+"
 
   # Fedora Rawhide follows the latest version
   - job: pull_from_upstream

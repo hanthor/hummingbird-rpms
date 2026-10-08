@@ -8,7 +8,7 @@ Version: 1.9.17
 # use "-p -e % {?extraver}" when beta
 # use "-e % {?extraver}" when patch version
 # use nothing special when normal version
-Release:        16.p2.1%{?dist}
+Release:        16.p2.2%{?dist}
 License: ISC
 URL: https://www.sudo.ws
 Source0: %{url}/dist/%{name}-%{version}%{?extraver}.tar.gz
@@ -28,6 +28,7 @@ BuildRequires: zlib-devel
 Patch1: 0001-cve-2026-35535.patch
 Patch2: 0002-Fix-OpenSSL-4.0-compatibility.patch
 Patch3: 0003-cve-2026-82474-execveat-intercept-policy-bypass.patch
+Patch4: 00004-cve-2026-96512-tz-environment-variable-allows-bypass.patch
 
 %description
 Sudo (superuser do) allows a system administrator to give certain

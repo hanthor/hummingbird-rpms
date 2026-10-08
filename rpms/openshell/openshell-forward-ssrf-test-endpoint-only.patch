@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Tue, 29 Sep 2026 00:00:00 +0000
+Subject: [PATCH] network: run forward SSRF regression in endpoint-only mode
+
+The forward-handler test checks SSRF response handling and denial-stage
+reporting. It does not need binary identity discovery, which depends on the
+host's /proc state. Use the endpoint-only mode supported by the 0.1.0 OPA
+engine and remove the Linux-only skip.
+
+diff --git a/crates/openshell-supervisor-network/src/proxy.rs b/crates/openshell-supervisor-network/src/proxy.rs
+index 5f224b4..1ed5b6b 100644
+--- a/crates/openshell-supervisor-network/src/proxy.rs
++++ b/crates/openshell-supervisor-network/src/proxy.rs
+@@ -13632,20 +13632,20 @@ network_policies:
+     ) -> (Vec<u8>, Vec<String>) {
+         const POLICY_REGO: &str = include_str!("../data/sandbox-policy.rego");
+ 
+-        let exe = std::env::current_exe().expect("current_exe");
+-        // JSON strings are valid YAML scalars and correctly escape Windows
+-        // path separators such as `D:\\...`.
+-        let exe_yaml = serde_json::to_string(&exe.to_string_lossy()).expect("encode executable");
++        // Exercise endpoint validation and response handling without process
++        // identity discovery, which depends on host /proc state.
+         let data = format!(
+             r#"network_policies:
+   test_allow:
+     name: test_allow
+     endpoints:
+-{endpoint_yaml}    binaries:
+-      - {{ path: {exe_yaml} }}
++{endpoint_yaml}
+ "#,
+         );
+-        let engine = Arc::new(OpaEngine::from_strings(POLICY_REGO, &data).expect("load policy"));
++        let engine = Arc::new(
++            OpaEngine::from_strings_with_binary_identity_required(POLICY_REGO, &data, false)
++                .expect("load policy"),
++        );
+ 
+         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+         let proxy_port = listener.local_addr().unwrap().port();
+@@ -13763,11 +13763,6 @@ network_policies:
+ 
+     #[tokio::test]
+     async fn forward_handler_preserves_ssrf_response_and_denial_stage() {
+-        if !cfg!(target_os = "linux") {
+-            eprintln!("skipping: handler identity binding requires /proc (Linux)");
+-            return;
+-        }
+-
+         let (response, denial_stages) = Box::pin(drive_forward_through_handler(
+             "      - { host: \"127.0.0.1\", port: 80 }\n",
+             "http://127.0.0.1/private",

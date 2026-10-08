@@ -359,6 +359,9 @@ export PATH="$PWD/jaeger-ui/.pnpm/node_modules/.bin:$PATH"
 pnpm_mjs="$PWD/jaeger-ui/.pnpm/node_modules/pnpm/bin/pnpm.mjs"
 pnpm_wrapper="$PWD/jaeger-ui/.pnpm/node_modules/.bin/pnpm"
 if [[ -f "$pnpm_mjs" ]]; then
+    # Recursive workspace scripts invoke pnpm through PATH.
+    chmod +x "$pnpm_mjs"
+    ln -sf ../pnpm/bin/pnpm.mjs "$pnpm_wrapper"
     run_pnpm() { node "$pnpm_mjs" "$@"; }
 elif [[ -x "$pnpm_wrapper" ]]; then
     run_pnpm() { "$pnpm_wrapper" "$@"; }

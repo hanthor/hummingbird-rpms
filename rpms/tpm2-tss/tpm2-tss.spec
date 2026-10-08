@@ -5,7 +5,7 @@
 
 Name:          tpm2-tss
 Version:       4.2.0
-Release:       1%{?candidate:.%{candidate}}%{?dist}
+Release:       1%{?candidate:.%{candidate}}.1%{?dist}
 Summary:       TPM2.0 Software Stack
 
 License:       BSD-2-Clause

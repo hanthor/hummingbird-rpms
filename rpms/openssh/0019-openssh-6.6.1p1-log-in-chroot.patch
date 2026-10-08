@@ -1,7 +1,7 @@
-From 7eadf0e2a279538fa7e4b1bd5cbd2fc6917e4753 Mon Sep 17 00:00:00 2001
+From 2316543bf85035762d9aadf200067fcaf2d0e338 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 19/54] openssh-6.6.1p1-log-in-chroot
+Subject: [PATCH 19/53] openssh-6.6.1p1-log-in-chroot
 
 ---
  log.c              | 11 +++++++++--
@@ -57,10 +57,10 @@ index 8e8dfc23f..70048a8af 100644
  int      log_change_level(LogLevel);
  int      log_is_on_stderr(void);
 diff --git a/monitor.c b/monitor.c
-index cddbc0a22..7e1c9061c 100644
+index fa477899e..14cdccf2f 100644
 --- a/monitor.c
 +++ b/monitor.c
-@@ -2004,9 +2004,22 @@ monitor_init(void)
+@@ -2014,9 +2014,22 @@ monitor_init(void)
  }
  
  void
@@ -226,7 +226,7 @@ index 2bde8bb7f..ddf1a3968 100644
 +int	sftp_server_main(int, char **, struct passwd *, int);
  void	sftp_server_cleanup_exit(int) __attribute__((noreturn));
 diff --git a/sshd-session.c b/sshd-session.c
-index 3d2672cfd..6f07c843a 100644
+index 8a3121d01..8a06616fd 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
 @@ -387,7 +387,7 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)

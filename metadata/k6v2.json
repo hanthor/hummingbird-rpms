@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 382606,
   "track_upstream": "2",
   "upstream_repo": "https://github.com/grafana/k6",
-  "version": "2.2.0"
+  "version": "2.3.0"
 }

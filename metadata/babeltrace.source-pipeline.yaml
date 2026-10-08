@@ -1,0 +1,11 @@
+fetch:
+  - type: url
+    url: "https://www.efficios.com/files/babeltrace/babeltrace-${VERSION}.tar.bz2"
+  - type: url
+    url: "https://www.efficios.com/files/babeltrace/babeltrace-${VERSION}.tar.bz2.asc"
+
+verify:
+  - type: gpg-signature
+    target: "babeltrace-${VERSION}.tar.bz2"
+    signature: "babeltrace-${VERSION}.tar.bz2.asc"
+    keyring: "babeltrace.gpg"

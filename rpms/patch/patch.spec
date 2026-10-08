@@ -3,12 +3,19 @@
 Summary: Utility for modifying/upgrading files
 Name: patch
 Version: 2.8
-Release: 5%{?dist}
+Release: 6.1%{?dist}
 License: GPL-3.0-or-later
 URL: https://savannah.gnu.org/projects/patch/
 Source: https://ftp.gnu.org/gnu/patch/patch-%{version}.tar.xz
-Patch0: patch-CVE-2026-56289-null-range.patch
-Patch1: patch-CVE-2026-56288-null-deref.patch
+Patch: 0001-patch~3aAdd-some-missing-filename-quoting.patch
+Patch: 0002-patch~3aReject-empty-filenames.patch
+Patch: 0003-patch~3aSkip-read-only-check-when-output-file-specified.patch
+Patch: 0004-patch~3aAvoid-null-pointer-derefence-with-bad-hunks.patch
+Patch: 0005-patch~3aPort-to-POSIX-ed.patch
+Patch: 0006-patch~3aDont-infloop-on-null-ranges.patch
+Patch: 0007-patch~3aRemove-symlink-caching.patch
+Patch: 0008-patch~3aAbsolute-in-tree-symlink-target-resolved-relative-to-symlink-parent.patch
+
 BuildRequires: make
 BuildRequires: gcc
 BuildRequires: libselinux-devel
@@ -51,6 +58,11 @@ make check
 %{_mandir}/*/*
 
 %changelog
+* Tue Sep 29 2026 Than Ngo <than@redhat.com> - 2.8-6
+- Bugfix update
+  * Avoid null pointer derefence with bad hunks
+  * Don’t infloop on null ranges
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 2.8-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 

@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
-Version:        24.18.1
-Release:        0.2.2%{?dist}
+Version:        24.21.0
+Release:        1.3%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -24,53 +24,55 @@ URL:            https://nodejs.org
 # expect anything between the markers to be overwritten on any update.
 
 # BEGIN automatic-version-macros  # DO NOT REMOVE THIS LINE!
-# Version from node-v24.18.1/src/node_version.h
+# Version from node-v24.21.0/src/node_version.h
 %global node_soversion 137
 
-# Version from node-v24.18.1/deps/ada/ada.h
-%nodejs_define_version ada 3.4.4
-# Version from node-v24.18.1/deps/brotli/c/common/version.h
+# Version from node-v24.21.0/deps/ada/ada.h
+%nodejs_define_version ada 4.0.0
+# Version from node-v24.21.0/deps/brotli/c/common/version.h
 %nodejs_define_version brotli 1.2.0
-# Version from node-v24.18.1/deps/cares/include/ares_version.h
-%nodejs_define_version c_ares 1.34.6
-# Version from node-v24.18.1/deps/histogram/include/hdr/hdr_histogram_version.h
-%nodejs_define_version histogram 0.11.9
-# Version from node-v24.18.1/tools/icu/current_ver.dep
+# Version from node-v24.21.0/deps/cares/include/ares_version.h
+%nodejs_define_version c_ares 1.34.8
+# Version from node-v24.21.0/deps/histogram/include/hdr/hdr_histogram_version.h
+%nodejs_define_version histogram 0.11.10
+# Version from node-v24.21.0/tools/icu/current_ver.dep
 %nodejs_define_version icu 78.3 -p
-# Version from node-v24.18.1/deps/uv/include/uv/version.h
+# Version from node-v24.21.0/deps/uv/include/uv/version.h
 %nodejs_define_version libuv 1.52.1
-# Version from node-v24.18.1/deps/llhttp/include/llhttp.h
+# Version from node-v24.21.0/deps/llhttp/include/llhttp.h
 %nodejs_define_version llhttp 9.4.3
-# Version from node-v24.18.1/deps/merve/merve.h
+# Version from node-v24.21.0/deps/merve/merve.h
 %nodejs_define_version merve 1.2.2
-# Version from node-v24.18.1/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
-%nodejs_define_version nghttp2 1.69.0
-# Version from node-v24.18.1/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
-%nodejs_define_version nghttp3 1.14.0
-# Version from node-v24.18.1/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
-%nodejs_define_version ngtcp2 1.15.1
-# Version from node-v24.18.1/deps/minimatch/package.json
-%nodejs_define_version nodejs-minimatch 10.2.5
-# Version from node-v24.18.1/lib/punycode.js
+# Version from node-v24.21.0/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
+%nodejs_define_version nghttp2 1.70.0
+# Version from node-v24.21.0/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
+%nodejs_define_version nghttp3 1.18.0
+# Version from node-v24.21.0/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
+%nodejs_define_version ngtcp2 1.25.0
+# Version from node-v24.21.0/deps/minimatch/package.json
+%nodejs_define_version nodejs-minimatch 10.2.6
+# Version from node-v24.21.0/lib/punycode.js
 %nodejs_define_version nodejs-punycode 2.1.0
-# Version from node-v24.18.1/deps/undici/src/package.json
-%nodejs_define_version nodejs-undici 7.29.0
-# Version from node-v24.18.1/deps/npm/package.json
-%nodejs_define_version npm 1:11.16.0-%{nodejs_subpackage_release}
-# Version from node-v24.18.1/deps/sqlite/sqlite3.h
-%nodejs_define_version sqlite 3.53.1
-# Version from node-v24.18.1/deps/uvwasi/include/uvwasi.h
+# Version from node-v24.21.0/deps/undici/src/package.json
+%nodejs_define_version nodejs-undici 7.29.1
+# Version from node-v24.21.0/deps/npm/package.json
+%nodejs_define_version npm 2:11.19.0-%{nodejs_subpackage_release}
+# Version from node-v24.21.0/deps/sqlite/sqlite3.h
+%nodejs_define_version sqlite 3.53.4
+# Version from node-v24.21.0/deps/uvwasi/include/uvwasi.h
 %nodejs_define_version uvwasi 0.0.23
-# Version from node-v24.18.1/deps/v8/include/v8-version.h
+# Version from node-v24.21.0/deps/v8/include/v8-version.h
 %nodejs_define_version v8 3:13.6.233.17-%{nodejs_subpackage_release} -p
-# Version from node-v24.18.1/deps/zlib/zlib.h
-%nodejs_define_version zlib 1.3.1
+# Version from node-v24.21.0/deps/zlib/zlib.h
+%nodejs_define_version zlib 1.3.2.1-motley
 # END automatic-version-macros  # DO NOT REMOVE THIS LINE!
 
 # === Conditional build – global options
 # Use all vendored dependencies when bootstrapping
 %bcond all_deps_bundled %{with bootstrap}
 
+# Generate unversioned names; TODO: figure out the condition
+%bcond rolling_stream 0
 
 # === Additional definitions ===
 # Architecture-dependent suffix for requiring/providing .so names
@@ -160,10 +162,9 @@ Source101:      nodejs.srpm.macros
 %patchlist
 0001-Remove-unused-OpenSSL-config.patch
 0002-Disable-FIPS-options.patch
-0003-CVE-2026-13149-brace-expansion-fix-exponential-time.patch
-0004-CVE-2026-14257-brace-expansion-bound-expansion-length.patch
 0005-CVE-2026-69152-brace-expansion-5.0.9.patch
-CVE-2026-59869-js-yaml-merge-keys.patch
+0006-CVE-2026-102278-brace-expansion-max-depth.patch
+0007-CVE-2026-102276-102277-brace-expansion.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
@@ -172,8 +173,8 @@ Node.js uses an event-driven, non-blocking I/O model that
 makes it lightweight and efficient, perfect for data-intensive
 real-time applications that run across distributed devices.
 
-%package        devel
-Summary:        JavaScript runtime – development headers
+
+%global devel_metadata %{expand:\
 Requires:       nodejs%{node_version_major}%{?_isa} = %{node_evr}
 Requires:       nodejs%{node_version_major}-libs%{?_isa} = %{node_evr}
 Requires:       nodejs-packaging
@@ -181,16 +182,16 @@ Requires:       openssl-devel%{?_isa}
 %{!?with_bundled_brotli:Requires: brotli-devel%{?_isa}}
 %{!?with_bundled_libuv:Requires: libuv-devel%{?_isa}}
 %{!?with_bundled_zlib:Requires: zlib-devel%{?_isa}}
-# Note: -devel sub-packages of the various streams conflict with each other,
-# as the headers cannot be easily namespaced (would break at lease node-gyp search path).
-# Hence the Provides: in place of metapackage.
-Provides:       nodejs-devel = %{node_evr}
 
 Provides: alternative-for(nodejs-devel) = %{node_evr}
 Conflicts: alternative-for(nodejs-devel)
+# previously VP used for the same reason as alternative-for() above
 Conflicts: nodejs-devel-pkg
- # previously VP used for the same reason as alternative-for() above
+}
 
+%package        devel
+Summary:        JavaScript runtime – development headers
+%devel_metadata
 
 %description    devel
 Development headers for the Node.js JavaScript runtime.
@@ -260,7 +261,6 @@ your node programs. It manages dependencies and does other cool stuff.
 
 %package        bin
 Summary:        Node.js JavaScript runtime – unversioned symlinks
-Group:          Development/Languages
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major} = %{node_evr}
 Provides:       alternative-for(nodejs-bin) = %{node_evr}
@@ -271,7 +271,7 @@ Binary symlinks for Node.js JavaScript runtime.
 
 %package        npm-bin
 Summary:        Node.js Package Manager – binary symlinks
-Group:          Development/Languages
+Epoch:          %{npm_epoch}
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
 Requires(meta): nodejs%{node_version_major}-bin = %{node_evr}
@@ -280,6 +280,53 @@ Conflicts:      alternative-for(nodejs-npm-bin)
 
 %description    npm-bin
 Binary symlinks for Node.js Package Manager.
+
+# === Rolling stream metadata ===
+%if %{with rolling_stream}
+
+%package -n     nodejs
+Summary:        Node.js JavaScript runtime – rolling stream
+Requires:       nodejs%{node_version_major} = %{node_evr}
+Recommends:     nodejs-npm = %{npm_evr}
+# For rolling stream, the -bin packages are merged into the main packages,
+# as that was determined to be a better user experience
+Provides:       nodejs-bin = %{node_evr}
+Provides:       alternative-for(nodejs-bin) = %{node_evr}
+Conflicts:      alternative-for(nodejs-bin)
+
+%description -n nodejs
+This is a meta-package that installs the recommended version of Node.js
+JavaScript runtime. It relies on nodejs%{version} to provide all necessary dependencies.
+
+%package -n     nodejs-devel
+Summary:        Node.js development headers – rolling stream
+%devel_metadata
+
+%description -n nodejs-devel
+Meta-package that installs the nodejs%{version}-devel package, which contains
+development headers for the appropriate Node.js JavaScript runtime.
+
+%package -n     nodejs-npm
+Summary:        Node.js Package Manager meta-package
+Epoch:          %{npm_epoch}
+Version:        %{npm_version}
+Release:        %{npm_release}
+
+Requires:       nodejs = %{node_evr}
+Requires:       nodejs%{node_version_major}-npm = %{npm_evr}
+Provides:       npm = %{npm_evr}
+# Similarly to main nodejs package, the nodejs-npm-bin is merged to this one.
+Provides:       nodejs-npm-bin = %{npm_evr}
+Requires(meta): nodejs = %{node_evr}
+Provides:       alternative-for(nodejs-npm-bin) = %{npm_evr}
+Conflicts:      alternative-for(nodejs-npm-bin)
+
+%description -n nodejs-npm
+Meta-package that installs the nodejs%{version}-npm package,
+which contains the appropriate version of Node.js Package Manager.
+
+%endif
+# ↪ %%{with rolling_stream}
 
 %prep
 %autosetup -n node-v%{node_version} -S git_am
@@ -301,6 +348,9 @@ readonly -a potential_python_scripts=(
     $(grep --recursive --files-with-matches --max-count=1 python)
 )
 %py3_shebang_fix "${potential_python_scripts[@]}"
+
+# LTO breaks V8's inline assembly symbols (PushAllRegistersAndIterateStack)
+%global _lto_cflags %{nil}
 
 %build
 # additional build flags
@@ -345,8 +395,6 @@ readonly -a configure_flags=(
 %if %{without bundled_nodejs_undici}
     --shared-builtin-undici/undici-path=%{nodejs_common_sitelib}/undici/loader.js
 %endif
-    # Enable LTO where possible
-    --enable-lto
     # Compile with small icu, extendable via full-i18n subpackage
     --with-intl=small-icu --with-icu-default-data-dir=%{nodejs_datadir}/icudata
     # Do not ship corepack
@@ -614,10 +662,12 @@ end
 # Versioned man page when -bin is not installed
 %{_mandir}/man1/node-%{node_version_major}.1*
 
-%files      bin
+%global     files_bin %{expand:
 %license    LICENSE
 %{_bindir}/node
 %{_mandir}/man1/node.1*
+}
+%files      bin %{files_bin}
 
 %files      libs
 %license    LICENSE
@@ -626,7 +676,7 @@ end
 %{_libdir}/libv8_libbase.so.%{v8_version_major}.%{v8_version_minor}
 %{_libdir}/libv8_libplatform.so.%{v8_version_major}.%{v8_version_minor}
 
-%files      devel
+%global     files_devel %{expand:
 %license    LICENSE
 %dir        %{nodejs_datadir}/
 %{_includedir}/node/
@@ -637,6 +687,8 @@ end
 %{_rpmconfigdir}/fileattrs/nodejs%{node_version_major}_abi.attr
 %{_rpmconfigdir}/nodejs%{node_version_major}_abi.req
 %{nodejs_datadir}/common.gypi
+}
+%files      devel %{files_devel}
 
 %files -n   v8-%{v8_version_major}.%{v8_version_minor}-devel
 %license    LICENSE
@@ -670,7 +722,7 @@ end
 %{nodejs_private_sitelib}/npm/
 %exclude    %{nodejs_datadir}/man/man1/node*.1*
 
-%files      npm-bin
+%global     files_npm_bin %{expand:
 %license    deps/npm/LICENSE
 %{_bindir}/npm
 %{_bindir}/npx
@@ -679,6 +731,8 @@ end
 %exclude %{_mandir}/man1/node-%{node_version_major}.1*
 %exclude %{_mandir}/man1/npm-%{node_version_major}.1*
 %exclude %{_mandir}/man1/npx-%{node_version_major}.1*
+}
+%files      npm-bin %{files_npm_bin}
 
 %files      docs
 %doc        doc/README.md
@@ -686,6 +740,12 @@ end
 %dir        %{_pkgdocdir}
 %{_pkgdocdir}/html/
 %{_pkgdocdir}/npm/
+
+%if %{with rolling_stream}
+%files -n   nodejs %{files_bin}
+%files -n   nodejs-npm %{files_npm_bin}
+%files -n   nodejs-devel %{files_devel}
+%endif
 
 %changelog
 %autochangelog

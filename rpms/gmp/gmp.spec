@@ -6,7 +6,7 @@
 Summary: GNU arbitrary precision library
 Name: gmp
 Version: 6.3.0
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 Epoch: 1
 URL: https://gmplib.org/
 Source0: https://gmplib.org/download/gmp/gmp-%{version}.tar.xz

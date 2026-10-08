@@ -2,7 +2,7 @@
 # update-checkout-config.json. Regenerate the complete forge source list from
 # that configuration instead of changing Version alone.
 update_spec: |
-  ./update-swift-version.sh "${UPDATE_NEW_VERSION}"
+  ./update_swift_version.py "${UPDATE_NEW_VERSION}"
   sed -Ei 's/^Release:.*/Release:        0.1%{?dist}/' "${UPDATE_SPEC_FILE}"
 
 # The default download_sources phase expands the regenerated %forge sources,

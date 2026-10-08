@@ -1,4 +1,4 @@
-{%- macro pipeline_run(rpm, event_type, cancel_in_progress, output_image_tag, build_platforms, extra_params={}, extra_annotations={}, extra_path_changes=[], timeout_hours=4, task_run_specs=None, forked_from=None, lookaside_cache_url=None) -%}
+{%- macro pipeline_run(rpm, event_type, cancel_in_progress, output_image_tag, build_architectures, build_platforms, extra_params={}, extra_annotations={}, extra_path_changes=[], timeout_hours=4, task_run_specs=None, forked_from=None, lookaside_cache_url=None) -%}
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
@@ -39,8 +39,9 @@ spec:
       value: '{{ "{{target_branch}}" }}'
     - name: build-architectures
       value:
-        - aarch64
-        - x86_64
+{%- for architecture in build_architectures %}
+        - {{ architecture }}
+{%- endfor %}
     - name: build-platforms
       value:
 {%- for platform in build_platforms %}

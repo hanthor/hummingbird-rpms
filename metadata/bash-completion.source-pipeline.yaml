@@ -1,0 +1,4 @@
+fetch:
+  # The spec's upstream_version is 2.18.0 while its RPM Version is 2.18.
+  - type: url
+    url: "https://github.com/scop/bash-completion/releases/download/${VERSION}.0/bash-completion-${VERSION}.0.tar.xz"

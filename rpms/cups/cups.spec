@@ -15,7 +15,7 @@ Summary: CUPS printing system
 Name: cups
 Epoch: 1
 Version: 2.4.19
-Release: 4.2%{?dist}
+Release: 4.3%{?dist}
 # backend/failover.c - BSD-3-Clause
 # cups/md5* - Zlib
 # scheduler/colorman.c - Apache-2.0 WITH LLVM-exception AND BSD-2-Clause
@@ -86,6 +86,9 @@ Patch1002: 0001-Fix-CVE-2026-87875-cupsUTF32ToUTF8-heap-oob-read.patch
 # https://github.com/OpenPrinting/cups/commit/f56844dbe4a54a9f8e1aeb3b913fbee614156bdb
 # https://github.com/OpenPrinting/cups/commit/88e67c00c130a45f3a1edf36686f7a0b2982fef8
 Patch1003: 0001-Fix-CVE-2026-87876-cups-username-case-sensitive.patch
+# CVE-2026-105326: argument injection in mailto notifier via notify-recipient-uri
+# https://github.com/OpenPrinting/cups/commit/611d1bd3bdf832363832383567906a6d7fd6c47d
+Patch1004: 0001-Fix-CVE-2026-105326-mailto-notifier-argument-injecti.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -317,6 +320,7 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1001 -p1 -b .fix-coverity-issues
 %patch -P 1002 -p1 -b .fix-cve-2026-87875-utf32
 %patch -P 1003 -p1 -b .fix-cve-2026-87876
+%patch -P 1004 -p1 -b .fix-cve-2026-105326
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).

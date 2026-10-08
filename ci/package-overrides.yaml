@@ -3,6 +3,7 @@
 #
 # Available options per package:
 #   timeout_hours: Override the default build timeout (default: 4 hours)
+#   build_architectures: Override the default RPM architectures (aarch64 and x86_64)
 #   build_platforms: Override the default MPLs (instance sizes) for builds
 #   forked_from: Override the upstream dist-git repository URL for lookaside cache resolution
 #                (default: https://src.fedoraproject.org/rpms/<package-name>)
@@ -40,15 +41,59 @@ _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i
 
 acl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 aom:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+apt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 attr:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+audit:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 bash:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 bind:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -58,20 +103,120 @@ bootc:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+brotli:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+bzip2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+ca-certificates:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 caddy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 capstone:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+catatonit:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+chkconfig:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+chunkah:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 cloud-init:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+cmake:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 composer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+coreutils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 cosign:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+createrepo_c:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+crypto-policies:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 curl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -79,15 +224,48 @@ curl:
   build_platforms:
     - "linux-c2xlarge/amd64"
     - "linux-c2xlarge/arm64"
+    - "linux/s390x"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
 
 cyrus-sasl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+dbus:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 dex:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 distribution:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+dnf5:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 dotnet10.0:
   timeout_hours: 12
@@ -108,14 +286,52 @@ dotnet9.0:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+doxygen:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 dracut:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 drpm:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+e2fsprogs:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 efi-rpm-macros:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+elfutils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 erlang27:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -123,14 +339,85 @@ erlang27:
 etcd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+environment-modules:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 expat:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+fedora-repos:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 fftw:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+file:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+filesystem:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+findutils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+fmt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 fontconfig:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+fsverity-utils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 fulcio:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -142,6 +429,11 @@ gcc:
   build_platforms:
     - "linux-d160-c8xlarge/amd64"
     - "linux-d160-c8xlarge/arm64"
+    - "linux/s390x"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
 
 gcc13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -151,21 +443,89 @@ gcc13:
     - "linux-d160-c8xlarge/amd64"
     - "linux-d160-c8xlarge/arm64"
 
+gdbm:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 gettext:
   timeout_hours: 8
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+git-lfs:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 git-sync:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+glib2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 glibc:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 16
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
+    - "linux/s390x"
+
+gmp:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+gnulib-l10n:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+gnupg2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+gnutls:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 go-fdo-client:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -201,6 +561,16 @@ grafana13.2:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+grep:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 grype:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -222,8 +592,31 @@ helm4:
 httpd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+hwloc:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 hugo:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+hummingbird-release:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+ima-evm-utils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 jaeger:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -255,6 +648,29 @@ java-25-openjdk-portable:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+jq:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+json-c:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+jsoncpp:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 k6v1:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -263,6 +679,26 @@ k6v2:
 
 kbd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+keyutils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+krb5:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 kube-state-metrics:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -273,26 +709,323 @@ kubernetes1.35:
 kubernetes1.36:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libarchive:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libassuan:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libcap:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libcap-ng:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libcbor:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libdex:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+libeconf:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 libevent:
   # Local version bump ahead of Fedora (2.1.13, HUM-6827): the source
   # tarball at that version is not in Fedora's lookaside cache, only
   # Hummingbird's. Use the Hummingbird lookaside cache instead of Fedora.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libfabric:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libffi:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libfido2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libgcrypt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libgpg-error:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libidn2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 libkcapi:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+libksba:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libmodulemd:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libpng:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libpsl:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+librepo:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libselinux:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libsemanage:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libsepol:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libsolv:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libssh:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libtasn1:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libtool:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libunistring:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libusb1:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libverto:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libxcrypt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 libxml2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libxslt:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+libyaml:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 libyuv:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -315,17 +1048,100 @@ loki3.6:
 loki3.7:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+lua:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+lz4:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 maven3.9:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 memcached:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+mpdecimal:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 nats-server2.12:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 nats-server2.14:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+ncurses:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nettle:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nftables:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+nghttp2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nghttp3:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+ngtcp2:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -359,6 +1175,26 @@ nodejs26:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
 
+npth:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+nss:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 nss-fips:
   # Use hummingbird lookaside cache instead of Fedora
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -366,10 +1202,50 @@ nss-fips:
 oauth2-proxy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+oniguruma:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 openblas:
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
+
+opendbx:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+openldap:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+openscap:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 openshell:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -399,6 +1275,14 @@ openshell:
 
 openssl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 openssl-fips-provider:
   # Use hummingbird lookaside cache instead of Fedora
@@ -437,8 +1321,36 @@ oras:
 openmpi:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+p11-kit:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+pam:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 pcre2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 pgbouncer:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -452,6 +1364,26 @@ pmix:
 poppler:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+popt:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - linux/x86_64
+    - linux/arm64
+    - linux/s390x
+
+procps-ng:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 prometheus3.13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -461,11 +1393,32 @@ prometheus3.5:
 protobuf:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+protobuf-c:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prrte:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+publicsuffix-list:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 python-pip:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 python-rpm-lockfile-prototype:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -484,6 +1437,17 @@ python3.14:
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
+    - "linux/s390x"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+
+python3.15:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_platforms:
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
 
 rabbitmq-server4.2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -491,8 +1455,28 @@ rabbitmq-server4.2:
 rabbitmq-server4.3:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+readline:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 rekor:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+rpm:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 ruff:
   timeout_hours: 8
@@ -502,6 +1486,7 @@ ruff:
 
 # Required to prevent running out of storage
 rust:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 12
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -520,9 +1505,75 @@ rust:
 rust-rpm-sequoia:
   # Tracked from CentOS Stream c10s instead of Fedora
   forked_from: "https://gitlab.com/redhat/centos-stream/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 scap-security-guide:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+sdbus-cpp:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+sed:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+setup:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+sgml-common:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+shadow-utils:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 snappy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -535,6 +1586,14 @@ spire1.15:
 
 sqlite:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 swift-lang:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -556,6 +1615,16 @@ swift-lang:
 syft:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+systemd:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 tbb:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -571,10 +1640,33 @@ thrift:
 tomcat11:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+tpm2-tss:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 trivy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+tzdata:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
 ucx:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+utf8proc:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 unbound:
@@ -582,6 +1674,16 @@ unbound:
 
 userspace-rcu:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+util-linux:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 valkey:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -594,6 +1696,72 @@ xcaddy:
 
 xmlsec1:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+xxhash:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+xz:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+yq:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+zchunk:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
+
+zlib-ng:
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"
 
 zstd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_architectures:
+    - aarch64
+    - x86_64
+    - s390x
+  build_platforms:
+    - "linux/x86_64"
+    - "linux/arm64"
+    - "linux/s390x"

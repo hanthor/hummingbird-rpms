@@ -1,7 +1,7 @@
-From 37022658e4c96b4ffc883f677cc1587f9bab4d00 Mon Sep 17 00:00:00 2001
+From 5348ff4f4c59dac677b8348b1213c6ef1e530e31 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:23:51 +0200
-Subject: [PATCH 46/54] support authentication indicators in GSSAPI
+Subject: [PATCH 46/53] support authentication indicators in GSSAPI
 
 https://github.com/openssh/openssh-portable/pull/500
 
@@ -17,10 +17,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
  7 files changed, 258 insertions(+), 14 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index caa75f708..4df1a3204 100644
+index 394acc3d8..d6274328b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5120,6 +5120,7 @@ AC_ARG_WITH([kerberos5],
+@@ -5059,6 +5059,7 @@ AC_ARG_WITH([kerberos5],
  		AC_CHECK_HEADERS([gssapi.h gssapi/gssapi.h])
  		AC_CHECK_HEADERS([gssapi_krb5.h gssapi/gssapi_krb5.h])
  		AC_CHECK_HEADERS([gssapi_generic.h gssapi/gssapi_generic.h])
@@ -312,10 +312,10 @@ index 6eb7d2163..237a3c40a 100644
  		}
  	else
 diff --git a/servconf.c b/servconf.c
-index bee75d486..90c5839a2 100644
+index 846f5d212..d9cccc17c 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -458,6 +458,7 @@ fill_default_server_options(ServerOptions *options)
+@@ -456,6 +456,7 @@ fill_default_server_options(ServerOptions *options)
  	CLEAR_ON_NONE(options->routing_domain);
  	CLEAR_ON_NONE(options->host_key_agent);
  	CLEAR_ON_NONE(options->per_source_penalty_exempt);
@@ -323,7 +323,7 @@ index bee75d486..90c5839a2 100644
  
  	for (i = 0; i < options->num_host_key_files; i++)
  		CLEAR_ON_NONE(options->host_key_files[i]);
-@@ -1490,6 +1491,15 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1488,6 +1489,15 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (*activep && options->gss_kex_algorithms == NULL)
  			options->gss_kex_algorithms = xstrdup(arg);
  		break;
@@ -339,7 +339,7 @@ index bee75d486..90c5839a2 100644
  #endif /* GSSAPI */
  
  	case sPasswordAuthentication:
-@@ -4275,6 +4285,7 @@ dump_config(ServerOptions *o)
+@@ -4274,6 +4284,7 @@ dump_config(ServerOptions *o)
  	dump_cfg_fmtint(sGSSAPIStrictAcceptorCheck, o->gss_strict_acceptor);
  	dump_cfg_fmtint(sGSSAPIStoreCredentialsOnRekey, o->gss_store_rekey);
  	dump_cfg_string(sGSSAPIKexAlgorithms, o->gss_kex_algorithms);
@@ -348,7 +348,7 @@ index bee75d486..90c5839a2 100644
  	dump_cfg_fmtint(sPasswordAuthentication, o->password_authentication);
  	dump_cfg_fmtint(sKbdInteractiveAuthentication,
 diff --git a/servconf.h b/servconf.h
-index 7e809cfff..a8e90e5a9 100644
+index c55b64c73..81e699655 100644
 --- a/servconf.h
 +++ b/servconf.h
 @@ -326,7 +326,8 @@ SSHCONF_INTFLAG(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_GLOBAL, 1
@@ -397,7 +397,7 @@ index 329dc9da0..1506719a9 100644
  
  typedef struct ssh_gssapi_mech_struct {
 diff --git a/sshd_config.5 b/sshd_config.5
-index 5998275d2..8fed58d5c 100644
+index b72757895..2a8f3abea 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
 @@ -811,6 +811,52 @@ This option only applies to connections using GSSAPI.

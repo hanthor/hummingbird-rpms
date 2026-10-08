@@ -1,7 +1,7 @@
-From 28bf794f131e07b0ffac3a91de30dc7784ab3d52 Mon Sep 17 00:00:00 2001
+From 74d160a951c390e2c690bf3462b643b7328e3b89 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 31/54] openssh-8.0p1-preserve-pam-errors
+Subject: [PATCH 31/53] openssh-8.0p1-preserve-pam-errors
 
 # sshd provides PAM an incorrect error code (#1879503)
 ---
