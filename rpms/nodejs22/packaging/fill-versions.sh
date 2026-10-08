@@ -107,7 +107,7 @@ parse_punycode_version() {
 }
 parse_npm_version() {
     # NPM was originally a separate package using epoch; we need to keep it
-    local -r NPM_EPOCH=2
+    local -r NPM_EPOCH=1
     # NPM is a subpackage with it's own version. Use always-increasing release macro
     local -r NPM_RELEASE='%{nodejs_subpackage_release}'
 
