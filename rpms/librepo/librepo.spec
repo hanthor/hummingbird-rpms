@@ -31,7 +31,7 @@
 
 Name:           librepo
 Version:        1.21.1
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        Repodata downloading library
 
 License:        LGPL-2.1-or-later
