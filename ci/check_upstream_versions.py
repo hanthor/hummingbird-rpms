@@ -996,7 +996,7 @@ def mark_package_modified(
 
     try:
         _METADATA_REPO.save(metadata)
-    except (OSError, InvalidMetadataError) as e:
+    except OSError as e:
         logger.error(f"{package}: failed to write metadata: {e}")
         return
 
