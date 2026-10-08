@@ -196,7 +196,7 @@ UPDATES_WITH_CONFLICTS=0
 FAILED_PACKAGES=()
 CREATED_MR_URLS=()
 # MRs that need a human to resolve conflicts before they can merge; surfaced
-# in the Slack failure notification (see .notify_schedule_failure).
+# in the Slack failure notification (see .notify_schedule_result).
 CONFLICT_MR_URLS=()
 ATTENTION_MRS_FILE=".ci_conflict_mrs.txt"
 rm -f "${ATTENTION_MRS_FILE}"
@@ -352,7 +352,9 @@ echo ""
 # Check how many commits were created since we started
 COMMITS_CREATED=$(git rev-list --count "${START_COMMIT}..HEAD" 2>/dev/null || echo "0")
 
-if [[ ${COMMITS_CREATED} -eq 0 ]]; then
+# No commits can also mean every update failed. Only the genuinely unchanged
+# case may exit early; failures must reach the summary and Slack diagnostics.
+if [[ ${COMMITS_CREATED} -eq 0 && ${UPDATE_FAILURES} -eq 0 ]]; then
     echo "No package updates available. All packages are up-to-date."
     exit 0
 fi
@@ -366,7 +368,10 @@ mapfile -t COMMIT_SHAS < <(git rev-list --reverse "${START_COMMIT}..HEAD")
 
 # Reset main back to START_COMMIT so MR branches will have commits ahead
 # (The commits are preserved in COMMIT_SHAS array)
-git reset --hard "${START_COMMIT}" --quiet
+# With no update commits, leave the worktree alone and only report failures.
+if [[ ${COMMITS_CREATED} -gt 0 ]]; then
+    git reset --hard "${START_COMMIT}" --quiet
+fi
 
 # Process each commit to create individual MRs
 for COMMIT_SHA in "${COMMIT_SHAS[@]}"; do
