@@ -107,7 +107,8 @@ from hum.meta.model import (  # noqa: E402
     PackageMetadata as HumPackageMetadata,
 )
 
-_METADATA_REPO = MetadataRepository(ROOT_DIR)
+def _metadata_repo() -> MetadataRepository:
+    return MetadataRepository(METADATA_DIR.parent)
 
 # release-monitoring.org API base URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
@@ -311,14 +312,17 @@ def get_package_metadata(package: str) -> Optional[HumPackageMetadata]:
     if not metadata_path.exists():
         return None
     try:
-        return _METADATA_REPO.load(package)
+        return _metadata_repo().load(package)
     except (MalformedMetadataError, json.JSONDecodeError, OSError) as e:
         raise MalformedMetadataError(f"{package}: {e}") from e
 
 
 def get_version_from_metadata(package: str) -> Optional[str]:
     """Get version from metadata JSON file."""
-    data = get_package_metadata(package)
+    try:
+        data = get_package_metadata(package)
+    except MalformedMetadataError:
+        return None
     if data is None:
         return None
     return data.version
@@ -728,7 +732,11 @@ def _run_gorget_pipeline(
             "--output-dir", str(output_dir),
             "--debug",
         ]
-        gorget_meta = get_package_metadata(package)
+        try:
+            gorget_meta = get_package_metadata(package)
+        except MalformedMetadataError as e:
+            logger.warning(f"{package}: malformed metadata, skipping upstream-repo injection: {e}")
+            gorget_meta = None
         upstream_repo = gorget_meta.upstream_repo if gorget_meta else None
         if upstream_repo:
             command += ["--upstream-repo", upstream_repo]
@@ -966,7 +974,11 @@ def mark_package_modified(
         reason: Reason for the update
         version: If provided, update the version field in metadata
     """
-    metadata = get_package_metadata(package)
+    try:
+        metadata = get_package_metadata(package)
+    except MalformedMetadataError as e:
+        logger.error(f"{package}: malformed metadata, skipping modification tracking: {e}")
+        return
     if metadata is None:
         logger.warning(
             f"{package}: no metadata file found, skipping modification tracking"
@@ -995,8 +1007,8 @@ def mark_package_modified(
         metadata.modification_reason = reason
 
     try:
-        _METADATA_REPO.save(metadata)
-    except (OSError, InvalidMetadataError) as e:
+        _metadata_repo().save(metadata)
+    except OSError as e:
         logger.error(f"{package}: failed to write metadata: {e}")
         return
 
@@ -1218,7 +1230,11 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
         # Recover old_version from metadata (the hook will mutate the
         # spec file directly, so we cannot rely on Specfile to tell us
         # the pre-update version).
-        meta = get_package_metadata(package)
+        try:
+            meta = get_package_metadata(package)
+        except MalformedMetadataError as e:
+            logger.warning(f"{package}: malformed metadata, falling back to spec version: {e}")
+            meta = None
         old_version = meta.version if meta else None
         if not old_version:
             old_version = parse_spec_version(package_dir) or new_version
@@ -1750,7 +1766,16 @@ def check_package_version(
         )
 
     # Use metadata for Anitya/GitLab lookup if available
-    meta = get_package_metadata(package)
+    try:
+        meta = get_package_metadata(package)
+    except MalformedMetadataError as e:
+        return VersionCheckResult(
+            package=package,
+            current_version=current_version,
+            upstream_version=None,
+            has_update=False,
+            error=f"Malformed metadata: {e}",
+        )
     track_version = None
     project_id = None
     version_suffix_strip = None
@@ -1988,7 +2013,10 @@ def list_all(args: argparse.Namespace) -> None:
         result = check_package_version(package, args.distro)
 
         # Determine tracking status from metadata
-        meta = get_package_metadata(package)
+        try:
+            meta = get_package_metadata(package)
+        except MalformedMetadataError as exc:
+            raise SystemExit(f"ERROR: {exc}") from exc
         tracking = "yes" if (meta and meta.track_upstream) else "no"
 
         # Determine status and upstream version display
@@ -2118,8 +2146,7 @@ def run_check(args: argparse.Namespace) -> None:
             try:
                 meta = get_package_metadata(pkg)
             except MalformedMetadataError as e:
-                logger.error("%s", e)
-                continue
+                raise SystemExit(f"ERROR: {e}") from e
             if meta and meta.track_upstream:
                 tracked.append(pkg)
         packages = tracked

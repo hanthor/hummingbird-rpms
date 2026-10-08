@@ -1390,7 +1390,7 @@ def test_mark_clean_refuses_upstream_modified(workdir: Path, upstream_repos: dic
     metadata_file = workdir / 'metadata' / 'vanilla.json'
     with open(metadata_file) as f:
         metadata = json.load(f)
-    release = metadata['fedora'].pop('release')
+    metadata['fedora'].pop('release')
     metadata['modification_status'] = 'modified'
     metadata['modification_reason'] = 'Ahead of Fedora'
     metadata['version'] = '2.0'

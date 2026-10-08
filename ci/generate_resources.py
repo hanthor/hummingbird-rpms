@@ -9,6 +9,7 @@ avoids spawning thousands of yq subprocesses.
 
 import argparse
 import json
+import logging
 import re
 import sys
 from pathlib import Path
@@ -19,6 +20,7 @@ from hum.meta import MetadataRepository  # noqa: E402
 from hum.meta.model import (  # noqa: E402
     CleanPackageMetadata,
     IndependentPackageMetadata,
+    MalformedMetadataError,
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
 )
@@ -140,7 +142,8 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 
             try:
                 metadata = _METADATA_REPO.load(dname)
-            except (OSError, json.JSONDecodeError):
+            except (OSError, json.JSONDecodeError, MalformedMetadataError) as e:
+                logging.warning("%s: failed to load metadata, falling back to directory name: %s", dname, e)
                 metadata = None
 
             if metadata is None or isinstance(metadata, IndependentPackageMetadata):
