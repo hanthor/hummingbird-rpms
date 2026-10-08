@@ -1,6 +1,0 @@
-# Persist the version change in the real spec. Gorget's spec-update step
-# applies the same substitution only to its scratch copy for source resolution.
-update_spec: >-
-  sed -Ei
-  '/^%nodejs_define_version\s+node\>/s|:[0-9]+\.[0-9]+\.[0-9]+-|:'"${UPDATE_NEW_VERSION}"'-|'
-  "${UPDATE_SPEC_FILE}"
