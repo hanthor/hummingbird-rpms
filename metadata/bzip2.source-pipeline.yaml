@@ -1,0 +1,11 @@
+fetch:
+  - type: spec-source
+    index: 0
+  - type: spec-source
+    index: 2
+
+verify:
+  - type: gpg-signature
+    target: "bzip2-${VERSION}.tar.gz"
+    signature: "bzip2-${VERSION}.tar.gz.sig"
+    keyring: "bzip2.gpg"

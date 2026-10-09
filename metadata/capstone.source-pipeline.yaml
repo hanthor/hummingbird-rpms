@@ -1,0 +1,4 @@
+fetch:
+  - type: url
+    url: "https://github.com/capstone-engine/capstone/archive/refs/tags/${VERSION}.tar.gz"
+    filename: "capstone-${VERSION}.tar.gz"
