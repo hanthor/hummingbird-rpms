@@ -34,14 +34,22 @@ transform:
 
         "/tmp/ocb-${VERSION}" --skip-compilation --config distributions/otelcol-contrib/manifest.yaml
 
-        # CVE-2026-79921: rabbitmqexporter/internal/rabbitmq still require
-        # amqp091-go < 1.13.0 as of this writing, so OCB's generated go.mod
-        # resolves to the vulnerable v1.12.0 via MVS. Force the floor up to
-        # the fixed release here, before go.mod/go.sum are tarred and handed
-        # to the vendor step, so both stay consistent. Drop this once
-        # upstream's own go.mod requires >= 1.13.0.
+        # CVE-2026-79921/CVE-2026-107386: the forced amqp091-go floor that
+        # used to live here (go get .../amqp091-go@v1.13.0, fixing
+        # CVE-2026-79921) is gone as of this update. rabbitmqexporter and
+        # internal/rabbitmq both re-tag amqp091-go version with every
+        # otelcol-contrib release; their v0.161.0 tags required amqp091-go
+        # v1.13.0 (vulnerable to CVE-2026-107386, fixed in v1.14.0), but
+        # their current v0.162.0 tags -- which OCB's manifest already
+        # resolves to at this package version -- require amqp091-go
+        # v1.15.0 on their own, well past the fix. Pinning an older floor
+        # here would only force Go's MVS to downgrade rabbitmqexporter/
+        # internal/rabbitmq back to their v0.161.0 tags (and amqp091-go
+        # back down) to satisfy the pin, which is counter to the goal. If a
+        # future otelcol-contrib release regresses amqp091-go below
+        # v1.14.0 again, restore a `go get .../amqp091-go@v<fixed>` pin
+        # here (see HUM-6504 for the previous occurrence).
         pushd _build
-        go get github.com/rabbitmq/amqp091-go@v1.13.0
         # HUM-6526 CI: the buildroot's golang provides go1.27, but the vendored
         # cockroachdb/swiss (as of upstream commit b0f6560f979b) gates its
         # runtime shim (hashFn/getRuntimeHasher/fastrand64) behind a `!go1.27`
@@ -74,12 +82,31 @@ transform:
     modules:
       - path: "opentelemetry-collector-releases-${VERSION}/_build"
 
-# Same-version regeneration for CVE-2026-79921 (forced amqp091-go >= 1.13.0),
-# the cockroachdb/swiss go1.27 build-tag fix (`go get`/`go mod tidy` above),
-# and the SermoDigital/jose RegisterHash(Hash(0)) vendor post_command (see
-# go-vendor-tools.toml; cloudfoundry/cli#3851) changes archive checksums while
-# keeping the 0.159.0 filenames, so gorget needs accepted-checksums exceptions.
+# Same-version regeneration for CVE-2026-107386 (dropped the amqp091-go
+# pin above -- OCB's manifest-driven resolution now pulls amqp091-go
+# v1.15.0 natively via rabbitmqexporter/internal/rabbitmq v0.162.0, so
+# removing the stale v1.13.0 floor changes both archive checksums while
+# keeping the 0.162.0 filenames) needs its own accepted-checksums
+# exceptions, same pattern as the 0.159.0 entries below for the previous
+# amqp091-go-related change.
 accepted-checksums:
+  - file: "opentelemetry-collector-contrib-0.162.0-generated.tar.bz2"
+    checksum: "c91214dcc0bd3e1908041a80d13760489ae590ae2db1684f97538e597e30763cd92003473acdffdc93c774a617b9382b133d5706508a3bcf14c387ef5451db4e"
+    reason: "CVE-2026-107386: removed the amqp091-go v1.13.0 floor pin
+      (added for CVE-2026-79921). OCB's manifest-driven go.mod now
+      resolves github.com/rabbitmq/amqp091-go to v1.15.0 directly via
+      rabbitmqexporter/internal/rabbitmq v0.162.0's own go.mod
+      requirement, so the forced go get/go mod tidy sequence is no
+      longer needed and only risked downgrading those two components
+      back to their v0.161.0 tags (HUM-9625/HUM-9649)."
+
+  - file: "opentelemetry-collector-contrib-0.162.0-vendor.tar.bz2"
+    checksum: "0c9ba745deb07bb72fc91841d7220804ef9305834eb482cdb65907d195db567cc5bdddcfa5ac19b1112f4122cc62f05f3609f3a176552c6de5c1adf4bb1568dc"
+    reason: "CVE-2026-107386: vendor archive regenerated after dropping
+      the amqp091-go v1.13.0 floor pin, now vendoring amqp091-go v1.15.0
+      (resolved natively via rabbitmqexporter/internal/rabbitmq v0.162.0)
+      instead of the forced-down v1.13.0 (HUM-9625/HUM-9649)."
+
   - file: "opentelemetry-collector-contrib-0.159.0-generated.tar.bz2"
     checksum: "5cae0f95d1caebcaa254afefd82882f33a1941cb6c53dcb1768fb74bddca7a48e3247c9544b67d015e4de52574c0969929fca98eaf05a94f57aeaef6c9d084ed"
     reason: "CVE-2026-79921: forced amqp091-go v1.12.0 -> v1.13.0 in _build/go.mod
