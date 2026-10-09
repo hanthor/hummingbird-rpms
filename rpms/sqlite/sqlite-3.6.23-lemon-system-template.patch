@@ -1,6 +1,6 @@
 --- a/tool/lemon.c
 +++ b/tool/lemon.c
-@@ -3686,6 +3686,8 @@
+@@ -3797,6 +3797,8 @@
      tpltname = buf;
    }else if( access(templatename,004)==0 ){
      tpltname = templatename;
