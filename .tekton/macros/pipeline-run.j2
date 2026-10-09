@@ -1,4 +1,4 @@
-{%- macro pipeline_run(rpm, event_type, cancel_in_progress, output_image_tag, build_architectures, build_platforms, extra_params={}, extra_annotations={}, extra_path_changes=[], timeout_hours=4, task_run_specs=None, forked_from=None, lookaside_cache_url=None) -%}
+{%- macro pipeline_run(rpm, event_type, cancel_in_progress, output_image_tag, build_architectures, build_platforms, extra_params={}, extra_annotations={}, timeout_hours=4, task_run_specs=None, forked_from=None, lookaside_cache_url=None) -%}
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
@@ -9,11 +9,18 @@ metadata:
     {{ key }}: '{{ value }}'
 {%- endfor %}
     build.appstudio.redhat.com/target_branch: '{{ "{{target_branch}}" }}'
-    pipelinesascode.tekton.dev/on-target-branch: "[{{ branch }}]"
     pipelinesascode.tekton.dev/cancel-in-progress: "{{ cancel_in_progress }}"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-event: "[{{ event_type }}]"
-    pipelinesascode.tekton.dev/on-path-change: "[rpms/{{ rpm.dname }}/***{%- for path in extra_path_changes %}, {{ path }}{%- endfor %}]"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "{{ event_type }}" && target_branch == "{{ branch }}" && (
+        files.all.exists(x,
+          (
+{%- for p in rpm.manifest_triggers %}
+            {{ "||" if not loop.first else "  " }} x.matches("{{ p | replace('\\', '\\\\') }}")
+{%- endfor %}
+          )
+        )
+      )
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: {{ rpm.application_name | default(application_name) }}

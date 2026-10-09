@@ -482,6 +482,71 @@ class TestPrivateProductKonfluxVariables:
         assert "application_name" not in variables["rpms"][0]
 
 
+class TestBuildTriggerManifest:
+    """Tests for build_trigger_manifest private_product routing."""
+
+    def test_private_product_routed_to_private_application(self, gen_module):
+        """Packages with private_product go under private-{product}-rpms-{branch}."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "mypkg", "imported": True,
+                 "application_name": "private-example-rpms-main",
+                 "manifest_triggers": ["^rpms/mypkg/"]},
+                {"dname": "normalpkg", "imported": True,
+                 "manifest_triggers": ["^rpms/normalpkg/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push")
+
+        apps = manifest["applications"]
+        assert "private-example-rpms-main" in apps
+        assert "mypkg--rpms" in apps["private-example-rpms-main"]
+        assert "rpms-main" in apps
+        assert "normalpkg--rpms" in apps["rpms-main"]
+        assert "mypkg--rpms" not in apps["rpms-main"]
+
+    def test_no_private_product_single_application(self, gen_module):
+        """Packages without private_product all go under rpms-{branch}."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "alpha", "imported": True,
+                 "manifest_triggers": ["^rpms/alpha/"]},
+                {"dname": "beta", "imported": True,
+                 "manifest_triggers": ["^rpms/beta/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push")
+
+        apps = manifest["applications"]
+        assert set(apps.keys()) == {"rpms-main"}
+        assert "alpha--rpms" in apps["rpms-main"]
+        assert "beta--rpms" in apps["rpms-main"]
+
+    def test_pull_request_adds_test_and_canary_triggers(self, gen_module):
+        """pull_request manifests add test-file triggers and setup canary triggers."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "setup", "imported": True,
+                 "manifest_triggers": ["^rpms/setup/", "^test/rpms/setup\\.yml$",
+                                       "^ci/", "^mock/"]},
+                {"dname": "bash", "imported": True,
+                 "manifest_triggers": ["^rpms/bash/", "^test/rpms/bash\\.yml$"]},
+                {"dname": "acl", "imported": True,
+                 "manifest_triggers": ["^rpms/acl/", "^test/rpms/acl\\.yml$"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "pull_request")
+
+        apps = manifest["applications"]["rpms-main"]
+        assert apps["bash--rpms"] == ["^rpms/bash/", "^test/rpms/bash\\.yml$"]
+        assert apps["acl--rpms"] == ["^rpms/acl/", "^test/rpms/acl\\.yml$"]
+        assert "^ci/" in apps["setup--rpms"]
+        assert "^mock/" in apps["setup--rpms"]
+
+
 class TestValidation:
     """Tests for configuration validation."""
 

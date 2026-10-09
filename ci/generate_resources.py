@@ -8,6 +8,8 @@ avoids spawning thousands of yq subprocesses.
 """
 
 import argparse
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -181,23 +183,16 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             if "lookaside_cache_url" in pkg_config:
                 rpm_data["lookaside_cache_url"] = pkg_config["lookaside_cache_url"]
 
-            # Extra path changes
-            extra_paths = []
-
-            # Add package-specific test file if it exists (pull-request only —
-            # on-push rebuilds must not be triggered by test-only changes, as
-            # the NEVR would be unchanged and Pulp would reject a re-publish
-            # with "same NEVR but different digest").
-            test_file = ROOT_DIR / "test" / "rpms" / f"{dname}.yml"
-            if test_file.exists() and resource_type == "pull-request":
-                extra_paths.append(f"test/rpms/{dname}.yml")
-
-            # Add ci/ and mock/ path changes for canary rpm
-            if dname == BUILD_TRIGGER_RPM_NAME and resource_type == "pull-request":
-                extra_paths.extend(["ci/***", "mock/***"])
-
-            if extra_paths:
-                rpm_data["extra_path_changes"] = extra_paths
+            # Trigger patterns (regex, used by both PAC CEL and trigger manifest).
+            # Stored as standard regexes (single backslash escapes); the CEL
+            # template doubles backslashes for CEL string literal syntax.
+            escaped_dname = re.escape(dname)
+            triggers = [f"^rpms/{escaped_dname}/"]
+            if resource_type == "pull-request":
+                triggers.append(rf"^test/rpms/{escaped_dname}\.yml$")
+                if dname == BUILD_TRIGGER_RPM_NAME:
+                    triggers.extend(["^ci/", "^mock/"])
+            rpm_data["manifest_triggers"] = triggers
 
         rpms.append(rpm_data)
 
@@ -403,6 +398,46 @@ def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     return render_template(template_path, macros_dir, variables)
 
 
+def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
+    """Build trigger manifest from already-computed PAC variables."""
+    default_application = pac_variables["application_name"]
+    applications: dict[str, dict[str, list[str]]] = {}
+
+    for rpm in pac_variables["rpms"]:
+        if not rpm["imported"]:
+            continue
+        component_name = f"{sanitize_component_name(rpm['dname'])}--rpms"
+        application = rpm.get("application_name", default_application)
+        applications.setdefault(application, {})[component_name] = rpm[
+            "manifest_triggers"
+        ]
+
+    return {
+        "type": event_type,
+        "excludes": [],
+        "applications": applications,
+    }
+
+
+def generate_gitattributes() -> str:
+    """Generate .gitattributes marking all generated files as gitlab-generated."""
+    releng_config = load_releng_config()
+    rpa_names = [rpa["name"] for rpa in releng_config["rpas"]]
+
+    lines = [
+        ".gitattributes gitlab-generated",
+        ".tekton/rpms-on-pull-request.yaml gitlab-generated",
+        ".tekton/rpms-on-push.yaml gitlab-generated",
+        ".tekton/trigger-manifest-pull-request.json gitlab-generated",
+        ".tekton/trigger-manifest-push.json gitlab-generated",
+        "konflux-templates/rendered.yml gitlab-generated",
+    ]
+    for name in sorted(rpa_names):
+        lines.append(f"releng/{name}.yaml gitlab-generated")
+
+    return "\n".join(lines) + "\n"
+
+
 def generate_konflux(branch: str, tenant: str, git_repo: str) -> str:
     """Generate Konflux resources."""
     print("Building template variables...", file=sys.stderr)
@@ -459,11 +494,20 @@ def main():
             print(content)
     elif args.command == "all":
         # Generate all resources (equivalent to generate.sh)
-        pac_push = generate_pac("push", args.branch, args.tenant)
-        (ROOT_DIR / ".tekton" / "rpms-on-push.yaml").write_text(pac_push)
+        # Generate PAC resources and trigger manifests together (shared variables)
+        for resource_type, event_type in (("push", "push"), ("pull-request", "pull_request")):
+            print(f"Building {resource_type} template variables...", file=sys.stderr)
+            variables = build_pac_variables(args.branch, args.tenant, resource_type)
 
-        pac_pr = generate_pac("pull-request", args.branch, args.tenant)
-        (ROOT_DIR / ".tekton" / "rpms-on-pull-request.yaml").write_text(pac_pr)
+            print(f"Rendering {resource_type} Pipeline as Code resources...", file=sys.stderr)
+            template_path = ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml.j2"
+            macros_dir = ROOT_DIR / ".tekton" / "macros"
+            pac_result = render_template(template_path, macros_dir, variables)
+            (ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml").write_text(pac_result)
+
+            manifest = build_trigger_manifest(variables, event_type)
+            manifest_json = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+            (ROOT_DIR / ".tekton" / f"trigger-manifest-{resource_type}.json").write_text(manifest_json)
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)
@@ -473,6 +517,9 @@ def main():
         releng_dir.mkdir(exist_ok=True)
         for name, content in releng_results.items():
             (releng_dir / f"{name}.yaml").write_text(content)
+
+        print("Generating .gitattributes...", file=sys.stderr)
+        (ROOT_DIR / ".gitattributes").write_text(generate_gitattributes())
 
         print("Generated all resources.", file=sys.stderr)
 
