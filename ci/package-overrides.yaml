@@ -511,6 +511,9 @@ protobuf-c:
 prrte:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+pygobject3:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 python-pip:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
