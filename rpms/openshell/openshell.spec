@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.2
+%global openshell_version 0.1.3
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -59,7 +59,6 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
-Patch1:  0001-russh-0.63.3-dependency-update.patch
 
 ExclusiveArch:  x86_64 aarch64
 
