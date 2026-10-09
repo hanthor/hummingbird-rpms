@@ -11,7 +11,7 @@ diff --git a/main.mk b/main.mk
 index 808f925..38749c8 100644
 --- a/main.mk
 +++ b/main.mk
-@@ -1058,7 +1058,7 @@ libsqlite3.SO = libsqlite3$(T.dll)
+@@ -1129,7 +1129,7 @@
  # Rules to build the LEMON compiler generator
  #
  lemon$(B.exe): $(MAKE_SANITY_CHECK) $(TOP)/tool/lemon.c $(TOP)/tool/lempar.c
