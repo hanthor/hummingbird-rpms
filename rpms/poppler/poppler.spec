@@ -11,7 +11,7 @@
 Summary: PDF rendering library
 Name:    poppler
 Version: 26.08.0
-Release:        1.2%{?dist}
+Release:        1.3%{?dist}
 License: (GPL-2.0-only OR GPL-3.0-only) AND GPL-2.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL:     https://poppler.freedesktop.org/
 Source0: https://poppler.freedesktop.org/poppler-%{version}.tar.xz
@@ -29,6 +29,7 @@ Patch2:  poppler-21.01.0-glib-introspection.patch
 Patch3:  poppler-26.08.0-CVE-2026-93313.patch
 Patch4: 00004-cve-2026-102621-denial-service-integer-overflow-splashclip.patch
 Patch5: 0005-CVE-2026-102620-FoFiTrueType-cvtSfnts.patch
+Patch6: 0006-cve-2026-107705-denial-service-stack-based-buffer-overflow.patch
 
 BuildRequires: make
 BuildRequires: cmake
