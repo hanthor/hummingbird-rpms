@@ -282,6 +282,13 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
     bad_commits = [line for line in bad_commits if not line.startswith('ee7e5850c2e61218d5eb08c1c325dd3b342b6e5b ')]
     bad_commits = [line for line in bad_commits if not line.startswith('ad6a072a59433f0b55c4a099529da9b3522b92df ')]
 
+    # fontconfig's bwrap test patch, changelog cleanup, CVE-2026-34085 update,
+    # and source archive repair were superseded by Fedora updates through 2.18.3-3.
+    bad_commits = [line for line in bad_commits if not line.startswith('27728894cec76de0f4b7a8a217979d31ed20bea1 ')]
+    bad_commits = [line for line in bad_commits if not line.startswith('11e261a8eda8fc909d1fda9fd6c6e7e25535f8e3 ')]
+    bad_commits = [line for line in bad_commits if not line.startswith('cbb5511f5620969cf2af78164dbcaee27358e6ff ')]
+    bad_commits = [line for line in bad_commits if not line.startswith('a29b253311107f33d497d9df9d30b4fd04a54016 ')]
+
     if bad_commits:
         # Filter out release-only commits (per project policy, Release-only changes
         # are not considered modifications)
