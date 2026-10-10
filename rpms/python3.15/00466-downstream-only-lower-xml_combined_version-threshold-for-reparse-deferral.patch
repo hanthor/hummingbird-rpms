@@ -101,7 +101,7 @@ index 620fb1c5aa..d0db89c383 100644
                  self.skipTest(f'XMLParser.(Get|Set)ReparseDeferralEnabled '
                                'methods not available in C')
 diff --git a/Modules/pyexpat.c b/Modules/pyexpat.c
-index 7094927ad2..5dce419a07 100644
+index cf34ccb972..949ad0c319 100644
 --- a/Modules/pyexpat.c
 +++ b/Modules/pyexpat.c
 @@ -844,7 +844,7 @@ pyexpat_xmlparser_SetReparseDeferralEnabled_impl(xmlparseobject *self,
@@ -122,7 +122,7 @@ index 7094927ad2..5dce419a07 100644
      self->reparse_deferral_enabled = true;
  #else
      self->reparse_deferral_enabled = false;
-@@ -2441,7 +2441,7 @@ pyexpat_exec(PyObject *mod)
+@@ -2444,7 +2444,7 @@ _Py_COMP_DIAG_POP
  #else
      capi->SetHashSalt16Bytes = NULL;
  #endif

@@ -47,10 +47,10 @@ URL: https://www.python.org/
 #  WARNING  When rebasing to a new Python version,
 #           remember to update the python3-docs package as well
 %global general_version %{pybasever}.0
-%global prerel rc2
+#global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -324,8 +324,7 @@ BuildRequires: libappstream-glib
 # the first compatible version of pip is 23.1.2.
 BuildRequires: %{python_wheel_pkg_prefix}-pip-wheel >= 23.1.2
 %if %{with tests}
-BuildRequires: %{python_wheel_pkg_prefix}-setuptools-wheel
-BuildRequires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+BuildRequires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 %endif
 %endif
 
@@ -724,12 +723,11 @@ Requires: %{pkgname} = %{version}-%{release}
 Requires: %{pkgname}-libs%{?_isa} = %{version}-%{release}
 
 %if %{with rpmwheels}
-Requires: %{python_wheel_pkg_prefix}-setuptools-wheel
-Requires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+Requires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 %else
 Provides: bundled(python3dist(setuptools)) = %{setuptools_version}
 %setuptools_bundled_provides
-# License manually combined from Python + setuptools + wheel
+# License manually combined from Python + setuptools
 License: Python-2.0.1 AND MIT AND Apache-2.0 AND (Apache-2.0 OR BSD-2-Clause)
 %endif
 
@@ -899,8 +897,7 @@ Requires: python%{pybasever}-freethreading = %{version}-%{release}
 Requires: python%{pybasever}-freethreading-libs%{?_isa} = %{version}-%{release}
 
 %if %{with rpmwheels}
-Requires: %{python_wheel_pkg_prefix}-setuptools-wheel
-Requires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+Requires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 %else
 Provides: bundled(python3dist(setuptools)) = %{setuptools_version}
 %setuptools_bundled_provides
