@@ -20,13 +20,13 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 # Default configuration
 DEFAULT_TIMEOUT_HOURS = 4
-DEFAULT_BUILD_ARCHITECTURES = ["aarch64", "x86_64"]
-DEFAULT_BUILD_PLATFORMS = ["linux/x86_64", "linux/arm64"]
+DEFAULT_BUILD_ARCHITECTURES = ["aarch64", "x86_64", "s390x"]
+DEFAULT_BUILD_PLATFORMS = ["linux/x86_64", "linux/arm64", "linux/s390x"]
 BUILD_TRIGGER_RPM_NAME = "setup"
 
 # Konflux rpmbuild-pipeline uses one pipeline task per arch (not a single "rpmbuild" task).
-# package-overrides may use pipelineTaskName: rpmbuild as shorthand for both.
-RPMBUILD_PIPELINE_TASK_NAMES = ("rpmbuild-x86-64", "rpmbuild-aarch64")
+# package-overrides may use pipelineTaskName: rpmbuild as shorthand for all default architectures.
+RPMBUILD_PIPELINE_TASK_NAMES = ("rpmbuild-x86-64", "rpmbuild-aarch64", "rpmbuild-s390x")
 
 
 def expand_task_run_specs(specs: list) -> list:

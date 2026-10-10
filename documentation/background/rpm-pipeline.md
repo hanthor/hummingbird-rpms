@@ -204,8 +204,8 @@ architecture:
 ### Build architectures
 
 Packages are built for the architectures specified in their PipelineRun
-definition. Most packages build for x86_64 and aarch64. Some packages also
-build for s390x and ppc64le.
+definition. Packages build for x86_64, aarch64, and s390x by default. Per-package
+overrides can select other architectures or build platforms.
 
 ### Build output
 
