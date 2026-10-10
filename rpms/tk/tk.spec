@@ -1,11 +1,11 @@
 %global major 9
 %global majorver %{major}.0
-%global vers %{majorver}.3
+%global vers %{majorver}.4
 
 Summary: The graphical toolkit for the Tcl scripting language
 Name: tk
 Version: %{vers}
-Release: 1.1%{?dist}
+Release: 1%{?dist}
 Epoch:   1
 License: TCL AND HPND-Pbmplus AND CC-BY-SA-3.0 AND MIT-open-group AND MIT
 URL: http://tcl.sourceforge.net
@@ -108,6 +108,10 @@ ln -s %{_bindir}/wish %{_bindir}/wish%{majorver} %{buildroot}%{_usr}/bin/
 %{_mandir}/man3/*
 
 %changelog
+* Thu Oct 08 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 1:9.0.4-1
+- New version
+  Related: rhbz#2543920
+
 * Wed May 13 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 1:9.0.3-1
 - New version
   Related: rhbz#2476982
