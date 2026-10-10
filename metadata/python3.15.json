@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Build JIT stencils from source with LLVM 21, matching python3.14",
+  "modification_reason": "Build JIT stencils from source with LLVM 21, matching python3.14; enforce OpenSSL FIPS policy for hashes and HMAC",
   "modification_status": "modified",
   "release": "1",
   "release_monitoring_project_id": 13254,
