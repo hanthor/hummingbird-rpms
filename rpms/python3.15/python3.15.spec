@@ -50,7 +50,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -418,6 +418,12 @@ Patch251: 00251-change-user-install-location.patch
 # The spec file BuildRequires expat-devel >= 2.5.0-2 to ensure the
 # backported function is available.
 Patch466: 00466-downstream-only-lower-xml_combined_version-threshold-for-reparse-deferral.patch
+
+# 00329 #
+# Match RHEL OpenSSL FIPS support for hashlib and HMAC.
+# Keep only the built-in BLAKE2 module; it rejects imports and calls in FIPS mode.
+# Rebased from python3.14 onto CPython 3.15.0.
+Patch329: 00329-fips.patch
 
 # 00486 # 1a2c71465a24c72fd06c7839e7cbd2d17ddf4ebc
 # gh-148646: Add --enable-prebuilt-jit-stencils configure flag
@@ -1106,6 +1112,7 @@ EOF
 %endif
 
 %configure \
+  --with-builtin-hashlib-hashes=blake2 \
   --with-platlibdir=%{_lib} \
   --with-missing-stdlib-config=missing-stdlib-config.json \
   --enable-ipv6 \
@@ -1697,7 +1704,6 @@ CheckPython freethreading
 %{1}/_elementtree.%{2}.so\
 %{1}/_hashlib.%{2}.so\
 %{1}/_heapq.%{2}.so\
-%{1}/_hmac.%{2}.so\
 %{1}/_interpchannels.%{2}.so\
 %{1}/_interpqueues.%{2}.so\
 %{1}/_interpreters.%{2}.so\
@@ -1705,7 +1711,6 @@ CheckPython freethreading
 %{1}/_lsprof.%{2}.so\
 %{1}/_lzma.%{2}.so\
 %{1}/_math_integer.%{2}.so\
-%{1}/_md5.%{2}.so\
 %{1}/_multibytecodec.%{2}.so\
 %{1}/_multiprocessing.%{2}.so\
 %{1}/_pickle.%{2}.so\
@@ -1714,9 +1719,6 @@ CheckPython freethreading
 %{1}/_queue.%{2}.so\
 %{1}/_random.%{2}.so\
 %{1}/_remote_debugging.%{2}.so\
-%{1}/_sha1.%{2}.so\
-%{1}/_sha2.%{2}.so\
-%{1}/_sha3.%{2}.so\
 %{1}/_socket.%{2}.so\
 %{1}/_sqlite3.%{2}.so\
 %{1}/_ssl.%{2}.so\
