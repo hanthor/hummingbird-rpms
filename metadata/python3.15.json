@@ -4,10 +4,10 @@
   "modification_status": "modified",
   "release": "1",
   "release_monitoring_project_id": 13254,
-  "sha": "0ef36f99812e73e57804b4cb40e2b0dfe76a40a9",
+  "sha": "729e1e7bdd0a6eff07c0b09c8b56eb73e37cd8fd",
   "source": "https://src.fedoraproject.org/rpms/python3.15.git",
   "track_upstream": "3.15",
   "upstream_branch": "3.15",
   "upstream_repo": "https://github.com/python/cpython",
-  "version": "3.15.0~rc2"
+  "version": "3.15.0"
 }
