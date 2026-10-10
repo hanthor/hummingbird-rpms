@@ -822,7 +822,7 @@ index 5b997d6..406ccbd 100644
 2.55.0
 
 
-From 4c8a5c30d9c25a3aa6d42447c575dc0372599d62 Mon Sep 17 00:00:00 2001
+From 0e32dccd9977a83450878d516dd2137bcfe628eb Mon Sep 17 00:00:00 2001
 From: Robert Sturla <robertsturla@outlook.com>
 Date: Sat, 10 Oct 2026 18:24:52 +0000
 Subject: [PATCH 7/7] Test RHEL FIPS policy boundaries and preserve Python 3.15
@@ -842,8 +842,8 @@ Rebased-for: CPython v3.15.0 (7212e49729737c864e3f17b69ed83c8443c75acf)
 ---
  Lib/hashlib.py        |   2 +-
  Lib/hmac.py           |   6 ++
- Lib/test/test_fips.py | 128 +++++++++++++++++++++++++++++++++++++-----
- 3 files changed, 120 insertions(+), 16 deletions(-)
+ Lib/test/test_fips.py | 170 ++++++++++++++++++++++++++++++++++++++----
+ 3 files changed, 162 insertions(+), 16 deletions(-)
 
 diff --git a/Lib/hashlib.py b/Lib/hashlib.py
 index ac6ce8b..618da74 100644
@@ -883,10 +883,10 @@ index be2e485..3d15f7b 100644
      if _is_shake_constructor(digest_cons):
          raise ValueError(f"unsupported hash algorithm {digest}")
 diff --git a/Lib/test/test_fips.py b/Lib/test/test_fips.py
-index 1f99dd7..2436e20 100644
+index 1f99dd7..a195996 100644
 --- a/Lib/test/test_fips.py
 +++ b/Lib/test/test_fips.py
-@@ -1,24 +1,122 @@
+@@ -1,24 +1,164 @@
 +"""Hummingbird FIPS policy regression tests.
 +
 +Run with an OpenSSL configuration that loads both the FIPS and default
@@ -959,6 +959,48 @@ index 1f99dd7..2436e20 100644
 +                expected = _hashlib.hmac_digest(b'key', b'abc', digest)
 +                self.assertEqual(hmac.new(b'key', b'abc', digest).digest(), expected)
 +                self.assertEqual(hmac.digest(b'key', b'abc', digest), expected)
++
++    def test_kdf_policy_after_nonsecurity_hash(self):
++        password = salt = b'0123456789abcdef'
++        expected = bytes.fromhex(
++            '0c80d0e933ee7e7e68e4c0265d65f6b6e0f9f19e1bb9c1b06f247f7de8951043')
++        for _ in range(3):
++            hashlib.md5(b'abc', usedforsecurity=False)
++            self.assertEqual(hashlib.pbkdf2_hmac('sha256', password, salt, 2048),
++                             expected)
++            with self.assertRaises(ValueError):
++                hashlib.pbkdf2_hmac('md5', password, salt, 2048)
++            with self.assertRaises(ValueError):
++                hashlib.scrypt(password, salt=salt, n=16, r=8, p=1)
++
++    def test_policy_in_subinterpreters(self):
++        from test.support.import_helper import import_module
++        interpreters = import_module('_interpreters')
++        script = """
++import hashlib, hmac, _hashlib
++assert _hashlib.get_fips_mode() == 1
++for name in ('md5', 'blake2b', 'blake2s'):
++    hashlib.new(name, b'abc', usedforsecurity=False)
++    try:
++        hashlib.new(name, b'abc')
++    except ValueError:
++        pass
++    else:
++        raise AssertionError(name + ' bypassed FIPS policy')
++assert hmac.digest(b'key', b'abc', 'sha256') == _hashlib.hmac_digest(b'key', b'abc', 'sha256')
++try:
++    hmac.digest(b'key', b'abc', lambda data=b'': hashlib.sha256(data))
++except ValueError:
++    pass
++else:
++    raise AssertionError('custom HMAC bypassed FIPS policy')
++"""
++        for _ in range(3):
++            interp = interpreters.create()
++            try:
++                self.assertIsNone(interpreters.run_string(interp, script))
++            finally:
++                interpreters.destroy(interp)
 +
 +    def test_custom_hmac_constructor_is_rejected(self):
 +        # Even an OpenSSL hash wrapped in a Python callable must not cause
