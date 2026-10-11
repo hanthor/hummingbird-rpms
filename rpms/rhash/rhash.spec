@@ -1,11 +1,12 @@
 Name:           rhash
-Version:        1.4.5
-Release:        5.1%{?dist}
+Version:        1.4.6
+Release:        0.1%{?dist}
 Summary:        Great utility for computing hash sums
 
 License:        MIT
 URL:            https://github.com/rhash/RHash
 Source0:        https://github.com/rhash/RHash/archive/v%{version}/%{name}-%{version}.tar.gz
+Patch1:         0001-fix-distro-specific-optflags.patch
 
 BuildRequires: make
 BuildRequires:  gcc
@@ -51,7 +52,7 @@ developing applications that use lib%{name}.
 
 
 %prep
-%setup -q -n RHash-%{version}
+%autosetup -p1 -n RHash-%{version}
 sed -i -e '/^INSTALL_SHARED/s/644/755/' librhash/Makefile
 
 
@@ -66,7 +67,7 @@ make DESTDIR=%{buildroot} -C librhash install-so-link install-lib-headers
 
 
 %check
-make test-shared
+make test-lib-shared
 
 
 %files
