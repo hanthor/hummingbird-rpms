@@ -4,7 +4,7 @@
 
 Name:           composefs
 Version:        1.0.8
-Release:        7%{?dist}
+Release:        7.1%{?dist}
 Summary:        Tools to handle creating and mounting composefs images
 
 License:        LGPL-2.0-or-later AND Apache-2.0
