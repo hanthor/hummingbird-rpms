@@ -77,9 +77,9 @@ def mock_repo(tmp_path):
 
 
 class TestExpandTaskRunSpecs:
-    """Tests for expand_task_run_specs (rpmbuild shorthand for both arches)."""
+    """Tests for expand_task_run_specs (rpmbuild shorthand for all default architectures)."""
 
-    def test_rpmbuild_expands_to_both_arches(self, gen_module):
+    def test_rpmbuild_expands_to_all_default_architectures(self, gen_module):
         specs = [
             {
                 "pipelineTaskName": "rpmbuild",
@@ -95,10 +95,11 @@ class TestExpandTaskRunSpecs:
             }
         ]
         out = gen_module.expand_task_run_specs(specs)
-        assert len(out) == 2
+        assert len(out) == 3
         assert out[0]["pipelineTaskName"] == "rpmbuild-x86-64"
         assert out[1]["pipelineTaskName"] == "rpmbuild-aarch64"
-        assert out[0]["stepSpecs"] == out[1]["stepSpecs"] == specs[0]["stepSpecs"]
+        assert out[2]["pipelineTaskName"] == "rpmbuild-s390x"
+        assert all(item["stepSpecs"] == specs[0]["stepSpecs"] for item in out)
 
     def test_other_task_names_unchanged(self, gen_module):
         specs = [{"pipelineTaskName": "upload-to-quay", "stepSpecs": [{"name": "foo"}]}]
@@ -110,15 +111,27 @@ class TestExpandTaskRunSpecs:
             {"pipelineTaskName": "custom-task", "computeResources": {"limits": {"memory": "2Gi"}}},
         ]
         out = gen_module.expand_task_run_specs(specs)
-        assert len(out) == 3
+        assert len(out) == 4
         assert [s["pipelineTaskName"] for s in out] == [
             "rpmbuild-x86-64",
             "rpmbuild-aarch64",
+            "rpmbuild-s390x",
             "custom-task",
         ]
 
 
 class TestBuildPacVariables:
+    @pytest.mark.parametrize("event_type", ["pull-request", "push"])
+    def test_default_build_targets(self, gen_module, mock_repo, event_type):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo):
+            variables = gen_module.build_pac_variables(
+                "main", "hummingbird-tenant", event_type
+            )
+
+        for rpm in variables["rpms"]:
+            assert rpm["build_architectures"] == ["aarch64", "x86_64", "s390x"]
+            assert rpm["build_platforms"] == ["linux/x86_64", "linux/arm64", "linux/s390x"]
+
     def test_build_architecture_override(self, gen_module, tmp_path):
         package_dir = tmp_path / "rpms" / "glibc"
         package_dir.mkdir(parents=True)
