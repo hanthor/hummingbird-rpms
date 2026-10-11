@@ -8,7 +8,7 @@ fetch:
 
   # Update this ref with %global wasi_libc_ref in rpms/rust/rust.spec.
   - type: url
-    url: "https://github.com/WebAssembly/wasi-libc/archive/wasi-sdk-33/wasi-libc-wasi-sdk-33.tar.gz"
+    url: "https://github.com/WebAssembly/wasi-libc/archive/wasi-sdk-34/wasi-libc-wasi-sdk-34.tar.gz"
 
 verify:
   - type: gpg-signature
