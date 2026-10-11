@@ -1,7 +1,7 @@
 Name:           emacs-filesystem
 Epoch:          1
 Version:        31.1
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Emacs filesystem layout
 URL:            https://www.gnu.org/software/emacs/
 License:        CC0-1.0
