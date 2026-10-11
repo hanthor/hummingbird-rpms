@@ -1,6 +1,6 @@
 Name:          libmnl
 Version:       1.0.5
-Release:       10%{?dist}
+Release:       10.1%{?dist}
 Summary:       Minimalistic Netlink user-space library
 
 License:       LGPL-2.1-or-later

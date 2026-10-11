@@ -1,6 +1,6 @@
 Name:    libdex
 Version: 1.2.0
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 Summary: a library supporting "Deferred Execution" for GNOME and GTK
 
 License: LGPL-2.1-or-later

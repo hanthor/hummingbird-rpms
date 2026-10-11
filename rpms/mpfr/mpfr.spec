@@ -1,7 +1,7 @@
 Summary: C library for multiple-precision floating-point computations
 Name: mpfr
 Version: 4.2.2
-Release: 4%{?dist}
+Release: 4.1%{?dist}
 URL: https://www.mpfr.org/
 VCS: git:https://gitlab.inria.fr/mpfr/mpfr.git
 
