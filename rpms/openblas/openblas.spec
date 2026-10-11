@@ -15,7 +15,7 @@
 
 Name:           openblas
 Version:        0.3.34
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        An optimized BLAS library based on GotoBLAS2
 
 License:        BSD-3-Clause
