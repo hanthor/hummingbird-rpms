@@ -1,6 +1,6 @@
 Name:           libnetfilter_conntrack
 Version:        1.1.1
-Release:        2%{?dist}
+Release:        2.1%{?dist}
 Summary:        Netfilter conntrack userspace library
 License:        GPL-2.0-or-later
 URL:            http://netfilter.org
