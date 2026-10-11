@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4%{?with_debug:.debug}%{?dist}
+Release:          4.1%{?with_debug:.debug}%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -261,6 +261,22 @@ Patch14:          %{majorname}-mtr.patch
 Patch15:          mark-RISC-V64-as-64-bit-architecture.patch
 #   Patch16: fix default Galera configuation file
 Patch16:          upstream_0a66c466f1772945d46b12bd340e1bd9adff4e9b.patch
+#   Patch17: CVE-2026-107814 - arbitrary code execution via insecure service account home directory
+Patch17:          CVE-2026-107814.patch
+#   Patch18: CVE-2026-107815 - arbitrary code execution via CONNECT engine out-of-bounds write
+Patch18:          CVE-2026-107815.patch
+#   Patch19: CVE-2026-107816 - information disclosure via embedded null bytes in query cache plugin
+Patch19:          CVE-2026-107816.patch
+#   Patch20: CVE-2026-107817 - denial of service via invalid binary JSON in mysql_json plugin
+Patch20:          CVE-2026-107817.patch
+#   Patch21: CVE-2026-107818 - privilege escalation via environment variable injection during service restart
+Patch21:          CVE-2026-107818.patch
+#   Patch22: CVE-2026-107821 - arbitrary code execution via crafted FRM metadata
+Patch22:          CVE-2026-107821.patch
+#   Patch23: CVE-2026-107822 - privilege escalation via ACL cache key collision
+Patch23:          CVE-2026-107822.patch
+#   Patch24: CVE-2026-107823 - privilege escalation via unescaped newlines in view parser
+Patch24:          CVE-2026-107823.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -878,6 +894,15 @@ rm -r storage/rocksdb/
 %patch -P15 -p1
 
 %patch -P16 -p1
+
+%patch -P17 -p1
+%patch -P18 -p1
+%patch -P19 -p1
+%patch -P20 -p1
+%patch -P21 -p1
+%patch -P22 -p1
+%patch -P23 -p1
+%patch -P24 -p1
 
 # generate a list of tests that fail, but are not disabled by upstream
 cat %{SOURCE50} | tee -a mysql-test/unstable-tests
