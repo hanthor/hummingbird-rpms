@@ -61,7 +61,7 @@
 Name:              nginx
 Epoch:             2
 Version:           1.30.5
-Release:           4%{?dist}
+Release:           4.1%{?dist}
 
 Summary:           A high performance web server and reverse proxy server
 License:           BSD-2-Clause
