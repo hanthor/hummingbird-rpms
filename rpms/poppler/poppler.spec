@@ -11,7 +11,7 @@
 Summary: PDF rendering library
 Name:    poppler
 Version: 26.08.0
-Release:        1.3%{?dist}
+Release:        1.4%{?dist}
 License: (GPL-2.0-only OR GPL-3.0-only) AND GPL-2.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL:     https://poppler.freedesktop.org/
 Source0: https://poppler.freedesktop.org/poppler-%{version}.tar.xz
