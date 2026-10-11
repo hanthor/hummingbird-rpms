@@ -18,7 +18,7 @@ Name:           protobuf
 # “patch” updates of protobuf.
 Version:        36.0
 %global so_version 36
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 
 # See version.json:
 %global version_protoc %{version}
