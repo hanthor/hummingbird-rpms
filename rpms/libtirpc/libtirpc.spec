@@ -2,7 +2,7 @@
 
 Name:			libtirpc
 Version:		1.3.8
-Release:		0%{?dist}
+Release:		0.1%{?dist}
 Summary:		Transport Independent RPC Library
 License:		SISSL AND BSD-3-Clause
 URL:  			http://git.linux-nfs.org/?p=steved/libtirpc.git;a=summary
