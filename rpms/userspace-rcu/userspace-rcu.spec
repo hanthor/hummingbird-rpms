@@ -1,6 +1,6 @@
 Name:           userspace-rcu
 Version:        0.15.7
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        RCU (read-copy-update) implementation in user-space
 License:        LGPL-2.1-or-later
 URL:            https://liburcu.org
