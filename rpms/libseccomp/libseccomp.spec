@@ -18,7 +18,7 @@
 
 Name:           libseccomp
 Version:        2.6.1
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        Enhanced seccomp library
 
 %global soname_version %%(echo %%{version}} | cut -d. -f1)
