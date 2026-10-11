@@ -1,7 +1,5 @@
-diff --git a/src/etc/rust-gdb b/src/etc/rust-gdb
-index 9abed30ea6f7..e4bf55df3688 100755
---- a/src/etc/rust-gdb
-+++ b/src/etc/rust-gdb
+--- rustc-beta-src/src/etc/rust-gdb.orig	2026-08-31 15:14:48.053176599 -0500
++++ rustc-beta-src/src/etc/rust-gdb	2026-08-31 15:16:20.210905378 -0500
 @@ -13,8 +13,6 @@ fi
  # Find out where the pretty printer Python module is
  RUSTC_SYSROOT="$("$RUSTC" --print=sysroot)"
@@ -11,8 +9,12 @@ index 9abed30ea6f7..e4bf55df3688 100755
  
  # Set the environment variable `RUST_GDB` to overwrite the call to a
  # different/specific command (defaults to `gdb`).
-@@ -27,3 +25,3 @@
+@@ -25,7 +23,7 @@ RUST_GDB="${RUST_GDB:-gdb}"
+ set -- \
+   --directory="$GDB_PYTHON_MODULE_DIRECTORY" \
    -iex "add-auto-load-safe-path $GDB_PYTHON_MODULE_DIRECTORY" \
 -  -iex "set substitute-path /rustc/$RUSTC_COMMIT_HASH $RUSTC_SYSROOT/lib/rustlib/src/rust" \
 +  -iex "set substitute-path @BUILDDIR@ $RUSTC_SYSROOT/lib/rustlib/src/rust" \
    "$@"
+ 
+ # Unstable (nightly-only) trim-paths feature, activated only if
