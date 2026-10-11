@@ -1,6 +1,6 @@
 Name: libndp
 Version: 1.9
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 Summary: Library for Neighbor Discovery Protocol
 License: LGPL-2.1-or-later
 URL: http://www.libndp.org/
