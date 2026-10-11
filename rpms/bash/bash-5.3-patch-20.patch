@@ -1,0 +1,26 @@
+diff --git a/lib/readline/display.c b/lib/readline/display.c
+--- a/lib/readline/display.c
++++ b/lib/readline/display.c
+@@ -3522,8 +3522,9 @@ _rl_redisplay_after_sigwinch (void)
+   else
+     rl_crlf ();
+ 
+-  if (_rl_screenwidth < prompt_visible_length)
+-    _rl_reset_prompt ();		/* update local_prompt_newlines array */
++  /* Let expand_prompt() update local_prompt_newlines and local_prompt_invis_chars
++    arrays */
++  _rl_reset_prompt ();
+ 
+   /* Redraw only the last line of a multi-line prompt. */
+   t = strrchr (rl_display_prompt, '\n');
+diff --git a/patchlevel.h b/patchlevel.h
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 19
++#define PATCHLEVEL 20
+ 
+ #endif /* _PATCHLEVEL_H_ */
