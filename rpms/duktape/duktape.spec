@@ -1,6 +1,6 @@
 Name:           duktape
 Version:        2.7.0
-Release:        12%{?dist}
+Release:        12.1%{?dist}
 Summary:        Embeddable Javascript engine
 
 License:        MIT

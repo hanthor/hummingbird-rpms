@@ -1,6 +1,6 @@
 Name:           jbigkit
 Version:        2.1
-Release:        34%{?dist}
+Release:        34.1%{?dist}
 Summary:        JBIG1 lossless image compression tools
 
 License:        GPL-2.0-or-later

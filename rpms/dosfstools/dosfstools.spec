@@ -1,6 +1,6 @@
 Name: dosfstools
 Version: 4.2
-Release: 28%{?dist}
+Release: 28.1%{?dist}
 Summary: Utilities for making and checking MS-DOS FAT filesystems on Linux
 License: GPL-3.0-or-later
 Source0: https://github.com/%{name}/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz

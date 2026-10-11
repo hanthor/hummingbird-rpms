@@ -1,6 +1,6 @@
 Name:           pmix
 Version:        6.1.0
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Process Management Interface Exascale (PMIx)
 License:        BSD-3-Clause
 URL:            https://pmix.org/
