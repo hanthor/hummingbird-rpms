@@ -1,6 +1,6 @@
 Name:           dav1d
 Version:        1.5.4
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        AV1 cross-platform Decoder
 
 # src/ext/x86/x86inc.asm is ISC
