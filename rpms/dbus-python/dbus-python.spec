@@ -1,6 +1,6 @@
 Name:    dbus-python
 Version: 1.4.0
-Release: 14%{?dist}
+Release: 14.1%{?dist}
 Summary: D-Bus Python Bindings
 
 License: MIT
