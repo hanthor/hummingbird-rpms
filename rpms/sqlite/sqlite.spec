@@ -5,15 +5,15 @@
 %bcond_without check
 
 %define majorver 3
-%define realver 3530400
-%define docver 3530400
-%define rpmver 3.53.4
+%define realver 3540000
+%define docver 3540000
+%define rpmver 3.54.0
 %define year 2026
 
 Summary: Library that implements an embeddable SQL database engine
 Name: sqlite
 Version: %{rpmver}
-Release: 1.1%{?dist}
+Release: 0.1%{?dist}
 License: blessing
 URL: http://www.sqlite.org/
 
@@ -22,7 +22,6 @@ Source1: http://www.sqlite.org/%{year}/sqlite-doc-%{docver}.zip
 # Support a system-wide lemon template
 Patch1: sqlite-3.6.23-lemon-system-template.patch
 Patch2: sqlite-3.49.0-fix-lemon-missing-cflags.patch
-Patch3: sqlite-3.53.0-fix-testrunner-exiting-0.patch
 Patch4: sqlite-3.53.3-fix-fts3corrupt4-test.patch
 
 BuildRequires: make
@@ -174,7 +173,6 @@ This package contains the analysis program for %{name}.
 %setup -q -a1 -n %{name}-src-%{realver}
 %patch -P 1 -p1
 %patch -P 2 -p1
-%patch -P 3 -p1
 %patch -P 4 -p1
 
 # The atof test is failing on the i686 architecture, when binary configured with
