@@ -10,7 +10,7 @@
 
 Name: hdf5
 Version: 2.2.0
-Release: 0.1.3%{?dist}
+Release: 0.1.4%{?dist}
 Summary: A general purpose library and file format for storing scientific data
 License: BSD-3-Clause
 URL: https://www.hdfgroup.org/solutions/hdf5/
