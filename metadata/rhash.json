@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 1.4.6",
+  "modification_reason": "Update to upstream version 1.4.6; backport upstream fix for distro-specific OPTFLAGS and correct shared library test target",
   "modification_status": "modified",
   "release_monitoring_project_id": 13843,
   "sha": "b675d3a7f797afd0437100fb444794ecf2df2975",
