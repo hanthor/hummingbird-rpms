@@ -3,7 +3,7 @@
 
 Name:           btrfs-progs
 Version:        7.1
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        Userspace programs for btrfs
 
 License:        GPL-2.0-only
