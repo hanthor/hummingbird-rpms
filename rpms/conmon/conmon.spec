@@ -21,7 +21,7 @@ Epoch: 2
 %endif
 Version: 2.2.1
 License: Apache-2.0
-Release: 2%{?dist}
+Release: 2.1%{?dist}
 Summary: OCI container runtime monitor
 URL: https://github.com/containers/%{name}
 # Tarball fetched from upstream
