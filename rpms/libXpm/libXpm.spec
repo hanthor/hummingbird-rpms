@@ -1,7 +1,7 @@
 Summary: X.Org X11 libXpm runtime library
 Name: libXpm
 Version: 3.5.19
-Release: 4%{?dist}
+Release: 4.1%{?dist}
 License: MIT AND X11-distribute-modifications-variant
 URL: https://www.x.org
 

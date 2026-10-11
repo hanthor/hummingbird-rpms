@@ -2,7 +2,7 @@
 
 Name:           libxkbcommon
 Version:        1.13.1
-Release:        4%{?gitdate:.%{gitdate}}%{?dist}
+Release:        4%{?gitdate:.%{gitdate}}.1%{?dist}
 Summary:        X.Org X11 XKB parsing library
 License:        MIT AND X11 AND MIT-CMU
 URL:            http://www.x.org
