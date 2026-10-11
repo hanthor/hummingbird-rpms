@@ -3,7 +3,7 @@
 Summary: Displays where a particular program in your path is located
 Name: which
 Version: 2.25
-Release: 2%{?dist}
+Release: 2.1%{?dist}
 License: GPL-3.0-only
 Url: https://savannah.gnu.org/projects/which/
 Source0: http://ftp.gnu.org/gnu/which/%{name}-%{version}.tar.gz
