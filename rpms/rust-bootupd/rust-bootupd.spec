@@ -4,7 +4,7 @@
 
 Name:           rust-%{crate}
 Version:        0.3.2
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Bootloader updater
 
 License:        Apache-2.0
