@@ -2,7 +2,7 @@
 
 Name:           munge
 Version:        0.5.18
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        Enables uid & gid authentication across a host cluster
 
 # The libs and devel package is GPLv3+ and LGPLv3+ where as the main package is GPLv3 only.
