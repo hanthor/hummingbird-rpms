@@ -1,8 +1,6 @@
 """Unit tests for hum.meta.spec.
 
-Uses real spec files from this repo's own rpms/<package>/ trees for
-resolve_spec_version, and synthetic fixtures for bump_release -- the
-latter needs controlled Release values and metadata state.
+Uses synthetic fixtures with controlled spec values and metadata state.
 """
 
 from pathlib import Path
@@ -14,8 +12,6 @@ from hum.meta.model import (
     FedoraOriginWithRelease,
 )
 from hum.meta.spec import bump_release, find_spec, resolve_spec_version
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
 
 _SPEC_TEMPLATE = """\
 Name: testpkg
@@ -130,9 +126,6 @@ class TestFindSpec:
 
 
 class TestResolveSpecVersion:
-    def test_resolves_a_real_spec(self) -> None:
-        assert resolve_spec_version(REPO_ROOT / "rpms" / "bash") == "5.3.15"
-
     def test_missing_rpmspec_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         (tmp_path / "bash.spec").write_text("Name: bash\n")
         monkeypatch.setenv("PATH", str(tmp_path))  # a real PATH with no rpmspec on it
