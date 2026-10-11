@@ -52,8 +52,7 @@ developing applications that use lib%{name}.
 
 
 %prep
-%setup -q -n RHash-%{version}
-%patch -P 1 -p1
+%autosetup -p1 -n RHash-%{version}
 sed -i -e '/^INSTALL_SHARED/s/644/755/' librhash/Makefile
 
 
