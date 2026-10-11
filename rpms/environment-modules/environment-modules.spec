@@ -2,7 +2,7 @@
 
 Name:           environment-modules
 Version:        5.7.0
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Provides dynamic modification of a user's environment
 
 License:        GPL-2.0-or-later
