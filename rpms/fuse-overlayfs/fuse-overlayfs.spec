@@ -4,7 +4,7 @@
 
 Name: fuse-overlayfs
 Version: 1.17
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 ExclusiveArch: %{arm64} ppc64le s390x x86_64 riscv64 loongarch64
 License: GPL-3.0-or-later
 Summary: FUSE overlay+shiftfs implementation for rootless containers
