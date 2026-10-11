@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 36.1",
+  "modification_reason": "Update to upstream version 36.1; disable Java JARs",
   "modification_status": "modified",
   "release_monitoring_project_id": 3715,
   "sha": "823108311dd525219823c0eaaaa1b7c535215d0f",

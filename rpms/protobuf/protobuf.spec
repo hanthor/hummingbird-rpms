@@ -1,4 +1,4 @@
-%bcond java %{undefined rhel}
+%bcond java 0
 
 # tests won't work with low default RLIMIT_NOFILE=10240 on mock builder
 %bcond_with check
