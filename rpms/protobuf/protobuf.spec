@@ -18,7 +18,7 @@ Name:           protobuf
 # “patch” updates of protobuf.
 Version:        36.0
 %global so_version 36
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 
 # See version.json:
 %global version_protoc %{version}
@@ -204,6 +204,9 @@ License:        BSD-3-Clause
 
 BuildArch:      noarch
 
+# Fedora XMvn requires Fedora Maven libraries. The standalone maven3.9
+# distribution provides epoch-0 maven and installs conflicting JAR paths.
+BuildRequires:  maven >= 1:3.9
 BuildRequires:  maven-local-openjdk25
 BuildRequires:  mvn(com.google.code.findbugs:jsr305)
 BuildRequires:  mvn(com.google.code.gson:gson)
