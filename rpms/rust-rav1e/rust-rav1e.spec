@@ -24,7 +24,7 @@
 
 Name:           rust-rav1e
 Version:        0.8.1
-Release:        5%{?dist}
+Release:        5.1%{?dist}
 Summary:        Fastest and safest AV1 encoder
 
 # rav1e is published under the terms of the BSD-2-Clause license,
