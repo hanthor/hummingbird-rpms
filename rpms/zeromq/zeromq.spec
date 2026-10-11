@@ -3,7 +3,7 @@
 
 Name:           zeromq
 Version:        4.3.5
-Release:        23.1%{?dist}
+Release:        23.2%{?dist}
 Summary:        Software library for fast, message-based applications
 
 License:        MPL-2.0 AND BSD-3-Clause AND MIT
@@ -89,7 +89,7 @@ rm %{buildroot}%{_libdir}/libzmq.la
 
 %check
 %ifarch s390x
-make check V=1 XFAIL_TESTS=tests/test_radio_dish || ( cat test-suite.log && exit 1 )
+make check V=1 || ( cat test-suite.log && exit 1 )
 %endif
 
 
