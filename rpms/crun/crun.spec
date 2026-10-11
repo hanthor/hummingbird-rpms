@@ -34,7 +34,7 @@ Epoch: 102
 # copr and koji builds.
 # If you're reading this on dist-git, the version is automatically filled in by Packit.
 Version: 1.30.1
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 URL: https://github.com/containers/%{name}
 Source0: %{url}/releases/download/%{version}/%{name}-%{version}.tar.zst
 %if !%{defined copr_build}
