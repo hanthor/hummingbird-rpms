@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/opendbx.git",
+    "release": "44",
+    "sha": "e73d7257b196e7c782ca3939639c65269c5dc890"
+  },
   "modification_status": "clean",
-  "release": "44",
-  "sha": "e73d7257b196e7c782ca3939639c65269c5dc890",
-  "source": "https://src.fedoraproject.org/rpms/opendbx.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/opendbx",
   "version": "1.4.6"
 }

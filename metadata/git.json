@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/git.git",
+    "release": "1",
+    "sha": "4fe49145479f0f74c07b17e87e7c3fb12952ab80"
+  },
   "modification_reason": "disable asciidoctor (rubygem-asciidoctor broken in buildroot)",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "4fe49145479f0f74c07b17e87e7c3fb12952ab80",
-  "source": "https://src.fedoraproject.org/rpms/git.git",
   "upstream_repo": "https://github.com/git/git",
   "version": "2.56.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gnat-srpm-macros.git",
+    "release": "3",
+    "sha": "19c5465f0629f5016fafdd2d7242fce795438c02"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "19c5465f0629f5016fafdd2d7242fce795438c02",
-  "source": "https://src.fedoraproject.org/rpms/gnat-srpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/gnat-srpm-macros",
   "version": "7"
 }

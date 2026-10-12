@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libssh.git",
+    "release": "1",
+    "sha": "f014985f38b81bbf15c36df2478f5e7b2eadbfdc"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "f014985f38b81bbf15c36df2478f5e7b2eadbfdc",
-  "source": "https://src.fedoraproject.org/rpms/libssh.git",
   "upstream_repo": "https://git.libssh.org/projects/libssh.git",
   "version": "0.12.2"
 }

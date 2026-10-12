@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libxcrypt.git",
+    "release": "4",
+    "sha": "7313a047b4b8d7956913c3236c6273aea5d16a55"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "7313a047b4b8d7956913c3236c6273aea5d16a55",
-  "source": "https://src.fedoraproject.org/rpms/libxcrypt.git",
   "upstream_repo": "https://github.com/besser82/libxcrypt",
   "version": "4.5.2"
 }

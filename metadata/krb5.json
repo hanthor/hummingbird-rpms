@@ -1,11 +1,13 @@
 {
-  "branch": "rawhide",
   "cve_product": "MIT / Kerberos 5",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/krb5.git",
+    "release": "10",
+    "sha": "e2fb2112fee3ef99bc6d49d4319fbe5a0bfe21b4"
+  },
   "modification_reason": "Backport CVE-2026-107778 CVE-2026-107708",
   "modification_status": "modified",
-  "release": "10",
-  "sha": "e2fb2112fee3ef99bc6d49d4319fbe5a0bfe21b4",
-  "source": "https://src.fedoraproject.org/rpms/krb5.git",
   "upstream_repo": "https://github.com/krb5/krb5",
   "version": "1.22.2"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/dav1d.git",
+    "release": "1",
+    "sha": "dd03ba5543ca4e8a21253d2492aa6ff1821500af"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "dd03ba5543ca4e8a21253d2492aa6ff1821500af",
-  "source": "https://src.fedoraproject.org/rpms/dav1d.git",
   "upstream_repo": "https://code.videolan.org/videolan/dav1d",
   "version": "1.5.4"
 }

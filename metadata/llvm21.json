@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/llvm21.git",
+    "release": "10",
+    "sha": "7758bcdfb259f3f25b25a270ef51201a2590aeb3"
+  },
   "modification_status": "clean",
-  "release": "10",
-  "sha": "7758bcdfb259f3f25b25a270ef51201a2590aeb3",
-  "source": "https://src.fedoraproject.org/rpms/llvm21.git",
   "upstream_branch": "release/21.x",
   "upstream_repo": "https://github.com/llvm/llvm-project",
   "version": "21.1.8"

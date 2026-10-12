@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Digest-MD5.git",
+    "release": "527",
+    "sha": "c0e53d07aa76182baf8472f0a72b78208ab8aa6e"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "c0e53d07aa76182baf8472f0a72b78208ab8aa6e",
-  "source": "https://src.fedoraproject.org/rpms/perl-Digest-MD5.git",
   "upstream_repo": "https://github.com/Dual-Life/digest-md5",
   "version": "2.59"
 }

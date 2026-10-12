@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/nghttp3.git",
+    "release": "1",
+    "sha": "a398da7ba9746b8dbeec758ed3383959b970f4cb"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "a398da7ba9746b8dbeec758ed3383959b970f4cb",
-  "source": "https://src.fedoraproject.org/rpms/nghttp3.git",
   "upstream_repo": "https://github.com/ngtcp2/nghttp3",
   "version": "1.18.0"
 }

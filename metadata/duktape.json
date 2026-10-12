@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/duktape.git",
+    "release": "12",
+    "sha": "0c8261e218db2c5402da2099301b919f164cd7c3"
+  },
   "modification_status": "clean",
-  "release": "12",
   "release_monitoring_project_id": 21345,
-  "sha": "0c8261e218db2c5402da2099301b919f164cd7c3",
-  "source": "https://src.fedoraproject.org/rpms/duktape.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/svaarala/duktape",
   "version": "2.7.0"

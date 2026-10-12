@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Exporter.git",
+    "release": "527",
+    "sha": "18e658dc6ce122e56ecde2e1146595ac666d37b0"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "18e658dc6ce122e56ecde2e1146595ac666d37b0",
-  "source": "https://src.fedoraproject.org/rpms/perl-Exporter.git",
   "upstream_repo": "https://github.com/Perl/perl5",
   "version": "5.79"
 }

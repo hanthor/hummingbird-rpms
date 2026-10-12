@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/logrotate.git",
+    "release": "6",
+    "sha": "9ddd9bd0e407a8a54ed01a8e67cddd4072de1243"
+  },
   "modification_status": "clean",
-  "release": "6",
-  "sha": "9ddd9bd0e407a8a54ed01a8e67cddd4072de1243",
-  "source": "https://src.fedoraproject.org/rpms/logrotate.git",
   "upstream_repo": "https://github.com/logrotate/logrotate",
   "version": "3.22.0"
 }

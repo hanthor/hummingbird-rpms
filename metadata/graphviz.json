@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/graphviz.git",
+    "release": "2",
+    "sha": "8909604f90bebb037e2ce66ecad6162e7f0127c7"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "8909604f90bebb037e2ce66ecad6162e7f0127c7",
-  "source": "https://src.fedoraproject.org/rpms/graphviz.git",
   "upstream_repo": "https://gitlab.com/graphviz/graphviz",
   "version": "16.1.0"
 }

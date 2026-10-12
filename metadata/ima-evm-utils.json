@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/ima-evm-utils.git",
+    "release": "12",
+    "sha": "57ebc296d550e374e4f686625bd2c2935de83985"
+  },
   "modification_status": "clean",
-  "release": "12",
-  "sha": "57ebc296d550e374e4f686625bd2c2935de83985",
-  "source": "https://src.fedoraproject.org/rpms/ima-evm-utils.git",
   "upstream_repo": "https://github.com/linux-integrity/ima-evm-utils",
   "version": "1.6.2"
 }

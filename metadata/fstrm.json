@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/fstrm.git",
+    "release": "15",
+    "sha": "33e0dd6efba41a5695f76b24772f1148ceb1fb90"
+  },
   "modification_status": "clean",
-  "release": "15",
-  "sha": "33e0dd6efba41a5695f76b24772f1148ceb1fb90",
-  "source": "https://src.fedoraproject.org/rpms/fstrm.git",
   "upstream_repo": "https://github.com/farsightsec/fstrm",
   "version": "0.6.1"
 }

@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/environment-modules.git",
+    "release": "1",
+    "sha": "fe96b8a2380659eabbcacc67ccd465e8bdc32c6b"
+  },
   "modification_status": "clean",
-  "release": "1",
   "release_monitoring_project_id": 700,
-  "sha": "fe96b8a2380659eabbcacc67ccd465e8bdc32c6b",
-  "source": "https://src.fedoraproject.org/rpms/environment-modules.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/envmodules/modules",
   "version": "5.7.0"

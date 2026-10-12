@@ -1,12 +1,14 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/pmix.git",
+    "release": "1",
+    "sha": "a4c6aa2621fc217fad3e9b1de4e3de81fa5a2487"
+  },
   "modification_reason": "Update to upstream version 6.1.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 10931,
-  "sha": "a4c6aa2621fc217fad3e9b1de4e3de81fa5a2487",
-  "source": "https://src.fedoraproject.org/rpms/pmix.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/openpmix/openpmix",
-  "version": "6.1.0",
-  "release": "1"
+  "version": "6.1.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/rootfiles.git",
+    "release": "8",
+    "sha": "13485d5c1106b82cfb53bcc1323ba551ad626922"
+  },
   "modification_status": "clean",
-  "release": "8",
-  "sha": "13485d5c1106b82cfb53bcc1323ba551ad626922",
-  "source": "https://src.fedoraproject.org/rpms/rootfiles.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/rootfiles",
   "version": "9.0"
 }

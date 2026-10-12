@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/cloud-utils.git",
+    "release": "2",
+    "sha": "2c19ece8444ca1e8fd4bbffda0222a1c432f8c29"
+  },
   "modification_status": "clean",
-  "release": "2",
   "release_monitoring_project_id": 369047,
-  "sha": "2c19ece8444ca1e8fd4bbffda0222a1c432f8c29",
-  "source": "https://src.fedoraproject.org/rpms/cloud-utils.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/canonical/cloud-utils",
   "version": "0.34"

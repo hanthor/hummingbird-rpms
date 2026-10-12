@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/chrony.git",
+    "release": "2",
+    "sha": "9de8c668e8f195bf349c1637962dd537a3098d1e"
+  },
   "modification_status": "clean",
-  "release": "2",
   "release_monitoring_project_id": 8810,
-  "sha": "9de8c668e8f195bf349c1637962dd537a3098d1e",
-  "source": "https://src.fedoraproject.org/rpms/chrony.git",
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.com/chrony/chrony",
   "version": "4.9"

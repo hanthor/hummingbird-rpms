@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/qt5.git",
+    "release": "3",
+    "sha": "35a01cd5eb9ecd14600d3427e3c6359bae55d90e"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "35a01cd5eb9ecd14600d3427e3c6359bae55d90e",
-  "source": "https://src.fedoraproject.org/rpms/qt5.git",
   "upstream_repo": "https://code.qt.io/qt/qt5.git",
   "version": "5.15.18"
 }

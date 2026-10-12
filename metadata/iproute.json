@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/iproute.git",
+    "release": "1",
+    "sha": "05147fa654455232d3e7afc1a0655d94f1c67597"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "05147fa654455232d3e7afc1a0655d94f1c67597",
-  "source": "https://src.fedoraproject.org/rpms/iproute.git",
   "upstream_repo": "https://git.kernel.org/pub/scm/network/iproute2/iproute2.git",
   "version": "7.2.0"
 }

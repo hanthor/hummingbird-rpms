@@ -1,10 +1,12 @@
 {
-  "branch": "f44",
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/fedora-repos.git",
+    "release": "1",
+    "sha": "226c6ca539f591a8087eaf45a69f4b231e90312d"
+  },
   "modification_reason": "Pre-existing modification - requires review",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "226c6ca539f591a8087eaf45a69f4b231e90312d",
-  "source": "https://src.fedoraproject.org/rpms/fedora-repos.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/fedora-repos",
   "version": "44"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/sed.git",
+    "release": "2",
+    "sha": "3460215d103c45ce704e11ba0776890a15051f99"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "3460215d103c45ce704e11ba0776890a15051f99",
-  "source": "https://src.fedoraproject.org/rpms/sed.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/sed.git",
   "version": "4.10"
 }

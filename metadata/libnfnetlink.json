@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libnfnetlink.git",
+    "release": "2",
+    "sha": "fa544ba2da26812c8a4774c32676b66d0b306ce2"
+  },
   "modification_status": "clean",
-  "release": "2",
   "release_monitoring_project_id": 1682,
-  "sha": "fa544ba2da26812c8a4774c32676b66d0b306ce2",
-  "source": "https://src.fedoraproject.org/rpms/libnfnetlink.git",
   "track_upstream": "latest",
   "upstream_repo": "https://git.netfilter.org/libnfnetlink",
   "version": "1.0.2"

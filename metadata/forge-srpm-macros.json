@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/forge-srpm-macros.git",
+    "release": "5",
+    "sha": "9a09f6f08361a22205466c2a1781974b4f2b3384"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "9a09f6f08361a22205466c2a1781974b4f2b3384",
-  "source": "https://src.fedoraproject.org/rpms/forge-srpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/forge-srpm-macros",
   "version": "0.4.0"
 }

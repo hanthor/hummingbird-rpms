@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libunwind.git",
+    "release": "4",
+    "sha": "88543f4453a9d1ed248b73933255bec6071ee924"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "88543f4453a9d1ed248b73933255bec6071ee924",
-  "source": "https://src.fedoraproject.org/rpms/libunwind.git",
   "upstream_repo": "https://github.com/libunwind/libunwind",
   "version": "1.8.3"
 }

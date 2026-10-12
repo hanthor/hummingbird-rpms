@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/m4.git",
+    "release": "3",
+    "sha": "d91104adeb7f2ca880ec3cb7d5bd6bbcf2d7c9d0"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "d91104adeb7f2ca880ec3cb7d5bd6bbcf2d7c9d0",
-  "source": "https://src.fedoraproject.org/rpms/m4.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/m4.git",
   "version": "1.4.21"
 }

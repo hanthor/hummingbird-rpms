@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/ecj.git",
+    "release": "16",
+    "sha": "c86fdc7d2feb415f60b87323b419de3ce0d85d58"
+  },
   "modification_status": "clean",
-  "release": "16",
-  "sha": "c86fdc7d2feb415f60b87323b419de3ce0d85d58",
-  "source": "https://src.fedoraproject.org/rpms/ecj.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/ecj",
   "version": "4.23"
 }

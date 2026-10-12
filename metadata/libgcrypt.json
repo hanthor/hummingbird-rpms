@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libgcrypt.git",
+    "release": "1",
+    "sha": "72aac0e9992e16b594f2516e09aa515be163a8fd"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "72aac0e9992e16b594f2516e09aa515be163a8fd",
-  "source": "https://src.fedoraproject.org/rpms/libgcrypt.git",
   "upstream_repo": "https://dev.gnupg.org/source/libgcrypt.git",
   "version": "1.12.4"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-productmd.git",
+    "release": "4",
+    "sha": "c77e7c7346e6a101635f4b3934d7954561f2f598"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "c77e7c7346e6a101635f4b3934d7954561f2f598",
-  "source": "https://src.fedoraproject.org/rpms/python-productmd.git",
   "upstream_repo": "https://github.com/release-engineering/productmd",
   "version": "1.50"
 }

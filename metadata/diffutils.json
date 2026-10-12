@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/diffutils.git",
+    "release": "6",
+    "sha": "f5bfb31c883d73fddbe99dc5ac8d254f700af008"
+  },
   "modification_reason": "backport fix for CVE-2026-53910",
   "modification_status": "modified",
-  "release": "6",
-  "sha": "f5bfb31c883d73fddbe99dc5ac8d254f700af008",
-  "source": "https://src.fedoraproject.org/rpms/diffutils.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/diffutils.git",
   "version": "3.12"
 }

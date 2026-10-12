@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Digest.git",
+    "release": "527",
+    "sha": "a5aa8fc3855e10f0c1d9545e1089591b091dd74b"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "a5aa8fc3855e10f0c1d9545e1089591b091dd74b",
-  "source": "https://src.fedoraproject.org/rpms/perl-Digest.git",
   "upstream_repo": "https://github.com/Dual-Life/digest",
   "version": "1.20"
 }

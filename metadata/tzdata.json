@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/tzdata.git",
+    "release": "1",
+    "sha": "2cb689f032a99415b2333b11e06b80a601df3ff8"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "2cb689f032a99415b2333b11e06b80a601df3ff8",
-  "source": "https://src.fedoraproject.org/rpms/tzdata.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/tzdata",
   "version": "2026e"
 }

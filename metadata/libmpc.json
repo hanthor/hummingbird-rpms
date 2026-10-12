@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libmpc.git",
+    "release": "2",
+    "sha": "41e31fd571b62eb26b755fb5a080f4422927c531"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "41e31fd571b62eb26b755fb5a080f4422927c531",
-  "source": "https://src.fedoraproject.org/rpms/libmpc.git",
   "upstream_repo": "https://gitlab.inria.fr/mpc/mpc",
   "version": "1.4.1"
 }

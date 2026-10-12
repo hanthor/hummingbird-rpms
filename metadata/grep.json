@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/grep.git",
+    "release": "4",
+    "sha": "aaf8d67b72eb7662497bf44b42736efa376063e4"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "aaf8d67b72eb7662497bf44b42736efa376063e4",
-  "source": "https://src.fedoraproject.org/rpms/grep.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/grep.git",
   "version": "3.12"
 }
