@@ -129,7 +129,7 @@ def test_latest_pulp_sbom_filename_raises_when_listing_empty(monkeypatch) -> Non
         lib_sbom.latest_pulp_sbom_filename("ghostpkg")
 
 
-def test_parse_glab_mr_list() -> None:
+def test_parse_lab_mr_list() -> None:
     output = "\n".join(
         [
             "!3905  grafana13.1: Update axios (renovate) (renovate/axios)",
@@ -137,7 +137,7 @@ def test_parse_glab_mr_list() -> None:
             "!12  plain title",
         ]
     )
-    entries = lib_vcs._parse_glab_mr_list(output, "open")
+    entries = lib_vcs._parse_lab_mr_list(output, "open")
     assert [e.iid for e in entries] == ["3905", "12"]
     assert entries[0].web_url.endswith("/merge_requests/3905")
     assert "axios" in entries[0].title
@@ -612,7 +612,7 @@ def test_open_package_mr_pushes_to_target_remote_by_default(monkeypatch) -> None
                 stdout="https://gitlab.com/redhat/hummingbird/rpms.git\n",
                 stderr="",
             )
-        if args[:3] == ["glab", "mr", "create"]:
+        if args[:3] == ["lab", "mr", "create"]:
             return SimpleNamespace(
                 returncode=0,
                 stdout="https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/9\n",
@@ -620,7 +620,7 @@ def test_open_package_mr_pushes_to_target_remote_by_default(monkeypatch) -> None
             )
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(lib_vcs, "ensure_glab_available", lambda: None)
+    monkeypatch.setattr(lib_vcs, "ensure_gitlab_cli_available", lambda: None)
     monkeypatch.setattr(lib_vcs, "run_command", fake_run)
 
     def post_comment(key: str, body: str) -> bool:
@@ -637,9 +637,10 @@ def test_open_package_mr_pushes_to_target_remote_by_default(monkeypatch) -> None
 
     assert url.endswith("/9")
     assert ["git", "push", "-u", "origin", "HUM-9"] in calls
-    create = next(args for args in calls if args[:3] == ["glab", "mr", "create"])
-    assert "--head" not in create
-    assert not any(args[:3] == ["glab", "mr", "note"] for args in calls)
+    create = next(args for args in calls if args[:3] == ["lab", "mr", "create"])
+    assert create[3] == "origin"
+    assert create[create.index("--source") + 1] == "origin:HUM-9"
+    assert not any(args[:3] == ["lab", "mr", "note"] for args in calls)
     assert comments == [("HUM-9", f"MR: {url}\n")]
 
 
@@ -673,7 +674,7 @@ def test_open_package_mr_uses_explicit_source_remote(monkeypatch) -> None:
                 stdout="https://gitlab.com/prarit/rpms.git\n",
                 stderr="",
             )
-        if args[:3] == ["glab", "mr", "create"]:
+        if args[:3] == ["lab", "mr", "create"]:
             return SimpleNamespace(
                 returncode=0,
                 stdout="https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/10\n",
@@ -681,7 +682,7 @@ def test_open_package_mr_uses_explicit_source_remote(monkeypatch) -> None:
             )
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(lib_vcs, "ensure_glab_available", lambda: None)
+    monkeypatch.setattr(lib_vcs, "ensure_gitlab_cli_available", lambda: None)
     monkeypatch.setattr(lib_vcs, "run_command", fake_run)
     lib_vcs.open_package_mr(
         title="Fix CVE",
@@ -693,8 +694,9 @@ def test_open_package_mr_uses_explicit_source_remote(monkeypatch) -> None:
     )
 
     assert ["git", "push", "-u", "contributor", "HUM-10"] in calls
-    create = next(args for args in calls if args[:3] == ["glab", "mr", "create"])
-    assert create[create.index("--head") + 1] == "prarit/rpms"
+    create = next(args for args in calls if args[:3] == ["lab", "mr", "create"])
+    assert create[3] == "origin"
+    assert create[create.index("--source") + 1] == "contributor:HUM-10"
 
 
 def test_lookaside_upload_commands() -> None:

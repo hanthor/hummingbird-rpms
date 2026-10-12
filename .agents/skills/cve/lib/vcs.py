@@ -17,32 +17,36 @@ GITHUB_COMMIT_RE = re.compile(
 )
 
 
-# ---- glab availability ----
+# ---- lab availability ----
 
 
-def ensure_glab_available() -> None:
-    """Raise if the `glab`/`lab` CLI is not on PATH.
+def ensure_gitlab_cli_available() -> None:
+    """Raise if the `lab` CLI is not on PATH.
 
-    open_package_mr() below assumes a `glab` CLI (verified against 1.115.0)
-    that uses explicit `--repo`/`--head`/`--source-branch`/`--target-branch`
-    flags for `mr create`. If a future CLI version changes this syntax,
-    "unknown flag" errors will surface here first.
+    list_bot_mrs() and open_package_mr() below assume the `lab` CLI
+    (https://gitlab.com/calmera/lab, verified against the `mr list` /
+    `mr create` subcommands documented by `lab mr --help`), which resolves
+    the target GitLab project from the local git remotes rather than an
+    explicit `--repo` flag. `glab` is intentionally not used here: its
+    stored token has repeatedly expired in this environment, while `lab`
+    keeps working.
     """
-    if shutil.which("glab"):
+    if shutil.which("lab"):
         return
-    raise RuntimeError("`glab` is not installed or not found in PATH.")
+    raise RuntimeError("`lab` is not installed or not found in PATH.")
 
 
 # ---- GitLab bot MR listing ----
 
 
-def _parse_glab_mr_list(output: str, state: str) -> list[BotMrEntry]:
+def _parse_lab_mr_list(output: str, state: str) -> list[BotMrEntry]:
     entries: list[BotMrEntry] = []
     for line in output.splitlines():
         line = line.strip()
         if not line or line.lower().startswith("no merge"):
             continue
-        # Typical: !1234  Title here  (branch) ← or similar
+        # Typical: !1234 Title here ← lab does not append branch metadata,
+        # but tolerate a trailing "(branch)" in case a future version does.
         m = re.match(r"!(\d+)\s+(.*)$", line)
         if not m:
             continue
@@ -64,28 +68,27 @@ def _parse_glab_mr_list(output: str, state: str) -> list[BotMrEntry]:
 
 
 def list_bot_mrs(package: str, *, per_page: int = 5) -> dict[str, list[BotMrEntry]]:
-    ensure_glab_available()
+    ensure_gitlab_cli_available()
     result: dict[str, list[BotMrEntry]] = {"open": [], "merged": []}
-    for state, flag in (("open", []), ("merged", ["--merged"])):
+    for state, state_flag in (("open", "opened"), ("merged", "merged")):
         cmd = [
-            "glab",
+            "lab",
             "mr",
             "list",
-            "--repo",
-            GITLAB_RPMS_REPO,
+            package,
             "--author",
             BOT_USER,
-            "--search",
-            package,
-            "--per-page",
+            "-s",
+            state_flag,
+            "-n",
             str(per_page),
-            *flag,
+            "--no-pager",
         ]
         proc = run_command(cmd)
         if proc.returncode != 0:
             err = (proc.stderr or proc.stdout or "").strip()
-            raise RuntimeError(f"glab mr list ({state}) failed: {err}")
-        result[state] = _parse_glab_mr_list(proc.stdout, state)
+            raise RuntimeError(f"lab mr list ({state}) failed: {err}")
+        result[state] = _parse_lab_mr_list(proc.stdout, state)
     return result
 
 
@@ -382,10 +385,9 @@ def open_package_mr(
     push: bool = True,
     push_remote: str | None = None,
 ) -> str:
-    ensure_glab_available()
-    detect_target_remote(cwd=cwd)
+    ensure_gitlab_cli_available()
+    target_remote = detect_target_remote(cwd=cwd)
     selected_remote = push_remote or detect_push_remote(cwd=cwd)
-    source_project = project_for_remote(selected_remote, cwd=cwd)
     if push:
         pushed = run_command(
             ["git", "push", "-u", selected_remote, source_branch], cwd=cwd
@@ -395,38 +397,34 @@ def open_package_mr(
                 (pushed.stderr or pushed.stdout or "git push failed").strip()
             )
     create_args = [
-        "glab",
+        "lab",
         "mr",
         "create",
-        "--repo",
-        GITLAB_RPMS_REPO,
-        "--source-branch",
-        source_branch,
-        "--target-branch",
+        target_remote,
         "main",
-        "-t",
+        "--source",
+        f"{selected_remote}:{source_branch}",
+        "-m",
         title,
-        "-d",
+        "-m",
         description,
-        "--yes",
+        "--no-edit",
     ]
-    if source_project != GITLAB_RPMS_REPO:
-        create_args[5:5] = ["--head", source_project]
     created = run_command(create_args, cwd=cwd)
     if created.returncode != 0:
         raise RuntimeError(
-            (created.stderr or created.stdout or "glab mr create failed").strip()
+            (created.stderr or created.stdout or "lab mr create failed").strip()
         )
     urls = MR_URL_RE.findall(f"{created.stdout}\n{created.stderr}")
     if not urls:
-        # glab may print a short /merge_requests/N path
+        # lab may print a short /merge_requests/N path
         tail = (created.stdout or created.stderr or "").strip().splitlines()
         last = tail[-1] if tail else ""
         if last.startswith("http"):
             mr_url = last.strip()
         else:
             raise RuntimeError(
-                f"Could not parse MR URL from glab output:\n{created.stdout}"
+                f"Could not parse MR URL from lab output:\n{created.stdout}"
             )
     else:
         mr_url = urls[-1]
