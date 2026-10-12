@@ -96,7 +96,7 @@ def read_spec_release_before_dist(package: str) -> tuple[str, bool]:
         raise RuntimeError(f"No Release: line in {spec_path}")
     raw = match.group(1).strip()
     uses_autorelease = "%autorelease" in raw.lower() or "%{autorelease}" in raw.lower()
-    dist_match = re.search(r"^(.*)%\{\??dist\}(.*)$", raw)
+    dist_match = re.search(r"^(.*)%\{\??dist\}(.*)$", raw, re.IGNORECASE)
     before = dist_match.group(1).strip() if dist_match else raw
     return before, uses_autorelease
 
@@ -607,7 +607,7 @@ def apply_release_bump(package: str) -> dict[str, Any]:
         # (e.g. "%{?snapver:0.%{snapver}.}%{baserelease}.2%{?dist}"), and
         # finding the first '%' would wrongly treat that leading macro as
         # the dist suffix, duplicating the whole value.
-        dist_match = re.search(r"%\{\??dist\}.*$", line)
+        dist_match = re.search(r"%\{\??dist\}.*$", line, re.IGNORECASE)
         if dist_match:
             dist_part = dist_match.group(0)
             return f"Release:{ws}{proposed}{dist_part}"

@@ -1205,6 +1205,33 @@ def test_release_bump_leading_macro_before_dist(tmp_path: Path, monkeypatch) -> 
     assert spec_content.count("%{?snapver:0.%{snapver}.}%{baserelease}") == 1
 
 
+def test_release_bump_uppercase_dist_macro(tmp_path: Path, monkeypatch) -> None:
+    # Regression for an uppercased %{?DIST} macro: the dist-suffix split
+    # must match case-insensitively, like read_spec_release_before_dist(),
+    # or the bump gets prepended in front of the dist macro instead of
+    # being inserted before it.
+    pkg = "upperpkg"
+    (tmp_path / "rpms" / pkg).mkdir(parents=True)
+    (tmp_path / "metadata").mkdir()
+    (tmp_path / "rpms" / pkg / f"{pkg}.spec").write_text(
+        "Name: upperpkg\nVersion: 1.0\nRelease: 3.1%{?DIST}\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "metadata" / f"{pkg}.json").write_text(
+        json.dumps({"modification_status": "modified", "fedora": {"release": "3.1"}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(lib_spec, "repo_root", lambda: tmp_path)
+    payload = helper.release_bump_payload(pkg)
+    assert payload["proposed_spec_release"] == "3.1.1"
+
+    applied = helper.apply_release_bump(pkg)
+    assert applied["writes"] is True
+    spec_content = (tmp_path / "rpms" / pkg / f"{pkg}.spec").read_text(encoding="utf-8")
+    assert "Release: 3.1.1%{?DIST}" in spec_content
+
+
 def test_release_bump_autorelease(tmp_path: Path, monkeypatch) -> None:
     pkg = "auto"
     (tmp_path / "rpms" / pkg).mkdir(parents=True)
