@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-urllib3.git",
+    "release": "1",
+    "sha": "b108fed3eb571f9236c3fb514126403b9d50fe8d"
+  },
   "modification_reason": "Pre-existing modification - requires review",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "b108fed3eb571f9236c3fb514126403b9d50fe8d",
-  "source": "https://src.fedoraproject.org/rpms/python-urllib3.git",
   "upstream_repo": "https://github.com/urllib3/urllib3",
   "version": "2.8.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/sysprof.git",
+    "release": "1",
+    "sha": "417262f0e8feca789e3cace1d3985d0fb56e1976"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "417262f0e8feca789e3cace1d3985d0fb56e1976",
-  "source": "https://src.fedoraproject.org/rpms/sysprof.git",
   "upstream_repo": "https://gitlab.gnome.org/GNOME/sysprof",
   "version": "51.0"
 }

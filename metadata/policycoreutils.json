@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/policycoreutils.git",
+    "release": "2",
+    "sha": "6f99690f0216d3c191538b2ee4facc58fda4ed17"
+  },
   "modification_reason": "Backport CVE-2026-19079",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "6f99690f0216d3c191538b2ee4facc58fda4ed17",
-  "source": "https://src.fedoraproject.org/rpms/policycoreutils.git",
   "upstream_repo": "https://github.com/SELinuxProject/selinux",
   "version": "3.11"
 }

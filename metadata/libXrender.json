@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libXrender.git",
+    "release": "5",
+    "sha": "280db7022b9777acfad3c307ee947485768a55b9"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "280db7022b9777acfad3c307ee947485768a55b9",
-  "source": "https://src.fedoraproject.org/rpms/libXrender.git",
   "upstream_repo": "https://gitlab.freedesktop.org/xorg/lib/libxrender",
   "version": "0.9.12"
 }

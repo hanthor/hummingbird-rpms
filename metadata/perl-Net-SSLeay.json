@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Net-SSLeay.git",
+    "release": "5",
+    "sha": "0b682b92e316198786e1eb2f6523e6d3ee55f99e"
+  },
   "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): Source0 used CPAN's stale legacy 'modules/by-module' mirror path -- repointed at the canonical MetaCPAN author path (authors/id/C/CH/CHRISN/...), which matches the existing recorded checksum exactly, no content change.",
   "modification_status": "modified",
-  "release": "5",
-  "sha": "0b682b92e316198786e1eb2f6523e6d3ee55f99e",
-  "source": "https://src.fedoraproject.org/rpms/perl-Net-SSLeay.git",
   "upstream_repo": "https://github.com/radiator-software/p5-net-ssleay",
   "version": "1.96"
 }

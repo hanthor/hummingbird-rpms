@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Thread-Queue.git",
+    "release": "527",
+    "sha": "4170c548c0fc1091ee6fa5b04c74124c31332623"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "4170c548c0fc1091ee6fa5b04c74124c31332623",
-  "source": "https://src.fedoraproject.org/rpms/perl-Thread-Queue.git",
   "upstream_repo": "https://github.com/Perl/perl5",
   "version": "3.14"
 }

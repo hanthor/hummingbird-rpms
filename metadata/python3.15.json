@@ -1,11 +1,13 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python3.15.git",
+    "release": "1",
+    "sha": "729e1e7bdd0a6eff07c0b09c8b56eb73e37cd8fd"
+  },
   "modification_reason": "Build JIT stencils from source with LLVM 21, matching python3.14; enforce OpenSSL FIPS policy for hashes and HMAC",
   "modification_status": "modified",
-  "release": "1",
   "release_monitoring_project_id": 13254,
-  "sha": "729e1e7bdd0a6eff07c0b09c8b56eb73e37cd8fd",
-  "source": "https://src.fedoraproject.org/rpms/python3.15.git",
   "track_upstream": "3.15",
   "upstream_branch": "3.15",
   "upstream_repo": "https://github.com/python/cpython",

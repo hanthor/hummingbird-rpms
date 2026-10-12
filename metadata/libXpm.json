@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libXpm.git",
+    "release": "4",
+    "sha": "3a020942bdc7acc7d0bf0612b7e982413c790a9b"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "3a020942bdc7acc7d0bf0612b7e982413c790a9b",
-  "source": "https://src.fedoraproject.org/rpms/libXpm.git",
   "upstream_repo": "https://gitlab.freedesktop.org/xorg/lib/libxpm",
   "version": "3.5.19"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/hello.git",
+    "release": "2",
+    "sha": "2621a97179dd5182d127a98a50759a637a4fa334"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "2621a97179dd5182d127a98a50759a637a4fa334",
-  "source": "https://src.fedoraproject.org/rpms/hello.git",
   "upstream_repo": "https://ftp.gnu.org/gnu/hello/",
   "version": "2.12.3"
 }

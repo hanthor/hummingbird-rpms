@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/dnf.git",
+    "release": "5",
+    "sha": "c4fe09883f4c86d3e4079649086f19cc91975bb0"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "c4fe09883f4c86d3e4079649086f19cc91975bb0",
-  "source": "https://src.fedoraproject.org/rpms/dnf.git",
   "upstream_repo": "https://github.com/rpm-software-management/dnf",
   "version": "4.24.0"
 }

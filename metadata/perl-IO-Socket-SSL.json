@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-IO-Socket-SSL.git",
+    "release": "2",
+    "sha": "5c4e9a98f342dca1e91f2168976f74b3eca63b0b"
+  },
   "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): Source0 used CPAN's stale legacy 'modules/by-module' mirror path -- repointed at the canonical MetaCPAN author path (authors/id/S/SU/SULLR/...), which matches the existing recorded checksum exactly, no content change.",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "5c4e9a98f342dca1e91f2168976f74b3eca63b0b",
-  "source": "https://src.fedoraproject.org/rpms/perl-IO-Socket-SSL.git",
   "upstream_repo": "https://github.com/noxxi/p5-io-socket-ssl",
   "version": "2.099"
 }

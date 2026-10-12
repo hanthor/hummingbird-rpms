@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/munge.git",
+    "release": "3",
+    "sha": "1bb740e59a33eabc2db4a28fecfff69ccb125870"
+  },
   "modification_status": "clean",
-  "release": "3",
   "release_monitoring_project_id": 138097,
-  "sha": "1bb740e59a33eabc2db4a28fecfff69ccb125870",
-  "source": "https://src.fedoraproject.org/rpms/munge.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/dun/munge",
   "version": "0.5.18"

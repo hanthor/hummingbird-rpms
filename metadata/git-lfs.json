@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/git-lfs.git",
+    "sha": "07a19b0f5e841934354eafe2282bb0c1633a244a"
+  },
   "modification_reason": "Update to upstream version 3.8.0; generate sources with gorget and identify the gotext vendor license; allow DNS-dependent retries in SSH HTTPS-fallback tests",
   "modification_status": "modified",
   "release_monitoring_project_id": 11551,
-  "sha": "07a19b0f5e841934354eafe2282bb0c1633a244a",
-  "source": "https://src.fedoraproject.org/rpms/git-lfs.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/git-lfs/git-lfs",
   "version": "3.8.0"

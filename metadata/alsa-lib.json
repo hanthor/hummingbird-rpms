@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/alsa-lib.git",
+    "release": "2",
+    "sha": "a3411f67974029abeb9521305b83e89c30be4efb"
+  },
   "modification_reason": "CVE-2026-90781: backport fix for off-by-one stack buffer overflow in __snd_ctl_ascii_elem_id_parse",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "a3411f67974029abeb9521305b83e89c30be4efb",
-  "source": "https://src.fedoraproject.org/rpms/alsa-lib.git",
   "upstream_repo": "https://github.com/alsa-project/alsa-lib",
   "version": "1.2.16.1"
 }

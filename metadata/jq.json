@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/jq.git",
+    "release": "5",
+    "sha": "a555ef019efc33c9b3d242d2475fe8079ac9302a"
+  },
   "modification_status": "clean",
-  "release": "5",
   "release_monitoring_project_id": 13252,
-  "sha": "a555ef019efc33c9b3d242d2475fe8079ac9302a",
-  "source": "https://src.fedoraproject.org/rpms/jq.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/jqlang/jq",
   "version": "1.8.2"

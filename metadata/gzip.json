@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gzip.git",
+    "release": "1",
+    "sha": "484fc32523629f031b34b673c45ffa64970d757a"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "484fc32523629f031b34b673c45ffa64970d757a",
-  "source": "https://src.fedoraproject.org/rpms/gzip.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/gzip.git",
   "version": "1.15"
 }

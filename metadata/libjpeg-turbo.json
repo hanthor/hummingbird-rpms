@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libjpeg-turbo.git",
+    "release": "2",
+    "sha": "b589bd97db2886d8adc30f964241c87af5a8117a"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "b589bd97db2886d8adc30f964241c87af5a8117a",
-  "source": "https://src.fedoraproject.org/rpms/libjpeg-turbo.git",
   "upstream_repo": "https://github.com/libjpeg-turbo/libjpeg-turbo",
   "version": "3.1.4.1"
 }

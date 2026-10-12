@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-libnet.git",
+    "release": "528",
+    "sha": "cf7346b7c83924a81622869eb282ee48ecba4e30"
+  },
   "modification_status": "clean",
-  "release": "528",
-  "sha": "cf7346b7c83924a81622869eb282ee48ecba4e30",
-  "source": "https://src.fedoraproject.org/rpms/perl-libnet.git",
   "upstream_repo": "https://github.com/steve-m-hay/perl-libnet",
   "version": "3.15"
 }

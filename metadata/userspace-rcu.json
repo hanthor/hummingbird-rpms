@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/userspace-rcu.git",
+    "release": "1",
+    "sha": "27834164f9ef07b30ab3833427ff057cda29bff5"
+  },
   "modification_status": "clean",
-  "release": "1",
   "release_monitoring_project_id": 7134,
-  "sha": "27834164f9ef07b30ab3833427ff057cda29bff5",
-  "source": "https://src.fedoraproject.org/rpms/userspace-rcu.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/urcu/userspace-rcu",
   "version": "0.15.7"

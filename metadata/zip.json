@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/zip.git",
+    "release": "46",
+    "sha": "4046c210d122112880062571f20bb5d127fdabca"
+  },
   "modification_status": "clean",
-  "release": "46",
-  "sha": "4046c210d122112880062571f20bb5d127fdabca",
-  "source": "https://src.fedoraproject.org/rpms/zip.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/zip",
   "version": "3.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-trustme.git",
+    "release": "3",
+    "sha": "9c0804578c3715f8cdd3e716bf24909ed43b6c89"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "9c0804578c3715f8cdd3e716bf24909ed43b6c89",
-  "source": "https://src.fedoraproject.org/rpms/python-trustme.git",
   "upstream_repo": "https://github.com/python-trio/trustme",
   "version": "1.2.1"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/chkconfig.git",
+    "release": "6",
+    "sha": "e6a4a4875ebda6e3c114b8aa89b45144a45f9042"
+  },
   "modification_status": "clean",
-  "release": "6",
-  "sha": "e6a4a4875ebda6e3c114b8aa89b45144a45f9042",
-  "source": "https://src.fedoraproject.org/rpms/chkconfig.git",
   "upstream_repo": "https://github.com/fedora-sysv/chkconfig",
   "version": "1.33"
 }

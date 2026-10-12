@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-pycparser.git",
+    "release": "4",
+    "sha": "549dfe743b7f9933aa27879ec85ac1fbf1e11dee"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "549dfe743b7f9933aa27879ec85ac1fbf1e11dee",
-  "source": "https://src.fedoraproject.org/rpms/python-pycparser.git",
   "upstream_repo": "https://github.com/eliben/pycparser",
   "version": "3.00"
 }

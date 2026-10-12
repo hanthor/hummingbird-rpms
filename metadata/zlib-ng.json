@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/zlib-ng.git",
+    "release": "6",
+    "sha": "4024f7cebb32c4ffecf608f500e12fb885e645f1"
+  },
   "modification_status": "clean",
-  "release": "6",
-  "sha": "4024f7cebb32c4ffecf608f500e12fb885e645f1",
-  "source": "https://src.fedoraproject.org/rpms/zlib-ng.git",
   "upstream_repo": "https://github.com/zlib-ng/zlib-ng",
   "version": "2.3.3"
 }

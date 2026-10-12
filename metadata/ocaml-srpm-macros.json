@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/ocaml-srpm-macros.git",
+    "release": "4",
+    "sha": "3fe8ea31b9b3f21b6852ed16b0586946a6bbf3da"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "3fe8ea31b9b3f21b6852ed16b0586946a6bbf3da",
-  "source": "https://src.fedoraproject.org/rpms/ocaml-srpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/ocaml-srpm-macros",
   "version": "11"
 }

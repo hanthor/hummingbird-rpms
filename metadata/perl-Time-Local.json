@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Time-Local.git",
+    "release": "527",
+    "sha": "08b113388555d087f935cf226c0fe904b37c338b"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "08b113388555d087f935cf226c0fe904b37c338b",
-  "source": "https://src.fedoraproject.org/rpms/perl-Time-Local.git",
   "upstream_repo": "https://github.com/houseabsolute/Time-Local",
   "version": "1.350"
 }

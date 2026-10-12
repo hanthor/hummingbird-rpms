@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/golist.git",
+    "release": "2",
+    "sha": "0c21ce5c8c0f75353c34ca374d66a21962de3163"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "0c21ce5c8c0f75353c34ca374d66a21962de3163",
-  "source": "https://src.fedoraproject.org/rpms/golist.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/golist",
   "version": "0.11.0"
 }

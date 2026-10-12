@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Data-Dumper.git",
+    "release": "528",
+    "sha": "ae11e68ce2c3c96c53842c50a4da9ed88d914214"
+  },
   "modification_status": "clean",
-  "release": "528",
-  "sha": "ae11e68ce2c3c96c53842c50a4da9ed88d914214",
-  "source": "https://src.fedoraproject.org/rpms/perl-Data-Dumper.git",
   "upstream_repo": "https://github.com/Perl/perl5",
   "version": "2.192"
 }
