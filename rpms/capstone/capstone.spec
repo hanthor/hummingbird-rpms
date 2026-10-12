@@ -1,6 +1,6 @@
 Name:           capstone
 Version:        5.0.8
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        A lightweight multi-platform, multi-architecture disassembly framework
 License:        BSD-3-Clause AND BSD-4-Clause AND APSL-2.0 AND NCSA AND MIT
 URL:            http://www.capstone-engine.org/
@@ -37,6 +37,10 @@ Source1:        cstool.1
 Patch1:         capstone-5.0.1-ocaml.patch
 # Fix OOB reads/writes (CVE-2026-55893, CVE-2026-55894)
 Patch2:         capstone-5.0.8-cve-2026-55893.patch
+# Fix WASM br_table size integer overflow (CVE-2026-49263)
+Patch3:         capstone-5.0.8-cve-2026-49263.patch
+# Fix M68K cs_insn_name() out-of-bounds read (CVE-2026-49282)
+Patch4:         capstone-5.0.8-cve-2026-49282.patch
 
 
 # Build with python3 package by default
