@@ -1,3 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hum"
+version = "0.1.0"
+description = "Hummingbird metadata library"
+requires-python = ">=3.11"
+dependencies = ["pyyaml"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["hum"]
+
 [dependency-groups]
 dev = [
   "rhjira",
