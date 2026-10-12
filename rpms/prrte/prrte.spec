@@ -1,6 +1,6 @@
 Name:           prrte
 Version:        4.1.0
-Release:        2%{?dist}
+Release:        2.1%{?dist}
 Summary:        PMIx Reference RunTime Environment (PRRTE)
 # src/mca/prtereachable/netlink/reachable_netlink_utils_common.c is BSD-2-Clause
 # -devel related licenses:
