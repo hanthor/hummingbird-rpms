@@ -48,7 +48,7 @@ BuildRequires: pkgconfig(libsystemd)
 Name:    qt6-qtbase
 Summary: Qt6 - QtBase components
 Version: 6.11.2
-Release: 3%{?dist}
+Release: 3.1%{?dist}
 
 License: LGPL-3.0-only OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 Url:     http://qt-project.org/
@@ -101,6 +101,12 @@ Patch58: qtbase-libglvnd.patch
 # Upstream patches
 Patch100: qtbase-qiconloader-dont-consider-fallbackthemename-in-themename.patch
 Patch101: qtbase-fix-crash-when-fontconfig-fallback-pattern-has-no-charset.patch
+
+# CVE-2026-15037: QDom XML injection via improper output neutralization in
+# comment/CDATA/processing-instruction serialization under the default
+# InvalidDataPolicy (AcceptInvalidChars). Changes the default to
+# ReturnNullNode, matching the Qt 6.12 behavior.
+Patch102: qtbase-CVE-2026-15037-qdom-invaliddatapolicy.patch
 
 # Do not check any files in %%{_qt6_plugindir}/platformthemes/ for requires.
 # Those themes are there for platform integration. If the required libraries are
