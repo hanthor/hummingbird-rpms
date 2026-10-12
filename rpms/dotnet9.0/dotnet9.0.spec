@@ -129,6 +129,7 @@ Patch3:         roslyn-analyzers-ppc64le-apphost.patch
 # https://github.com/dotnet/runtime/issues/119706
 Patch4:         runtime-119706-clang-21.patch
 ExclusiveArch:  aarch64 ppc64le s390x x86_64
+ExcludeArch:    s390x
 
 
 %if ! %{use_bundled_brotli}
