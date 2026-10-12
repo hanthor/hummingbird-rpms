@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libgpg-error.git",
+    "release": "2",
+    "sha": "3e2380f840ae9e12f4e5b1ad9ab8655f019d6298"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "3e2380f840ae9e12f4e5b1ad9ab8655f019d6298",
-  "source": "https://src.fedoraproject.org/rpms/libgpg-error.git",
   "upstream_repo": "https://dev.gnupg.org/source/libgpg-error.git",
   "version": "1.61"
 }

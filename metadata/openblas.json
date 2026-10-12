@@ -1,11 +1,13 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/openblas.git",
+    "release": "1",
+    "sha": "ab5066185a567f4f118e604f987d9cdb572957de"
+  },
   "modification_reason": "Ship openblas.pc for Meson-based builds (numpy, scipy)",
   "modification_status": "modified",
-  "release": "1",
   "release_monitoring_project_id": 2540,
-  "sha": "ab5066185a567f4f118e604f987d9cdb572957de",
-  "source": "https://src.fedoraproject.org/rpms/openblas.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/OpenMathLib/OpenBLAS",
   "version": "0.3.34"

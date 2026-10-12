@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/man-db.git",
+    "release": "4",
+    "sha": "514425d19188d8bce926e8e071261c4f1533c562"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "514425d19188d8bce926e8e071261c4f1533c562",
-  "source": "https://src.fedoraproject.org/rpms/man-db.git",
   "upstream_repo": "https://gitlab.com/man-db/man-db",
   "version": "2.13.1"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Text-ParseWords.git",
+    "release": "527",
+    "sha": "a7b7bb7b64038c65a516823880657552f2baa637"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "a7b7bb7b64038c65a516823880657552f2baa637",
-  "source": "https://src.fedoraproject.org/rpms/perl-Text-ParseWords.git",
   "upstream_repo": "https://github.com/neilb/Text-ParseWords",
   "version": "3.31"
 }

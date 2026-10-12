@@ -95,6 +95,21 @@ RPMS_DIR = ROOT_DIR / "rpms"
 METADATA_DIR = ROOT_DIR / "metadata"
 PACKAGE_OVERRIDES_YAML = ROOT_DIR / "ci" / "package-overrides.yaml"
 
+sys.path.insert(0, str(ROOT_DIR))
+from hum.meta import MetadataRepository  # noqa: E402
+from hum.meta.model import (  # noqa: E402
+    CleanPackageMetadata,
+    IndependentPackageMetadata,
+    InvalidMetadataError,
+    MalformedMetadataError,
+    ModifiedFedoraPackageMetadata,
+    ModifiedUpstreamPackageMetadata,
+    PackageMetadata as HumPackageMetadata,
+)
+
+def _metadata_repo() -> MetadataRepository:
+    return MetadataRepository(METADATA_DIR.parent)
+
 # release-monitoring.org API base URL
 ANITYA_API_BASE = "https://release-monitoring.org/api"
 UPLOAD_SCRIPT = ROOT_DIR / "ci" / "upload-to-lookaside-cache.sh"
@@ -286,25 +301,31 @@ def parse_spec_version_release(package_dir: Path) -> Optional[tuple[str, str]]:
         return None
 
 
-def get_package_metadata(package: str) -> Optional[dict]:
-    """Get full metadata dict from metadata JSON file."""
-    metadata_file = METADATA_DIR / f"{package}.json"
-    if not metadata_file.exists():
-        return None
+def get_package_metadata(package: str) -> Optional[HumPackageMetadata]:
+    """Get typed metadata object for a package.
 
-    try:
-        with open(metadata_file) as f:
-            return json.load(f)
-    except (json.JSONDecodeError, OSError):
+    Returns None for missing metadata files. Raises MalformedMetadataError
+    for files that exist but cannot be loaded, so callers can distinguish
+    absent from broken.
+    """
+    metadata_path = METADATA_DIR / f"{package}.json"
+    if not metadata_path.exists():
         return None
+    try:
+        return _metadata_repo().load(package)
+    except (MalformedMetadataError, json.JSONDecodeError, OSError) as e:
+        raise MalformedMetadataError(f"{package}: {e}") from e
 
 
 def get_version_from_metadata(package: str) -> Optional[str]:
     """Get version from metadata JSON file."""
-    data = get_package_metadata(package)
+    try:
+        data = get_package_metadata(package)
+    except MalformedMetadataError:
+        return None
     if data is None:
         return None
-    return data.get("version")
+    return data.version
 
 
 def _get_spec_sources(spec_path: str, sourcedir: str) -> dict[int, str]:
@@ -711,7 +732,12 @@ def _run_gorget_pipeline(
             "--output-dir", str(output_dir),
             "--debug",
         ]
-        upstream_repo = (get_package_metadata(package) or {}).get("upstream_repo")
+        try:
+            gorget_meta = get_package_metadata(package)
+        except MalformedMetadataError as e:
+            logger.warning(f"{package}: malformed metadata, skipping upstream-repo injection: {e}")
+            gorget_meta = None
+        upstream_repo = gorget_meta.upstream_repo if gorget_meta else None
         if upstream_repo:
             command += ["--upstream-repo", upstream_repo]
         logger.info(
@@ -948,33 +974,42 @@ def mark_package_modified(
         reason: Reason for the update
         version: If provided, update the version field in metadata
     """
-    metadata_file = METADATA_DIR / f"{package}.json"
-    if not metadata_file.exists():
+    try:
+        metadata = get_package_metadata(package)
+    except MalformedMetadataError as e:
+        logger.error(f"{package}: malformed metadata, skipping modification tracking: {e}")
+        return
+    if metadata is None:
         logger.warning(
             f"{package}: no metadata file found, skipping modification tracking"
         )
         return
 
-    try:
-        with open(metadata_file) as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error(f"{package}: failed to read metadata: {e}")
-        return
-
-    if data.get("modification_status") == "independent":
+    if isinstance(metadata, IndependentPackageMetadata):
         logger.info(f"{package}: independent package, skipping modification tracking")
-    else:
-        data["modification_status"] = "modified"
-        data["modification_reason"] = reason
-    if version is not None:
-        data["version"] = version
-    data.pop("release", None)
+        if version is not None:
+            metadata.update(version=version)
+        else:
+            return
+    elif isinstance(metadata, CleanPackageMetadata):
+        if version is not None:
+            metadata = metadata.to_modified_upstream(version=version, reason=reason)
+        else:
+            metadata = metadata.to_modified_fedora(reason=reason)
+    elif isinstance(metadata, ModifiedFedoraPackageMetadata):
+        if version is not None:
+            metadata = metadata.to_clean().to_modified_upstream(
+                version=version, reason=reason
+            )
+        else:
+            metadata.modification_reason = reason
+    elif isinstance(metadata, ModifiedUpstreamPackageMetadata):
+        if version is not None:
+            metadata.update(version=version)
+        metadata.modification_reason = reason
 
     try:
-        with open(metadata_file, "w") as f:
-            json.dump(data, f, indent=2, sort_keys=True)
-            f.write("\n")
+        _metadata_repo().save(metadata)
     except OSError as e:
         logger.error(f"{package}: failed to write metadata: {e}")
         return
@@ -1197,8 +1232,12 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
         # Recover old_version from metadata (the hook will mutate the
         # spec file directly, so we cannot rely on Specfile to tell us
         # the pre-update version).
-        meta = get_package_metadata(package)
-        old_version = meta.get("version") if meta else None
+        try:
+            meta = get_package_metadata(package)
+        except MalformedMetadataError as e:
+            logger.warning(f"{package}: malformed metadata, falling back to spec version: {e}")
+            meta = None
+        old_version = meta.version if meta else None
         if not old_version:
             old_version = parse_spec_version(package_dir) or new_version
 
@@ -1597,16 +1636,16 @@ def transform_upstream_version(version: str, transform: str) -> str:
     return fn(version)
 
 
-def _openjdk_source_check(version: str, metadata: dict[str, object]) -> bool:
+def _openjdk_source_check(version: str, metadata: HumPackageMetadata) -> bool:
     """Check OpenJDK source tarball availability on openjdk-sources.osci.io."""
-    feature = metadata.get("track_upstream", "")
+    feature = metadata.track_upstream or ""
     if feature == "latest":
         feature = ""
     url = f"https://openjdk-sources.osci.io/openjdk{feature}/openjdk-{version}.tar.xz"
     return _check_source_exists(url)
 
 
-def _tomcat_source_check(version: str, metadata: dict[str, object]) -> bool:
+def _tomcat_source_check(version: str, metadata: HumPackageMetadata) -> bool:
     """Check that the Apache Tomcat source (and required signature) is published.
 
     Apache creates an upstream Git tag before the corresponding release files
@@ -1614,7 +1653,7 @@ def _tomcat_source_check(version: str, metadata: dict[str, object]) -> bool:
     their Source0 download would fail, and Tomcat 10 also requires its detached
     signature in %prep.
     """
-    track_upstream = str(metadata.get("track_upstream") or "")
+    track_upstream = str(metadata.track_upstream or "")
     major = track_upstream.split(".", 1)[0]
     if not major:
         return False
@@ -1630,7 +1669,7 @@ def _tomcat_source_check(version: str, metadata: dict[str, object]) -> bool:
     return major != "10" or _check_source_exists(f"{base_url}.asc")
 
 
-SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]] = {
+SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, HumPackageMetadata], bool]] = {
     "openjdk_osci": _openjdk_source_check,
     "tomcat_apache": _tomcat_source_check,
 }
@@ -1639,7 +1678,7 @@ SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, dict[str, object]], bool]
 def _http_source_check(
     version: str,
     config: dict[str, object],
-    metadata: dict[str, object],
+    metadata: HumPackageMetadata,
 ) -> bool:
     """HEAD-probe every configured, version-templated source URL."""
     urls = config.get("urls")
@@ -1650,8 +1689,8 @@ def _http_source_check(
 
     substitutions = {
         "VERSION": version,
-        "UPSTREAM_REPO": str(metadata.get("upstream_repo") or "").rstrip("/"),
-        "TRACK_UPSTREAM": str(metadata.get("track_upstream") or ""),
+        "UPSTREAM_REPO": (metadata.upstream_repo or "").rstrip("/"),
+        "TRACK_UPSTREAM": metadata.track_upstream or "",
     }
     for url_template in urls:
         try:
@@ -1674,7 +1713,7 @@ def _http_source_check(
 def check_source_available(
     version: str,
     checker: object,
-    metadata: dict[str, object],
+    metadata: HumPackageMetadata,
 ) -> bool:
     """Check source availability using a legacy named checker or probe config."""
     if isinstance(checker, str):
@@ -1729,7 +1768,16 @@ def check_package_version(
         )
 
     # Use metadata for Anitya/GitLab lookup if available
-    meta = get_package_metadata(package)
+    try:
+        meta = get_package_metadata(package)
+    except MalformedMetadataError as e:
+        return VersionCheckResult(
+            package=package,
+            current_version=current_version,
+            upstream_version=None,
+            has_update=False,
+            error=f"Malformed metadata: {e}",
+        )
     track_version = None
     project_id = None
     version_suffix_strip = None
@@ -1738,20 +1786,20 @@ def check_package_version(
     version_source = None
     tag_strip_prefix = "v"
     if meta:
-        track_upstream = meta.get("track_upstream")
+        track_upstream = meta.track_upstream
         if track_upstream and track_upstream != "latest":
             track_version = track_upstream
-        project_id = meta.get("release_monitoring_project_id")
-        version_suffix_strip = meta.get("version_suffix_strip")
-        version_transform = meta.get("upstream_version_transform")
-        source_checker = meta.get("source_availability_check")
-        version_source = meta.get("version_source")
-        tag_strip_prefix = meta.get("tag_strip_prefix", "v")
+        project_id = meta.release_monitoring_project_id
+        version_suffix_strip = meta.version_suffix_strip
+        version_transform = meta.upstream_version_transform
+        source_checker = meta.source_availability_check
+        version_source = meta.version_source
+        tag_strip_prefix = meta.tag_strip_prefix
 
     # Query upstream version source
     try:
         if version_source == "gitlab_tags":
-            upstream_repo = meta.get("upstream_repo") if meta else None
+            upstream_repo = meta.upstream_repo if meta else None
             if not upstream_repo:
                 raise ValueError(
                     f"{package}: version_source is 'gitlab_tags' but "
@@ -1967,8 +2015,11 @@ def list_all(args: argparse.Namespace) -> None:
         result = check_package_version(package, args.distro)
 
         # Determine tracking status from metadata
-        meta = get_package_metadata(package)
-        tracking = "yes" if (meta and meta.get("track_upstream")) else "no"
+        try:
+            meta = get_package_metadata(package)
+        except MalformedMetadataError as exc:
+            raise SystemExit(f"ERROR: {exc}") from exc
+        tracking = "yes" if (meta and meta.track_upstream) else "no"
 
         # Determine status and upstream version display
         if result.error:
@@ -2094,8 +2145,11 @@ def run_check(args: argparse.Namespace) -> None:
         # Filter to only packages with track_upstream set in metadata
         tracked = []
         for pkg in packages:
-            meta = get_package_metadata(pkg)
-            if meta and meta.get("track_upstream"):
+            try:
+                meta = get_package_metadata(pkg)
+            except MalformedMetadataError as e:
+                raise SystemExit(f"ERROR: {e}") from e
+            if meta and meta.track_upstream:
                 tracked.append(pkg)
         packages = tracked
         if not args.quiet:
@@ -2216,6 +2270,8 @@ def run_check(args: argparse.Namespace) -> None:
                 subprocess.CalledProcessError,
                 urllib.error.URLError,
                 requests.HTTPError,
+                InvalidMetadataError,
+                MalformedMetadataError,
             ) as e:
                 result.update_error = str(e)
                 logger.error("%s: failed to apply update: %s", result.package, e)

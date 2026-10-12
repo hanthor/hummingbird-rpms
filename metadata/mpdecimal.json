@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/mpdecimal.git",
+    "release": "4",
+    "sha": "9b34a4a1bf05734ac0142e372407938ed6b8229b"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "9b34a4a1bf05734ac0142e372407938ed6b8229b",
-  "source": "https://src.fedoraproject.org/rpms/mpdecimal.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/mpdecimal",
   "version": "4.0.1"
 }

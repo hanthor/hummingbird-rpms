@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/uuid.git",
+    "release": "70",
+    "sha": "fe96fe5d020bb9d9bc3a8076730cdd36544ec8bb"
+  },
   "modification_reason": "Pre-existing modification - requires review",
   "modification_status": "modified",
-  "release": "70",
-  "sha": "fe96fe5d020bb9d9bc3a8076730cdd36544ec8bb",
-  "source": "https://src.fedoraproject.org/rpms/uuid.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/uuid",
   "version": "1.6.2"
 }

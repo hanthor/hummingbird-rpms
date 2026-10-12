@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libcomps.git",
+    "release": "5",
+    "sha": "362481a56d4b65df93442c9f69506d169aa632d4"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "362481a56d4b65df93442c9f69506d169aa632d4",
-  "source": "https://src.fedoraproject.org/rpms/libcomps.git",
   "upstream_repo": "https://github.com/rpm-software-management/libcomps",
   "version": "0.1.24"
 }

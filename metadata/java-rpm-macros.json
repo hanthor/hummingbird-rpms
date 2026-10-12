@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/java-rpm-macros.git",
+    "release": "9",
+    "sha": "39188768d4c1f1837fd90660d1d9012d1555d80b"
+  },
   "modification_status": "clean",
-  "release": "9",
-  "sha": "39188768d4c1f1837fd90660d1d9012d1555d80b",
-  "source": "https://src.fedoraproject.org/rpms/java-rpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/java-rpm-macros",
   "version": "1"
 }

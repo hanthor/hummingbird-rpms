@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libfido2.git",
+    "release": "6",
+    "sha": "a0b6b286fb6849bf0d7aaa841383ee2e3e8e7faf"
+  },
   "modification_status": "clean",
-  "release": "6",
-  "sha": "a0b6b286fb6849bf0d7aaa841383ee2e3e8e7faf",
-  "source": "https://src.fedoraproject.org/rpms/libfido2.git",
   "upstream_repo": "https://github.com/Yubico/libfido2",
   "version": "1.17.0"
 }

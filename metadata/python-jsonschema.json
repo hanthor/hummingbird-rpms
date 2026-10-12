@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-jsonschema.git",
+    "release": "10",
+    "sha": "572209c0320f98267d8217d5f4506e9f190d5a9f"
+  },
   "modification_status": "clean",
-  "release": "10",
-  "sha": "572209c0320f98267d8217d5f4506e9f190d5a9f",
-  "source": "https://src.fedoraproject.org/rpms/python-jsonschema.git",
   "upstream_repo": "https://github.com/python-jsonschema/jsonschema",
   "version": "4.26.0"
 }

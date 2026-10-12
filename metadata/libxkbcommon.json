@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libxkbcommon.git",
+    "release": "4",
+    "sha": "87c0d29da5312b74222b727f6d28b5834e8394f7"
+  },
   "modification_status": "clean",
-  "release": "4",
   "release_monitoring_project_id": 1780,
-  "sha": "87c0d29da5312b74222b727f6d28b5834e8394f7",
-  "source": "https://src.fedoraproject.org/rpms/libxkbcommon.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/xkbcommon/libxkbcommon",
   "version": "1.13.1"

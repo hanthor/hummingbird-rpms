@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/graphite2.git",
+    "release": "22",
+    "sha": "3697c751ad9dd237ca7c9040baed7cf6fc728fd7"
+  },
   "modification_status": "clean",
-  "release": "22",
-  "sha": "3697c751ad9dd237ca7c9040baed7cf6fc728fd7",
-  "source": "https://src.fedoraproject.org/rpms/graphite2.git",
   "upstream_repo": "https://github.com/silnrsi/graphite",
   "version": "1.3.14"
 }

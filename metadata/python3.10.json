@@ -1,11 +1,13 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python3.10.git",
+    "release": "1",
+    "sha": "7491694b02c3158d416640d7dd3f8bee471e5974"
+  },
   "fix_status": 0,
   "modification_reason": "CVE-2026-4360; CVE-2026-6879; CVE-2026-17084; CVE-2026-19672; CVE-2026-15806; CVE-2026-15310; CVE-2026-87910; CVE-2026-82049; CVE-2026-7210; backport fix for CVE-2026-19553",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "7491694b02c3158d416640d7dd3f8bee471e5974",
-  "source": "https://src.fedoraproject.org/rpms/python3.10.git",
   "upstream_branch": "3.10",
   "upstream_repo": "https://github.com/python/cpython",
   "version": "3.10.22"

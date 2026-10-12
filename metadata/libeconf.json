@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libeconf.git",
+    "release": "4",
+    "sha": "0ae0051ef26268d3d2a46fa05ab5bbda4d58451e"
+  },
   "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): Source0 was missing the 'v' tag prefix openSUSE/libeconf actually uses for its git tags -- repointed at archive/v0.7.9/, which matches the existing recorded checksum exactly, no content change.",
   "modification_status": "modified",
-  "release": "4",
-  "sha": "0ae0051ef26268d3d2a46fa05ab5bbda4d58451e",
-  "source": "https://src.fedoraproject.org/rpms/libeconf.git",
   "upstream_repo": "https://github.com/openSUSE/libeconf",
   "version": "0.7.9"
 }

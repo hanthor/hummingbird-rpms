@@ -50,6 +50,21 @@ def workdir(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _base_metadata(name: str, version: str) -> dict:
+    """Minimum valid metadata for the hum.meta library."""
+    return {
+        'modification_status': 'clean',
+        'version': version,
+        'upstream_repo': 'https://example.com',
+        'fedora': {
+            'git_url': f'https://src.fedoraproject.org/rpms/{name}',
+            'branch': 'rawhide',
+            'sha': 'abc123',
+            'release': '1',
+        },
+    }
+
+
 def _create_package(workdir: Path, name: str, version: str,
                     sources: dict | None = None,
                     metadata: dict | None = None) -> Path:
@@ -60,7 +75,8 @@ def _create_package(workdir: Path, name: str, version: str,
         name: Package name
         version: Package version
         sources: Optional dict mapping filename -> hash for the sources file
-        metadata: Optional metadata dict (written to metadata/<name>.json)
+        metadata: Optional metadata dict merged onto a valid base
+                  (written to metadata/<name>.json)
 
     Returns:
         Path to the package directory
@@ -87,9 +103,13 @@ Test package
         (pkg_dir / 'sources').write_text('\n'.join(lines) + '\n')
 
     if metadata is not None:
+        merged = _base_metadata(name, version)
+        merged.update(metadata)
+        if merged.get('modification_status') == 'independent':
+            merged.pop('fedora', None)
         meta_file = workdir / 'metadata' / f'{name}.json'
         with open(meta_file, 'w') as f:
-            json.dump(metadata, f, indent=2, sort_keys=True)
+            json.dump(merged, f, indent=2, sort_keys=True)
             f.write('\n')
 
     return pkg_dir
@@ -227,8 +247,12 @@ def test_parse_spec_version_release_no_spec(cuv_module, tmp_path: Path) -> None:
 def test_get_version_from_metadata(cuv_module, workdir: Path) -> None:
     """Read version from metadata JSON."""
     _create_package(workdir, 'mypkg', '1.0',
-                    metadata={'version': '2.5', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '2.5',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/mypkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     assert cuv_module.get_version_from_metadata('mypkg') == '2.5'
 
 
@@ -364,8 +388,12 @@ def test_update_gitignore_empty_list(cuv_module, tmp_path: Path) -> None:
 def test_mark_package_modified(cuv_module, workdir: Path) -> None:
     """Sets modification_status to modified and modification_reason."""
     _create_package(workdir, 'pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.mark_package_modified('pkg', 'Update to upstream version 2.0')
 
     with open(workdir / 'metadata' / 'pkg.json') as f:
@@ -377,9 +405,10 @@ def test_mark_package_modified(cuv_module, workdir: Path) -> None:
 def test_mark_package_modified_preserves_independent(cuv_module, workdir: Path) -> None:
     """Does not overwrite independent status with modified."""
     _create_package(workdir, 'pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
-                              'modification_status': 'independent'})
+                    metadata={'modification_status': 'independent', 'version': '1.0',
+                              'upstream_repo': 'https://example.com'})
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.mark_package_modified('pkg', 'Update to upstream version 2.0',
                                      version='2.0')
 
@@ -394,19 +423,24 @@ def test_mark_package_modified_preserves_independent(cuv_module, workdir: Path) 
 def test_mark_package_modified_removes_fedora_release(cuv_module, workdir: Path) -> None:
     """Removes the Fedora release after an upstream version bump."""
     _create_package(workdir, 'pkg', '1.0', metadata={
-        'version': '1.0', 'release': '1', 'source': 'https://example.com',
+        'modification_status': 'clean', 'version': '1.0',
+        'upstream_repo': 'https://example.com',
+        'fedora': {'git_url': 'https://example.com', 'branch': 'rawhide',
+                   'sha': 'abc123', 'release': '1'},
     })
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.mark_package_modified('pkg', 'Update to upstream version 2.0', version='2.0')
 
     data = json.loads((workdir / 'metadata' / 'pkg.json').read_text())
     assert data['version'] == '2.0'
-    assert 'release' not in data
+    assert 'release' not in data.get('fedora', {})
 
 
 def test_mark_package_modified_no_metadata(cuv_module, workdir: Path) -> None:
     """Logs warning and does nothing when metadata file is missing."""
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     # Should not raise
     cuv_module.mark_package_modified('nonexistent', 'reason')
 
@@ -570,12 +604,16 @@ def test_check_package_version_falls_back_to_version(cuv_module, workdir: Path) 
 def test_check_package_version_uses_project_id_string(cuv_module, workdir: Path) -> None:
     """Uses string project_id from metadata to query Anitya by name."""
     _create_package(workdir, 'golang1.26', '1.26.3',
-                    metadata={'version': '1.26.3', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.26.3',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/golang1.26',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 'golang',
                               'track_upstream': '1.26'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.27.0',
@@ -602,11 +640,15 @@ def test_check_package_version_uses_project_id_string(cuv_module, workdir: Path)
 def test_check_package_version_track_version_filters_stable(cuv_module, workdir: Path) -> None:
     """track_version filters stable_versions to matching prefix."""
     _create_package(workdir, 'pkg', '1.26.3',
-                    metadata={'version': '1.26.3', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.26.3',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': '1.26'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -624,11 +666,15 @@ def test_check_package_version_track_version_filters_stable(cuv_module, workdir:
 def test_check_package_version_track_version_no_match(cuv_module, workdir: Path) -> None:
     """Warns when reported releases do not match the tracked version line."""
     _create_package(workdir, 'pkg', '1.24.0',
-                    metadata={'version': '1.24.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.24.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': '1.24'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -828,11 +874,15 @@ def test_check_package_version_gitlab_missing_tracked_release_warning(
 def test_check_package_version_track_version_exact_match(cuv_module, workdir: Path) -> None:
     """track_version matches exact version (not just prefix)."""
     _create_package(workdir, 'pkg', '1.26',
-                    metadata={'version': '1.26', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.26',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': '1.26'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.27',
@@ -851,11 +901,15 @@ def test_check_package_version_track_version_exact_match(cuv_module, workdir: Pa
 def test_check_package_version_uses_project_id(cuv_module, workdir: Path) -> None:
     """Uses release_monitoring_project_id to query Anitya by project ID."""
     _create_package(workdir, 'python3.11', '3.11.11',
-                    metadata={'version': '3.11.11', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '3.11.11',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/python3.11',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 13254})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['3.11.12', '3.11.11', '3.11.10'],
@@ -877,12 +931,16 @@ def test_check_package_version_uses_project_id(cuv_module, workdir: Path) -> Non
 def test_check_package_version_project_id_with_track_version(cuv_module, workdir: Path) -> None:
     """Project ID lookup combined with track_version filtering works."""
     _create_package(workdir, 'python3.11', '3.11.11',
-                    metadata={'version': '3.11.11', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '3.11.11',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/python3.11',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 13254,
                               'track_upstream': '3.11'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['3.13.2', '3.12.8', '3.11.12', '3.11.11'],
@@ -901,11 +959,15 @@ def test_check_package_version_project_id_with_track_version(cuv_module, workdir
 def test_check_package_version_project_id_int(cuv_module, workdir: Path) -> None:
     """Integer project ID queries Anitya by project ID."""
     _create_package(workdir, 'python3.11', '3.11.11',
-                    metadata={'version': '3.11.11', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '3.11.11',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/python3.11',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 13254})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['3.11.12'],
@@ -926,11 +988,15 @@ def test_check_package_version_project_id_int(cuv_module, workdir: Path) -> None
 def test_check_package_version_project_id_not_found(cuv_module, workdir: Path) -> None:
     """Returns error when project ID lookup fails (404)."""
     _create_package(workdir, 'pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 99999})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'query_anitya_by_project_id',
                       side_effect=ValueError('Project ID 99999 not found on release-monitoring.org')):
@@ -943,11 +1009,15 @@ def test_check_package_version_project_id_not_found(cuv_module, workdir: Path) -
 def test_check_package_version_project_id_string_without_track_version(cuv_module, workdir: Path) -> None:
     """String project_id is used for Anitya lookup even without track_version."""
     _create_package(workdir, 'python3.13', '3.13.1',
-                    metadata={'version': '3.13.1', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '3.13.1',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/python3.13',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 'python3.13'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '3.13.2',
@@ -972,12 +1042,16 @@ def test_check_package_version_project_id_string_without_track_version(cuv_modul
 def test_check_package_version_strips_version_suffix(cuv_module, workdir: Path) -> None:
     """Strips configured suffix from upstream versions before comparing."""
     _create_package(workdir, 'swift-lang', '6.3.2',
-                    metadata={'version': '6.3.2', 'release': '5',
+                    metadata={'modification_status': 'clean', 'version': '6.3.2',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/swift-lang',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '5'},
                               'release_monitoring_project_id': 21267,
                               'version_suffix_strip': '-RELEASE'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '6.3.3-RELEASE',
@@ -997,12 +1071,16 @@ def test_check_package_version_strips_version_suffix(cuv_module, workdir: Path) 
 def test_check_package_version_suffix_strip_no_update(cuv_module, workdir: Path) -> None:
     """No update when stripped version matches current."""
     _create_package(workdir, 'swift-lang', '6.3.2',
-                    metadata={'version': '6.3.2', 'release': '5',
+                    metadata={'modification_status': 'clean', 'version': '6.3.2',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/swift-lang',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '5'},
                               'release_monitoring_project_id': 21267,
                               'version_suffix_strip': '-RELEASE'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '6.3.2-RELEASE',
@@ -1046,13 +1124,17 @@ def test_check_package_version_transforms_openjdk_version(
 ) -> None:
     """Detects update when Anitya version is transformed to RPM scheme."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
-                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '21.0.11.0.10',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['21.0.12.1+0', '21.0.12+8', '21.0.11+10'],
@@ -1072,13 +1154,17 @@ def test_check_package_version_transform_no_update(
 ) -> None:
     """No update when transformed version matches current."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.12.0.8',
-                    metadata={'version': '21.0.12.0.8', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '21.0.12.0.8',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['21.0.12+8', '21.0.11+10'],
@@ -1097,13 +1183,17 @@ def test_check_package_version_transform_with_cpu_release(
 ) -> None:
     """Handles OpenJDK CPU/PSU releases with 4-part base version."""
     _create_package(workdir, 'java-25-openjdk-portable', '25.0.4.0.7',
-                    metadata={'version': '25.0.4.0.7', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '25.0.4.0.7',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-25-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 378887,
                               'track_upstream': '25',
                               'upstream_version_transform': 'openjdk_to_rpm'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['25.0.4.1+0', '25.0.4+7'],
@@ -1122,13 +1212,17 @@ def test_check_package_version_transform_skips_unparseable(
 ) -> None:
     """Unparseable versions in stable_versions are filtered out."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
-                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '21.0.11.0.10',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['bad-tag', '21.0.12+8', '21.0.11+10'],
@@ -1193,7 +1287,10 @@ def test_check_package_version_skips_unavailable_source(
 ) -> None:
     """source_availability_check filters out versions whose tarball is not published."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
-                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '21.0.11.0.10',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm',
@@ -1201,6 +1298,7 @@ def test_check_package_version_skips_unavailable_source(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['21.0.12.1+0', '21.0.12+8', '21.0.11+10'],
@@ -1232,7 +1330,10 @@ def test_check_package_version_all_sources_unavailable(
 ) -> None:
     """No update when all candidate source tarballs return 404."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
-                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '21.0.11.0.10',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm',
@@ -1240,6 +1341,7 @@ def test_check_package_version_all_sources_unavailable(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['21.0.12.1+0'],
@@ -1267,7 +1369,10 @@ def test_check_package_version_all_sources_unavailable(
 def test_check_source_available_unknown(cuv_module) -> None:
     """check_source_available raises ValueError for unknown checker name."""
     with pytest.raises(ValueError, match="unknown source_availability_check"):
-        cuv_module.check_source_available('1.0', 'nonexistent', {})
+        cuv_module.check_source_available(
+            '1.0', 'nonexistent',
+            types.SimpleNamespace(upstream_repo=None, track_upstream=None),
+        )
 
 
 def test_http_source_check_expands_metadata_variables(cuv_module) -> None:
@@ -1281,10 +1386,10 @@ def test_http_source_check_expands_metadata_variables(cuv_module) -> None:
             ),
         ],
     }
-    metadata = {
-        'upstream_repo': 'https://github.com/ofiwg/libfabric/',
-        'track_upstream': 'latest',
-    }
+    metadata = types.SimpleNamespace(
+        upstream_repo='https://github.com/ofiwg/libfabric/',
+        track_upstream='latest',
+    )
 
     with patch.object(cuv_module, '_check_source_exists', return_value=True) as check:
         assert cuv_module.check_source_available('2.7.0', config, metadata) is True
@@ -1308,7 +1413,10 @@ def test_http_source_check_requires_every_url(cuv_module) -> None:
     with patch.object(
         cuv_module, '_check_source_exists', side_effect=[True, False],
     ) as check:
-        assert cuv_module.check_source_available('1.2.3', config, {}) is False
+        assert cuv_module.check_source_available(
+            '1.2.3', config,
+            types.SimpleNamespace(upstream_repo=None, track_upstream=None),
+        ) is False
 
     assert [call.args[0] for call in check.call_args_list] == [
         'https://example.com/project-1.2.3.tar.gz',
@@ -1340,7 +1448,10 @@ def test_source_availability_probe_rejects_invalid_config(
 ) -> None:
     """Invalid source probe configurations fail with actionable errors."""
     with pytest.raises(ValueError, match=message):
-        cuv_module.check_source_available('1.0', config, {})
+        cuv_module.check_source_available(
+            '1.0', config,
+            types.SimpleNamespace(upstream_repo=None, track_upstream=None),
+        )
 
 
 def test_openjdk_source_check_url_construction(cuv_module) -> None:
@@ -1352,7 +1463,7 @@ def test_openjdk_source_check_url_construction(cuv_module) -> None:
         return True
 
     with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
-        cuv_module._openjdk_source_check('21.0.12+8', {'track_upstream': '21'})
+        cuv_module._openjdk_source_check('21.0.12+8', types.SimpleNamespace(track_upstream='21'))
 
     assert checked_urls == [
         'https://openjdk-sources.osci.io/openjdk21/openjdk-21.0.12+8.tar.xz',
@@ -1360,7 +1471,7 @@ def test_openjdk_source_check_url_construction(cuv_module) -> None:
 
     checked_urls.clear()
     with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
-        cuv_module._openjdk_source_check('25.0.1+3', {'track_upstream': 'latest'})
+        cuv_module._openjdk_source_check('25.0.1+3', types.SimpleNamespace(track_upstream='latest'))
 
     assert checked_urls == [
         'https://openjdk-sources.osci.io/openjdk/openjdk-25.0.1+3.tar.xz',
@@ -1368,7 +1479,7 @@ def test_openjdk_source_check_url_construction(cuv_module) -> None:
 
     checked_urls.clear()
     with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
-        cuv_module._openjdk_source_check('25.0.1+3', {})
+        cuv_module._openjdk_source_check('25.0.1+3', types.SimpleNamespace(track_upstream=None))
 
     assert checked_urls == [
         'https://openjdk-sources.osci.io/openjdk/openjdk-25.0.1+3.tar.xz',
@@ -1384,7 +1495,7 @@ def test_tomcat_source_check_requires_published_source_and_signature(cuv_module)
         return True
 
     with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
-        assert cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+        assert cuv_module._tomcat_source_check('10.1.60', types.SimpleNamespace(track_upstream='10.1'))
 
     assert checked_urls == [
         'https://downloads.apache.org/tomcat/tomcat-10/v10.1.60/src/'
@@ -1394,10 +1505,10 @@ def test_tomcat_source_check_requires_published_source_and_signature(cuv_module)
     ]
 
     with patch.object(cuv_module, '_check_source_exists', return_value=False):
-        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+        assert not cuv_module._tomcat_source_check('10.1.60', types.SimpleNamespace(track_upstream='10.1'))
 
     with patch.object(cuv_module, '_check_source_exists', side_effect=[True, False]):
-        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': '10.1'})
+        assert not cuv_module._tomcat_source_check('10.1.60', types.SimpleNamespace(track_upstream='10.1'))
 
 
 def test_tomcat11_source_check_does_not_require_signature(cuv_module) -> None:
@@ -1409,7 +1520,7 @@ def test_tomcat11_source_check_does_not_require_signature(cuv_module) -> None:
         return True
 
     with patch.object(cuv_module, '_check_source_exists', side_effect=capture_check):
-        assert cuv_module._tomcat_source_check('11.0.26', {'track_upstream': '11'})
+        assert cuv_module._tomcat_source_check('11.0.26', types.SimpleNamespace(track_upstream='11'))
 
     assert checked_urls == [
         'https://downloads.apache.org/tomcat/tomcat-11/v11.0.26/src/'
@@ -1420,7 +1531,7 @@ def test_tomcat11_source_check_does_not_require_signature(cuv_module) -> None:
 def test_tomcat_source_check_ignores_missing_track_upstream(cuv_module) -> None:
     """A malformed metadata value must not produce a tomcat-None probe."""
     with patch.object(cuv_module, '_check_source_exists') as check_exists:
-        assert not cuv_module._tomcat_source_check('10.1.60', {'track_upstream': None})
+        assert not cuv_module._tomcat_source_check('10.1.60', types.SimpleNamespace(track_upstream=None))
 
     check_exists.assert_not_called()
 
@@ -1428,12 +1539,16 @@ def test_tomcat_source_check_ignores_missing_track_upstream(cuv_module) -> None:
 def test_source_check_uses_only_tracked_versions(cuv_module, workdir: Path) -> None:
     """Availability checks do not probe a different line of a shared project."""
     _create_package(workdir, 'tomcat10', '10.1.59',
-                    metadata={'version': '10.1.59', 'release': '0.1',
+                    metadata={'modification_status': 'clean', 'version': '10.1.59',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tomcat10',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '0.1'},
                               'release_monitoring_project_id': 148939,
                               'track_upstream': '10.1',
                               'source_availability_check': 'tomcat_apache'})
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     checked_versions = []
 
     def source_available(version: str, _checker: str, _meta: dict) -> bool:
@@ -1456,12 +1571,16 @@ def test_source_check_uses_only_tracked_versions(cuv_module, workdir: Path) -> N
 def test_source_check_preserves_other_version_lines(cuv_module, workdir: Path) -> None:
     """Rejecting a tracked candidate must not discard other Anitya versions."""
     _create_package(workdir, 'tomcat10', '10.1.59',
-                    metadata={'version': '10.1.59', 'release': '0.1',
+                    metadata={'modification_status': 'clean', 'version': '10.1.59',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tomcat10',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '0.1'},
                               'release_monitoring_project_id': 148939,
                               'track_upstream': '10.1',
                               'source_availability_check': 'tomcat_apache'})
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     anitya_data = {'stable_versions': ['11.0.26', '10.1.60', '10.1.59']}
 
     with (
@@ -1481,7 +1600,10 @@ def test_check_package_version_source_checker_dispatches_correctly(
 ) -> None:
     """source_availability_check dispatches to the named checker with correct args."""
     _create_package(workdir, 'java-21-openjdk-portable', '21.0.11.0.10',
-                    metadata={'version': '21.0.11.0.10', 'release': '2',
+                    metadata={'modification_status': 'clean', 'version': '21.0.11.0.10',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/java-21-openjdk-portable',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '2'},
                               'release_monitoring_project_id': 369281,
                               'track_upstream': '21',
                               'upstream_version_transform': 'openjdk_to_rpm',
@@ -1489,6 +1611,7 @@ def test_check_package_version_source_checker_dispatches_correctly(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'stable_versions': ['21.0.12+8'],
@@ -2189,7 +2312,8 @@ def test_run_gorget_pipeline_passes_upstream_repo_when_declared(
     _create_package(
         workdir, 'pkg', '1.0',
         sources={'pkg-1.0.tar.gz': 'oldhash'},
-        metadata={'upstream_repo': 'https://example.com/org/pkg'},
+        metadata={'modification_status': 'independent', 'version': '1.0',
+                  'upstream_repo': 'https://example.com/org/pkg'},
     )
     pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
     pipeline_file.write_text('fetch: []\n')
@@ -2201,6 +2325,7 @@ def test_run_gorget_pipeline_passes_upstream_repo_when_declared(
          ) as mock_run:
         cuv_module.RPMS_DIR = workdir / 'rpms'
         cuv_module.METADATA_DIR = workdir / 'metadata'
+        cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
         cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
 
     cmd = mock_run.call_args.args[0]
@@ -2402,6 +2527,7 @@ def test_update_spec_version_checks_patches(
     """Check expanded patch names against Source0, not the first downloaded archive."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     spec = pkg / 'pkg.spec'
     spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
@@ -2419,6 +2545,7 @@ def test_update_spec_version_checks_patches(
                    check=True, stdout=subprocess.DEVNULL)
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.ROOT_DIR = workdir
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[
@@ -2445,6 +2572,7 @@ def test_update_spec_version_leaves_patch_applicability_to_build(
     """Non-upstreamed patches are retained without forward checks or application."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     spec = pkg / 'pkg.spec'
     spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
@@ -2459,6 +2587,7 @@ def test_update_spec_version_leaves_patch_applicability_to_build(
         tar.add(src_dir, arcname='pkg-2.0')
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.ROOT_DIR = workdir
 
     with patch.object(cuv_module, 'download_new_sources', return_value=['pkg-2.0.tar.gz']), \
@@ -2530,7 +2659,9 @@ def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> No
 def test_upstream_update_stale_patch_requires_review(
     cuv_module, workdir: Path, workqueue: bool, stale: bool,
 ) -> None:
-    pkg = _create_package(workdir, 'pkg', '1.0', metadata={'version': '1.0'})
+    pkg = _create_package(workdir, 'pkg', '1.0',
+                          metadata={'modification_status': 'independent', 'version': '1.0',
+                                    'upstream_repo': 'https://example.com'})
     patch_file = pkg / 'fix.patch'
     patch_file.write_text('patch')
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
@@ -2579,14 +2710,17 @@ def test_update_spec_version(cuv_module, workdir: Path) -> None:
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
                     metadata={
+                        'modification_status': 'clean',
                         'version': '1.0',
-                        'release': '1',
-                        'source': 'https://example.com',
+                        'upstream_repo': 'https://example.com',
+                        'fedora': {'git_url': 'https://example.com', 'branch': 'rawhide',
+                                   'sha': 'abc123', 'release': '1'},
                     })
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources',
                       return_value=['pkg-2.0.tar.gz']) as mock_dl:
@@ -2602,7 +2736,7 @@ def test_update_spec_version(cuv_module, workdir: Path) -> None:
     assert data['modification_status'] == 'modified'
     assert 'Update to upstream version 2.0' in data['modification_reason']
     assert data['version'] == '2.0'
-    assert 'release' not in data
+    assert 'release' not in data.get('fedora', {})
 
 
 def test_update_spec_version_sets_release_0_1(cuv_module, workdir: Path) -> None:
@@ -2610,11 +2744,15 @@ def test_update_spec_version_sets_release_0_1(cuv_module, workdir: Path) -> None
     sorts higher and replaces the locally-built version."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[]):
         cuv_module.update_spec_version('pkg', '2.0')
@@ -2628,13 +2766,14 @@ def test_update_spec_version_removes_independent_release(cuv_module, workdir: Pa
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
                     metadata={
-                        'version': '1.0',
-                        'release': '1',
                         'modification_status': 'independent',
+                        'version': '1.0',
+                        'upstream_repo': 'https://example.com',
                     })
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[]):
         cuv_module.update_spec_version('pkg', '2.0')
@@ -2651,7 +2790,10 @@ def test_update_spec_version_ignores_matching_dependency_version(
     package_dir = _create_package(
         workdir, 'pkg', '13.1.0',
         sources={'pkg-13.1.0.tar.gz': 'oldhash'},
-        metadata={'version': '13.1.0', 'release': '1'},
+        metadata={'modification_status': 'clean', 'version': '13.1.0',
+                  'upstream_repo': 'https://example.com',
+                  'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                             'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}},
     )
     spec_file = package_dir / 'pkg.spec'
     spec_file.write_text(spec_file.read_text().replace(
@@ -2661,6 +2803,7 @@ def test_update_spec_version_ignores_matching_dependency_version(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[]):
         cuv_module.update_spec_version('pkg', '13.1.1')
@@ -2826,7 +2969,10 @@ def test_update_spec_version_with_update_spec_hook(
     """update_spec hook replaces default version update logic."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     import yaml
     hooks_data = {
@@ -2839,6 +2985,7 @@ def test_update_spec_version_with_update_spec_hook(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources',
                       return_value=['pkg-2.0.tar.gz']):
@@ -2855,7 +3002,10 @@ def test_update_spec_version_with_download_sources_hook(
     """download_sources hook replaces default download path."""
     pkg_dir = _create_package(workdir, 'pkg', '1.0',
                               sources={'pkg-1.0.tar.gz': 'oldhash'},
-                              metadata={'version': '1.0', 'release': '1'})
+                              metadata={'modification_status': 'clean', 'version': '1.0',
+                                        'upstream_repo': 'https://example.com',
+                                        'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                                   'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     import yaml
     # The hook creates a fake file and prints its name
@@ -2872,6 +3022,7 @@ def test_update_spec_version_with_download_sources_hook(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, '_upload_to_lookaside'):
         downloaded = cuv_module.update_spec_version('pkg', '2.0')
@@ -2890,7 +3041,10 @@ def test_update_spec_version_with_post_update_hook(
     """post_update hook runs after default phases."""
     pkg_dir = _create_package(workdir, 'pkg', '1.0',
                               sources={'pkg-1.0.tar.gz': 'oldhash'},
-                              metadata={'version': '1.0', 'release': '1'})
+                              metadata={'modification_status': 'clean', 'version': '1.0',
+                                        'upstream_repo': 'https://example.com',
+                                        'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                                   'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     import yaml
     hooks_data = {
@@ -2903,6 +3057,7 @@ def test_update_spec_version_with_post_update_hook(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
          caplog.at_level('INFO'):
@@ -2922,7 +3077,10 @@ def test_update_spec_version_hook_failure_propagates(
     """Hook failure propagates RuntimeError to caller."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     import yaml
     hooks_data = {
@@ -2935,6 +3093,7 @@ def test_update_spec_version_hook_failure_propagates(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with pytest.raises(RuntimeError, match='update_spec hook failed'):
         cuv_module.update_spec_version('pkg', '2.0')
@@ -2946,11 +3105,15 @@ def test_update_spec_version_no_hooks_default_path(
     """Without hooks file, the default specfile-library path is used."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'download_new_sources',
                       return_value=['pkg-2.0.tar.gz']) as mock_dl:
@@ -2971,7 +3134,10 @@ def test_update_spec_version_pipeline_takes_priority_over_hooks(
     generic default for the source-download phase."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     import yaml
     (workdir / 'metadata' / 'pkg.update-hooks.yaml').write_text(
@@ -2982,6 +3148,7 @@ def test_update_spec_version_pipeline_takes_priority_over_hooks(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, '_run_gorget_pipeline',
                       return_value=['pkg-2.0.tar.gz']) as mock_pipeline:
@@ -3000,7 +3167,10 @@ def test_update_spec_version_pipeline_keeps_update_spec_hook(
     pkg_dir = _create_package(
         workdir, 'pkg', '1.0',
         sources={'pkg-1.0.tar.gz': 'oldhash'},
-        metadata={'version': '1.0', 'release': '1'},
+        metadata={'modification_status': 'clean', 'version': '1.0',
+                  'upstream_repo': 'https://example.com',
+                  'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                             'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}},
     )
     spec_path = pkg_dir / 'pkg.spec'
     spec_path.write_text(
@@ -3025,6 +3195,7 @@ def test_update_spec_version_pipeline_keeps_update_spec_hook(
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, '_run_gorget_pipeline', return_value=[]) \
             as mock_pipeline:
@@ -3044,12 +3215,16 @@ def test_update_spec_version_skip_pipeline_forces_legacy_path(
     even when it exists, falling back to the default path."""
     _create_package(workdir, 'pkg', '1.0',
                     sources={'pkg-1.0.tar.gz': 'oldhash'},
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
     (workdir / 'metadata' / 'pkg.source-pipeline.yaml').write_text('fetch: []\n')
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     cuv_module.skip_pipeline = True
 
     try:
@@ -3075,7 +3250,10 @@ def test_commit_excludes_lookaside_files(cuv_module, workdir: Path) -> None:
     pkg_dir = _create_package(
         workdir, 'pkg', '1.0',
         sources={'pkg-1.0.tar.gz': 'oldhash'},
-        metadata={'version': '1.0', 'release': '1'},
+        metadata={'modification_status': 'clean', 'version': '1.0',
+                  'upstream_repo': 'https://example.com',
+                  'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                             'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}},
     )
 
     # Stage initial package state
@@ -3085,6 +3263,7 @@ def test_commit_excludes_lookaside_files(cuv_module, workdir: Path) -> None:
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
     cuv_module.ROOT_DIR = workdir
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     # Simulate what main() does: update spec, create source file,
     # update .gitignore, git add, commit.
@@ -3150,7 +3329,9 @@ def test_cli_check_json_reports_source_warnings(
     _create_package(
         workdir, 'pkg', '1.0',
         metadata={
+            'modification_status': 'independent',
             'version': '1.0',
+            'upstream_repo': 'https://example.com',
             'track_upstream': 'latest',
             'source_availability_check': {
                 'type': 'http',
@@ -3160,6 +3341,7 @@ def test_cli_check_json_reports_source_warnings(
     )
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     mock_response = {
         'version': '2.0',
         'stable_versions': ['2.0'],
@@ -3264,7 +3446,9 @@ def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     _create_package(
         workdir, 'pkg', '1.0',
         metadata={
+            'modification_status': 'independent',
             'version': '1.0',
+            'upstream_repo': 'https://example.com',
             'track_upstream': 'latest',
             'source_availability_check': {
                 'type': 'http',
@@ -3274,6 +3458,7 @@ def test_cli_warning_only_package_is_not_counted_as_up_to_date(
     )
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with (
         patch.object(cuv_module, 'query_anitya', return_value={
@@ -3337,10 +3522,16 @@ def test_update_continues_after_package_failure(
 ) -> None:
     """A failed package update is restored and does not block later packages."""
     _create_package(workdir, 'bad', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/bad',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'good', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/good',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
     subprocess.run(['git', 'commit', '-m', 'Add packages'], cwd=workdir, check=True)
@@ -3348,6 +3539,7 @@ def test_update_continues_after_package_failure(
     cuv_module.ROOT_DIR = workdir
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     results = {
         'bad': cuv_module.VersionCheckResult(
@@ -3414,13 +3606,20 @@ def test_update_continues_after_package_failure(
 def test_main_skips_packages_without_track_upstream(cuv_module, workdir: Path) -> None:
     """main() skips packages without track_upstream when no CLI args given."""
     _create_package(workdir, 'tracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'untracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.0',
@@ -3448,11 +3647,15 @@ def test_main_skips_packages_without_track_upstream(cuv_module, workdir: Path) -
 def test_main_checks_tracked_packages(cuv_module, workdir: Path) -> None:
     """main() checks packages that have track_upstream: true."""
     _create_package(workdir, 'pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -3474,7 +3677,9 @@ def test_main_sudo_current_patchlevel_is_noop(
 ) -> None:
     """--update must not rewrite Fedora's spec or download p2p2 sources."""
     pkg_dir = _create_package(workdir, 'sudo', '1.9.17', metadata={
-        'version': '1.9.17', 'release': '16.p2',
+        'version': '1.9.17',
+        'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/sudo',
+                   'branch': 'rawhide', 'sha': 'abc123', 'release': '16.p2'},
         'track_upstream': 'latest', 'release_monitoring_project_id': 4906,
     })
     spec_file = pkg_dir / 'sudo.spec'
@@ -3508,10 +3713,14 @@ def test_main_sudo_current_patchlevel_is_noop(
 def test_main_explicit_args_bypass_track_filter(cuv_module, workdir: Path) -> None:
     """Explicit CLI package args bypass the track_upstream filter."""
     _create_package(workdir, 'untracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -3538,13 +3747,20 @@ def test_list_subcommand_includes_all_packages(
 ) -> None:
     """list subcommand includes both tracked and untracked packages."""
     _create_package(workdir, 'tracked-pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tracked-pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'untracked-pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked-pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.0',
@@ -3568,10 +3784,14 @@ def test_list_subcommand_shows_not_found(
 ) -> None:
     """list subcommand shows not-found status for missing packages."""
     _create_package(workdir, 'missing-pkg', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/missing-pkg',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     with patch.object(cuv_module, 'query_anitya',
                       side_effect=ValueError('Package not found in Fedora')), \
@@ -3592,14 +3812,18 @@ def test_list_subcommand_shows_source_warning(
     _create_package(
         workdir, 'pending-source', '1.0',
         metadata={
+            'modification_status': 'clean',
             'version': '1.0',
-            'release': '1',
+            'upstream_repo': 'https://example.com',
+            'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/pending-source',
+                       'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
             'track_upstream': 'latest',
         },
     )
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     warning = (
         'skipped upstream version 2.0: required source artifact is not published'
     )
@@ -3635,13 +3859,20 @@ def test_list_subcommand_json_output(
 ) -> None:
     """list subcommand with --json produces valid JSON with all packages."""
     _create_package(workdir, 'alpha', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/alpha',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'beta', '2.0',
-                    metadata={'version': '2.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '2.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/beta',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -3671,13 +3902,20 @@ def test_list_subcommand_shows_tracking_status(
 ) -> None:
     """list subcommand shows correct tracking status from metadata."""
     _create_package(workdir, 'tracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'untracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.0',
@@ -3708,13 +3946,20 @@ def test_list_subcommand_shows_tracking_status(
 def test_check_subcommand_filters_tracked(cuv_module, workdir: Path) -> None:
     """check subcommand only checks packages with track_upstream: true."""
     _create_package(workdir, 'tracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1',
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/tracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'},
                               'track_upstream': 'latest'})
     _create_package(workdir, 'untracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '1.0',
@@ -3743,10 +3988,14 @@ def test_check_subcommand_filters_tracked(cuv_module, workdir: Path) -> None:
 def test_check_subcommand_with_packages(cuv_module, workdir: Path) -> None:
     """check subcommand with explicit packages bypasses track filter."""
     _create_package(workdir, 'untracked', '1.0',
-                    metadata={'version': '1.0', 'release': '1'})
+                    metadata={'modification_status': 'clean', 'version': '1.0',
+                              'upstream_repo': 'https://example.com',
+                              'fedora': {'git_url': 'https://src.fedoraproject.org/rpms/untracked',
+                                         'branch': 'rawhide', 'sha': 'abc123', 'release': '1'}})
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0',
@@ -4097,6 +4346,7 @@ def test_check_package_version_gitlab_tags_sets_version_source(
     """version_source field is populated in VersionCheckResult for gitlab_tags."""
     _create_package(workdir, 'mypackage', '1.0.0',
                     metadata={
+                        'modification_status': 'independent',
                         'version': '1.0.0',
                         'version_source': 'gitlab_tags',
                         'upstream_repo': 'https://gitlab.com/group/project',
@@ -4105,6 +4355,7 @@ def test_check_package_version_gitlab_tags_sets_version_source(
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0.0',
@@ -4125,12 +4376,15 @@ def test_check_package_version_anitya_version_source_is_none(
     """version_source field is None for standard Anitya-based lookups."""
     _create_package(workdir, 'mypackage', '1.0.0',
                     metadata={
+                        'modification_status': 'independent',
                         'version': '1.0.0',
+                        'upstream_repo': 'https://example.com',
                         'release_monitoring_project_id': 42,
                     })
 
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
 
     mock_response = {
         'version': '2.0.0',
@@ -4238,6 +4492,7 @@ def test_git_clone_env_private_repo_injects_config_rewrite(cuv_module) -> None:
 def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, workdir: Path) -> None:
     package = _create_package(workdir, 'pkg', '1.0', metadata={
         'version': '1.0', 'modification_status': 'independent',
+        'upstream_repo': 'https://example.com/pkg',
     })
     (package / '.gitignore').write_text('*.patch\n')
     (package / 'old:fix.patch').write_bytes(b'old payload')
@@ -4248,6 +4503,7 @@ def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, 
     cuv_module.ROOT_DIR = workdir
     cuv_module.RPMS_DIR = workdir / 'rpms'
     cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
     with patch.object(cuv_module, 'download_new_sources', return_value=[]), \
          patch.object(cuv_module, '_check_updated_patches'):
         cuv_module.update_spec_version('pkg', '2.0')
@@ -4261,3 +4517,72 @@ def test_upstream_update_sanitizes_hook_patch_and_workqueue_actions(cuv_module, 
                for action in actions)
     assert any(action['action'] == 'update' and action['file_path'] == 'rpms/pkg/old~3afix.patch'
                and action['content'] for action in actions)
+
+
+#
+# Tests — MalformedMetadataError graceful handling
+#
+
+
+def _write_malformed_metadata(workdir: Path, name: str) -> None:
+    """Write a valid JSON file that the hum.meta library rejects."""
+    meta_file = workdir / 'metadata' / f'{name}.json'
+    meta_file.write_text(json.dumps({'modification_status': 'BOGUS'}) + '\n')
+
+
+def test_get_version_from_metadata_malformed(cuv_module, workdir: Path) -> None:
+    """Returns None when metadata is valid JSON but structurally invalid."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    assert cuv_module.get_version_from_metadata('pkg') is None
+
+
+def test_mark_package_modified_malformed(cuv_module, workdir: Path, caplog) -> None:
+    """Logs error and returns without crashing on malformed metadata."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    with caplog.at_level('ERROR'):
+        cuv_module.mark_package_modified('pkg', 'reason')
+    assert 'malformed metadata' in caplog.text
+
+
+def test_check_package_version_malformed(cuv_module, workdir: Path) -> None:
+    """Returns a result with an error string instead of crashing."""
+    _create_package(workdir, 'pkg', '1.0')
+    _write_malformed_metadata(workdir, 'pkg')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+    result = cuv_module.check_package_version('pkg', 'fedora')
+    assert result.error
+    assert 'Malformed metadata' in result.error
+    assert not result.has_update
+
+
+def test_run_gorget_pipeline_malformed_metadata(
+    cuv_module, workdir: Path, caplog,
+) -> None:
+    """Malformed metadata omits --upstream-repo but pipeline still runs."""
+    _create_package(workdir, 'pkg', '1.0', sources={'pkg-1.0.tar.gz': 'oldhash'})
+    _write_malformed_metadata(workdir, 'pkg')
+    pipeline_file = workdir / 'metadata' / 'pkg.source-pipeline.yaml'
+    pipeline_file.write_text('fetch: []\n')
+
+    fake_run = _fake_gorget_run({'pkg-2.0.tar.gz': b'x'})
+    with patch.object(cuv_module, '_upload_to_lookaside'), \
+         patch.object(
+             cuv_module, '_run_gorget_command', side_effect=fake_run,
+         ) as mock_run, \
+         caplog.at_level('WARNING'):
+        cuv_module.RPMS_DIR = workdir / 'rpms'
+        cuv_module.METADATA_DIR = workdir / 'metadata'
+        cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+        cuv_module._run_gorget_pipeline('pkg', '1.0', '2.0', pipeline_file)
+
+    cmd = mock_run.call_args.args[0]
+    assert '--upstream-repo' not in cmd
+    assert 'malformed metadata' in caplog.text

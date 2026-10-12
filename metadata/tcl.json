@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/tcl.git",
+    "release": "1",
+    "sha": "b13f131fc6fab5080e47bf50e4b488580b21d36a"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "b13f131fc6fab5080e47bf50e4b488580b21d36a",
-  "source": "https://src.fedoraproject.org/rpms/tcl.git",
   "upstream_repo": "https://github.com/tcltk/tcl",
   "version": "9.0.4"
 }

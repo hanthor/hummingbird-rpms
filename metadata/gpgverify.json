@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gpgverify.git",
+    "release": "5",
+    "sha": "e6fb70441dd7aa8da53c4abf1741724e274210b8"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "e6fb70441dd7aa8da53c4abf1741724e274210b8",
-  "source": "https://src.fedoraproject.org/rpms/gpgverify.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/gpgverify",
   "version": "2.2"
 }

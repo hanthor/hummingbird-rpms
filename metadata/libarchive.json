@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libarchive.git",
+    "release": "2",
+    "sha": "a8cfe7b27ca28896432ba7aac3ddc9aba32966ca"
+  },
   "modification_reason": "backport fix for CVE-2026-15028; backport fix for CVE-2026-16517",
   "modification_status": "modified",
-  "release": "2",
-  "sha": "a8cfe7b27ca28896432ba7aac3ddc9aba32966ca",
-  "source": "https://src.fedoraproject.org/rpms/libarchive.git",
   "upstream_repo": "https://github.com/libarchive/libarchive",
   "version": "3.8.9"
 }

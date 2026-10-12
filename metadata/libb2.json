@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libb2.git",
+    "release": "16",
+    "sha": "d37de09baa2293d1f905293ad37e29f269dfdeb2"
+  },
   "modification_status": "clean",
-  "release": "16",
-  "sha": "d37de09baa2293d1f905293ad37e29f269dfdeb2",
-  "source": "https://src.fedoraproject.org/rpms/libb2.git",
   "upstream_repo": "https://github.com/BLAKE2/libb2",
   "version": "0.98.1"
 }

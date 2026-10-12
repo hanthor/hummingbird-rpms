@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libsodium.git",
+    "release": "2",
+    "sha": "f37bdb885868d4466dcf815e4817148edf523d2d"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "f37bdb885868d4466dcf815e4817148edf523d2d",
-  "source": "https://src.fedoraproject.org/rpms/libsodium.git",
   "upstream_repo": "https://github.com/jedisct1/libsodium",
   "version": "1.0.22"
 }

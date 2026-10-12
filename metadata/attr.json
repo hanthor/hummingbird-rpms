@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/attr.git",
+    "release": "2",
+    "sha": "16cb4edfcb980bb9cec97d6206c7b410a22a8002"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "16cb4edfcb980bb9cec97d6206c7b410a22a8002",
-  "source": "https://src.fedoraproject.org/rpms/attr.git",
   "upstream_repo": "https://git.savannah.nongnu.org/git/attr.git",
   "version": "2.6.0"
 }

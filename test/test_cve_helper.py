@@ -1150,7 +1150,8 @@ def test_release_bump_payload(tmp_path: Path, monkeypatch) -> None:
         encoding="utf-8",
     )
     (tmp_path / "metadata" / f"{pkg}.json").write_text(
-        json.dumps({"modification_status": "modified", "release": "3.1"}),
+        json.dumps({"modification_status": "modified",
+                     "fedora": {"release": "3.1"}}),
         encoding="utf-8",
     )
     monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
@@ -1178,7 +1179,8 @@ def test_release_bump_autorelease(tmp_path: Path, monkeypatch) -> None:
         encoding="utf-8",
     )
     (tmp_path / "metadata" / f"{pkg}.json").write_text(
-        json.dumps({"modification_status": "clean", "release": "5"}),
+        json.dumps({"modification_status": "clean",
+                     "fedora": {"release": "5"}}),
         encoding="utf-8",
     )
     monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)

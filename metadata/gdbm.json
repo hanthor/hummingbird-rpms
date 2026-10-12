@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gdbm.git",
+    "release": "1",
+    "sha": "cb9d30db5db59467d21b30b5492f5fcc54aa32b6"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "cb9d30db5db59467d21b30b5492f5fcc54aa32b6",
-  "source": "https://src.fedoraproject.org/rpms/gdbm.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/gdbm.git",
   "version": "1.26"
 }

@@ -1,6 +1,6 @@
 """Tests that every RPM package has upstream_repo in its metadata."""
 
-import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -8,6 +8,12 @@ import pytest
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RPMS_DIR = ROOT_DIR / "rpms"
 METADATA_DIR = ROOT_DIR / "metadata"
+
+sys.path.insert(0, str(ROOT_DIR))
+from hum.meta import MetadataRepository  # noqa: E402
+from hum.meta.model import MalformedMetadataError  # noqa: E402
+
+_METADATA_REPO = MetadataRepository(ROOT_DIR)
 
 MISSING_FIELD_MESSAGE = """\
 Package '{package}' is missing the 'upstream_repo' field in metadata/{package}.json.
@@ -39,33 +45,19 @@ def _rpm_package_names() -> list[str]:
     return sorted(d.name for d in RPMS_DIR.iterdir() if d.is_dir())
 
 
-def _load_metadata(package: str) -> dict | None:
-    """Load metadata JSON for a package, or None if missing."""
-    path = METADATA_DIR / f"{package}.json"
-    if not path.exists():
-        return None
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        pytest.fail(f"metadata/{package}.json contains invalid JSON: {e}")
-
-
 @pytest.mark.parametrize("package", _rpm_package_names())
 def test_upstream_repo_exists(package: str) -> None:
     """Each RPM package must have upstream_repo set in its metadata."""
-    metadata = _load_metadata(package)
-    assert metadata is not None, (
+    path = METADATA_DIR / f"{package}.json"
+    assert path.exists(), (
         f"Package '{package}' has no metadata file at metadata/{package}.json. "
         f"Create the file with at least: "
         f'{{"upstream_repo": "https://github.com/example/project", '
         f'"version": "...", "modification_status": "independent"}}'
     )
-    val = metadata.get("upstream_repo")
-    assert val is not None, MISSING_FIELD_MESSAGE.format(package=package)
-    assert val != "", (
-        f"Package '{package}' has an empty 'upstream_repo' value in "
-        f"metadata/{package}.json. Set it to the canonical upstream git "
-        f"repository URL, or use "
-        f"'https://src.fedoraproject.org/rpms/{package}' as a fallback."
-    )
+    try:
+        _METADATA_REPO.load(package)
+    except MalformedMetadataError as e:
+        if "upstream_repo" in str(e):
+            pytest.fail(MISSING_FIELD_MESSAGE.format(package=package))
+        pytest.fail(f"metadata/{package}.json is malformed: {e}")

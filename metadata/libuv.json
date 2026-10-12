@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libuv.git",
+    "release": "2",
+    "sha": "a17f04ba152d9f1a8e4f1acefe27c019483ad1c0"
+  },
   "modification_status": "clean",
-  "release": "2",
-  "sha": "a17f04ba152d9f1a8e4f1acefe27c019483ad1c0",
-  "source": "https://src.fedoraproject.org/rpms/libuv.git",
   "upstream_repo": "https://github.com/libuv/libuv",
   "version": "1.52.1"
 }

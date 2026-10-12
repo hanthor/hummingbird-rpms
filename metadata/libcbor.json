@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libcbor.git",
+    "release": "3",
+    "sha": "ae25c289fbfcd1ff28b7b15edd72578a74c5b86f"
+  },
   "modification_status": "clean",
-  "release": "3",
-  "sha": "ae25c289fbfcd1ff28b7b15edd72578a74c5b86f",
-  "source": "https://src.fedoraproject.org/rpms/libcbor.git",
   "upstream_repo": "https://github.com/PJK/libcbor",
   "version": "0.14.0"
 }

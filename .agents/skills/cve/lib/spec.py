@@ -558,7 +558,7 @@ def read_package_metadata(package: str) -> dict[str, Any]:
 
 def release_bump_payload(package: str) -> dict[str, Any]:
     metadata = read_package_metadata(package)
-    metadata_release = str(metadata.get("release") or "")
+    metadata_release = str(metadata.get("fedora", {}).get("release") or "")
     spec_release, uses_autorelease = read_spec_release_before_dist(package)
     proposed = ""
     if uses_autorelease:

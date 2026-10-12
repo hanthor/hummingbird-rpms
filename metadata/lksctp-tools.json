@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/lksctp-tools.git",
+    "release": "4",
+    "sha": "c8774cc1e1001b6c2934608d6da32b10984a20bb"
+  },
   "modification_status": "clean",
-  "release": "4",
-  "sha": "c8774cc1e1001b6c2934608d6da32b10984a20bb",
-  "source": "https://src.fedoraproject.org/rpms/lksctp-tools.git",
   "upstream_repo": "https://github.com/sctp/lksctp-tools",
   "version": "1.0.21"
 }

@@ -9,14 +9,27 @@ avoids spawning thousands of yq subprocesses.
 
 import argparse
 import json
+import logging
 import re
 import sys
 from pathlib import Path
 
-import yaml
-from jinja2 import Environment, FileSystemLoader
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from hum.meta import MetadataRepository  # noqa: E402
+from hum.meta.model import (  # noqa: E402
+    CleanPackageMetadata,
+    IndependentPackageMetadata,
+    MalformedMetadataError,
+    ModifiedFedoraPackageMetadata,
+    ModifiedUpstreamPackageMetadata,
+)
+
+import yaml  # noqa: E402
+from jinja2 import Environment, FileSystemLoader  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+_METADATA_REPO = MetadataRepository(ROOT_DIR)
 
 # Default configuration
 DEFAULT_TIMEOUT_HOURS = 4
@@ -124,28 +137,23 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             #
             # Independent packages (Hummingbird-specific) have no source URL in metadata,
             # so we use the directory name directly.
-            metadata_file = ROOT_DIR / "metadata" / f"{dname}.json"
-            metadata = load_yaml_file(metadata_file)
-            upstream_name = dname  # Default to directory name
-
             forked_from = pkg_config.get("forked_from", "")
             is_hummingbird = "hummingbird" in forked_from
 
-            if metadata and metadata.get("modification_status") == "independent":
-                # Independent packages: Use directory name (no upstream source)
-                # Examples: chunkah, hummingbird-release, openssl-fips-provider
+            try:
+                metadata = _METADATA_REPO.load(dname)
+            except (OSError, json.JSONDecodeError, MalformedMetadataError) as e:
+                logging.warning("%s: failed to load metadata, falling back to directory name: %s", dname, e)
+                metadata = None
+
+            if metadata is None or isinstance(metadata, IndependentPackageMetadata):
                 upstream_name = dname
             elif is_hummingbird:
-                # Hummingbird lookaside cache: Use directory name
-                # Examples: nss-fips
                 upstream_name = dname
-            elif metadata and "source" in metadata:
-                # Fedora/CentOS packages: Extract from source URL to handle renamed packages
-                # Examples:
-                #   - rpms/golang1.25 -> source: .../golang.git -> upstream_name: golang
-                #   - rpms/ruby3.3 -> source: .../ruby.git -> upstream_name: ruby
-                #   - rpms/tomcat10 -> source: .../tomcat.git -> upstream_name: tomcat
-                upstream_name = Path(metadata["source"]).stem
+            elif isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
+                upstream_name = Path(metadata.fedora.git_url).stem
+            else:
+                upstream_name = dname
 
             # Store upstream package name for use in pipeline
             rpm_data["package_name"] = upstream_name

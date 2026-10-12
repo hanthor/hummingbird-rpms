@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/efibootmgr.git",
+    "release": "13",
+    "sha": "b4be1eef7cdd48ed0435364ef63fc773ff71889b"
+  },
   "modification_status": "clean",
-  "release": "13",
   "release_monitoring_project_id": 663,
-  "sha": "b4be1eef7cdd48ed0435364ef63fc773ff71889b",
-  "source": "https://src.fedoraproject.org/rpms/efibootmgr.git",
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rhboot/efibootmgr",
   "version": "18"

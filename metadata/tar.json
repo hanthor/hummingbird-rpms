@@ -1,10 +1,12 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/tar.git",
+    "release": "10",
+    "sha": "e4e337c57a86b5faa686872c6d7f22d58686e66c"
+  },
   "modification_reason": "CVE-2026-18477; CVE-2026-18508",
   "modification_status": "modified",
-  "release": "10",
-  "sha": "e4e337c57a86b5faa686872c6d7f22d58686e66c",
-  "source": "https://src.fedoraproject.org/rpms/tar.git",
   "upstream_repo": "https://git.savannah.gnu.org/git/tar.git",
   "version": "1.35"
 }

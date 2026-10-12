@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libxcb.git",
+    "release": "8",
+    "sha": "de0da2fada5296269f6b78b74365cbcea97f1e87"
+  },
   "modification_status": "clean",
-  "release": "8",
-  "sha": "de0da2fada5296269f6b78b74365cbcea97f1e87",
-  "source": "https://src.fedoraproject.org/rpms/libxcb.git",
   "upstream_repo": "https://gitlab.freedesktop.org/xorg/lib/libxcb",
   "version": "1.17.0"
 }

@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-File-Temp.git",
+    "release": "527",
+    "sha": "18d08eebae81aca9dbf80faa3a3d8a0567a27ed2"
+  },
   "modification_status": "clean",
-  "release": "527",
-  "sha": "18d08eebae81aca9dbf80faa3a3d8a0567a27ed2",
-  "source": "https://src.fedoraproject.org/rpms/perl-File-Temp.git",
   "upstream_repo": "https://github.com/Perl-Toolchain-Gang/File-Temp",
   "version": "0.231.200"
 }

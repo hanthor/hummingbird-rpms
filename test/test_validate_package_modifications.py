@@ -49,6 +49,7 @@ def validator(tmp_path: Path):
     dg.RPMS_DIR = tmp_path / 'rpms'  # type: ignore[attr-defined]
     dg.METADATA_DIR = tmp_path / 'metadata'  # type: ignore[attr-defined]
     dg.PACKAGE_OVERRIDES_YAML = tmp_path / 'ci' / 'package-overrides.yaml'  # type: ignore[attr-defined]
+    dg._METADATA_REPO = dg.MetadataRepository(tmp_path)  # type: ignore[attr-defined]
 
     module = types.ModuleType('validate_package_modifications')
     module.__file__ = str(script_path)
@@ -60,6 +61,7 @@ def validator(tmp_path: Path):
     module.RPMS_DIR = tmp_path / 'rpms'  # type: ignore[attr-defined]
     module.ROOT_DIR = tmp_path  # type: ignore[attr-defined]
     module.PACKAGE_OVERRIDES_YAML = tmp_path / 'ci' / 'package-overrides.yaml'  # type: ignore[attr-defined]
+    module._METADATA_REPO = dg._METADATA_REPO  # type: ignore[attr-defined]
 
     module._tmp_path = tmp_path  # type: ignore[attr-defined]
     return module
@@ -98,9 +100,9 @@ def test_track_upstream_boolean_rejected(validator) -> None:
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'clean',
-        'source': 'https://example.com',
-        'branch': 'main',
-        'sha': 'abc123',
+        'version': '1.0',
+        'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
+        'upstream_repo': 'https://example.com',
         'track_upstream': True,
     })
     # Commit the package so git history checks have something
@@ -113,7 +115,7 @@ def test_track_upstream_boolean_rejected(validator) -> None:
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
     assert 'track_upstream' in error
-    assert 'bool' in error
+    assert 'str' in error
 
 
 def test_track_upstream_string_latest_accepted(validator) -> None:
@@ -121,10 +123,11 @@ def test_track_upstream_string_latest_accepted(validator) -> None:
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'clean',
-        'source': 'https://example.com',
-        'branch': 'main',
-        'sha': 'abc123',
+        'version': '1.0',
+        'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
+        'upstream_repo': 'https://example.com',
         'track_upstream': 'latest',
+        'release_monitoring_project_id': 12345,
     })
     subprocess.run(['git', 'add', '.'], cwd=root, check=True)
     subprocess.run(['git', 'commit', '-m', 'Sync pkg from 1.0-1 to 1.0-1',
@@ -141,10 +144,11 @@ def test_track_upstream_version_prefix_accepted(validator) -> None:
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'clean',
-        'source': 'https://example.com',
-        'branch': 'main',
-        'sha': 'abc123',
+        'version': '1.0',
+        'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
+        'upstream_repo': 'https://example.com',
         'track_upstream': '1.26',
+        'release_monitoring_project_id': 12345,
     })
     subprocess.run(['git', 'add', '.'], cwd=root, check=True)
     subprocess.run(['git', 'commit', '-m', 'Sync pkg from 1.0-1 to 1.0-1',
@@ -161,9 +165,9 @@ def test_track_upstream_integer_rejected(validator) -> None:
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'clean',
-        'source': 'https://example.com',
-        'branch': 'main',
-        'sha': 'abc123',
+        'version': '1.0',
+        'fedora': {'git_url': 'https://example.com', 'branch': 'main', 'sha': 'abc123', 'release': '1'},
+        'upstream_repo': 'https://example.com',
         'track_upstream': 42,
     })
     subprocess.run(['git', 'add', '.'], cwd=root, check=True)
@@ -175,7 +179,7 @@ def test_track_upstream_integer_rejected(validator) -> None:
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
     assert 'track_upstream' in error
-    assert 'int' in error
+    assert 'str' in error
 
 
 #
@@ -199,7 +203,11 @@ def test_independent_package_missing_lookaside_override_rejected(validator) -> N
     lookaside cache, where an independent package's sources were never uploaded.
     """
     root = validator._tmp_path
-    _create_package(root, 'pkg', {'modification_status': 'independent'})
+    _create_package(root, 'pkg', {
+        'modification_status': 'independent',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
+    })
     _write_sources(root, 'pkg', 'SHA512 (pkg-1.0.tar.gz) = abc123\n')
     _write_overrides(root, {})
 
@@ -215,7 +223,11 @@ def test_independent_package_with_no_overrides_file_and_sources_rejected(validat
     falls back to an empty overrides dict rather than erroring out.
     """
     root = validator._tmp_path
-    _create_package(root, 'pkg', {'modification_status': 'independent'})
+    _create_package(root, 'pkg', {
+        'modification_status': 'independent',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
+    })
     _write_sources(root, 'pkg', 'SHA512 (pkg-1.0.tar.gz) = abc123\n')
     # Deliberately do NOT write ci/package-overrides.yaml
 
@@ -227,7 +239,11 @@ def test_independent_package_with_no_overrides_file_and_sources_rejected(validat
 def test_independent_package_with_forked_from_accepted(validator) -> None:
     """An independent package with forked_from set passes validation."""
     root = validator._tmp_path
-    _create_package(root, 'pkg', {'modification_status': 'independent'})
+    _create_package(root, 'pkg', {
+        'modification_status': 'independent',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
+    })
     _write_sources(root, 'pkg', 'SHA512 (pkg-1.0.tar.gz) = abc123\n')
     _write_overrides(root, {
         'pkg': {'forked_from': 'https://gitlab.com/redhat/hummingbird/rpms'},
@@ -240,7 +256,11 @@ def test_independent_package_with_forked_from_accepted(validator) -> None:
 def test_independent_package_with_lookaside_cache_url_accepted(validator) -> None:
     """An independent package with lookaside_cache_url set passes validation."""
     root = validator._tmp_path
-    _create_package(root, 'pkg', {'modification_status': 'independent'})
+    _create_package(root, 'pkg', {
+        'modification_status': 'independent',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
+    })
     _write_sources(root, 'pkg', 'SHA512 (pkg-1.0.tar.gz) = abc123\n')
     _write_overrides(root, {
         'pkg': {'lookaside_cache_url': 'https://example.cloudfront.net/'},
@@ -256,7 +276,11 @@ def test_independent_package_with_no_sources_file_accepted(validator) -> None:
     so it doesn't need forked_from/lookaside_cache_url.
     """
     root = validator._tmp_path
-    _create_package(root, 'pkg', {'modification_status': 'independent'})
+    _create_package(root, 'pkg', {
+        'modification_status': 'independent',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
+    })
     _write_overrides(root, {})
 
     valid, error = validator.validate_package('pkg', check_actual_state=False)
@@ -264,7 +288,8 @@ def test_independent_package_with_no_sources_file_accepted(validator) -> None:
 
 
 def test_independent_package_release_rejected(validator) -> None:
-    """Independent packages cannot claim a Fedora release."""
+    """Independent packages cannot have a top-level release field;
+    the library rejects it as an unrecognized field."""
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'independent',
@@ -273,21 +298,22 @@ def test_independent_package_release_rejected(validator) -> None:
 
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
-    assert 'should not have release field' in error
+    assert "unrecognized field" in error and "release" in error
 
 
-def test_modified_package_without_source_release_rejected(validator) -> None:
-    """A modified package without a Fedora source cannot retain release."""
+def test_modified_package_without_fedora_rejected(validator) -> None:
+    """A modified package must have a fedora origin block."""
     root = validator._tmp_path
     _create_package(root, 'pkg', {
         'modification_status': 'modified',
+        'version': '1.0',
+        'upstream_repo': 'https://example.com',
         'modification_reason': 'Local change',
-        'release': '1',
     })
 
     valid, error = validator.validate_package('pkg', check_actual_state=False)
     assert not valid
-    assert 'should not have release field' in error
+    assert 'fedora' in error.lower()
 
 
 #

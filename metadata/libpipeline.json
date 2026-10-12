@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libpipeline.git",
+    "release": "5",
+    "sha": "a662f50470b54f1e22a1af2fe813322bd5e8a3d0"
+  },
   "modification_status": "clean",
-  "release": "5",
-  "sha": "a662f50470b54f1e22a1af2fe813322bd5e8a3d0",
-  "source": "https://src.fedoraproject.org/rpms/libpipeline.git",
   "upstream_repo": "https://gitlab.com/cjwatson/libpipeline",
   "version": "1.5.8"
 }

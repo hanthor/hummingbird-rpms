@@ -1,10 +1,12 @@
 {
-  "branch": "f44",
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/python3.13.git",
+    "release": "1",
+    "sha": "a93ec22eafc24bef97cc352b2be90bf7d3c136e6"
+  },
   "modification_reason": "Backport security fixes from python3.14; backport fix for CVE-2026-11972; backport fix for CVE-2026-15308; backport fix for CVE-2026-11940; CVE-2026-4360; CVE-2026-6879",
   "modification_status": "modified",
-  "release": "1",
-  "sha": "a93ec22eafc24bef97cc352b2be90bf7d3c136e6",
-  "source": "https://src.fedoraproject.org/rpms/python3.13.git",
   "upstream_branch": "3.13",
   "upstream_repo": "https://github.com/python/cpython",
   "version": "3.13.16"

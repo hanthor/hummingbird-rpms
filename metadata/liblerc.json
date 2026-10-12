@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/liblerc.git",
+    "release": "1",
+    "sha": "a2af670c77a91c3fd8a00d49fc41ffd1c7168918"
+  },
   "modification_status": "clean",
-  "release": "1",
-  "sha": "a2af670c77a91c3fd8a00d49fc41ffd1c7168918",
-  "source": "https://src.fedoraproject.org/rpms/liblerc.git",
   "upstream_repo": "https://github.com/Esri/lerc",
   "version": "4.2.0"
 }

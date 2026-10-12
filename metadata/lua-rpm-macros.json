@@ -1,9 +1,11 @@
 {
-  "branch": "rawhide",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/lua-rpm-macros.git",
+    "release": "18",
+    "sha": "607b7f14f4140f2fa192b6210355a4950138a43d"
+  },
   "modification_status": "clean",
-  "release": "18",
-  "sha": "607b7f14f4140f2fa192b6210355a4950138a43d",
-  "source": "https://src.fedoraproject.org/rpms/lua-rpm-macros.git",
   "upstream_repo": "https://src.fedoraproject.org/rpms/lua-rpm-macros",
   "version": "1"
 }

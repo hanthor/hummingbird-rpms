@@ -87,6 +87,8 @@ def workdir(tmp_path: Path) -> Path:
     # real repo, which would otherwise leak into every test's "clean" copy).
     shutil.copytree(project_root / 'ci', rpms_dir / 'ci',
                      ignore=shutil.ignore_patterns('__pycache__'))
+    shutil.copytree(project_root / 'hum', rpms_dir / 'hum',
+                     ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copy(project_root / 'target-packages.yml', rpms_dir / 'target-packages.yml')
     shutil.copy(project_root / '.gitignore', rpms_dir / '.gitignore')
     shutil.copytree(project_root / '.tekton', rpms_dir / '.tekton')
@@ -234,6 +236,7 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
     dist_git_module.RPMS_DIR = workdir / 'rpms'
     dist_git_module.METADATA_DIR = workdir / 'metadata'
     dist_git_module.RELEASES_JSON = workdir / 'upstream-releases.json'
+    dist_git_module._METADATA_REPO = dist_git_module.MetadataRepository(workdir)
 
     old_argv = sys.argv
     try:
@@ -264,14 +267,15 @@ def test_import(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert import_json_file.exists()
     with open(import_json_file) as f:
         import_data = json.load(f)
-    assert import_data['branch'] == 'rawhide'
+    assert import_data['fedora']['branch'] == 'rawhide'
     assert import_data['version'] == '10'
-    assert import_data['release'] == '1'
+    assert import_data['fedora']['release'] == '1'
+    assert import_data['upstream_repo'] == 'https://src.fedoraproject.org/rpms/chocolate'
 
     subject, body = get_last_commit_info(workdir)
     assert subject == 'Import chocolate-10-1'
     assert 'Branch: rawhide' in body
-    assert f"Upstream: {import_data['sha']}" in body
+    assert f"Upstream: {import_data['fedora']['sha']}" in body
 
     # did not miss any changes
     status_result = subprocess.run(
@@ -330,7 +334,7 @@ def test_import_sign_off(workdir: Path, upstream_repos: dict[str, Path]) -> None
     # Verify commit has sign-off trailer
     subject, body = get_last_commit_info(workdir)
     assert subject == 'Import vanilla-1.0-1'
-    assert f"Upstream: {import_data['sha']}" in body
+    assert f"Upstream: {import_data['fedora']['sha']}" in body
     assert 'Signed-off-by: Test <test@example.com>' in body
 
 
@@ -345,14 +349,14 @@ def test_import_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> N
     import_json_file = workdir / 'metadata' / 'chocolate.json'
     with open(import_json_file) as f:
         import_data = json.load(f)
-    assert import_data['branch'] == 'f40'
+    assert import_data['fedora']['branch'] == 'f40'
     assert import_data['version'] == '4'
-    assert import_data['release'] == '1'
+    assert import_data['fedora']['release'] == '1'
 
     subject, body = get_last_commit_info(workdir)
     assert subject == 'Import chocolate-4-1'
     assert 'Branch: f40' in body
-    assert f"Upstream: {import_data['sha']}" in body
+    assert f"Upstream: {import_data['fedora']['sha']}" in body
 
 
 def test_import_existing_package_fails(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -391,9 +395,9 @@ def test_import_with_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None
     import_json_file = workdir / 'metadata' / 'chocolate.json'
     with open(import_json_file) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == old_sha
+    assert import_data['fedora']['sha'] == old_sha
     assert import_data['version'] == '10'
-    assert import_data['branch'] == 'rawhide'
+    assert import_data['fedora']['branch'] == 'rawhide'
 
     # Verify commit message includes the old SHA
     subject, body = get_last_commit_info(workdir)
@@ -409,7 +413,7 @@ def test_import_with_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None
     # Check that we're now at the latest version
     with open(import_json_file) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == new_sha
+    assert import_data['fedora']['sha'] == new_sha
     assert import_data['version'] == '12'
 
     # Verify update commit was created
@@ -447,7 +451,7 @@ def test_import_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.0'
-    assert metadata['release'] == '5'
+    assert metadata['fedora']['release'] == '5'
 
 
 def test_import_anitya_found(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
@@ -458,6 +462,7 @@ def test_import_anitya_found(workdir: Path, upstream_repos: dict[str, Path], dis
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         metadata = json.load(f)
     assert metadata['release_monitoring_project_id'] == 12345
+    assert metadata['track_upstream'] == 'latest'
 
 
 def test_import_anitya_not_found(workdir: Path, upstream_repos: dict[str, Path], dist_git_module,
@@ -495,7 +500,7 @@ def test_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
     with open(chocolate_import_json) as f:
         chocolate_import_data = json.load(f)
-    initial_sha = chocolate_import_data['sha']
+    initial_sha = chocolate_import_data['fedora']['sha']
 
     # Update upstream chocolate
     add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
@@ -534,7 +539,7 @@ def test_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert "already up-to-date" in result.stderr or "vanilla" in result.stderr
 
     # Case 2: chocolate should be updated to new version
-    assert chocolate_import_data['sha'] != initial_sha, "chocolate should have been updated"
+    assert chocolate_import_data['fedora']['sha'] != initial_sha, "chocolate should have been updated"
     assert chocolate_import_data['version'] == '11', "chocolate should be at version 11"
     assert "Updating chocolate" in result.stderr
 
@@ -567,7 +572,7 @@ def test_sync_restores_release_when_fedora_catches_up(
     ))
     metadata_file = workdir / 'metadata' / 'vanilla.json'
     metadata = json.loads(metadata_file.read_text())
-    metadata.pop('release')
+    metadata['fedora'].pop('release')
     metadata['version'] = '2.0'
     metadata['modification_status'] = 'modified'
     metadata['modification_reason'] = 'Update to upstream version 2.0'
@@ -582,7 +587,7 @@ def test_sync_restores_release_when_fedora_catches_up(
 
     metadata = json.loads(metadata_file.read_text())
     assert metadata['version'] == '2.0'
-    assert metadata['release'] == '1'
+    assert metadata['fedora']['release'] == '1'
     assert metadata['modification_status'] == 'clean'
     assert 'modification_reason' not in metadata
 
@@ -683,7 +688,7 @@ def test_update_built(workdir: Path, upstream_repos: dict[str, Path], dist_git_m
         with open(workdir / 'metadata' / 'chocolate.json') as f:
             import_data = json.load(f)
         assert import_data['version'] == '11'
-        assert import_data['sha'] == new_sha
+        assert import_data['fedora']['sha'] == new_sha
 
 
 def test_update_branch_dist_tag(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
@@ -717,7 +722,7 @@ def test_update_branch_dist_tag(workdir: Path, upstream_repos: dict[str, Path], 
         with open(chocolate_import_json) as f:
             import_data = json.load(f)
         assert import_data['version'] == '5'
-        assert import_data['sha'] == new_sha
+        assert import_data['fedora']['sha'] == new_sha
 
 
 def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
@@ -767,7 +772,7 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
         with open(vanilla_import_json) as f:
             import_data = json.load(f)
         assert import_data['version'] == '2.0'
-        assert import_data['sha'] == new_sha
+        assert import_data['fedora']['sha'] == new_sha
 
 
 def test_update_rawhide_finds_build_for_unknown_dist_tag(
@@ -821,7 +826,7 @@ def test_update_rawhide_finds_build_for_unknown_dist_tag(
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         import_data = json.load(f)
     assert import_data['version'] == '2.0'
-    assert import_data['sha'] == new_sha
+    assert import_data['fedora']['sha'] == new_sha
 
 
 def test_check_koji_build_finds_numbered_eln_suffix(dist_git_module) -> None:
@@ -1005,7 +1010,7 @@ def test_sync(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
     with open(chocolate_import_json) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == new_sha
+    assert import_data['fedora']['sha'] == new_sha
     assert import_data['version'] == '11'
     assert import_data['modification_status'] == 'clean'
     assert 'modification_reason' not in import_data
@@ -1028,7 +1033,7 @@ def test_sync(workdir: Path, upstream_repos: dict[str, Path]) -> None:
 
     with open(chocolate_import_json) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == new_sha2
+    assert import_data['fedora']['sha'] == new_sha2
     assert import_data['version'] == '12'
 
     # Verify update commit was created
@@ -1272,7 +1277,7 @@ def test_update_of_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> No
     vanilla_import_json = workdir / 'metadata' / 'vanilla.json'
     with open(vanilla_import_json) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == new_sha
+    assert import_data['fedora']['sha'] == new_sha
     assert import_data['version'] == '2.0'
     subject, body = get_last_commit_info(workdir)
     assert subject == 'Update vanilla from 1.0-1 to 2.0-1'
@@ -1372,6 +1377,34 @@ def test_mark_clean(workdir: Path, upstream_repos: dict[str, Path]) -> None:
         metadata = json.load(f)
     assert metadata['modification_status'] == 'clean'
     assert 'modification_reason' not in metadata
+
+
+def test_mark_clean_refuses_upstream_modified(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """Mark-clean is refused for upstream-modified packages without verified Fedora data."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Manually set metadata to modified-upstream state (no fedora.release)
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    metadata['fedora'].pop('release')
+    metadata['modification_status'] = 'modified'
+    metadata['modification_reason'] = 'Ahead of Fedora'
+    metadata['version'] = '2.0'
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2, sort_keys=True)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Set upstream-modified'], cwd=workdir, check=True)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'mark-modified', 'vanilla', '--clean'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode != 0
+    assert 'Cannot mark upstream-modified package' in result.stderr
 
 
 @pytest.mark.parametrize("modify_release", [False, True], ids=["clean", "with_release"])
@@ -1707,7 +1740,7 @@ def _fake_pin_refresh_git(commit_date: str):
     return fake_run
 
 
-_GCC_VERSION_FROM_REF = {'type': 'commit-date'}
+_GCC_VERSION_FROM_REF = types.SimpleNamespace(type='commit-date')
 _GCC_UPSTREAM_REPO = 'https://gcc.gnu.org/git/gcc.git'
 
 
@@ -1764,7 +1797,7 @@ def test_refresh_fixed_ref_pin_unsupported_type_returns_none(tmp_path: Path, dis
 
     result = dist_git_module._refresh_fixed_ref_pin(
         'glibc', package_dir, pipeline_file, pipeline,
-        'https://sourceware.org/git/glibc.git', {'type': 'git-describe', 'match': 'glibc-*'},
+        'https://sourceware.org/git/glibc.git', types.SimpleNamespace(type='git-describe'),
         '2.43',
     )
     assert result is None
@@ -1934,7 +1967,7 @@ def test_run_gorget_for_updated_package_fixed_ref_drift_gcc_auto_fix(
         '    ref: "0000000000000000000000000000000000000000"\n'
         '    archive_name: "gcc-${VERSION}.tar.xz"\n'
     )
-    metadata = {'version_from_ref': _GCC_VERSION_FROM_REF, 'upstream_repo': _GCC_UPSTREAM_REPO}
+    metadata = types.SimpleNamespace(version_from_ref=_GCC_VERSION_FROM_REF, upstream_repo=_GCC_UPSTREAM_REPO)
 
     with patch.object(dist_git_module.cuv, '_load_source_pipeline', return_value=pipeline_file), \
          patch.object(dist_git_module.cuv, '_run_gorget_pipeline',
@@ -1977,7 +2010,7 @@ def test_run_gorget_for_updated_package_fixed_ref_retry_after_gorget_failure_sti
         '    ref: "0000000000000000000000000000000000000000"\n'
         '    archive_name: "gcc-${VERSION}.tar.xz"\n'
     )
-    metadata = {'version_from_ref': _GCC_VERSION_FROM_REF, 'upstream_repo': _GCC_UPSTREAM_REPO}
+    metadata = types.SimpleNamespace(version_from_ref=_GCC_VERSION_FROM_REF, upstream_repo=_GCC_UPSTREAM_REPO)
 
     # First attempt: gorget fails (e.g. the binary is missing).
     with patch.object(dist_git_module.cuv, '_load_source_pipeline', return_value=pipeline_file), \
@@ -2024,7 +2057,7 @@ def test_run_gorget_for_updated_package_fixed_ref_drift_no_version_from_ref_need
          patch.object(dist_git_module.cuv, '_run_gorget_pipeline') as mock_gorget:
         reason, uploaded = dist_git_module._run_gorget_for_updated_package(
             'glibc', package_dir, '2.43', '2.43',
-            {'upstream_repo': 'https://sourceware.org/git/glibc.git'},
+            types.SimpleNamespace(version_from_ref=None, upstream_repo='https://sourceware.org/git/glibc.git'),
         )
 
     assert reason is not None
@@ -2180,7 +2213,7 @@ def test_update_version_templated_pipeline_failure_needs_manual_run(
 
 
 def test_update_skips_package_without_upstream_metadata(workdir: Path) -> None:
-    """Packages without source/branch/sha are skipped instead of crashing."""
+    """Independent packages (no Fedora origin) are blocked from update."""
     package_dir = workdir / 'rpms' / 'signed-stub'
     package_dir.mkdir()
     (package_dir / 'signed-stub.spec').write_text("""Name: signed-stub
@@ -2196,9 +2229,8 @@ Signed stub
 """)
     (workdir / 'metadata' / 'signed-stub.json').write_text(json.dumps({
         'version': '1',
-        'release': '1',
-        'modification_status': 'modified',
-        'modification_reason': 'trigger rebuild to sign the RPMs',
+        'modification_status': 'independent',
+        'upstream_repo': 'https://src.fedoraproject.org/rpms/signed-stub',
     }, indent=2) + '\n')
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
     subprocess.run(['git', 'commit', '-m', 'Add signed stub'], cwd=workdir, check=True)
@@ -2208,8 +2240,8 @@ Signed stub
         cwd=workdir, capture_output=True, text=True,
     )
 
-    assert result.returncode == 0
-    assert 'Skipping signed-stub: no Fedora upstream configured' in result.stderr
+    assert result.returncode != 0
+    assert 'Cannot update independent package signed-stub' in result.stderr
 
 
 def test_update_skips_upstream_without_spec(
@@ -2260,8 +2292,8 @@ Independent package
     with open(metadata_file, 'w') as f:
         json.dump({
             'version': '1.0',
-            'release': '1',
             'modification_status': 'independent',
+            'upstream_repo': 'https://src.fedoraproject.org/rpms/independent-pkg',
         }, f, indent=2)
 
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
@@ -2305,8 +2337,8 @@ Independent package
     with open(metadata_file, 'w') as f:
         json.dump({
             'version': '1.0',
-            'release': '1',
             'modification_status': 'independent',
+            'upstream_repo': 'https://src.fedoraproject.org/rpms/independent-pkg',
         }, f, indent=2)
 
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
@@ -2421,8 +2453,8 @@ Independent package
     with open(metadata_file, 'w') as f:
         json.dump({
             'version': '1.0',
-            'release': '1',
             'modification_status': 'independent',
+            'upstream_repo': 'https://src.fedoraproject.org/rpms/independent-pkg',
         }, f, indent=2)
 
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
@@ -2515,8 +2547,8 @@ Independent package
     with open(metadata_file, 'w') as f:
         json.dump({
             'version': '1.0',
-            'release': '1',
             'modification_status': 'independent',
+            'upstream_repo': 'https://src.fedoraproject.org/rpms/independent-pkg',
         }, f, indent=2)
 
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
@@ -2839,7 +2871,7 @@ def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.0'
-    assert metadata['release'] == '3'
+    assert metadata['fedora']['release'] == '3'
 
     # Update upstream to version 2.0, this usually resets release to 1 in MDAPI
     upstream_spec_content = vanilla_spec.read_text()
@@ -2866,7 +2898,7 @@ def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['version'] == '2.0'
-    assert metadata['release'] == '1'
+    assert metadata['fedora']['release'] == '1'
 
 
 def _koji_search_server(builds: list[dict]) -> MagicMock:
@@ -2992,8 +3024,8 @@ def test_update_autorelease_prefers_koji_over_stale_mdapi(
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         metadata = json.load(f)
     assert metadata['version'] == '2.0'
-    assert metadata['release'] == '1'
-    assert metadata['sha'] == new_sha
+    assert metadata['fedora']['release'] == '1'
+    assert metadata['fedora']['sha'] == new_sha
 
 
 def test_call_koji_with_retry_offline_raises_koji_offline(dist_git_module) -> None:
@@ -3035,7 +3067,7 @@ def test_update_skips_cleanly_when_koji_offline(
     # Nothing was updated: metadata still points at the pre-update commit
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['sha'] != new_sha
+    assert metadata['fedora']['sha'] != new_sha
     assert metadata['version'] == '10'
 
 
@@ -3066,7 +3098,7 @@ def test_update_autorelease_skips_when_koji_offline(
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.0', "Should not update while Koji is offline"
-    assert metadata['sha'] != new_sha
+    assert metadata['fedora']['sha'] != new_sha
 
 
 def test_update_autorelease_no_koji_build_skips_without_mdapi(
@@ -3141,7 +3173,7 @@ def test_update_autorelease_modified(workdir: Path, upstream_repos: dict[str, Pa
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['version'] == '1.0'
-    assert metadata['release'] == '3'
+    assert metadata['fedora']['release'] == '3'
 
 
 def test_replace_autorelease_optional_when_local_merge_removed_macro(
@@ -3192,9 +3224,9 @@ def test_update_with_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None
     # Check that we updated to the intermediate version
     with open(import_json_file) as f:
         import_data = json.load(f)
-    assert import_data['sha'] == intermediate_sha
+    assert import_data['fedora']['sha'] == intermediate_sha
     assert import_data['version'] == '12'
-    assert import_data['release'] == '1'
+    assert import_data['fedora']['release'] == '1'
 
     # Verify commit message includes the intermediate SHA
     subject, body = get_last_commit_info(workdir)
@@ -3251,17 +3283,18 @@ def test_set_upstream_track(workdir: Path, upstream_repos: dict[str, Path]) -> N
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', 'latest'],
+         '--track-version', 'latest', '--project-id', '12345'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['track_upstream'] == 'latest'
+    assert metadata['release_monitoring_project_id'] == 12345
 
 
 def test_set_upstream_no_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """set-upstream --no-track-version removes track_upstream from metadata."""
+    """set-upstream --no-track-version --no-project-id removes tracking from metadata."""
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
@@ -3270,7 +3303,7 @@ def test_set_upstream_no_track(workdir: Path, upstream_repos: dict[str, Path]) -
     # Enable first
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', 'latest'],
+         '--track-version', 'latest', '--project-id', '12345'],
         cwd=workdir, check=True,
     )
 
@@ -3281,17 +3314,18 @@ def test_set_upstream_no_track(workdir: Path, upstream_repos: dict[str, Path]) -
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--no-track-version'],
+         '--no-track-version', '--no-project-id'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert 'track_upstream' not in metadata
+    assert 'release_monitoring_project_id' not in metadata
 
 
-def test_set_upstream_project_id_string(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """set-upstream --project-id with string sets upstream name in metadata."""
+def test_set_upstream_project_id_with_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """set-upstream --project-id with --track-version sets both fields."""
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
@@ -3299,14 +3333,15 @@ def test_set_upstream_project_id_string(workdir: Path, upstream_repos: dict[str,
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--project-id', 'golang'],
+         '--project-id', '99999', '--track-version', 'latest'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
     metadata_file = workdir / 'metadata' / 'vanilla.json'
     with open(metadata_file) as f:
         metadata = json.load(f)
-    assert metadata['release_monitoring_project_id'] == 'golang'
+    assert metadata['release_monitoring_project_id'] == 99999
+    assert metadata['track_upstream'] == 'latest'
 
 
 def test_set_upstream_track_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -3318,7 +3353,7 @@ def test_set_upstream_track_version(workdir: Path, upstream_repos: dict[str, Pat
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', '1.26'],
+         '--track-version', '1.26', '--project-id', '12345'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
@@ -3326,19 +3361,20 @@ def test_set_upstream_track_version(workdir: Path, upstream_repos: dict[str, Pat
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['track_upstream'] == '1.26'
+    assert metadata['release_monitoring_project_id'] == 12345
 
 
 def test_set_upstream_no_track_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """set-upstream --no-track-version removes track_upstream."""
+    """set-upstream --no-track-version --no-project-id removes upstream tracking."""
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
     )
 
-    # Set track_version first
+    # Set tracking first
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', '1.26'],
+         '--track-version', '1.26', '--project-id', '12345'],
         cwd=workdir, check=True,
     )
 
@@ -3348,17 +3384,19 @@ def test_set_upstream_no_track_version(workdir: Path, upstream_repos: dict[str, 
     assert metadata['track_upstream'] == '1.26'
 
     subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla', '--no-track-version'],
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--no-track-version', '--no-project-id'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert 'track_upstream' not in metadata
+    assert 'release_monitoring_project_id' not in metadata
 
 
 def test_set_upstream_project_id(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """set-upstream --project-id sets release_monitoring_project_id."""
+    """set-upstream --project-id with --track-version sets release_monitoring_project_id."""
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
@@ -3366,7 +3404,7 @@ def test_set_upstream_project_id(workdir: Path, upstream_repos: dict[str, Path])
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--project-id', '13254'],
+         '--project-id', '13254', '--track-version', 'latest'],
         cwd=workdir, capture_output=True, text=True, check=True,
     )
 
@@ -3374,10 +3412,11 @@ def test_set_upstream_project_id(workdir: Path, upstream_repos: dict[str, Path])
     with open(metadata_file) as f:
         metadata = json.load(f)
     assert metadata['release_monitoring_project_id'] == 13254
+    assert metadata['track_upstream'] == 'latest'
 
 
-def test_set_upstream_no_project_id(workdir: Path, upstream_repos: dict[str, Path]) -> None:
-    """set-upstream --no-project-id removes release_monitoring_project_id."""
+def test_set_upstream_no_project_id_requires_no_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+    """set-upstream --no-project-id alone errors when track_upstream is still set."""
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
         cwd=workdir, check=True,
@@ -3395,15 +3434,13 @@ def test_set_upstream_no_project_id(workdir: Path, upstream_repos: dict[str, Pat
         metadata = json.load(f)
     assert metadata['release_monitoring_project_id'] == 13254
 
-    subprocess.run(
+    # Removing only project_id while track_upstream is set should error
+    result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla', '--no-project-id'],
-        cwd=workdir, capture_output=True, text=True, check=True,
+        cwd=workdir, capture_output=True, text=True,
     )
-
-    with open(metadata_file) as f:
-        metadata = json.load(f)
-    assert metadata['track_upstream'] == 'latest'
-    assert 'release_monitoring_project_id' not in metadata
+    assert result.returncode != 0
+    assert 'track_upstream requires release_monitoring_project_id' in result.stderr
 
 
 def test_set_upstream_combined(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -3493,6 +3530,103 @@ def test_set_upstream_no_flags(workdir: Path, upstream_repos: dict[str, Path]) -
     assert "set-upstream requires at least one flag" in result.stderr
 
 
+def test_set_upstream_gitlab_tags_rejects_project_id(
+    workdir: Path, upstream_repos: dict[str, Path],
+) -> None:
+    """set-upstream --project-id is refused for packages using gitlab_tags tracking."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Set up gitlab_tags tracking directly in metadata
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    metadata['version_source'] = 'gitlab_tags'
+    metadata['track_upstream'] = 'latest'
+    metadata['tag_strip_prefix'] = 'v'
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2, sort_keys=True)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Set gitlab_tags'], cwd=workdir, check=True)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--project-id', '12345'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode != 0
+    assert 'gitlab_tags' in result.stderr
+
+
+def test_set_upstream_gitlab_tags_no_project_id_is_noop(
+    workdir: Path, upstream_repos: dict[str, Path],
+) -> None:
+    """set-upstream --no-project-id on a gitlab_tags package is a no-op."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Set up gitlab_tags tracking
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    metadata['version_source'] = 'gitlab_tags'
+    metadata['track_upstream'] = 'latest'
+    metadata['tag_strip_prefix'] = 'v'
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2, sort_keys=True)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Set gitlab_tags'], cwd=workdir, check=True)
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--no-project-id'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    # Settings should be preserved
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    assert metadata['version_source'] == 'gitlab_tags'
+    assert metadata['track_upstream'] == 'latest'
+    assert metadata['tag_strip_prefix'] == 'v'
+
+
+def test_set_upstream_gitlab_tags_track_version(
+    workdir: Path, upstream_repos: dict[str, Path],
+) -> None:
+    """set-upstream --track-version on a gitlab_tags package updates only track_upstream."""
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
+        cwd=workdir, check=True,
+    )
+
+    # Set up gitlab_tags tracking
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    metadata['version_source'] = 'gitlab_tags'
+    metadata['track_upstream'] = 'latest'
+    metadata['tag_strip_prefix'] = 'v'
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2, sort_keys=True)
+    subprocess.run(['git', 'commit', '-a', '-m', 'Set gitlab_tags'], cwd=workdir, check=True)
+
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
+         '--track-version', '1.0'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    )
+
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    assert metadata['version_source'] == 'gitlab_tags'
+    assert metadata['track_upstream'] == '1.0'
+    assert metadata.get('tag_strip_prefix', 'v') == 'v'
+
+
 def test_update_skips_when_track_version_mismatch(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Update skips package when upstream version doesn't match track_version prefix."""
     # Import vanilla
@@ -3504,7 +3638,7 @@ def test_update_skips_when_track_version_mismatch(workdir: Path, upstream_repos:
     # Set track_version to 1.0 (matches current version)
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', '1.0'],
+         '--track-version', '1.0', '--project-id', '12345'],
         cwd=workdir, check=True,
     )
 
@@ -3537,7 +3671,7 @@ def test_update_proceeds_when_track_version_matches(workdir: Path, upstream_repo
     # Set track_version to 1 (matches 1.0 and 1.x)
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
-         '--track-version', '1'],
+         '--track-version', '1', '--project-id', '12345'],
         cwd=workdir, check=True,
     )
 
@@ -3665,7 +3799,7 @@ def test_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> None:
         metadata = json.load(f)
     assert metadata['modification_status'] == 'clean'
     assert metadata['version'] == '1.0'
-    assert metadata['release'] == '1'
+    assert metadata['fedora']['release'] == '1'
 
 
 def test_rebuild_already_bumped(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -3779,67 +3913,6 @@ def test_rebuild_nonexistent_package(workdir: Path) -> None:
 
     assert result.returncode != 0
     assert "Package 'nonexistent' not found" in result.stderr
-
-
-def test_bump_release_helper(dist_git_module) -> None:
-    """Test bump_release helper function logic."""
-    bump = dist_git_module.bump_release
-
-    # Basic bump
-    assert bump('3') == '3.1'
-    assert bump('1') == '1.1'
-
-    # Already bumped
-    assert bump('3.1') == '3.2'
-    assert bump('3.2') == '3.3'
-    assert bump('1.99') == '1.100'
-
-    # With macros
-    assert bump('8.%{revision}') == '8.%{revision}.1'
-    assert bump('8.%{revision}.1') == '8.%{revision}.2'
-
-    # Complex release strings
-    assert bump('10') == '10.1'
-    assert bump('0') == '0.1'
-
-    # With upstream_release parameter (smart bumping for Fedora releases with dots)
-    # Scenario: Fedora ships Release: 3.1, we rebuild it -> should become 3.1.1
-    assert bump('3.1', upstream_release='3.1') == '3.1.1'
-
-    # Scenario: We already rebuilt Fedora's 3.1 to 3.1.1, rebuild again -> 3.1.2
-    assert bump('3.1.1', upstream_release='3.1') == '3.1.2'
-
-    # Scenario: Fedora ships Release: 5, we rebuild it -> 5.1 (same as before)
-    assert bump('5', upstream_release='5') == '5.1'
-
-    # Scenario: We already rebuilt Fedora's 3 to 3.1, rebuild again -> 3.2
-    # (upstream is still 3, current is 3.1, so current != upstream -> increment logic)
-    assert bump('3.1', upstream_release='3') == '3.2'
-
-    # Scenario: No upstream info (None) - falls back to old behavior
-    assert bump('3.1', upstream_release=None) == '3.2'
-    assert bump('3', upstream_release=None) == '3.1'
-
-    # Real-world release strings from the repo:
-
-    # libyuv: ends with non-digit letters, so no .N match -> append .1
-    assert bump('0.62.20260213git6067afd') == '0.62.20260213git6067afd.1'
-    assert bump('0.62.20260213git6067afd.1') == '0.62.20260213git6067afd.2'
-
-    # libedit: macro with non-digit suffix -> no .N match -> append .1
-    assert bump('58.%{snap}cvs') == '58.%{snap}cvs.1'
-    assert bump('58.%{snap}cvs.1') == '58.%{snap}cvs.2'
-
-    # ansible-packaging: Fedora ships 20.1 (dotted), first rebuild -> 20.1.1
-    assert bump('20.1', upstream_release='20.1') == '20.1.1'
-    assert bump('20.1.1', upstream_release='20.1') == '20.1.2'
-
-    # python-gitlab: Fedora ships 1.1, already rebuilt to 1.2 -> 1.3
-    assert bump('1.2', upstream_release='1.1') == '1.3'
-
-    # Fedora pre-release (0.N pattern): first rebuild -> 0.1.1, not 0.2
-    assert bump('0.1', upstream_release='0.1') == '0.1.1'
-    assert bump('0.1.1', upstream_release='0.1') == '0.1.2'
 
 
 def test_rebuild_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -4209,9 +4282,9 @@ def test_rebuild_real_world_release_strings(workdir: Path, upstream_repos: dict[
         metadata_file = workdir / 'metadata' / 'vanilla.json'
         import json
         metadata = json.loads(metadata_file.read_text())
-        # Strip %{?dist} and anything after it so upstream_release matches what bump_release expects
+        # Strip %{?dist} and anything after it so fedora.release matches the spec
         upstream_rel = re.sub(r'%\{\??dist\}.*', '', initial).strip()
-        metadata['release'] = upstream_rel
+        metadata['fedora']['release'] = upstream_rel
         metadata_file.write_text(json.dumps(metadata, indent=2) + '\n')
 
         subprocess.run(['git', 'commit', '-a', '-m', f'Set Release: {initial}'],
@@ -4274,7 +4347,7 @@ def test_rebuild_all_continues_on_failure(workdir: Path, upstream_repos: dict[st
 
     # Should show success for chocolate
     assert 'Rebuilding chocolate' in result.stderr
-    assert 'Updated Release: to 1.1%{?dist} in chocolate.spec' in result.stderr
+    assert 'Bumped release to 1.1' in result.stderr
 
     # Should show summary
     assert 'Rebuild Summary:' in result.stdout
@@ -4311,12 +4384,12 @@ Test independent package
 %files
 """)
 
-    # Create metadata for independent package (no 'source' field)
+    # Create metadata for independent package (no fedora origin)
     metadata_file = workdir / 'metadata' / 'independent-pkg.json'
     metadata = {
         'version': '1.0',
-        'release': '0.1',
-        'modification_status': 'independent'
+        'modification_status': 'independent',
+        'upstream_repo': 'https://src.fedoraproject.org/rpms/independent-pkg',
     }
     with open(metadata_file, 'w') as f:
         json.dump(metadata, f, indent=2)
@@ -4354,7 +4427,7 @@ def test_rebuild_ahead_of_fedora_package_without_metadata_release(
     spec_file.write_text(spec_file.read_text().replace('Release: 1%{?dist}', 'Release: 0.1%{?dist}'))
     metadata_file = workdir / 'metadata' / 'vanilla.json'
     metadata = json.loads(metadata_file.read_text())
-    del metadata['release']
+    del metadata['fedora']['release']
     metadata['modification_status'] = 'modified'
     metadata['modification_reason'] = 'Update to upstream version 2.0'
     metadata_file.write_text(json.dumps(metadata, indent=2) + '\n')
@@ -4423,12 +4496,15 @@ Go compiler version {version}
 """)
         metadata_file = workdir / 'metadata' / f'golang{version}.json'
         metadata = {
-            'source': 'https://example.com/golang.git',
-            'branch': 'rawhide',
-            'sha': '1234567890abcdef',
             'version': f'{version}.0',
-            'release': '1',
-            'modification_status': 'clean'
+            'modification_status': 'clean',
+            'upstream_repo': 'https://github.com/golang/go',
+            'fedora': {
+                'git_url': 'https://example.com/golang.git',
+                'branch': 'rawhide',
+                'sha': '1234567890abcdef',
+                'release': '1',
+            },
         }
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -4558,7 +4634,7 @@ def test_update_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> N
     # Verify metadata updated
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f40'
+    assert metadata['fedora']['branch'] == 'f40'
     assert metadata['version'] == '4'
 
     # Verify spec file has f40 content
@@ -4590,7 +4666,7 @@ def test_update_with_branch_release_upgrade(workdir: Path, upstream_repos: dict[
     # Verify metadata updated
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f99'
+    assert metadata['fedora']['branch'] == 'f99'
     assert metadata['version'] == '99'
 
     # Verify commit message includes branch change
@@ -4629,7 +4705,7 @@ def test_update_with_branch_modified_package(workdir: Path, upstream_repos: dict
     # Verify metadata updated
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f40'
+    assert metadata['fedora']['branch'] == 'f40'
     assert metadata['version'] == '4'
     assert metadata['modification_status'] == 'modified'
 
@@ -4660,7 +4736,7 @@ def test_update_with_branch_same_branch(workdir: Path, upstream_repos: dict[str,
     # Verify normal update happened
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'rawhide'
+    assert metadata['fedora']['branch'] == 'rawhide'
     assert metadata['version'] == '11'
 
     # Verify commit message does NOT include branch change annotation
@@ -4700,7 +4776,7 @@ def test_update_with_branch_lower_version(workdir: Path, upstream_repos: dict[st
     # Verify metadata NOT changed (branch still f99)
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f99'
+    assert metadata['fedora']['branch'] == 'f99'
     assert metadata['version'] == '99'
 
     # rawhide -> f40 IS a forward move (rawhide resolves to f99, the highest)
@@ -4723,7 +4799,7 @@ def test_update_with_branch_lower_version(workdir: Path, upstream_repos: dict[st
 
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f40'
+    assert metadata['fedora']['branch'] == 'f40'
     assert metadata['version'] == '4'
 
 
@@ -4757,7 +4833,7 @@ def test_sync_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> Non
     # Verify metadata updated and status reset
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f40'
+    assert metadata['fedora']['branch'] == 'f40'
     assert metadata['version'] == '4'
     assert metadata['modification_status'] == 'clean'
 
@@ -4796,9 +4872,9 @@ def test_update_with_branch_and_ref(workdir: Path, upstream_repos: dict[str, Pat
     # Verify we got version 5, not 6
     with open(workdir / 'metadata' / 'chocolate.json') as f:
         metadata = json.load(f)
-    assert metadata['branch'] == 'f40'
+    assert metadata['fedora']['branch'] == 'f40'
     assert metadata['version'] == '5'
-    assert metadata['sha'] == intermediate_sha
+    assert metadata['fedora']['sha'] == intermediate_sha
 
 
 #
@@ -6055,7 +6131,7 @@ def test_sanitize_paths_command_dry_run(dist_git_module, workdir: Path) -> None:
     package = workdir / 'rpms' / 'test'
     package.mkdir()
     (package / 'fix:one.patch').write_bytes(b'patch')
-    metadata = {'version': '1', 'modification_status': 'independent'}
+    metadata = {'version': '1', 'modification_status': 'independent', 'upstream_repo': 'https://src.fedoraproject.org/rpms/test'}
     metadata_path = workdir / 'metadata' / 'test.json'
     metadata_path.write_text(json.dumps(metadata))
     run_dist_git(dist_git_module, workdir, '--dry-run', 'sanitize-paths', '--all')
@@ -6091,8 +6167,7 @@ def test_import_update_and_merge_portable_paths(workdir: Path, upstream_repos: d
         run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
     package = workdir / 'rpms' / 'chocolate'
     assert (package / 'fix~3aone.patch').read_bytes() == b'upstream patch\n'
-    metadata = json.loads((workdir / 'metadata' / 'chocolate.json').read_text())
-    assert dist_git_module.is_package_unmodified('chocolate', metadata, upstream)
+    assert dist_git_module.is_package_unmodified('chocolate', dist_git_module.imports['chocolate'], upstream)
     assert dist_git_module.diff_package('chocolate', capture=True) == ''
     assert dist_git_module.diff_package('chocolate', capture=True, raw=True)
     (package / 'local:fix.patch').write_bytes(b'local patch\n')
