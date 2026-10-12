@@ -43,6 +43,13 @@ post:
       - |
         set -euo pipefail
         ./packaging/fill-versions.sh "${SPEC_FILE}" "node-v${VERSION}.tar.gz"
+        # spec-update operates on Gorget's working copy. Persist the main
+        # version macro and restore the macro-based package header here.
+        sed -Ei \
+          -e "s|^(%nodejs_define_version[[:space:]]+node[[:space:]]+([0-9]+:)?)[0-9]+\\.[0-9]+\\.[0-9]+-|\\1${VERSION}-|" \
+          -e '0,/^Version:[[:space:]]/s|^Version:.*|Version:        %{node_version}|' \
+          -e '0,/^Release:[[:space:]]/s|^Release:.*|Release:        %{node_release}|' \
+          "${SPEC_FILE}"
         # The downstream patch updates nghttp2 beyond the upstream tarball.
         sed -Ei \
           's|^%nodejs_define_version[[:space:]]+nghttp2[[:space:]]+[^[:space:]]+|%nodejs_define_version nghttp2 1.68.1|' \
