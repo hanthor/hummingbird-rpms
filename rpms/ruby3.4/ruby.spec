@@ -41,7 +41,7 @@
 %global rubygems_net_http_version 0.6.0
 %global rubygems_net_protocol_version 0.2.2
 %global rubygems_optparse_version 0.6.0
-%global rubygems_resolv_version 0.6.0
+%global rubygems_resolv_version 0.7.2
 %global rubygems_securerandom_version 0.4.1
 %global rubygems_timeout_version 0.4.3
 %global rubygems_tsort_version 0.2.0
@@ -192,7 +192,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 31.7%{?dist}
+Release: 32%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -1949,6 +1949,11 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
+* Fri Sep 04 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-32
+- Backport upstream patch to update resolv to 0.7.2
+- Resolves: CVE-2026-80212 (rhbz#2527308)
+- Resolves: CVE-2026-80213 (rhbz#2527310)
+
 * Wed Jul 08 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-31
 - Update to Ruby 3.4.10
 - Resolves: CVE-2026-41316 (rhbz#2463216)
