@@ -188,7 +188,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 23.6%{?dist}
+Release: 23.7%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -319,6 +319,9 @@ Patch16: ruby-3.3.10-lgamma-unspecified-sign-tests.patch
 # CVE-2026-80213: resolv DNS allowlist/egress bypass and cache poisoning via crafted hostnames
 # https://github.com/ruby/ruby/pull/18530
 Patch17: ruby-3.3.10-resolv-0.3.2-security-fixes.patch
+
+# https://github.com/ruby/ruby/commit/9cfc1362aa6f42f2c654ee155b1cffb9063879f6
+Patch18: 0018-mkmf-compiler-test-timeouts.patch
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
@@ -832,6 +835,7 @@ analysis result in RBS format, a standard type description format for Ruby
 %patch 15 -p1 -d .bundle/gems/net-imap-0.4.21
 %patch 16 -p1
 %patch 17 -p1
+%patch 18 -p1
 
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE3} .
