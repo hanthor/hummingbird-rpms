@@ -102,7 +102,7 @@ License:  MPL-2.0 AND ISC AND MIT AND BSD-3-Clause AND BSD-2-Clause
 # Before rebasing bind, ensure bind-dyndb-ldap is ready to be rebuild and use side-tag with it.
 # Updating just bind will cause freeipa-dns-server package to be uninstallable.
 Version:  9.20.29
-Release:  0.2%{?dist}
+Release:  0.3%{?dist}
 Epoch:    32
 Url:      https://www.isc.org/downloads/bind/
 #
@@ -496,6 +496,12 @@ export TSAN_OPTIONS="log_exe_name=true log_path=ThreadSanitizer exitcode=0"
   # proxyudp_test opens many sockets and routinely hits EMFILE under mock/CI.
   # Full coverage remains available via --with UNITTEST_ALL.
   sed -i 's/proxyudp_test//g' tests/isc/Makefile
+%ifarch s390x
+  # Each benchmark pause calls sched_yield() on s390x. Reduce repetitions
+  # for CI; retain all lock tests, contention levels, and write ratios.
+  # --with UNITTEST_ALL keeps the upstream benchmark workload.
+  export ISC_BENCHMARK_LOOPS=10
+%endif
 %endif
   ORIGFILES=$(ulimit -n)
   if [ "$CPUS" -gt 16 ]; then
