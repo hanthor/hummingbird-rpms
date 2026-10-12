@@ -58,7 +58,7 @@
 
 Name:		busybox
 Version:	1.37.0
-Release:  9.3%{?dist}
+Release:  9.4%{?dist}
 Epoch:		1
 Summary:	Statically linked binary providing simplified versions of system commands
 License:	GPL-2.0-only
@@ -107,6 +107,8 @@ Patch9:		busybox-1.37.0-CVE-2026-38755-ash-evalfun-recursion-limit.patch
 Patch10:	busybox-1.37.0-CVE-2026-88832-CVE-2026-88831-CVE-2026-88837-CVE-2026-88835-CVE-2026-88839.patch
 # CVE-2026-88841: reset dpkg status-file field cursor for each package
 Patch11:	busybox-1.37.0-CVE-2026-88841-dpkg-status-cursor.patch
+# CVE-2026-108119: prevent tar deferred links escaping the extraction directory
+Patch12:	busybox-1.37.0-CVE-2026-108119-fix-deferred-tar-links.patch
 BuildRequires:	gcc
 BuildRequires:	libselinux-devel >= 1.27.7-2
 BuildRequires:	libsepol-devel
@@ -172,6 +174,7 @@ package is build against shared libraries, most notably glibc.
 %patch -P9 -p1 -b .ash-evalfun-recursion-fix
 %patch -P10 -p1 -b .cve-2026-88832-88831-88837-88835-88839
 %patch -P11 -p1 -b .cve-2026-88841
+%patch -P12 -p1 -b .cve-2026-108119
 
 %build
 # Fix architecture name maps
