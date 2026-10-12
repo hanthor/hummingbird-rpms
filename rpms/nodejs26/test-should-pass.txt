@@ -7,7 +7,9 @@
 # Each exception should be explained with a comment
 # containing date and a short description of the problem
 #
-wasm-allocation/test-wasm-allocation.js
+# 2026-10-12: Upstream runs this address-space test only on x64 and arm64.
+# https://github.com/nodejs/node/blob/v26.11.1/test/wasm-allocation/wasm-allocation.status
+wasm-allocation/test-wasm-allocation.js s390x ppc64le i686 riscv64
 node-api/test_threadsafe_function/uncaught_exception.js
 pummel/test-heapsnapshot-near-heap-limit-by-api.js
 pummel/test-heapdump-fs-promise.js
