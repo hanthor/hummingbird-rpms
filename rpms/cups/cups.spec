@@ -15,7 +15,7 @@ Summary: CUPS printing system
 Name: cups
 Epoch: 1
 Version: 2.4.19
-Release: 4.4%{?dist}
+Release: 4.5%{?dist}
 # backend/failover.c - BSD-3-Clause
 # cups/md5* - Zlib
 # scheduler/colorman.c - Apache-2.0 WITH LLVM-exception AND BSD-2-Clause
@@ -90,6 +90,13 @@ Patch1003: 0001-Fix-CVE-2026-87876-cups-username-case-sensitive.patch
 # https://github.com/OpenPrinting/cups/commit/611d1bd3bdf832363832383567906a6d7fd6c47d
 Patch1004: 0001-Fix-CVE-2026-105326-mailto-notifier-argument-injecti.patch
 Patch1005: 1005-cve-2026-107655-null-pointer-dereference-embedded-job.patch
+Patch1006: 1006-cve-2026-107885-denial-service-improper-job-submission.patch
+Patch1007: 1007-cve-2026-107886-denial-service-double-free-printer-class.patch
+Patch1008: 1008-cve-2026-107888-denial-service-deleted-temporary-printer.patch
+Patch1009: 1009-cve-2026-107890-denial-service-repeated-ipp-group.patch
+# The upstream CVE-2026-107890 fix above only strips group separators on the
+# normal exit of add_job_subscriptions(); cupsd still crashes without it.
+Patch1010: 1010-cve-2026-107890-strip-separators-on-all-exits.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -323,6 +330,11 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1003 -p1 -b .fix-cve-2026-87876
 %patch -P 1004 -p1 -b .fix-cve-2026-105326
 %patch -P 1005 -p1 -b .fix-cve-2026-107655
+%patch -P 1006 -p1
+%patch -P 1007 -p1
+%patch -P 1008 -p1
+%patch -P 1009 -p1
+%patch -P 1010 -p1
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
