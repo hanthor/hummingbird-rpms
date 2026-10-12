@@ -42,7 +42,7 @@
 Summary: A Modern Concurrent Version Control System
 Name: subversion
 Version: 1.14.5
-Release: 32%{?dist}
+Release: 32.1%{?dist}
 License: Apache-2.0
 URL: https://subversion.apache.org/
 Source0: https://downloads.apache.org/subversion/subversion-%{version}.tar.bz2
@@ -212,8 +212,10 @@ Summary: Ruby bindings to the Subversion libraries
 BuildRequires: ruby-devel >= 1.9.1, ruby >= 1.9.1
 BuildRequires: rubygem(test-unit)
 BuildRequires: rubygem(csv)
+BuildRequires: rubygem(nkf)
 Requires: subversion-libs%{?_isa} = %{version}-%{release}
 Requires: rubygem(csv)
+Requires: rubygem(nkf)
 Conflicts: ruby-libs%{?_isa} < 1.8.2
 
 %description ruby
