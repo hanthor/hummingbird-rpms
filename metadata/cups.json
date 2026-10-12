@@ -5,7 +5,7 @@
     "release": "4",
     "sha": "38f5984a61ed64fdf1cf7ba56a4dbae16bfac788"
   },
-  "modification_reason": "CVE-2026-87876: backport fix for case-insensitive username matching in scheduler authorization paths; HUM-9671: CVE-2026-107655",
+  "modification_reason": "CVE-2026-87876: backport fix for case-insensitive username matching in scheduler authorization paths; HUM-9671: CVE-2026-107655; HUM-9651: CVE-2026-107885; HUM-9652: CVE-2026-107886; HUM-9653: CVE-2026-107888; HUM-9654: CVE-2026-107890",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/OpenPrinting/cups",
   "version": "2.4.19"
