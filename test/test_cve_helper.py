@@ -1170,6 +1170,41 @@ def test_release_bump_payload(tmp_path: Path, monkeypatch) -> None:
     assert "Release: 3.1.1%{?dist}" in spec_content
 
 
+def test_release_bump_leading_macro_before_dist(tmp_path: Path, monkeypatch) -> None:
+    # Regression for a Release value where a macro appears before the
+    # baserelease/.N suffix (e.g. rpm.spec's
+    # %{?snapver:0.%{snapver}.}%{baserelease}.2%{?dist}). The dist-suffix
+    # split must anchor on %{?dist} itself, not the first '%' in the line,
+    # or the bumped value gets prepended in front of the whole original
+    # Release instead of being inserted before %{?dist}.
+    pkg = "macropkg"
+    (tmp_path / "rpms" / pkg).mkdir(parents=True)
+    (tmp_path / "metadata").mkdir()
+    (tmp_path / "rpms" / pkg / f"{pkg}.spec").write_text(
+        "Name: macropkg\n"
+        "Version: 1.0\n"
+        "Release: %{?snapver:0.%{snapver}.}%{baserelease}.2%{?dist}\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "metadata" / f"{pkg}.json").write_text(
+        json.dumps({"modification_status": "modified", "release": "1"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(lib_spec, "repo_root", lambda: tmp_path)
+    payload = helper.release_bump_payload(pkg)
+    assert payload["proposed_spec_release"] == "%{?snapver:0.%{snapver}.}%{baserelease}.3"
+
+    applied = helper.apply_release_bump(pkg)
+    assert applied["writes"] is True
+    spec_content = (tmp_path / "rpms" / pkg / f"{pkg}.spec").read_text(encoding="utf-8")
+    assert (
+        "Release: %{?snapver:0.%{snapver}.}%{baserelease}.3%{?dist}" in spec_content
+    )
+    # The leading macro must not be duplicated.
+    assert spec_content.count("%{?snapver:0.%{snapver}.}%{baserelease}") == 1
+
+
 def test_release_bump_autorelease(tmp_path: Path, monkeypatch) -> None:
     pkg = "auto"
     (tmp_path / "rpms" / pkg).mkdir(parents=True)
