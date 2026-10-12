@@ -24,6 +24,12 @@ fips-checksum-match-softokn:
           aarch64)
             EXPECTED_SOFTOKN_SHA512="75addf8e63c21c5b854f1871b7e2d3c3f8b228cfb4fcecbbd19eeceed56e1442b825b408f08f2e15d15716de1e7f5288a41bf8c660121779c1f54841e9eac3ef"
             ;;
+          s390x)
+            EXPECTED_SOFTOKN_SHA512="62966798dca3b272b75fa0f3bee83fc7ce824538db705d4063928306f0aca07a681f94aa2a9b3408d0e9305364695bf0852bb8776278207e49f5e3a26f84214e"
+            ;;
+          ppc64le)
+            EXPECTED_SOFTOKN_SHA512="47afb746d2bf8b8f24790ededa1152f590077d51e32b6b4b8abba2b84ec333bd0197b259b79a254a5a49ff5a64a03cb36192086a1c5f0deb292669a961305456"
+            ;;
           *)
             echo "ERROR: Unsupported architecture: ${rpm_arch}"
             exit 1
@@ -86,6 +92,14 @@ fips-checksum-match-freebl:
           aarch64)
             EXPECTED_FREEBL3_SHA512="dae32a9dda2db9beb4a2dbd90da5a482e2f4ef42e73e899a220a1ff08d2d4fd427d5c165f63db519b5f16aceabcbd709b0b857e042aba6b65f1c18c7f67e7ae7"
             EXPECTED_FREEBLPRIV3_SHA512="4af207d657110efc16c09e7f10f34ea16a890268434f5d3b8ce363f049861aa1b2bb4a73aa8119e3ca16ebea3f4d0f015149b562d7b1fac536d7c4a2efe7ddc3"
+            ;;
+          s390x)
+            EXPECTED_FREEBL3_SHA512="849fa7cb99890c4bb876eae3dbd9de3e194b1020a8abb71369353bf25340193f298ef50e42f8aeec9ae2126986eb63325fc350d5c9305e18f40802d0b9b74212"
+            EXPECTED_FREEBLPRIV3_SHA512="eb79b4131aca69d2eeddfcd9f1091a6af89f1d255c7c851cd55c54e78f671cc11ecaeecd7ed2ea2106d581b9eb71d90d3bfc393c4b5ea8e8e272582e3faf34f6"
+            ;;
+          ppc64le)
+            EXPECTED_FREEBL3_SHA512="72135a5fe4e23f4a21de89a624efda9933be3471d19332ca2852597726f3469f9e7182dc0850430a8b6442c38d75766a20e26b87ba7cc5ca44690ac063dfcd5e"
+            EXPECTED_FREEBLPRIV3_SHA512="96457b0e92503c758c9c4b42bdec318f4fa74c96a9be8aca16534074e0d91f37772f0fd7e6950b2e08540bebbf18cc651588bedf7d4d617af0f0ef10620fbef5"
             ;;
           *)
             echo "ERROR: Unsupported architecture: ${rpm_arch}"

@@ -6,7 +6,7 @@
 # using UBI9 containers with subscription-manager authentication,
 # then packages them into a tar.gz source tarball.
 #
-# For aarch64 packages, it uses QEMU emulation via podman.
+# For non-native architectures, it uses QEMU emulation via podman.
 #
 # Usage: ./create-source-tarball.sh --org <ORG_ID> --key <ACTIVATION_KEY>
 #
@@ -19,7 +19,7 @@
 #
 # Requirements:
 # - podman
-# - qemu-user-static (for aarch64 emulation)
+# - qemu-user-static (for non-native architecture emulation)
 # - Internet access to Red Hat CDN
 #
 set -euo pipefail
@@ -79,7 +79,7 @@ OVR="${VERSION}-${RELEASE}"
 TARBALL_NAME="nss-fips-${VERSION}"
 
 # Architectures to download
-ARCHES=(x86_64 aarch64)
+ARCHES=(x86_64 aarch64 s390x ppc64le)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="${SCRIPT_DIR}/${TARBALL_NAME}"
@@ -109,6 +109,12 @@ download_rpms_for_arch() {
             ;;
         aarch64)
             platform="linux/arm64"
+            ;;
+        s390x)
+            platform="linux/s390x"
+            ;;
+        ppc64le)
+            platform="linux/ppc64le"
             ;;
         *)
             echo "Unsupported architecture: ${arch}"

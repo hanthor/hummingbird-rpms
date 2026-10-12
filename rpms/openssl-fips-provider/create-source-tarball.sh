@@ -26,8 +26,8 @@ SOURCE_RPM="${PKGNAME}-${OVR}.src.rpm"
 RHEL_TARBALL="${PKGNAME}-${VERSION}-1.tar.gz"
 TARBALL_NAME="${PKGNAME}-${VERSION}"
 
-# Architectures Hummingbird builds today.
-ARCHES=(x86_64 aarch64)
+# Architectures required in the source bundle.
+ARCHES=(x86_64 aarch64 s390x ppc64le)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="${SCRIPT_DIR}/${TARBALL_NAME}"
