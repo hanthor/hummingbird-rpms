@@ -94,6 +94,9 @@ Patch1006: 1006-cve-2026-107885-denial-service-improper-job-submission.patch
 Patch1007: 1007-cve-2026-107886-denial-service-double-free-printer-class.patch
 Patch1008: 1008-cve-2026-107888-denial-service-deleted-temporary-printer.patch
 Patch1009: 1009-cve-2026-107890-denial-service-repeated-ipp-group.patch
+# The upstream CVE-2026-107890 fix above only strips group separators on the
+# normal exit of add_job_subscriptions(); cupsd still crashes without it.
+Patch1010: 1010-cve-2026-107890-strip-separators-on-all-exits.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -331,6 +334,7 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1007 -p1
 %patch -P 1008 -p1
 %patch -P 1009 -p1
+%patch -P 1010 -p1
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
