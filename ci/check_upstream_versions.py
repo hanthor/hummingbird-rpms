@@ -989,6 +989,8 @@ def mark_package_modified(
         logger.info(f"{package}: independent package, skipping modification tracking")
         if version is not None:
             metadata.update(version=version)
+        else:
+            return
     elif isinstance(metadata, CleanPackageMetadata):
         if version is not None:
             metadata = metadata.to_modified_upstream(version=version, reason=reason)
