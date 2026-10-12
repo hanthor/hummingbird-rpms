@@ -113,6 +113,8 @@ tree_status:
 
 check:
   tags: [big-runner]
+  variables:
+    KUBERNETES_HELPER_MEMORY_LIMIT: "256Mi"
   script:
     # Fetch full history for git commit trailer validation
     - git fetch --unshallow --quiet
