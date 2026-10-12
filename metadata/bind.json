@@ -1,6 +1,6 @@
 {
   "branch": "rawhide",
-  "modification_reason": "Update to upstream version 9.20.29",
+  "modification_reason": "Update to upstream version 9.20.29; Reduce s390x rwlock benchmark repetitions for CI; preserve full workload with UNITTEST_ALL",
   "modification_status": "modified",
   "release_monitoring_project_id": 383859,
   "sha": "55c3f8e6d3577eeeaa80d74ddf2c872ce213e86d",
