@@ -1,0 +1,66 @@
+From 28b571c38af5631b95e993258764caa3604c3fca Mon Sep 17 00:00:00 2001
+From: Filip Skokan <panva.ip@gmail.com>
+Date: Wed, 26 Aug 2026 10:32:07 +0000
+Subject: [PATCH] test: account for varied OpenSSL CCM final behaviours
+
+Upstream: https://github.com/nodejs/node/commit/28b571c38af5631b95e993258764caa3604c3fca
+Adapt the test to Node.js 20's common.hasOpenSSL3 helper and retain coverage
+for both createCipher and createCipheriv with matching control instances.
+Expect the additional warning from the legacy control constructor.
+
+Signed-off-by: Filip Skokan <panva.ip@gmail.com>
+---
+--- a/test/parallel/test-crypto-authenticated.js
++++ b/test/parallel/test-crypto-authenticated.js
+@@ -69,6 +69,7 @@
+     ['Use Cipheriv for counter mode of aes-256-ccm'],
+     ['Use Cipheriv for counter mode of aes-256-ccm'],
+     ['Use Cipheriv for counter mode of aes-128-ccm'],
++    ['Use Cipheriv for counter mode of aes-128-ccm'],
+   ];
+ 
+ const expectedDeprecationWarnings = [
+@@ -669,17 +670,33 @@
+   const iv = Buffer.alloc(12);
+   const opts = { authTagLength: 10 };
+ 
+-  for (const cipher of [
+-    crypto.createCipher(algo, 'foo', opts),
+-    crypto.createCipheriv(algo, key, iv, opts),
++  for (const createCipher of [
++    () => crypto.createCipher(algo, 'foo', opts),
++    () => crypto.createCipheriv(algo, key, iv, opts),
+   ]) {
+-    assert.throws(() => {
+-      cipher.final();
+-    }, common.hasOpenSSL3 ? {
+-      code: 'ERR_OSSL_TAG_NOT_SET'
+-    } : {
+-      message: /Unsupported state/
+-    });
++    const control = createCipher();
++    control.update(Buffer.alloc(0));
++    control.final();
++    const expectedTag = control.getAuthTag();
++
++    const cipher = createCipher();
++    let output;
++    try {
++      output = cipher.final();
++    } catch (err) {
++      // OpenSSL without https://github.com/openssl/openssl/pull/32427
++      // cannot finalize an empty CCM message unless update() was called.
++      if (common.hasOpenSSL3) {
++        assert.strictEqual(err.code, 'ERR_OSSL_TAG_NOT_SET');
++      } else {
++        assert.match(err.message, /Unsupported state/);
++      }
++    }
++
++    if (output !== undefined) {
++      assert.deepStrictEqual(output, Buffer.alloc(0));
++      assert.deepStrictEqual(cipher.getAuthTag(), expectedTag);
++    }
+   }
+ }
+ 
