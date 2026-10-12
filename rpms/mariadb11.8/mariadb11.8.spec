@@ -1,6 +1,6 @@
 # Plain package name for cases, where %%{name} differs (e.g. for versioned packages)
 %global majorname mariadb
-%global package_version 11.8.8
+%global package_version 11.8.9
 %global majorversion %(echo %{package_version} | cut -d'.' -f1-2 )
 
 # Set if this package will be the default one in distribution
@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          101%{?with_debug:.debug}%{?dist}
+Release:          0.1%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -258,8 +258,6 @@ Patch13:          %{majorname}-libfmt.patch
 #   Patch14: make MTR port calculation reasonably predictable
 Patch14:          %{majorname}-mtr.patch
 Patch16:          %{majorname}-federated.patch
-#   Patch17: fix default Galera configuation file
-Patch17:          upstream_0a66c466f1772945d46b12bd340e1bd9adff4e9b.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -875,7 +873,6 @@ rm -r storage/rocksdb/
 
 %patch -P14 -p1
 %patch -P16 -p1
-%patch -P17 -p1
 
 # generate a list of tests that fail, but are not disabled by upstream
 cat %{SOURCE50} | tee -a mysql-test/unstable-tests
