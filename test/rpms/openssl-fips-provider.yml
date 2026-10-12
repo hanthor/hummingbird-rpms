@@ -32,6 +32,12 @@ fips-checksum-match:
       aarch64)
         ubi_platform="linux/arm64"
         ;;
+      s390x)
+        ubi_platform="linux/s390x"
+        ;;
+      ppc64le)
+        ubi_platform="linux/ppc64le"
+        ;;
       *)
         TEST_FAIL "Unsupported RPM architecture for UBI checksum comparison: ${rpm_arch}"
         ;;
