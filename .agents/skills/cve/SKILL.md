@@ -76,6 +76,12 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    get the exact string via
    `cve_helper.py show HUM-XXXX --title-only --title-prefix "<prefix>"`.
 
+In Cursor, `rename_chat` is documented to fire only when the user explicitly
+asks in that turn; a compliant agent will not call it proactively there even
+though the steps above say to. That is a known Cursor-side restriction, not
+a missing dependency — print the suggested title and move on instead of
+retrying or searching for a workaround.
+
 For product-mismatch CVEs, search `spec-deps` and the SBOM using the tracker’s
 **Upstream Affected Component** field, not the CVE-reported product. If the
 component is not in the spec, treat an SBOM hit as a false
