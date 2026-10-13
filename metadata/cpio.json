@@ -5,7 +5,7 @@
     "release": "10",
     "sha": "71eb8b05f5018ca52f1e6d25d54b9d54f93349cd"
   },
-  "modification_reason": "Backport CVE-2026-66484",
+  "modification_reason": "Backport CVE-2026-66484, CVE-2026-66485",
   "modification_status": "modified",
   "upstream_repo": "https://git.savannah.gnu.org/git/cpio.git",
   "version": "2.15"
