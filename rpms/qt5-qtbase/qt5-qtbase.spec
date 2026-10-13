@@ -57,7 +57,7 @@
 Name:    qt5-qtbase
 Summary: Qt5 - QtBase components
 Version: 5.15.18
-Release: 5.3%{?dist}
+Release: 6%{?dist}
 
 # See LGPL_EXCEPTIONS.txt, for exception details
 License: LGPL-3.0-only OR GPL-3.0-only WITH Qt-GPL-exception-1.0
@@ -165,14 +165,6 @@ Patch104: 0001-Update-SSL-trust-store-locations-for-modern-Red-Hat-.patch
 # Fix build with OpenSSL 4.0
 Patch105: qtbase-openssl4-opaque-structs.patch
 
-# CVE-2026-19248: unbounded recursion in ~QDomNodePrivate() lets a deeply
-# nested, untrusted XML document parsed with QDomDocument exhaust the stack
-# and crash the process. Manual backport of upstream qt/qtbase commit
-# 647b221ca885739a69ece5695b7dcddcf3227558 (fixed in Qt 6.8.9 / 6.11.2); no
-# official or KDE-maintained patch exists yet for the Qt 5.15 branch.
-# https://www.qt.io/blog/security-advisory-cve-2026-19248
-Patch106: CVE-2026-19248-qdomnode-dtor-recursion.patch
-
 ## Qt 6 backports for better Gtk/GNOME integration
 # https://fedoraproject.org/wiki/Changes/Qt_Wayland_By_Default_On_Gnome
 # https://bugzilla.redhat.com/show_bug.cgi?id=1732129
@@ -201,7 +193,8 @@ Patch168: 0019-Fix-tooltip-palette-issue-in-gtk3-theme.patch
 Patch169: 0020-QGtk3Theme-define-light-midlight-mid-dark-shadow-colors.patch
 
 # Security
-
+# CVE-2026-19248, Unbounded recursion vulnerability in the QDomNode destructor of Qt XML impacts Qt
+Patch180: qt5-qtbase-CVE-2026-19248.patch
 
 # Latest QGnomePlatform needs to be specified to be used
 Patch200: qtbase-use-qgnomeplatform-as-default-platform-theme-on-gnome.patch
@@ -493,10 +486,9 @@ Qt5 libraries used for drawing widgets and OpenGL items.
 %patch -P102 -p1
 %patch -P103 -p1
 %patch -P104 -p1
-%if 0%{?fedora} >= 45
+%if 0%{?fedora} >= 45 || 0%{?rhel} >= 11
 %patch -P105 -p1
 %endif
-%patch -P106 -p1
 
 ## Qt 6 backports
 %if 0%{?fedora} > 30 || 0%{?rhel} > 8
@@ -523,6 +515,8 @@ Qt5 libraries used for drawing widgets and OpenGL items.
 %patch -P168 -p1
 %patch -P169 -p1
 %endif
+
+%patch -P180 -p1
 
 %if 0%{?fedora} < 39
 # Use QGnomePlatform by default
@@ -1193,6 +1187,9 @@ fi
 
 
 %changelog
+* Tue Oct 13 2026 Than Ngo <than@redhat.com> - 5.15.18-6
+- Fix CVE-2026-19248, denial of Service vulnerability in XML parsing
+
 * Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 5.15.18-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
@@ -2650,4 +2647,3 @@ fi
 
 * Wed Nov 14 2012 Rex Dieter <rdieter@fedoraproject.org> 5.0.0-0.0.beta2
 - first try
-
