@@ -269,6 +269,11 @@ Summary: A very fast and robust SQL database server
 %endif
 
 BuildRequires:    make cmake gcc-c++
+# Needed by storage/duckdb/cmake/duckdb.cmake, which runs 'git apply' as the
+# ExternalProject_Add PATCH_COMMAND for duckdb-pr24061-setval.diff against the
+# bundled third_parties/duckdb submodule source. No network access is
+# required; git is only used locally as a patch-application tool here.
+BuildRequires:    git
 BuildRequires:    libxcrypt-devel
 BuildRequires:    multilib-rpm-config
 BuildRequires:    selinux-policy-devel
