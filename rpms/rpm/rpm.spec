@@ -37,7 +37,7 @@
 Summary: The RPM package management system
 Name: rpm
 Version: %{rpmver}
-Release: %{?snapver:0.%{snapver}.}%{baserelease}.2%{?dist}
+Release: %{?snapver:0.%{snapver}.}%{baserelease}.3%{?dist}
 Url: https://rpm.org/
 License: GPL-2.0-or-later
 Source0: http://ftp.rpm.org/releases/%{srcdir}/rpm-%{srcver}.tar.bz2
@@ -128,6 +128,11 @@ rpm-6.0-rpmformat.patch
 # Patches already upstream:
 # Backport fix for heap buffer overflow in NDB slot table parsing
 rpm-6.0.1-ndb-slottable-CVE-2026-44605.patch
+# Backport fix for rpmbuild -t spec member name macro/Lua injection
+rpm-6.1.0-gettarspec-macro-injection-CVE-2026-78367.patch
+# Backport fix for shell injection via tarball/archive filenames
+# passed to rpmbuild -t and rpmuncompress
+rpm-6.1.0-rpopen-filename-injection-CVE-2026-84837-84838.patch
 
 # These are not yet upstream
 rpm-4.7.1-geode-i686.patch
