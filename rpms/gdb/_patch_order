@@ -18,3 +18,4 @@ gdb-backport-libiberty-sync.patch
 gdb-backport-corefile-use-after-free-fix.patch
 gdb-backport-s390x-return-crash.patch
 gdb-backport-ifunc-lookup-fix.patch
+gdb-rhel-190101-read_member_functions.patch
