@@ -1,0 +1,5 @@
+fetch:
+  - type: spec-source
+    index: 0
+  - type: spec-source
+    index: 1
