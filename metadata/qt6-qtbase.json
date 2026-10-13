@@ -5,7 +5,8 @@
     "release": "3",
     "sha": "c3dd3fe417d776886a3f4b3b245f597313780eaa"
   },
-  "modification_status": "clean",
+  "modification_reason": "Backport CVE-2026-15037",
+  "modification_status": "modified",
   "upstream_branch": "6.11",
   "upstream_repo": "https://github.com/qt/qtbase",
   "version": "6.11.2"
