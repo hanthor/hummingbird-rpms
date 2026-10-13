@@ -1,7 +1,7 @@
 Summary: A GNU archiving program
 Name: cpio
 Version: 2.15
-Release: 10.2%{?dist}
+Release: 10.3%{?dist}
 License: GPL-3.0-or-later
 URL: https://www.gnu.org/software/cpio/
 Source0: https://ftp.gnu.org/gnu/cpio/cpio-%{version}.tar.bz2
@@ -44,6 +44,11 @@ Patch8: cpio-2.11-crc-fips-nit.patch
 # CVE-2026-66484: --no-absolute-filenames must sanitize tar hard-link targets
 # Upstream: e2b9cbdd3354d2b1569b7390d1bc15c1930559ad
 Patch9: cpio-2.15-no-abs-hardlink-CVE-2026-66484.patch
+
+# CVE-2026-66485: make_path() must not use alloca for an archive-controlled
+# pathname length
+# Upstream: 3cd514031371d8aeeaf2048aa10103e02831aaa9
+Patch10: cpio-2.15-makepath-no-alloca-CVE-2026-66485.patch
 
 Provides: bundled(gnulib)
 Provides: bundled(paxutils)
