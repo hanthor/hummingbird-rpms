@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "221ba0f3358f3749c32afe8c51f6d67f2683c743"
   },
-  "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): Source0's ftp://ftp.openbsd.org is unreliable/FTP-blocked in modern build environments -- repointed at OpenBSD's own HTTPS mirror (cdn.openbsd.org), which matches the existing recorded checksum exactly, no content change.",
+  "modification_reason": "Backport CVE-2026-106586, CVE-2026-106583, CVE-2026-106587, CVE-2026-106552, CVE-2026-106582, CVE-2026-106584, CVE-2026-106585; retain HTTPS source-pipeline mirror (HUM-4620)",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/openssh/openssh-portable",
   "version": "10.5p1"

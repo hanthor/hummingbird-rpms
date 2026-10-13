@@ -39,7 +39,7 @@
 Summary: An open source implementation of SSH protocol version 2
 Name: openssh
 Version: %{openssh_ver}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 URL: http://www.openssh.com/portable.html
 Source0: https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
 Source1: https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz.asc
@@ -114,6 +114,13 @@ Patch0050: 0050-openssh-10.2p1-pam-auth.patch
 Patch0051: 0051-gssapi-s4u.patch
 Patch0052: 0052-openssh-10.2p1-pkcs11-uri.patch
 Patch0053: 0053-gssapi-tests.patch
+Patch0054: 0054-CVE-2026-106584.patch
+Patch0055: 0055-CVE-2026-106586.patch
+Patch0056: 0056-CVE-2026-106587.patch
+Patch0057: 0057-CVE-2026-106582.patch
+Patch0058: 0058-CVE-2026-106585.patch
+Patch0059: 0059-CVE-2026-106552.patch
+Patch0060: 0060-CVE-2026-106583.patch
 
 License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: openssl-libs >= 1:3.5.0
