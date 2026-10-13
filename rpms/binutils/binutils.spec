@@ -7,7 +7,7 @@ Name: binutils%{?_with_debug:-debug}
 # The variable %%{source} (see below) should be set to indicate which of these
 # origins is being used.
 Version: 2.46.1
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 License: GPL-3.0-or-later AND (GPL-3.0-or-later WITH Bison-exception-2.2) AND (LGPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND GFDL-1.3-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later AND LGPL-2.0-or-later
 URL: https://sourceware.org/binutils
 
@@ -375,6 +375,10 @@ Patch24: binutils-CVE-2026-15003.patch
 #           CVE-2026-91781
 # Lifetime: Fixed in 2.47
 Patch25: binutils-CVE-2026-91781.patch
+
+# Purpose:  Fix use-after-free in add_archive_element with LTO plugins (CVE-2026-19548).
+# Lifetime: Fixed in 2.47
+Patch26: binutils-CVE-2026-19548.patch
 
 #----------------------------------------------------------------------------
 
