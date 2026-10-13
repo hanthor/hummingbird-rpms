@@ -112,3 +112,10 @@ Patch019: gdb-backport-s390x-return-crash.patch
 # backport will drop out once GDB is rebased to GDB 18.
 Patch020: gdb-backport-ifunc-lookup-fix.patch
 
+# Fix out-of-bounds write in read_member_functions() (Tom de Vries,
+# RHEL-190101; backported by Keith Seitz, Approved-By: Simon Marchi).
+# Vendored from CentOS Stream c10s; fixes CVE-2026-13732.  No GDB
+# upstream commit exists for this fix since STABS support is being
+# removed in GDB 18.
+Patch021: gdb-rhel-190101-read_member_functions.patch
+
