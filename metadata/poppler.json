@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "ab357b7d0ee5de297fc491394fd9fd8416df275e"
   },
-  "modification_reason": "Update to 26.08.0 for CVE-2026-10118; backport CVE-2026-93313 fix; HUM-9084: CVE-2026-102621; backport CVE-2026-102620 (HUM-9078); HUM-9642: CVE-2026-107705",
+  "modification_reason": "Update to 26.08.0 for CVE-2026-10118; backport CVE-2026-93313 fix; HUM-9084: CVE-2026-102621; backport CVE-2026-102620 (HUM-9078); HUM-9642: CVE-2026-107705; backport CVE-2026-93311 fix",
   "modification_status": "modified",
   "upstream_repo": "https://gitlab.freedesktop.org/poppler/poppler",
   "version": "26.08.0"
