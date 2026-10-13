@@ -51,7 +51,11 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    analyze or write.
 2. **Investigate.** `cve_helper.py investigate HUM-XXXX` (add `--only` if
    the user said only those keys). Bare numbers are HUM tickets. Rename the
-   chat using the environment's title tool with the printed `Suggested chat title`.
+   chat with the printed `Suggested chat title` via
+   `CallMcpTool: cursor-app-control / rename_chat`. If that MCP tool is not
+   connected in this session (check the dynamic tool catalog once; do not
+   search further or re-litigate this per ticket), skip the rename and
+   just print the suggested title for the user to apply manually.
 3. **Verify applicability.** Read the recap, then gather evidence for every
    named ticket before asking the user what to do: published Hummingbird NVR
    and artifacts, component version and binary presence, target architecture
@@ -66,10 +70,17 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    closure. If FIB and a task/MR already exist, leave for advisory automation.
    If FIB is set with no task/MR, ask whether to create the task.
 5. **Act** with the matching helper (below). Comment before state
-   changes. Ask before any close. After acting, rename the chat again using
-   the same environment-specific title tool, with the resolution's **Chat
-   prefix** (below) prepended — get the exact string via
+   changes. Ask before any close. After acting, rename the chat again the
+   same way (`cursor-app-control / rename_chat`, or print-and-skip if
+   unavailable), with the resolution's **Chat prefix** (below) prepended —
+   get the exact string via
    `cve_helper.py show HUM-XXXX --title-only --title-prefix "<prefix>"`.
+
+In Cursor, `rename_chat` is documented to fire only when the user explicitly
+asks in that turn; a compliant agent will not call it proactively there even
+though the steps above say to. That is a known Cursor-side restriction, not
+a missing dependency — print the suggested title and move on instead of
+retrying or searching for a workaround.
 
 For product-mismatch CVEs, search `spec-deps` and the SBOM using the tracker’s
 **Upstream Affected Component** field, not the CVE-reported product. If the
