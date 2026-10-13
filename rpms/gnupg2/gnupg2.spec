@@ -5,7 +5,7 @@
 Summary: Utility for secure communication and data storage
 Name:    gnupg2
 Version: 2.4.9
-Release: 18.2%{?dist}
+Release: 18.3%{?dist}
 
 License: CC0-1.0 AND GPL-2.0-or-later AND GPL-3.0-or-later AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND (BSD-3-Clause OR LGPL-3.0-or-later OR GPL-2.0-or-later) AND CC-BY-4.0 AND MIT
 Source0: https://gnupg.org/ftp/gcrypt/%{?pre:alpha/}gnupg/gnupg-%{version}%{?pre}.tar.bz2
@@ -34,6 +34,8 @@ Patch6:  gnupg-2.4.9-CVE-2026-105712-gpgtar-defs-empty-dir.patch
 Patch7:  gnupg-2.4.9-CVE-2026-105712-gpgtar-compat-no-dir-check.patch
 # CVE-2026-105712 follow-up: skip directory check when target dir does not exist yet
 Patch8:  gnupg-2.4.9-CVE-2026-105712-gpgtar-nonexist-dir.patch
+# CVE-2026-57062: gpgsm accepts short GCM authentication tags during CMS decryption
+Patch9:  gnupg-2.4.9-CVE-2026-57062-gpgsm-min-gcm-tag.patch
 
 # Patches from FreePG:
 # https://gitlab.com/freepg/gnupg/-/tree/main/STABLE-BRANCH-2-4-freepg
@@ -236,6 +238,7 @@ package contains the GnuPG Web Key Service client and server.
 %patch 6 -p1 -b .gpgtar-defs-emptydir
 %patch 7 -p1 -b .gpgtar-compat-nodircheck
 %patch 8 -p1 -b .gpgtar-nonexist-dir
+%patch 9 -p1 -b .gpgsm-min-gcm-tag
 
 %patch 20 -p1 -b .good_revoc
 %patch 21 -p1 -b .prev_known_key

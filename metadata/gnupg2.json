@@ -5,7 +5,8 @@
     "release": "18",
     "sha": "f2a95f7a06c30562246f5cbd27d0096ccb698013"
   },
-  "modification_status": "clean",
+  "modification_reason": "Backport CVE-2026-57062",
+  "modification_status": "modified",
   "upstream_repo": "https://dev.gnupg.org/source/gnupg.git",
   "version": "2.4.9"
 }
