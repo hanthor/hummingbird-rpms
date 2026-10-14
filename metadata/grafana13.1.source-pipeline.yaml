@@ -72,6 +72,9 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.1.7.tar.bz2"
+    checksum: "8709f7c151846c7b7dc3cc5a1fb56131a99941f6485eca47c2c243ffbe0eab50fe0d5b9aa0ccef6d5b4b37d33c60e74bb3f8c008ddacb96b0010c65653f5e2df"
+    reason: "grafana-hono-4.13.11-cve.patch bumps hono 4.13.7->4.13.11 for CVE-2026-109955; yarn-cache regenerated without stale hono-4.13.7 zip"
   - file: "grafana-yarn-cache-13.1.3.tar.bz2"
     checksum: "3f466ce2b8654f9bc7b4d5023362ead08f79e74a37436ef7f03ce429313f611d02e231c65bc5ea4a86d73fd4af8c9e06c33ef496013720c56c97a4652830bfdb"
     reason: "grafana-qs-6.16.0-cve.patch bumps qs 6.15.2->6.16.0 for CVE-2026-82562/CVE-2026-82417; yarn-cache regenerated without stale qs-6.15.2 zip"
