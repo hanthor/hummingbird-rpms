@@ -1,6 +1,6 @@
 Name:           maven3.9
 Version:        3.9.16
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Java project management and comprehension tool
 
 %global homedir %{_datadir}/maven
@@ -14,6 +14,10 @@ Source0:        https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 # Source1 contains the Maven Central artifacts needed for a network-free build.
 # Run generate-vendor.sh to reproduce it.
 Source1:        maven-%{version}-repository.tar.zst
+# Bundled org.ow2.asm:asm 9.9.1 is vulnerable to CVE-2026-110257,
+# CVE-2026-110258, CVE-2026-110260, CVE-2026-110261, and CVE-2026-110263.
+# Fixed upstream in ASM 9.11.
+Patch0:         0001-bump-bundled-asm-to-9.11.patch
 
 BuildArch:      noarch
 BuildRequires:  java-25-openjdk-devel
@@ -73,7 +77,7 @@ Provides: bundled(mvn(org.eclipse.sisu:org.eclipse.sisu.inject)) = 1.0.0
 Provides: bundled(mvn(org.eclipse.sisu:org.eclipse.sisu.plexus)) = 1.0.0
 Provides: bundled(mvn(org.fusesource.jansi:jansi)) = 2.4.3
 Provides: bundled(mvn(org.jspecify:jspecify)) = 1.0.0
-Provides: bundled(mvn(org.ow2.asm:asm)) = 9.9.1
+Provides: bundled(mvn(org.ow2.asm:asm)) = 9.11
 Provides: bundled(mvn(org.slf4j:jcl-over-slf4j)) = 1.7.36
 Provides: bundled(mvn(org.slf4j:slf4j-api)) = 1.7.36
 # END generated bundled Maven Provides
@@ -85,6 +89,7 @@ using Fedora's Maven layout for Hummingbird builds.
 
 %prep
 %setup -q -n apache-maven-%{version}
+%patch 0 -p1
 mkdir ../repository
 tar --zstd -xf %{SOURCE1} -C ../repository
 
