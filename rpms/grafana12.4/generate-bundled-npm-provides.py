@@ -4,7 +4,6 @@
 import json
 import re
 import sys
-import tarfile
 from pathlib import Path
 
 import yaml
@@ -115,36 +114,36 @@ def yarn_packages(lock, root_package, workspaces):
     return provides
 
 
-def read_member(source, member):
-    extracted = source.extractfile(member)
-    if extracted is None:
-        raise ValueError(f"could not read {member.name}")
-    return extracted.read().decode()
+def read_source_tree(source_dir):
+    """Read Yarn metadata from the patched Grafana source tree."""
+    lock = (source_dir / "yarn.lock").read_text()
+    root_package = json.loads((source_dir / "package.json").read_text())
+    patterns = root_package.get("workspaces", {}).get("packages", [])
+    workspaces = {}
+    for package_json in source_dir.rglob("package.json"):
+        if package_json == source_dir / "package.json":
+            continue
+        relative = package_json.relative_to(source_dir)
+        if not any(relative.match(f"{pattern}/package.json") for pattern in patterns):
+            continue
+        package = json.loads(package_json.read_text())
+        if package.get("name"):
+            workspaces[package["name"]] = package
+    return lock, root_package, workspaces
 
 
 def main():
-    if len(sys.argv) != 2 or not re.fullmatch(r"[0-9][0-9A-Za-z.+-]*", sys.argv[1]):
-        raise SystemExit(f"usage: {Path(sys.argv[0]).name} VERSION")
-    version = sys.argv[1]
+    if len(sys.argv) != 3 or not re.fullmatch(r"[0-9][0-9A-Za-z.+-]*", sys.argv[1]):
+        raise SystemExit(f"usage: {Path(sys.argv[0]).name} VERSION SOURCE_DIR")
     package_dir = Path(__file__).resolve().parent
-    archive = package_dir / f"grafana-{version}.tar.gz"
+    source_dir = Path(sys.argv[2])
+    if not source_dir.is_dir():
+        raise SystemExit(f"source directory not found: {source_dir}")
     specs = list(package_dir.glob("grafana*.spec"))
     if len(specs) != 1:
         raise SystemExit("expected exactly one grafana*.spec")
 
-    with tarfile.open(archive, "r:gz") as source:
-        prefix = f"grafana-{version}/"
-        lock = read_member(source, source.getmember(f"{prefix}yarn.lock"))
-        root_package = json.loads(read_member(source, source.getmember(f"{prefix}package.json")))
-        patterns = root_package.get("workspaces", {}).get("packages", [])
-        workspaces = {}
-        for member in source.getmembers():
-            relative = member.name.removeprefix(prefix)
-            if not any(Path(relative).match(f"{pattern}/package.json") for pattern in patterns):
-                continue
-            package = json.loads(read_member(source, member))
-            if package.get("name"):
-                workspaces[package["name"]] = package
+    lock, root_package, workspaces = read_source_tree(source_dir)
 
     provides = yarn_packages(lock, root_package, workspaces)
 

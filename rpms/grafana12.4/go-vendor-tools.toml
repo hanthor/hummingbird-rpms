@@ -1,19 +1,27 @@
 [archive]
 pre_commands = [
-  # CVE-2026-93450. Bumps go-openapi/swag jsonutils to v0.27.1 to fix
-  # Denial of Service via unbounded JSON recursion.
-  ["go", "get", "github.com/go-openapi/swag@v0.27.1",
-                "github.com/go-openapi/swag/jsonutils@v0.27.1",
-                "github.com/go-openapi/swag/cmdutils@v0.27.1",
-                "github.com/go-openapi/swag/conv@v0.27.1",
-                "github.com/go-openapi/swag/fileutils@v0.27.1",
-                "github.com/go-openapi/swag/loading@v0.27.1",
-                "github.com/go-openapi/swag/mangling@v0.27.1",
-                "github.com/go-openapi/swag/netutils@v0.27.1",
-                "github.com/go-openapi/swag/pools@v0.27.1",
-                "github.com/go-openapi/swag/stringutils@v0.27.1",
-                "github.com/go-openapi/swag/typeutils@v0.27.1",
-                "github.com/go-openapi/swag/yamlutils@v0.27.1"],
+  # Upstream Grafana versions with swag >= 0.28.0 already include the fix.
+  # Keep the 0.27.1 backport only for older releases.
+  ["sh", "-c", """
+    swag_version=$(awk '
+      $1 == "require" && $2 == "github.com/go-openapi/swag" { print $3; exit }
+      $1 == "github.com/go-openapi/swag" { print $2; exit }
+    ' go.mod)
+    if [ -z "${swag_version}" ] || [ "$(printf '%s\n' "${swag_version}" v0.28.0 | sort -V | tail -n 1)" != "${swag_version}" ]; then
+      go get github.com/go-openapi/swag@v0.27.1 \
+        github.com/go-openapi/swag/jsonutils@v0.27.1 \
+        github.com/go-openapi/swag/cmdutils@v0.27.1 \
+        github.com/go-openapi/swag/conv@v0.27.1 \
+        github.com/go-openapi/swag/fileutils@v0.27.1 \
+        github.com/go-openapi/swag/loading@v0.27.1 \
+        github.com/go-openapi/swag/mangling@v0.27.1 \
+        github.com/go-openapi/swag/netutils@v0.27.1 \
+        github.com/go-openapi/swag/pools@v0.27.1 \
+        github.com/go-openapi/swag/stringutils@v0.27.1 \
+        github.com/go-openapi/swag/typeutils@v0.27.1 \
+        github.com/go-openapi/swag/yamlutils@v0.27.1
+    fi
+  """],
 ]
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
