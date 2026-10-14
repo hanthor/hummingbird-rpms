@@ -122,11 +122,17 @@ main.func_str                               :
 main.func_kdf                               :
 
 # Fails since 11.8.9
-# IPv6 loopback (::1) TLS connections fail hostname verification in the
-# Konflux hermetic mock chroot; main.mysql_client_test_nonblock then trips
-# mysql-test-run's "too many tests failed" abort threshold as a result.
+# IPv6 loopback (::1) connections fail in the Konflux hermetic mock chroot:
+# TLS connections fail hostname verification, and plain TCP connections over
+# ::1 are not reliably established/tracked either (perfschema.socket_connect
+# never sees the expected second client_connection row). main.mysql_client_test
+# and its _comp/_nonblock variants all drive the same mariadb-client-test
+# binary, which exercises IPv6 connections internally and fails the same way.
 rpl.rpl_ip_mix                              :
 rpl.rpl_ip_mix2                             :
 rpl.rpl_ipv6                                :
 main.ipv6                                   :
 main.mysql_client_test_nonblock             :
+main.mysql_client_test                      :
+main.mysql_client_test_comp                 :
+perfschema.socket_connect                   :
