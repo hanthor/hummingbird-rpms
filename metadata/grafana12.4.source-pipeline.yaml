@@ -15,58 +15,10 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        # Apply every patch %prep will (in the same order), not just
-        # grafana-yarn-cache.patch: the fast-uri/brace-postcss/browserslist-nanoid/dompurify
-        # CVE patches also bump yarn.lock/package.json entries (the other two
-        # patches only touch a Go test file, harmless to apply here too).
-        # Populating the cache from the pristine (pre-CVE-patch) lockfile
-        # leaves it missing whatever versions those patches bump to, so
-        # %build's own `yarn install --immutable` (against the post-patch
-        # lockfile) fails with "Cache entry required but missing" for
-        # exactly those packages.
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache.patch"
-        patch -p1 < "${PACKAGE_DIR}/disable-parallel-db-regression-tests.patch"
-        patch -p1 < "${PACKAGE_DIR}/reset-begintx-test-deadline.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-npm-cve-brace-postcss.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-ip-address-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-browserslist-nanoid-cve.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
-        # Must apply after the CVE patches above: pins compressionLevel and
-        # carries the resulting full yarn.lock checksum regeneration (see
-        # grafana-yarn-cache-compression.patch's own header comment).
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression.patch"
-        # Generated against the post-compression lockfile, so this comes after
-        # grafana-yarn-cache-compression.patch (same order as Patch9 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
-        # Generated against the post-js-yaml lockfile, so this comes after
-        # Patch9 (same order as Patch10 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7-cve.patch"
-        # Generated against the post-fast-uri-3.1.7 lockfile, so this comes
-        # after Patch10 (same order as Patch11 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-undici-cve.patch"
-        # Generated against the post-Patch11 lockfile; include the Joi bump
-        # before cache generation so the offline cache contains 17.13.8.
-        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
-        # Bumps the same fast-uri dependency again (3.1.7 -> 3.1.8) for
-        # CVE-2026-86472 (same order as Patch13 in the spec).
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
-        # Keep Source0's Go module graph aligned with the vendor archive.
-        patch -p1 < "${PACKAGE_DIR}/grafana-go-openapi-swag-cve.patch"
-        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-3.4.13-cve.patch"
-        # CVE-2026-93981: bump vendored hono 4.12.7 -> 4.13.7.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.7-cve.patch"
-        # CVE-2026-101903: bump vendored axios 1.16.0 -> 1.20.0.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
-        # CVE-2026-109955: bump vendored hono 4.13.7 -> 4.13.11.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.11-cve.patch"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
           node .yarn/releases/yarn-*.cjs install --immutable
         # CVE-2026-9496 is backported inside the two cached pacote archives.
