@@ -62,6 +62,9 @@ transform:
         # CVE-2026-101903: bump vendored axios 1.16.0 -> 1.20.0.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
+        # CVE-2026-109955: bump vendored hono 4.13.7 -> 4.13.11.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.11-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
@@ -93,6 +96,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.12.tar.bz2"
+    checksum: "3c0031b3c20334dcb21e802aa4f5ae5efa3ebfe8a9f5c8b913625861a4232f6fa0498e899ac94a1b1b51b092d5b8e5257675957febb2f1705dbc978270a33a79"
+    reason: "grafana-hono-4.13.11-cve.patch bumps hono 4.13.7->4.13.11 for CVE-2026-109955; yarn-cache regenerated without stale hono-4.13.7 zip"
   - file: "grafana-yarn-cache-12.4.12.tar.bz2"
     checksum: "d4339aa4dc329dfa24b6e8d5d41b5bae1831bdd07b75837df3ed1e9a33378501da76601be264093851060efab71fa843011b75cd0275eab0503435b0cf58d9d0"
     reason: "grafana-axios-1.20.0-cve.patch bumps axios 1.16.0->1.20.0 for CVE-2026-101903; yarn-cache regenerated without stale axios-1.16.0 zip"
