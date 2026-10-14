@@ -1,6 +1,6 @@
 Name:           rust
 Version:        1.99.0
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        The Rust Programming Language
 License:        (Apache-2.0 OR MIT) AND (Artistic-2.0 AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0)
 # ^ written as: (rust itself) and (bundled libraries)
@@ -157,6 +157,16 @@ Patch100:       rustc-1.99.0-disable-libssh2.patch
 
 # Update vendored lockfiles to fixed dependency versions for CVE tracking.
 Patch101:       0001-Update-vendored-lockfiles-for-CVE-fixes.patch
+
+# gix-pack (vendored, used by cargo): reject invalid OFS_DELTA base distances.
+Patch102:       rustc-1.99.0-CVE-2026-109350-gix-pack-ofs-delta-panic.patch
+
+# gix-pack (vendored, used by cargo): accept pack version 3 in streaming input.
+Patch103:       rustc-1.99.0-CVE-2026-109349-gix-pack-version-assert.patch
+
+# gix-pack (vendored, used by cargo): make exact_vec() preallocation fallible.
+Patch104:       rustc-1.99.0-CVE-2026-109351-gix-pack-exact-vec-oom.patch
+
 # Get the Rust triple for any architecture and ABI.
 %{lua: function rust_triple(arch, abi)
   abi = abi or "gnu"
@@ -732,6 +742,9 @@ test "$(cut -d' ' -f1 ./version)" = "%{lua: print((rpm.expand('%version'):gsub('
 %patch -P100 -p1
 %endif
 %patch -P101 -p1
+%patch -P102 -p1
+%patch -P103 -p1
+%patch -P104 -p1
 # Use our explicit python3 first
 sed -i.try-python -e '/^try python3 /i try "%{__python3}" "$@"' ./configure
 
