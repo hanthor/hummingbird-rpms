@@ -5,7 +5,8 @@
     "release": "32",
     "sha": "69a9819a8aac7b15b2103984a30559f0b2e0b954"
   },
-  "modification_status": "clean",
+  "modification_reason": "Declare nkf build and runtime dependencies for the Ruby bindings (HUM-9790)",
+  "modification_status": "modified",
   "upstream_repo": "https://github.com/apache/subversion",
   "version": "1.14.5"
 }

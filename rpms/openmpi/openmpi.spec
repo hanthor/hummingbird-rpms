@@ -47,7 +47,7 @@
 
 Name:           openmpi%{?_cc_name_suffix}
 Version:        5.0.11
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Open Message Passing Interface
 # Automatically converted from old format: BSD and MIT and Romio - review is highly recommended.
 # main code is BSD-3-Clause-Open-MPI
