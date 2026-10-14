@@ -6,7 +6,7 @@
 %global debug_package %{nil}
 %undefine _auto_set_build_flags
 
-Version: 6.4.0
+Version: 6.4.1
 
 # Main swift source and version
 %global forgeurl0  https://github.com/swiftlang/swift
@@ -185,7 +185,7 @@ Version: 6.4.0
 # End forge sources
 
 Name:           swift-lang
-Release:        0.5%{?dist}
+Release:        0.1%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
