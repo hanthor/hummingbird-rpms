@@ -44,6 +44,9 @@ transform:
         # CVE-2026-101903: bump vendored axios 1.18.1 -> 1.20.0.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
+        # CVE-2026-109955: bump vendored hono 4.13.7 -> 4.13.11.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.11-cve.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -65,6 +68,9 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.2.3.tar.bz2"
+    checksum: "2e09cf49799b260863604afb0f4cff304bb7b43f7790fbabf255ab58c2ff53e210e81bd82111067d9cd55ba159645984f65888b4fec12ffa6c7cf3e7966470fc"
+    reason: "grafana-hono-4.13.11-cve.patch bumps hono 4.13.7->4.13.11 for CVE-2026-109955; yarn cache regenerated without stale hono-4.13.7 zip"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "bf3633ad07c9ab25c4b0a6a33d8c2a9afd9d80ff572b2cb716920553b2c510d156513b396c5292a00ffed9f4c7611ed2f3a0d66551f6591c15de548784b37d7e"
     reason: "grafana-axios-1.20.0-cve.patch bumps axios 1.18.1->1.20.0 for CVE-2026-101903; yarn cache regenerated without stale axios-1.18.1 zip"
