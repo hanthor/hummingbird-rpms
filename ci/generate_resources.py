@@ -57,7 +57,7 @@ def expand_task_run_specs(specs: list) -> list:
     return expanded
 
 # renovate: datasource=docker depName=quay.io/hummingbird-ci/rpmbuild-pipeline
-PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:356d14ae179590728498782dd0e829b5e746afc28690ef95ee6993b320fe3a9c"
+PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:7e7ff03aed0bce65139a6c099ac9f57189ccc9f86b0cb2a89548875190934a88"
 
 def load_yaml_file(path: Path) -> dict | None:
     """Load a YAML file, returning None if it doesn't exist."""

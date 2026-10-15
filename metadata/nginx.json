@@ -3,10 +3,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/nginx.git",
-    "release": "4",
-    "sha": "1e3677491cc2eb75d895a24d3b54ed71d702443d"
+    "release": "1",
+    "sha": "179828dcb54847311f8fc8d22e68939a09d84974"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/nginx/nginx",
-  "version": "1.30.5"
+  "version": "1.30.6"
 }
