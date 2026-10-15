@@ -29,8 +29,8 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 
 | Command | Use |
 | --- | --- |
-| `investigate HUM-XXXX` | Show + recap + bot-mrs + spec-deps + GitLab MR search |
-| `investigate HUM-XXXX --only` | Named tickets only; skip related-ticket discovery |
+| `investigate HUM-XXXX [HUM-YYYY ...]` | Show + recap + bot-mrs + spec-deps + GitLab MR search. Takes one call with all tickets, not one call per ticket — it dedups per-package probes and runs a single combined GitLab MR search |
+| `investigate HUM-XXXX [HUM-YYYY ...] --only` | Named tickets only; skip related-ticket discovery |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
 | `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Push the branch and open a `glab` MR; `--title` and `--message` are required. |
@@ -49,9 +49,14 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
 
 1. **Embargo.** If the summary starts with `EMBARGOED`, stop. Do not
    analyze or write.
-2. **Investigate.** `cve_helper.py investigate HUM-XXXX` (add `--only` if
-   the user said only those keys). Bare numbers are HUM tickets. Rename the
-   chat with the printed `Suggested chat title` via
+2. **Investigate.** `cve_helper.py investigate HUM-XXXX [HUM-YYYY ...]`
+   (add `--only` if the user said only those keys). Bare numbers are HUM
+   tickets. Pass all named tickets as arguments to a single `investigate`
+   call — do not call it once per ticket. The command dedups per-package
+   probes (`bot-mrs`, `spec-deps`) across tickets that share a package and
+   runs one combined GitLab MR search over every CVE ID, so a single call
+   is both correct and cheaper than separate calls. Rename the chat with
+   the printed `Suggested chat title` via
    `CallMcpTool: cursor-app-control / rename_chat`. If that MCP tool is not
    connected in this session (check the dynamic tool catalog once; do not
    search further or re-litigate this per ticket), skip the rename and
