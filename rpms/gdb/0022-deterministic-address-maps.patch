@@ -1,28 +1,31 @@
-From be505d9e385aabc8773be1f3ce8b8c41beb60ce8 Mon Sep 17 00:00:00 2001
+From 57810562ece3f3bf0915f95db6e756ec5b0c1e22 Mon Sep 17 00:00:00 2001
 From: Robert Sturla <rsturla@redhat.com>
 Date: Thu, 15 Oct 2026 20:45:52 +0100
 Subject: [PATCH] fix(gdb): backport deterministic address maps to 17.2
 
 Upstream-Status: Pending (not submitted)
-Origin: Local backport of c390ae441f8da928b0fc9e72665630c218fc8475,
+Origin: Local backport of 201470151c04c11fdc99d30e4f77cdd006a1649d,
 based on upstream GDB 835aee81fa93e587eb9ac73a79e911361ec46d6f.
 
 Use the same stable CU priority during parallel collection and map merging. Keep parallel indexing and publish one valid address table.
+
+Preserve empty maps after a DWARF reader error and test index saving after the error.
 
 Assisted-by: Codex:GPT-6 [functions.exec] [exec_command]
 ---
  gdb/addrmap.c                                 | 52 +++++++++++
  gdb/addrmap.h                                 | 15 ++-
  gdb/dwarf2/cooked-index-worker.h              |  2 +-
- gdb/dwarf2/cooked-index.c                     | 36 +++++---
+ gdb/dwarf2/cooked-index.c                     | 40 +++++---
  gdb/dwarf2/cooked-index.h                     |  9 +-
  gdb/dwarf2/read.h                             |  7 ++
+ gdb/testsuite/gdb.dwarf2/dw2-error.exp        |  5 +
  .../gdb.dwarf2/gdb-index-reproducible.exp     | 92 +++++++++++++++++++
- 7 files changed, 194 insertions(+), 19 deletions(-)
+ 8 files changed, 203 insertions(+), 19 deletions(-)
  create mode 100644 gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
 
 diff --git a/gdb/addrmap.c b/gdb/addrmap.c
-index 2b333a1f..f3d0655c 100644
+index 2b333a1fd..f3d0655c4 100644
 --- a/gdb/addrmap.c
 +++ b/gdb/addrmap.c
 @@ -239,6 +239,8 @@ addrmap_mutable::set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
@@ -98,7 +101,7 @@ index 2b333a1f..f3d0655c 100644
  #endif /* GDB_SELF_TEST */
  }
 diff --git a/gdb/addrmap.h b/gdb/addrmap.h
-index 398bdd84..0315fe2b 100644
+index 398bdd842..0315fe2b8 100644
 --- a/gdb/addrmap.h
 +++ b/gdb/addrmap.h
 @@ -123,7 +123,12 @@ struct addrmap_mutable final : public addrmap
@@ -152,7 +155,7 @@ index 398bdd84..0315fe2b 100644
    splay_tree_key allocate_key (CORE_ADDR addr);
    void force_transition (CORE_ADDR addr);
 diff --git a/gdb/dwarf2/cooked-index-worker.h b/gdb/dwarf2/cooked-index-worker.h
-index 8b9766cd..7d3dcfb2 100644
+index 8b9766cdd..7d3dcfb26 100644
 --- a/gdb/dwarf2/cooked-index-worker.h
 +++ b/gdb/dwarf2/cooked-index-worker.h
 @@ -177,7 +177,7 @@ class cooked_index_worker_result
@@ -165,7 +168,7 @@ index 8b9766cd..7d3dcfb2 100644
    /* The issued complaints.  Only set after done_reading is
       called.  */
 diff --git a/gdb/dwarf2/cooked-index.c b/gdb/dwarf2/cooked-index.c
-index 6209590f..eefa8300 100644
+index 6209590fe..c8c950713 100644
 --- a/gdb/dwarf2/cooked-index.c
 +++ b/gdb/dwarf2/cooked-index.c
 @@ -84,6 +84,29 @@ cooked_index::set_contents ()
@@ -198,7 +201,7 @@ index 6209590f..eefa8300 100644
    m_state->set (cooked_state::MAIN_AVAILABLE);
  
    /* This is run after finalization is done -- but not before.  If
-@@ -133,13 +156,7 @@ cooked_index::lookup (unrelocated_addr addr)
+@@ -133,13 +156,9 @@ cooked_index::lookup (unrelocated_addr addr)
  {
    /* Ensure that the address maps are ready.  */
    wait (cooked_state::MAIN_AVAILABLE, true);
@@ -209,11 +212,13 @@ index 6209590f..eefa8300 100644
 -	return result;
 -    }
 -  return nullptr;
++  if (m_addrmap == nullptr)
++    return nullptr;
 +  return static_cast<dwarf2_per_cu *> (m_addrmap->find ((CORE_ADDR) addr));
  }
  
  /* See cooked-index.h.  */
-@@ -149,10 +166,7 @@ cooked_index::get_addrmaps ()
+@@ -149,10 +168,9 @@ cooked_index::get_addrmaps ()
  {
    /* Ensure that the address maps are ready.  */
    wait (cooked_state::MAIN_AVAILABLE, true);
@@ -221,12 +226,14 @@ index 6209590f..eefa8300 100644
 -  for (const auto &shard : m_shards)
 -    result.push_back (shard->m_addrmap);
 -  return result;
++  if (m_addrmap == nullptr)
++    return {};
 +  return {m_addrmap};
  }
  
  /* See cooked-index.h.  */
 diff --git a/gdb/dwarf2/cooked-index.h b/gdb/dwarf2/cooked-index.h
-index 43b27232..b5c86115 100644
+index 43b27232a..b5c86115f 100644
 --- a/gdb/dwarf2/cooked-index.h
 +++ b/gdb/dwarf2/cooked-index.h
 @@ -132,10 +132,7 @@ class cooked_index : public dwarf_scanner_base
@@ -253,7 +260,7 @@ index 43b27232..b5c86115 100644
       entries are stored on the obstacks in those objects.  */
    std::vector<cooked_index_shard_up> m_shards;
 diff --git a/gdb/dwarf2/read.h b/gdb/dwarf2/read.h
-index 2d68586f..20909c87 100644
+index 2d68586f0..20909c87b 100644
 --- a/gdb/dwarf2/read.h
 +++ b/gdb/dwarf2/read.h
 @@ -200,6 +200,13 @@ struct dwarf2_per_cu
@@ -270,9 +277,22 @@ index 2d68586f..20909c87 100644
  private:
    /* The unit type of this CU.  */
    std::atomic<packed<dwarf_unit_type, 1>> m_unit_type {(dwarf_unit_type)0};
+diff --git a/gdb/testsuite/gdb.dwarf2/dw2-error.exp b/gdb/testsuite/gdb.dwarf2/dw2-error.exp
+index 0701ec633..ff842785f 100644
+--- a/gdb/testsuite/gdb.dwarf2/dw2-error.exp
++++ b/gdb/testsuite/gdb.dwarf2/dw2-error.exp
+@@ -51,3 +51,8 @@ gdb_test_multiple "maint print objfiles $host_binfile" "" {
+ 
+ # Now check that we can still break given the minimal symbol.
+ gdb_test "break -q main" "Breakpoint $decimal.*"
++
++# Saving an index after a reader error must also remain safe.
++set index_dir [host_standard_output_file index-after-error]
++remote_exec host "mkdir -p $index_dir"
++gdb_test_no_output "save gdb-index $index_dir" "save index after DWARF error"
 diff --git a/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp b/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
 new file mode 100644
-index 00000000..884f5725
+index 000000000..884f57250
 --- /dev/null
 +++ b/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
 @@ -0,0 +1,92 @@
