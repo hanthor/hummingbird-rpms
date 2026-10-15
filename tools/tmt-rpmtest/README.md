@@ -8,6 +8,22 @@ Tests run on the local runner through tmt's standard executor.
 A subject session copies fixtures and executes commands inside the minimal root.
 Assertions, test selection, timeouts, and reports remain normal tmt features.
 
+## Where the fresh environment comes from
+
+The plan's `prepare` block defines the subject filesystem through `packages`, `repositories`,
+and optional local `artifacts`. Each plan starts with an empty root and installs its requested
+packages plus required dependencies. The plugin saves this root as an archive for that plan.
+The builder image supplies assembly tools outside the subject filesystem.
+
+`provision: local` selects the runner where tmt executes Python test scripts and their assertions.
+Inside a test, `with subject() as target:` creates a private session from the prepared archive.
+`target.run(...)` executes the requested program inside that session's minimal container.
+The Python assertions execute on the runner, outside the subject.
+
+Commands within one session share filesystem changes. Each new `subject()` starts from the
+prepared archive, without changes from earlier sessions. Processes do not persist between commands.
+The session removes its containers and image checkpoints when its context ends.
+
 ## Run
 
 Install Podman, rsync, and uv on a Linux runner:

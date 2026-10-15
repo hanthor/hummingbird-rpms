@@ -8,6 +8,18 @@ Hello and curl use the Python `tmt-rpmtest` plugin and ordinary tmt tests.
 Their fmf trees live under `test/rpmtest/hello/` and `test/rpmtest/curl/`.
 The plugin source lives in `tools/tmt-rpmtest/` in this repository.
 
+## Define the environment
+
+Each plan's `prepare` block defines the RPM package set. For example,
+`test/rpmtest/hello/plans/greeting.fmf` requests `hello` from the configured repository.
+The plugin starts with an empty filesystem, installs the package and its required dependencies,
+and saves an archive for that plan. Local build artifacts override repository packages by name.
+
+`provision: local` runs the Python tests and assertions on the runner.
+Each `with subject() as target:` block creates a fresh container session from the plan's archive.
+`target.run(...)` executes a program inside that minimal environment.
+Commands in one session share filesystem changes. A new session starts from the original archive.
+
 ## Run hello or curl through tmt
 
 Install uv, Podman, and rsync on a Linux runner. Prepare an isolated plugin environment:
