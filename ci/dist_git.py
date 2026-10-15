@@ -1290,19 +1290,28 @@ _PATCH_APPLY_RE = re.compile(
 def get_spec_patches(spec_path: Path) -> list[tuple[int, str]]:
     """Parse Patch<N>: declarations from a spec file.
 
-    Returns list of (patch_number, macro-expanded filename) tuples, without
-    rewriting the spec. Literal filenames do not require RPM parsing.
+    Returns list of (patch_number, macro-expanded local filename) tuples,
+    without rewriting the spec. Literal filenames do not require RPM parsing.
     """
     patches = [(int(m.group(1)), m.group(2))
                for m in _PATCH_TAG_RE.finditer(spec_path.read_text())]
-    if not any('%' in filename for _, filename in patches):
-        return patches
-
     # Undefined non-optional macros remain literal; empty expansions contribute
     # no text. Keep the resulting filename so callers still check for missing
     # patch files rather than silently discarding the declaration.
-    spec = Specfile(str(spec_path), sourcedir=str(spec_path.parent))
-    return [(number, spec.expand(filename)) for number, filename in patches]
+    if any('%' in filename for _, filename in patches):
+        spec = Specfile(str(spec_path), sourcedir=str(spec_path.parent))
+        patches = [(number, spec.expand(filename)) for number, filename in patches]
+
+    local_patches = []
+    for number, location in patches:
+        if '://' in location:
+            url = urllib.parse.urlsplit(location)
+            # RPM uses #/filename.patch to rename a downloaded patch. Without
+            # a fragment, it stores the basename of the URL path.
+            location = urllib.parse.unquote(url.fragment or url.path)
+            location = Path(location).name
+        local_patches.append((number, location))
+    return local_patches
 
 
 def _find_source_root(extract_dir: Path) -> Path:

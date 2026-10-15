@@ -2625,6 +2625,31 @@ def test_check_updated_patches_reports_expanded_missing_filename(
     assert 'Patch3: fix-%{version}.patch' in spec.read_text()
 
 
+def test_check_updated_patches_uses_url_fragment_filename(
+    cuv_module, workdir: Path,
+) -> None:
+    """A URL Patch tag checks the locally downloaded filename after #/."""
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    tag = 'Patch0: https://example.com/commit/abc.patch#/fix-build.patch'
+    spec.write_text(spec.read_text().replace(
+        '%description', f'{tag}\n\n%description',
+    ))
+    (pkg / 'fix-build.patch').write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1 @@\n-old\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    (src_dir / 'main.c').write_text('old\n')
+    with tarfile.open(pkg / 'pkg-2.0.tar.gz', 'w:gz') as tar:
+        tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    cuv_module._check_updated_patches('pkg')
+
+    assert (pkg / 'fix-build.patch').exists()
+    assert tag in spec.read_text()
+
+
 def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:
     """Earlier local patches must not hide a later patch already upstream."""
     import dist_git
