@@ -415,6 +415,9 @@ openblas:
     - "linux-d160-c8xlarge/amd64"
     - "linux/s390x"
 
+openjpeg:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 openshell:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8

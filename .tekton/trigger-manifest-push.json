@@ -1010,6 +1010,9 @@
       "opendbx--rpms": [
         "^rpms/opendbx/"
       ],
+      "openjpeg--rpms": [
+        "^rpms/openjpeg/"
+      ],
       "openldap--rpms": [
         "^rpms/openldap/"
       ],

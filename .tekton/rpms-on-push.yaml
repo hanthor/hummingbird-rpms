@@ -25935,6 +25935,85 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- openjpeg ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/openjpeg/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: openjpeg-main
+    pipelines.appstudio.openshift.io/type: build
+  name: openjpeg-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/openjpeg-main:{{revision}}
+    - name: package-name
+      value: openjpeg
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "openjpeg.spec"
+    - name: monorepo-subdir
+      value: "rpms/openjpeg"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:7e7ff03aed0bce65139a6c099ac9f57189ccc9f86b0cb2a89548875190934a88"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-openjpeg-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- openldap ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun

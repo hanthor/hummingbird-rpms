@@ -1345,6 +1345,10 @@
         "^rpms/opendbx/",
         "^test/rpms/opendbx\\.yml$"
       ],
+      "openjpeg--rpms": [
+        "^rpms/openjpeg/",
+        "^test/rpms/openjpeg\\.yml$"
+      ],
       "openldap--rpms": [
         "^rpms/openldap/",
         "^test/rpms/openldap\\.yml$"

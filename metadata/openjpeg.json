@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/openjpeg.git",
+    "release": "4",
+    "sha": "40d001c8b02b482df9ee43a620f82163f1f070c5"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 8468,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/uclouvain/openjpeg",
+  "version": "2.5.4"
+}
