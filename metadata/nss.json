@@ -1,12 +1,12 @@
 {
-  "fedora": {
-    "branch": "f43",
-    "git_url": "https://src.fedoraproject.org/rpms/nss.git",
-    "release": "1",
-    "sha": "8d3b0f00d56ad85dd5f7effc7cf453a23d12ca4c"
-  },
-  "modification_reason": "Lower nss-softokn minimum version to 3.90.0 to allow FIPS-certified softokn from RHEL 9.2",
+  "version": "3.131.0",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/nss-dev/nss",
-  "version": "3.130.0"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/nss.git",
+    "branch": "f43",
+    "sha": "492c29a55cf6146249e2f4cfe3fa7c0836d85c96",
+    "release": "1"
+  },
+  "modification_reason": "Lower nss-softokn minimum version to 3.90.0 to allow FIPS-certified softokn from RHEL 9.2"
 }
