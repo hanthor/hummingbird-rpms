@@ -85,6 +85,12 @@ Patch18:        grafana-axios-1.20.0-cve.patch
 # middleware (e.g. authentication) and still reach the static file.
 Patch19:        grafana-hono-4.13.11-cve.patch
 
+# The bundled @swc/core 1.15.3 has no published linux-s390x native build
+# (s390x support was only added in @swc/core 1.15.21), so the frontend
+# build's swc-loader step cannot load a native binding on s390x. The Yarn
+# offline cache (Source3) is also only populated for x86_64 and aarch64.
+ExcludeArch:    s390x
+
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.5
 BuildRequires:  nodejs24
