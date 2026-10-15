@@ -58,8 +58,11 @@ Patch11:        grafana-hono-4.13.7-cve.patch
 # many slashes and no comma causes catastrophic regex backtracking that
 # blocks the Node.js event loop (DoS).
 Patch12:        grafana-axios-1.20.0-cve.patch
-# Match the go-vendor-tools swag v0.27.1 pre_command in the source tree.
+# Grafana 13.2.4 has go-openapi/swag 0.28.0; retain the backport only
+# for 13.2.3 until its upstream update is packaged.
+%if "%{version}" == "13.2.3"
 Patch13:        grafana-go-openapi-swag-cve.patch
+%endif
 # Generated against the post-Patch12 lockfile (grafana-axios-1.20.0-cve.patch).
 # Bumps vendored hono 4.13.7 -> 4.13.11 for CVE-2026-109955: hono before
 # 4.13.11 decodes the serveStatic request path a second time, letting a
