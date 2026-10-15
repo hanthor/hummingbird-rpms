@@ -11420,8 +11420,8 @@ spec:
   taskRunTemplate:
     serviceAccountName: build-pipeline-grafana12-4-main
   timeouts:
-    pipeline: 4h
-    tasks: 4h
+    pipeline: 8h
+    tasks: 8h
   workspaces:
     - name: git-auth
       secret:
