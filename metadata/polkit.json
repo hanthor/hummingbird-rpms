@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/polkit.git",
-    "release": "5",
-    "sha": "00848f784ca89a3dc182e48866aa93c65734b823"
+    "release": "1",
+    "sha": "994c3d95f850051c454e0f81b78b6ef984c76c79"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 3682,
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.freedesktop.org/polkit/polkit",
-  "version": "127"
+  "version": "128"
 }
