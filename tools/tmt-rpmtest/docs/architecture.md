@@ -8,6 +8,7 @@ The test scripts make their own assertions. There is no custom suite, step, or a
 | --- | --- |
 | `plugin.py` | tmt prepare and finish methods |
 | `rpm.py` | Candidate selection, empty-root assembly, and installed identity verification |
+| `packages.py` | RPM verification results, installed names, owners, and metadata values |
 | `subject.py` | Fixture staging, execution evidence, and external RPM inspection |
 | `podman.py` | Builder transport, subject filesystem checkpoints, and owned-resource cleanup |
 

@@ -9,6 +9,7 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
+from tmt_rpmtest.packages import Packages
 from tmt_rpmtest.podman import Podman, Session
 from tmt_rpmtest.rpm import digest
 
@@ -36,6 +37,7 @@ class Subject:
         self.directory = directory
         self.manifest = manifest
         self.sequence = 0
+        self.packages = Packages(self.rpm)
 
     def _directory(self, operation):
         self.sequence += 1

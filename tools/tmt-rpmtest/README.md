@@ -105,7 +105,10 @@ with subject() as target:
     missing = target.run(["/usr/bin/curl", "--fail", "--silent", "file:///missing"])
     assert missing.returncode == 37, missing
 
-    verified = target.rpm("-V", "curl")
+    assert "curl" in target.packages.installed()
+    assert target.packages.owners("/usr/bin/curl") == {"curl"}
+    assert "curl" in target.packages.metadata("curl", "provides")
+    verified = target.packages.verify("curl")
     assert verified.returncode == 0, verified.stdout + verified.stderr
 ```
 
@@ -124,6 +127,29 @@ Each session starts from the prepared root. Copy fixtures before compiling or ru
 The host test controls its own environment. Subject commands receive only the standard PATH and
 explicit overrides.
 A shell command inside the subject requires a shell supplied by its RPM dependencies.
+
+## Package inspection primitives
+
+`target.packages` reads the current session's filesystem and RPM database through external tools.
+These operations do not add RPM utilities to the subject or decide test assertions.
+
+| Operation | Result |
+| --- | --- |
+| `installed()` | Set of installed package names |
+| `verify(*names)` | RPM verification result, including exit status and differences |
+| `owners(path)` | Set of package names that own the path |
+| `metadata(package, field)` | Tuple of values for `provides`, `requires`, `files`, or `nevra` |
+
+`verify(*names)` requires at least one package name.
+A nonzero verification result remains available to the test's assertion.
+Other query failures raise `subprocess.CalledProcessError`, including missing packages and unowned paths.
+The evidence directory retains RPM output for each operation.
+`provides` and `requires` return capability names without version constraints.
+Use `target.rpm(...)` for full RPM query output or other metadata fields.
+
+`target.stat(path)` returns standard tar metadata for file assertions.
+Use `isfile()`, `issym()`, `mode`, and `linkname` for type, permissions, and symlink checks.
+A missing path raises `FileNotFoundError`.
 
 ## Evidence and limits
 

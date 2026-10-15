@@ -3,14 +3,13 @@ import re
 from tmt_rpmtest import subject
 
 with subject() as target:
-    verified = target.rpm("-V", "curl", "libcurl", "libcurl-devel")
+    names = ["curl", "libcurl", "libcurl-devel"]
+    assert set(names) <= target.packages.installed()
+    verified = target.packages.verify(*names)
     assert verified.returncode == 0, verified.stdout + verified.stderr
     paths = ["/usr/bin/curl", "/usr/lib64/libcurl.so.4", "/usr/include/curl/curl.h"]
-    owners = target.rpm("-qf", "--qf", "%{NAME}\n", *paths)
-    assert owners.returncode == 0, owners.stderr
-    assert owners.stdout.splitlines() == ["curl", "libcurl", "libcurl-devel"], (
-        owners.stdout
-    )
+    for path, package in zip(paths, names, strict=True):
+        assert target.packages.owners(path) == {package}
     assert target.stat(paths[0]).mode & 0o111
     target.stat(paths[1])
     assert target.stat(paths[2]).isfile()
