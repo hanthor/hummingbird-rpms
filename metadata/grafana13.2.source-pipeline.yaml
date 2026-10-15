@@ -69,8 +69,8 @@ transform:
 # exception for the new hash.
 accepted-checksums:
   - file: "grafana-yarn-cache-13.2.3.tar.bz2"
-    checksum: "2e09cf49799b260863604afb0f4cff304bb7b43f7790fbabf255ab58c2ff53e210e81bd82111067d9cd55ba159645984f65888b4fec12ffa6c7cf3e7966470fc"
-    reason: "grafana-hono-4.13.11-cve.patch bumps hono 4.13.7->4.13.11 for CVE-2026-109955; yarn cache regenerated without stale hono-4.13.7 zip"
+    checksum: "684cc07561dd083ca4616c1d5473d000ffcddcdf1cd5bc893bd8e613f38ebe50aacb566f8d242a7b4b1f79206c107d110118f103a6e3077845dee53fa6fdc6ef"
+    reason: "Adds s390x to .yarnrc.yml supportedArchitectures (grafana-yarn-cache.patch) so the offline cache includes @esbuild/linux-s390x and @swc/core-linux-s390x-gnu, alongside the hono 4.13.7->4.13.11 bump for CVE-2026-109955"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "bf3633ad07c9ab25c4b0a6a33d8c2a9afd9d80ff572b2cb716920553b2c510d156513b396c5292a00ffed9f4c7611ed2f3a0d66551f6591c15de548784b37d7e"
     reason: "grafana-axios-1.20.0-cve.patch bumps axios 1.18.1->1.20.0 for CVE-2026-101903; yarn cache regenerated without stale axios-1.18.1 zip"
