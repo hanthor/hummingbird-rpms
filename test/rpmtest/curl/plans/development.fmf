@@ -1,0 +1,17 @@
+summary: Test curl development in a minimal RPM root
+provision:
+  how: local
+discover:
+  how: fmf
+  test: /tests/development
+prepare:
+  how: rpmtest
+  packages:
+  - libcurl-devel
+  - gcc
+  repositories:
+  - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest

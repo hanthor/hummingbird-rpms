@@ -96,6 +96,7 @@ check-host:
 	$(MAKE) check-frontmatter-host
 	$(MAKE) check-conflict-markers-host
 	$(MAKE) check-hum-host
+	$(MAKE) check-rpmtest-host
 
 check:
 	$(PODMAN_RUN) $(PODMAN_IMAGE) make check-host
@@ -132,3 +133,14 @@ check-nevr-conflicts: # Check that branch RPMs don't conflict with NEVRs already
 .PHONY: analyze-rpms
 analyze-rpms: # This lists rpms defined in the containers repo that are not present in the rpms repo
 	+@ci/analyze-rpms.sh $(ARGS)
+
+.PHONY: check-rpmtest-host check-rpmtest
+check-rpmtest-host:
+	uv sync --python python3 --frozen --project tools/tmt-rpmtest
+	uv run --project tools/tmt-rpmtest ruff check tools/tmt-rpmtest
+	uv run --project tools/tmt-rpmtest ruff format --check tools/tmt-rpmtest
+	uv run --project tools/tmt-rpmtest pytest -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests
+	cd tools/tmt-rpmtest && uv run tmt plans lint
+
+check-rpmtest:
+	$(PODMAN_RUN) $(PODMAN_IMAGE) make check-rpmtest-host

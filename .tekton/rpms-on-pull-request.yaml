@@ -5037,6 +5037,8 @@ metadata:
           (
                x.matches("^rpms/curl/")
             || x.matches("^test/rpms/curl\\.yml$")
+            || x.matches("^test/rpmtest/curl/")
+            || x.matches("^tools/tmt-rpmtest/")
           )
         )
       )
@@ -12948,6 +12950,8 @@ metadata:
           (
                x.matches("^rpms/hello/")
             || x.matches("^test/rpms/hello\\.yml$")
+            || x.matches("^test/rpmtest/hello/")
+            || x.matches("^tools/tmt-rpmtest/")
           )
         )
       )

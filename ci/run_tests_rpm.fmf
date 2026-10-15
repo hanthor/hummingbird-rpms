@@ -7,6 +7,20 @@ prepare:
     package: rpmlint
   - how: install
     package: podman
+  - how: install
+    package: slirp4netns
+  - how: install
+    package: [uv, rsync]
+  - how: shell
+    script: |
+      set -euo pipefail
+      case "${IMAGE_NAME:-}" in
+        hello-main|curl-main) ;;
+        *) exit 0 ;;
+      esac
+      plugin_source="${TMT_TREE}/tools/tmt-rpmtest"
+      uv sync --python python3 --frozen --no-dev --project "${plugin_source}"
+      printf 'RPMTEST_TMT=%s\n' "${plugin_source}/.venv/bin/tmt" >> "${TMT_PLAN_ENVIRONMENT_FILE}"
   - how: shell
     script: |
       #!/bin/bash
@@ -120,6 +134,16 @@ discover:
           # Get source RPM path
           src_rpm_file=$(ls -1 "${srpms_dir}/"*.src.rpm)
 
-          # Run tests with --repo-dir pointing to binary RPMs directory
-          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}"
+          test_status=0
+          rpmtest_tree="test/rpmtest/${package_name}"
+          if [[ -f ${rpmtest_tree}/.fmf/version ]]; then
+            "${RPMTEST_TMT}" --root "${rpmtest_tree}" \
+              --allow-unsafe-behavior=provision/local run --all --keep --scratch \
+              --id "${TMT_TEST_DATA}/rpmtest-${package_name}" \
+              prepare --how rpmtest --artifact "${rpms_dir}/*.rpm" || test_status=$?
+          fi
+
+          # Run the existing tests for every package, including packages with rpmtest coverage.
+          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}" || test_status=$?
+          exit "${test_status}"
         fi

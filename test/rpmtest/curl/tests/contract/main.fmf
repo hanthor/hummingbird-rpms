@@ -1,0 +1,3 @@
+summary: Check curl contract
+test: '"$RPMTEST_PYTHON" curl_contract.py'
+duration: 5m

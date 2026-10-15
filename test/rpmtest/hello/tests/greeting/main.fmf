@@ -1,0 +1,3 @@
+summary: Check hello greeting
+test: '"$RPMTEST_PYTHON" hello_greeting.py'
+duration: 5m

@@ -1,0 +1,3 @@
+summary: Check curl without adding a test harness to its root
+test: '"$RPMTEST_PYTHON" test.py'
+duration: 2m

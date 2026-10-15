@@ -3,7 +3,9 @@
     "private-example-rpms-main": {
       "hello--rpms": [
         "^rpms/hello/",
-        "^test/rpms/hello\\.yml$"
+        "^test/rpms/hello\\.yml$",
+        "^test/rpmtest/hello/",
+        "^tools/tmt-rpmtest/"
       ]
     },
     "private-nodejs20-rpms-main": {
@@ -251,7 +253,9 @@
       ],
       "curl--rpms": [
         "^rpms/curl/",
-        "^test/rpms/curl\\.yml$"
+        "^test/rpms/curl\\.yml$",
+        "^test/rpmtest/curl/",
+        "^tools/tmt-rpmtest/"
       ],
       "cyrus-sasl--rpms": [
         "^rpms/cyrus\\-sasl/",

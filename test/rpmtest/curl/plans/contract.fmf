@@ -1,0 +1,18 @@
+summary: Test curl contract in a minimal RPM root
+provision:
+  how: local
+discover:
+  how: fmf
+  test: /tests/contract
+prepare:
+  how: rpmtest
+  packages:
+  - curl
+  - libcurl
+  - libcurl-devel
+  repositories:
+  - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest
