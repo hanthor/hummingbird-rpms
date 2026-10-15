@@ -7,7 +7,7 @@
   },
   "modification_reason": "Update to upstream version 17.11",
   "modification_status": "modified",
-  "release_monitoring_project_id": 381406,
+  "release_monitoring_project_id": 375014,
   "track_upstream": "17",
   "upstream_branch": "REL_17_STABLE",
   "upstream_repo": "https://github.com/postgres/postgres",
