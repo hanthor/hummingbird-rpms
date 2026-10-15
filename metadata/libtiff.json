@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libtiff.git",
-    "release": "2",
-    "sha": "f8063dac9fbfa5dc4bb3c4780a6925b2d8f906ba"
+    "release": "3",
+    "sha": "c2b3f372a5f58c7df33ca1d659ba6403f56b82a1"
   },
   "modification_reason": "Backport fix for CVE-2026-12912",
   "modification_status": "modified",
