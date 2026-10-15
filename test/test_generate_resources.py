@@ -131,6 +131,44 @@ class TestBuildPacVariables:
         for rpm in variables["rpms"]:
             assert rpm["build_architectures"] == ["aarch64", "x86_64", "s390x"]
             assert rpm["build_platforms"] == ["linux/x86_64", "linux/arm64", "linux/s390x"]
+            assert rpm["extra_params"]["reproducibility-architectures"] == [
+                "x86_64", "aarch64", "s390x", "noarch"
+            ]
+            assert rpm["extra_params"]["reproducibility-on-error"] == "continue"
+
+    @pytest.mark.parametrize("event_type", ["pull-request", "push"])
+    @pytest.mark.parametrize("architectures", [[], ["aarch64"]])
+    def test_reproducibility_override(self, gen_module, mock_repo, event_type, architectures):
+        (mock_repo / "ci" / "package-overrides.yaml").write_text(yaml.safe_dump({
+            "alpha": {"extra_params": {
+                "reproducibility-architectures": architectures,
+                "reproducibility-on-error": "stopAndFail",
+            }}
+        }))
+        with patch.object(gen_module, "ROOT_DIR", mock_repo):
+            variables = gen_module.build_pac_variables("main", "hummingbird-tenant", event_type)
+        params = next(rpm["extra_params"] for rpm in variables["rpms"] if rpm["dname"] == "alpha")
+        assert params["reproducibility-architectures"] == architectures
+        assert params["reproducibility-on-error"] == "stopAndFail"
+
+    def test_extra_params_keep_yaml_types(self, gen_module):
+        rendered = gen_module.render_template(
+            REPO_ROOT / ".tekton/rpms-on-push.yaml.j2", REPO_ROOT / ".tekton/macros",
+            {"branch": "main", "tenant": "fixture", "application_name": "fixture",
+             "pipeline_bundle": gen_module.PIPELINE_BUNDLE,
+             "rpms": [{"name": "fixture", "package_name": "fixture", "dname": "fixture",
+                       "imported": True, "specfile": "fixture.spec", "manifest_triggers": [],
+                       "build_architectures": ["x86_64"], "build_platforms": ["linux/amd64"],
+                       "timeout_hours": 4,
+                       "extra_params": {"reproducibility-architectures": ["x86_64", "noarch"],
+                                        "reproducibility-on-error": "continue",
+                                        "quoted": 'a "quote"\\newline'}}]},
+        )
+        params = {param["name"]: param["value"]
+                  for param in yaml.safe_load(rendered)["spec"]["params"]}
+        assert params["reproducibility-architectures"] == ["x86_64", "noarch"]
+        assert params["reproducibility-on-error"] == "continue"
+        assert params["quoted"] == 'a "quote"\\newline'
 
     def test_build_architecture_override(self, gen_module, tmp_path):
         package_dir = tmp_path / "rpms" / "glibc"
