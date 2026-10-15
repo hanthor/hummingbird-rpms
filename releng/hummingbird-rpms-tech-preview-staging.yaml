@@ -475,6 +475,8 @@ spec:
           contentType: rpm
         - name: langpacks-main
           contentType: rpm
+        - name: lcms2-main
+          contentType: rpm
         - name: less-main
           contentType: rpm
         - name: libx11-main

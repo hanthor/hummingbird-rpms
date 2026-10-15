@@ -789,6 +789,10 @@
         "^rpms/langpacks/",
         "^test/rpms/langpacks\\.yml$"
       ],
+      "lcms2--rpms": [
+        "^rpms/lcms2/",
+        "^test/rpms/lcms2\\.yml$"
+      ],
       "less--rpms": [
         "^rpms/less/",
         "^test/rpms/less\\.yml$"

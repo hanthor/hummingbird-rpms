@@ -593,6 +593,9 @@
       "langpacks--rpms": [
         "^rpms/langpacks/"
       ],
+      "lcms2--rpms": [
+        "^rpms/lcms2/"
+      ],
       "less--rpms": [
         "^rpms/less/"
       ],

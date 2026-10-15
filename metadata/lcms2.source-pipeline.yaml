@@ -1,0 +1,7 @@
+fetch:
+  - type: url
+    url: "${UPSTREAM_REPO}/releases/download/lcms${VERSION}/lcms2-${VERSION}.tar.gz"
+
+publish:
+  files:
+    - "lcms2-${VERSION}.tar.gz"
