@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        13.1.7
+Version:        13.1.8
 
 %gometa -L -f
 
@@ -1550,7 +1550,7 @@ Provides:       bundled(npm(prop-types)) = 15.8.1
 Provides:       bundled(npm(property-information)) = 7.1.0
 Provides:       bundled(npm(protobufjs)) = 7.6.4
 Provides:       bundled(npm(protocol-buffers-schema)) = 3.6.1
-Provides:       bundled(npm(proxy-addr)) = 2.0.7
+Provides:       bundled(npm(proxy-addr)) = 2.0.8
 Provides:       bundled(npm(proxy-from-env)) = 2.1.0
 Provides:       bundled(npm(psl)) = 1.9.0
 Provides:       bundled(npm(publint)) = 0.3.12
@@ -1799,7 +1799,7 @@ Provides:       bundled(npm(synckit)) = 0.11.12
 Provides:       bundled(npm(systemjs)) = 6.15.1
 Provides:       bundled(npm(tabbable)) = 6.4.0
 Provides:       bundled(npm(tapable)) = 2.3.3
-Provides:       bundled(npm(tar)) = 7.5.11
+Provides:       bundled(npm(tar)) = 7.5.22
 Provides:       bundled(npm(terser)) = 5.37.0
 Provides:       bundled(npm(terser-webpack-plugin)) = 5.4.0
 Provides:       bundled(npm(test-exclude)) = 6.0.0
