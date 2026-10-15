@@ -4,4 +4,9 @@
 # spec file that gorget's sandboxed run: steps don't have.
 post_update: |
   set -euo pipefail
-  ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}"
+  work_dir=$(mktemp -d)
+  trap 'rm -rf "${work_dir}"' EXIT
+  tar -xzf "grafana-${UPDATE_NEW_VERSION}.tar.gz" -C "${work_dir}"
+  source_dir="${work_dir}/grafana-${UPDATE_NEW_VERSION}"
+  bash ./prepare-yarn-cache-source.sh "${source_dir}"
+  ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}" "${source_dir}"
