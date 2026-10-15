@@ -6,14 +6,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
-GENERATOR = ROOT_DIR / "rpms" / "grafana13.1" / "generate-bundled-npm-provides.py"
-
-
-def test_generator_reads_patched_source_tree(tmp_path: Path) -> None:
-    generator = tmp_path / GENERATOR.name
-    shutil.copy2(GENERATOR, generator)
-    spec = tmp_path / "grafana13.1.spec"
+@pytest.mark.parametrize("package,version", [("grafana13.1", "13.1.6"), ("grafana13.2", "13.2.4")])
+def test_generator_reads_patched_source_tree(tmp_path: Path, package: str, version: str) -> None:
+    source_generator = ROOT_DIR / "rpms" / package / "generate-bundled-npm-provides.py"
+    generator = tmp_path / source_generator.name
+    shutil.copy2(source_generator, generator)
+    spec = tmp_path / f"{package}.spec"
     spec.write_text(
         "# BEGIN generated bundled npm Provides\n"
         "Provides:       bundled(npm(old)) = 1.0.0\n"
@@ -31,7 +32,7 @@ def test_generator_reads_patched_source_tree(tmp_path: Path) -> None:
     )
 
     result = subprocess.run(
-        [sys.executable, generator, "13.1.6", source_dir],
+        [sys.executable, generator, version, source_dir],
         capture_output=True,
         text=True,
         check=False,
