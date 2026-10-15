@@ -5768,6 +5768,29 @@ Test
     assert spec.read_text() == content
 
 
+def test_get_spec_patches_uses_local_name_for_url(tmp_path: Path, dist_git_module) -> None:
+    """A URL Patch tag resolves to the filename RPM saves on disk."""
+    spec = tmp_path / 'test.spec'
+    spec.write_text("""\
+Name: test
+Version: 3.0.29
+Release: 1%{?dist}
+Summary: Test package
+License: MIT
+Patch0: https://github.com/haproxy/haproxy/commit/abc.patch#/haproxy-3.0.17-lua-5.5.patch
+Patch1: https://example.com/fix-%{version}.patch
+
+%description
+Test
+%files
+""")
+
+    assert dist_git_module.get_spec_patches(spec) == [
+        (0, 'haproxy-3.0.17-lua-5.5.patch'),
+        (1, 'fix-3.0.29.patch'),
+    ]
+
+
 def test_drop_patches_from_spec_autosetup(tmp_path: Path, dist_git_module) -> None:
     """drop_patches_from_spec removes Patch declarations and preceding comments (%autosetup)."""
     spec = tmp_path / 'test.spec'
