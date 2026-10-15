@@ -15,6 +15,14 @@ curl --fail --location --silent --show-error \
 mkdir "${work_dir}/source"
 tar -xzf "${work_dir}/${source_name}" -C "${work_dir}/source"
 
+# Apply the same patches %prep applies, so the vendored repository matches
+# what the spec actually builds against.
+for patch in "${package_dir}"/*.patch; do
+    [ -e "${patch}" ] || continue
+    patch -d "${work_dir}/source/apache-maven-${version}" -p1 \
+        --batch --fuzz=0 < "${patch}"
+done
+
 podman run --rm \
     --volume "${work_dir}:/work:Z" \
     --workdir "/work/source/apache-maven-${version}" \
