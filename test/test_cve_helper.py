@@ -403,6 +403,27 @@ def test_load_jira_auth_prefers_process_env(tmp_path: Path) -> None:
     assert auth.source == "env"
 
 
+def test_ensure_analysis_on_path_adds_rpms_root(monkeypatch) -> None:
+    # hummingbird_cve_analysis.lib.rpms_repo does `from hum import meta`, so the
+    # rpms checkout must be importable even when cve_helper.py runs as a script
+    # (sys.path[0] is then the skill dir, not the repo root).
+    import cve_analysis_bridge as bridge
+
+    monkeypatch.setattr(sys, "path", [p for p in sys.path if p != str(bridge.RPMS_ROOT)])
+    bridge.ensure_analysis_on_path()
+    assert str(bridge.RPMS_ROOT) in sys.path
+    assert (bridge.RPMS_ROOT / "hum").is_dir()
+
+
+def test_import_analysis_lib_error_names_the_failed_import() -> None:
+    import cve_analysis_bridge as bridge
+
+    with pytest.raises(bridge.AnalysisImportError) as excinfo:
+        bridge.import_analysis_lib("no_such_module")
+    assert "hummingbird_cve_analysis.lib.no_such_module" in str(excinfo.value)
+    assert bridge.TOOLS_ROOT_ENV in str(excinfo.value)
+
+
 def test_cmd_deps_reports_missing_analysis(monkeypatch) -> None:
     import cve_analysis_bridge as bridge
 
@@ -1001,6 +1022,23 @@ def test_version_check_component_uses_component_version(
     assert payload["comparable"] is True
     assert payload["compare_version"] == "3.0.6"
     assert payload["version_source"] == "spec_provides"
+    assert payload["vs_fixed"] == "below"
+    assert payload["vs_affected"] == "in_range"
+    assert payload["hint"] == "possibly_below_fix"
+
+
+@pytest.mark.parametrize("component", ["rpm", " RPM "])
+def test_version_check_parent_component_uses_package_version(component: str) -> None:
+    payload = helper.version_check_payload(
+        "rpm",
+        local_nvr="rpm-6.1.0-1.3",
+        component=component,
+        affected="< 6.1.1",
+        fixed="6.1.1",
+    )
+    assert payload["comparable"] is True
+    assert payload["compare_version"] == "6.1.0"
+    assert payload["version_source"] == "parent_rpm"
     assert payload["vs_fixed"] == "below"
     assert payload["vs_affected"] == "in_range"
     assert payload["hint"] == "possibly_below_fix"

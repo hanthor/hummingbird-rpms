@@ -426,8 +426,8 @@ def version_check_payload(
     _fib_name, fib_version, _fib_rel = split_nvr(fib_nvr) if fib_nvr else ("", "", "")
     analysis_nvr = normalize_nvr(analysis_nvr) if analysis_nvr else ""
 
-    # Choose the version to compare: the affected component's version when a
-    # component is named, otherwise the parent RPM version.
+    # Prefer a resolved component version; allow the parent RPM version only
+    # when the component is unnamed or is the package itself.
     component = (component or "").strip()
     compare_version = local_version
     version_source = "parent_rpm" if local_version else ""
@@ -441,7 +441,7 @@ def version_check_payload(
         if resolved:
             compare_version = resolved
             version_source = evidence
-        else:
+        elif component.casefold() != package.casefold():
             # No component version resolvable: refuse to compare against the
             # parent RPM version (avoids e.g. grafana 13.x vs fast-uri 3.x).
             compare_version = ""
