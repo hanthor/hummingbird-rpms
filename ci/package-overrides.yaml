@@ -502,6 +502,9 @@ pmix:
 poppler:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+poppler-data:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prometheus3.13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

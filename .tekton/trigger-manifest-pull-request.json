@@ -1645,6 +1645,10 @@
         "^rpms/poppler/",
         "^test/rpms/poppler\\.yml$"
       ],
+      "poppler-data--rpms": [
+        "^rpms/poppler\\-data/",
+        "^test/rpms/poppler\\-data\\.yml$"
+      ],
       "popt--rpms": [
         "^rpms/popt/",
         "^test/rpms/popt\\.yml$"

@@ -1235,6 +1235,9 @@
       "poppler--rpms": [
         "^rpms/poppler/"
       ],
+      "poppler-data--rpms": [
+        "^rpms/poppler\\-data/"
+      ],
       "popt--rpms": [
         "^rpms/popt/"
       ],
