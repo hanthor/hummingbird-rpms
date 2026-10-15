@@ -97,9 +97,11 @@ Patch19:        grafana-hono-4.13.7-cve.patch
 # Node.js event loop (DoS). Patch3 only bumped as far as 1.18.0, which is
 # itself affected.
 Patch20:        grafana-axios-1.20.0-cve.patch
-# Keep Source0's module requirements in sync with the vendor archive's
-# go-vendor-tools.toml pre_commands for CVE-2026-93450.
+# Grafana 13.1.8 has go-openapi/swag 0.28.0; retain the backport only
+# for 13.1.7 until its upstream update is packaged.
+%if "%{version}" == "13.1.7"
 Patch21:        grafana-go-openapi-swag-cve.patch
+%endif
 # Generated against the post-Patch20 lockfile (grafana-axios-1.20.0-cve.patch),
 # so this comes after it in prepare-yarn-cache-source.sh. Bumps vendored hono
 # 4.13.7 -> 4.13.11 for CVE-2026-109955: hono before 4.13.11 decodes the
