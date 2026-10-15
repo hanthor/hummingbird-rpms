@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/bubblewrap.git",
-    "sha": "dd762bbd1482d114d837699daf635eaa542b067a"
+    "release": "1",
+    "sha": "2d48c2ff6ea7b5feb7589426f7b0178a8bb4c784"
   },
-  "modification_reason": "Update to upstream version 0.13.1",
-  "modification_status": "modified",
+  "modification_status": "clean",
   "release_monitoring_project_id": 10937,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/containers/bubblewrap",

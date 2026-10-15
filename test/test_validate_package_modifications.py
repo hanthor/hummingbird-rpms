@@ -402,3 +402,24 @@ def test_get_changed_packages_in_mr_fallback_to_target_branch(validator, monkeyp
     result = validator.get_changed_packages_in_mr()
 
     assert result == ['changed-pkg', 'meta-only-pkg']
+
+
+@pytest.mark.parametrize(('commit_sha', 'expected_clean'), [
+    ('aaf6d161f64e4aaaaf9dd9385c3ac004062682db', True),
+    ('0c5336c3602facced0d8b1ad177babd4442c74a1', True),
+    ('1234567890123456789012345678901234567890', False),
+])
+def test_bubblewrap_superseded_updates(validator, monkeypatch, commit_sha, expected_clean):
+    """Ignore superseded version updates but reject other local changes."""
+    def fake_run_git(*args, **kwargs):
+        return subprocess.CompletedProcess(args, 0, stdout=f'{commit_sha} Local update\n')
+
+    monkeypatch.setattr(validator, 'run_git', fake_run_git)
+    monkeypatch.setattr(validator, 'is_release_only_commit', lambda *args: False)
+
+    is_clean, error = validator.check_git_history_state('bubblewrap', None)
+    assert is_clean == expected_clean
+    if expected_clean:
+        assert error is None
+    else:
+        assert "missing 'Upstream:' trailer" in error
