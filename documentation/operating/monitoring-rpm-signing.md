@@ -47,9 +47,9 @@ artifact locations.
 
 The monitor saves `release.json`, `managed-pipelinerun.json`, and `internalrequests.json` at the top
 level. Each direct PipelineRun gets its own directory containing the PipelineRun, TaskRuns, events,
-and pod directories. Each pod directory contains its status, events, available logs for download,
-signing, trusted-artifact creation, merge, and upload, plus `metrics.jsonl` and `memory.jsonl`.
-`metrics.jsonl` samples the Kubernetes metrics API; `memory.jsonl` reads cgroup v2
+and pod directories. Each pod directory contains its status, events, and available step logs.
+While a pod is running, it also records `metrics.jsonl` and `memory.jsonl` when those readings are
+available. `metrics.jsonl` samples the Kubernetes metrics API; `memory.jsonl` reads cgroup v2
 `memory.current` and `memory.peak` from running download, signing, and trusted-artifact containers.
 Metrics can miss short spikes. A recorded cgroup peak is stronger evidence, but an OOM may kill the
 container before its final peak is sampled.
