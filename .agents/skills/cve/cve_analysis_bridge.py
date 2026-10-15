@@ -21,6 +21,8 @@ DEFAULT_AGENT_ENV = Path.home() / ".config" / "rhjira" / "agent.env"
 ENV_ASSIGNMENT_RE = re.compile(r"^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$")
 TOOLS_ROOT_ENV = "HUMMINGBIRD_TOOLS_ROOT"
 PACKAGE_SUBDIR = "hummingbird-cve-analysis"
+# This rpms checkout: .agents/skills/cve/<this file>
+RPMS_ROOT = Path(__file__).resolve().parents[3]
 
 
 class AnalysisImportError(RuntimeError):
@@ -112,14 +114,16 @@ def tools_package_roots(environ: Mapping[str, str] | None = None) -> list[Path]:
         roots.append(Path(configured).expanduser() / PACKAGE_SUBDIR)
         roots.append(Path(configured).expanduser())
     # Sibling of this rpms checkout: ../tools/hummingbird-cve-analysis
-    here = Path(__file__).resolve()
-    repo_root = here.parent.parent.parent.parent
-    roots.append(repo_root.parent / "tools" / PACKAGE_SUBDIR)
+    roots.append(RPMS_ROOT.parent / "tools" / PACKAGE_SUBDIR)
     return roots
 
 
 def ensure_analysis_on_path(environ: Mapping[str, str] | None = None) -> Path | None:
     """Put a tools checkout on sys.path if the package is not already installed."""
+    # hummingbird_cve_analysis.lib.rpms_repo imports `hum` from this checkout,
+    # which is absent from sys.path when cve_helper.py runs as a script.
+    if str(RPMS_ROOT) not in sys.path:
+        sys.path.append(str(RPMS_ROOT))
     if "hummingbird_cve_analysis" in sys.modules:
         module = sys.modules["hummingbird_cve_analysis"]
         path = getattr(module, "__file__", None)
@@ -147,7 +151,7 @@ def import_analysis_lib(name: str) -> ModuleType:
         return __import__(f"hummingbird_cve_analysis.lib.{name}", fromlist=[name])
     except ImportError as err:
         raise AnalysisImportError(
-            "hummingbird_cve_analysis is not installed. "
+            f"Could not import hummingbird_cve_analysis.lib.{name}: {err}. "
             f"Set {TOOLS_ROOT_ENV} to a hummingbird/tools checkout, or pip install "
             "the hummingbird-cve-analysis package from that repo "
             f"(subdirectory {PACKAGE_SUBDIR})."
