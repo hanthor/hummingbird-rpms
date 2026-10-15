@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        13.2.3
+Version:        13.2.4
 
 %gometa -L -f
 
@@ -1327,7 +1327,6 @@ Provides:       bundled(npm(jest-watcher)) = 30.3.0
 Provides:       bundled(npm(jest-worker)) = 27.5.0
 Provides:       bundled(npm(jest-worker)) = 30.3.0
 Provides:       bundled(npm(joi)) = 17.13.8
-Provides:       bundled(npm(joi)) = 18.2.9
 Provides:       bundled(npm(jose)) = 6.2.1
 Provides:       bundled(npm(jquery)) = 3.7.1
 Provides:       bundled(npm(js-cookie)) = 3.0.8
@@ -1599,7 +1598,7 @@ Provides:       bundled(npm(prop-types)) = 15.8.1
 Provides:       bundled(npm(property-information)) = 7.1.0
 Provides:       bundled(npm(protobufjs)) = 7.6.5
 Provides:       bundled(npm(protocol-buffers-schema)) = 3.6.1
-Provides:       bundled(npm(proxy-addr)) = 2.0.7
+Provides:       bundled(npm(proxy-addr)) = 2.0.8
 Provides:       bundled(npm(proxy-from-env)) = 2.1.0
 Provides:       bundled(npm(psl)) = 1.9.0
 Provides:       bundled(npm(publint)) = 0.3.12
