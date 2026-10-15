@@ -136,10 +136,18 @@ analyze-rpms: # This lists rpms defined in the containers repo that are not pres
 
 .PHONY: check-rpmtest-host check-rpmtest
 check-rpmtest-host:
-	uv sync --python python3 --frozen --project tools/tmt-rpmtest
-	uv run --project tools/tmt-rpmtest ruff check tools/tmt-rpmtest
-	uv run --project tools/tmt-rpmtest ruff format --check tools/tmt-rpmtest
-	uv run --project tools/tmt-rpmtest pytest -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests
+	@set -eu; \
+	tools_dir=$$(mktemp -d); \
+	trap 'rmdir "$$tools_dir" 2>/dev/null || rm -r "$$tools_dir"' EXIT; \
+	if ! command -v uv >/dev/null; then \
+	  python3 -m venv "$$tools_dir"; \
+	  "$$tools_dir/bin/pip" install --quiet uv==0.13.1; \
+	  PATH="$$tools_dir/bin:$$PATH"; export PATH; \
+	fi; \
+	uv sync --python python3 --frozen --project tools/tmt-rpmtest; \
+	uv run --project tools/tmt-rpmtest ruff check tools/tmt-rpmtest; \
+	uv run --project tools/tmt-rpmtest ruff format --check tools/tmt-rpmtest; \
+	uv run --project tools/tmt-rpmtest pytest -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests; \
 	cd tools/tmt-rpmtest && uv run tmt plans lint
 
 check-rpmtest:
