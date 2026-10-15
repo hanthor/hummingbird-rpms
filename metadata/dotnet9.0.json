@@ -5,10 +5,10 @@
     "git_url": "https://src.fedoraproject.org/rpms/dotnet9.0.git",
     "sha": "1a9f8800e932757725244ea369bc98b15c3da1ca"
   },
-  "modification_reason": "update to SDK 9.0.121 / Runtime 9.0.20 for CVE-2026-58649; local build patches retained; exclude s390x because builds get stuck",
+  "modification_reason": "update to SDK 9.0.122 / Runtime 9.0.21 for CVE-2026-70159, CVE-2026-58280, CVE-2026-66822, CVE-2026-69651; local build patches retained; exclude s390x because builds get stuck",
   "modification_status": "modified",
   "upstream_branch": "release/9.0",
   "upstream_repo": "https://github.com/dotnet/runtime",
-  "version": "9.0.121",
+  "version": "9.0.122",
   "version_transform": "dotnet_sdk_to_runtime"
 }
