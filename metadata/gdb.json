@@ -5,7 +5,7 @@
     "release": "6",
     "sha": "c9593886da9a79ec828477c9a9e89c2a7c0df7e9"
   },
-  "modification_reason": "Drop texlive/PDF/HTML from gdb-doc: not needed in Hummingbird; gdb-doc ships info pages only",
+  "modification_reason": "Drop texlive/PDF/HTML from gdb-doc: not needed in Hummingbird; gdb-doc ships info pages only; Fix worker-dependent GDB address maps for RPM reproducibility (upstream review pending)",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/binutils-gdb.git",
   "version": "17.2"
