@@ -288,6 +288,11 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
     bad_commits = [line for line in bad_commits if not line.startswith('ee7e5850c2e61218d5eb08c1c325dd3b342b6e5b ')]
     bad_commits = [line for line in bad_commits if not line.startswith('ad6a072a59433f0b55c4a099529da9b3522b92df ')]
 
+    # bubblewrap local updates to 0.13.0 and 0.13.1 were committed without the
+    # Upstream: trailer. Both are superseded by Fedora 0.13.1-1.
+    bad_commits = [line for line in bad_commits if not line.startswith('aaf6d161f64e4aaaaf9dd9385c3ac004062682db ')]
+    bad_commits = [line for line in bad_commits if not line.startswith('0c5336c3602facced0d8b1ad177babd4442c74a1 ')]
+
     # fontconfig's bwrap test patch, changelog cleanup, CVE-2026-34085 update,
     # and source archive repair were superseded by Fedora updates through 2.18.3-3.
     bad_commits = [line for line in bad_commits if not line.startswith('27728894cec76de0f4b7a8a217979d31ed20bea1 ')]
