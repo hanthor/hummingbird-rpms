@@ -4,10 +4,10 @@
     "git_url": "https://src.fedoraproject.org/rpms/helm3.git",
     "sha": "4a8b81b991bfa730a1f51e240f980ed120c1a809"
   },
-  "modification_reason": "Update to upstream version 3.22.0; update vendored OpenTelemetry log exporters for CVE-2026-81871",
+  "modification_reason": "Update to upstream version 3.22.1",
   "modification_status": "modified",
   "release_monitoring_project_id": 15046,
   "track_upstream": "3",
   "upstream_repo": "https://github.com/helm/helm",
-  "version": "3.22.0"
+  "version": "3.22.1"
 }
