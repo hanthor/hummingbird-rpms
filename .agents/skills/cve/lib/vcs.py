@@ -400,6 +400,13 @@ def open_package_mr(
         "create",
         "--repo",
         GITLAB_RPMS_REPO,
+        # Always pass --head explicitly. Without it, glab can auto-detect a
+        # personal fork remote (e.g. a remote named after the authenticated
+        # user) as the head project even when --repo already names the
+        # intended project and the branch was pushed there, failing with
+        # "source_branch: [does not exist]" against the fork.
+        "--head",
+        source_project,
         "--source-branch",
         source_branch,
         "--target-branch",
@@ -410,8 +417,6 @@ def open_package_mr(
         description,
         "--yes",
     ]
-    if source_project != GITLAB_RPMS_REPO:
-        create_args[5:5] = ["--head", source_project]
     created = run_command(create_args, cwd=cwd)
     if created.returncode != 0:
         raise RuntimeError(
