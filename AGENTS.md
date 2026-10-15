@@ -34,6 +34,7 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
+| `python3 ci/monitor_signing.py <release> --rh03-context ... --signing-context ... --output ...` | Capture a Release and its direct RPM signing runs across both clusters (read-only) |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -55,6 +56,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Backport a patch               | Add patch, bump Release, run `mark-modified`                    | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
 | Configure metadata fields      | _(edit `metadata/<pkg>.json`)_                                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)                   | Understand `release` and `modification_status` configuration           |
 | Debug build failures           | _(see docs)_                                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Investigate and fix failed package builds                              |
+| Monitor RPM signing            | `python3 ci/monitor_signing.py <release> ...`                  | [Monitoring RPM Signing Releases](documentation/operating/monitoring-rpm-signing.md)            | Capture direct signing steps, logs, events, and memory before pruning |
 | Mark package modified          | `mark-modified <pkg> --modified --reason "..."`                 | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Track local changes; prevent automatic Fedora updates                  |
 | Set package basename           | `set-upstream <pkg> --track-version <prefix>`                   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Set basename/track_version for versioned packages                      |
 | Track upstream versions        | `set-upstream <pkg>`                                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Enable/disable upstream version checking for a package                 |
