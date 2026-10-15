@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libzip.git",
-    "release": "2",
-    "sha": "181a79e0e05d8c6575ea4cbbbce52b510b298e9d"
+    "release": "1",
+    "sha": "f90623bbd34f7eafc804d6a46f11ab79595c0147"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/nih-at/libzip",
-  "version": "1.12"
+  "version": "1.12.1"
 }
