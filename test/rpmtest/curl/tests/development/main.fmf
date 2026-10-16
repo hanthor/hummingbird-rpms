@@ -1,3 +1,4 @@
 summary: Check curl development
 test: '"$RPMTEST_PYTHON" curl_development.py'
 duration: 5m
+component: curl-main

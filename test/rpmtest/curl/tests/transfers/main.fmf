@@ -1,3 +1,4 @@
 summary: Check curl transfers
 test: '"$RPMTEST_PYTHON" curl_transfers.py'
 duration: 5m
+component: curl-main

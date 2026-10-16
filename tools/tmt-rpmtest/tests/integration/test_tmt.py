@@ -4,16 +4,51 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
 
 CANDIDATE = os.environ.get("RPMTEST_CURL_RPM")
+SSH_PORT = os.environ.get("RPMTEST_SSH_PORT")
+SSH_KEY = os.environ.get("RPMTEST_SSH_KEY")
+
 pytestmark = pytest.mark.skipif(not CANDIDATE, reason="Set RPMTEST_CURL_RPM for the live RPM test.")
 
 
-def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path):
+@pytest.mark.parametrize("remote", [False, True], ids=["local", "ssh"])
+def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path, monkeypatch, remote):
+    if remote and not (SSH_PORT and SSH_KEY):
+        pytest.skip("Set RPMTEST_SSH_PORT and RPMTEST_SSH_KEY for a localhost SSH guest.")
+    if remote:
+        from tmt.guest import GuestSsh
+
+        # The localhost SSH fixture must not install tmt helpers into the host system.
+        monkeypatch.setattr(GuestSsh, "install_scripts", lambda self, scripts: None)
+    provision = (
+        {
+            "how": "connect",
+            "guest": "127.0.0.1",
+            "user": os.environ.get("USER", "admin"),
+            "port": int(SSH_PORT),
+            "key": [SSH_KEY],
+        }
+        if remote
+        else {"how": "local"}
+    )
+    # Keep ambient credentials out of subprocess environments and tmt evidence.
+    keep = {
+        "HOME",
+        "PATH",
+        "LANG",
+        "USER",
+        "LOGNAME",
+        "XDG_RUNTIME_DIR",
+        "DBUS_SESSION_BUS_ADDRESS",
+    }
+    for name in set(os.environ) - keep:
+        monkeypatch.delenv(name)
     from tmt.__main__ import import_cli_commands
     from tmt.cli._root import main
     from tmt.utils import to_yaml, yaml_to_list
@@ -25,10 +60,11 @@ def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path):
     (root / "plan.fmf").write_text(
         to_yaml(
             {
-                "provision": {"how": "local"},
+                "provision": provision,
                 "discover": {"how": "fmf"},
                 "prepare": {
                     "how": "rpmtest",
+                    "python": sys.executable,
                     "packages": ["curl"],
                     "repositories": [
                         "https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/"
@@ -116,7 +152,7 @@ with subject() as fresh:
     assert result.exit_code == 0, result.output
     outcomes = yaml_to_list((run / "plan/execute/results.yaml").read_text())
     assert {item["name"]: item["result"] for item in outcomes} == {"/test": "pass"}
-    manifest = json.loads((run / "plan/data/rpmtest/manifest.json").read_text())
+    manifest = json.loads((run / "plan/data/rpmtest-default-0/root/manifest.json").read_text())
     with Path(CANDIDATE).open("rb") as candidate:
         sha = hashlib.file_digest(candidate, "sha256").hexdigest()
     assert any(item["sha256"] == sha and item["selected"] for item in manifest["candidates"])

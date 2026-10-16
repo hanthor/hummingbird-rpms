@@ -43,7 +43,12 @@ class Subject:
 @contextmanager
 def subject(directory: Path | None = None):
     """Open a fresh root from TMT_PLAN_DATA. Keep command evidence in TMT_TEST_DATA."""
-    directory = directory or Path(os.environ["TMT_PLAN_DATA"]) / "rpmtest"
+    if directory is None:
+        directory = (
+            Path(os.environ["RPMTEST_DIRECTORY"])
+            if "RPMTEST_DIRECTORY" in os.environ
+            else Path(os.environ["TMT_PLAN_DATA"]) / "rpmtest"
+        )
     manifest = json.loads((directory / "manifest.json").read_text())
     if digest(directory / "rootfs.tar") != manifest["rootfs_sha256"]:
         raise ValueError("The prepared root archive changed before execution.")

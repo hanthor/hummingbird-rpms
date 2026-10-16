@@ -1,7 +1,7 @@
 # Architecture
 
 The plugin prepares RPM roots and cleans up runtime resources. tmt discovers and executes ordinary
-host-side tests.
+guest-side tests.
 The test scripts make their own assertions. There is no custom suite, step, or assertion language.
 
 ```text
@@ -10,9 +10,12 @@ tmt_rpmtest/
 ├── plugins/
 │   ├── prepare.py            # tmt prepare method and options
 │   ├── finish.py             # tmt finish method
+│   ├── guest.py              # tmt guest transfers and command dispatch
 │   └── schemas/              # tmt plan validation
 ├── environment/
-│   └── rpm.py                # Root assembly and artifact verification
+│   ├── rpm.py                # Root assembly and artifact verification
+│   ├── lifecycle.py          # Guest preparation and ownership cleanup
+│   └── __main__.py           # Guest-side command entry point
 ├── execution/
 │   ├── subject.py            # Fresh-session lifecycle and test conveniences
 │   └── context.py            # Commands, snapshots, inspection, and evidence
@@ -56,9 +59,12 @@ The context returns process results; primitives expose observations; tests make 
 
 ## Preparation
 
-The prepare method stores the root under `TMT_PLAN_DATA/rpmtest`.
-It exposes the plugin's Python interpreter through tmt's plan environment file.
-Tests use that interpreter and the standard tmt executor.
+The controller stages the package and candidate files through `guest.push()`.
+Candidate digests are checked again after transport, before assembly.
+`guest.execute()` runs the shared preparation helper on the provisioned guest.
+Each guest has a separate root under `TMT_PLAN_DATA/rpmtest-<guest>/root/`.
+The helper publishes `RPMTEST_DIRECTORY` and `RPMTEST_PYTHON` through the plan environment file.
+Tests execute on that guest through tmt's standard executor.
 
 All candidate RPMs get digest checks and metadata records.
 A local repository makes those exact artifacts available to the solver.
@@ -96,3 +102,16 @@ The plugin does not interpret query results or command output as assertions.
 Each session removes its owned resources on exit. Cleanup has an independent deadline.
 The finish method also removes resources carrying the plan's unique ownership label.
 It never selects shared builder images or another plan's resources.
+
+## CI orchestration
+
+Testing Farm runs the native plans in `ci/run_tests_rpm.fmf`.
+They use native fmf discovery and the standard test executor, without invoking another tmt run.
+Artifact preparation happens before execution; each package suite receives its own minimal root.
+Existing RPM checks have their own test result, independent of the package assertions.
+
+CI bootstraps the in-tree package with native shell preparation on the guest.
+It invokes the same RPM preparation helper as the installed plugin.
+This keeps controller plugin installation out of the Testing Farm bootstrap sequence.
+The helper reads only the RPM preparation settings from each canonical package plan.
+The finish step invokes guest-side cleanup using its recorded owner, including after test failures.

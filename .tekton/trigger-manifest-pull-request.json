@@ -5,7 +5,8 @@
         "^rpms/hello/",
         "^test/rpms/hello\\.yml$",
         "^test/rpmtest/hello/",
-        "^tools/tmt-rpmtest/"
+        "^tools/tmt-rpmtest/",
+        "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ]
     },
     "private-nodejs20-rpms-main": {
@@ -255,7 +256,8 @@
         "^rpms/curl/",
         "^test/rpms/curl\\.yml$",
         "^test/rpmtest/curl/",
-        "^tools/tmt-rpmtest/"
+        "^tools/tmt-rpmtest/",
+        "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ],
       "cyrus-sasl--rpms": [
         "^rpms/cyrus\\-sasl/",

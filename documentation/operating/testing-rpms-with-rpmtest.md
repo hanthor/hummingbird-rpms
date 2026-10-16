@@ -15,7 +15,8 @@ Each plan's `prepare` block defines the RPM package set. For example,
 The plugin starts with an empty filesystem, installs the package and its required dependencies,
 and saves an archive for that plan. Local build artifacts override repository packages by name.
 
-`provision: local` runs the Python tests and assertions on the runner.
+tmt runs Python tests and assertions on its provisioned guest.
+`provision: local` uses the current machine. A `connect` guest uses an existing machine over SSH.
 Each `with subject() as target:` block creates a fresh container session from the plan's archive.
 `target.run(...)` executes a program inside that minimal environment.
 Commands in one session share filesystem changes. A new session starts from the original archive.
@@ -44,13 +45,23 @@ tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/curl \
   --allow-unsafe-behavior=provision/local run --all --keep
 ```
 
+For an existing SSH guest with Podman, rsync, and Python 3.11 installed:
+
+```console
+tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/hello run --all --keep \
+  provision --how connect --guest "$VM_ADDRESS" --user root --key "$VM_KEY" \
+  prepare --how rpmtest --python python3.11 --artifact "$PWD/builds/hello/RPMS/*.rpm"
+```
+
+The artifact paths refer to the controller. The plugin copies and checks them on the guest.
+
 Each plan prepares its own requested packages and their dependency closure.
 All supplied candidate RPMs receive digest checks and metadata records.
 The manifest identifies selected and unselected candidates separately.
 Debuginfo and debugsource are not added to unrelated runtime environments or reported as runtime-
 tested.
 
-Tests make ordinary Python assertions on the runner.
+Tests make ordinary Python assertions on the provisioned guest.
 A subject session supplies fixture copying, command execution, file inspection, and external RPM
 queries.
 Multiple commands in one session share filesystem changes. Separate sessions start fresh.
@@ -60,10 +71,10 @@ The two hello plans preserve RPM integrity, ownership, executable, provides, ver
 checks.
 The three curl plans preserve package contracts, offline transfers, precise failure codes, and
 libcurl compile-and-run coverage.
-The transfer test compares output on the runner, so its root no longer needs diffutils.
+The transfer test compares output on the guest, so its root no longer needs diffutils.
 
-Testing Farm installs the local plugin in an isolated environment for hello and curl.
-The plugin and tests always come from the same checkout.
-It passes the complete candidate pool to their tmt plans and retains nested tmt reports under
-`TMT_TEST_DATA`.
-It also runs `ci/run_tests_rpm.sh`. A failure in either path fails the job.
+Testing Farm uses native fmf discovery for the hello and curl tests in `ci/run_tests_rpm.fmf`.
+Preparation downloads artifacts, filters native and noarch RPMs, and installs this checkout's
+Python package in an isolated guest environment. The RPM helper builds the requested environment.
+Each test gets its own tmt result. The existing `ci/run_tests_rpm.sh` checks have a separate result.
+A failure in either path fails the job. There is no nested tmt invocation.

@@ -4,7 +4,7 @@ Prepare minimal RPM roots for ordinary tmt tests.
 
 The Python plugin resolves packages, installs their exact artifacts into an empty root, and records
 installed identities.
-Tests run on the local runner through tmt's standard executor.
+Tests run on tmt's provisioned guest through its standard executor.
 A subject session copies fixtures and executes commands inside the minimal root.
 Assertions, test selection, timeouts, and reports remain normal tmt features.
 
@@ -15,10 +15,11 @@ and optional local `artifacts`. Each plan starts with an empty root and installs
 packages plus required dependencies. The plugin saves this root as an archive for that plan.
 The builder image supplies assembly tools outside the subject filesystem.
 
-`provision: local` selects the runner where tmt executes Python test scripts and their assertions.
+tmt executes Python test scripts and assertions on the provisioned guest.
+`provision: local` uses the current machine. `provision: connect` uses an existing SSH guest.
 Inside a test, `with subject() as target:` creates a private session from the prepared archive.
 `target.run(...)` executes the requested program inside that session's minimal container.
-The Python assertions execute on the runner, outside the subject.
+The Python assertions execute on the guest, outside the subject container.
 
 Commands within one session share filesystem changes. Each new `subject()` starts from the
 prepared archive, without changes from earlier sessions. Processes do not persist between commands.
@@ -89,7 +90,10 @@ test: '"$RPMTEST_PYTHON" test.py'
 duration: 2m
 ```
 
-The prepare plugin sets `RPMTEST_PYTHON` to its Python environment.
+The prepare plugin stages this package and candidate RPMs through `guest.push()`.
+It assembles the root through `guest.execute()` and sets `RPMTEST_PYTHON` to the guest interpreter.
+The guest needs Podman, rsync, and Python 3.11 or later.
+Set the prepare field `python: python3.11` when the guest's default Python is older.
 The test script uses ordinary Python assertions:
 
 ```python
@@ -124,9 +128,27 @@ Each session starts from the prepared root. Copy fixtures before compiling or ru
 `stat()` returns a standard `tarfile.TarInfo` for file type and mode checks.
 `rpm()` runs RPM queries or verification against a snapshot, using build tools outside the subject.
 
-The host test controls its own environment. Subject commands receive only the standard PATH and
+The guest-side test controls its own environment. Subject commands receive only the standard PATH and
 explicit overrides.
 A shell command inside the subject requires a shell supplied by its RPM dependencies.
+
+## Testing Farm
+
+CI uses one tmt orchestration layer. Native fmf discovery selects each hello or curl test,
+and the standard executor reports its result directly.
+`ci/run_tests_rpm.fmf` defines separate plans for their package environments.
+The existing RPM checks remain a separate native shell test.
+
+Artifact download and architecture filtering happen in preparation through
+`ci/prepare_rpm_artifacts.sh`. Each package plan then installs this checkout's Python package
+in an isolated guest environment and calls `python -m tmt_rpmtest.environment` to assemble its root.
+That command performs RPM preparation and cleanup only; it never invokes tmt.
+The canonical package settings remain in `test/rpmtest/<package>/plans/`.
+
+The CI plans use tmt's built-in shell preparation for bootstrap, so Testing Farm does not need
+the custom plugin installed on its controller before it reads the plans.
+An installed `how: rpmtest` plugin uses the same guest-side assembly code through tmt's guest interface.
+Both paths build and execute on the guest's native architecture.
 
 ## Package inspection primitives
 
@@ -214,8 +236,10 @@ Primitives leave assertions to the test and do not manage containers or signal h
 ## Evidence and limits
 
 Use `--keep` to retain the run directory.
-`TMT_PLAN_DATA/rpmtest/manifest.json` records candidates, selected RPM hashes, installed identities,
+`RPMTEST_DIRECTORY/manifest.json` records candidates, selected RPM hashes, installed identities,
 and the root archive hash.
+The plugin stores each guest's root under `TMT_PLAN_DATA/rpmtest-<guest>/root/`.
+Native CI preparation stores its root under `TMT_PLAN_DATA/rpmtest/`.
 The same directory retains the selected RPM files and root archive.
 Each session writes command output, exit codes, fixture archives, and a manifest copy under
 `TMT_TEST_DATA`.
@@ -265,7 +289,15 @@ The optional live test covers fixtures, filesystem state, RPM queries, and exact
 selection:
 
 ```sh
-RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm uv run pytest tests/integration/test_tmt.py
+RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm uv run pytest tests/integration/test_tmt.py -k local
+```
+
+The optional SSH case uses a localhost SSH service with Podman, Python, and rsync available:
+
+```sh
+RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm \
+RPMTEST_SSH_PORT=2222 RPMTEST_SSH_KEY=/absolute/path/to/key \
+uv run pytest tests/integration/test_tmt.py -k ssh
 ```
 
 See [architecture](docs/architecture.md).

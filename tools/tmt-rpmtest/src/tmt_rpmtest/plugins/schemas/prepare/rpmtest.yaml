@@ -23,6 +23,7 @@ properties:
   builder:
     type: string
     pattern: '^\S+@sha256:[0-9a-f]{64}$'
+  python: {type: string}
   cpus: {type: number, exclusiveMinimum: 0}
   memory: {type: integer, minimum: 1}
   pids: {type: integer, minimum: 1}

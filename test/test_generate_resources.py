@@ -134,6 +134,8 @@ class TestBuildPacVariables:
             expected = package["dname"] == "alpha" and event_type == "pull-request"
             assert ("^test/rpmtest/alpha/" in package["manifest_triggers"]) == expected
             assert ("^tools/tmt-rpmtest/" in package["manifest_triggers"]) == expected
+            shared = r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$"
+            assert (shared in package["manifest_triggers"]) == expected
 
     @pytest.mark.parametrize("event_type", ["pull-request", "push"])
     def test_default_build_targets(self, gen_module, mock_repo, event_type):

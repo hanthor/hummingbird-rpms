@@ -1,13 +1,12 @@
 """Remove runtime resources after tmt finishes the tests."""
 
-import json
 from pathlib import Path
 
 import tmt.steps
 from tmt.container import container
 from tmt.steps.finish import FinishPlugin, FinishStepData
 
-from tmt_rpmtest.drivers.podman import Podman
+from tmt_rpmtest.plugins.guest import execute
 
 
 @container
@@ -28,7 +27,7 @@ class FinishRPM(FinishPlugin[RPMFinishData]):
         outcome = super().go(guest=guest, environment=environment, logger=logger)
         if self.is_dry_run:
             return outcome
-        state = Path(self.step.plan.data_directory) / "rpmtest/session.json"
-        if state.exists():
-            Podman(owner=json.loads(state.read_text())["owner"]).cleanup()
+        work = Path(self.step.plan.data_directory) / f"rpmtest-{guest.safe_name}"
+        if (work / "python").exists():
+            execute(guest, work, (work / "python").read_text(), "finish")
         return outcome

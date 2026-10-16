@@ -1,3 +1,4 @@
 summary: Check hello contract
 test: '"$RPMTEST_PYTHON" hello_contract.py'
 duration: 5m
+component: hello-main

@@ -1,68 +1,13 @@
----
+summary: Test built RPM artifacts
 execute:
   how: tmt
-
 prepare:
   - how: install
-    package: rpmlint
-  - how: install
-    package: podman
-  - how: install
-    package: slirp4netns
-  - how: install
-    package: [uv, rsync]
+    package: [rpmlint, podman, slirp4netns, rsync]
   - how: shell
     script: |
       set -euo pipefail
-      case "${IMAGE_NAME:-}" in
-        hello-main|curl-main) ;;
-        *) exit 0 ;;
-      esac
-      plugin_source="${TMT_TREE}/tools/tmt-rpmtest"
-      uv sync --python python3 --frozen --no-dev --project "${plugin_source}"
-      printf 'RPMTEST_TMT=%s\n' "${plugin_source}/.venv/bin/tmt" >> "${TMT_PLAN_ENVIRONMENT_FILE}"
-  - how: shell
-    script: |
-      #!/bin/bash
-      set -euo pipefail
-      shopt -s inherit_errexit
-
-      mkdir -p ~/.local/bin
-
-      ARCH="$(arch)"
-      case $ARCH in
-          "x86_64")
-              ARCH="amd64"
-              ;;
-          "aarch64")
-              ARCH="arm64"
-              ;;
-      esac
-
-      OS="linux"
-      oras_version="1.3.0"
-      oras_archive=$(mktemp)
-      curl \
-        --location \
-        --silent \
-        --fail \
-        --show-error \
-        --retry 5 \
-        --retry-delay 5 \
-        --connect-timeout 30 \
-        --globoff \
-        --output "${oras_archive}" \
-        "https://github.com/oras-project/oras/releases/download/v${oras_version}/oras_${oras_version}_${OS}_${ARCH}.tar.gz"
-      tar \
-        --extract \
-        --gzip \
-        --file "${oras_archive}" \
-        --directory ~/.local/bin \
-        oras
-      rm -f "${oras_archive}"
-
-  # fix TF not being able to deal with newly added submodules in MRs
-  # https://issues.redhat.com/browse/TFT-3991
+      ci/prepare_rpm_artifacts.sh
   - how: shell
     script: git submodule update --init --recursive
 
@@ -71,79 +16,96 @@ discover:
   keep-git-metadata: true
   sync-repo: true
   tests:
-    - name: Podman
-      # When increasing the timeout, also increase the value inside
-      # the IntegrationTestScenario resource
+    - name: RPM checks
       duration: 8h
       test: |
-        #!/bin/bash
         set -euo pipefail
-        shopt -s inherit_errexit
-        echo "IMAGE_NAME: ${IMAGE_NAME:-unset}"
-        echo "IMAGE_URL: ${IMAGE_URL:-unset}"
-        if [[ -n ${IMAGE_NAME:-} ]]; then
-            package_name=${IMAGE_NAME%-main}
-            # Find actual package directory by reversing the IMAGE_NAME normalization.
-            # Konflux normalizes directory names: lowercase + replace _+. with hyphens.
-            # We iterate through rpms/ directories, apply the same normalization,
-            # and compare to package_name to find the original directory name.
-            while IFS= read -r dir; do
-                dir_basename=$(basename "$dir")
-                # Apply same normalization as Konflux: lowercase, replace _+. with -
-                normalized="${dir_basename,,}"
-                normalized="${normalized//_/-}"
-                normalized="${normalized//+/-}"
-                normalized="${normalized//./-}"
-                if [[ "${normalized}" == "${package_name}" ]]; then
-                    package_name="${dir_basename}"
-                    break
-                fi
-            done < <(find rpms -maxdepth 1 -mindepth 1 -type d)
-        fi
-        if [[ -n ${IMAGE_URL:-} ]]; then
-          work_dir=$(mktemp -d)
-          rpms_dir="${work_dir}/RPMS"
-          srpms_dir="${work_dir}/SRPMS"
-          mkdir -p "${rpms_dir}" "${srpms_dir}"
+        [[ -n ${RPMTEST_SOURCE_RPM:-} ]] || exit 0
+        rpm_arguments=()
+        for artifact in "${RPMTEST_RPMS}"/*.rpm; do
+          rpm_arguments+=(--rpm "$artifact")
+        done
+        ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
+          --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
 
-          # Pull all files to work directory
-          oras pull "${IMAGE_URL}" -o "${work_dir}"
+/rpmtest:
+  enabled: false
+  summary: Test minimal RPM environments
+  prepare+:
+    - how: install
+      package: [python3.11, python3.11-pip]
+    - how: shell
+      script: |
+        set -euo pipefail
+        export PATH
+        plugin_source="${TMT_TREE}/tools/tmt-rpmtest"
+        bootstrap="${TMT_PLAN_DATA}/bootstrap"
+        python3.11 -m venv "$bootstrap"
+        "$bootstrap/bin/pip" install --quiet uv==0.13.1
+        export UV_PROJECT_ENVIRONMENT="${TMT_PLAN_DATA}/python"
+        "$bootstrap/bin/uv" sync --python python3.11 --frozen --no-dev --project "$plugin_source"
+        "$UV_PROJECT_ENVIRONMENT/bin/python" -m tmt_rpmtest.environment prepare \
+          --directory "${TMT_PLAN_DATA}/rpmtest" \
+          --plan "${TMT_TREE}/${RPMTEST_PLAN}" --artifact "${RPMTEST_RPMS}/*.rpm"
+  finish:
+    how: shell
+    script: |
+      python="${TMT_PLAN_DATA}/python/bin/python"
+      if [[ -x $python ]]; then
+        "$python" -m tmt_rpmtest.environment finish --directory "${TMT_PLAN_DATA}/rpmtest"
+      fi
 
-          # Move source RPMs to srpms_dir
-          mv "${work_dir}"/*.src.rpm "${srpms_dir}/" 2>/dev/null || true
+  /hello-contract:
+    enabled: true
+    summary: Test hello contract in a minimal RPM root
+    environment:
+      RPMTEST_PLAN: test/rpmtest/hello/plans/contract.fmf
+    discover:
+      how: fmf
+      path: $TMT_TREE/test/rpmtest/hello
+      test: ^/tests/contract$
+      filter: component:${IMAGE_NAME}
 
-          # Move binary RPMs matching current architecture to rpms_dir
-          current_arch=$(uname -m)
-          rpm_files=()
-          for f in "${work_dir}"/*.rpm; do
-            [[ $f == *.src.rpm ]] && continue
-            rpm_arch=$(rpm -qp --queryformat '%{ARCH}\n' "$f" 2>/dev/null || true)
-            if [[ ${rpm_arch} == "noarch" || ${rpm_arch} == "${current_arch}" ]]; then
-              mv "$f" "${rpms_dir}/"
-              rpm_files+=("${rpms_dir}/$(basename "$f")")
-            fi
-          done
+  /hello-greeting:
+    enabled: true
+    summary: Test hello greeting in a minimal RPM root
+    environment:
+      RPMTEST_PLAN: test/rpmtest/hello/plans/greeting.fmf
+    discover:
+      how: fmf
+      path: $TMT_TREE/test/rpmtest/hello
+      test: ^/tests/greeting$
+      filter: component:${IMAGE_NAME}
 
-          # Skip testing if no RPMs match the current architecture
-          # (e.g., x86_64-only packages like libipt running on aarch64)
-          if [[ ${#rpm_files[@]} -eq 0 ]]; then
-            echo "No binary RPMs found for architecture ${current_arch}, skipping tests"
-            exit 0
-          fi
+  /curl-contract:
+    enabled: true
+    summary: Test curl contract in a minimal RPM root
+    environment:
+      RPMTEST_PLAN: test/rpmtest/curl/plans/contract.fmf
+    discover:
+      how: fmf
+      path: $TMT_TREE/test/rpmtest/curl
+      test: ^/tests/contract$
+      filter: component:${IMAGE_NAME}
 
-          # Get source RPM path
-          src_rpm_file=$(ls -1 "${srpms_dir}/"*.src.rpm)
+  /curl-transfers:
+    enabled: true
+    summary: Test curl transfers in a minimal RPM root
+    environment:
+      RPMTEST_PLAN: test/rpmtest/curl/plans/transfers.fmf
+    discover:
+      how: fmf
+      path: $TMT_TREE/test/rpmtest/curl
+      test: ^/tests/transfers$
+      filter: component:${IMAGE_NAME}
 
-          test_status=0
-          rpmtest_tree="test/rpmtest/${package_name}"
-          if [[ -f ${rpmtest_tree}/.fmf/version ]]; then
-            "${RPMTEST_TMT}" --root "${rpmtest_tree}" \
-              --allow-unsafe-behavior=provision/local run --all --keep --scratch \
-              --id "${TMT_TEST_DATA}/rpmtest-${package_name}" \
-              prepare --how rpmtest --artifact "${rpms_dir}/*.rpm" || test_status=$?
-          fi
-
-          # Run the existing tests for every package, including packages with rpmtest coverage.
-          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}" || test_status=$?
-          exit "${test_status}"
-        fi
+  /curl-development:
+    enabled: true
+    summary: Test curl development in a minimal RPM root
+    environment:
+      RPMTEST_PLAN: test/rpmtest/curl/plans/development.fmf
+    discover:
+      how: fmf
+      path: $TMT_TREE/test/rpmtest/curl
+      test: ^/tests/development$
+      filter: component:${IMAGE_NAME}
