@@ -132,7 +132,7 @@ class TestBuildPacVariables:
             assert rpm["build_architectures"] == ["aarch64", "x86_64", "s390x"]
             assert rpm["build_platforms"] == ["linux/x86_64", "linux/arm64", "linux/s390x"]
             assert rpm["extra_params"]["reproducibility-architectures"] == [
-                "x86_64", "aarch64", "s390x", "noarch"
+                "x86_64", "noarch"
             ]
             assert rpm["extra_params"]["reproducibility-on-error"] == "continue"
 

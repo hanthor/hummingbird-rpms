@@ -183,7 +183,7 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 
             extra_params = {
                 "purl-rpm-namespace": "redhat",
-                "reproducibility-architectures": ["x86_64", "aarch64", "s390x", "noarch"],
+                "reproducibility-architectures": ["x86_64", "noarch"],
                 "reproducibility-on-error": "continue",
             }
             if "extra_params" in pkg_config:

@@ -34,7 +34,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -113,7 +113,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -192,7 +192,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -271,7 +271,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -350,7 +350,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -429,7 +429,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -508,7 +508,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -591,7 +591,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -670,7 +670,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -749,7 +749,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -828,7 +828,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -911,7 +911,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -990,7 +990,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1069,7 +1069,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1151,7 +1151,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1234,7 +1234,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1313,7 +1313,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1392,7 +1392,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1471,7 +1471,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1550,7 +1550,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1629,7 +1629,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1708,7 +1708,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1791,7 +1791,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1870,7 +1870,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -1953,7 +1953,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2032,7 +2032,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2111,7 +2111,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2190,7 +2190,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2269,7 +2269,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2348,7 +2348,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2427,7 +2427,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2506,7 +2506,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2585,7 +2585,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2664,7 +2664,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2743,7 +2743,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2822,7 +2822,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2905,7 +2905,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -2988,7 +2988,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3067,7 +3067,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3146,7 +3146,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3225,7 +3225,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3304,7 +3304,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3383,7 +3383,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3462,7 +3462,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3541,7 +3541,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3624,7 +3624,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3703,7 +3703,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3782,7 +3782,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3861,7 +3861,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -3944,7 +3944,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4023,7 +4023,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4102,7 +4102,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4181,7 +4181,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4260,7 +4260,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4339,7 +4339,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4422,7 +4422,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4501,7 +4501,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4580,7 +4580,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4659,7 +4659,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4738,7 +4738,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4817,7 +4817,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4896,7 +4896,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -4975,7 +4975,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5054,7 +5054,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5143,7 +5143,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5226,7 +5226,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5305,7 +5305,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5384,7 +5384,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5463,7 +5463,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5542,7 +5542,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5627,7 +5627,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5710,7 +5710,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5789,7 +5789,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5872,7 +5872,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -5951,7 +5951,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6030,7 +6030,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6124,7 +6124,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6203,7 +6203,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6282,7 +6282,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6365,7 +6365,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6444,7 +6444,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6523,7 +6523,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6606,7 +6606,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6689,7 +6689,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6768,7 +6768,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6847,7 +6847,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -6926,7 +6926,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7005,7 +7005,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7084,7 +7084,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7167,7 +7167,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7246,7 +7246,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7325,7 +7325,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7410,7 +7410,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7489,7 +7489,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7572,7 +7572,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7651,7 +7651,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7734,7 +7734,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7820,7 +7820,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7903,7 +7903,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -7985,7 +7985,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8064,7 +8064,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8147,7 +8147,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8226,7 +8226,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8305,7 +8305,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8390,7 +8390,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8472,7 +8472,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8551,7 +8551,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8634,7 +8634,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8716,7 +8716,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8795,7 +8795,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8877,7 +8877,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -8956,7 +8956,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9035,7 +9035,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9114,7 +9114,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9200,7 +9200,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9279,7 +9279,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9361,7 +9361,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9440,7 +9440,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9519,7 +9519,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9605,7 +9605,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9688,7 +9688,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9767,7 +9767,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9846,7 +9846,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -9925,7 +9925,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10028,7 +10028,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10110,7 +10110,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10189,7 +10189,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10272,7 +10272,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10355,7 +10355,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10434,7 +10434,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10523,7 +10523,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10602,7 +10602,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10681,7 +10681,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10763,7 +10763,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10842,7 +10842,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -10921,7 +10921,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11004,7 +11004,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11083,7 +11083,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11162,7 +11162,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11250,7 +11250,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11329,7 +11329,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11408,7 +11408,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11491,7 +11491,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11570,7 +11570,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11649,7 +11649,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11735,7 +11735,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11814,7 +11814,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11893,7 +11893,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -11975,7 +11975,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12058,7 +12058,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12141,7 +12141,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12224,7 +12224,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12303,7 +12303,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12382,7 +12382,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12461,7 +12461,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12540,7 +12540,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12638,7 +12638,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12717,7 +12717,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12803,7 +12803,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12882,7 +12882,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -12965,7 +12965,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13044,7 +13044,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13127,7 +13127,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13216,7 +13216,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13295,7 +13295,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13374,7 +13374,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13457,7 +13457,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13540,7 +13540,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13619,7 +13619,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13702,7 +13702,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13781,7 +13781,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13863,7 +13863,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -13942,7 +13942,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14027,7 +14027,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14110,7 +14110,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14189,7 +14189,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14272,7 +14272,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14351,7 +14351,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14434,7 +14434,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14513,7 +14513,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14596,7 +14596,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14675,7 +14675,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14754,7 +14754,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14833,7 +14833,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14915,7 +14915,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -14994,7 +14994,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15073,7 +15073,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15156,7 +15156,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15239,7 +15239,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15322,7 +15322,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15411,7 +15411,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15490,7 +15490,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15569,7 +15569,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15648,7 +15648,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15727,7 +15727,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15806,7 +15806,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15889,7 +15889,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -15972,7 +15972,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16058,7 +16058,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16137,7 +16137,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16216,7 +16216,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16295,7 +16295,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16374,7 +16374,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16453,7 +16453,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16532,7 +16532,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16611,7 +16611,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16690,7 +16690,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16769,7 +16769,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16848,7 +16848,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -16927,7 +16927,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17006,7 +17006,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17085,7 +17085,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17164,7 +17164,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17243,7 +17243,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17322,7 +17322,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17401,7 +17401,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17480,7 +17480,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17559,7 +17559,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17638,7 +17638,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17717,7 +17717,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17800,7 +17800,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17879,7 +17879,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -17958,7 +17958,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18037,7 +18037,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18120,7 +18120,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18203,7 +18203,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18282,7 +18282,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18361,7 +18361,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18440,7 +18440,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18519,7 +18519,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18598,7 +18598,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18677,7 +18677,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18756,7 +18756,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18835,7 +18835,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18914,7 +18914,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -18997,7 +18997,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19076,7 +19076,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19155,7 +19155,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19234,7 +19234,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19313,7 +19313,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19392,7 +19392,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19471,7 +19471,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19550,7 +19550,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19629,7 +19629,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19708,7 +19708,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19787,7 +19787,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19866,7 +19866,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -19945,7 +19945,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20024,7 +20024,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20107,7 +20107,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20186,7 +20186,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20265,7 +20265,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20344,7 +20344,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20423,7 +20423,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20502,7 +20502,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20581,7 +20581,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20660,7 +20660,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20739,7 +20739,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20818,7 +20818,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20897,7 +20897,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -20976,7 +20976,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21058,7 +21058,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21137,7 +21137,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21216,7 +21216,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21295,7 +21295,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21374,7 +21374,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21453,7 +21453,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21532,7 +21532,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21611,7 +21611,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21690,7 +21690,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21769,7 +21769,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21851,7 +21851,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -21930,7 +21930,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22009,7 +22009,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22088,7 +22088,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22167,7 +22167,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22250,7 +22250,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22333,7 +22333,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22412,7 +22412,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22495,7 +22495,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22583,7 +22583,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22662,7 +22662,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22741,7 +22741,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22823,7 +22823,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22902,7 +22902,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -22981,7 +22981,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23060,7 +23060,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23143,7 +23143,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23226,7 +23226,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23305,7 +23305,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23384,7 +23384,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23463,7 +23463,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23542,7 +23542,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23624,7 +23624,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23703,7 +23703,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23782,7 +23782,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23861,7 +23861,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -23940,7 +23940,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24019,7 +24019,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24098,7 +24098,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24177,7 +24177,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24256,7 +24256,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24339,7 +24339,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24418,7 +24418,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24501,7 +24501,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24622,7 +24622,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24704,7 +24704,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24786,7 +24786,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24865,7 +24865,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -24950,7 +24950,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25032,7 +25032,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25115,7 +25115,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25198,7 +25198,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25283,7 +25283,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25365,7 +25365,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25447,7 +25447,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25530,7 +25530,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25609,7 +25609,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25688,7 +25688,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25767,7 +25767,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25846,7 +25846,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -25931,7 +25931,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26014,7 +26014,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26102,7 +26102,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26185,7 +26185,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26268,7 +26268,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26351,7 +26351,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26434,7 +26434,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26513,7 +26513,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26592,7 +26592,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26678,7 +26678,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26760,7 +26760,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26843,7 +26843,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -26922,7 +26922,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27001,7 +27001,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27080,7 +27080,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27159,7 +27159,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27238,7 +27238,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27317,7 +27317,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27403,7 +27403,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27482,7 +27482,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27598,7 +27598,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27677,7 +27677,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27760,7 +27760,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27843,7 +27843,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -27926,7 +27926,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28009,7 +28009,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28092,7 +28092,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28175,7 +28175,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28258,7 +28258,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28341,7 +28341,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28424,7 +28424,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28503,7 +28503,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28586,7 +28586,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28665,7 +28665,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28744,7 +28744,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28823,7 +28823,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28908,7 +28908,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -28987,7 +28987,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29066,7 +29066,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29152,7 +29152,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29234,7 +29234,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29313,7 +29313,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29392,7 +29392,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29471,7 +29471,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29550,7 +29550,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29629,7 +29629,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29708,7 +29708,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29787,7 +29787,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29866,7 +29866,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -29945,7 +29945,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30024,7 +30024,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30103,7 +30103,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30182,7 +30182,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30261,7 +30261,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30340,7 +30340,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30419,7 +30419,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30498,7 +30498,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30577,7 +30577,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30656,7 +30656,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30735,7 +30735,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30814,7 +30814,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30893,7 +30893,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -30972,7 +30972,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31051,7 +31051,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31130,7 +31130,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31209,7 +31209,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31288,7 +31288,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31367,7 +31367,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31446,7 +31446,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31525,7 +31525,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31604,7 +31604,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31683,7 +31683,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31762,7 +31762,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31844,7 +31844,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -31926,7 +31926,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32005,7 +32005,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32084,7 +32084,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32163,7 +32163,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32242,7 +32242,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32321,7 +32321,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32400,7 +32400,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32483,7 +32483,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32565,7 +32565,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32651,7 +32651,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32733,7 +32733,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32815,7 +32815,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32901,7 +32901,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -32980,7 +32980,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33059,7 +33059,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33138,7 +33138,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33221,7 +33221,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33300,7 +33300,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33379,7 +33379,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33464,7 +33464,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33543,7 +33543,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33626,7 +33626,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33709,7 +33709,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33792,7 +33792,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33875,7 +33875,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -33958,7 +33958,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34040,7 +34040,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34119,7 +34119,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34198,7 +34198,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34281,7 +34281,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34360,7 +34360,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34445,7 +34445,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34530,7 +34530,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34609,7 +34609,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34688,7 +34688,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34767,7 +34767,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34864,7 +34864,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -34946,7 +34946,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35028,7 +35028,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35110,7 +35110,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35189,7 +35189,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35268,7 +35268,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35347,7 +35347,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35429,7 +35429,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35511,7 +35511,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35590,7 +35590,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35669,7 +35669,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35751,7 +35751,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35834,7 +35834,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35916,7 +35916,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -35995,7 +35995,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36074,7 +36074,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36165,7 +36165,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36244,7 +36244,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36323,7 +36323,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36402,7 +36402,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36484,7 +36484,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36567,7 +36567,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36646,7 +36646,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36725,7 +36725,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36804,7 +36804,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36904,7 +36904,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -36986,7 +36986,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37065,7 +37065,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37144,7 +37144,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37223,7 +37223,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37311,7 +37311,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37390,7 +37390,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37469,7 +37469,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37548,7 +37548,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37627,7 +37627,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37706,7 +37706,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37785,7 +37785,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37874,7 +37874,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -37953,7 +37953,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38032,7 +38032,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38111,7 +38111,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38190,7 +38190,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38269,7 +38269,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38352,7 +38352,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38438,7 +38438,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38517,7 +38517,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38596,7 +38596,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38675,7 +38675,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38757,7 +38757,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38840,7 +38840,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38919,7 +38919,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -38998,7 +38998,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39077,7 +39077,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39159,7 +39159,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39238,7 +39238,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39317,7 +39317,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39399,7 +39399,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39478,7 +39478,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39557,7 +39557,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39665,7 +39665,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39744,7 +39744,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39823,7 +39823,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39902,7 +39902,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -39981,7 +39981,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40060,7 +40060,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40139,7 +40139,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40218,7 +40218,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40301,7 +40301,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40384,7 +40384,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40463,7 +40463,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40542,7 +40542,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40621,7 +40621,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40700,7 +40700,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40779,7 +40779,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40858,7 +40858,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -40940,7 +40940,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41026,7 +41026,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41105,7 +41105,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41184,7 +41184,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41267,7 +41267,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41350,7 +41350,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41436,7 +41436,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41515,7 +41515,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41594,7 +41594,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41673,7 +41673,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41781,7 +41781,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41864,7 +41864,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -41943,7 +41943,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42022,7 +42022,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42104,7 +42104,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42183,7 +42183,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42266,7 +42266,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42345,7 +42345,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42428,7 +42428,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42514,7 +42514,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42597,7 +42597,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42676,7 +42676,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42758,7 +42758,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42837,7 +42837,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42920,7 +42920,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -42999,7 +42999,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43078,7 +43078,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43161,7 +43161,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43240,7 +43240,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43319,7 +43319,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43402,7 +43402,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43485,7 +43485,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43564,7 +43564,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43643,7 +43643,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43726,7 +43726,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43809,7 +43809,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43888,7 +43888,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -43967,7 +43967,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44050,7 +44050,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44133,7 +44133,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44212,7 +44212,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44294,7 +44294,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44377,7 +44377,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44456,7 +44456,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44539,7 +44539,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44618,7 +44618,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44697,7 +44697,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44776,7 +44776,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44855,7 +44855,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -44934,7 +44934,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -45013,7 +45013,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -45092,7 +45092,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -45171,7 +45171,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
@@ -45250,7 +45250,7 @@ spec:
     - name: purl-rpm-namespace
       value: "redhat"
     - name: reproducibility-architectures
-      value: ["x86_64", "aarch64", "s390x", "noarch"]
+      value: ["x86_64", "noarch"]
     - name: reproducibility-on-error
       value: "continue"
     - name: ociStorage
