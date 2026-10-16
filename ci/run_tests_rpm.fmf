@@ -13,7 +13,7 @@ prepare:
   - how: shell
     script: |
       set -euo pipefail
-      [[ -f "${TMT_TREE}/test/rpmtest/${RPMTEST_PACKAGE}/.fmf/version" ]] || exit 0
+      [[ -d "${TMT_TREE}/test/rpmtest/${RPMTEST_PACKAGE}/tests" ]] || exit 0
       bootstrap="${TMT_PLAN_DATA}/bootstrap"
       python3.11 -m venv "$bootstrap"
       "$bootstrap/bin/pip" install --quiet uv==0.13.1
@@ -46,25 +46,8 @@ discover:
           done
           ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
             --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
-  - name: hello
+  - name: rpmtest
     how: fmf
-    path: $TMT_TREE/test/rpmtest/hello
-    test: ^/tests/
-    filter: component:${IMAGE_NAME}
-  - name: curl
-    how: fmf
-    path: $TMT_TREE/test/rpmtest/curl
-    test: ^/tests/
-    filter: component:${IMAGE_NAME}
-  - name: nats-2-12
-    how: fmf
-    path: $TMT_TREE/test/rpmtest/nats-server2.12
-    sync-repo: true
-    test: ^/tests/
-    filter: component:${IMAGE_NAME}
-  - name: nats-2-14
-    how: fmf
-    path: $TMT_TREE/test/rpmtest/nats-server2.14
-    sync-repo: true
-    test: ^/tests/
+    path: $TMT_TREE/test/rpmtest
+    test: ^/[^/]+/tests/
     filter: component:${IMAGE_NAME}

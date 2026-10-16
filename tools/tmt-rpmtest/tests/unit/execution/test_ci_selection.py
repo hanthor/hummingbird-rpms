@@ -19,6 +19,7 @@ REPO = Path(__file__).resolve().parents[5]
         ("curl-main", {"contract", "transfers", "development"}),
         ("hello-main", {"contract", "greeting"}),
         ("openssl-main", set()),
+        ("future-example-main", {"smoke"}),
         ("nats-server2-12-main", {"contract", "messaging"}),
         ("nats-server2-14-main", {"contract", "messaging"}),
     ],
@@ -32,6 +33,10 @@ def test_native_discovery_excludes_unrelated_components(tmp_path, component, exp
     (root / "ci").mkdir()
     shutil.copy(REPO / "ci/run_tests_rpm.fmf", root / "ci/run_tests_rpm.fmf")
     shutil.copytree(REPO / "test/rpmtest", root / "test/rpmtest")
+    # A new package needs no change to the shared CI discovery plan.
+    new_test = root / "test/rpmtest/future-example/tests/smoke/main.fmf"
+    new_test.parent.mkdir(parents=True)
+    new_test.write_text("test: ':'\ncomponent: future-example-main\n")
     run = tmp_path / "run"
     result = subprocess.run(
         [
@@ -79,7 +84,7 @@ def test_test_environment_is_private_and_cleanup_runs(tmp_path, monkeypatch, fai
         assert settings["packages"] == ["libcurl-devel", "gcc"]
         assert settings["artifacts"] == [str(tmp_path / "candidates/*.rpm")]
         assert publish is False
-        assert root == REPO / "test/rpmtest/curl"
+        assert root == REPO / "test/rpmtest"
         calls.append(("prepare", directory))
         if failure == "prepare":
             raise OSError("failed preparation")
@@ -136,3 +141,46 @@ def test_finish_recovers_all_test_environments_after_one_cleanup_fails(tmp_path,
     with pytest.raises(ExceptionGroup, match="cleanup failed"):
         lifecycle.finish(tmp_path)
     assert set(cleaned) == {"first", "second"}
+
+
+@pytest.mark.parametrize(
+    "package,expected",
+    [
+        ("curl", {"contract", "transfers", "development"}),
+        ("hello", {"contract", "greeting"}),
+        ("nats-server2.12", {"contract", "messaging"}),
+        ("nats-server2.14", {"contract", "messaging"}),
+    ],
+)
+def test_shared_root_local_plans_select_only_their_package(tmp_path, package, expected):
+    import re
+
+    from tmt.utils import yaml_to_list
+
+    root = tmp_path / "rpmtest"
+    shutil.copytree(REPO / "test/rpmtest", root)
+    run = tmp_path / "run"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "tmt",
+            "--root",
+            str(root),
+            "run",
+            "--id",
+            str(run),
+            "discover",
+            "plans",
+            "--name",
+            f"^/{re.escape(package)}/plans/",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    discovered = list(run.glob("*/plans/*/discover/tests.yaml"))
+    assert len(discovered) == len(expected)
+    selected = {test["name"] for path in discovered for test in yaml_to_list(path.read_text())}
+    assert selected == {f"/{package}/tests/{name}" for name in expected}

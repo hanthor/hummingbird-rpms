@@ -244,6 +244,12 @@ removes owned networks left by interrupted runs. Pulled images stay cached.
 CI uses one plan in `ci/run_tests_rpm.fmf`. Native fmf discovery filters tests by the
 `IMAGE_NAME` component before execution, so unrelated package tests do not produce skipped results.
 The standard executor reports each selected test and the shared RPM checks directly.
+One generic discovery entry reads the shared fmf root at `test/rpmtest/`. New packages need only
+plans and component-tagged test metadata; they do not need an entry in the CI plan.
+Local runs use that same root and select plans explicitly, for example
+`plans --name '^/curl/plans/'`. Plans select package-qualified tests such as `^/curl/tests/transfers$`.
+Shared fixtures under `test/rpmtest/shared/` are copied with this tree, without `sync-repo`.
+See the [authoring guide](../../test/rpmtest/AGENTS.md).
 
 Artifact download and architecture filtering happen in preparation through
 `ci/prepare_rpm_artifacts.sh`. Preparation also installs this checkout's Python package in an

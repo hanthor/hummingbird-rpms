@@ -3,7 +3,7 @@ provision:
   how: local
 discover:
   how: fmf
-  test: /tests/contract
+  test: ^/curl/tests/contract$
 prepare:
   how: rpmtest
   packages:

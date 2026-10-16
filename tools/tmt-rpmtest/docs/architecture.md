@@ -133,8 +133,12 @@ It never selects shared builder images or another plan's resources.
 ## CI orchestration
 
 Testing Farm runs one native plan in `ci/run_tests_rpm.fmf`.
-Component filters select package tests during discovery. The standard executor reports each selected
-test directly, without invoking another tmt run. Existing RPM checks have their own test result.
+One generic discovery entry reads the shared fmf root at `test/rpmtest/`.
+Component filters select package tests during discovery. Package-local plans use qualified test
+names and local runs select the desired package's plans explicitly. New packages require no central
+CI registration. Shared fixtures are included in the fmf tree copy. The standard executor reports
+each selected test directly, without invoking another tmt run. Existing RPM checks have their own
+test result.
 
 CI bootstraps the in-tree package with native shell preparation on the guest.
 `execution.test` reads each selected test's canonical package plan, prepares a private root using

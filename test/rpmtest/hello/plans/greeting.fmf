@@ -3,7 +3,7 @@ provision:
   how: local
 discover:
   how: fmf
-  test: /tests/greeting
+  test: ^/hello/tests/greeting$
 prepare:
   how: rpmtest
   packages:

@@ -5,7 +5,7 @@ weight: 65
 ---
 
 Hello, curl, and NATS use the Python `tmt-rpmtest` plugin and ordinary tmt tests.
-Their fmf trees live under `test/rpmtest/<package>/`.
+They share the fmf root at `test/rpmtest/`, with plans and tests under each package directory.
 The plugin source lives in `tools/tmt-rpmtest/` in this repository.
 
 ## Define the environment
@@ -41,8 +41,9 @@ uv sync --python python3 --frozen --project tools/tmt-rpmtest
 Pass the full set of native and noarch binary RPMs from a build:
 
 ```console
-tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/hello \
+tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest \
   --allow-unsafe-behavior=provision/local run --all --keep \
+  plans --name '^/hello/plans/' \
   prepare --how rpmtest --artifact "$PWD/builds/hello/RPMS/*.rpm"
 ```
 
@@ -50,14 +51,16 @@ Hello is not available from the public Hummingbird repository at the time of thi
 Use local candidates for its plans. Curl can also test published packages:
 
 ```console
-tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/curl \
-  --allow-unsafe-behavior=provision/local run --all --keep
+tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest \
+  --allow-unsafe-behavior=provision/local run --all --keep \
+  plans --name '^/curl/plans/'
 ```
 
 For an existing SSH guest with Podman, rsync, and Python 3.11 installed:
 
 ```console
-tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/hello run --all --keep \
+tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest run --all --keep \
+  plans --name '^/hello/plans/' \
   provision --how connect --guest "$VM_ADDRESS" --user root --key "$VM_KEY" \
   prepare --how rpmtest --python python3.11 --artifact "$PWD/builds/hello/RPMS/*.rpm"
 ```
@@ -92,11 +95,12 @@ and required dependencies. These tests do not start systemd or test JetStream pe
 Run either version locally:
 
 ```console
-tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/nats-server2.12 \
-  --allow-unsafe-behavior=provision/local run --all --keep
+tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest \
+  --allow-unsafe-behavior=provision/local run --all --keep \
+  plans --name '^/nats-server2\.12/plans/'
 ```
 
-Use `nats-server2.14` for the other version. To test a local build, append
+Use the plan filter `'^/nats-server2\.14/plans/'` for the other version. To test a local build, append
 `prepare --how rpmtest --artifact "$PWD/builds/nats-server2.12/RPMS/*.rpm"`.
 
 Testing Farm uses one plan with native fmf discovery in `ci/run_tests_rpm.fmf`.
@@ -108,5 +112,11 @@ Each test gets its own tmt result, including preparation failures. The existing
 `ci/run_tests_rpm.sh` checks have a separate result. A failure in either path fails the job.
 There is no nested tmt invocation.
 
-After adding a package tree, run `make generate` to update build triggers. Adopted packages watch
-their own tests, the shared test directory, the plugin, and the shared CI entry points.
+Add a package's plans and test metadata under the shared root; CI discovery needs no package list.
+Each local plan must select package-qualified tests, such as `^/curl/tests/transfers$`.
+Always filter local plans: a package subdirectory used as `--root` still resolves to the shared tree.
+See [the authoring guide](../../test/rpmtest/AGENTS.md) for onboarding examples.
+
+After adding a package's `tests/` directory, run `make generate` to update build triggers.
+Adopted packages watch their own tests, the shared test directory, the plugin,
+and the shared CI entry points.

@@ -3,8 +3,7 @@ provision:
   how: local
 discover:
   how: fmf
-  sync-repo: true
-  test: ^/tests/contract$
+  test: ^/nats\-server2\.12/tests/contract$
 prepare:
   how: rpmtest
   packages:

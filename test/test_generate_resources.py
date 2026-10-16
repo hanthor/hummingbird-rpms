@@ -125,9 +125,8 @@ class TestBuildPacVariables:
     def test_fmf_pilot_changes_trigger_only_the_corresponding_package(
         self, gen_module, mock_repo, event_type
     ):
-        marker = mock_repo / "test/rpmtest/alpha/.fmf/version"
-        marker.parent.mkdir(parents=True)
-        marker.write_text("1\n")
+        tests = mock_repo / "test/rpmtest/alpha/tests"
+        tests.mkdir(parents=True)
         with patch.object(gen_module, "ROOT_DIR", mock_repo):
             variables = gen_module.build_pac_variables("main", "hummingbird-tenant", event_type)
         for package in variables["rpms"]:
@@ -135,6 +134,7 @@ class TestBuildPacVariables:
             assert ("^test/rpmtest/alpha/" in package["manifest_triggers"]) == expected
             assert ("^tools/tmt-rpmtest/" in package["manifest_triggers"]) == expected
             assert ("^test/rpmtest/shared/" in package["manifest_triggers"]) == expected
+            assert (r"^test/rpmtest/\.fmf/" in package["manifest_triggers"]) == expected
             shared = r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$"
             assert (shared in package["manifest_triggers"]) == expected
 

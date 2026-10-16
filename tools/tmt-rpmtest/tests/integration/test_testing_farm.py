@@ -56,7 +56,7 @@ def test_flat_ci_executes_only_selected_component_test(tmp_path):
             "local",
             "tests",
             "--name",
-            "^/tests/transfers$",
+            "^/curl/tests/transfers$",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -71,7 +71,9 @@ def test_flat_ci_executes_only_selected_component_test(tmp_path):
     )
     assert result.returncode == 0, result.stdout
     results = yaml_to_list((run / "ci/run_tests_rpm/execute/results.yaml").read_text())
-    assert {item["name"]: item["result"] for item in results} == {"/curl/tests/transfers": "pass"}
+    assert {item["name"]: item["result"] for item in results} == {
+        "/rpmtest/curl/tests/transfers": "pass"
+    }
     environments = list((run / "ci/run_tests_rpm/data/rpmtest").glob("test-*/manifest.json"))
     assert len(environments) == 1
     # The transfer test retains its own minimal package request, without compiler packages.

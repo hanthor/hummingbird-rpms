@@ -34,7 +34,7 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
-| `tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest/<pkg> --allow-unsafe-behavior=provision/local run --all` | Test hello, curl, or NATS through the RPM plugin |
+| `tools/tmt-rpmtest/.venv/bin/tmt --root test/rpmtest --allow-unsafe-behavior=provision/local run --all plans --name '^/<pkg>/plans/'` | Test hello, curl, or NATS through the RPM plugin |
 | `python -m tmt_rpmtest.execution.test --plan <plan.fmf> <test.py>` | Prepare, execute, and clean up one component-selected CI test |
 | `RPMTEST_LIVE=1 uv run --project tools/tmt-rpmtest pytest -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests/integration/test_features.py` | Validate RPM inspection, persistent services, and companion containers with published RPMs |
 

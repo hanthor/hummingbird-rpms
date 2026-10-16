@@ -6,6 +6,7 @@
         "^test/rpms/hello\\.yml$",
         "^test/rpmtest/hello/",
         "^test/rpmtest/shared/",
+        "^test/rpmtest/\\.fmf/",
         "^tools/tmt-rpmtest/",
         "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ]
@@ -258,6 +259,7 @@
         "^test/rpms/curl\\.yml$",
         "^test/rpmtest/curl/",
         "^test/rpmtest/shared/",
+        "^test/rpmtest/\\.fmf/",
         "^tools/tmt-rpmtest/",
         "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ],
@@ -1246,6 +1248,7 @@
         "^test/rpms/nats\\-server2\\.12\\.yml$",
         "^test/rpmtest/nats\\-server2\\.12/",
         "^test/rpmtest/shared/",
+        "^test/rpmtest/\\.fmf/",
         "^tools/tmt-rpmtest/",
         "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ],
@@ -1254,6 +1257,7 @@
         "^test/rpms/nats\\-server2\\.14\\.yml$",
         "^test/rpmtest/nats\\-server2\\.14/",
         "^test/rpmtest/shared/",
+        "^test/rpmtest/\\.fmf/",
         "^tools/tmt-rpmtest/",
         "^ci/(run_tests_rpm\\.fmf|prepare_rpm_artifacts\\.sh)$"
       ],
