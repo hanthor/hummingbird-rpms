@@ -1,0 +1,393 @@
+From 57810562ece3f3bf0915f95db6e756ec5b0c1e22 Mon Sep 17 00:00:00 2001
+From: Robert Sturla <rsturla@redhat.com>
+Date: Thu, 15 Oct 2026 20:45:52 +0100
+Subject: [PATCH] fix(gdb): backport deterministic address maps to 17.2
+
+Upstream-Status: Pending (not submitted)
+Origin: Local backport of 201470151c04c11fdc99d30e4f77cdd006a1649d,
+based on upstream GDB 835aee81fa93e587eb9ac73a79e911361ec46d6f.
+
+Use the same stable CU priority during parallel collection and map merging. Keep parallel indexing and publish one valid address table.
+
+Preserve empty maps after a DWARF reader error and test index saving after the error.
+
+Assisted-by: Codex:GPT-6 [functions.exec] [exec_command]
+---
+ gdb/addrmap.c                                 | 52 +++++++++++
+ gdb/addrmap.h                                 | 15 ++-
+ gdb/dwarf2/cooked-index-worker.h              |  2 +-
+ gdb/dwarf2/cooked-index.c                     | 40 +++++---
+ gdb/dwarf2/cooked-index.h                     |  9 +-
+ gdb/dwarf2/read.h                             |  7 ++
+ gdb/testsuite/gdb.dwarf2/dw2-error.exp        |  5 +
+ .../gdb.dwarf2/gdb-index-reproducible.exp     | 92 +++++++++++++++++++
+ 8 files changed, 203 insertions(+), 19 deletions(-)
+ create mode 100644 gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
+
+diff --git a/gdb/addrmap.c b/gdb/addrmap.c
+index 2b333a1fd..f3d0655c4 100644
+--- a/gdb/addrmap.c
++++ b/gdb/addrmap.c
+@@ -239,6 +239,8 @@ addrmap_mutable::set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
+ 	{
+ 	  /* Already mapped.  */
+ 	  full_range = false;
++	  if (m_prefer != nullptr && m_prefer (obj, addrmap_node_value (n)))
++	    addrmap_node_set_value (n, obj);
+ 	}
+       else
+ 	addrmap_node_set_value (n, obj);
+@@ -488,6 +490,55 @@ test_addrmap ()
+   check_addrmap_find (map, array, 14, 19, nullptr);
+ }
+ 
++/* Check priority replacement, coalescing, moves, and the final address.  */
++
++static void
++test_addrmap_priority ()
++{
++  int low = 1, high = 2;
++  auto prefer = [] (const void *a, const void *b)
++    { return *static_cast<const int *> (a) < *static_cast<const int *> (b); };
++
++  for (bool reverse : {false, true})
++    {
++      addrmap_mutable map (prefer);
++      if (reverse)
++	{
++	  map.set_empty (10, 19, &low);
++	  map.set_empty (5, 24, &high);
++	}
++      else
++	{
++	  map.set_empty (5, 24, &high);
++	  map.set_empty (10, 19, &low);
++	}
++      SELF_CHECK (map.find (4) == nullptr);
++      SELF_CHECK (map.find (5) == &high);
++      SELF_CHECK (map.find (9) == &high);
++      SELF_CHECK (map.find (10) == &low);
++      SELF_CHECK (map.find (19) == &low);
++      SELF_CHECK (map.find (20) == &high);
++      SELF_CHECK (map.find (24) == &high);
++      SELF_CHECK (map.find (25) == nullptr);
++
++      addrmap_mutable moved (std::move (map));
++      addrmap_mutable assigned;
++      assigned = std::move (moved);
++      assigned.set_empty (0, CORE_ADDR_MAX, &high);
++      assigned.set_empty (0, CORE_ADDR_MAX, &low);
++      SELF_CHECK (assigned.find (0) == &low);
++      SELF_CHECK (assigned.find (CORE_ADDR_MAX) == &low);
++      int count = 0;
++      assigned.foreach ([&] (CORE_ADDR start, void *obj)
++	{
++	  SELF_CHECK (start == 0 && obj == &low);
++	  ++count;
++	  return 0;
++	});
++      SELF_CHECK (count == 1);
++    }
++}
++
+ } /* namespace selftests */
+ #endif /* GDB_SELF_TEST */
+ 
+@@ -495,5 +546,6 @@ INIT_GDB_FILE (addrmap)
+ {
+ #if GDB_SELF_TEST
+   selftests::register_test ("addrmap", selftests::test_addrmap);
++  selftests::register_test ("addrmap-priority", selftests::test_addrmap_priority);
+ #endif /* GDB_SELF_TEST */
+ }
+diff --git a/gdb/addrmap.h b/gdb/addrmap.h
+index 398bdd842..0315fe2b8 100644
+--- a/gdb/addrmap.h
++++ b/gdb/addrmap.h
+@@ -123,7 +123,12 @@ struct addrmap_mutable final : public addrmap
+ {
+ public:
+ 
+-  addrmap_mutable () = default;
++  /* PREFER selects NEW_OBJ over OLD_OBJ in an occupied range.
++     A null predicate keeps the first object, as usual.  */
++  using prefer_ftype = bool (*) (const void *new_obj, const void *old_obj);
++  explicit addrmap_mutable (prefer_ftype prefer = nullptr)
++    : m_prefer (prefer)
++  {}
+   ~addrmap_mutable ()
+   {
+     clear ();
+@@ -132,7 +137,7 @@ struct addrmap_mutable final : public addrmap
+   DISABLE_COPY_AND_ASSIGN (addrmap_mutable);
+ 
+   addrmap_mutable (addrmap_mutable &&other)
+-    : tree (other.tree)
++    : tree (other.tree), m_prefer (other.m_prefer)
+   {
+     other.tree = nullptr;
+   }
+@@ -144,6 +149,7 @@ struct addrmap_mutable final : public addrmap
+       {
+ 	clear ();
+ 	tree = other.tree;
++	m_prefer = other.m_prefer;
+ 	other.tree = nullptr;
+       }
+     return *this;
+@@ -152,7 +158,8 @@ struct addrmap_mutable final : public addrmap
+   /* In the mutable address map MAP, associate the addresses from START
+      to END_INCLUSIVE that are currently associated with NULL with OBJ
+      instead.  Addresses mapped to an object other than NULL are left
+-     unchanged.  Return true if the full range is mapped to OBJ.
++     unchanged unless the constructor's predicate prefers OBJ.
++     Return true if the full range was previously empty.
+ 
+      As the name suggests, END_INCLUSIVE is also mapped to OBJ.  This
+      convention is unusual, but it allows callers to accurately specify
+@@ -215,6 +222,8 @@ struct addrmap_mutable final : public addrmap
+      from deleted nodes; they'll be freed when the obstack is freed.  */
+   splay_tree tree = nullptr;
+ 
++  prefer_ftype m_prefer;
++
+   /* Various helper methods.  */
+   splay_tree_key allocate_key (CORE_ADDR addr);
+   void force_transition (CORE_ADDR addr);
+diff --git a/gdb/dwarf2/cooked-index-worker.h b/gdb/dwarf2/cooked-index-worker.h
+index 8b9766cdd..7d3dcfb26 100644
+--- a/gdb/dwarf2/cooked-index-worker.h
++++ b/gdb/dwarf2/cooked-index-worker.h
+@@ -177,7 +177,7 @@ class cooked_index_worker_result
+   parent_map m_parent_map;
+ 
+   /* A writeable addrmap being constructed by this scanner.  */
+-  addrmap_mutable m_addrmap;
++  addrmap_mutable m_addrmap {dwarf2_per_cu::prefer_address_owner};
+ 
+   /* The issued complaints.  Only set after done_reading is
+      called.  */
+diff --git a/gdb/dwarf2/cooked-index.c b/gdb/dwarf2/cooked-index.c
+index 6209590fe..c8c950713 100644
+--- a/gdb/dwarf2/cooked-index.c
++++ b/gdb/dwarf2/cooked-index.c
+@@ -84,6 +84,29 @@ cooked_index::set_contents ()
+   gdb_assert (m_shards.empty ());
+   m_shards = m_state->release_shards ();
+ 
++  /* Merge before publishing the maps.  Use the same CU priority within
++     and between shards, so worker partitioning cannot change ownership.  */
++  addrmap_mutable merged (dwarf2_per_cu::prefer_address_owner);
++  for (const auto &shard : m_shards)
++    {
++      if (shard->m_addrmap == nullptr)
++	continue;
++      CORE_ADDR previous_start = 0;
++      void *previous_obj = nullptr;
++      shard->m_addrmap->foreach ([&] (CORE_ADDR start, const void *obj)
++	{
++	  if (previous_obj != nullptr)
++	    merged.set_empty (previous_start, start - 1, previous_obj);
++	  previous_start = start;
++	  previous_obj = const_cast<void *> (obj);
++	  return 0;
++	});
++      if (previous_obj != nullptr)
++	merged.set_empty (previous_start, CORE_ADDR_MAX, previous_obj);
++    }
++  m_addrmap = new (&m_addrmap_storage) addrmap_fixed (&m_addrmap_storage,
++						   &merged);
++
+   m_state->set (cooked_state::MAIN_AVAILABLE);
+ 
+   /* This is run after finalization is done -- but not before.  If
+@@ -133,13 +156,9 @@ cooked_index::lookup (unrelocated_addr addr)
+ {
+   /* Ensure that the address maps are ready.  */
+   wait (cooked_state::MAIN_AVAILABLE, true);
+-  for (const auto &shard : m_shards)
+-    {
+-      dwarf2_per_cu *result = shard->lookup (addr);
+-      if (result != nullptr)
+-	return result;
+-    }
+-  return nullptr;
++  if (m_addrmap == nullptr)
++    return nullptr;
++  return static_cast<dwarf2_per_cu *> (m_addrmap->find ((CORE_ADDR) addr));
+ }
+ 
+ /* See cooked-index.h.  */
+@@ -149,10 +168,9 @@ cooked_index::get_addrmaps ()
+ {
+   /* Ensure that the address maps are ready.  */
+   wait (cooked_state::MAIN_AVAILABLE, true);
+-  std::vector<const addrmap *> result;
+-  for (const auto &shard : m_shards)
+-    result.push_back (shard->m_addrmap);
+-  return result;
++  if (m_addrmap == nullptr)
++    return {};
++  return {m_addrmap};
+ }
+ 
+ /* See cooked-index.h.  */
+diff --git a/gdb/dwarf2/cooked-index.h b/gdb/dwarf2/cooked-index.h
+index 43b27232a..b5c86115f 100644
+--- a/gdb/dwarf2/cooked-index.h
++++ b/gdb/dwarf2/cooked-index.h
+@@ -132,10 +132,7 @@ class cooked_index : public dwarf_scanner_base
+      found.  */
+   dwarf2_per_cu *lookup (unrelocated_addr addr) override;
+ 
+-  /* Return a new vector of all the addrmaps used by all the indexes
+-     held by this object.
+-
+-     Elements of the vector may be nullptr.  */
++  /* Return the merged address map, in a vector for index writers.  */
+   std::vector<const addrmap *> get_addrmaps ();
+ 
+   /* Return the entry that is believed to represent the program's
+@@ -171,6 +168,10 @@ class cooked_index : public dwarf_scanner_base
+ 
+ private:
+ 
++  /* Canonical address map shared by lookups and index writers.  */
++  auto_obstack m_addrmap_storage;
++  addrmap_fixed *m_addrmap = nullptr;
++
+   /* The vector of cooked_index objects.  This is stored because the
+      entries are stored on the obstacks in those objects.  */
+   std::vector<cooked_index_shard_up> m_shards;
+diff --git a/gdb/dwarf2/read.h b/gdb/dwarf2/read.h
+index 2d68586f0..20909c87b 100644
+--- a/gdb/dwarf2/read.h
++++ b/gdb/dwarf2/read.h
+@@ -200,6 +200,13 @@ struct dwarf2_per_cu
+      point in trying to read it again next time.  */
+   packed<bool, 1> files_read;
+ 
++  /* Resolve overlapping CU ranges independently of worker order.  */
++  static bool prefer_address_owner (const void *new_obj, const void *old_obj)
++  {
++    return (static_cast<const dwarf2_per_cu *> (new_obj)->index
++	    < static_cast<const dwarf2_per_cu *> (old_obj)->index);
++  }
++
+ private:
+   /* The unit type of this CU.  */
+   std::atomic<packed<dwarf_unit_type, 1>> m_unit_type {(dwarf_unit_type)0};
+diff --git a/gdb/testsuite/gdb.dwarf2/dw2-error.exp b/gdb/testsuite/gdb.dwarf2/dw2-error.exp
+index 0701ec633..ff842785f 100644
+--- a/gdb/testsuite/gdb.dwarf2/dw2-error.exp
++++ b/gdb/testsuite/gdb.dwarf2/dw2-error.exp
+@@ -51,3 +51,8 @@ gdb_test_multiple "maint print objfiles $host_binfile" "" {
+ 
+ # Now check that we can still break given the minimal symbol.
+ gdb_test "break -q main" "Breakpoint $decimal.*"
++
++# Saving an index after a reader error must also remain safe.
++set index_dir [host_standard_output_file index-after-error]
++remote_exec host "mkdir -p $index_dir"
++gdb_test_no_output "save gdb-index $index_dir" "save index after DWARF error"
+diff --git a/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp b/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
+new file mode 100644
+index 000000000..884f57250
+--- /dev/null
++++ b/gdb/testsuite/gdb.dwarf2/gdb-index-reproducible.exp
+@@ -0,0 +1,92 @@
++# Copyright 2026 Free Software Foundation, Inc.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++# Check overlapping ranges across workers and within an imported CU.
++
++load_lib dwarf.exp
++require dwarf2_support
++require !readnow
++require {!is_remote host}
++
++standard_testfile main.c -debug.S
++set asm_file [standard_output_file $srcfile2]
++Dwarf::assemble $asm_file {
++    declare_labels imported
++    for {set i 0} {$i < 128} {incr i} {
++	cu {} {
++	    if {$i == 127} {
++		define_label $imported
++	    }
++	    compile_unit {
++		DW_AT_name "unit$i.c"
++		DW_AT_language @DW_LANG_C
++		if {$i == 127} {
++		    MACRO_AT_range {main}
++		}
++	    } {
++		if {$i == 0} {
++		    imported_unit {DW_AT_import %$imported}
++		}
++		subprogram {
++		    DW_AT_name "function$i"
++		    DW_AT_external 1 flag
++		    MACRO_AT_range {main}
++		}
++	    }
++	}
++    }
++}
++
++if {[build_executable "failed to build" $testfile \
++	 [list $srcfile $asm_file] {nodebug}]} {
++    return
++}
++clean_restart $testfile
++require {string equal [have_index $binfile] ""}
++
++set reference ""
++foreach_with_prefix workers {0 1 2 8 24} {
++    clean_restart
++    gdb_test_no_output "maint set worker-threads $workers"
++    gdb_test_no_output "set index-cache enabled off"
++    gdb_load $binfile
++    set dir [standard_output_file "index-$workers"]
++    file mkdir $dir
++    set index "$dir/[file tail $binfile].gdb-index"
++    file delete -force $index
++    gdb_test_no_output "save gdb-index $dir" "save index"
++    gdb_assert {[file exists $index]} "index exists"
++    if {![file exists $index]} {
++	continue
++    }
++    set fd [open $index rb]
++    set contents [read $fd]
++    close $fd
++    if {$workers == 0} {
++	set reference $contents
++    } else {
++	gdb_assert {$contents eq $reference} "index is reproducible"
++    }
++}
++
++# The address table must also remain valid for the index reader.
++set with_index "$binfile.with-index"
++if {[run_on_host "add index" [gdb_find_objcopy] \
++	 "--add-section .gdb_index=$index --set-section-flags .gdb_index=readonly $binfile $with_index"]} {
++    return
++}
++clean_restart [file tail $with_index]
++gdb_test "maint print objfiles" "gdb_index.*" "generated index is used"
++gdb_test "info address function0" "Symbol .*function0.* is a function at address .*"
+-- 
+2.56.0
+
