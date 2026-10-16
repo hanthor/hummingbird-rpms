@@ -40,10 +40,16 @@ class Subject:
         return self.packages.query(*args)
 
     @contextmanager
-    def companions(self, services, *, timeout=30):
-        """Connect the subject to scoped companions on a private internal network."""
-        with self._context.companions(services, timeout=timeout) as companions:
+    def companions(self, services, *, timeout=30, internet=False):
+        """Connect scoped companions, with internet access disabled by default."""
+        with self._context.companions(services, timeout=timeout, internet=internet) as companions:
             yield companions
+
+    @contextmanager
+    def network(self, *, internet: bool):
+        """Scope subject networking, with explicit opt-in to internet access."""
+        with self._context.network(internet=internet):
+            yield
 
     @contextmanager
     def service(self, argv: list[str], *, ready: list[str], timeout=30, environment=None, user="0"):

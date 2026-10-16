@@ -49,15 +49,25 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(source, "sha256").hexdigest()
 
 
-RESOLVE = r"""
+RESOLVE = (
+    Path(__file__).with_name("download.sh").read_text()
+    + r"""
 set -eu
-mkdir -p /work/packages /work/cache /work/resolve-root
-dnf5 --installroot=/work/resolve-root --use-host-config --releasever=rpmtest \
-  --setopt=reposdir=/work/repos --setopt=cachedir=/work/cache \
-  --setopt=keepcache=True --setopt=install_weak_deps=False \
-  --no-gpgchecks -y install --downloadonly "$@" >&2
+mkdir -p /work/packages
+rpmtest_resolve() {
+  # Failed attempts must not leave stale RPM versions in the final transaction.
+  rm -rf /work/cache /work/resolve-root || return
+  mkdir -p /work/cache /work/resolve-root || return
+  dnf5 --installroot=/work/resolve-root --use-host-config --releasever=rpmtest \
+    --setopt=reposdir=/work/repos --setopt=cachedir=/work/cache \
+    --setopt=keepcache=True --setopt=install_weak_deps=False \
+    --setopt=timeout=30 --setopt=minrate=1000 \
+    --no-gpgchecks -y install --downloadonly "$@" >&2
+}
+rpmtest_download rpmtest_resolve "$@"
 find /work/resolve-root /work/cache -name '*.rpm' -exec cp '{}' /work/packages/ \;
 """
+)
 
 ASSEMBLE = r"""
 set -eu

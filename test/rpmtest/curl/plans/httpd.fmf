@@ -1,0 +1,16 @@
+summary: Test curl against an httpd companion
+provision:
+  how: local
+discover:
+  how: fmf
+  test: ^/curl/tests/httpd$
+prepare:
+  how: rpmtest
+  packages:
+  - curl
+  repositories:
+  - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest

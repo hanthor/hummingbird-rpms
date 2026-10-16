@@ -228,10 +228,12 @@ class Session:
     validate_command = staticmethod(validate_command)
 
     @contextmanager
-    def companions(self, services, *, directory, timeout):
+    def companions(self, services, *, directory, timeout, internet=False):
         if self.network != "none":
-            raise RuntimeError("Companion scopes cannot be nested.")
-        with companions(self.runtime, services, self.limits, directory, timeout) as (
+            raise RuntimeError("Network scopes cannot be nested.")
+        with companions(
+            self.runtime, services, self.limits, directory, timeout, internet=internet
+        ) as (
             network,
             processes,
         ):

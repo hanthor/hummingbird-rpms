@@ -86,13 +86,27 @@ class PrimitiveContext:
         self._session.copy(archive)
 
     @contextmanager
-    def companions(self, services, *, timeout=30):
+    def companions(self, services, *, timeout=30, internet=False):
+        if not services:
+            raise ValueError("Declare at least one companion.")
+        with self._network_scope(
+            "companions", services, timeout=timeout, internet=internet
+        ) as peers:
+            yield peers
+
+    @contextmanager
+    def network(self, *, internet: bool):
+        with self._network_scope("network", {}, timeout=30, internet=internet):
+            yield
+
+    @contextmanager
+    def _network_scope(self, name, services, *, timeout, internet):
         self._require_active()
         if self._serving:
-            raise RuntimeError("Enter the companion scope before starting a subject service.")
-        with self.operation("companions") as directory:
+            raise RuntimeError("Enter the network scope before starting a subject service.")
+        with self.operation(name) as directory:
             with self._session.companions(
-                services, directory=directory, timeout=timeout
+                services, directory=directory, timeout=timeout, internet=internet
             ) as processes:
                 with ExitStack() as scope:
                     yield {

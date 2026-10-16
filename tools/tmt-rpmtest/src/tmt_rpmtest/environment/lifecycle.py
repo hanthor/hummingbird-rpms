@@ -10,6 +10,7 @@ import uuid
 from pathlib import Path
 
 from tmt_rpmtest.drivers.podman import Podman
+from tmt_rpmtest.environment.cache import prepare_root
 from tmt_rpmtest.environment.rpm import DEFAULT_BUILDER, RPMBuilder, digest
 
 
@@ -29,7 +30,9 @@ def finish(directory: Path):
         raise ExceptionGroup("RPM environment cleanup failed.", errors)
 
 
-def prepare(settings: dict, directory: Path, root: Path, *, publish=True):
+def prepare(
+    settings: dict, directory: Path, root: Path, *, publish=True, cache: Path | None = None
+):
     limits = {
         key: settings.get(key, default)
         for key, default in {"cpus": 2.0, "memory": 1 << 30, "pids": 512}.items()
@@ -46,14 +49,16 @@ def prepare(settings: dict, directory: Path, root: Path, *, publish=True):
     owner_file(directory).write_text(owner + "\n")
     runtime = Podman(owner=owner)
     try:
-        RPMBuilder(runtime, settings.get("builder", DEFAULT_BUILDER)).prepare(
-            settings.get("packages", []),
-            settings.get("repositories", []),
-            settings.get("artifacts", []),
+        cached = prepare_root(
+            RPMBuilder(runtime, settings.get("builder", DEFAULT_BUILDER)),
+            settings,
             root,
             directory,
+            cache,
         )
         configuration = {"owner": owner, "limits": limits, "python": sys.executable}
+        if cached is not None:
+            configuration["cache"] = cached
         (directory / "session.json").write_text(json.dumps(configuration) + "\n")
         if not publish:
             return

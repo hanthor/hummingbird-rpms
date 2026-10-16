@@ -56,7 +56,7 @@ def test_flat_ci_executes_only_selected_component_test(tmp_path):
             "local",
             "tests",
             "--name",
-            "^/curl/tests/transfers$",
+            "^/curl/tests/(transfers|httpd)$",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -72,13 +72,19 @@ def test_flat_ci_executes_only_selected_component_test(tmp_path):
     assert result.returncode == 0, result.stdout
     results = yaml_to_list((run / "ci/run_tests_rpm/execute/results.yaml").read_text())
     assert {item["name"]: item["result"] for item in results} == {
-        "/rpmtest/curl/tests/transfers": "pass"
+        "/rpmtest/curl/tests/transfers": "pass",
+        "/rpmtest/curl/tests/httpd": "pass",
     }
     environments = list((run / "ci/run_tests_rpm/data/rpmtest").glob("test-*/manifest.json"))
-    assert len(environments) == 1
+    assert len(environments) == 2
     # The transfer test retains its own minimal package request, without compiler packages.
     import json
 
-    manifest = json.loads(environments[0].read_text())
-    assert manifest["packages"] == ["curl"]
-    assert any(item["name"] == "curl" and item["selected"] for item in manifest["candidates"])
+    manifests = [json.loads(path.read_text()) for path in environments]
+    for manifest in manifests:
+        assert manifest["packages"] == ["curl"]
+        assert any(item["name"] == "curl" and item["selected"] for item in manifest["candidates"])
+    assert len({manifest["rootfs_sha256"] for manifest in manifests}) == 1
+    sessions = [json.loads(path.with_name("session.json").read_text()) for path in environments]
+    assert sorted(session["cache"]["hit"] for session in sessions) == [False, True]
+    assert len({session["owner"] for session in sessions}) == 2

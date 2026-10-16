@@ -77,7 +77,10 @@ Tests make ordinary Python assertions on the provisioned guest.
 A subject session supplies fixture copying, command execution, file inspection, and external RPM
 queries.
 Multiple commands in one session share filesystem changes. Separate sessions start fresh.
-The subject has no external network access and receives no test harness packages.
+The subject has no external network access by default and receives no test harness packages.
+Use `with target.network(internet=True):` for deliberate public-network checks, or pass
+`internet=True` to `target.companions(...)` for a scope containing companions. Both restore offline
+execution on exit. Public HTTPS trust checks should include `ca-certificates` in the package set.
 
 The two hello plans preserve RPM integrity, ownership, executable, provides, version, and greeting
 checks.

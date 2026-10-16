@@ -55,6 +55,76 @@ APACHE = (
 )
 
 
+@pytest.mark.skipif(
+    os.environ.get("RPMTEST_INTERNET_LIVE") != "1",
+    reason="Set RPMTEST_INTERNET_LIVE=1 to contact public HTTPS services.",
+)
+def test_explicit_internet_scopes_and_offline_restoration(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    evidence = tmp_path / "evidence"
+    monkeypatch.setenv("TMT_TEST_DATA", str(evidence))
+    request = [
+        "/usr/bin/curl",
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--connect-timeout",
+        "5",
+        "--max-time",
+        "15",
+        "--output",
+        "/dev/null",
+        "--write-out",
+        "%{ssl_verify_result}",
+        "https://github.com/",
+    ]
+    try:
+        prepare(
+            {
+                "packages": ["curl", "ca-certificates"],
+                "repositories": [
+                    "https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/"
+                ],
+            },
+            root,
+            tmp_path,
+            publish=False,
+        )
+        with subject(root) as target:
+            assert target.run(request).returncode != 0
+            with target.network(internet=True):
+                response = target.run(request)
+                assert response.returncode == 0, response.stderr
+                assert response.stdout == "0"
+            with target.companions({"web": Companion(APACHE)}, internet=True):
+                response = target.run(request)
+                assert response.returncode == 0, response.stderr
+                assert response.stdout == "0"
+                response = target.run(
+                    [
+                        "/usr/bin/curl",
+                        "--fail",
+                        "--retry",
+                        "5",
+                        "--retry-connrefused",
+                        "http://web/",
+                    ]
+                )
+                assert response.returncode == 0 and "It works!" in response.stdout, response
+            assert target.run(request).returncode != 0
+        for path in evidence.glob("rpmtest-*/*/network.json"):
+            record = json.loads(path.read_text())
+            assert record["internet"] is True and record["internal"] is False
+            assert (
+                Podman()
+                ._process(["podman", "network", "exists", record["name"]], timeout=30)
+                .returncode
+                == 1
+            )
+    finally:
+        finish(root)
+
+
 def test_companion_apache_dns_persistent_subject_and_network_cleanup(root, evidence):
     with subject(root) as target:
         with target.companions({"web": Companion(APACHE, ready=("httpd", "-t"))}):

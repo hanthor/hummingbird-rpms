@@ -38,7 +38,9 @@ def stage(guest, work: Path, artifacts: list[str], root: Path, settings: dict, *
     guest.push(source=TmtPath(work), destination=TmtPath(work))
 
 
-def execute(guest, work: Path, python: str, action: str, *, settings=None):
+def execute(
+    guest, work: Path, python: str, action: str, *, settings=None, cache: Path | None = None
+):
     environment = Environment()
     environment.update(guest.environment, guest.plan_environment, guest.parent.plan.environment)
     paths = [str(work / "payload"), *environment.get("PYTHONPATH", "").split(":")]
@@ -48,6 +50,8 @@ def execute(guest, work: Path, python: str, action: str, *, settings=None):
     command = [python, "-m", "tmt_rpmtest.environment", action, "--directory", str(work / "root")]
     if settings is not None:
         command += ["--settings", json.dumps(settings)]
+    if cache is not None:
+        command += ["--cache", str(cache)]
     guest.execute(
         ShellScript("export PATH") + Command(*command).to_script(), environment=environment
     )

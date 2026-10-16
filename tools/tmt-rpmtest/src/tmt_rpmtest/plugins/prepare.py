@@ -66,5 +66,12 @@ class PrepareRPM(PreparePlugin[RPMData]):
             settings,
             python=self.data.python,
         )
-        execute(guest, work, self.data.python, "prepare", settings=settings)
+        execute(
+            guest,
+            work,
+            self.data.python,
+            "prepare",
+            settings=settings,
+            cache=Path(self.step.plan.run_workdir) / "rpmtest-cache" / guest.safe_name,
+        )
         return outcome

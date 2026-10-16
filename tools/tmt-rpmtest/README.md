@@ -181,9 +181,30 @@ Filesystem changes remain available to later commands in the enclosing subject s
 `environment=` on `service()` sets the container environment; `run(environment=...)` overrides it for
 that command only. Service blocks cannot be nested.
 
-The subject still has no external network, host mounts, or added capabilities.
+The subject has no external network by default, host mounts, or added capabilities.
 Loopback connections work within the subject. Enter a companion scope before starting a subject
 service to connect it to other containers. Privileged init systems such as systemd are not supported.
+
+## Internet access
+
+Subjects have no network by default. Opt in for the commands that need internet access:
+
+```python
+with subject() as target:
+    with target.network(internet=True):
+        response = target.run([
+            "/usr/bin/curl", "--fail", "--silent", "--show-error",
+            "--connect-timeout", "5", "--max-time", "30", "https://github.com/",
+        ])
+        assert response.returncode == 0, response.stderr
+```
+
+Include `ca-certificates` in the plan's package set when checking public TLS certificates.
+The framework does not inject certificates, disable verification, or inherit guest proxy variables.
+Internet access uses a dedicated Podman network and depends on the guest's available connectivity.
+Leaving the scope retains filesystem changes, removes that network, and restores offline execution,
+including after a failed assertion. `network.json` records whether internet access was enabled.
+Enter network scopes before starting a subject service; network scopes cannot be nested.
 
 ## Companion containers
 
@@ -209,8 +230,11 @@ with subject() as target:
         assert "It works!" in response.stdout
 ```
 
-Images must be pinned by SHA-256 digest. Pulling an image can use the network; running it cannot reach
-the internet. Names must be DNS labels in lowercase; `subject` is reserved.
+Images must be pinned by SHA-256 digest. Pulling an image can use the network; running it has no
+internet access by default. Names must be DNS labels in lowercase; `subject` is reserved.
+Use `target.companions({"web": apache}, internet=True)` to enable internet access for the subject
+and all companions in that scope while preserving their private DNS names. External access is
+configured for the whole scope, rather than individual companions.
 No host directories, image-declared volumes, or published host ports are attached.
 Companions use Podman's default capabilities, with privilege escalation disabled; the RPM subject
 continues to drop all capabilities. Each companion receives the plan's CPU, memory, and PID limits.
@@ -262,6 +286,32 @@ Canonical package settings remain in `test/rpmtest/<package>/plans/`.
 Local plans use the installed `how: rpmtest` plugin to prepare their root, which the test helper
 reuses. Both paths use the same assembly code on the guest's native architecture.
 Testing Farm needs only tmt's built-in plugins on its controller. No helper invokes another tmt run.
+
+## Prepared-root cache
+
+Identical package requests reuse an assembled root within the same run on the same guest.
+Local plans share a cache under the run directory's `rpmtest-cache/<guest>/`.
+The shared CI plan uses `TMT_PLAN_DATA/rpmtest-cache/` across its selected tests.
+No test definitions or extra configuration are needed.
+
+The key includes the package set, candidate RPM contents, ordered repository URLs, builder digest,
+native architecture, and assembly settings. Repository contents are resolved on the first miss and
+remain fixed for that request during the run. A new run resolves them again.
+Only successful, verified roots are published. Cache hits verify the archive and manifest, then copy
+them into a private environment with fresh ownership and runtime limits. Containers and filesystem
+changes are never shared. `session.json` records the cache key and whether preparation was a hit.
+The cache remains in the run directory with `--keep`; it is not a global cache.
+
+## Download retries
+
+RPM resolution and CI artifact downloads retry recognized transient network failures up to four
+attempts, with delays of 2, 4, and 8 seconds. Diagnostics are retained for every attempt.
+Unknown errors, authentication failures, missing packages or manifests, certificate failures, and
+interruptions fail immediately. Offline installation and test assertions are not retried.
+RPM resolution stays within the builder's ten-minute timeout; failed attempts discard partial
+download state. Artifact bootstrap requests have a 60-second timeout, and each ORAS pull has a
+120-second timeout with a ten-second termination grace period. Image pulls retain Podman's native
+three retries and exponential backoff within the framework's five-minute pull timeout.
 
 ## Package inspection primitives
 
@@ -389,8 +439,9 @@ Use `--keep` to retain the run directory.
 `RPMTEST_DIRECTORY/manifest.json` records candidates, selected RPM hashes, installed identities,
 and the root archive hash.
 The plugin stores each guest's root under `TMT_PLAN_DATA/rpmtest-<guest>/root/`.
-Native CI preparation stores its root under `TMT_PLAN_DATA/rpmtest/`.
-The same directory retains the selected RPM files and root archive.
+Native CI preparation stores each test's root under `TMT_PLAN_DATA/rpmtest/test-*/`.
+An assembled environment retains selected RPM files; a cache hit retains the manifest and root
+archive without duplicating the downloaded RPM files.
 Each session writes command output, exit codes, fixture archives, and a manifest copy under
 `TMT_TEST_DATA`.
 RPM inspection saves its output. Temporary inspection snapshots are removed after use.
@@ -401,7 +452,8 @@ cached.
 Cleanup failure fails the test or finish step.
 
 Resolution uses the configured repositories online. Installation runs without networking.
-Execution uses no network by default; companion scopes use a private internal network.
+Execution uses no network by default; companion scopes use a private internal network unless
+`internet=True` is explicitly requested.
 Weak dependencies and documentation are disabled. Normal dependencies can still supply Bash or other
 utilities.
 The plugin does not add test harness packages to the root.
@@ -457,6 +509,9 @@ service, an Apache companion, readiness, logs, and cleanup after failures. From 
 RPMTEST_LIVE=1 uv run --project tools/tmt-rpmtest pytest \
   -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests/integration/test_features.py
 ```
+
+Add `RPMTEST_INTERNET_LIVE=1` to explicitly include public HTTPS certificate verification against
+GitHub, internet-enabled companion networking, and restoration of offline execution.
 
 The shared NATS suite can also be validated for both packaged versions:
 

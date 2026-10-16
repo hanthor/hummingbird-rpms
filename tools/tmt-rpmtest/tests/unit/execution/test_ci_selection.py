@@ -16,7 +16,7 @@ REPO = Path(__file__).resolve().parents[5]
 @pytest.mark.parametrize(
     "component,expected",
     [
-        ("curl-main", {"contract", "transfers", "development"}),
+        ("curl-main", {"contract", "transfers", "development", "httpd"}),
         ("hello-main", {"contract", "greeting"}),
         ("openssl-main", set()),
         ("future-example-main", {"smoke"}),
@@ -80,10 +80,11 @@ def test_test_environment_is_private_and_cleanup_runs(tmp_path, monkeypatch, fai
     monkeypatch.setenv("TMT_PLAN_DATA", str(tmp_path))
     monkeypatch.setenv("RPMTEST_RPMS", str(tmp_path / "candidates"))
 
-    def prepare(settings, directory, root, *, publish):
+    def prepare(settings, directory, root, *, publish, cache):
         assert settings["packages"] == ["libcurl-devel", "gcc"]
         assert settings["artifacts"] == [str(tmp_path / "candidates/*.rpm")]
         assert publish is False
+        assert cache == tmp_path / "rpmtest-cache"
         assert root == REPO / "test/rpmtest"
         calls.append(("prepare", directory))
         if failure == "prepare":
@@ -146,7 +147,7 @@ def test_finish_recovers_all_test_environments_after_one_cleanup_fails(tmp_path,
 @pytest.mark.parametrize(
     "package,expected",
     [
-        ("curl", {"contract", "transfers", "development"}),
+        ("curl", {"contract", "transfers", "development", "httpd"}),
         ("hello", {"contract", "greeting"}),
         ("nats-server2.12", {"contract", "messaging"}),
         ("nats-server2.14", {"contract", "messaging"}),

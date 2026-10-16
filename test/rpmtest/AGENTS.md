@@ -144,6 +144,18 @@ A new `subject()` scope starts from the prepared archive. Commands within a scop
 changes, but ordinary `target.run()` calls do not preserve running processes between commands.
 Use `target.service()` for a persistent process.
 
+Identical package sets reuse a verified prepared archive within one run on the same guest.
+This happens automatically for local plans and the shared CI plan. Each environment still gets a
+private archive copy and fresh container ownership; test writes and running services are not shared.
+Candidate contents, repository URLs, builder digest, architecture, and assembly settings determine
+reuse. Repository contents stay fixed after the first preparation of a request in that run.
+Start a new run to resolve published packages again. `session.json` records cache hits and misses.
+Do not change package sets just to obtain a cache hit, or modify the cached files directly.
+
+Preparation retries recognized transient download failures with bounded exponential backoff.
+Image pulls use Podman's native retries. Do not wrap installation or assertions in broad retry
+loops; keep invalid packages, broken certificates, and functional failures visible.
+
 | Operation | Usage |
 | --- | --- |
 | Run a program | `target.run(["/usr/bin/program", "argument"], timeout=60)` |
@@ -186,9 +198,16 @@ with target.companions({"client": Companion(image=CLIENT_IMAGE, command=CLIENT_C
         assert response.returncode == 0, response.stdout + response.stderr
 ```
 
-Companions and the subject use a private internal network. Companion dictionary keys are DNS names;
+Companions and the subject use a private internal network by default. Dictionary keys are DNS names;
 the subject's DNS name is `subject`. Companion handles expire when the scope closes. Readiness
 commands for companions execute inside their images. The NATS messaging test is a working example.
+
+For deliberate public-network checks, use `with target.network(internet=True):` around the subject
+commands. For companions, pass `internet=True` to `target.companions(...)`; this enables internet
+access for every container in that scope. Both restore offline subject execution and remove their
+network on exit. Do not nest network scopes or enter them after starting a subject service.
+Include `ca-certificates` when checking public HTTPS trust, and bound requests with connection and
+overall timeouts. Keep ordinary functional tests independent of public services.
 
 ## Run and validate
 
@@ -245,7 +264,8 @@ Do not run `make check`; the user has explicitly requested targeted checks inste
 - Do catch only expected exception types; preserve tracebacks for programming errors.
 - Don't run subject commands with host `subprocess.run()` or install tested RPMs on the tmt guest.
 - Don't start daemons in the background with `&`, manage Podman resources directly in package tests,
-  mount host directories into subjects, or rely on public services during assertions.
+  or mount host directories into subjects. Use the scoped internet opt-in for deliberate public
+  network checks.
 - Don't assume a new session retains files or processes from an earlier session.
 - Don't invoke another tmt run from a test. The local and CI paths use one orchestration layer.
 - Don't bypass candidate identity checks, broadly suppress verification failures, or turn errors into

@@ -13,6 +13,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["prepare", "finish"])
     parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument(
+        "--cache", type=Path, help="Prepared-root cache for this run on this guest."
+    )
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--settings", help="Preparation settings as JSON.")
     source.add_argument("--plan", type=Path, help="A local fmf plan with an RPM prepare phase.")
@@ -39,7 +42,7 @@ def main():
 
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGHUP, interrupt)
-    prepare(settings, args.directory, root)
+    prepare(settings, args.directory, root, cache=args.cache)
 
 
 if __name__ == "__main__":

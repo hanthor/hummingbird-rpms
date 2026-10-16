@@ -1,4 +1,4 @@
-"""Own companion containers and their internal network as one scope."""
+"""Own companion containers and their private network as one scope."""
 
 import json
 import re
@@ -25,9 +25,9 @@ def remove_network(runtime, name):
 
 
 @contextmanager
-def companions(runtime, services, limits, directory, timeout):
-    if not services:
-        raise ValueError("Declare at least one companion.")
+def companions(runtime, services, limits, directory, timeout, *, internet=False):
+    if not isinstance(internet, bool):
+        raise ValueError("Internet access must be explicitly True or False.")
     for name, spec in services.items():
         if name == "subject" or not re.fullmatch(r"[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?", name):
             raise ValueError(f"Invalid or reserved companion name: {name!r}")
@@ -40,11 +40,12 @@ def companions(runtime, services, limits, directory, timeout):
     processes = []
     with ExitStack() as cleanup:
         cleanup.callback(remove_network, runtime, network)
+        options = [] if internet else ["--internal"]
         runtime._command(
-            "network", "create", "--internal", "--label", f"{LABEL}={runtime.owner}", network
+            "network", "create", *options, "--label", f"{LABEL}={runtime.owner}", network
         )
         (directory / "network.json").write_text(
-            json.dumps({"name": network, "internal": True}) + "\n"
+            json.dumps({"name": network, "internal": not internet, "internet": internet}) + "\n"
         )
         for name, spec in services.items():
             work = directory / name

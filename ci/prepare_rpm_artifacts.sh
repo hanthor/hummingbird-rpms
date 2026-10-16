@@ -2,6 +2,7 @@
 # Fetch build artifacts before tests run and publish their paths to the plan environment.
 set -euo pipefail
 export PATH
+source tools/tmt-rpmtest/src/tmt_rpmtest/environment/download.sh
 [[ -n ${IMAGE_NAME:-} ]] || exit 0
 : "${IMAGE_NAME:?}" "${TMT_PLAN_DATA:?}" "${TMT_PLAN_ENVIRONMENT_FILE:?}"
 current_arch=$(uname -m)
@@ -32,14 +33,13 @@ if [[ -n ${IMAGE_URL:-} ]]; then
   OS="linux"
   oras_version="1.3.0"
   oras_archive=$(mktemp)
-  curl \
+  rpmtest_download curl \
     --location \
     --silent \
     --fail \
     --show-error \
-    --retry 5 \
-    --retry-delay 5 \
     --connect-timeout 30 \
+    --max-time 60 \
     --globoff \
     --output "${oras_archive}" \
     "https://github.com/oras-project/oras/releases/download/v${oras_version}/oras_${oras_version}_${OS}_${ARCH}.tar.gz"
@@ -52,7 +52,8 @@ if [[ -n ${IMAGE_URL:-} ]]; then
   rm -f "${oras_archive}"
 
   source_dir=$(mktemp -d "${TMT_PLAN_DATA}/rpm-download.XXXXXX")
-  "${HOME}/.local/bin/oras" pull "${IMAGE_URL}" -o "${source_dir}"
+  rpmtest_download timeout --verbose --signal=TERM --kill-after=10s 120s \
+    "${HOME}/.local/bin/oras" pull "${IMAGE_URL}" -o "${source_dir}"
 else
   source_dir=${RPMTEST_LOCAL_RPMS:-}
 fi

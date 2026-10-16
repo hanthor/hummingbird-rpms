@@ -21,7 +21,13 @@ def execute(plan: Path, script: Path):
         settings["artifacts"] = [str(Path(artifacts) / "*.rpm")]
     directory = Path(os.environ["TMT_PLAN_DATA"]) / "rpmtest" / f"test-{uuid.uuid4().hex}"
     try:
-        prepare(settings, directory, root, publish=False)
+        prepare(
+            settings,
+            directory,
+            root,
+            publish=False,
+            cache=Path(os.environ["TMT_PLAN_DATA"]) / "rpmtest-cache",
+        )
         os.environ["RPMTEST_DIRECTORY"] = str(directory)
         runpy.run_path(str(script), run_name="__main__")
     finally:

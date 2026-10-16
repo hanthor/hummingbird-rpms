@@ -72,6 +72,14 @@ Each guest has a separate root under `TMT_PLAN_DATA/rpmtest-<guest>/root/`.
 The helper publishes `RPMTEST_DIRECTORY` and `RPMTEST_PYTHON` through the plan environment file.
 Tests execute on that guest through tmt's standard executor.
 
+Preparation uses a guest-local cache scoped to the run. Local plans share the run cache;
+CI tests share their plan's cache. A request key covers package names, candidate content hashes,
+ordered repositories, builder digest, architecture, and assembly scripts. A per-key file lock and
+atomic rename publish only complete entries. Hits verify stored hashes and copy the archive and
+manifest into a private environment. Ownership and runtime limits are created anew for every
+environment, so cleanup cannot remove another test's resources. Repository contents are resolved
+once per request within the run; the cache is not reused by new runs.
+
 All candidate RPMs get digest checks and metadata records.
 A local repository makes those exact artifacts available to the solver.
 Remote repositories exclude candidate package names, so a selected package cannot silently use a
@@ -103,7 +111,11 @@ process-state checks, shutdown, and logs. Readiness uses the context's normal co
 evidence. The context restores ordinary execution when the service block exits.
 New execution modes can supply these session operations without changing package or file primitives.
 
-Companion scopes own one internal network and declared image containers. The Podman session selects
+Network scopes own one private network and optional companion image containers. The network is
+internal by default; `internet=True` explicitly enables external routing for every member.
+The same implementation handles subject-only internet scopes and companion scopes, retaining
+filesystem changes and restoring offline execution on exit. Network evidence records the opt-in.
+Companion scopes own their declared image containers. The Podman session selects
 that network for subject commands and persistent services, then checkpoints and removes its attached
 container before network cleanup. Process state, exec, readiness evidence, and shutdown are shared
 through `ContainerProcess`; `PersistentSession` adds subject file operations to that implementation.
