@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from tmt_rpmtest.podman import Podman
+from tmt_rpmtest.drivers.podman import Podman
 
 DEFAULT_BUILDER = (
     "quay.io/hummingbird-ci/hummingbird-builder@sha256:"

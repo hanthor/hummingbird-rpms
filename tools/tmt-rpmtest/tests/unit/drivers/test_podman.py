@@ -5,7 +5,7 @@ import threading
 
 import pytest
 
-from tmt_rpmtest.podman import Podman
+from tmt_rpmtest.drivers.podman import Podman
 
 LIMITS = {"cpus": 1, "memory": 512 << 20, "pids": 256}
 

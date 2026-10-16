@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Self
 
-from tmt_rpmtest.podman import Session
+from tmt_rpmtest.drivers.podman import Session
 
 _INSPECT = r"""
 set -eu

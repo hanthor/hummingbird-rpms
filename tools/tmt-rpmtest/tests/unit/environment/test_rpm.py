@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from tmt_rpmtest.rpm import Identity, identities, verify_installed
+from tmt_rpmtest.environment.rpm import Identity, identities, verify_installed
 
 RPM = Identity("curl", "curl-8.23.0-1.x86_64", "a" * 64, "b" * 64)
 

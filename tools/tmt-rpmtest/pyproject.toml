@@ -10,11 +10,11 @@ requires-python = ">=3.11"
 dependencies = ["tmt==1.78.0"]
 
 [project.entry-points."tmt.plugin"]
-rpmtest_prepare = "tmt_rpmtest.plugin:PrepareRPM"
-rpmtest_finish = "tmt_rpmtest.plugin:FinishRPM"
+rpmtest_prepare = "tmt_rpmtest.plugins.prepare:PrepareRPM"
+rpmtest_finish = "tmt_rpmtest.plugins.finish:FinishRPM"
 
 [project.entry-points."tmt.resources"]
-rpmtest = "tmt_rpmtest"
+rpmtest = "tmt_rpmtest.plugins"
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.9"]

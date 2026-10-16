@@ -3,7 +3,7 @@
 import tarfile
 from pathlib import Path, PurePosixPath
 
-from tmt_rpmtest.context import PrimitiveContext
+from tmt_rpmtest.execution.context import PrimitiveContext
 
 
 class Files:

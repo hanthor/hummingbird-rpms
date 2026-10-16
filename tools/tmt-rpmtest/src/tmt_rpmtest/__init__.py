@@ -1,6 +1,6 @@
 """Test RPMs in minimal roots through tmt."""
 
-from tmt_rpmtest.context import PrimitiveContext
-from tmt_rpmtest.subject import subject
+from tmt_rpmtest.execution.context import PrimitiveContext
+from tmt_rpmtest.execution.subject import subject
 
 __all__ = ["PrimitiveContext", "subject"]

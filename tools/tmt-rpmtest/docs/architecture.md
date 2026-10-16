@@ -4,15 +4,33 @@ The plugin prepares RPM roots and cleans up runtime resources. tmt discovers and
 host-side tests.
 The test scripts make their own assertions. There is no custom suite, step, or assertion language.
 
-| Module | Responsibility |
-| --- | --- |
-| `plugin.py` | tmt prepare and finish methods |
-| `rpm.py` | Candidate selection, empty-root assembly, and installed identity verification |
-| `subject.py` | Fresh-session lifecycle, primitive construction, and test conveniences |
-| `context.py` | Shared execution, snapshots, inspection, evidence, and session lifetime |
-| `primitives/files.py` | Fixture archives and filesystem observations |
-| `primitives/packages.py` | RPM query construction, verification results, and metadata values |
-| `podman.py` | Builder transport, subject filesystem checkpoints, and owned-resource cleanup |
+```text
+tmt_rpmtest/
+├── __init__.py               # Public test imports
+├── plugins/
+│   ├── prepare.py            # tmt prepare method and options
+│   ├── finish.py             # tmt finish method
+│   └── schemas/              # tmt plan validation
+├── environment/
+│   └── rpm.py                # Root assembly and artifact verification
+├── execution/
+│   ├── subject.py            # Fresh-session lifecycle and test conveniences
+│   └── context.py            # Commands, snapshots, inspection, and evidence
+├── drivers/
+│   └── podman.py             # Builder transport and subject containers
+└── primitives/
+    ├── files.py              # Fixture staging and file observations
+    └── packages.py           # RPM verification and metadata observations
+```
+
+Add primitive modules under `primitives/` and runtime adapters under `drivers/`.
+The package root exports `subject` and `PrimitiveContext` for test authors.
+`tmt.plugin` entry points load the prepare and finish modules directly.
+`tmt.resources` locates their schemas within `plugins/`.
+
+Tests mirror the source responsibilities under `tests/unit/`.
+The live orchestration test lives in `tests/integration/test_tmt.py`.
+The example fmf test remains under `tests/rpm/`.
 
 The RPM and subject modules receive their runtime transport.
 They contain no Podman flags. A future adapter must supply the same build and session operations.

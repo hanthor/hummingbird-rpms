@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from tmt_rpmtest import PrimitiveContext
-from tmt_rpmtest.subject import Subject
+from tmt_rpmtest.execution.subject import Subject
 
 
 def test_custom_primitive_shares_evidence_and_subject_lifetime(tmp_path):

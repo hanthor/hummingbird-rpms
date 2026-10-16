@@ -9,10 +9,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeVar
 
-from tmt_rpmtest.context import PrimitiveContext
-from tmt_rpmtest.podman import Podman
+from tmt_rpmtest.drivers.podman import Podman
+from tmt_rpmtest.environment.rpm import digest
+from tmt_rpmtest.execution.context import PrimitiveContext
 from tmt_rpmtest.primitives import Files, Packages
-from tmt_rpmtest.rpm import digest
 
 T = TypeVar("T")
 

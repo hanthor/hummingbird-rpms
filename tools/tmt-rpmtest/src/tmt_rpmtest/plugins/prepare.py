@@ -11,13 +11,12 @@ from pathlib import Path
 import tmt.steps
 import tmt.utils
 from tmt.container import container, field
-from tmt.steps.finish import FinishPlugin, FinishStepData
 from tmt.steps.prepare import PreparePlugin, PrepareStepData
 from tmt.steps.provision.local import GuestLocal
 from tmt.utils.signals import INTERRUPT_PENDING
 
-from tmt_rpmtest.podman import Podman
-from tmt_rpmtest.rpm import DEFAULT_BUILDER, RPMBuilder
+from tmt_rpmtest.drivers.podman import Podman
+from tmt_rpmtest.environment.rpm import DEFAULT_BUILDER, RPMBuilder
 
 
 @container
@@ -88,28 +87,4 @@ class PrepareRPM(PreparePlugin[RPMData]):
         except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
             runtime.cleanup()
             raise tmt.utils.PrepareError(f"RPM preparation failed: {error}") from error
-        return outcome
-
-
-@container
-class RPMFinishData(FinishStepData):
-    @property
-    def is_bare(self):
-        # Cleanup has work to do even without additional configuration.
-        return False
-
-
-@tmt.steps.provides_method("rpmtest")
-class FinishRPM(FinishPlugin[RPMFinishData]):
-    """Remove resources left by interrupted host-side tests."""
-
-    _data_class = RPMFinishData
-
-    def go(self, *, guest, environment=None, logger):
-        outcome = super().go(guest=guest, environment=environment, logger=logger)
-        if self.is_dry_run:
-            return outcome
-        state = Path(self.step.plan.data_directory) / "rpmtest/session.json"
-        if state.exists():
-            Podman(owner=json.loads(state.read_text())["owner"]).cleanup()
         return outcome

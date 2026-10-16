@@ -238,6 +238,19 @@ This version disables signature checks and supports the runner's native architec
 It pins tmt 1.78.0 because it uses tmt's Python plugin interfaces.
 Podman is the current runtime adapter.
 
+## Code layout
+
+Source modules are grouped by responsibility:
+
+- `plugins/` contains tmt prepare, finish, and their schemas.
+- `environment/` assembles minimal RPM roots and verifies artifacts.
+- `execution/` owns subject lifecycle and the primitive context.
+- `drivers/` contains runtime adapters, currently Podman.
+- `primitives/` contains file and package operations for tests.
+
+Unit tests mirror these areas. Live tests live under `tests/integration/`.
+See [architecture](docs/architecture.md) for the source tree and dependency relationships.
+
 ## Development
 
 ```sh
@@ -252,7 +265,7 @@ The optional live test covers fixtures, filesystem state, RPM queries, and exact
 selection:
 
 ```sh
-RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm uv run pytest tests/test_integration.py
+RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm uv run pytest tests/integration/test_tmt.py
 ```
 
 See [architecture](docs/architecture.md).
