@@ -6,6 +6,7 @@ import sys
 import tarfile
 import types
 import urllib.error
+import zipfile
 from email.message import Message
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
@@ -2520,9 +2521,16 @@ def test_run_gorget_pipeline_missing_declared_artifact(
      'grafana-yarn-cache-compression-2.0.patch'),
     ('fips-17u-%{fipsver}.patch', 'fips-17u-e1780dd5d390.patch'),
 ])
+@pytest.mark.parametrize('source_location', [
+    'https://example.com/pkg/pkg-%{version}.tar.gz',
+    'https://example.com/pkg/v%{version}.tar.gz#/pkg-%{version}.tar.gz',
+    'https://example.com/pkg/download?version=%{version}#/pkg-%{version}.tar.gz',
+    'https://example.com/pkg/v%{version}.tar.gz#/pkg%%2D%{version}.tar.gz',
+    'pkg-%{version}.tar.gz',
+])
 def test_update_spec_version_checks_patches(
     cuv_module, workdir: Path, source_text: str, patch_text: str, dropped: bool,
-    patch_name: str, filename: str,
+    patch_name: str, filename: str, source_location: str,
 ) -> None:
     """Check expanded patch names against Source0, not the first downloaded archive."""
     pkg = _create_package(workdir, 'pkg', '1.0', metadata={
@@ -2530,7 +2538,11 @@ def test_update_spec_version_checks_patches(
         'upstream_repo': 'https://example.com/pkg',
     })
     spec = pkg / 'pkg.spec'
-    spec.write_text('%global fipsver e1780dd5d390\n' + spec.read_text().replace(
+    spec_text = spec.read_text().replace(
+        'Source0: https://example.com/pkg/pkg-%{version}.tar.gz',
+        f'Source0: {source_location}',
+    )
+    spec.write_text('%global fipsver e1780dd5d390\n' + spec_text.replace(
         '%description', f'Patch1: {patch_name}\n\n%description',
     ))
     (pkg / filename).write_text(patch_text)
@@ -2648,6 +2660,64 @@ def test_check_updated_patches_uses_url_fragment_filename(
 
     assert (pkg / 'fix-build.patch').exists()
     assert tag in spec.read_text()
+
+
+@pytest.mark.parametrize(('suffix', 'source_location'), [
+    ('jar', 'https://example.com/pkg/pkg-%{version}.jar'),
+    ('crate', 'https://crates.io/api/v1/crates/pkg/%{version}/download#/pkg-%{version}.crate'),
+])
+@pytest.mark.parametrize('upstreamed', [False, True])
+def test_check_updated_patches_archive_formats(
+    cuv_module, workdir: Path, suffix: str, source_location: str, upstreamed: bool,
+) -> None:
+    """JAR and crate sources retain or drop patches based on extracted content."""
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        'https://example.com/pkg/pkg-%{version}.tar.gz', source_location,
+    ).replace('%description', 'Patch0: fix.patch\n\n%description'))
+    patch_file = pkg / 'fix.patch'
+    patch_file.write_text(
+        '--- a/main.c\n+++ b/main.c\n@@ -1 +1,2 @@\n old\n+fixed\n')
+    src_dir = workdir / 'pkg-2.0'
+    src_dir.mkdir()
+    source_file = src_dir / 'main.c'
+    source_file.write_text('old\nfixed\n' if upstreamed else 'old\n')
+    archive_path = pkg / f'pkg-2.0.{suffix}'
+    if suffix == 'jar':
+        with zipfile.ZipFile(archive_path, 'w') as jar:
+            jar.write(source_file, arcname='main.c')
+    else:
+        with tarfile.open(archive_path, 'w:gz') as tar:
+            tar.add(src_dir, arcname='pkg-2.0')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    cuv_module._check_updated_patches('pkg')
+
+    assert patch_file.exists() is not upstreamed
+    assert ('Patch0: fix.patch' in spec.read_text()) is not upstreamed
+
+
+@pytest.mark.parametrize('suffix', ['jar', 'crate'])
+def test_check_updated_patches_rejects_invalid_archive(
+    cuv_module, workdir: Path, suffix: str,
+) -> None:
+    """Invalid archives fail before any patch can be removed."""
+    pkg = _create_package(workdir, 'pkg', '2.0')
+    spec = pkg / 'pkg.spec'
+    spec.write_text(spec.read_text().replace(
+        '.tar.gz', f'.{suffix}',
+    ).replace('%description', 'Patch0: fix.patch\n\n%description'))
+    patch_file = pkg / 'fix.patch'
+    patch_file.write_text('patch')
+    (pkg / f'pkg-2.0.{suffix}').write_text('not an archive')
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+
+    with pytest.raises(RuntimeError, match='cannot extract Source0 for patch check'):
+        cuv_module._check_updated_patches('pkg')
+
+    assert patch_file.exists()
+    assert 'Patch0: fix.patch' in spec.read_text()
 
 
 def test_stale_detection_uses_unmodified_source(cuv_module, workdir: Path) -> None:

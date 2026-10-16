@@ -1030,17 +1030,18 @@ def _check_updated_patches(package: str) -> None:
         return
 
     source = _get_spec_sources(str(spec), str(package_dir)).get(0, "")
-    filename = Path(urllib.parse.urlsplit(source).path).name
+    url = urllib.parse.urlsplit(source)
+    filename = Path(urllib.parse.unquote(url.fragment or url.path)).name
     archive = package_dir / filename
     if not filename or not archive.is_file() or not filename.endswith(
-        (".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tgz", ".tar", ".zip")
+        (".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tgz", ".tar", ".zip", ".jar", ".crate")
     ):
         raise RuntimeError(f"{package}: cannot check patches: Source0 archive is unavailable")
 
     with tempfile.TemporaryDirectory() as tmp:
         extract_dir = Path(tmp)
         command = (["unzip", "-q", str(archive), "-d", tmp]
-                   if filename.endswith(".zip") else ["tar", "xf", str(archive), "-C", tmp])
+                   if filename.endswith((".zip", ".jar")) else ["tar", "xf", str(archive), "-C", tmp])
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode:
             raise RuntimeError(f"{package}: cannot extract Source0 for patch check: {result.stderr}")

@@ -6,3 +6,9 @@ fetch:
   - type: url
     url: "https://raw.githubusercontent.com/mattn/go-localereader/6bae6c923850ab5e0da9f36f69811ffe17064228/LICENSE"
     filename: "go-localereader-LICENSE"
+
+transform:
+  - type: vendor
+    ecosystem: go
+    archive_name: "loki-${VERSION}-vendor.tar.bz2"
+    sync_go_modules: true
