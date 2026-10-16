@@ -1,1 +1,3 @@
-"""Runtime adapters for builders and subject sessions."""
+"""Container transport and resource ownership."""
+
+LABEL = "io.rpmtest.owner"

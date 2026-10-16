@@ -8,7 +8,9 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
-LABEL = "io.rpmtest.owner"
+from tmt_rpmtest.drivers import LABEL
+from tmt_rpmtest.drivers.companions import companions
+from tmt_rpmtest.drivers.persistent import PersistentSession, validate_command
 
 
 class Podman:
@@ -52,7 +54,7 @@ class Podman:
         completed.check_returncode()
         return completed.stdout
 
-    def pull_builder(self, image: str) -> None:
+    def pull_image(self, image: str) -> None:
         self._command("pull", "--quiet", "--policy=missing", image, timeout=300)
 
     def build(
@@ -116,6 +118,16 @@ class Podman:
         ).split()
         if images:
             self._command("rmi", "--force", "--ignore", *dict.fromkeys(images), interruptible=False)
+        networks = self._command(
+            "network",
+            "ls",
+            "--quiet",
+            "--filter",
+            f"label={LABEL}={self.owner}",
+            interruptible=False,
+        ).split()
+        if networks:
+            self._command("network", "rm", "--force", "--time=0", *networks, interruptible=False)
 
 
 class Session:
@@ -127,6 +139,7 @@ class Session:
         self.image = ""
         self.container = None
         self.images = []
+        self.network = "none"
 
     def image_tag(self):
         tag = f"localhost/tmt-rpmtest-{uuid.uuid4().hex}"
@@ -139,7 +152,7 @@ class Session:
             self.runtime._command("rm", "--force", "--ignore", self.container)
             self.container = None
 
-    def _create(self, argv, environment=None):
+    def _create(self, argv, environment=None, user="0"):
         self._checkpoint()
         self.container = f"tmt-rpmtest-{uuid.uuid4().hex}"
         options = [
@@ -147,7 +160,10 @@ class Session:
             "--name",
             self.container,
             "--pull=never",
-            "--network=none",
+            "--user",
+            user,
+            "--network",
+            self.network,
             "--label",
             f"{LABEL}={self.runtime.owner}",
             "--image-volume=ignore",
@@ -167,6 +183,8 @@ class Session:
         ]
         for key, value in (environment or {}).items():
             options += ["--env", f"{key}={value}"]
+        if self.network != "none":
+            options += ["--network-alias", "subject"]
         self.runtime._command(*options, self.image, *argv[1:])
 
     def copy(self, archive: Path):
@@ -189,10 +207,7 @@ class Session:
         self.runtime._command("export", "--output", str(destination), self.container)
 
     def run(self, argv, *, timeout, environment, directory):
-        if not argv or not argv[0] or any("\0" in arg for arg in argv):
-            raise ValueError("Specify an executable and valid arguments.")
-        if timeout <= 0:
-            raise ValueError("The command duration must be positive.")
+        self.validate_command(argv, timeout)
         self._create(argv, environment)
         args = [self.runtime.executable, "start", "--attach", self.container]
         with (
@@ -209,6 +224,43 @@ class Session:
             (directory / "stdout.txt").read_text(errors="replace"),
             (directory / "stderr.txt").read_text(errors="replace"),
         )
+
+    validate_command = staticmethod(validate_command)
+
+    @contextmanager
+    def companions(self, services, *, directory, timeout):
+        if self.network != "none":
+            raise RuntimeError("Companion scopes cannot be nested.")
+        with companions(self.runtime, services, self.limits, directory, timeout) as (
+            network,
+            processes,
+        ):
+            self.network = network
+            try:
+                yield processes
+            finally:
+                self.network = "none"
+                try:
+                    self._checkpoint()
+                finally:
+                    if self.container:
+                        self.runtime._command(
+                            "rm", "--force", "--ignore", self.container, interruptible=False
+                        )
+                        self.container = None
+
+    @contextmanager
+    def service(self, argv, *, environment, directory, user="0"):
+        self.validate_command(argv, 60)
+        self._create(argv, environment, user)
+        running = PersistentSession(self, directory)
+        try:
+            self.runtime._command("start", self.container)
+            running.require_running()
+            yield running
+            running.require_running()
+        finally:
+            running.close()
 
     def close(self):
         errors = []

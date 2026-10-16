@@ -123,7 +123,7 @@ class RPMBuilder:
                 shutil.copyfile(artifact, target)
                 if target.stem != digest(target):
                     raise ValueError("An RPM artifact changed while it was copied.")
-        self.runtime.pull_builder(self.image)
+        self.runtime.pull_image(self.image)
         candidate_paths = sorted(candidates_dir.glob("*.rpm"))
         candidates = {}
         if candidate_paths:

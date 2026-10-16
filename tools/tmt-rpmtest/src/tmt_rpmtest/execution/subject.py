@@ -39,6 +39,20 @@ class Subject:
     def rpm(self, *args: str):
         return self.packages.query(*args)
 
+    @contextmanager
+    def companions(self, services, *, timeout=30):
+        """Connect the subject to scoped companions on a private internal network."""
+        with self._context.companions(services, timeout=timeout) as companions:
+            yield companions
+
+    @contextmanager
+    def service(self, argv: list[str], *, ready: list[str], timeout=30, environment=None, user="0"):
+        """Run a foreground service and execute subject commands alongside it."""
+        with self._context.service(
+            argv, ready=ready, timeout=timeout, environment=environment, user=user
+        ):
+            yield self
+
 
 @contextmanager
 def subject(directory: Path | None = None):

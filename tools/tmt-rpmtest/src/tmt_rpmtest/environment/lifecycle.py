@@ -4,6 +4,7 @@ import json
 import math
 import os
 import shlex
+import subprocess
 import sys
 import uuid
 from pathlib import Path
@@ -17,12 +18,18 @@ def owner_file(directory: Path) -> Path:
 
 
 def finish(directory: Path):
-    state = owner_file(directory)
-    if state.exists():
-        Podman(owner=state.read_text().strip()).cleanup()
+    errors = []
+    for state in [owner_file(directory), *directory.glob(".*.owner")]:
+        if state.exists():
+            try:
+                Podman(owner=state.read_text().strip()).cleanup()
+            except (OSError, subprocess.SubprocessError) as error:
+                errors.append(error)
+    if errors:
+        raise ExceptionGroup("RPM environment cleanup failed.", errors)
 
 
-def prepare(settings: dict, directory: Path, root: Path):
+def prepare(settings: dict, directory: Path, root: Path, *, publish=True):
     limits = {
         key: settings.get(key, default)
         for key, default in {"cpus": 2.0, "memory": 1 << 30, "pids": 512}.items()
@@ -48,6 +55,8 @@ def prepare(settings: dict, directory: Path, root: Path):
         )
         configuration = {"owner": owner, "limits": limits, "python": sys.executable}
         (directory / "session.json").write_text(json.dumps(configuration) + "\n")
+        if not publish:
+            return
         variables = {"RPMTEST_PYTHON": sys.executable, "RPMTEST_DIRECTORY": str(directory)}
         if os.environ.get("PYTHONPATH"):
             variables["PYTHONPATH"] = os.environ["PYTHONPATH"]

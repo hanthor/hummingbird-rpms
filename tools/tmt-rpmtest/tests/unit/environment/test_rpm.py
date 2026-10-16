@@ -28,3 +28,20 @@ def test_rpm_metadata_requires_digests_and_unique_identities():
         identities(record * 2)
     with pytest.raises(ValueError, match="digests"):
         identities(record.replace(RPM.payload_sha256, "(none)"))
+
+
+def test_guest_cli_imports_with_only_the_standard_library():
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[3] / "src"
+    result = subprocess.run(
+        [sys.executable, "-S", "-m", "tmt_rpmtest.environment", "--help"],
+        env={**os.environ, "PYTHONPATH": str(source)},
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr

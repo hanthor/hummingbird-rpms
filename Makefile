@@ -145,8 +145,8 @@ check-rpmtest-host:
 	  PATH="$$tools_dir/bin:$$PATH"; export PATH; \
 	fi; \
 	uv sync --python python3 --frozen --project tools/tmt-rpmtest; \
-	uv run --project tools/tmt-rpmtest ruff check tools/tmt-rpmtest; \
-	uv run --project tools/tmt-rpmtest ruff format --check tools/tmt-rpmtest; \
+	uv run --project tools/tmt-rpmtest ruff check tools/tmt-rpmtest test/rpmtest/shared; \
+	uv run --project tools/tmt-rpmtest ruff format --check tools/tmt-rpmtest test/rpmtest/shared; \
 	uv run --project tools/tmt-rpmtest pytest -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests; \
 	cd tools/tmt-rpmtest && uv run tmt plans lint
 

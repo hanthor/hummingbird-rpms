@@ -1,4 +1,4 @@
 summary: Check curl contract
-test: '"$RPMTEST_PYTHON" curl_contract.py'
-duration: 5m
+test: '"$RPMTEST_PYTHON" -m tmt_rpmtest.execution.test --plan ../../plans/contract.fmf curl_contract.py'
+duration: 30m
 component: curl-main

@@ -7,6 +7,7 @@ The test scripts make their own assertions. There is no custom suite, step, or a
 ```text
 tmt_rpmtest/
 ├── __init__.py               # Public test imports
+├── containers.py             # Companion image and process declarations
 ├── plugins/
 │   ├── prepare.py            # tmt prepare method and options
 │   ├── finish.py             # tmt finish method
@@ -18,10 +19,15 @@ tmt_rpmtest/
 │   └── __main__.py           # Guest-side command entry point
 ├── execution/
 │   ├── subject.py            # Fresh-session lifecycle and test conveniences
-│   └── context.py            # Commands, snapshots, inspection, and evidence
+│   ├── context.py            # Commands, snapshots, inspection, and evidence
+│   └── readiness.py          # Bounded polling through recorded command execution
 ├── drivers/
-│   └── podman.py             # Builder transport and subject containers
+│   ├── podman.py             # Builder transport and subject containers
+│   ├── companions.py         # Private network and companion ownership
+│   └── persistent.py         # Container processes and persistent subject sessions
 └── primitives/
+    ├── archive.py            # Paths and symlink resolution within an archived root
+    ├── elf.py                # ELF program headers and dynamic loader selection
     ├── files.py              # Fixture staging and file observations
     └── packages.py           # RPM verification and metadata observations
 ```
@@ -87,7 +93,28 @@ A session imports the verified root and owns private containers and image checkp
 A new command checkpoints the previous container's filesystem, then starts a container with the
 requested executable.
 This preserves compile-and-run state without adding a persistent agent or shell to the root.
-Processes do not persist between commands. Separate sessions always start from the prepared archive.
+Processes do not persist between ordinary commands. Separate sessions always start from the prepared
+archive.
+
+`Subject.service()` scopes a persistent session adapter through the primitive context.
+The adapter implements the same run, copy, snapshot, and runtime operations used by primitives.
+The Podman session owns container creation and final removal; the persistent adapter owns exec,
+process-state checks, shutdown, and logs. Readiness uses the context's normal command execution and
+evidence. The context restores ordinary execution when the service block exits.
+New execution modes can supply these session operations without changing package or file primitives.
+
+Companion scopes own one internal network and declared image containers. The Podman session selects
+that network for subject commands and persistent services, then checkpoints and removes its attached
+container before network cleanup. Process state, exec, readiness evidence, and shutdown are shared
+through `ContainerProcess`; `PersistentSession` adds subject file operations to that implementation.
+Scoped command handles reuse the context's evidence recording and reject execution after exit.
+An `ExitStack` registers companion cleanup as resources are allocated, so partial startup still
+removes earlier containers and the network. Ownership labels also let the finish step remove networks
+after interrupted tests. Shared pulled images are not owned by a test.
+
+Package contents and symlink checks use one archive per inspection. Paths resolve within that archive,
+without following the host filesystem. ELF inspection reads program headers from the archive and
+uses the subject's dynamic loader for dependency resolution. Assertions remain in Python tests.
 
 Fixture archives enter the container through the transport. There are no subject host mounts.
 Command-specific environment overrides do not persist through checkpoints.
@@ -105,13 +132,14 @@ It never selects shared builder images or another plan's resources.
 
 ## CI orchestration
 
-Testing Farm runs the native plans in `ci/run_tests_rpm.fmf`.
-They use native fmf discovery and the standard test executor, without invoking another tmt run.
-Artifact preparation happens before execution; each package suite receives its own minimal root.
-Existing RPM checks have their own test result, independent of the package assertions.
+Testing Farm runs one native plan in `ci/run_tests_rpm.fmf`.
+Component filters select package tests during discovery. The standard executor reports each selected
+test directly, without invoking another tmt run. Existing RPM checks have their own test result.
 
 CI bootstraps the in-tree package with native shell preparation on the guest.
-It invokes the same RPM preparation helper as the installed plugin.
-This keeps controller plugin installation out of the Testing Farm bootstrap sequence.
-The helper reads only the RPM preparation settings from each canonical package plan.
-The finish step invokes guest-side cleanup using its recorded owner, including after test failures.
+`execution.test` reads each selected test's canonical package plan, prepares a private root using
+`environment.lifecycle`, runs the Python assertions, and cleans up in a `finally` block.
+The local plugin prepares the same environment in advance and the helper reuses it.
+No per-test environment is published to the plan, so package sets cannot leak between tests.
+Preparation errors appear in the affected test's result. The finish step recovers all recorded owners
+in the plan directory, including after interrupted execution.

@@ -22,7 +22,8 @@ Inside a test, `with subject() as target:` creates a private session from the pr
 The Python assertions execute on the guest, outside the subject container.
 
 Commands within one session share filesystem changes. Each new `subject()` starts from the
-prepared archive, without changes from earlier sessions. Processes do not persist between commands.
+prepared archive, without changes from earlier sessions. Processes persist only inside an explicit
+`target.service(...)` block.
 The session removes its containers and image checkpoints when its context ends.
 
 ## Run
@@ -37,7 +38,8 @@ uv run tmt --allow-unsafe-behavior=provision/local run --all --keep \
 
 The example checks curl from the Hummingbird repository.
 The builder requires a privileged container. RPM scriptlets execute during assembly.
-The subject has no network access, host mounts, or added capabilities.
+By default, the subject has no network access. Companion scopes provide private internal networking.
+The subject has no host mounts or added capabilities.
 
 A plan declares the RPM environment:
 
@@ -122,7 +124,7 @@ exceptions.
 Use `timeout=` and `environment=` for command-specific settings.
 Environment overrides do not carry into later commands.
 
-Commands in one session share filesystem changes. They do not share background processes.
+Commands in one session share filesystem changes. By default, they do not share background processes.
 Each session starts from the prepared root. Copy fixtures before compiling or running them.
 `copy()` accepts a file or directory and an absolute destination inside the subject.
 `stat()` returns a standard `tarfile.TarInfo` for file type and mode checks.
@@ -132,23 +134,128 @@ The guest-side test controls its own environment. Subject commands receive only 
 explicit overrides.
 A shell command inside the subject requires a shell supplied by its RPM dependencies.
 
+## Persistent services
+
+Use `target.service()` to start a foreground process and execute commands alongside it.
+The plan must request the packages that supply the service and readiness command.
+For example, a plan requesting `python3` and `curl` can run a local HTTP service:
+
+```python
+from pathlib import Path
+from tmt_rpmtest import subject
+
+with subject() as target:
+    target.copy(Path("payload.txt"), "/workspace/payload.txt")
+    url = "http://127.0.0.1:8000/payload.txt"
+    with target.service(
+        [
+            "/usr/bin/python3",
+            "-m",
+            "http.server",
+            "8000",
+            "--bind",
+            "127.0.0.1",
+            "--directory",
+            "/workspace",
+        ],
+        ready=["/usr/bin/curl", "--fail", "--silent", url],
+        timeout=30,
+    ):
+        response = target.run(["/usr/bin/curl", "--fail", "--silent", url])
+        assert response.returncode == 0, response.stderr
+        assert response.stdout == Path("payload.txt").read_text()
+```
+
+The service is PID 1 in the subject container. It must stay in the foreground.
+`user="postgres"` or a numeric `"UID:GID"` runs the service and its commands under that account.
+The default is root. Ordinary commands after the service block use root again.
+Readiness retries until the command succeeds or `timeout` seconds elapse.
+An early service exit, OOM kill, or readiness timeout raises an exception.
+Commands, fixture copies, and inspection primitives use the same running container.
+Inspection snapshots of a running service are not atomic database backups.
+
+The block stops the service on exit, including after an assertion or timeout.
+A command timeout stops the entire service container so an abandoned exec process cannot continue.
+Service output and container state remain in the session's numbered `service` evidence directory.
+Filesystem changes remain available to later commands in the enclosing subject session.
+`environment=` on `service()` sets the container environment; `run(environment=...)` overrides it for
+that command only. Service blocks cannot be nested.
+
+The subject still has no external network, host mounts, or added capabilities.
+Loopback connections work within the subject. Enter a companion scope before starting a subject
+service to connect it to other containers. Privileged init systems such as systemd are not supported.
+
+## Companion containers
+
+`target.companions()` starts declared containers on a private internal network. Each dictionary key
+becomes a DNS name on that network. The RPM subject is named `subject`.
+
+```python
+from tmt_rpmtest import Companion, subject
+
+apache = Companion(
+    image=(
+        "docker.io/library/httpd@sha256:"
+        "1b766f17b84026429b7cb243317b142921b24432336e798bc881c43f45ed9567"
+    ),
+    ready=("httpd", "-t"),
+)
+with subject() as target:
+    with target.companions({"web": apache}, timeout=30):
+        response = target.run(
+            ["/usr/bin/curl", "--retry", "5", "--retry-connrefused", "--fail", "http://web/"]
+        )
+        assert response.returncode == 0, response.stderr
+        assert "It works!" in response.stdout
+```
+
+Images must be pinned by SHA-256 digest. Pulling an image can use the network; running it cannot reach
+the internet. Names must be DNS labels in lowercase; `subject` is reserved.
+No host directories, image-declared volumes, or published host ports are attached.
+Companions use Podman's default capabilities, with privilege escalation disabled; the RPM subject
+continues to drop all capabilities. Each companion receives the plan's CPU, memory, and PID limits.
+These are per-container limits, without an aggregate scheduler.
+
+`Companion` accepts optional `command`, `ready`, `environment`, and `user` settings. Without `command`,
+the image's entrypoint and command are used. With it, the first argument is the entrypoint.
+Without `user`, the image's configured user is used.
+Readiness commands run inside the companion, so their tools must be present in the image.
+`timeout` bounds readiness polling for each companion. Without `ready`, only process liveness is
+checked. An Apache configuration check does not establish HTTP readiness; the example retries curl
+connections for that reason. All companions are started and checked before the block executes.
+All companions start before readiness polling, so they can depend on one another during startup.
+
+Ordinary subject commands and `target.service()` can run inside the scope. A subject service must
+start after entering the companion scope. Companion scopes cannot be nested.
+On exit, filesystem changes are retained, the subject returns to no networking, and companions and
+their network are removed. Partial startup, failed assertions, and timeouts also trigger cleanup.
+The scope yields a dictionary of command handles. For example,
+`with target.companions({"client": spec}) as peers:` makes
+`peers["client"].run(["/usr/bin/python3", "-c", client_code])` available while a subject service runs.
+Commands retain stdout, stderr, and exit status in that companion's evidence directory.
+Handles become invalid when the scope closes.
+
+Each companion retains its declared image and command, readiness attempts, state, and logs beneath
+the numbered `companions` evidence directory. Cleanup failures fail the scope. The finish step also
+removes owned networks left by interrupted runs. Pulled images stay cached.
+
 ## Testing Farm
 
-CI uses one tmt orchestration layer. Native fmf discovery selects each hello or curl test,
-and the standard executor reports its result directly.
-`ci/run_tests_rpm.fmf` defines separate plans for their package environments.
-The existing RPM checks remain a separate native shell test.
+CI uses one plan in `ci/run_tests_rpm.fmf`. Native fmf discovery filters tests by the
+`IMAGE_NAME` component before execution, so unrelated package tests do not produce skipped results.
+The standard executor reports each selected test and the shared RPM checks directly.
 
 Artifact download and architecture filtering happen in preparation through
-`ci/prepare_rpm_artifacts.sh`. Each package plan then installs this checkout's Python package
-in an isolated guest environment and calls `python -m tmt_rpmtest.environment` to assemble its root.
-That command performs RPM preparation and cleanup only; it never invokes tmt.
-The canonical package settings remain in `test/rpmtest/<package>/plans/`.
+`ci/prepare_rpm_artifacts.sh`. Preparation also installs this checkout's Python package in an
+isolated guest environment. Each selected test calls `python -m tmt_rpmtest.execution.test` with
+its canonical package plan and Python script. This helper assembles a private RPM root, runs the
+assertions, and cleans up even after failures. Preparation failures belong to that test's result.
+The finish step recovers any remaining owned resources after an interruption.
 
-The CI plans use tmt's built-in shell preparation for bootstrap, so Testing Farm does not need
-the custom plugin installed on its controller before it reads the plans.
-An installed `how: rpmtest` plugin uses the same guest-side assembly code through tmt's guest interface.
-Both paths build and execute on the guest's native architecture.
+Canonical package settings remain in `test/rpmtest/<package>/plans/`.
+Local plans use the installed `how: rpmtest` plugin to prepare their root, which the test helper
+reuses. Both paths use the same assembly code on the guest's native architecture.
+Testing Farm needs only tmt's built-in plugins on its controller. No helper invokes another tmt run.
 
 ## Package inspection primitives
 
@@ -161,6 +268,9 @@ These operations do not add RPM utilities to the subject or decide test assertio
 | `verify(*names)` | RPM verification result, including exit status and differences |
 | `owners(path)` | Set of package names that own the path |
 | `metadata(package, field)` | Tuple of values for `provides`, `requires`, `files`, or `nevra` |
+| `contents(package, match=("/**",))` | Owned paths with current `TarInfo`, or `None` for missing files |
+| `links(package)` | Owned symlinks with target, resolved path, and resolution error |
+| `runtime_links(package, timeout=60)` | Dynamic ELF paths, loaders, and dependency resolution results |
 
 `verify(*names)` requires at least one package name.
 A nonzero verification result remains available to the test's assertion.
@@ -168,6 +278,40 @@ Other query failures raise `subprocess.CalledProcessError`, including missing pa
 The evidence directory retains RPM output for each operation.
 `provides` and `requires` return capability names without version constraints.
 Use `target.rpm(...)` for full RPM query output or other metadata fields.
+
+For richer package contracts, assert on observations:
+
+```python
+from pathlib import PurePosixPath
+
+entries = target.packages.contents("curl", match=("/usr/bin/*",))
+assert entries
+assert all(entry.info and entry.info.isfile() and entry.info.mode & 0o111 for entry in entries)
+assert all(PurePosixPath(entry.path).is_relative_to("/usr") for entry in entries)
+
+links = target.packages.links("libcurl")
+assert all(link.resolved is not None and link.error is None for link in links)
+# An optional package policy can reject absolute targets.
+assert all(not link.target.startswith("/") for link in links)
+
+dependencies = target.packages.runtime_links("curl")
+assert dependencies
+assert all(check.resolved for check in dependencies), dependencies
+```
+
+Content patterns match the full absolute path. `*` and `?` do not cross `/`; `**` does.
+Without a pattern, `contents()` returns all owned paths so tests can enforce allowed prefixes.
+Missing files remain visible, including omitted documentation and ghost files; tests decide which
+must exist. File metadata does not follow the final symlink.
+Link resolution follows absolute and relative targets within the subject root, including symlinks
+in parent directories. Dangling targets and link loops are reported as resolution errors.
+
+Runtime dependency inspection skips non-ELF files, symlinks, and static ELF files. It reads ELF
+program headers outside the subject and invokes the subject's dynamic loader with `--list` inside
+the subject. No inspection packages are added. Missing loaders and libraries produce unresolved
+results; malformed ELF files raise `ValueError`. Default loaders for shared libraries support
+glibc on x86_64 and aarch64. This checks loader resolution, not `dlopen()` paths or application
+behavior. Content and link observations, ELF inspection inputs, and command output remain in evidence.
 
 `target.stat(path)` returns standard tar metadata for file assertions.
 Use `isfile()`, `issym()`, `mode`, and `linkname` for type, permissions, and symlink checks.
@@ -245,13 +389,13 @@ Each session writes command output, exit codes, fixture archives, and a manifest
 `TMT_TEST_DATA`.
 RPM inspection saves its output. Temporary inspection snapshots are removed after use.
 
-Session cleanup removes its containers and imported images.
+Session cleanup removes its containers, private networks, and imported images.
 The finish plugin removes owned resources left by interrupted tests. Shared builder images remain
 cached.
 Cleanup failure fails the test or finish step.
 
-Resolution uses the configured repositories online. Installation and execution run without
-networking.
+Resolution uses the configured repositories online. Installation runs without networking.
+Execution uses no network by default; companion scopes use a private internal network.
 Weak dependencies and documentation are disabled. Normal dependencies can still supply Bash or other
 utilities.
 The plugin does not add test harness packages to the root.
@@ -298,6 +442,21 @@ The optional SSH case uses a localhost SSH service with Podman, Python, and rsyn
 RPMTEST_CURL_RPM=/absolute/path/to/curl.rpm \
 RPMTEST_SSH_PORT=2222 RPMTEST_SSH_KEY=/absolute/path/to/key \
 uv run pytest tests/integration/test_tmt.py -k ssh
+```
+
+Live feature tests use published curl and Python RPMs to check ELF dependencies, a persistent HTTP
+service, an Apache companion, readiness, logs, and cleanup after failures. From the repository root:
+
+```sh
+RPMTEST_LIVE=1 uv run --project tools/tmt-rpmtest pytest \
+  -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests/integration/test_features.py
+```
+
+The shared NATS suite can also be validated for both packaged versions:
+
+```sh
+RPMTEST_LIVE=1 uv run --project tools/tmt-rpmtest pytest \
+  -c tools/tmt-rpmtest/pyproject.toml tools/tmt-rpmtest/tests/integration/test_nats.py
 ```
 
 See [architecture](docs/architecture.md).

@@ -202,6 +202,7 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
                     triggers.extend(
                         [
                             rf"^test/rpmtest/{escaped_dname}/",
+                            r"^test/rpmtest/shared/",
                             r"^tools/tmt-rpmtest/",
                             r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$",
                         ]

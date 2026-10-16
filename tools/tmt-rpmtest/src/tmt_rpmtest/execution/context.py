@@ -3,11 +3,12 @@
 import json
 import subprocess
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Self
 
 from tmt_rpmtest.drivers.podman import Session
+from tmt_rpmtest.execution.readiness import wait_ready
 
 _INSPECT = r"""
 set -eu
@@ -36,6 +37,7 @@ class PrimitiveContext:
         self._builder = builder
         self._sequence = 0
         self._active = True
+        self._serving = False
 
     def __enter__(self) -> Self:
         self._require_active()
@@ -84,6 +86,50 @@ class PrimitiveContext:
         self._session.copy(archive)
 
     @contextmanager
+    def companions(self, services, *, timeout=30):
+        self._require_active()
+        if self._serving:
+            raise RuntimeError("Enter the companion scope before starting a subject service.")
+        with self.operation("companions") as directory:
+            with self._session.companions(
+                services, directory=directory, timeout=timeout
+            ) as processes:
+                with ExitStack() as scope:
+                    yield {
+                        name: Commands(
+                            scope.enter_context(
+                                PrimitiveContext(process, process.directory, self._builder)
+                            )
+                        )
+                        for name, process in processes.items()
+                    }
+
+    @contextmanager
+    def service(self, argv, *, ready, timeout=30, environment=None, user="0"):
+        """Scope persistent execution and bounded guest-side readiness checks."""
+        self._require_active()
+        if self._serving:
+            raise RuntimeError("Subject services cannot be nested.")
+        Session.validate_command(argv, timeout)
+        Session.validate_command(ready, timeout)
+        with self.operation("service") as directory:
+            (directory / "service.json").write_text(
+                json.dumps({"argv": argv, "ready": ready, "timeout": timeout}, indent=2) + "\n"
+            )
+            previous = self._session
+            with previous.service(
+                argv, environment=environment or {}, directory=directory, user=user
+            ) as running:
+                self._session = running
+                self._serving = True
+                try:
+                    wait_ready(self.run, ready, timeout)
+                    yield
+                finally:
+                    self._session = previous
+                    self._serving = False
+
+    @contextmanager
     def snapshot(self, name: str = "snapshot") -> Iterator[Path]:
         """Export the current filesystem. Remove the archive when the scope ends."""
         with self.operation(name) as directory:
@@ -110,3 +156,13 @@ class PrimitiveContext:
             return subprocess.CompletedProcess(
                 argv, result.returncode, result.stdout, result.stderr
             )
+
+
+class Commands:
+    """Execute commands with evidence, only while the companion scope is open."""
+
+    def __init__(self, context: PrimitiveContext):
+        self._context = context
+
+    def run(self, argv: list[str], *, timeout=60, environment=None):
+        return self._context.run(argv, timeout=timeout, environment=environment)

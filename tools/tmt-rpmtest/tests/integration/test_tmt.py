@@ -65,7 +65,7 @@ def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path, monkeypatch, r
                 "prepare": {
                     "how": "rpmtest",
                     "python": sys.executable,
-                    "packages": ["curl"],
+                    "packages": ["curl", "bash", "coreutils"],
                     "repositories": [
                         "https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/"
                     ],
@@ -98,6 +98,12 @@ with subject() as target:
     assert target.packages.metadata("curl", "requires")
     assert "/usr/bin/curl" in target.packages.metadata("curl", "files")
     assert target.packages.metadata("curl", "nevra")[0].startswith("curl-")
+    contents = target.packages.contents("curl", match=("/usr/bin/*",))
+    assert any(item.path == "/usr/bin/curl" and item.info.isfile() for item in contents)
+    links = target.packages.links("libcurl")
+    assert links and all(item.resolved for item in links)
+    dependencies = target.packages.runtime_links("curl")
+    assert dependencies and all(item.resolved for item in dependencies)
     try:
         target.packages.owners("/missing")
     except subprocess.CalledProcessError:
@@ -123,6 +129,11 @@ else:
     raise AssertionError("A primitive must not operate after its subject closes.")
 with subject() as fresh:
     assert fresh.run(["/usr/bin/cat", "/tmp/state"]).returncode != 0
+    with fresh.service(
+        ["/usr/bin/sleep", "30"], ready=["/bin/sh", "-c", "kill -0 1"], timeout=10
+    ):
+        assert fresh.run(["/bin/sh", "-c", "kill -0 1"]).returncode == 0
+        assert fresh.run(["/usr/bin/curl", "--version"]).returncode == 0
     try:
         fresh.run(["/usr/bin/sleep", "30"], timeout=0.1)
     except subprocess.TimeoutExpired:
@@ -156,5 +167,10 @@ with subject() as fresh:
     with Path(CANDIDATE).open("rb") as candidate:
         sha = hashlib.file_digest(candidate, "sha256").hexdigest()
     assert any(item["sha256"] == sha and item["selected"] for item in manifest["candidates"])
-    owned = subprocess.check_output(["podman", "ps", "--all", "--format", "{{.Names}}"], text=True)
-    assert not any(name.startswith("tmt-rpmtest-") for name in owned.splitlines())
+    owner = json.loads((run / "plan/data/rpmtest-default-0/root/session.json").read_text())["owner"]
+    for command in (["ps", "--all"], ["images"]):
+        owned = subprocess.check_output(
+            ["podman", *command, "--quiet", "--filter", f"label=io.rpmtest.owner={owner}"],
+            text=True,
+        )
+        assert not owned.strip()

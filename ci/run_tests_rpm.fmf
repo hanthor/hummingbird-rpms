@@ -3,109 +3,68 @@ execute:
   how: tmt
 prepare:
   - how: install
-    package: [rpmlint, podman, slirp4netns, rsync]
+    package: [rpmlint, podman, slirp4netns, rsync, python3.11, python3.11-pip]
   - how: shell
     script: |
       set -euo pipefail
       ci/prepare_rpm_artifacts.sh
   - how: shell
     script: git submodule update --init --recursive
+  - how: shell
+    script: |
+      set -euo pipefail
+      [[ -f "${TMT_TREE}/test/rpmtest/${RPMTEST_PACKAGE}/.fmf/version" ]] || exit 0
+      bootstrap="${TMT_PLAN_DATA}/bootstrap"
+      python3.11 -m venv "$bootstrap"
+      "$bootstrap/bin/pip" install --quiet uv==0.13.1
+      export UV_PROJECT_ENVIRONMENT="${TMT_PLAN_DATA}/python"
+      "$bootstrap/bin/uv" sync --python python3.11 --frozen --no-dev \
+        --project "${TMT_TREE}/tools/tmt-rpmtest"
+      printf 'RPMTEST_PYTHON=%q\n' "$UV_PROJECT_ENVIRONMENT/bin/python" >> "$TMT_PLAN_ENVIRONMENT_FILE"
+
+finish:
+  how: shell
+  script: |
+    python="${TMT_PLAN_DATA}/python/bin/python"
+    if [[ -x $python ]]; then
+      "$python" -m tmt_rpmtest.environment finish --directory "${TMT_PLAN_DATA}/rpmtest"
+    fi
 
 discover:
-  how: shell
-  keep-git-metadata: true
-  sync-repo: true
-  tests:
-    - name: RPM checks
-      duration: 8h
-      test: |
-        set -euo pipefail
-        [[ -n ${RPMTEST_SOURCE_RPM:-} ]] || exit 0
-        rpm_arguments=()
-        for artifact in "${RPMTEST_RPMS}"/*.rpm; do
-          rpm_arguments+=(--rpm "$artifact")
-        done
-        ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
-          --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
-
-/rpmtest:
-  enabled: false
-  summary: Test minimal RPM environments
-  prepare+:
-    - how: install
-      package: [python3.11, python3.11-pip]
-    - how: shell
-      script: |
-        set -euo pipefail
-        export PATH
-        plugin_source="${TMT_TREE}/tools/tmt-rpmtest"
-        bootstrap="${TMT_PLAN_DATA}/bootstrap"
-        python3.11 -m venv "$bootstrap"
-        "$bootstrap/bin/pip" install --quiet uv==0.13.1
-        export UV_PROJECT_ENVIRONMENT="${TMT_PLAN_DATA}/python"
-        "$bootstrap/bin/uv" sync --python python3.11 --frozen --no-dev --project "$plugin_source"
-        "$UV_PROJECT_ENVIRONMENT/bin/python" -m tmt_rpmtest.environment prepare \
-          --directory "${TMT_PLAN_DATA}/rpmtest" \
-          --plan "${TMT_TREE}/${RPMTEST_PLAN}" --artifact "${RPMTEST_RPMS}/*.rpm"
-  finish:
+  - name: rpm-checks
     how: shell
-    script: |
-      python="${TMT_PLAN_DATA}/python/bin/python"
-      if [[ -x $python ]]; then
-        "$python" -m tmt_rpmtest.environment finish --directory "${TMT_PLAN_DATA}/rpmtest"
-      fi
-
-  /hello-contract:
-    enabled: true
-    summary: Test hello contract in a minimal RPM root
-    environment:
-      RPMTEST_PLAN: test/rpmtest/hello/plans/contract.fmf
-    discover:
-      how: fmf
-      path: $TMT_TREE/test/rpmtest/hello
-      test: ^/tests/contract$
-      filter: component:${IMAGE_NAME}
-
-  /hello-greeting:
-    enabled: true
-    summary: Test hello greeting in a minimal RPM root
-    environment:
-      RPMTEST_PLAN: test/rpmtest/hello/plans/greeting.fmf
-    discover:
-      how: fmf
-      path: $TMT_TREE/test/rpmtest/hello
-      test: ^/tests/greeting$
-      filter: component:${IMAGE_NAME}
-
-  /curl-contract:
-    enabled: true
-    summary: Test curl contract in a minimal RPM root
-    environment:
-      RPMTEST_PLAN: test/rpmtest/curl/plans/contract.fmf
-    discover:
-      how: fmf
-      path: $TMT_TREE/test/rpmtest/curl
-      test: ^/tests/contract$
-      filter: component:${IMAGE_NAME}
-
-  /curl-transfers:
-    enabled: true
-    summary: Test curl transfers in a minimal RPM root
-    environment:
-      RPMTEST_PLAN: test/rpmtest/curl/plans/transfers.fmf
-    discover:
-      how: fmf
-      path: $TMT_TREE/test/rpmtest/curl
-      test: ^/tests/transfers$
-      filter: component:${IMAGE_NAME}
-
-  /curl-development:
-    enabled: true
-    summary: Test curl development in a minimal RPM root
-    environment:
-      RPMTEST_PLAN: test/rpmtest/curl/plans/development.fmf
-    discover:
-      how: fmf
-      path: $TMT_TREE/test/rpmtest/curl
-      test: ^/tests/development$
-      filter: component:${IMAGE_NAME}
+    keep-git-metadata: true
+    tests:
+      - name: RPM checks
+        duration: 8h
+        test: |
+          set -euo pipefail
+          [[ -n ${RPMTEST_SOURCE_RPM:-} ]] || exit 0
+          rpm_arguments=()
+          for artifact in "${RPMTEST_RPMS}"/*.rpm; do
+            rpm_arguments+=(--rpm "$artifact")
+          done
+          ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
+            --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
+  - name: hello
+    how: fmf
+    path: $TMT_TREE/test/rpmtest/hello
+    test: ^/tests/
+    filter: component:${IMAGE_NAME}
+  - name: curl
+    how: fmf
+    path: $TMT_TREE/test/rpmtest/curl
+    test: ^/tests/
+    filter: component:${IMAGE_NAME}
+  - name: nats-2-12
+    how: fmf
+    path: $TMT_TREE/test/rpmtest/nats-server2.12
+    sync-repo: true
+    test: ^/tests/
+    filter: component:${IMAGE_NAME}
+  - name: nats-2-14
+    how: fmf
+    path: $TMT_TREE/test/rpmtest/nats-server2.14
+    sync-repo: true
+    test: ^/tests/
+    filter: component:${IMAGE_NAME}

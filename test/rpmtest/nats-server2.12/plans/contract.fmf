@@ -1,0 +1,17 @@
+summary: Check NATS 2.12 contract
+provision:
+  how: local
+discover:
+  how: fmf
+  sync-repo: true
+  test: ^/tests/contract$
+prepare:
+  how: rpmtest
+  packages:
+  - nats-server2.12
+  repositories:
+  - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest

@@ -134,6 +134,7 @@ class TestBuildPacVariables:
             expected = package["dname"] == "alpha" and event_type == "pull-request"
             assert ("^test/rpmtest/alpha/" in package["manifest_triggers"]) == expected
             assert ("^tools/tmt-rpmtest/" in package["manifest_triggers"]) == expected
+            assert ("^test/rpmtest/shared/" in package["manifest_triggers"]) == expected
             shared = r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$"
             assert (shared in package["manifest_triggers"]) == expected
 

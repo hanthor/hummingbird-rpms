@@ -6,6 +6,7 @@ import signal
 from pathlib import Path
 
 from tmt_rpmtest.environment.lifecycle import finish, prepare
+from tmt_rpmtest.environment.plan import settings_from_plan
 
 
 def main():
@@ -22,16 +23,10 @@ def main():
         return
     root = Path.cwd()
     if args.plan:
-        import fmf
-
-        plan = args.plan.resolve()
-        tree = fmf.Tree(str(plan.parent))
-        root = Path(tree.root)
-        name = "/" + plan.relative_to(root).with_suffix("").as_posix()
-        settings = tree.find(name).get("prepare")
-        if not isinstance(settings, dict) or settings.get("how") != "rpmtest":
-            parser.error("The selected plan must contain one RPM prepare phase.")
-        settings = settings.copy()
+        try:
+            settings, root = settings_from_plan(args.plan)
+        except ValueError as error:
+            parser.error(str(error))
     elif args.settings:
         settings = json.loads(args.settings)
     else:
