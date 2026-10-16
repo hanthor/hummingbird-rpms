@@ -1,15 +1,23 @@
 """RPM inspection primitives. Tests decide which observations to assert."""
 
 import subprocess
-from collections.abc import Callable
+
+from tmt_rpmtest.context import PrimitiveContext
 
 
 class Packages:
-    def __init__(self, query: Callable[..., subprocess.CompletedProcess[str]]):
-        self._query = query
+    def __init__(self, context: PrimitiveContext):
+        self._context = context
+
+    def query(self, *args: str) -> subprocess.CompletedProcess[str]:
+        """Run an RPM query against the current snapshot using external tools."""
+        result = self._context.inspect(["rpm", "--root", "/inspection", *args], name="rpm")
+        return subprocess.CompletedProcess(
+            ["rpm", *args], result.returncode, result.stdout, result.stderr
+        )
 
     def _lines(self, *args: str) -> tuple[str, ...]:
-        result = self._query(*args)
+        result = self.query(*args)
         result.check_returncode()
         return tuple(result.stdout.splitlines())
 
@@ -17,7 +25,7 @@ class Packages:
         """Verify selected packages. Return RPM's status and reported differences."""
         if not names:
             raise ValueError("Select at least one package to verify.")
-        return self._query("-V", *names)
+        return self.query("-V", *names)
 
     def installed(self) -> frozenset[str]:
         """Return installed package names from the current subject's RPM database."""

@@ -1,120 +1,43 @@
-"""A minimal RPM subject for ordinary Python assertions in tmt tests."""
+"""Fresh subject lifecycle and a facade for ordinary Python test scripts."""
 
 import json
 import os
 import signal
-import subprocess
-import tarfile
 import tempfile
+from collections.abc import Callable
 from contextlib import contextmanager
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from typing import TypeVar
 
-from tmt_rpmtest.packages import Packages
-from tmt_rpmtest.podman import Podman, Session
+from tmt_rpmtest.context import PrimitiveContext
+from tmt_rpmtest.podman import Podman
+from tmt_rpmtest.primitives import Files, Packages
 from tmt_rpmtest.rpm import digest
 
-INSPECT = r"""
-set -eu
-python3 -m venv --without-pip /tmp/rpmtest-inspect
-/tmp/rpmtest-inspect/bin/python3 - <<'PY'
-import os
-import tarfile
-with tarfile.open('/work/snapshot.tar') as archive:
-    archive.extractall('/inspection', filter='fully_trusted')
-    for info in archive:
-        for key, value in info.pax_headers.items():
-            if key.startswith('SCHILY.xattr.'):
-                os.setxattr('/inspection/' + info.name, key.removeprefix('SCHILY.xattr.'),
-                            value.encode('utf-8', 'surrogateescape'), follow_symlinks=False)
-PY
-exec rpm --root /inspection "$@"
-"""
+T = TypeVar("T")
 
 
 class Subject:
-    def __init__(self, session: Session, directory: Path, manifest: dict):
-        self.session = session
-        self.directory = directory
-        self.manifest = manifest
-        self.sequence = 0
-        self.packages = Packages(self.rpm)
+    def __init__(self, context: PrimitiveContext):
+        self._context = context
+        self.files = self.use(Files)
+        self.packages = self.use(Packages)
 
-    def _directory(self, operation):
-        self.sequence += 1
-        directory = self.directory / f"{self.sequence:03}-{operation}"
-        directory.mkdir()
-        return directory
+    def use(self, primitive: Callable[[PrimitiveContext], T]) -> T:
+        """Construct a primitive with this session's context. No registration is required."""
+        return primitive(self._context)
 
     def run(self, argv: list[str], *, timeout=60, environment=None):
-        directory = self._directory("command")
-        try:
-            result = self.session.run(
-                argv, timeout=timeout, environment=environment or {}, directory=directory
-            )
-        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
-            (directory / "error.txt").write_text(str(error) + "\n")
-            raise
-        (directory / "execution.json").write_text(
-            json.dumps(
-                {
-                    "argv": argv,
-                    "exit_code": result.returncode,
-                },
-                indent=2,
-            )
-            + "\n"
-        )
-        return result
+        return self._context.run(argv, timeout=timeout, environment=environment)
 
     def copy(self, source: Path, destination: str):
-        target = PurePosixPath(destination)
-        if not target.is_absolute() or ".." in target.parts or str(target) == "/":
-            raise ValueError("Fixture destinations must be absolute paths below root.")
-        directory = self._directory("fixture")
-        archive = directory / "fixture.tar"
+        return self.files.copy(source, destination)
 
-        def metadata(info):
-            info.uid = info.gid = 0
-            info.uname = info.gname = ""
-            return info
-
-        with tarfile.open(archive, "w") as output:
-            for parent in reversed(target.parents[:-1]):
-                info = tarfile.TarInfo(str(parent).lstrip("/"))
-                info.type = tarfile.DIRTYPE
-                info.mode = 0o755
-                output.addfile(info)
-            output.add(source, arcname=str(target).lstrip("/"), filter=metadata)
-        self.session.copy(archive)
-
-    def stat(self, path: str) -> tarfile.TarInfo:
-        directory = self._directory("stat")
-        archive = directory / "snapshot.tar"
-        self.session.snapshot(archive)
-        try:
-            with tarfile.open(archive) as snapshot:
-                for info in snapshot:
-                    if info.name.removeprefix("./").lstrip("/") == path.lstrip("/"):
-                        return info
-            raise FileNotFoundError(path)
-        finally:
-            archive.unlink()
+    def stat(self, path: str):
+        return self.files.stat(path)
 
     def rpm(self, *args: str):
-        directory = self._directory("rpm")
-        archive = directory / "snapshot.tar"
-        self.session.snapshot(archive)
-        try:
-            result = self.session.runtime.build(
-                self.manifest["builder"], directory, INSPECT, *args, check=False
-            )
-        finally:
-            archive.unlink()
-        (directory / "stdout.txt").write_text(result.stdout)
-        (directory / "stderr.txt").write_text(result.stderr)
-        return subprocess.CompletedProcess(
-            ["rpm", *args], result.returncode, result.stdout, result.stderr
-        )
+        return self.packages.query(*args)
 
 
 @contextmanager
@@ -138,6 +61,7 @@ def subject(directory: Path | None = None):
     signal.signal(signal.SIGTERM, interrupt)
     try:
         with runtime.session(directory / "rootfs.tar", configuration["limits"]) as session:
-            yield Subject(session, work, manifest)
+            with PrimitiveContext(session, work, manifest["builder"]) as context:
+                yield Subject(context)
     finally:
         signal.signal(signal.SIGTERM, previous_handler)

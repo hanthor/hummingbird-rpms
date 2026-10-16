@@ -44,7 +44,18 @@ def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path):
     (root / "test.py").write_text("""import subprocess
 from pathlib import Path
 from tmt_rpmtest import subject
+from tmt_rpmtest.primitives import Files
+
+class Binaries:
+    def __init__(self, context):
+        self.files = Files(context)
+
+    def executable(self, path):
+        info = self.files.stat(path)
+        return info.isfile() and bool(info.mode & 0o111)
+
 with subject() as target:
+    binaries = target.use(Binaries)
     assert "curl" in target.packages.installed()
     assert target.packages.owners("/usr/bin/curl") == {"curl"}
     assert "curl" in target.packages.metadata("curl", "provides")
@@ -65,9 +76,15 @@ with subject() as target:
     assert target.run(["/usr/bin/curl", "--fail", "--silent", "file:///missing"]).returncode == 37
     assert target.packages.verify("curl").returncode == 0
     assert target.rpm("-qf", "--qf", "%{NAME}", "/usr/bin/curl").stdout == "curl"
-    assert target.stat("/usr/bin/curl").mode & 0o111
+    assert binaries.executable("/usr/bin/curl")
     assert target.run(["/bin/sh", "-c", "printf broken >/usr/bin/curl"]).returncode == 0
     assert target.packages.verify("curl").returncode != 0
+try:
+    binaries.executable("/usr/bin/curl")
+except RuntimeError as error:
+    assert "closed" in str(error)
+else:
+    raise AssertionError("A primitive must not operate after its subject closes.")
 with subject() as fresh:
     assert fresh.run(["/usr/bin/cat", "/tmp/state"]).returncode != 0
     try:

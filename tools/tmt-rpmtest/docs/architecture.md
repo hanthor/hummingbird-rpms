@@ -8,13 +8,33 @@ The test scripts make their own assertions. There is no custom suite, step, or a
 | --- | --- |
 | `plugin.py` | tmt prepare and finish methods |
 | `rpm.py` | Candidate selection, empty-root assembly, and installed identity verification |
-| `packages.py` | RPM verification results, installed names, owners, and metadata values |
-| `subject.py` | Fixture staging, execution evidence, and external RPM inspection |
+| `subject.py` | Fresh-session lifecycle, primitive construction, and test conveniences |
+| `context.py` | Shared execution, snapshots, inspection, evidence, and session lifetime |
+| `primitives/files.py` | Fixture archives and filesystem observations |
+| `primitives/packages.py` | RPM query construction, verification results, and metadata values |
 | `podman.py` | Builder transport, subject filesystem checkpoints, and owned-resource cleanup |
 
 The RPM and subject modules receive their runtime transport.
 They contain no Podman flags. A future adapter must supply the same build and session operations.
 We will add a formal driver interface when a second implementation makes its requirements concrete.
+
+## Primitive interface
+
+`Subject.use(factory)` passes its `PrimitiveContext` to a normal Python factory and returns the result.
+There is no registration step, base class, or primitive dispatcher.
+A primitive can live in a test tree or an independent Python library.
+New primitive modules do not change the subject lifecycle, tmt methods, or runtime adapter.
+
+The context owns evidence numbering, command execution, fixture transport, and temporary snapshots.
+It also runs external tools against an offline snapshot in the builder.
+`Files` and `Packages` depend on this interface, as custom primitives do.
+A new primitive can compose either built-in without depending on `Subject` or Podman.
+
+The subject invalidates its context before runtime cleanup.
+A primitive that outlives its subject cannot start another command or inspection.
+Snapshot scopes remove partially written archives on export or inspection failure.
+Operation scopes record errors and propagate them to the test.
+The context returns process results; primitives expose observations; tests make assertions.
 
 ## Preparation
 

@@ -151,6 +151,66 @@ Use `target.rpm(...)` for full RPM query output or other metadata fields.
 Use `isfile()`, `issym()`, `mode`, and `linkname` for type, permissions, and symlink checks.
 A missing path raises `FileNotFoundError`.
 
+## Add a primitive
+
+A primitive is a Python class or factory that accepts `PrimitiveContext`.
+Keep it beside your tests, in a shared library, or under the plugin's `primitives/` package.
+Create it with `target.use(MyPrimitive)`. No registration or tmt changes are required.
+Each call creates an instance bound to the current subject session.
+
+For example, save this class in `checks.py` beside a test:
+
+```python
+from tmt_rpmtest import PrimitiveContext
+from tmt_rpmtest.primitives import Files
+
+
+class Binaries:
+    def __init__(self, context: PrimitiveContext):
+        self.files = Files(context)
+
+    def executable(self, path: str) -> bool:
+        info = self.files.stat(path)
+        return info.isfile() and bool(info.mode & 0o111)
+```
+
+Use it from an ordinary test script:
+
+```python
+from checks import Binaries
+from tmt_rpmtest import subject
+
+with subject() as target:
+    binaries = target.use(Binaries)
+    assert binaries.executable("/usr/bin/hello")
+```
+
+Built-in `Files` and `Packages` use the same interface.
+`target.files` and `target.packages` expose their instances.
+Existing `target.copy()`, `target.stat()`, and `target.rpm()` calls remain available as conveniences.
+Compose built-ins inside a new primitive, as the example does, or use the context directly:
+
+| Context operation | Purpose |
+| --- | --- |
+| `run(argv, timeout=..., environment=...)` | Execute in the subject and retain command evidence |
+| `snapshot(name="snapshot")` | Scope a temporary filesystem archive with automatic removal |
+| `inspect(argv, name="inspect")` | Run offline builder tools against a snapshot at `/inspection` |
+| `operation(name)` | Scope a numbered evidence directory and retain errors |
+| `stage(archive)` | Copy a prepared fixture archive into the subject |
+
+For host-side inspection, open the archive inside `with context.snapshot() as archive:`.
+The archive is removed when that block ends, including on failure.
+For external inspection, `context.inspect()` extracts the snapshot with ownership, modes, and xattrs.
+Its tools come from the plan's builder image and cannot change the subject.
+Commands and inspections return `subprocess.CompletedProcess`, including nonzero exit codes.
+Inspection output and operation errors remain in the evidence directory.
+
+Use `context.operation("my-check")` when a primitive needs to write its own evidence.
+Operation names accept lowercase letters, digits, and hyphens.
+A primitive must not retain the context beyond its subject block.
+After that block, context operations raise `RuntimeError` before accessing the runtime.
+Primitives leave assertions to the test and do not manage containers or signal handlers.
+
 ## Evidence and limits
 
 Use `--keep` to retain the run directory.
