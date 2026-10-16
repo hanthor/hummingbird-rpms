@@ -122,6 +122,23 @@ class TestExpandTaskRunSpecs:
 
 class TestBuildPacVariables:
     @pytest.mark.parametrize("event_type", ["pull-request", "push"])
+    def test_fmf_pilot_changes_trigger_only_the_corresponding_package(
+        self, gen_module, mock_repo, event_type
+    ):
+        tests = mock_repo / "test/rpmtest/alpha/tests"
+        tests.mkdir(parents=True)
+        with patch.object(gen_module, "ROOT_DIR", mock_repo):
+            variables = gen_module.build_pac_variables("main", "hummingbird-tenant", event_type)
+        for package in variables["rpms"]:
+            expected = package["dname"] == "alpha" and event_type == "pull-request"
+            assert ("^test/rpmtest/alpha/" in package["manifest_triggers"]) == expected
+            assert ("^tools/tmt-rpmtest/" in package["manifest_triggers"]) == expected
+            assert ("^test/rpmtest/shared/" in package["manifest_triggers"]) == expected
+            assert (r"^test/rpmtest/\.fmf/" in package["manifest_triggers"]) == expected
+            shared = r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$"
+            assert (shared in package["manifest_triggers"]) == expected
+
+    @pytest.mark.parametrize("event_type", ["pull-request", "push"])
     def test_default_build_targets(self, gen_module, mock_repo, event_type):
         with patch.object(gen_module, "ROOT_DIR", mock_repo):
             variables = gen_module.build_pac_variables(

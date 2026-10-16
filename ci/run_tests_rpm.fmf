@@ -1,125 +1,53 @@
----
+summary: Test built RPM artifacts
 execute:
   how: tmt
-
 prepare:
   - how: install
-    package: rpmlint
-  - how: install
-    package: podman
+    package: [rpmlint, podman, slirp4netns, rsync, python3.11, python3.11-pip]
   - how: shell
     script: |
-      #!/bin/bash
       set -euo pipefail
-      shopt -s inherit_errexit
-
-      mkdir -p ~/.local/bin
-
-      ARCH="$(arch)"
-      case $ARCH in
-          "x86_64")
-              ARCH="amd64"
-              ;;
-          "aarch64")
-              ARCH="arm64"
-              ;;
-      esac
-
-      OS="linux"
-      oras_version="1.3.0"
-      oras_archive=$(mktemp)
-      curl \
-        --location \
-        --silent \
-        --fail \
-        --show-error \
-        --retry 5 \
-        --retry-delay 5 \
-        --connect-timeout 30 \
-        --globoff \
-        --output "${oras_archive}" \
-        "https://github.com/oras-project/oras/releases/download/v${oras_version}/oras_${oras_version}_${OS}_${ARCH}.tar.gz"
-      tar \
-        --extract \
-        --gzip \
-        --file "${oras_archive}" \
-        --directory ~/.local/bin \
-        oras
-      rm -f "${oras_archive}"
-
-  # fix TF not being able to deal with newly added submodules in MRs
-  # https://issues.redhat.com/browse/TFT-3991
+      ci/prepare_rpm_artifacts.sh
   - how: shell
     script: git submodule update --init --recursive
+  - how: shell
+    script: |
+      set -euo pipefail
+      [[ -d "${TMT_TREE}/test/rpmtest/${RPMTEST_PACKAGE}/tests" ]] || exit 0
+      bootstrap="${TMT_PLAN_DATA}/bootstrap"
+      python3.11 -m venv "$bootstrap"
+      "$bootstrap/bin/pip" install --quiet uv==0.13.1
+      export UV_PROJECT_ENVIRONMENT="${TMT_PLAN_DATA}/python"
+      "$bootstrap/bin/uv" sync --python python3.11 --frozen --no-dev \
+        --project "${TMT_TREE}/tools/tmt-rpmtest"
+      printf 'RPMTEST_PYTHON=%q\n' "$UV_PROJECT_ENVIRONMENT/bin/python" >> "$TMT_PLAN_ENVIRONMENT_FILE"
+
+finish:
+  how: shell
+  script: |
+    python="${TMT_PLAN_DATA}/python/bin/python"
+    if [[ -x $python ]]; then
+      "$python" -m tmt_rpmtest.environment finish --directory "${TMT_PLAN_DATA}/rpmtest"
+    fi
 
 discover:
-  how: shell
-  keep-git-metadata: true
-  sync-repo: true
-  tests:
-    - name: Podman
-      # When increasing the timeout, also increase the value inside
-      # the IntegrationTestScenario resource
-      duration: 8h
-      test: |
-        #!/bin/bash
-        set -euo pipefail
-        shopt -s inherit_errexit
-        echo "IMAGE_NAME: ${IMAGE_NAME:-unset}"
-        echo "IMAGE_URL: ${IMAGE_URL:-unset}"
-        if [[ -n ${IMAGE_NAME:-} ]]; then
-            package_name=${IMAGE_NAME%-main}
-            # Find actual package directory by reversing the IMAGE_NAME normalization.
-            # Konflux normalizes directory names: lowercase + replace _+. with hyphens.
-            # We iterate through rpms/ directories, apply the same normalization,
-            # and compare to package_name to find the original directory name.
-            while IFS= read -r dir; do
-                dir_basename=$(basename "$dir")
-                # Apply same normalization as Konflux: lowercase, replace _+. with -
-                normalized="${dir_basename,,}"
-                normalized="${normalized//_/-}"
-                normalized="${normalized//+/-}"
-                normalized="${normalized//./-}"
-                if [[ "${normalized}" == "${package_name}" ]]; then
-                    package_name="${dir_basename}"
-                    break
-                fi
-            done < <(find rpms -maxdepth 1 -mindepth 1 -type d)
-        fi
-        if [[ -n ${IMAGE_URL:-} ]]; then
-          work_dir=$(mktemp -d)
-          rpms_dir="${work_dir}/RPMS"
-          srpms_dir="${work_dir}/SRPMS"
-          mkdir -p "${rpms_dir}" "${srpms_dir}"
-
-          # Pull all files to work directory
-          oras pull "${IMAGE_URL}" -o "${work_dir}"
-
-          # Move source RPMs to srpms_dir
-          mv "${work_dir}"/*.src.rpm "${srpms_dir}/" 2>/dev/null || true
-
-          # Move binary RPMs matching current architecture to rpms_dir
-          current_arch=$(uname -m)
-          rpm_files=()
-          for f in "${work_dir}"/*.rpm; do
-            [[ $f == *.src.rpm ]] && continue
-            rpm_arch=$(rpm -qp --queryformat '%{ARCH}\n' "$f" 2>/dev/null || true)
-            if [[ ${rpm_arch} == "noarch" || ${rpm_arch} == "${current_arch}" ]]; then
-              mv "$f" "${rpms_dir}/"
-              rpm_files+=("${rpms_dir}/$(basename "$f")")
-            fi
+  - name: rpm-checks
+    how: shell
+    keep-git-metadata: true
+    tests:
+      - name: RPM checks
+        duration: 8h
+        test: |
+          set -euo pipefail
+          [[ -n ${RPMTEST_SOURCE_RPM:-} ]] || exit 0
+          rpm_arguments=()
+          for artifact in "${RPMTEST_RPMS}"/*.rpm; do
+            rpm_arguments+=(--rpm "$artifact")
           done
-
-          # Skip testing if no RPMs match the current architecture
-          # (e.g., x86_64-only packages like libipt running on aarch64)
-          if [[ ${#rpm_files[@]} -eq 0 ]]; then
-            echo "No binary RPMs found for architecture ${current_arch}, skipping tests"
-            exit 0
-          fi
-
-          # Get source RPM path
-          src_rpm_file=$(ls -1 "${srpms_dir}/"*.src.rpm)
-
-          # Run tests with --repo-dir pointing to binary RPMs directory
-          ci/run_tests_rpm.sh -j $(printf -- '--rpm %s ' "${rpm_files[@]}") --repo-dir "${rpms_dir}" --src-rpm "${src_rpm_file}" "${package_name:-}"
-        fi
+          ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
+            --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
+  - name: rpmtest
+    how: fmf
+    path: $TMT_TREE/test/rpmtest
+    test: ^/[^/]+/tests/
+    filter: component:${IMAGE_NAME}

@@ -1,0 +1,16 @@
+summary: Test hello contract in a minimal RPM root
+provision:
+  how: local
+discover:
+  how: fmf
+  test: ^/hello/tests/contract$
+prepare:
+  how: rpmtest
+  packages:
+  - hello
+  repositories:
+  - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest

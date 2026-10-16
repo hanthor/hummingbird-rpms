@@ -1,0 +1,15 @@
+summary: Test curl in its minimal RPM dependency root
+discover:
+  how: fmf
+  test: /tests/rpm
+provision:
+  how: local
+prepare:
+  how: rpmtest
+  packages: [curl]
+  repositories:
+    - https://packages.redhat.com/api/pulp-content/public-hummingbird/$basearch/
+execute:
+  how: tmt
+finish:
+  how: rpmtest

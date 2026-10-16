@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tmt-rpmtest"
+version = "0.2.0"
+description = "Test exact RPM artifacts in minimal roots through tmt"
+requires-python = ">=3.11"
+dependencies = ["tmt==1.78.0"]
+
+[project.entry-points."tmt.plugin"]
+rpmtest_prepare = "tmt_rpmtest.plugins.prepare:PrepareRPM"
+rpmtest_finish = "tmt_rpmtest.plugins.finish:FinishRPM"
+
+[project.entry-points."tmt.resources"]
+rpmtest = "tmt_rpmtest.plugins"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.9"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

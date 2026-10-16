@@ -20,6 +20,7 @@ dev = [
 [[tool.mypy.overrides]]
 module = [
   "cki_lib.*",
+  "tmt_rpmtest.*",
   "cve_analysis_bridge",
   "hummingbird_cve_analysis.*",
 ]
