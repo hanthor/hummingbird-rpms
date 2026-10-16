@@ -20,6 +20,8 @@ Source3:        loki-%{version}-vendor.tar.bz2
 Patch0:         0001-tests-use-explicit-loopback-addresses.patch
 # Update the encoding/json error text used by Go 1.27.
 Patch1:         0002-tests-update-json-error-for-go1.27.patch
+# Keep asynchronous cleanup assertions reliable on slower build architectures.
+Patch2:         0003-tests-wait-for-async-cleanup.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26

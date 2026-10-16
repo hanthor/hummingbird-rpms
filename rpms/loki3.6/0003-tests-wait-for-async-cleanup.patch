@@ -1,0 +1,66 @@
+From: Hummingbird RPM maintainers
+Subject: [PATCH] tests: wait for asynchronous cleanup on slow builders
+
+Promtail removes file metrics on a periodic sync, so sleeping for exactly
+one sync interval can observe them before cleanup runs. Poll for the metric
+removal while keeping the same assertions. Give marker processor tests more
+time and poll less aggressively on slower build architectures.
+
+diff --git a/clients/pkg/promtail/promtail_test.go b/clients/pkg/promtail/promtail_test.go
+index 28c63fc..534fa71 100644
+--- a/clients/pkg/promtail/promtail_test.go
++++ b/clients/pkg/promtail/promtail_test.go
+@@ -201,11 +201,27 @@ func TestPromtail(t *testing.T) {
+ 		t.Fatal("Could not delete a log file to verify metrics are removed: ", err)
+ 	}
+ 
+-	// Sync period is 500ms in tests, need to wait for at least one sync period for tailer to be cleaned up
+-	<-time.After(500 * time.Millisecond)
++	// Wait for the sync that removes the deleted file's metrics. Sleeping for
++	// exactly one sync period races the ticker on slower builders.
++	var metricsBytes []byte
++	var contentType string
++	deadline := time.Now().Add(10 * time.Second)
++	for {
++		metricsBytes, contentType = getPromMetrics(t, httpListenAddr)
++		readBytesMetrics := parsePromMetrics(t, metricsBytes, contentType, "promtail_read_bytes_total", "path")
++		fileBytesMetrics := parsePromMetrics(t, metricsBytes, contentType, "promtail_file_bytes_total", "path")
++		_, readPresent := readBytesMetrics[logFile1]
++		_, filePresent := fileBytesMetrics[logFile1]
++		if !readPresent && !filePresent {
++			break
++		}
++		if time.Now().After(deadline) {
++			t.Fatalf("file metrics remained after cleanup: read=%t file=%t", readPresent, filePresent)
++		}
++		time.Sleep(100 * time.Millisecond)
++	}
+ 
+-	// Pull out some prometheus metrics before shutting down
+-	metricsBytes, contentType := getPromMetrics(t, httpListenAddr)
++	// Keep the final metrics snapshot for the remaining assertions.
+ 
+ 	p.Shutdown()
+ 
+diff --git a/pkg/compactor/retention/marker_test.go b/pkg/compactor/retention/marker_test.go
+index e90ac7d..56bb44e 100644
+--- a/pkg/compactor/retention/marker_test.go
++++ b/pkg/compactor/retention/marker_test.go
+@@ -84,7 +84,7 @@ func Test_markerProcessor_StartRetryKey(t *testing.T) {
+ 		}
+ 		sort.Strings(actual)
+ 		return assert.ObjectsAreEqual(expected, actual)
+-	}, 10*time.Second, 100*time.Microsecond)
++	}, 30*time.Second, 10*time.Millisecond)
+ }
+ 
+ func Test_markerProcessor_StartDeleteOnSuccess(t *testing.T) {
+@@ -113,7 +113,7 @@ func Test_markerProcessor_StartDeleteOnSuccess(t *testing.T) {
+ 		}
+ 		sort.Strings(actual)
+ 		return assert.ObjectsAreEqual(expected, actual)
+-	}, 10*time.Second, 100*time.Microsecond)
++	}, 30*time.Second, 10*time.Millisecond)
+ }
+ 
+ func Test_markerProcessor_availablePath(t *testing.T) {
