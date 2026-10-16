@@ -2,7 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/pgbouncer.git",
-    "sha": "84f413679018d24a0cd0071a9c532b020772f085"
+    "release": "1",
+    "sha": "5f443ef56fb2264296df7059e460f937882c6fad"
   },
   "modification_reason": "Update to upstream version 1.26.1",
   "modification_status": "modified",
