@@ -5,9 +5,9 @@
 %bcond_without check
 
 %define majorver 3
-%define realver 3540000
-%define docver 3540000
-%define rpmver 3.54.0
+%define realver 3540100
+%define docver 3540100
+%define rpmver 3.54.1
 %define year 2026
 
 Summary: Library that implements an embeddable SQL database engine
