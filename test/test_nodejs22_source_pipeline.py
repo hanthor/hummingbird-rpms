@@ -15,6 +15,7 @@ from gorget.config.loader import build_pipeline_spec
 from gorget.config.schema import PipelineSpec
 from gorget.config.substitution import SubstitutionVars
 from gorget.context import RunContext
+from gorget.exceptions import GorgetTransientError
 from gorget.fetch.base import FetchContext
 from gorget.fetch.spec_update import SpecUpdateHandler
 from gorget.pipeline.artifact import Artifact
@@ -82,7 +83,7 @@ def test_packaging_scripts_archive_normalizes_gitlab_checkout_modes(
     }
 
 
-def _source_archive(path: Path) -> None:
+def _source_archive(path: Path, version: str = VERSION) -> None:
     """Supply the version headers consumed by the real fill-versions.sh."""
     files = {
         "src/node_version.h": "#define NODE_MODULE_VERSION 127\n",
@@ -121,12 +122,12 @@ def _source_archive(path: Path) -> None:
     with tarfile.open(path, "w:gz") as archive:
         for name, content in files.items():
             data = content.encode()
-            entry = tarfile.TarInfo(f"node-v{VERSION}/{name}")
+            entry = tarfile.TarInfo(f"node-v{version}/{name}")
             entry.size = len(data)
             archive.addfile(entry, io.BytesIO(data))
 
 
-def _post_context(tmp_path: Path, *, dry_run: bool = False) -> tuple[
+def _post_context(tmp_path: Path, *, dry_run: bool = False, version: str = VERSION) -> tuple[
     RunContext, PipelineSpec, StageState
 ]:
     # Spaces exercise quoting of SPEC_FILE and package-relative artifact paths.
@@ -134,7 +135,7 @@ def _post_context(tmp_path: Path, *, dry_run: bool = False) -> tuple[
     shutil.copytree(PACKAGE_DIR, package_dir)
     spec_path = package_dir / "nodejs22.spec"
     variables = SubstitutionVars(
-        version=VERSION, old_version="22.23.3", package="nodejs22",
+        version=version, old_version="22.23.3", package="nodejs22",
         spec_file=spec_path.name, package_dir=str(package_dir),
     )
     context = RunContext(
@@ -145,11 +146,11 @@ def _post_context(tmp_path: Path, *, dry_run: bool = False) -> tuple[
     pipeline = build_pipeline_spec(PIPELINE_FILE, substitution_vars=variables)
     scratch = tmp_path / "scratch.spec"
     shutil.copyfile(spec_path, scratch)
-    archive_path = tmp_path / f"node-v{VERSION}.tar.gz"
-    _source_archive(archive_path)
+    archive_path = tmp_path / f"node-v{version}.tar.gz"
+    _source_archive(archive_path, version)
     state = StageState(
         work_dir=tmp_path, spec=SpecFile(scratch, sourcedir=package_dir),
-        report=PipelineReport(package="nodejs22", version=VERSION,
+        report=PipelineReport(package="nodejs22", version=version,
                               old_version=variables.old_version, dry_run=dry_run),
         artifacts=[Artifact(path=archive_path, output_name=archive_path.name,
                             source_description="test Node source", checksum=None)],
@@ -225,12 +226,26 @@ def test_nodejs22_post_persists_version_and_preserves_evr(
 def test_nodejs22_post_dry_run_preserves_tracked_files(tmp_path: Path) -> None:
     context, pipeline, state = _post_context(tmp_path, dry_run=True)
     original = context.spec_path.read_bytes()
+    source_archive = state.artifacts[0].path
+    original_archive = source_archive.read_bytes()
 
     result = PostStage().run(context, pipeline, state)
 
     assert result.status == "skipped"
     assert context.spec_path.read_bytes() == original
+    assert source_archive.read_bytes() == original_archive
+    # A non-dry-run post stage copies declared artifacts into package_dir.
     assert not (context.package_dir / f"node-v{VERSION}.tar.gz").exists()
+
+
+def test_nodejs22_post_rejects_invalid_version(tmp_path: Path) -> None:
+    context, pipeline, state = _post_context(tmp_path, version="22.23.4|bad")
+    original = context.spec_path.read_bytes()
+
+    with pytest.raises(GorgetTransientError, match="Unexpected Node version"):
+        PostStage().run(context, pipeline, state)
+
+    assert context.spec_path.read_bytes() == original
 
 
 def test_nodejs22_post_is_idempotent(tmp_path: Path) -> None:
@@ -248,7 +263,7 @@ def test_nodejs22_post_keeps_subpackage_version_release_macros(tmp_path: Path) -
     PostStage().run(context, pipeline, state)
     result = subprocess.run(
         ["rpmspec", "--parse", "--define", f"_sourcedir {context.package_dir}",
-         str(context.spec_path)], capture_output=True, text=True,
+         str(context.spec_path)], capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
     parsed = result.stdout

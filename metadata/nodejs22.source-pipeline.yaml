@@ -88,6 +88,10 @@ post:
         # Without the legacy hook, check_upstream_versions.py first replaces
         # the main Version/Release tags with literals; restore their macro
         # bindings so Node, npm and V8 continue to share the same Node EVR.
+        if ! printf '%s\n' "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          printf 'Unexpected Node version: %s\n' "${VERSION}" >&2
+          exit 1
+        fi
         sed -Ei \
           -e '/^%nodejs_define_version\s+node\>/s|:[0-9]+\.[0-9]+\.[0-9]+-|:'"${VERSION}"'-|' \
           -e '0,/^Version:/{s/^(Version:\s+).*/\1%{node_version}/;}' \
