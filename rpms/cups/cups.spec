@@ -15,7 +15,7 @@ Summary: CUPS printing system
 Name: cups
 Epoch: 1
 Version: 2.4.19
-Release: 4.5%{?dist}
+Release: 4.6%{?dist}
 # backend/failover.c - BSD-3-Clause
 # cups/md5* - Zlib
 # scheduler/colorman.c - Apache-2.0 WITH LLVM-exception AND BSD-2-Clause
@@ -97,6 +97,10 @@ Patch1009: 1009-cve-2026-107890-denial-service-repeated-ipp-group.patch
 # The upstream CVE-2026-107890 fix above only strips group separators on the
 # normal exit of add_job_subscriptions(); cupsd still crashes without it.
 Patch1010: 1010-cve-2026-107890-strip-separators-on-all-exits.patch
+Patch1011: 1011-cve-2026-55453-ipp-status-sanitization.patch
+Patch1012: 1012-cve-2026-61702-natural-language-validation.patch
+Patch1013: 1013-cve-2026-55480-secure-temporary-ppd.patch
+Patch1014: 1014-cve-2026-55467-fax-option-sanitization.patch
 
 
 ##### Patches removed because IMHO they aren't no longer needed
@@ -335,6 +339,10 @@ to CUPS daemon. This solution will substitute printer drivers and raw queues in 
 %patch -P 1008 -p1 -b .fix-cve-2026-107888
 %patch -P 1009 -p1 -b .fix-cve-2026-107890
 %patch -P 1010 -p1 -b .fix-cve-2026-107890-complement
+%patch -P 1011 -p1 -b .fix-cve-2026-55453
+%patch -P 1012 -p1 -b .fix-cve-2026-61702
+%patch -P 1013 -p1 -b .fix-cve-2026-55480
+%patch -P 1014 -p1 -b .fix-cve-2026-55467
 
 
 # Log to the system journal by default (bug #1078781, bug #1519331).
