@@ -1,0 +1,25 @@
+Subject: [PATCH] Allow more time for the rotation test TLS handshake
+
+TestSVIDRotation generates an agent SVID with a three-second lifetime.
+The mock clock is truncated to a whole second, but the TLS server uses
+wall-clock time. On slow or busy workers the SVID can expire before the
+initial handshake, failing manager initialization with "tls: expired
+certificate" before any rotation assertions run.
+
+Allow a minute for the handshake. The test derives its rotation interval
+and advances its mock clock from the same TTL, preserving the rotation
+checks without waiting for the longer lifetime in real time.
+
+--- a/pkg/agent/manager/manager_test.go
++++ b/pkg/agent/manager/manager_test.go
+@@ -441,7 +441,9 @@
+ 
+ 	clk := clock.NewMock(t)
+ 
+-	baseTTLSeconds := 3
++	// Allow slow build workers to complete the initial TLS handshake.
++	// Rotation uses the mock clock, so a longer TTL does not slow the test.
++	baseTTLSeconds := 60
+ 	api := newMockAPI(t, &mockAPIConfig{
+ 		km: km,
+ 		getAuthorizedEntries: func(*mockAPI, int32, *entryv1.GetAuthorizedEntriesRequest) (*entryv1.GetAuthorizedEntriesResponse, error) {
