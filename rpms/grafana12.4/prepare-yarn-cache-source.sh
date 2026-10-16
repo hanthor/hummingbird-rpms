@@ -5,6 +5,10 @@ source_dir=${1:?Usage: prepare-yarn-cache-source.sh SOURCE_DIR VERSION}
 package_dir=$(cd "$(dirname "$0")" && pwd)
 
 cd "${source_dir}"
+# Do not apply grafana-pacote-cve.patch here. The source pipeline first runs
+# Yarn to populate the cache, patches the pacote zip files, then applies the
+# checksum-only lockfile patch and verifies the patched cache offline.
+# post_update only reads package names and versions, so it needs no checksums.
 patch -p1 < "${package_dir}/grafana-yarn-cache.patch"
 patch -p1 < "${package_dir}/grafana-fast-uri-cve.patch"
 patch -p1 < "${package_dir}/grafana-npm-cve-brace-postcss.patch"
