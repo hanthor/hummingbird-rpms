@@ -283,6 +283,10 @@ identify it as an FMF metadata tree for tmt. The test plan in
 `ci/run_tests_rpm.fmf` sets up the test instance and runs default and
 package-specific tests via `ci/run_tests_rpm.sh`.
 
+The plan configures Podman to use public DNS servers `1.1.1.1` and
+`8.8.8.8` inside test containers. This selects the public Pulp endpoint
+to match customer access. Containers use their original CA trust stores.
+
 #### Test environment
 
 These environment variables are available to the tmt test execution:

@@ -9,6 +9,16 @@ prepare:
     package: podman
   - how: shell
     script: |
+      set -euo pipefail
+
+      # Use public DNS so test containers access the public Pulp endpoint.
+      mkdir -p /etc/containers/containers.conf.d
+      cat > /etc/containers/containers.conf.d/90-hummingbird-dns.conf <<'EOF'
+      [containers]
+      dns_servers = ["1.1.1.1", "8.8.8.8"]
+      EOF
+  - how: shell
+    script: |
       #!/bin/bash
       set -euo pipefail
       shopt -s inherit_errexit
