@@ -20,7 +20,7 @@ rpas:
     pulp_unsigned_domain: hummingbird-unsigned
     pulp_signed_domain: public-hummingbird
     pulp_secret_name: hummingbird-pulp-credentials-production-secret
-    pipeline_url: "https://github.com/konflux-ci/release-service-catalog.git"
+    pipeline_url: "https://github.com/scoheb/release-service-catalog.git"
     pipeline_revision: development
     skip_pyxis_mr: true  # Set to true to skip pyxis-repo-configs MR for this RPA
     component_filter:
@@ -37,7 +37,7 @@ rpas:
     pulp_unsigned_domain: private-hummingbird-example-unsigned
     pulp_signed_domain: private-hummingbird-example
     pulp_secret_name: hummingbird-pulp-credentials-private-production-secret
-    pipeline_url: "https://github.com/konflux-ci/release-service-catalog.git"
+    pipeline_url: "https://github.com/scoheb/release-service-catalog.git"
     pipeline_revision: development
     private_product: example
     component_filter:
@@ -53,7 +53,7 @@ rpas:
     pulp_unsigned_domain: private-hummingbird-nodejs20-unsigned
     pulp_signed_domain: private-hummingbird-nodejs20
     pulp_secret_name: hummingbird-pulp-credentials-private-production-secret
-    pipeline_url: "https://github.com/konflux-ci/release-service-catalog.git"
+    pipeline_url: "https://github.com/scoheb/release-service-catalog.git"
     pipeline_revision: development
     private_product: nodejs20
     component_filter:
