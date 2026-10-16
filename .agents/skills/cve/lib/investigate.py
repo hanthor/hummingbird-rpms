@@ -10,6 +10,7 @@ from lib.models import (
     GITLAB_RPMS_REPO,
 )
 from lib.utils import normalize_hum_key
+from lib.redact import redact_secrets, write_redacted_copy
 from lib.jira import (
     ensure_rhjira_available,
     fetch_json,
@@ -249,13 +250,31 @@ def log_message(
     *,
     print_only: bool = False,
 ) -> tuple[Path, str]:
-    """Attach an existing log or transcript file to a Jira ticket."""
+    """Attach an existing log or transcript file to a Jira ticket.
+
+    Before attaching (or previewing with `print_only`), the file is scanned
+    for likely passwords/tokens/keys via `redact_secrets()`. If any are
+    found, a redacted copy is written and that copy — never the original
+    file — is what gets attached or reported.
+    """
     ticket = normalize_hum_key(ticket)
     if not file_path.is_file():
         raise ValueError(f"Log file not found: {file_path}")
 
-    if print_only:
-        return file_path, f"Found {file_path} (print-only, not uploaded)"
+    original_text = file_path.read_text(encoding="utf-8", errors="replace")
+    redacted_text, redacted_count = redact_secrets(original_text)
+    upload_path = file_path
+    note = ""
+    if redacted_count:
+        upload_path = write_redacted_copy(file_path, redacted_text)
+        plural = "" if redacted_count == 1 else "s"
+        note = (
+            f"Redacted {redacted_count} potential secret{plural} "
+            f"before upload -> {upload_path}. "
+        )
 
-    msg = attach_file(ticket, file_path)
-    return file_path, msg
+    if print_only:
+        return upload_path, f"{note}Found {file_path} (print-only, not uploaded)"
+
+    msg = attach_file(ticket, upload_path)
+    return upload_path, f"{note}{msg}"

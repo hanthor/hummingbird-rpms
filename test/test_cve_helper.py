@@ -30,6 +30,7 @@ import lib.comments as lib_comments  # noqa: E402
 import lib.investigate as lib_investigate  # noqa: E402
 import lib.jira as lib_jira  # noqa: E402
 import lib.models as lib_models  # noqa: E402
+import lib.redact as lib_redact  # noqa: E402
 import lib.sbom as lib_sbom  # noqa: E402
 import lib.spec as lib_spec  # noqa: E402
 import lib.utils as lib_utils  # noqa: E402
@@ -1639,6 +1640,138 @@ def test_cmd_close_nab_without_tickets_or_print_only_raises() -> None:
     )
     with pytest.raises(RuntimeError, match="Pass HUM ticket key"):
         helper.cmd_close_nab(args)
+
+
+def test_redact_secrets_leaves_clean_text_unchanged() -> None:
+    text = "# My Investigation Log\nAll steps completed.\n"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert redacted == text
+    assert count == 0
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_substring"),
+    [
+        ('password = "hunter2hunter2"', 'password = "[SECRET]"'),
+        ("password: hunter2hunter2", "password: [SECRET]"),
+        ("DB_PASSWORD=supersecretvalue", "DB_PASSWORD=[SECRET]"),
+        ("aws_secret_access_key: abcd1234efgh5678ijkl", "aws_secret_access_key: [SECRET]"),
+        ("api_key='sk-abcdefghijklmnop'", "api_key='[SECRET]'"),
+        ("JIRA_TOKEN=abcdef0123456789", "JIRA_TOKEN=[SECRET]"),
+    ],
+)
+def test_redact_secrets_generic_assignment(text: str, expected_substring: str) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert expected_substring in redacted
+    assert "hunter2hunter2" not in redacted
+    assert "supersecretvalue" not in redacted
+
+
+def test_redact_secrets_github_token() -> None:
+    text = "remote: ghp_" + "a" * 36
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "[SECRET]" in redacted
+    assert "ghp_" not in redacted
+
+
+def test_redact_secrets_aws_access_key_id() -> None:
+    text = "AWS_ACCESS_KEY_ID=AKIAABCDEFGHIJKLMNOP"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert "AKIAABCDEFGHIJKLMNOP" not in redacted
+    assert "[SECRET]" in redacted
+
+
+def test_redact_secrets_jwt() -> None:
+    jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dQw4w9WgXcQ_dQw4w9WgXcQ"
+    text = f"Authorization token: {jwt}"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert jwt not in redacted
+    assert "[SECRET]" in redacted
+
+
+def test_redact_secrets_bearer_header() -> None:
+    text = "curl -H 'Authorization: Bearer abc123.def456-token'"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "abc123.def456-token" not in redacted
+    assert "Authorization: Bearer [SECRET]" in redacted
+
+
+def test_redact_secrets_url_credentials() -> None:
+    text = "git clone https://myuser:mysecretpass@example.com/repo.git"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "mysecretpass" not in redacted
+    assert "myuser" not in redacted
+    assert "https://[SECRET]@example.com/repo.git" in redacted
+
+
+def test_redact_secrets_private_key_block() -> None:
+    text = (
+        "-----BEGIN RSA PRIVATE KEY-----\n"
+        "MIIBOgIBAAJBAK...\n"
+        "-----END RSA PRIVATE KEY-----"
+    )
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert redacted == "[SECRET]"
+
+
+def test_write_redacted_copy_does_not_touch_original(tmp_path: Path) -> None:
+    original = tmp_path / "session.jsonl"
+    original.write_text("password=supersecretvalue", encoding="utf-8")
+    copy_path = lib_redact.write_redacted_copy(original, "password=[SECRET]")
+    assert copy_path != original
+    assert copy_path.suffix == ".jsonl"
+    assert copy_path.read_text(encoding="utf-8") == "password=[SECRET]"
+    assert original.read_text(encoding="utf-8") == "password=supersecretvalue"
+
+
+def test_log_message_redacts_secrets_before_attach(tmp_path: Path, monkeypatch) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text(
+        "# Investigation\npassword=supersecretvalue\nAll done.\n", encoding="utf-8"
+    )
+
+    calls: list[list[str]] = []
+
+    def fake_rhjira(args, *, cwd=None):
+        calls.append(args)
+        return SimpleNamespace(returncode=0, stdout="attached", stderr="")
+
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
+
+    out_file, msg = lib_investigate.log_message("HUM-1234", log_file)
+
+    assert out_file != log_file
+    assert "Redacted 1 potential secret" in msg
+    assert "Attached" in msg
+    attached_path = Path(calls[0][2])
+    assert attached_path == out_file
+    assert "supersecretvalue" not in attached_path.read_text(encoding="utf-8")
+    assert "[SECRET]" in attached_path.read_text(encoding="utf-8")
+    # Original file on disk is left untouched.
+    assert "supersecretvalue" in log_file.read_text(encoding="utf-8")
+
+
+def test_log_message_print_only_reports_redaction_without_writing(
+    tmp_path: Path,
+) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text("token: abcdef0123456789", encoding="utf-8")
+
+    out_file, msg = lib_investigate.log_message(
+        "HUM-9999", log_file, print_only=True
+    )
+
+    assert out_file != log_file
+    assert "Redacted 1 potential secret" in msg
+    assert "print-only" in msg.lower()
+    assert "abcdef0123456789" not in out_file.read_text(encoding="utf-8")
 
 
 def test_log_message_with_existing_file(tmp_path: Path, monkeypatch) -> None:

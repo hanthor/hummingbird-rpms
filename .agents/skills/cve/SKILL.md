@@ -255,6 +255,15 @@ need to ask:
 cve_helper.py log-message HUM-XXXX /path/to/log
 ```
 
+**Secret redaction:** before attaching (or previewing with `--print-only`),
+`log-message` scans the file and replaces likely passwords, tokens, API
+keys, and private keys with `[SECRET]` (see `lib/redact.py`). This is
+best-effort pattern matching, not a guarantee — do not rely on it as the
+only safeguard; avoid pasting real credentials into a session in the first
+place. If any secrets are redacted, the command reports a count and uploads
+the redacted copy, never the original file; check the printed message to
+confirm before assuming a ticket comment thread is safe to share further.
+
 **Finding the log file by environment:**
 
 `cve_helper.py log-message` can auto-export and attach the current session
