@@ -2,11 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/subversion.git",
-    "release": "32",
-    "sha": "69a9819a8aac7b15b2103984a30559f0b2e0b954"
+    "release": "3",
+    "sha": "eddf0fda2425dcc901531ba912982c519bacd9cd"
   },
-  "modification_reason": "Declare nkf build and runtime dependencies for the Ruby bindings (HUM-9790)",
+  "modification_reason": "Declare nkf build and runtime dependencies for the Ruby bindings (HUM-9790); restrict the JavaHL DOS readonly cleanup workaround to Windows for hermetic mock builds",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/apache/subversion",
-  "version": "1.14.5"
+  "version": "1.15.0"
 }
