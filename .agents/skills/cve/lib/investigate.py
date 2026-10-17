@@ -259,12 +259,26 @@ def log_message(
     again once the attach completes, so `file_path` (the original, never
     modified) is always what's returned. `print_only` never writes a file;
     it only reports what would happen.
+
+    If the file isn't valid UTF-8 (e.g. it contains raw binary captured in
+    a command's output), redaction is skipped entirely and the original
+    file is attached as-is: decoding with `errors="replace"` and writing
+    the result back would silently replace the invalid bytes with U+FFFD,
+    corrupting the uploaded copy without any indication to the caller.
     """
     ticket = normalize_hum_key(ticket)
     if not file_path.is_file():
         raise ValueError(f"Log file not found: {file_path}")
 
-    original_text = file_path.read_text(encoding="utf-8", errors="replace")
+    try:
+        original_text = file_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        note = f"{file_path} is not valid UTF-8; skipped secret redaction. "
+        if print_only:
+            return file_path, f"{note}Found {file_path} (print-only, not uploaded)"
+        msg = attach_file(ticket, file_path)
+        return file_path, f"{note}{msg}"
+
     redacted_text, redacted_count = redact_secrets(original_text)
     note = ""
     if redacted_count:
