@@ -254,8 +254,11 @@ def log_message(
 
     Before attaching (or previewing with `print_only`), the file is scanned
     for likely passwords/tokens/keys via `redact_secrets()`. If any are
-    found, a redacted copy is written and that copy — never the original
-    file — is what gets attached or reported.
+    found and the file is actually being uploaded, a redacted scratch copy
+    is attached instead of the original -- that scratch copy is removed
+    again once the attach completes, so `file_path` (the original, never
+    modified) is always what's returned. `print_only` never writes a file;
+    it only reports what would happen.
     """
     ticket = normalize_hum_key(ticket)
     if not file_path.is_file():
@@ -263,18 +266,20 @@ def log_message(
 
     original_text = file_path.read_text(encoding="utf-8", errors="replace")
     redacted_text, redacted_count = redact_secrets(original_text)
-    upload_path = file_path
     note = ""
     if redacted_count:
-        upload_path = write_redacted_copy(file_path, redacted_text)
         plural = "" if redacted_count == 1 else "s"
-        note = (
-            f"Redacted {redacted_count} potential secret{plural} "
-            f"before upload -> {upload_path}. "
-        )
+        note = f"Redacted {redacted_count} potential secret{plural} before upload. "
 
     if print_only:
-        return upload_path, f"{note}Found {file_path} (print-only, not uploaded)"
+        return file_path, f"{note}Found {file_path} (print-only, not uploaded)"
 
-    msg = attach_file(ticket, upload_path)
-    return upload_path, f"{note}{msg}"
+    if redacted_count:
+        upload_path = write_redacted_copy(file_path, redacted_text)
+        try:
+            msg = attach_file(ticket, upload_path)
+        finally:
+            upload_path.unlink(missing_ok=True)
+    else:
+        msg = attach_file(ticket, file_path)
+    return file_path, f"{note}{msg}"

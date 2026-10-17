@@ -80,6 +80,11 @@ _SECRET_ASSIGNMENT = re.compile(
     """
 )
 
+# Values that should not be treated as secrets even when the key name looks
+# credential-like (e.g. `token_count: 150`, `password_attempts: 999`).
+_NUMERIC_ONLY = re.compile(r"^\d+(\.\d+)?$")
+_BOOL_LIKE = re.compile(r"^(?:true|false|yes|no|null|none|undefined)$", re.I)
+
 
 def redact_secrets(text: str) -> tuple[str, int]:
     """Replace likely passwords/tokens/keys in `text` with `[SECRET]`.
@@ -98,10 +103,7 @@ def redact_secrets(text: str) -> tuple[str, int]:
     text, n = _AUTH_HEADER.subn(_replace_auth_header, text)
     count += n
 
-    def _replace_bearer(m: re.Match[str]) -> str:
-        return "Bearer [SECRET]"
-
-    text, n = _BEARER_INLINE.subn(_replace_bearer, text)
+    text, n = _BEARER_INLINE.subn(lambda _m: "Bearer [SECRET]", text)
     count += n
 
     def _replace_url_credentials(m: re.Match[str]) -> str:
@@ -110,12 +112,29 @@ def redact_secrets(text: str) -> tuple[str, int]:
     text, n = _URL_CREDENTIALS.subn(_replace_url_credentials, text)
     count += n
 
+    # `.sub()` + a counter closure here, not `.subn()`: the replacement
+    # function below leaves some matches unchanged (already-redacted values,
+    # numeric/boolean counters), and `.subn()` counts pattern matches, not
+    # actual substitutions, which would inflate `count` for those skips.
+    assignment_count = 0
+
     def _replace_assignment(m: re.Match[str]) -> str:
+        nonlocal assignment_count
+        value = m.group("value")
+        # Already redacted by an earlier pass (e.g. a vendor token pattern
+        # matched first) -- don't double-count the same secret.
+        if value == "[SECRET]":
+            return m.group(0)
+        # Harmless counters/flags that merely sit next to a credential-like
+        # key name (`token_count: 150`, `password_attempts: 999`).
+        if _NUMERIC_ONLY.match(value) or _BOOL_LIKE.match(value):
+            return m.group(0)
+        assignment_count += 1
         quote = m.group("quote")
         return f"{m.group('prefix')}{quote}[SECRET]{quote}"
 
-    text, n = _SECRET_ASSIGNMENT.subn(_replace_assignment, text)
-    count += n
+    text = _SECRET_ASSIGNMENT.sub(_replace_assignment, text)
+    count += assignment_count
 
     return text, count
 

@@ -1710,6 +1710,31 @@ def test_redact_secrets_url_credentials() -> None:
     assert "https://[SECRET]@example.com/repo.git" in redacted
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "token_count: 1000000",
+        "num_tokens: 150",
+        "password_attempts: 999",
+        "access_key_age_days: 365",
+        "token_present: true",
+        "has_secret: false",
+    ],
+)
+def test_redact_secrets_numeric_and_boolean_counters_not_redacted(text: str) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert redacted == text
+    assert count == 0
+
+
+def test_redact_secrets_vendor_token_in_assignment_not_double_counted() -> None:
+    text = "GH_TOKEN=" + "ghp_" + "a" * 36
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "[SECRET]" in redacted
+    assert "ghp_" not in redacted
+
+
 def test_redact_secrets_private_key_block() -> None:
     text = (
         "-----BEGIN RSA PRIVATE KEY-----\n"
@@ -1738,40 +1763,73 @@ def test_log_message_redacts_secrets_before_attach(tmp_path: Path, monkeypatch) 
     )
 
     calls: list[list[str]] = []
+    captured_content: list[str] = []
 
     def fake_rhjira(args, *, cwd=None):
         calls.append(args)
+        # Capture the attached file's content now: the real code deletes the
+        # redacted scratch copy right after this call returns.
+        captured_content.append(Path(args[2]).read_text(encoding="utf-8"))
         return SimpleNamespace(returncode=0, stdout="attached", stderr="")
 
     monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
 
     out_file, msg = lib_investigate.log_message("HUM-1234", log_file)
 
-    assert out_file != log_file
+    # The original file is always what's returned, never the scratch copy.
+    assert out_file == log_file
     assert "Redacted 1 potential secret" in msg
     assert "Attached" in msg
     attached_path = Path(calls[0][2])
-    assert attached_path == out_file
-    assert "supersecretvalue" not in attached_path.read_text(encoding="utf-8")
-    assert "[SECRET]" in attached_path.read_text(encoding="utf-8")
+    assert attached_path != log_file
+    assert "supersecretvalue" not in captured_content[0]
+    assert "[SECRET]" in captured_content[0]
+    # The redacted scratch copy is cleaned up after a successful attach.
+    assert not attached_path.exists()
     # Original file on disk is left untouched.
     assert "supersecretvalue" in log_file.read_text(encoding="utf-8")
 
 
-def test_log_message_print_only_reports_redaction_without_writing(
-    tmp_path: Path,
+def test_log_message_attach_failure_still_cleans_up_scratch_copy(
+    tmp_path: Path, monkeypatch
+) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text("password=supersecretvalue", encoding="utf-8")
+
+    scratch_paths: list[Path] = []
+
+    def fake_rhjira(args, *, cwd=None):
+        scratch_paths.append(Path(args[2]))
+        return SimpleNamespace(returncode=1, stdout="", stderr="boom")
+
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        lib_investigate.log_message("HUM-1234", log_file)
+
+    assert scratch_paths and not scratch_paths[0].exists()
+
+
+def test_log_message_print_only_does_not_write_a_file(
+    tmp_path: Path, monkeypatch
 ) -> None:
     log_file = tmp_path / "transcript.md"
     log_file.write_text("token: abcdef0123456789", encoding="utf-8")
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError(
+            "write_redacted_copy must not run in --print-only mode"
+        )
+
+    monkeypatch.setattr(lib_investigate, "write_redacted_copy", fail_if_called)
 
     out_file, msg = lib_investigate.log_message(
         "HUM-9999", log_file, print_only=True
     )
 
-    assert out_file != log_file
+    assert out_file == log_file
     assert "Redacted 1 potential secret" in msg
     assert "print-only" in msg.lower()
-    assert "abcdef0123456789" not in out_file.read_text(encoding="utf-8")
 
 
 def test_log_message_with_existing_file(tmp_path: Path, monkeypatch) -> None:
