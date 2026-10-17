@@ -1691,6 +1691,23 @@ def test_redact_secrets_generic_assignment(
     assert secret_value not in redacted
 
 
+# Regression guards for the exact examples raised in MR review (jstibran):
+# quoted JSON keys and quoted values containing internal spaces previously
+# survived unredacted.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ('{"password": "supersecretvalue"}', '{"password": "[SECRET]"}'),
+        ('password="super secret value"', 'password="[SECRET]"'),
+        ("password='super secret value'", "password='[SECRET]'"),
+    ],
+)
+def test_redact_secrets_reviewer_reported_gaps(text: str, expected: str) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert redacted == expected
+
+
 def test_redact_secrets_github_token() -> None:
     text = "remote: ghp_" + "a" * 36
     redacted, count = lib_redact.redact_secrets(text)
