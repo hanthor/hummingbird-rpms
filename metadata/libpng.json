@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libpng.git",
-    "release": "2",
     "sha": "189b72618658df96aff1c66d3c746dc0d4818dad"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.6.59",
+  "modification_status": "modified",
   "upstream_repo": "https://github.com/pnggroup/libpng",
-  "version": "1.6.58"
+  "version": "1.6.59"
 }
