@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.11.1-0.3%{?dist} -p
+%nodejs_define_version node 1:26.11.1-0.4%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -163,6 +163,18 @@ Source101:      nodejs.srpm.macros
 0001-v8-memcopy-include-climits.patch
 0002-CVE-2026-102278-brace-expansion-max-depth.patch
 0003-CVE-2026-102276-102277-brace-expansion.patch
+# The following 8 patches backport the undici 8.12.2 security release
+# (undici is vendored at 8.11.2 under deps/undici/src) for CVEs not yet
+# picked up by an upstream Node.js release. Generated against the exact
+# deps/undici/src tree in this tarball; see each patch's Upstream: trailer.
+0004-CVE-2026-87018-undici-tls-renegotiation.patch
+0005-CVE-2026-87029-undici-decompress-interceptor.patch
+0006-CVE-2026-109932-undici-websocket-pong-backpressure.patch
+0007-CVE-2026-109383-undici-agent-tls-options.patch
+0008-CVE-2026-109869-undici-content-encodings.patch
+0009-CVE-2026-109841-undici-sri-lowercase.patch
+0010-CVE-2026-109924-undici-eventsource-memory.patch
+0011-CVE-2026-109829-undici-cache-redirect-poisoning.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
