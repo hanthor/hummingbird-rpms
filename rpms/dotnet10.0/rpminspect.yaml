@@ -2,6 +2,29 @@
 inspections:
     # We patch upstream a lot, no need to reject patches
     patches: off
+annocheck:
+    extra_opts:
+        # See https://sourceware.org/annobin/annobin.html/The-tests.html
+        # Disable/skip these checks:
+        #  --skip-cf-protection: upstream doesn't build with -fcf-protection;
+        #    https://github.com/dotnet/runtime/issues/40100
+        #  --skip-dynamic-tags: the spec disables -mbranch-protection=standard
+        #    because it breaks CoreCLR unwinding through libunwind
+        #  --skip-fortify: NativeAOT bootstrapper objects report MAYB because
+        #    the required compiler option isn't recorded
+        #  --skip-glibcxx-assertions: NativeAOT bootstrapper objects report MAYB
+        #    because the required compiler option isn't recorded
+        #  --skip-lto: upstream binaries don't record whether LTO was used, so
+        #    annocheck reports MAYB
+        #  --skip-optimization, --skip-stack-clash, --skip-stack-prot:
+        #    some upstream Clang/LLVM binaries lack the annobin notes needed by
+        #    these Fedora-profile checks, so they report MAYB
+        #  --skip-pic: packaged relocatable object files aren't final PIC binaries
+        #  --skip-property-note: some apphost binaries lack GNU property notes
+        #  --skip-warnings: NativeAOT bootstrapper objects report MAYB because
+        #    the compiler warning option isn't recorded
+        - hardened: --skip-cf-protection --skip-dynamic-tags --skip-fortify --skip-glibcxx-assertions --skip-lto --skip-optimization --skip-pic --skip-property-note --skip-stack-clash --skip-stack-prot --skip-warnings
+
 badfuncs:
     allowed:
         # The Mono runtime (used on s390x, for example), uses inet_addr for
