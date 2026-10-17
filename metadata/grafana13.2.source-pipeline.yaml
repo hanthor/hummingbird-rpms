@@ -86,3 +86,6 @@ accepted-checksums:
   - file: "grafana-yarn-cache-13.2.3.tar.bz2"
     checksum: "a00e8dec9935407b703afb5dd850cce8786e66af29ad57e8b7ff57508a9af141b991c734875d097aaca6982f3e5cd7c3535c71991055c1e14fc4c935b8f39325"
     reason: "grafana-qs-6.16.1.patch bumps qs 6.16.0->6.16.1 for CVE-2026-110816; yarn cache regenerated without stale qs-6.16.0 zip"
+  - file: "grafana-yarn-cache-13.2.3.tar.bz2"
+    checksum: "9dc671aff777772b713d29f6fe27d9648212c716805e31b0f557618f2507d1f962fc511cac5e55f24ef5b6bc8195eab89464312bcbc7ee058cb50ff593b0e82b"
+    reason: "grafana-yarn-cache.patch adds s390x to .yarnrc.yml supportedArchitectures; yarn cache regenerated with @esbuild/@swc/@rollup/@typescript/@unrs-resolver/@oxc-resolver/@oxc-parser/@rolldown linux-s390x native binaries (CI build was failing on s390x without them)"
