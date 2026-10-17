@@ -44,6 +44,9 @@ transform:
         # CVE-2026-101903: bump vendored axios 1.18.1 -> 1.20.0.
         # Must be applied here too, or the offline yarn cache goes stale.
         patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
+        # CVE-2026-110816: bump vendored qs 6.16.0 -> 6.16.1.
+        # Must be applied here too, or the offline yarn cache goes stale.
+        patch -p1 < "${PACKAGE_DIR}/grafana-qs-6.16.1.patch"
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -80,3 +83,6 @@ accepted-checksums:
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "aa24fdd6fc2453acc3a42466f33e0f86639c816fd4a04858405e02c8ef629f94767ffd7fc937bae30c9f478d9f05d2809c3f89a21a3c9c460ce03ddb14958987"
     reason: "grafana-fast-uri-3.1.7.patch bumps fast-uri 3.1.6->3.1.7 for CVE-2026-84394/CVE-2026-84292; yarn-cache regenerated without stale fast-uri-3.1.6 zip"
+  - file: "grafana-yarn-cache-13.2.3.tar.bz2"
+    checksum: "a00e8dec9935407b703afb5dd850cce8786e66af29ad57e8b7ff57508a9af141b991c734875d097aaca6982f3e5cd7c3535c71991055c1e14fc4c935b8f39325"
+    reason: "grafana-qs-6.16.1.patch bumps qs 6.16.0->6.16.1 for CVE-2026-110816; yarn cache regenerated without stale qs-6.16.0 zip"
