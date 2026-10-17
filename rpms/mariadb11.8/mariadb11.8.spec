@@ -78,6 +78,17 @@
 # hierarchies and more complex graph structures to be handled in a relational fashion
 %bcond_without oqgraph
 
+# The DuckDB storage engine, new in MariaDB 11.8.9 (storage/duckdb/), embeds
+# DuckDB for fast analytical (OLAP) queries. Upstream's own
+# storage/duckdb/CMakeLists.txt only builds it on 64-bit x86_64/aarch64 Linux
+# with a C++17-capable compiler; keep it disabled elsewhere to match that
+# restriction explicitly rather than relying on upstream's silent skip.
+%ifarch x86_64 aarch64
+%bcond_without duckdb
+%else
+%bcond_with duckdb
+%endif
+
 # Other plugins
 # S3 storage engine
 #   https://mariadb.com/kb/en/s3-storage-engine/
@@ -525,6 +536,7 @@ Recommends:       %{pkgname}-backup%{?_isa} = %{sameevr}
 %{?with_rocksdb:Suggests:      %{pkgname}-rocksdb-engine%{?_isa} = %{sameevr}}
 %{?with_sphinx:Suggests:       %{pkgname}-sphinx-engine%{?_isa} = %{sameevr}}
 %{?with_oqgraph:Suggests:      %{pkgname}-oqgraph-engine%{?_isa} = %{sameevr}}
+%{?with_duckdb:Suggests:       %{pkgname}-duckdb-engine%{?_isa} = %{sameevr}}
 %{?with_connect:Suggests:      %{pkgname}-connect-engine%{?_isa} = %{sameevr}}
 %{?with_pam:Suggests:          %{pkgname}-pam%{?_isa} = %{sameevr}}
 
@@ -587,6 +599,21 @@ database server. OQGRAPH is a computation engine allowing hierarchies and more
 complex graph structures to be handled in a relational fashion. In a nutshell,
 tree structures and friend-of-a-friend style searches can now be done using
 standard SQL syntax, and results joined onto other tables.
+%endif
+
+
+%if %{with duckdb}
+%package          -n %{pkgname}-duckdb-engine
+Summary:          The DuckDB storage engine for MariaDB
+Requires:         %{pkgname}-server%{?_isa} = %{sameevr}
+Provides:         bundled(duckdb)
+
+%virtual_conflicts_and_provides_arched duckdb-engine
+
+%description      -n %{pkgname}-duckdb-engine
+The DuckDB storage engine embeds DuckDB as a pluggable storage engine for
+MariaDB, enabling fast analytical (OLAP) query processing directly inside
+the database server.
 %endif
 
 
@@ -1018,6 +1045,7 @@ CXXFLAGS="$CFLAGS"; CPPFLAGS="$CFLAGS"; export CFLAGS CXXFLAGS CPPFLAGS
          \
          -DPLUGIN_MROONGA=%{?with_mroonga:DYNAMIC}%{!?with_mroonga:NO} \
          -DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
+         -DPLUGIN_DUCKDB=%{?with_duckdb:DYNAMIC}%{!?with_duckdb:NO} \
          -DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
          -DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
          -DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
@@ -1739,6 +1767,12 @@ fi
 %files -n %{pkgname}-oqgraph-engine
 %config(noreplace) %{_sysconfdir}/my.cnf.d/oqgraph.cnf
 %{_libdir}/%{majorname}/plugin/ha_oqgraph.so
+%endif
+
+%if %{with duckdb}
+%files -n %{pkgname}-duckdb-engine
+%config(noreplace) %{_sysconfdir}/my.cnf.d/duckdb.cnf
+%{_libdir}/%{majorname}/plugin/ha_duckdb.so
 %endif
 
 %if %{with connect}
