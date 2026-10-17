@@ -659,7 +659,11 @@ def test_open_package_mr_pushes_to_target_remote_by_default(monkeypatch) -> None
     assert url.endswith("/9")
     assert ["git", "push", "-u", "origin", "HUM-9"] in calls
     create = next(args for args in calls if args[:3] == ["glab", "mr", "create"])
-    assert "--head" not in create
+    # --head is always passed explicitly (even when it matches --repo) so
+    # that glab cannot auto-detect an unrelated personal fork remote as the
+    # head project. See test_open_package_mr_uses_explicit_source_remote for
+    # the case where it legitimately differs.
+    assert create[create.index("--head") + 1] == "redhat/hummingbird/rpms"
     assert not any(args[:3] == ["glab", "mr", "note"] for args in calls)
     assert comments == [("HUM-9", f"MR: {url}\n")]
 
