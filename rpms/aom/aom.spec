@@ -1,5 +1,5 @@
 %global sover           3
-%global aom_version     v3.14.0
+%global aom_version     v3.15.2
 
 %if 0%{?fedora} || 0%{?rhel} >= 9
 %ifarch x86_64
@@ -13,8 +13,8 @@
 %endif
 
 Name:       aom
-Version:    3.14.0
-Release:    0.1.3%{?dist}
+Version:    3.15.2
+Release:    1%{?dist}
 Summary:    Royalty-free next-generation video format
 
 License:    BSD-3-Clause
