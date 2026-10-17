@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
 Version:        24.21.0
-Release:        1.4%{?dist}
+Release:        1.5%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -165,6 +165,8 @@ Source101:      nodejs.srpm.macros
 0005-CVE-2026-69152-brace-expansion-5.0.9.patch
 0006-CVE-2026-102278-brace-expansion-max-depth.patch
 0007-CVE-2026-102276-102277-brace-expansion.patch
+0008-CVE-2026-87018-undici-7.30.1.patch
+0009-CVE-2026-87018-undici-npm-6.29.1.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
