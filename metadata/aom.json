@@ -2,10 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/aom.git",
-    "sha": "2539e35b9e97bbcea7e629eb6a441cbe9f831ff6"
+    "release": "1",
+    "sha": "fcf2d8d2e47603dddba1ee1f36bb694fa591e281"
   },
-  "modification_reason": "Update to v3.14.0 to fix CVE-2026-56208, CVE-2026-56209, CVE-2026-56210, CVE-2026-56211 (HUM-2755)",
+  "modification_reason": "Generate reproducible source archives with Gorget and adapt prep to their directory layout",
   "modification_status": "modified",
   "upstream_repo": "https://aomedia.googlesource.com/aom",
-  "version": "3.14.0"
+  "version": "3.15.2"
 }

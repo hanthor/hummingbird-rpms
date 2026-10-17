@@ -20,3 +20,8 @@ accepted-checksums:
       endpoint to gorget's own deterministic git-based archive. Content
       verified identical (diffed extracted trees); re-run twice back-to-back
       to confirm this new checksum is itself stable going forward."
+  - file: "aom-3.15.2.tar.gz"
+    checksum: "5fab2270b81012657306e2ad9ada3b26c7e933ceac63fb0fd9096ebce010cacd1fb67fac3a76d674b878a08f6f80e13e7dbf2cc738cba6ad589b3fbabd03d1fb"
+    reason: "Replace the Fedora gitiles archive with the configured deterministic
+      Git archive of v3.15.2. Extracted contents match, with an enclosing
+      directory required by prep."

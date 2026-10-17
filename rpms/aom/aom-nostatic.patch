@@ -1,7 +1,7 @@
 diff -up a/cmake/aom_install.cmake.orig a/cmake/aom_install.cmake
 --- a/cmake/aom_install.cmake.orig
 +++ a/cmake/aom_install.cmake
-@@ -83,7 +83,7 @@ macro(setup_aom_install_targets)
+@@ -81,7 +81,7 @@ macro(setup_aom_install_targets)
      endif()
  
      if(BUILD_SHARED_LIBS)
