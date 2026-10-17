@@ -10,9 +10,18 @@ basic-auth URL credentials) and for generic `password=`/`token=`/`secret=`/
 
 This is defense in depth, not a guarantee: it will not catch every possible
 secret shape, and it may occasionally redact a non-secret field whose name
-merely contains a credential-like word (e.g. `token_count`). Over-redaction
+merely contains a credential-like word (e.g. `token_name`). Over-redaction
 is the safer failure mode for a security feature, so matches are intentionally
 broad.
+
+Every entry in `_REDACTIONS` is a plain (compiled pattern, replacement
+template) pair; `redact_secrets()` just runs `pattern.subn(replacement, text)`
+for each in turn. Replacement templates use `\\1` / `\\g<name>` backreferences,
+so no Python callback carries extra behavior. Cases that look like
+conditional logic -- skip a value that's already `[SECRET]`, skip a harmless
+counter/flag like `token_count: 150` -- are instead expressed as negative
+lookaheads inside the patterns themselves (see `_SECRET_ASSIGNMENT_QUOTED` /
+`_SECRET_ASSIGNMENT_BARE`).
 """
 
 import re
@@ -35,55 +44,79 @@ _GITLAB_TOKEN = re.compile(r"\bglpat-[A-Za-z0-9_-]{20,}\b")
 _SLACK_TOKEN = re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")
 _AWS_ACCESS_KEY_ID = re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")
 
-_WHOLE_MATCH_PATTERNS: tuple[re.Pattern[str], ...] = (
-    _PRIVATE_KEY_BLOCK,
-    _JWT,
-    _GITHUB_TOKEN,
-    _GITLAB_TOKEN,
-    _SLACK_TOKEN,
-    _AWS_ACCESS_KEY_ID,
-)
-
 # ---- Patterns that keep a prefix/scheme and redact only the secret part ----
 
 # `Authorization: Bearer <token>` / `Authorization: Basic <creds>` headers.
 _AUTH_HEADER = re.compile(
-    r"(?i)(authorization\s*:\s*(?:bearer|basic|token)\s+)([A-Za-z0-9\-._~+/=]+)"
+    r"(?i)(?P<prefix>authorization\s*:\s*(?:bearer|basic|token)\s+)"
+    r"[A-Za-z0-9\-._~+/=]+"
 )
 
 # Bare `Bearer <token>` outside of an Authorization header line.
-_BEARER_INLINE = re.compile(r"(?i)\bBearer\s+([A-Za-z0-9\-._~+/]+=*)")
+_BEARER_INLINE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9\-._~+/]+=*")
 
 # Basic-auth credentials embedded in a URL: scheme://user:pass@host
 _URL_CREDENTIALS = re.compile(
-    r"(?i)\b((?:https?|ftp|ssh|git)://)[^\s/@'\"]+:[^\s/@'\"]+@"
+    r"(?i)\b(?P<scheme>(?:https?|ftp|ssh|git)://)[^\s/@'\"]+:[^\s/@'\"]+@"
 )
 
-# Generic `key = value` / `key: value` assignments where the key name looks
-# like a credential (password, token, secret, api key, etc). Matches
-# snake_case and camelCase names such as `aws_secret_access_key`,
-# `DB_PASSWORD`, or `apiKey`, quoted or not.
-_SECRET_ASSIGNMENT = re.compile(
-    r"""(?ix)
-    (?P<prefix>
-        [\w.\-]*?
-        (?:password|passwd|pwd|secret|token|api[_-]?key|apikey
-          |access[_-]?key|accesskey|private[_-]?key|privatekey
-          |client[_-]?secret|auth[_-]?token|session[_-]?token
-          |refresh[_-]?token|bearer)
-        [\w.\-]*?
-        \s*[:=]\s*
-    )
-    (?P<quote>["']?)
-    (?P<value>[^\s"']{3,})
+# Credential-like key names, shared by the quoted and unquoted assignment
+# patterns below. Matches snake_case, camelCase, and ALL_CAPS names such as
+# `aws_secret_access_key`, `DB_PASSWORD`, or `apiKey`. The trailing `["']?`
+# optionally absorbs a quoted JSON key's closing quote (e.g. `"password":`).
+_CRED_KEY = (
+    r"[\w.\-]*?"
+    r"(?:password|passwd|pwd|secret|token|api[_-]?key|apikey"
+    r"|access[_-]?key|accesskey|private[_-]?key|privatekey"
+    r"|client[_-]?secret|auth[_-]?token|session[_-]?token"
+    r"|refresh[_-]?token|bearer)"
+    r"[\w.\-]*?"
+    r"[\"']?"
+)
+
+# Values that should not be treated as secrets even when the key name looks
+# credential-like: already redacted by an earlier pass (e.g. a GitHub token
+# inside `GH_TOKEN=...`), or a harmless counter/flag (`token_count: 150`,
+# `password_attempts: 999`, `token_present: true`).
+_NOT_A_SECRET_VALUE = r"\[SECRET\]|\d+(?:\.\d+)?|true|false|yes|no|null|none|undefined"
+
+# `"key": "value"` / `key: "value"` -- value may contain spaces, since it's
+# unambiguously delimited by the matching quote.
+_SECRET_ASSIGNMENT_QUOTED = re.compile(
+    rf"""(?ix)
+    (?P<prefix>{_CRED_KEY}\s*[:=]\s*)
+    (?P<quote>["'])
+    (?!(?:{_NOT_A_SECRET_VALUE})(?=(?P=quote)))
+    [^"']+
     (?P=quote)
     """
 )
 
-# Values that should not be treated as secrets even when the key name looks
-# credential-like (e.g. `token_count: 150`, `password_attempts: 999`).
-_NUMERIC_ONLY = re.compile(r"^\d+(\.\d+)?$")
-_BOOL_LIKE = re.compile(r"^(?:true|false|yes|no|null|none|undefined)$", re.I)
+# `key=value` / `key: value` with no quotes -- value stops at whitespace.
+_SECRET_ASSIGNMENT_BARE = re.compile(
+    rf"""(?ix)
+    (?P<prefix>{_CRED_KEY}\s*[:=]\s*)
+    (?!(?:{_NOT_A_SECRET_VALUE})(?=[\s"']|$))
+    [^\s"']{{3,}}
+    """
+)
+
+# (pattern, replacement) pairs, applied in order via `pattern.subn()`. Every
+# replacement is a plain template -- whole-match patterns replace everything,
+# the rest keep a captured prefix/scheme and append `[SECRET]`.
+_REDACTIONS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (_PRIVATE_KEY_BLOCK, "[SECRET]"),
+    (_JWT, "[SECRET]"),
+    (_GITHUB_TOKEN, "[SECRET]"),
+    (_GITLAB_TOKEN, "[SECRET]"),
+    (_SLACK_TOKEN, "[SECRET]"),
+    (_AWS_ACCESS_KEY_ID, "[SECRET]"),
+    (_AUTH_HEADER, r"\g<prefix>[SECRET]"),
+    (_BEARER_INLINE, "Bearer [SECRET]"),
+    (_URL_CREDENTIALS, r"\g<scheme>[SECRET]@"),
+    (_SECRET_ASSIGNMENT_QUOTED, r"\g<prefix>\g<quote>[SECRET]\g<quote>"),
+    (_SECRET_ASSIGNMENT_BARE, r"\g<prefix>[SECRET]"),
+)
 
 
 def redact_secrets(text: str) -> tuple[str, int]:
@@ -92,50 +125,9 @@ def redact_secrets(text: str) -> tuple[str, int]:
     Returns `(redacted_text, replacement_count)`.
     """
     count = 0
-
-    for pattern in _WHOLE_MATCH_PATTERNS:
-        text, n = pattern.subn("[SECRET]", text)
+    for pattern, replacement in _REDACTIONS:
+        text, n = pattern.subn(replacement, text)
         count += n
-
-    def _replace_auth_header(m: re.Match[str]) -> str:
-        return f"{m.group(1)}[SECRET]"
-
-    text, n = _AUTH_HEADER.subn(_replace_auth_header, text)
-    count += n
-
-    text, n = _BEARER_INLINE.subn(lambda _m: "Bearer [SECRET]", text)
-    count += n
-
-    def _replace_url_credentials(m: re.Match[str]) -> str:
-        return f"{m.group(1)}[SECRET]@"
-
-    text, n = _URL_CREDENTIALS.subn(_replace_url_credentials, text)
-    count += n
-
-    # `.sub()` + a counter closure here, not `.subn()`: the replacement
-    # function below leaves some matches unchanged (already-redacted values,
-    # numeric/boolean counters), and `.subn()` counts pattern matches, not
-    # actual substitutions, which would inflate `count` for those skips.
-    assignment_count = 0
-
-    def _replace_assignment(m: re.Match[str]) -> str:
-        nonlocal assignment_count
-        value = m.group("value")
-        # Already redacted by an earlier pass (e.g. a vendor token pattern
-        # matched first) -- don't double-count the same secret.
-        if value == "[SECRET]":
-            return m.group(0)
-        # Harmless counters/flags that merely sit next to a credential-like
-        # key name (`token_count: 150`, `password_attempts: 999`).
-        if _NUMERIC_ONLY.match(value) or _BOOL_LIKE.match(value):
-            return m.group(0)
-        assignment_count += 1
-        quote = m.group("quote")
-        return f"{m.group('prefix')}{quote}[SECRET]{quote}"
-
-    text = _SECRET_ASSIGNMENT.sub(_replace_assignment, text)
-    count += assignment_count
-
     return text, count
 
 

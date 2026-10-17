@@ -1650,22 +1650,45 @@ def test_redact_secrets_leaves_clean_text_unchanged() -> None:
 
 
 @pytest.mark.parametrize(
-    ("text", "expected_substring"),
+    ("text", "expected_substring", "secret_value"),
     [
-        ('password = "hunter2hunter2"', 'password = "[SECRET]"'),
-        ("password: hunter2hunter2", "password: [SECRET]"),
-        ("DB_PASSWORD=supersecretvalue", "DB_PASSWORD=[SECRET]"),
-        ("aws_secret_access_key: abcd1234efgh5678ijkl", "aws_secret_access_key: [SECRET]"),
-        ("api_key='sk-abcdefghijklmnop'", "api_key='[SECRET]'"),
-        ("JIRA_TOKEN=abcdef0123456789", "JIRA_TOKEN=[SECRET]"),
+        ('password = "hunter2hunter2"', 'password = "[SECRET]"', "hunter2hunter2"),
+        ("password: hunter2hunter2", "password: [SECRET]", "hunter2hunter2"),
+        ("DB_PASSWORD=supersecretvalue", "DB_PASSWORD=[SECRET]", "supersecretvalue"),
+        (
+            "aws_secret_access_key: abcd1234efgh5678ijkl",
+            "aws_secret_access_key: [SECRET]",
+            "abcd1234efgh5678ijkl",
+        ),
+        ("api_key='sk-abcdefghijklmnop'", "api_key='[SECRET]'", "sk-abcdefghijklmnop"),
+        ("JIRA_TOKEN=abcdef0123456789", "JIRA_TOKEN=[SECRET]", "abcdef0123456789"),
+        # Quoted JSON key.
+        (
+            '"password": "hunter2hunter2"',
+            '"password": "[SECRET]"',
+            "hunter2hunter2",
+        ),
+        # Quoted JSON key/value embedded in a larger object.
+        (
+            '{"user": "bob", "api_key": "sk-abcdefghijklmnop", "ok": true}',
+            '"api_key": "[SECRET]"',
+            "sk-abcdefghijklmnop",
+        ),
+        # Quoted value containing spaces -- only delimitable because it's quoted.
+        (
+            '"client_secret": "a secret phrase with spaces in it"',
+            '"client_secret": "[SECRET]"',
+            "a secret phrase with spaces in it",
+        ),
     ],
 )
-def test_redact_secrets_generic_assignment(text: str, expected_substring: str) -> None:
+def test_redact_secrets_generic_assignment(
+    text: str, expected_substring: str, secret_value: str
+) -> None:
     redacted, count = lib_redact.redact_secrets(text)
     assert count >= 1
     assert expected_substring in redacted
-    assert "hunter2hunter2" not in redacted
-    assert "supersecretvalue" not in redacted
+    assert secret_value not in redacted
 
 
 def test_redact_secrets_github_token() -> None:
