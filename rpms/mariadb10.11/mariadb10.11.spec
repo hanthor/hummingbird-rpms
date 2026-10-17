@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4.1%{?with_debug:.debug}%{?dist}
+Release:          4.1%{?with_debug:.debug}.1%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -277,6 +277,14 @@ Patch22:          CVE-2026-107821.patch
 Patch23:          CVE-2026-107822.patch
 #   Patch24: CVE-2026-107823 - privilege escalation via unescaped newlines in view parser
 Patch24:          CVE-2026-107823.patch
+#   Patch25: CVE-2026-85745 - out-of-bounds read in ST_Area with crafted MULTIPOLYGON
+Patch25:          CVE-2026-85745.patch
+#   Patch26: CVE-2026-85985 - unauthorized file access via CONNECT engine functions
+Patch26:          CVE-2026-85985.patch
+#   Patch27: CVE-2026-86047 - SQL injection via improper identifier quoting
+Patch27:          CVE-2026-86047.patch
+#   Patch28: CVE-2026-97380 - privilege escalation via empty password in GRANT PROXY statement
+Patch28:          CVE-2026-97380.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -903,6 +911,10 @@ rm -r storage/rocksdb/
 %patch -P22 -p1
 %patch -P23 -p1
 %patch -P24 -p1
+%patch -P25 -p1
+%patch -P26 -p1
+%patch -P27 -p1
+%patch -P28 -p1
 
 # generate a list of tests that fail, but are not disabled by upstream
 cat %{SOURCE50} | tee -a mysql-test/unstable-tests
