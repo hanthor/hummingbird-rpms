@@ -7,13 +7,14 @@ provision:
 prepare:
     how: install
     package:
-        - aspnetcore-runtime-10.0
+        - aspnetcore-runtime-dbg-10.0
         - babeltrace
         - bash-completion
         - bc
         - binutils
-        - dotnet-runtime-10.0
-        - dotnet-sdk-10.0
+        - dotnet-runtime-dbg-10.0
+        - dotnet-sdk-aot-10.0
+        - dotnet-sdk-dbg-10.0
         - expect
         - file
         - findutils

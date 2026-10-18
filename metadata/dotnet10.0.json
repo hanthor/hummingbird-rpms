@@ -4,12 +4,12 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dotnet10.0.git",
     "release": "1",
-    "sha": "88a52f277193616ced1e6d6b9f602e5fa2deba01"
+    "sha": "341d9d7dd28161bb75ae549e26522851151a6d05"
   },
-  "modification_reason": "Disable MSBuild node reuse and build server to fix mock chroot teardown busy on /dev/urandom",
+  "modification_reason": "update to SDK 10.0.113 / Runtime 10.0.13 for CVE-2026-70159, CVE-2026-96957; local build patches retained",
   "modification_status": "modified",
   "upstream_branch": "release/10.0",
   "upstream_repo": "https://github.com/dotnet/runtime",
-  "version": "10.0.112",
+  "version": "10.0.113",
   "version_transform": "dotnet_sdk_to_runtime"
 }
