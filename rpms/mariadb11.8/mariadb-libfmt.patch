@@ -23,14 +23,26 @@ therefore we are using it instead of the bundled fmt.
 
 We are still keeping this patch in case it may be needed in the future and because it is needed in rhel
 
---- mariadb-11.8.2/cmake/libfmt.cmake	2025-05-21 16:08:31.000000000 +0200
-+++ mariadb-11.8.2/cmake/libfmt.cmake_patched	2025-06-16 22:51:14.579292098 +0200
-@@ -15,7 +15,7 @@ MACRO(BUNDLE_LIBFMT)
-   ExternalProject_Add(
-     libfmt
-     PREFIX   "${dir}"
--    URL "https://github.com/fmtlib/fmt/releases/download/11.1.4/fmt-11.1.4.zip"
-+    URL file:///${dir}/fmt-11.1.4.zip
-     URL_MD5 ad6a56b15cddf4aad2a234e7cfc9e8c9
-     INSTALL_COMMAND ""
-     CONFIGURE_COMMAND ""
+Refreshed against the mariadb-11.8.9 source tarball: upstream split the single
+download URL into two compiler-version-conditional branches (gcc < 4.9 getting
+fmt 11.0.2, everything else getting fmt 12.2.0). Redirect both branches to a
+local file, preserving the original intent. Note this macro is still not
+invoked in normal builds (WITH_LIBFMT uses the system package), so the
+existing version mismatch against this spec's single pinned
+fmt_bundled_version (11.1.4) is pre-existing and unaffected by this refresh.
+
+--- mariadb-11.8.9/cmake/libfmt.cmake	2026-10-13 00:00:00.000000000 +0000
++++ mariadb-11.8.9/cmake/libfmt.cmake_patched	2026-10-13 00:00:00.000000000 +0000
+@@ -15,10 +15,10 @@ MACRO(BUNDLE_LIBFMT)
+   IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9")
+     # it's for RHEL-7, gcc 4.8.5
+     # with newer fmt it complains about missing space in operator""_a()
+-    SET(source URL "https://github.com/fmtlib/fmt/releases/download/11.0.2/fmt-11.0.2.zip"
++    SET(source URL file:///${dir}/fmt-11.0.2.zip
+                URL_MD5 c622dca45ec3fc95254c48370a9f7a1d)
+   ELSE()
+-    SET(source URL "https://github.com/fmtlib/fmt/releases/download/12.2.0/fmt-12.2.0.zip"
++    SET(source URL file:///${dir}/fmt-12.2.0.zip
+                URL_MD5 6083253772ad29e73a4d5920be08918e)
+   ENDIF()
+ 

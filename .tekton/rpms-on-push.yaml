@@ -22991,8 +22991,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-d160-c8xlarge/amd64"
+        - "linux-d160-c8xlarge/arm64"
         - "linux/s390x"
     - name: specfile
       value: "mariadb11.8.spec"
@@ -23000,6 +23000,10 @@ spec:
       value: "rpms/mariadb11.8"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
@@ -23012,8 +23016,8 @@ spec:
   taskRunTemplate:
     serviceAccountName: build-pipeline-mariadb11-8-main
   timeouts:
-    pipeline: 4h
-    tasks: 4h
+    pipeline: 8h
+    tasks: 8h
   workspaces:
     - name: git-auth
       secret:
