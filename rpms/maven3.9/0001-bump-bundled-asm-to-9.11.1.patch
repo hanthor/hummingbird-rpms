@@ -1,0 +1,33 @@
+From: Prarit Bhargava <prarit@redhat.com>
+Date: Mon, 19 Oct 2026 15:30:00 +0000
+Subject: [PATCH] maven3.9: bump bundled org.ow2.asm:asm to 9.11.1
+
+Apache Maven 3.9.16 resolves org.ow2.asm:asm 9.9.1 for maven-core and
+maven-model-builder via the asmVersion property in the root pom.xml.
+ASM 9.11 before 9.11.1 contains an infinite loop in Label.resolve() when
+16-bit forward-reference offsets truncate for rewritten methods larger
+than 64 KB (CVE-2026-112046). ASM 9.11.1 also includes the DoS fixes
+from 9.11. Bump the asmVersion property so the vendored Maven Central
+artifact resolves to the fixed release.
+
+Upstream: https://gitlab.ow2.org/asm/asm/-/tags/ASM_9_11_1
+CVE: CVE-2026-112046
+
+---
+diff --git a/apache-maven/src/main/appended-resources/licenses/unrecognized-asm-9.9.1.txt b/apache-maven/src/main/appended-resources/licenses/unrecognized-asm-9.11.1.txt
+similarity index 100%
+rename from apache-maven/src/main/appended-resources/licenses/unrecognized-asm-9.9.1.txt
+rename to apache-maven/src/main/appended-resources/licenses/unrecognized-asm-9.11.1.txt
+diff --git a/pom.xml b/pom.xml
+index 117288069aeb..786c30762916 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -126,7 +126,7 @@ under the License.
+   <properties>
+     <javaVersion>8</javaVersion>
+     <version.sisu-maven-plugin>1.0.0</version.sisu-maven-plugin>
+-    <asmVersion>9.9.1</asmVersion>
++    <asmVersion>9.11.1</asmVersion>
+     <classWorldsVersion>2.11.0</classWorldsVersion>
+     <commonsCliVersion>1.11.0</commonsCliVersion>
+     <commonsIoVersion>2.22.0</commonsIoVersion>
