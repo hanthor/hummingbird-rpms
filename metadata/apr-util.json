@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/apr-util.git",
-    "release": "2",
-    "sha": "06d4df61dff20d95372e548ab347744026e24d26"
+    "release": "3",
+    "sha": "179c512ac8904ac0e06e6b0557f887259d83a97f"
   },
   "modification_reason": "Use Apache's permanent archive for Source0 and disable the deprecated OpenSSL ENGINE API when it is unavailable.",
   "modification_status": "modified",
