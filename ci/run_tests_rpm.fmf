@@ -4,6 +4,8 @@ execute:
 
 prepare:
   - how: install
+    package: git
+  - how: install
     package: rpmlint
   - how: install
     package: podman
