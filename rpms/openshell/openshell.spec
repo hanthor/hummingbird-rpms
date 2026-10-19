@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.3
+%global openshell_version 0.1.4
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -59,6 +59,8 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
+Patch1:  openshell-e2fsprogs-busy-retry.patch
+Patch2:  openshell-landlock-fd-test-isolation.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -305,6 +307,8 @@ skip="${skip-} --skip linux::proc_fd::tests::installed_socket_snapshot_can_exclu
 skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_output_writes"
 # Starts a sandboxed workload and broker that need kernel notification privileges.
 skip="${skip-} --skip network_broker::tests::accepted_loopback_stream_is_registered_for_notified_operations"
+# Starts real DNS mediation, which requires a nameserver absent from hermetic Mock's resolv.conf.
+skip="${skip-} --skip backend_setup::tests::shared_startup_uses_selected_backend_through_readiness_and_shutdown"
 %cargo_test -- -- ${skip-}
 
 # Smoke-test the CLI binary
