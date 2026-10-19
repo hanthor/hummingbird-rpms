@@ -1,6 +1,6 @@
 Name:           lcms2
-Version:        2.16
-Release:        8%{?dist}
+Version:        2.19.1
+Release:        0.1%{?dist}
 Summary:        Color Management Engine
 # part of src/cmssm.c is softsurf (no SPDX yet) see https://gitlab.com/fedora/legal/fedora-license-data/-/issues/469
 # utils/samples/mkcmy.c is libtiff - but it is not used
