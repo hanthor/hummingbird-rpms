@@ -1,0 +1,14 @@
+
+Fix intermittent failures when "svn add" guesses a near-empty file is binary and hence
+the output is different.
+
+--- subversion-1.15.0/subversion/tests/cmdline/svntest/main.py.6
++++ subversion-1.15.0/subversion/tests/cmdline/svntest/main.py
+@@ -708,6 +708,7 @@
+ 
+ [miscellany]
+ interactive-conflicts = false
++enable-magic-file = no
+ 
+ [working-copy]
+ """

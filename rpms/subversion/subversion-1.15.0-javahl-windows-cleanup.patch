@@ -1,0 +1,31 @@
+JavaHL: only clear the DOS readonly attribute on Windows
+
+Linux deletion does not need this Windows Java 25 workaround. Avoid
+Files.getFileStore(), which fails when the mount table is unavailable
+or does not match the filesystem paths inside a mock chroot.
+
+--- a/subversion/bindings/javahl/tests/org/apache/subversion/javahl/SVNTests.java
++++ b/subversion/bindings/javahl/tests/org/apache/subversion/javahl/SVNTests.java
+@@ -515,13 +515,15 @@
+ 
+         // Unset readonly flag of the file because deleting a file with
+         // readonly flag on Windows fails since Java 25.
+-        Path nioPath = path.toPath();
+-        FileStore store = Files.getFileStore(nioPath);
+-        if (store.supportsFileAttributeView(DosFileAttributeView.class)) {
+-            DosFileAttributeView view = Files.getFileAttributeView(
+-                    nioPath, DosFileAttributeView.class);
+-            if (view != null) {
+-                view.setReadOnly(false);
++        if (File.separatorChar == '\\') {
++            Path nioPath = path.toPath();
++            FileStore store = Files.getFileStore(nioPath);
++            if (store.supportsFileAttributeView(DosFileAttributeView.class)) {
++                DosFileAttributeView view = Files.getFileAttributeView(
++                        nioPath, DosFileAttributeView.class);
++                if (view != null) {
++                    view.setReadOnly(false);
++                }
+             }
+         }
+ 
