@@ -15,41 +15,7 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache.patch"
-        patch -p1 < "${PACKAGE_DIR}/grafana-yarn-cache-compression.patch"
-        # CVE-2026-76172, CVE-2026-75975, CVE-2026-75931, CVE-2026-75899: bump
-        # vendored fast-uri to 3.1.6. Must be applied here too, or the offline
-        # yarn cache this step generates goes stale on the next version bump.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.6.patch"
-        # CVE-2026-82562, CVE-2026-82417: bump vendored qs to 6.16.0. Must be
-        # applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-qs-6.16.0.patch"
-        # CVE-2026-84375: bump vendored js-yaml to 3.15.2 and 4.3.2.
-        patch -p1 < "${PACKAGE_DIR}/grafana-js-yaml-cve.patch"
-        # CVE-2026-84394, CVE-2026-84292: bump vendored fast-uri to 3.1.7.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.7.patch"
-        # CVE-2026-90771: bump vendored joi to 17.13.8 and 18.2.9.
-        # The later axios patch depends on this resolution block.
-        patch -p1 < "${PACKAGE_DIR}/grafana-joi-cve.patch"
-        # CVE-2026-75838: bump vendored DOMPurify 3.4.12 -> 3.4.13.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-dompurify-cve.patch"
-        # CVE-2026-86472: bump vendored fast-uri 3.1.7 -> 3.1.8.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-fast-uri-3.1.8-cve.patch"
-        # CVE-2026-93981: bump vendored hono 4.12.34 -> 4.13.7.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.7-cve.patch"
-        # CVE-2026-101903: bump vendored axios 1.18.1 -> 1.20.0.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-axios-1.20.0-cve.patch"
-        # CVE-2026-109955: bump vendored hono 4.13.7 -> 4.13.11.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-hono-4.13.11-cve.patch"
-        # CVE-2026-110816: bump vendored qs 6.16.0 -> 6.16.1.
-        # Must be applied here too, or the offline yarn cache goes stale.
-        patch -p1 < "${PACKAGE_DIR}/grafana-qs-6.16.1.patch"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
@@ -71,12 +37,21 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-13.2.4-vendor.tar.bz2"
+    checksum: "b1010bde77e2bc76cfdeffc3bf2447a30a711b7c4e68b59d46b33805332c315b69a2770d5bbac525c8f9bf00317abfa1e9562cd1ad401672ed01fd0874a4cf83"
+    reason: "Regenerate the 13.2.4 Go vendor archive with kin-openapi 0.149.0 and jsonschema/v6 6.0.3 security updates from main"
+  - file: "grafana-yarn-cache-13.2.4.tar.bz2"
+    checksum: "8e365ec83746a9501061aeea8f332312d08a63ae5a195e9fff08ef4aa7a4f7f69a5a390d86dea920ebdcbaac60c98ed675147586a221782e169dc44b32789b8d"
+    reason: "Regenerate the 13.2.4 offline cache with Hono 4.13.11 and qs 6.16.1 security patches carried forward from main"
   - file: "grafana-yarn-cache-13.2.3.tar.bz2"
     checksum: "684cc07561dd083ca4616c1d5473d000ffcddcdf1cd5bc893bd8e613f38ebe50aacb566f8d242a7b4b1f79206c107d110118f103a6e3077845dee53fa6fdc6ef"
     reason: "Adds s390x to .yarnrc.yml supportedArchitectures (grafana-yarn-cache.patch) so the offline cache includes @esbuild/linux-s390x and @swc/core-linux-s390x-gnu, alongside the hono 4.13.7->4.13.11 bump for CVE-2026-109955"
   - file: "grafana-yarn-cache-13.2.3.tar.bz2"
     checksum: "c6c6c86535d7ab01e9419323077969fe898ee27030f67ac3467574ae96a1495e94297287977b33a0faa712daf486288dfb1687eeecc4282af036067ef52b4b09"
     reason: "grafana-qs-6.16.1.patch bumps qs 6.16.0->6.16.1 for CVE-2026-110816; yarn cache regenerated without stale qs-6.16.0 zip"
+  - file: "grafana-yarn-cache-13.2.4.tar.bz2"
+    checksum: "874da9c9112a7880f22e578a590244a8130064c0b38fe0e47bb74e3f06e0e4d75ab67371d8d3823b8f933e03330fb924b532c36fc0878cf25f5a0d0a958f102c"
+    reason: "Include s390x native Yarn packages for the offline RPM build"
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "bf3633ad07c9ab25c4b0a6a33d8c2a9afd9d80ff572b2cb716920553b2c510d156513b396c5292a00ffed9f4c7611ed2f3a0d66551f6591c15de548784b37d7e"
     reason: "grafana-axios-1.20.0-cve.patch bumps axios 1.18.1->1.20.0 for CVE-2026-101903; yarn cache regenerated without stale axios-1.18.1 zip"
