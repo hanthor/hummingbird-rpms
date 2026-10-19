@@ -463,10 +463,23 @@ for FAILURE_RECORD in "${UPDATE_FAILURE_RECORDS[@]}"; do
     # Push options are newline-delimited. Keep multi-line errors intact for
     # GitLab by encoding their newlines as the literal \n sequence, as used
     # by create_mr.sh descriptions elsewhere.
-    UPDATE_ERROR=$(jq -r '.update_error | gsub("\n"; "\\n")' <<<"${FAILURE_JSON}")
+    # A gorget report can contain thousands of repeated Go module errors.
+    # GitLab receives the description as a Git push option, whose protocol
+    # packet cannot hold an unbounded report. Keep a useful opening excerpt;
+    # the scheduled job log retains the complete error.
+    UPDATE_ERROR=$(jq -r '
+        ((.update_error // .error // "unknown error") | gsub("\n"; "\\n")) as $error
+        | if ($error | length) > 4000
+          then $error[:4000] + "\\n...[truncated; see full CI job log]"
+          else $error
+          end
+    ' <<<"${FAILURE_JSON}")
     BRANCH_NAME="chore/upstream-update-failure-${PACKAGE}"
     MR_TITLE="Draft: investigate failed upstream update for ${PACKAGE}"
     MR_DESCRIPTION="Automated upstream update from ${CURRENT_VERSION} to ${UPSTREAM_VERSION} failed.\n\nError:\n\`\`\`\n${UPDATE_ERROR}\n\`\`\`\n\nThis diagnostic MR intentionally contains no partial package changes. The updater discarded them after the failure to avoid proposing an unsafe update. Reproduce the update from this branch, apply and validate the required fix, then replace this empty commit with the resolved package changes."
+    if [[ -n "${CI_JOB_URL:-}" ]]; then
+        MR_DESCRIPTION+="\n\nFull job log: ${CI_JOB_URL}"
+    fi
 
     echo "----------------------------------------"
     echo "Processing failed update: ${PACKAGE}"
