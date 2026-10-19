@@ -15,7 +15,6 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
@@ -48,6 +47,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.13.tar.bz2"
+    checksum: "411cb7da051153f76f14932ba3c3c3e66c1a78977c553ea58538d79ccb94c279d444ad611ad43884dcbae91a5b41b813a24df83dccf6e41e5cbfa51125c9adf6"
+    reason: "Rebuilt the 12.4.13 offline Yarn cache after applying grafana-hono-4.13.11-cve.patch from main for CVE-2026-109955"
   - file: "grafana-yarn-cache-12.4.12.tar.bz2"
     checksum: "3c0031b3c20334dcb21e802aa4f5ae5efa3ebfe8a9f5c8b913625861a4232f6fa0498e899ac94a1b1b51b092d5b8e5257675957febb2f1705dbc978270a33a79"
     reason: "grafana-hono-4.13.11-cve.patch bumps hono 4.13.7->4.13.11 for CVE-2026-109955; yarn-cache regenerated without stale hono-4.13.7 zip"
