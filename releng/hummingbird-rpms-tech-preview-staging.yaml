@@ -475,6 +475,8 @@ spec:
           contentType: rpm
         - name: langpacks-main
           contentType: rpm
+        - name: lcms2-main
+          contentType: rpm
         - name: less-main
           contentType: rpm
         - name: libx11-main
@@ -749,6 +751,8 @@ spec:
           contentType: rpm
         - name: opendbx-main
           contentType: rpm
+        - name: openjpeg-main
+          contentType: rpm
         - name: openldap-main
           contentType: rpm
         - name: openmpi-main
@@ -896,6 +900,8 @@ spec:
         - name: polkit-main
           contentType: rpm
         - name: poppler-main
+          contentType: rpm
+        - name: poppler-data-main
           contentType: rpm
         - name: popt-main
           contentType: rpm

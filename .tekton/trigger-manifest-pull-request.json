@@ -789,6 +789,10 @@
         "^rpms/langpacks/",
         "^test/rpms/langpacks\\.yml$"
       ],
+      "lcms2--rpms": [
+        "^rpms/lcms2/",
+        "^test/rpms/lcms2\\.yml$"
+      ],
       "less--rpms": [
         "^rpms/less/",
         "^test/rpms/less\\.yml$"
@@ -1341,6 +1345,10 @@
         "^rpms/opendbx/",
         "^test/rpms/opendbx\\.yml$"
       ],
+      "openjpeg--rpms": [
+        "^rpms/openjpeg/",
+        "^test/rpms/openjpeg\\.yml$"
+      ],
       "openldap--rpms": [
         "^rpms/openldap/",
         "^test/rpms/openldap\\.yml$"
@@ -1636,6 +1644,10 @@
       "poppler--rpms": [
         "^rpms/poppler/",
         "^test/rpms/poppler\\.yml$"
+      ],
+      "poppler-data--rpms": [
+        "^rpms/poppler\\-data/",
+        "^test/rpms/poppler\\-data\\.yml$"
       ],
       "popt--rpms": [
         "^rpms/popt/",

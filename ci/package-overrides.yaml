@@ -309,6 +309,9 @@ kubernetes1.35:
 kubernetes1.36:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+lcms2:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 libdex:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -433,6 +436,9 @@ openblas:
     - "linux-d160-c8xlarge/amd64"
     - "linux/s390x"
 
+openjpeg:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 openshell:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
@@ -515,6 +521,9 @@ pmix:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 poppler:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+poppler-data:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 prometheus3.13:

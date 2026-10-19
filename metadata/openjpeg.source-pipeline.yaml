@@ -1,0 +1,7 @@
+fetch:
+  - type: url
+    url: "${UPSTREAM_REPO}/archive/v${VERSION}/openjpeg-${VERSION}.tar.gz"
+
+publish:
+  files:
+    - "openjpeg-${VERSION}.tar.gz"

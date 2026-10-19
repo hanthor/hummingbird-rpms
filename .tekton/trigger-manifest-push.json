@@ -593,6 +593,9 @@
       "langpacks--rpms": [
         "^rpms/langpacks/"
       ],
+      "lcms2--rpms": [
+        "^rpms/lcms2/"
+      ],
       "less--rpms": [
         "^rpms/less/"
       ],
@@ -1007,6 +1010,9 @@
       "opendbx--rpms": [
         "^rpms/opendbx/"
       ],
+      "openjpeg--rpms": [
+        "^rpms/openjpeg/"
+      ],
       "openldap--rpms": [
         "^rpms/openldap/"
       ],
@@ -1228,6 +1234,9 @@
       ],
       "poppler--rpms": [
         "^rpms/poppler/"
+      ],
+      "poppler-data--rpms": [
+        "^rpms/poppler\\-data/"
       ],
       "popt--rpms": [
         "^rpms/popt/"

@@ -1,0 +1,7 @@
+fetch:
+  - type: url
+    url: "https://poppler.freedesktop.org/poppler-data-${VERSION}.tar.gz"
+
+publish:
+  files:
+    - "poppler-data-${VERSION}.tar.gz"
