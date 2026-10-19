@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/lcms2.git",
-    "release": "8",
     "sha": "c0f033adc3aa403736a7d6f9cf2f371fc3803883"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 2.19.1",
+  "modification_status": "modified",
   "release_monitoring_project_id": 9815,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/mm2/Little-CMS",
-  "version": "2.16"
+  "version": "2.19.1"
 }
