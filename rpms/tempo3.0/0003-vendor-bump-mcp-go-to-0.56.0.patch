@@ -5,7 +5,7 @@ Subject: [PATCH] Bump github.com/mark3labs/mcp-go to v0.56.0 for
  CVE-2026-81092
 
 ---
- go.mod                                        |    7 +-
+ go.mod                                        |   10 +-
  go.sum                                        |   13 +-
  .../COPYING => google/jsonschema-go/LICENSE}  |   16 +-
  .../jsonschema-go/jsonschema/annotations.go   |   76 +
@@ -82,7 +82,7 @@ Subject: [PATCH] Bump github.com/mark3labs/mcp-go to v0.56.0 for
  .../wk8/go-ordered-map/v2/orderedmap.go       |  296 ---
  .../github.com/wk8/go-ordered-map/v2/yaml.go  |   71 -
  vendor/modules.txt                            |   19 +-
- 77 files changed, 12332 insertions(+), 4585 deletions(-)
+ 77 files changed, 12334 insertions(+), 4586 deletions(-)
  rename vendor/github.com/{invopop/jsonschema/COPYING => google/jsonschema-go/LICENSE} (60%)
  create mode 100644 vendor/github.com/google/jsonschema-go/jsonschema/annotations.go
  create mode 100644 vendor/github.com/google/jsonschema-go/jsonschema/doc.go
@@ -146,16 +146,19 @@ index 19f649f7696e..2405492c5c02 100644
  	github.com/maypok86/otter/v2 v2.3.0
  	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v0.150.0
  	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.150.0
-@@ -124,6 +124,8 @@ require (
- 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
+@@ -124,7 +124,10 @@ require (
+ 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260928230214-8a89bd6388cc
  )
  
-+require github.com/google/jsonschema-go v0.4.2 // indirect
-+
+-require github.com/go-openapi/swag/pools v0.28.0 // indirect
++require (
++	github.com/go-openapi/swag/pools v0.28.0 // indirect
++	github.com/google/jsonschema-go v0.4.2 // indirect
++)
+ 
  require (
- 	cel.dev/expr v0.25.1 // indirect
- 	cloud.google.com/go v0.123.0 // indirect
-@@ -249,7 +251,6 @@ require (
+ 	cel.dev/expr v0.25.2 // indirect
+@@ -250,7 +253,6 @@ require (
  	github.com/hashicorp/serf v0.10.2 // indirect
  	github.com/iancoleman/strcase v0.3.0 // indirect
  	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -163,7 +166,7 @@ index 19f649f7696e..2405492c5c02 100644
  	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
  	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
  	github.com/jcmturner/gofork v1.7.6 // indirect
-@@ -267,7 +268,6 @@ require (
+@@ -268,7 +270,6 @@ require (
  	github.com/kylelemons/godebug v1.1.0 // indirect
  	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
  	github.com/magefile/mage v1.15.0 // indirect
@@ -171,7 +174,7 @@ index 19f649f7696e..2405492c5c02 100644
  	github.com/mattn/go-colorable v0.1.14 // indirect
  	github.com/mattn/go-isatty v0.0.20 // indirect
  	github.com/mattn/go-runewidth v0.0.19 // indirect
-@@ -348,7 +348,6 @@ require (
+@@ -349,7 +350,6 @@ require (
  	github.com/twpayne/go-geom v1.6.1 // indirect
  	github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 // indirect
  	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
@@ -222,7 +225,7 @@ index 5721b746b177..b0be23514634 100644
  github.com/mattn/go-colorable v0.1.9/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
  github.com/mattn/go-colorable v0.1.12/go.mod h1:u5H1YNBxpqRaxsYJYSkiCWKzEfiAb1Gb520KVy5xxl4=
  github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
-@@ -876,8 +873,6 @@ github.com/uber/jaeger-lib v2.4.1+incompatible h1:td4jdvLcExb4cBISKIpHuGoVXh+dVK
+@@ -877,8 +874,6 @@ github.com/uber/jaeger-lib v2.4.1+incompatible h1:td4jdvLcExb4cBISKIpHuGoVXh+dVK
  github.com/uber/jaeger-lib v2.4.1+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
  github.com/vultr/govultr/v3 v3.28.1 h1:KR3LhppYARlBujY7+dcrE7YKL0Yo9qXL+msxykKQrLI=
  github.com/vultr/govultr/v3 v3.28.1/go.mod h1:2zyUw9yADQaGwKnwDesmIOlBNLrm7edsCfWHFJpWKf8=
@@ -20599,4 +20602,3 @@ index 35dda08412a6..feccf670f245 100644
  github.com/x448/float16
 -- 
 2.55.0
-

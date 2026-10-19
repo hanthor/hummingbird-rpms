@@ -3,3 +3,8 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "tempo-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: go
+    archive_name: "tempo-${VERSION}-vendor.tar.bz2"
