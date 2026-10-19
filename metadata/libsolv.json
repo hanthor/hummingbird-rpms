@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libsolv.git",
-    "release": "1",
-    "sha": "445e4cbe546777f275a7104cb0bdde08000c6f28"
+    "release": "2",
+    "sha": "8cff1ac4018bf3db4d364b3831e0bae798986e65"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/openSUSE/libsolv",
