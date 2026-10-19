@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/kernel-headers.git",
-    "release": "61",
-    "sha": "7ee42988bf3051e5d4fa9c70614d3110ea3cad23"
+    "release": "65",
+    "sha": "5d0e099750a3ce59688641a1260520d03be60a48"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/torvalds/linux",
-  "version": "7.2.0"
+  "version": "7.3.0"
 }
