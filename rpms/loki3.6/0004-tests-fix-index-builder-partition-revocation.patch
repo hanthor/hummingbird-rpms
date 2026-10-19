@@ -1,0 +1,47 @@
+From: Hummingbird RPM maintainers
+Subject: [PATCH] tests: synchronize index builder partition revocation
+Upstream: not submitted
+
+The builder reaches Running before it starts its child indexer. Wait for
+the indexer before submitting records. Sending the revocation trigger only
+unblocks the callback goroutine, so also wait for callback completion before
+reading partition state. Keep revocation concurrent with record processing
+and retain the original assertions and context deadline.
+
+diff --git a/pkg/dataobj/index/builder_test.go b/pkg/dataobj/index/builder_test.go
+--- a/pkg/dataobj/index/builder_test.go
++++ b/pkg/dataobj/index/builder_test.go
+@@ -71,6 +71,7 @@
+ 	// Start the service so the downloader goroutines are started.
+ 	require.NoError(t, builder.StartAsync(ctx))
+ 	require.NoError(t, builder.AwaitRunning(ctx))
++	require.NoError(t, builder.indexer.AwaitRunning(ctx))
+ 
+ 	// Assign some partitions to the builder.
+ 	builder.handlePartitionsAssigned(ctx, nil, map[string][]int32{
+@@ -78,11 +79,13 @@
+ 	})
+ 
+ 	trigger := make(chan struct{})
++	revoked := make(chan struct{})
+ 	go func() {
+ 		<-trigger
+ 		builder.handlePartitionsRevoked(ctx, nil, map[string][]int32{
+ 			"loki.metastore-events": {1},
+ 		})
++		close(revoked)
+ 	}()
+ 
+ 	// Trigger the revocation of a partition, but only after we've processed a couple of records.
+@@ -102,6 +105,11 @@
+ 	}
+ 
+ 	// Verify that the partition was revoked.
++	select {
++	case <-revoked:
++	case <-ctx.Done():
++		t.Fatal("partition revocation did not complete:", ctx.Err())
++	}
+ 	require.Equal(t, 2, len(builder.partitionStates))
+ 	require.Nil(t, builder.partitionStates[1])
+ }

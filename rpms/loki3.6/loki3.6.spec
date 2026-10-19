@@ -22,6 +22,7 @@ Patch0:         0001-tests-use-explicit-loopback-addresses.patch
 Patch1:         0002-tests-update-json-error-for-go1.27.patch
 # Keep asynchronous cleanup assertions reliable on slower build architectures.
 Patch2:         0003-tests-wait-for-async-cleanup.patch
+Patch3:         0004-tests-fix-index-builder-partition-revocation.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26
