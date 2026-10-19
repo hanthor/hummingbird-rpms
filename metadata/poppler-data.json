@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/poppler-data.git",
-    "release": "12",
     "sha": "6fc4bcbdf33a6d1dd896f9f288e2beba2b22493f"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 0.4.12",
+  "modification_status": "modified",
   "release_monitoring_project_id": 3687,
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.freedesktop.org/poppler/poppler-data",
-  "version": "0.4.11"
+  "version": "0.4.12"
 }
