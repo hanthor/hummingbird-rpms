@@ -23,8 +23,8 @@ def test_jobs_requires_positive_integer(value: str | None) -> None:
 
 
 @pytest.mark.parametrize("hermetic", [False, True])
-@pytest.mark.parametrize("jobs,profile", [(None, "normal"), ("3", "normal"), (None, "varied")])
-def test_jobs_reaches_mock(tmp_path: Path, hermetic: bool, jobs: str | None, profile: str) -> None:
+@pytest.mark.parametrize("jobs", [None, "3"])
+def test_jobs_reaches_mock(tmp_path: Path, hermetic: bool, jobs: str | None) -> None:
     repo = tmp_path / "repo"
     for directory in ["ci", "mock", "rpms/probe", ".git", "bin"]:
         (repo / directory).mkdir(parents=True)
@@ -43,7 +43,7 @@ def test_jobs_reaches_mock(tmp_path: Path, hermetic: bool, jobs: str | None, pro
     setfacl = repo / "bin/setfacl"
     setfacl.write_text("#!/bin/sh\nexit 0\n")
     setfacl.chmod(0o755)
-    args = ["bash", str(repo / "ci/build_rpms.sh"), "--nocheck", "--variance-profile", profile]
+    args = ["bash", str(repo / "ci/build_rpms.sh"), "--nocheck"]
     if hermetic:
         args.append("--hermetic")
     if jobs:
@@ -65,25 +65,10 @@ def test_jobs_reaches_mock(tmp_path: Path, hermetic: bool, jobs: str | None, pro
                 assert call[call.index("--define") + 1] == "_smp_build_ncpus 3"
             else:
                 assert "--define" not in call
-        build = next(call for call in mock_calls if "--hermetic-build" in call)
-        assert build[build.index("--profile") + 1] == profile
-        calculation = next(call for call in mock_calls if "--calculate-build-dependencies" in call)
-        assert "--profile" not in calculation
     else:
         inner_script = next(call[-1] for call in calls if "bash" in call)
         subprocess.run(["bash", "-n", "-c", inner_script], check=True)
-        assert f"--profile '{profile}'" in inner_script
         if jobs:
             assert "--define '_smp_build_ncpus 3'" in inner_script
         else:
             assert "--define" not in inner_script
-
-
-@pytest.mark.parametrize("args", [
-    ["--variance-profile"], ["--variance-profile", "unknown"],
-    ["--variance-profile", "varied", "--jobs", "4", "probe"],
-])
-def test_invalid_variance_options(args: list[str]) -> None:
-    result = subprocess.run(["bash", str(SCRIPT), *args], capture_output=True, text=True, check=False)
-    assert result.returncode == 1
-    assert "Error:" in result.stderr

@@ -27,8 +27,6 @@ Usage: ./ci/build_rpms.sh [OPTIONS] PACKAGE_NAME
                        high-priority repo (useful for testing build compatibility)
   --hermetic         - Match CI: materialize dependencies, then build offline
   --jobs N           - Set RPM build parallelism (packages may lower this further)
-  --variance-profile normal|varied
-                     - Automatic CPU variance; default normal, no package tuning
   --nocheck          - Skip running %check tests during the build
   --shell-before     - Drop into interactive shell instead of running mock
                        (displays the mock command that would be executed)
@@ -49,7 +47,6 @@ build_dir=""
 local_rpms_dir=""
 hermetic=""
 jobs=""
-variance_profile="normal"
 nocheck=""
 shell_before=""
 shell_after=""
@@ -86,13 +83,6 @@ while [[ $# -gt 0 ]]; do
             jobs="$2"
             shift 2
             ;;
-        --variance-profile)
-            case "${2:-}" in
-                normal|varied) variance_profile="$2" ;;
-                *) echo "Error: --variance-profile requires normal or varied" >&2; exit 1 ;;
-            esac
-            shift 2
-            ;;
         --nocheck)
             nocheck="--nocheck"
             shift
@@ -117,11 +107,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-if [[ "${variance_profile}" == varied && -n "${jobs}" ]]; then
-    echo "Error: --jobs cannot be combined with the automatic varied profile" >&2
-    exit 1
-fi
 
 if [[ -n "${hermetic}" && ( -n "${shell_before}" || -n "${shell_after}" ) ]]; then
     echo "Error: Interactive shell modes cannot be used with --hermetic" >&2
@@ -284,9 +269,7 @@ if [[ -n "${local_rpms_dir}" ]]; then
 fi
 
 # Mock command used by the non-hermetic debugging path.
-mock_cmd="python3 /repo/ci/build_variance.py \\
-     --profile '${variance_profile}' --report /results/variance.json -- \\
-     mock -r /config/mock.cfg \\
+mock_cmd="mock -r /config/mock.cfg \\
      --spec '/repo/rpms/${package_name}/${spec_file_name}' \\
      --sources /sources \\
      --resultdir /results \\
@@ -382,8 +365,6 @@ if [[ -n "${hermetic}" ]]; then
 
     echo "Building without network access..."
     podman run --network=none "${podman_args[@]}" "${image}" \
-        python3 /repo/ci/build_variance.py \
-            --profile "${variance_profile}" --report /results/variance.json -- \
         mock --hermetic-build \
             /results/buildroot_lock.json \
             /results/buildroot_repo \

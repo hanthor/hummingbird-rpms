@@ -21,36 +21,6 @@ environment.
 
 ## Testing build parallelism
 
-For automatic variance without package-specific tuning, use the standard profiles:
-
-```bash
-./ci/build_rpms.sh --hermetic --variance-profile normal --build-dir builds/which-normal which
-./ci/build_rpms.sh --hermetic --variance-profile varied --build-dir builds/which-varied which
-```
-
-The `normal` profile preserves CPU affinity and RPM's resource-aware job defaults.
-The `varied` profile inherits seven eighths of the allowed CPU IDs (rounded down,
-at least one) and sets `%_smp_ncpus_max` to that count. Memory and disk allocations
-are unchanged. RPM's memory-based estimates and package-specific constraints can
-lower the job count further. `--jobs` cannot be combined with `varied`, because
-it overrides the calculation that the automatic profile is intended to preserve.
-
-Only the package build is varied; dependency calculation runs normally. Both
-profiles write `results/variance.json` with the policy version, original and
-effective CPU affinity, RPM cap, hostname, and command. A one-CPU allocation is
-reported as having no CPU-affinity variation. The cap is a requested maximum,
-not evidence of actual recipe concurrency: inspect `build.log` too.
-
-The helper `ci/build_variance.py` runs inside the build container, so CPU selection
-uses the build worker's allowed CPUs. Affinity is inherited by Mock and its
-children; privileged processes can widen it. It does not mask `/proc/cpuinfo`,
-change the CPU model, or establish reproduction across machines. Existing explicit
-job settings in the spec or frozen Mock configuration can supersede the cap.
-These profiles currently vary CPU scheduling and job limits only.
-
-The two local commands above independently resolve inputs; they are useful for
-debugging, not a substitute for a pipeline comparison sharing frozen inputs.
-
 Use `--jobs N` to override RPM's `%_smp_build_ncpus` without reducing the runner's
 memory or disk allocation:
 
