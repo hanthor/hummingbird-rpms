@@ -2,12 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/qt6-qtbase.git",
-    "release": "3",
-    "sha": "c3dd3fe417d776886a3f4b3b245f597313780eaa"
+    "release": "1",
+    "sha": "7b093c11df66bdceea2eb068a107a6362dc18ebf"
   },
-  "modification_reason": "Backport CVE-2026-15037",
-  "modification_status": "modified",
+  "modification_status": "clean",
   "upstream_branch": "6.11",
   "upstream_repo": "https://github.com/qt/qtbase",
-  "version": "6.11.2"
+  "version": "6.12.0"
 }

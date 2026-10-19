@@ -300,6 +300,10 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
     bad_commits = [line for line in bad_commits if not line.startswith('cbb5511f5620969cf2af78164dbcaee27358e6ff ')]
     bad_commits = [line for line in bad_commits if not line.startswith('a29b253311107f33d497d9df9d30b4fd04a54016 ')]
 
+    # qt6-qtbase's CVE-2026-15037 backport was superseded by Qt 6.12.0,
+    # which includes the fix and restores the package to Fedora upstream.
+    bad_commits = [line for line in bad_commits if not line.startswith('376c36ccdf1f4d8b2ec652575e77a79c7878e97f ')]
+
     if bad_commits:
         # Filter out release-only commits (per project policy, Release-only changes
         # are not considered modifications)
