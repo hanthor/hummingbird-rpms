@@ -72,6 +72,9 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.1.8.tar.bz2"
+    checksum: "90d7bd3802c630a426b927d0264336326f6d98bfcb8d7d039841fe7f01220071ae4f216aecbc726ac6fe39218dae644ce635be761149cb1fc87910cd15587c64"
+    reason: "Regenerate the 13.1.8 offline cache with the Hono 4.13.11 security patch and s390x native packages carried forward from main"
   - file: "grafana-yarn-cache-13.1.7.tar.bz2"
     checksum: "aa840eb781fd6d70c185495a7b211de08ef1a2e16e6498932a6b5701a621c77d9e8e7d96e053c3c36c08536adc70d107975021046f57955f0aa643dfa4385e91"
     reason: "Adds s390x to .yarnrc.yml supportedArchitectures (grafana-yarn-cache.patch) so the offline cache includes @esbuild/linux-s390x and @swc/core-linux-s390x-gnu, alongside the hono 4.13.7->4.13.11 bump for CVE-2026-109955"
