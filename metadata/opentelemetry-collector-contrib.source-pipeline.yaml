@@ -34,6 +34,14 @@ transform:
 
         "/tmp/ocb-${VERSION}" --skip-compilation --config distributions/otelcol-contrib/manifest.yaml
 
+        # OCB needs the upstream ../../../internal/obi-src replacement above,
+        # but gorget vendors from a copy of this source tree in another scratch
+        # directory. Point the generated module at the prepared OBI source
+        # inside this tree so the replacement survives that copy.
+        if [ -f internal/obi-src/go.mod ]; then
+          (cd _build && go mod edit -replace=go.opentelemetry.io/obi=../internal/obi-src)
+        fi
+
         # CVE-2026-79921/CVE-2026-107386: the forced amqp091-go floor that
         # used to live here (go get .../amqp091-go@v1.13.0, fixing
         # CVE-2026-79921) is gone as of this update. rabbitmqexporter and
