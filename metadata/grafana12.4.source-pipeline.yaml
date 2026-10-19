@@ -48,6 +48,12 @@ transform:
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
+    checksum: "b61c2ff402608e94b3d7c29656ef4416c517b482c12c4096fdf84db507e277b594effd602a7fad1a196977761f4e87e74a7970d42e24715bef6a591d024361e9"
+    reason: "grafana-qs-6.16.1.patch bumps qs 6.14.1->6.16.1 for CVE-2026-110816; yarn cache regenerated without stale qs-6.14.1 zip"
+  - file: "grafana-12.4.13-vendor.tar.bz2"
+    checksum: "64aca7b5bb11c64ce3e7775edd7252de6269bd77590cf81289fc048250e48ce18acee58e8f73748daae32cf293c62e255dc11c4a8a3f8edccc72816fd34a77d7"
+    reason: "go-vendor-tools.toml pre_command bumps kin-openapi 0.147.0->0.149.0 (jsonschema/v6 6.0.3) for CVE-2026-100352/100353/100354; vendor archive regenerated"
+  - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "411cb7da051153f76f14932ba3c3c3e66c1a78977c553ea58538d79ccb94c279d444ad611ad43884dcbae91a5b41b813a24df83dccf6e41e5cbfa51125c9adf6"
     reason: "Rebuilt the 12.4.13 offline Yarn cache after applying grafana-hono-4.13.11-cve.patch from main for CVE-2026-109955"
   - file: "grafana-yarn-cache-12.4.12.tar.bz2"
