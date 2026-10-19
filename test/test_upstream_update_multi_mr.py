@@ -517,3 +517,54 @@ def test_stale_patch_update_creates_review_required_mr(tmp_path: Path) -> None:
     assert "--draft" in args
     assert "--auto-merge" not in args
     assert "STALE PATCH: chore(rpms): Update protobuf to 36.2" in args
+
+
+def test_large_update_error_keeps_diagnostic_mr_push_option_bounded(
+    tmp_path: Path,
+) -> None:
+    repo, ci_dir = _create_success_fixture(tmp_path)
+    error = "go mod tidy failed: missing internal/obi-src/go.mod\n" + (
+        "module error repeated by Go\n" * 10_000
+    )
+    (repo / "failure.json").write_text(json.dumps({"results": [{
+        "package": "opentelemetry-collector-contrib",
+        "current_version": "0.162.0",
+        "upstream_version": "0.163.1",
+        "error": None,
+        "update_error": error,
+        "updated": False,
+        "warnings": [],
+    }]}))
+    checker = ci_dir / "check_upstream_versions.py"
+    checker.write_text("#!/bin/bash\ncat failure.json\nexit 2\n")
+
+    description_path = tmp_path / "description.txt"
+    create_mr = ci_dir / "create_mr.sh"
+    create_mr.write_text("""#!/bin/bash
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--description" ]]; then
+        printf '%s' "$2" > "$MR_DESCRIPTION_LOG"
+        exit 0
+    fi
+    shift
+done
+exit 1
+""")
+    create_mr.chmod(0o755)
+    env = os.environ.copy()
+    env.pop("WORKQUEUE_SERVICE_URL", None)
+    env.pop("WORKQUEUE_OIDC_TOKEN", None)
+    env["MR_DESCRIPTION_LOG"] = str(description_path)
+    env["CI_JOB_URL"] = "https://gitlab.example/jobs/123"
+
+    result = subprocess.run(
+        [str(ci_dir / UPDATE_SCRIPT.name), "--create-mrs"], cwd=repo,
+        capture_output=True, text=True, env=env,
+    )
+
+    assert result.returncode == 1, result.stderr  # The package update failed.
+    description = description_path.read_text()
+    assert "go mod tidy failed: missing internal/obi-src/go.mod" in description
+    assert "[truncated; see full CI job log]" in description
+    assert "https://gitlab.example/jobs/123" in description
+    assert len(description.encode()) < 8_000
