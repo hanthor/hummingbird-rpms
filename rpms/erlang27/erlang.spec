@@ -75,7 +75,7 @@
 
 Name:		erlang27
 Version:	27.3.4.19
-Release:	0.1%{?dist}
+Release:	1%{?dist}
 Summary:	General-purpose programming language and runtime environment
 
 License:	Apache-2.0
@@ -2022,6 +2022,9 @@ ERL_TOP=${ERL_TOP} make TARGET=${TARGET} release_tests
 
 
 %changelog
+* Fri Oct 16 2026 Peter Lemenkov <lemenkov@gmail.com> - 27.3.4.19-1
+- Ver. 27.3.4.19
+
 * Wed Sep 23 2026 Peter Lemenkov <lemenkov@gmail.com> - 27.3.4.18-1
 - Ver. 27.3.4.18
 
