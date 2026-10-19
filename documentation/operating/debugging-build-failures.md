@@ -19,6 +19,74 @@ investigate failures, modify files, and re-run the build without starting over.
 After the build completes (success or failure), you'll be dropped into a mock shell inside the build
 environment.
 
+## Testing build parallelism
+
+For automatic variance without package-specific tuning, use the standard profiles:
+
+```bash
+./ci/build_rpms.sh --hermetic --variance-profile normal --build-dir builds/which-normal which
+./ci/build_rpms.sh --hermetic --variance-profile varied --build-dir builds/which-varied which
+```
+
+The `normal` profile preserves CPU affinity and RPM's resource-aware job defaults.
+The `varied` profile inherits seven eighths of the allowed CPU IDs (rounded down,
+at least one) and sets `%_smp_ncpus_max` to that count. Memory and disk allocations
+are unchanged. RPM's memory-based estimates and package-specific constraints can
+lower the job count further. `--jobs` cannot be combined with `varied`, because
+it overrides the calculation that the automatic profile is intended to preserve.
+
+Only the package build is varied; dependency calculation runs normally. Both
+profiles write `results/variance.json` with the policy version, original and
+effective CPU affinity, RPM cap, hostname, and command. A one-CPU allocation is
+reported as having no CPU-affinity variation. The cap is a requested maximum,
+not evidence of actual recipe concurrency: inspect `build.log` too.
+
+The helper `ci/build_variance.py` runs inside the build container, so CPU selection
+uses the build worker's allowed CPUs. Affinity is inherited by Mock and its
+children; privileged processes can widen it. It does not mask `/proc/cpuinfo`,
+change the CPU model, or establish reproduction across machines. Existing explicit
+job settings in the spec or frozen Mock configuration can supersede the cap.
+These profiles currently vary CPU scheduling and job limits only.
+
+The two local commands above independently resolve inputs; they are useful for
+debugging, not a substitute for a pipeline comparison sharing frozen inputs.
+
+Use `--jobs N` to override RPM's `%_smp_build_ncpus` without reducing the runner's
+memory or disk allocation:
+
+```bash
+./ci/build_rpms.sh --hermetic --jobs 4 --build-dir builds/which-j4 which
+./ci/build_rpms.sh --hermetic --jobs 2 --build-dir builds/which-j2 which
+```
+
+The override is passed to dependency calculation and the offline build. The
+networked debugging path supports it too. Package-specific resource constraints
+can lower the requested count, and tools that ignore RPM macros can choose a
+different count. Inspect `results/build.log` for the actual build commands.
+
+To verify the mechanism with measured concurrency, run:
+
+```bash
+./ci/probe_build_parallelism.sh
+```
+
+The probe uses the pinned build environment image and this repository's Mock
+configuration. It resolves dependencies once, materializes an offline repository,
+then performs three clean, network-disabled builds of a diagnostic fixture. Eight
+Make recipes record monotonic start/end timestamps. The build fails unless RPM's
+effective macro, `RPM_BUILD_NCPUS`, and observed peak concurrency all match:
+
+| Requested jobs | Package constraint | Expected peak recipes |
+| --- | --- | --- |
+| 2 | None | 2 |
+| 4 | None | 4 |
+| 4 | `%constrain_build -c 2` | 2 |
+
+Logs and diagnostic RPMs are retained in a new `builds/parallelism-probe.*`
+directory. The diagnostic RPM deliberately contains execution details and is not
+intended to be reproducible or published. This probe runs on one host; it tests
+job control, not reproduction across machines or production package reproducibility.
+
 ## Understanding the Build Environment
 
 The build happens in two layers:

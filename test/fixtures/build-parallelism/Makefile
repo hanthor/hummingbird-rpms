@@ -1,0 +1,4 @@
+all: job-1 job-2 job-3 job-4 job-5 job-6 job-7 job-8
+
+job-%:
+	python3 probe.py worker $@

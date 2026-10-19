@@ -26,6 +26,9 @@ Usage: ./ci/build_rpms.sh [OPTIONS] PACKAGE_NAME
   --local-rpms-dir DIR - Directory containing local RPMs to use as an additional
                        high-priority repo (useful for testing build compatibility)
   --hermetic         - Match CI: materialize dependencies, then build offline
+  --jobs N           - Set RPM build parallelism (packages may lower this further)
+  --variance-profile normal|varied
+                     - Automatic CPU variance; default normal, no package tuning
   --nocheck          - Skip running %check tests during the build
   --shell-before     - Drop into interactive shell instead of running mock
                        (displays the mock command that would be executed)
@@ -45,6 +48,8 @@ arch=$(uname -m)
 build_dir=""
 local_rpms_dir=""
 hermetic=""
+jobs=""
+variance_profile="normal"
 nocheck=""
 shell_before=""
 shell_after=""
@@ -73,6 +78,21 @@ while [[ $# -gt 0 ]]; do
             hermetic="1"
             shift
             ;;
+        --jobs)
+            if [[ ! "${2:-}" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Error: --jobs requires a positive integer" >&2
+                exit 1
+            fi
+            jobs="$2"
+            shift 2
+            ;;
+        --variance-profile)
+            case "${2:-}" in
+                normal|varied) variance_profile="$2" ;;
+                *) echo "Error: --variance-profile requires normal or varied" >&2; exit 1 ;;
+            esac
+            shift 2
+            ;;
         --nocheck)
             nocheck="--nocheck"
             shift
@@ -98,14 +118,26 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ "${variance_profile}" == varied && -n "${jobs}" ]]; then
+    echo "Error: --jobs cannot be combined with the automatic varied profile" >&2
+    exit 1
+fi
+
 if [[ -n "${hermetic}" && ( -n "${shell_before}" || -n "${shell_after}" ) ]]; then
     echo "Error: Interactive shell modes cannot be used with --hermetic" >&2
     exit 1
 fi
 
-mock_check_args=()
+mock_build_args=()
 if [[ -n "${nocheck}" ]]; then
-    mock_check_args+=(--nocheck)
+    mock_build_args+=(--nocheck)
+fi
+jobs_option=""
+if [[ -n "${jobs}" ]]; then
+    mock_build_args+=(--define "_smp_build_ncpus ${jobs}")
+    # jobs is validated as digits above; this command also runs in an inner shell.
+    jobs_option="--define '_smp_build_ncpus ${jobs}'"
+    echo "Requested RPM build parallelism: ${jobs} (check build.log for package overrides)"
 fi
 
 # Validate exactly one package name was provided
@@ -252,12 +284,14 @@ if [[ -n "${local_rpms_dir}" ]]; then
 fi
 
 # Mock command used by the non-hermetic debugging path.
-mock_cmd="mock -r /config/mock.cfg \\
+mock_cmd="python3 /repo/ci/build_variance.py \\
+     --profile '${variance_profile}' --report /results/variance.json -- \\
+     mock -r /config/mock.cfg \\
      --spec '/repo/rpms/${package_name}/${spec_file_name}' \\
      --sources /sources \\
      --resultdir /results \\
      --no-clean --no-cleanup-after \\
-     ${nocheck}"
+     ${nocheck} ${jobs_option}"
 
 podman run "${podman_args[@]}" "${image}" bash -euo pipefail -c "
 # Configure curl's header until https://github.com/release-engineering/dist-git/issues/88 is fixed
@@ -331,7 +365,7 @@ if [[ -n "${hermetic}" ]]; then
             --sources /sources \
             --resultdir /results \
             --calculate-build-dependencies \
-            "${mock_check_args[@]}"
+            "${mock_build_args[@]}"
 
     echo "Materializing hermetic buildroot repository..."
     root_podman_args=("${podman_args[@]}")
@@ -348,13 +382,15 @@ if [[ -n "${hermetic}" ]]; then
 
     echo "Building without network access..."
     podman run --network=none "${podman_args[@]}" "${image}" \
+        python3 /repo/ci/build_variance.py \
+            --profile "${variance_profile}" --report /results/variance.json -- \
         mock --hermetic-build \
             /results/buildroot_lock.json \
             /results/buildroot_repo \
             --spec "/sources/${spec_file_name}" \
             --sources /sources \
             --resultdir /results \
-            "${mock_check_args[@]}"
+            "${mock_build_args[@]}"
 fi
 
 # Organize RPMs into separate directories
