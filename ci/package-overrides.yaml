@@ -60,6 +60,9 @@ bootc:
     - "linux-d160-c8xlarge/amd64"
     - "linux/s390x"
 
+bubblewrap:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 caddy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
