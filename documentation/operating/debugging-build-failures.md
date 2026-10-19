@@ -19,6 +19,44 @@ investigate failures, modify files, and re-run the build without starting over.
 After the build completes (success or failure), you'll be dropped into a mock shell inside the build
 environment.
 
+## Testing build parallelism
+
+Use `--jobs N` to override RPM's `%_smp_build_ncpus` without reducing the runner's
+memory or disk allocation:
+
+```bash
+./ci/build_rpms.sh --hermetic --jobs 4 --build-dir builds/which-j4 which
+./ci/build_rpms.sh --hermetic --jobs 2 --build-dir builds/which-j2 which
+```
+
+The override is passed to dependency calculation and the offline build. The
+networked debugging path supports it too. Package-specific resource constraints
+can lower the requested count, and tools that ignore RPM macros can choose a
+different count. Inspect `results/build.log` for the actual build commands.
+
+To verify the mechanism with measured concurrency, run:
+
+```bash
+./ci/probe_build_parallelism.sh
+```
+
+The probe uses the pinned build environment image and this repository's Mock
+configuration. It resolves dependencies once, materializes an offline repository,
+then performs three clean, network-disabled builds of a diagnostic fixture. Eight
+Make recipes record monotonic start/end timestamps. The build fails unless RPM's
+effective macro, `RPM_BUILD_NCPUS`, and observed peak concurrency all match:
+
+| Requested jobs | Package constraint | Expected peak recipes |
+| --- | --- | --- |
+| 2 | None | 2 |
+| 4 | None | 4 |
+| 4 | `%constrain_build -c 2` | 2 |
+
+Logs and diagnostic RPMs are retained in a new `builds/parallelism-probe.*`
+directory. The diagnostic RPM deliberately contains execution details and is not
+intended to be reproducible or published. This probe runs on one host; it tests
+job control, not reproduction across machines or production package reproducibility.
+
 ## Understanding the Build Environment
 
 The build happens in two layers:

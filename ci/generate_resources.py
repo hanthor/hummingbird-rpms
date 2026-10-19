@@ -57,7 +57,7 @@ def expand_task_run_specs(specs: list) -> list:
     return expanded
 
 # renovate: datasource=docker depName=quay.io/hummingbird-ci/rpmbuild-pipeline
-PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:7e7ff03aed0bce65139a6c099ac9f57189ccc9f86b0cb2a89548875190934a88"
+PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:pipeline-2965344274@sha256:7971f4e98f05e132e671f7c64cdc5ce402043d4175bdc8c5fa3fd58a4987d62e"
 
 def load_yaml_file(path: Path) -> dict | None:
     """Load a YAML file, returning None if it doesn't exist."""
@@ -181,7 +181,11 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             if private_product:
                 rpm_data["application_name"] = f"private-{private_product}-rpms-{branch}"
 
-            extra_params = {"purl-rpm-namespace": "redhat"}
+            extra_params = {
+                "purl-rpm-namespace": "redhat",
+                "reproducibility-architectures": ["x86_64", "noarch"],
+                "reproducibility-on-error": "continue",
+            }
             if "extra_params" in pkg_config:
                 extra_params.update(pkg_config["extra_params"])
             if resource_type == "pull-request":

@@ -242,6 +242,17 @@ make generate
 This updates `.tekton/rpms-on-push.yaml` and `.tekton/rpms-on-pull-request.yaml` with the new
 configuration.
 
+Generated PipelineRuns enable reproducibility checks for `x86_64`, `aarch64`,
+`s390x`, and `noarch`. Verification failures do not block publication.
+Use `extra_params` in `ci/package-overrides.yaml` to change these defaults:
+
+```yaml
+example-package:
+  extra_params:
+    reproducibility-architectures: []
+    reproducibility-on-error: stopAndFail
+```
+
 ## Branching and pull requests
 
 - Create feature branches from the default branch.

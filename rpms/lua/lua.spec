@@ -14,7 +14,7 @@
 
 Name:           lua
 Version:        %{major_version}.1
-Release:        2.1%{?dist}
+Release:        2.2%{?dist}
 Summary:        Powerful light-weight programming language
 License:        MIT
 URL:            https://www.lua.org/

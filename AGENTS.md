@@ -34,6 +34,8 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
 | `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
+| `./ci/build_rpms.sh --jobs N [--hermetic] <pkg>` | Test a package with an explicit RPM build job count |
+| `./ci/probe_build_parallelism.sh` | Verify job overrides and package constraints using measured concurrent tasks in offline Mock builds |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -55,6 +57,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Backport a patch               | Add patch, bump Release, run `mark-modified`                    | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Fast-track an upstream fix not yet in Fedora                           |
 | Configure metadata fields      | _(edit `metadata/<pkg>.json`)_                                  | [Package Metadata Fields](documentation/operating/package-metadata-fields.md)                   | Understand `release` and `modification_status` configuration           |
 | Debug build failures           | _(see docs)_                                                    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Investigate and fix failed package builds                              |
+| Probe build parallelism        | `ci/probe_build_parallelism.sh`; `ci/build_rpms.sh --jobs N`    | [Debugging Build Failures](documentation/operating/debugging-build-failures.md)                 | Measure effective concurrency and test RPM job overrides               |
 | Mark package modified          | `mark-modified <pkg> --modified --reason "..."`                 | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Track local changes; prevent automatic Fedora updates                  |
 | Set package basename           | `set-upstream <pkg> --track-version <prefix>`                   | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Set basename/track_version for versioned packages                      |
 | Track upstream versions        | `set-upstream <pkg>`                                            | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Enable/disable upstream version checking for a package                 |
