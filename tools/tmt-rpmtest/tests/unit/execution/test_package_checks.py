@@ -6,6 +6,7 @@ import struct
 import subprocess
 import sys
 import tarfile
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -231,6 +232,15 @@ def test_debug_only_elf_is_not_loaded_but_empty_runtime_interpreter_is_rejected(
         assert interpreter(stream) is not None
     with debug.open("rb") as stream:
         assert interpreter(stream) is None
+    # RPM debuginfo produced by elfutils may retain the executable's original program
+    # headers, even though their offsets and lengths no longer describe runtime contents.
+    original = Path(executable).read_bytes()
+    separate = bytearray(debug.read_bytes())
+    endian = "<" if original[5] == 1 else ">"
+    offset = struct.unpack_from(endian + "Q", original, 32)[0]
+    size, count = struct.unpack_from(endian + "HH", original, 54)
+    separate[offset : offset + size * count] = original[offset : offset + size * count]
+    assert interpreter(io.BytesIO(separate)) is None
     # An empty interpreter in an ordinary executable is still a broken package.
     damaged = bytearray(elf(loader="/lib64/ld-linux-x86-64.so.2"))
     struct.pack_into("<Q", damaged, 64 + 32, 0)
