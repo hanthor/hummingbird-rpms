@@ -1,0 +1,13 @@
+# Signing key from rpms/nghttp2/tatsuhiro-t.pgp.
+# Fingerprint: F4F3B91474D1EB29889BD0EF7E8403D5D673C366
+fetch:
+  - type: url
+    url: "https://github.com/nghttp2/nghttp2/releases/download/v${VERSION}/nghttp2-${VERSION}.tar.xz"
+  - type: url
+    url: "https://github.com/nghttp2/nghttp2/releases/download/v${VERSION}/nghttp2-${VERSION}.tar.xz.asc"
+
+verify:
+  - type: gpg-signature
+    target: "nghttp2-${VERSION}.tar.xz"
+    signature: "nghttp2-${VERSION}.tar.xz.asc"
+    keyring: "nghttp2.gpg"
