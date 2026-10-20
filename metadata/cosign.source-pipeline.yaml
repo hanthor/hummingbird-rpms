@@ -6,3 +6,11 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+accepted-checksums:
+  - file: "cosign-3.1.4-vendor.tar.bz2"
+    checksum: "70174496103ddc5ed7908b822300740c29cee74e9522ed80b3f3afb206d4253118b1cba8392847a38d60e2dddfa6b74e2f7fbdf014e98f409d1044aea0f96d40"
+    reason: >-
+      Regenerated from cosign 3.1.4 after removing obsolete CVE pins that
+      downgraded x/text, x/tools, and go-openapi/swag. Upstream selects
+      x/text v0.43.0, x/tools v0.51.0, and swag v0.28.0 with jsonutils
+      v0.29.2, preserving both security fixes. The source archive is unchanged.
