@@ -3,7 +3,7 @@ index 46a27b6..72e350e 100644
 --- a/go.mod
 +++ b/go.mod
 @@ -3,12 +3,12 @@ module github.com/spiffe/spire
- go 1.26.9
+ go 1.26.10
  
  require (
 -	cloud.google.com/go/iam v1.5.3
