@@ -5,6 +5,31 @@ import struct
 LOADERS = {62: "/lib64/ld-linux-x86-64.so.2", 183: "/lib/ld-linux-aarch64.so.1"}
 
 
+def _debug_sections(stream, header, endian, wide) -> bool:
+    """Recognize allocated sections stripped to NOBITS by objcopy --only-keep-debug."""
+    offset = struct.unpack_from(endian + ("Q" if wide else "I"), header, 40 if wide else 32)[0]
+    size, count = struct.unpack_from(endian + "HH", header, 58 if wide else 46)
+    minimum = 64 if wide else 40
+    if not count:
+        return False
+    if size < minimum:
+        raise ValueError("Invalid ELF section header size.")
+    stripped = False
+    for index in range(count):
+        stream.seek(offset + index * size)
+        section = stream.read(minimum)
+        if len(section) != minimum:
+            raise ValueError("Truncated ELF section header.")
+        kind = struct.unpack_from(endian + "I", section, 4)[0]
+        flags = struct.unpack_from(endian + ("Q" if wide else "I"), section, 8)[0]
+        length = struct.unpack_from(endian + ("Q" if wide else "I"), section, 32 if wide else 20)[0]
+        if flags & 2 and length:  # SHF_ALLOC
+            if kind not in {7, 8}:  # Retained notes and stripped NOBITS sections only.
+                return False
+            stripped |= kind == 8
+    return stripped
+
+
 def interpreter(stream) -> str | None:
     """Return the dynamic loader for an ELF needing runtime resolution, otherwise None."""
     header = stream.read(64)
@@ -31,6 +56,8 @@ def interpreter(stream) -> str | None:
         file_offset = struct.unpack_from(endian + ("Q" if wide else "I"), data, 8 if wide else 4)[0]
         file_size = struct.unpack_from(endian + ("Q" if wide else "I"), data, 32 if wide else 16)[0]
         if kind == 3:  # PT_INTERP
+            if file_size == 0 and _debug_sections(stream, header, endian, wide):
+                continue
             stream.seek(file_offset)
             value = stream.read(min(file_size, 4096))
             if not value.endswith(b"\0") or not value.startswith(b"/"):

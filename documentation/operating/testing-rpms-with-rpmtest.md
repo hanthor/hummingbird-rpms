@@ -153,6 +153,9 @@ coexist. Development, documentation, debug, and metapackages still receive artif
 installation disposition. A package may need a different dependency repository or installation
 profile; inability to resolve it must remain visible rather than silently removing it from coverage.
 
+Debug-only ELF files receive installed-content verification; their stripped interpreter and dynamic
+sections do not represent runnable files and are not runtime-linkage failures.
+
 U06 uses RPM metadata as the source of expected files and attributes. Package-specific ownership
 assertions, such as requiring `/usr/bin/curl` to belong to `curl`, belong in the package contract
 below. Do not impose blanket rules that every package has an executable, all symlinks resolve in

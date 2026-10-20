@@ -4,6 +4,7 @@ import io
 import shutil
 import struct
 import subprocess
+import sys
 import tarfile
 from types import SimpleNamespace
 
@@ -217,3 +218,21 @@ def test_elf_rejects_truncated_headers_and_unknown_dynamic_architecture():
         with pytest.raises(ValueError):
             interpreter(io.BytesIO(data))
     assert interpreter(io.BytesIO(b"ordinary text")) is None
+
+
+@pytest.mark.skipif(shutil.which("objcopy") is None, reason="GNU objcopy is required.")
+def test_debug_only_elf_is_not_loaded_but_empty_runtime_interpreter_is_rejected(tmp_path):
+    from tmt_rpmtest.primitives.elf import interpreter
+
+    executable = sys.executable
+    debug = tmp_path / "ls.debug"
+    subprocess.run(["objcopy", "--only-keep-debug", executable, str(debug)], check=True)
+    with open(executable, "rb") as stream:
+        assert interpreter(stream) is not None
+    with debug.open("rb") as stream:
+        assert interpreter(stream) is None
+    # An empty interpreter in an ordinary executable is still a broken package.
+    damaged = bytearray(elf(loader="/lib64/ld-linux-x86-64.so.2"))
+    struct.pack_into("<Q", damaged, 64 + 32, 0)
+    with pytest.raises(ValueError, match="Invalid ELF interpreter"):
+        interpreter(io.BytesIO(damaged))
