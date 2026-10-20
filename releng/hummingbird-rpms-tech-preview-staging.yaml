@@ -343,6 +343,8 @@ spec:
           contentType: rpm
         - name: gnat-srpm-macros-main
           contentType: rpm
+        - name: gnome-srpm-macros-main
+          contentType: rpm
         - name: gnulib-l10n-main
           contentType: rpm
         - name: gnupg2-main

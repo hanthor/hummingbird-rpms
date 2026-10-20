@@ -395,6 +395,9 @@
       "gnat-srpm-macros--rpms": [
         "^rpms/gnat\\-srpm\\-macros/"
       ],
+      "gnome-srpm-macros--rpms": [
+        "^rpms/gnome\\-srpm\\-macros/"
+      ],
       "gnulib-l10n--rpms": [
         "^rpms/gnulib\\-l10n/"
       ],

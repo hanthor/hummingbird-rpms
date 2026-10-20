@@ -525,6 +525,10 @@
         "^rpms/gnat\\-srpm\\-macros/",
         "^test/rpms/gnat\\-srpm\\-macros\\.yml$"
       ],
+      "gnome-srpm-macros--rpms": [
+        "^rpms/gnome\\-srpm\\-macros/",
+        "^test/rpms/gnome\\-srpm\\-macros\\.yml$"
+      ],
       "gnulib-l10n--rpms": [
         "^rpms/gnulib\\-l10n/",
         "^test/rpms/gnulib\\-l10n\\.yml$"
