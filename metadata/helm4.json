@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/helm.git",
     "sha": "a53b20b924c7a3361f827227cac644b63e783df2"
   },
-  "modification_reason": "Update to upstream version 4.3.1",
+  "modification_reason": "Update to upstream version 4.3.1; isolate mutable lint fixtures to prevent concurrent test failures",
   "modification_status": "modified",
   "release_monitoring_project_id": 15046,
   "track_upstream": "4",

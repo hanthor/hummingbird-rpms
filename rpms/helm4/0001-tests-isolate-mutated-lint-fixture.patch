@@ -1,0 +1,34 @@
+tests: isolate the mutable chart fixture
+
+The lint and lint/rules test binaries can run concurrently. Renaming the
+shared fail.yaml races chart loading in TestInvalidYaml. Use a temporary
+copy for the happy-path test and check the filesystem operations.
+
+--- a/pkg/chart/v2/lint/rules/template_test.go
++++ b/pkg/chart/v2/lint/rules/template_test.go
+@@ -62,19 +62,15 @@
+ 	assert.ErrorContains(t, res[0].Err, "deliberateSyntaxError")
+ }
+ 
+-var (
+-	wrongTemplatePath   = filepath.Join(templateTestBasedir, "templates", "fail.yaml")
+-	ignoredTemplatePath = filepath.Join(templateTestBasedir, "fail.yaml.ignored")
+-)
+-
+ // Test a template with all the existing features:
+ // namespaces, partial templates
+ func TestTemplateIntegrationHappyPath(t *testing.T) {
+-	// Rename file so it gets ignored by the linter
+-	os.Rename(wrongTemplatePath, ignoredTemplatePath)
+-	defer os.Rename(ignoredTemplatePath, wrongTemplatePath)
+-
+-	linter := support.Linter{ChartDir: templateTestBasedir}
++	// Other packages lint this fixture concurrently. Modify only a private copy.
++	chartDir := t.TempDir()
++	require.NoError(t, os.CopyFS(chartDir, os.DirFS(templateTestBasedir)))
++	require.NoError(t, os.Rename(filepath.Join(chartDir, "templates", "fail.yaml"), filepath.Join(chartDir, "fail.yaml.ignored")))
++
++	linter := support.Linter{ChartDir: chartDir}
+ 	Templates(
+ 		&linter,
+ 		namespace,
