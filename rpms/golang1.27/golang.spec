@@ -113,7 +113,7 @@
 
 Name:           %{basepackagename}1.27
 Version:        %{go_version}
-Release:        0.1%{?dist}
+Release:        1%{?dist}
 Summary:        The Go Programming Language
 # source tree includes several copies of Mark.Twain-Tom.Sawyer.txt under Public Domain
 License:        BSD-3-Clause AND LicenseRef-Fedora-Public-Domain
@@ -212,6 +212,9 @@ BuildArch:     noarch
 Summary:       Golang compiler tests for stdlib
 Requires:      %{name} = %{version}-%{release}
 BuildArch:     noarch
+# testdata contains ELF files (e.g. debug/elf/testdata/libtiffxx.so_)
+# whose SONAMEs would otherwise be picked up as spurious library provides
+AutoProv:      no
 
 %description   tests
 %{summary}.
