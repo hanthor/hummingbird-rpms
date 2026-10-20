@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.11.1-0.4%{?dist} -p
+%nodejs_define_version node 1:26.11.1-0.5%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -175,6 +175,9 @@ Source101:      nodejs.srpm.macros
 0009-CVE-2026-109841-undici-sri-lowercase.patch
 0010-CVE-2026-109924-undici-eventsource-memory.patch
 0011-CVE-2026-109829-undici-cache-redirect-poisoning.patch
+# Follow-up: upgrade npm-bundled undici (deps/npm/node_modules/undici)
+# from 6.28.0 to 6.29.1 for the 6.x-line subset of the same CVE set.
+0012-CVE-2026-87018-undici-npm-6.29.1.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
