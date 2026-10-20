@@ -3,10 +3,10 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/expat.git",
     "release": "1",
-    "sha": "31e641b11f28c36aa2c81f6869dc8539b62cbc65"
+    "sha": "937abbe186778036c4516dc4090f336059105858"
   },
   "modification_reason": "Update to 2.8.4 for CVE-2026-66046 and CVE-2026-76641 (HUM-7121, HUM-7086); previous local backports for CVE-2026-76956 and CVE-2026-76957 (HUM-6424) are included upstream in 2.8.4; backport CVE-2026-93990 (HUM-8509); backport CVE-2026-77214 (HUM-9507)",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/libexpat/libexpat",
-  "version": "2.8.5"
+  "version": "2.9.0"
 }
