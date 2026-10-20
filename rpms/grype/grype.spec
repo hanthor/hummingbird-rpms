@@ -2,7 +2,7 @@
 
 # https://github.com/anchore/grype
 %global goipath         github.com/anchore/grype
-Version:                0.120.1
+Version:                0.121.0
 
 %gometa -L -f
 
