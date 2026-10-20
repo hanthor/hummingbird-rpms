@@ -6,7 +6,7 @@ Version: 2.3.0
 %gometa -L
 
 Name:           k6v2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Modern load testing tool, version 2
 # Upstream does not support s390x: https://github.com/grafana/k6/issues/3982
 ExcludeArch:    s390x
