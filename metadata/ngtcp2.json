@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/ngtcp2.git",
-    "release": "3",
     "sha": "1f3461875959ffb12f3127c682a0b10d5fdf51bb"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.25.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 370247,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/ngtcp2/ngtcp2",
-  "version": "1.22.1"
+  "version": "1.25.0"
 }
