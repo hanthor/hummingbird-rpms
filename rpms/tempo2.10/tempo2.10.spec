@@ -6,7 +6,7 @@ Version: 2.10.8
 %gometa -L
 
 Name:           tempo2.10
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        High-volume distributed tracing backend
 # s390x is unsupported.
 ExcludeArch:    s390x
