@@ -8,6 +8,16 @@ exclude_files = [
 ]
 
 [[licensing.licenses]]
+path = "COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/anchore/syft/COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
 path = "vendor/github.com/apparentlymart/go-textseg/v15/LICENSE"
 sha256sum = "59e80949c14925f65181757d837ed93dea3783f62b031f642281d9e5b1936917"
 expression = "MIT"
@@ -26,6 +36,11 @@ expression = "BSD-2-Clause AND ISC"
 path = "vendor/github.com/glebarez/go-sqlite/SQLITE-LICENSE"
 sha256sum = "8438c9c89b849131ead81d5435cb97fcf052df5b0b286dda8a2d4c29e6cb3fd0"
 expression = "LicenseRef-Fedora-Public-Domain"
+
+[[licensing.licenses]]
+path = "vendor/modernc.org/sqlite/LICENSE-3RD-PARTY.md"
+sha256sum = "b4366b9c27a9364633e015011a231913ed19bf1228f335bf617e50a6f7b168a6"
+expression = "Apache-2.0 AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0"
 
 [[licensing.licenses]]
 path = "vendor/modernc.org/sqlite/LICENSE-SQLITE"
@@ -54,11 +69,6 @@ expression = "LicenseRef-Fedora-Public-Domain"
 
 [[licensing.licenses]]
 path = "vendor/go.yaml.in/yaml/v3/LICENSE"
-sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
-expression = "MIT AND (MIT AND Apache-2.0)"
-
-[[licensing.licenses]]
-path = "vendor/go.yaml.in/yaml/v4/LICENSE"
 sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
 expression = "MIT AND (MIT AND Apache-2.0)"
 
