@@ -12,17 +12,17 @@ exclude_directories = [
 ]
 
 [[licensing.licenses]]
+path = "COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
 path = "vendor/github.com/cloudflare/circl/LICENSE"
 sha256sum = "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
 expression = "BSD-3-Clause"
 
 [[licensing.licenses]]
 path = "vendor/go.yaml.in/yaml/v3/LICENSE"
-sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
-expression = "MIT AND (MIT AND Apache-2.0)"
-
-[[licensing.licenses]]
-path = "vendor/go.yaml.in/yaml/v4/LICENSE"
 sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
 expression = "MIT AND (MIT AND Apache-2.0)"
 
@@ -40,6 +40,11 @@ expression = "BSD-2-Clause AND ISC"
 path = "vendor/modernc.org/sqlite/LICENSE-SQLITE"
 sha256sum = "8438c9c89b849131ead81d5435cb97fcf052df5b0b286dda8a2d4c29e6cb3fd0"
 expression = "LicenseRef-scancode-public-domain"
+
+[[licensing.licenses]]
+path = "vendor/modernc.org/sqlite/LICENSE-3RD-PARTY.md"
+sha256sum = "b4366b9c27a9364633e015011a231913ed19bf1228f335bf617e50a6f7b168a6"
+expression = "Apache-2.0 AND BSD-3-Clause AND MIT AND MPL-2.0 AND LicenseRef-scancode-public-domain"
 
 [[licensing.licenses]]
 path = "vendor/github.com/apparentlymart/go-textseg/v15/LICENSE"
