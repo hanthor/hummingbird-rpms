@@ -1,6 +1,15 @@
 fetch:
   - type: spec-source
     index: 0
+  - type: url
+    url: "https://download.samba.org/pub/rsync/src/rsync-${VERSION}.tar.gz.asc"
+
+verify:
+  # Release 3.5.1 carries signatures from Zen Dodd and Andrew Tridgell.
+  - type: gpg-signature
+    target: "rsync-${VERSION}.tar.gz"
+    signature: "rsync-${VERSION}.tar.gz.asc"
+    keyring: "rsync.gpg"
 
 publish:
   files:
