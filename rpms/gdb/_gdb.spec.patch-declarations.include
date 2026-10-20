@@ -119,3 +119,7 @@ Patch020: gdb-backport-ifunc-lookup-fix.patch
 # removed in GDB 18.
 Patch021: gdb-rhel-190101-read_member_functions.patch
 
+# Keep address maps reproducible across GDB worker counts.
+# Local candidate; upstream review is pending.
+Patch022: 0022-deterministic-address-maps.patch
+
