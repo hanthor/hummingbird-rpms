@@ -225,7 +225,12 @@ class Session:
         ):
             self.runtime._process(args, stdout=stdout, stderr=stderr, timeout=timeout)
         state = json.loads(self.runtime._command("inspect", self.container))[0]["State"]
-        if state["Status"] != "exited" or state.get("Error") or state.get("OOMKilled"):
+        if (
+            state["Status"] not in {"exited", "stopped"}
+            or state.get("Running")
+            or state.get("Error")
+            or state.get("OOMKilled")
+        ):
             raise RuntimeError(f"Subject command did not finish normally: {state}")
         return subprocess.CompletedProcess(
             argv,

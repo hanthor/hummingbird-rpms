@@ -51,7 +51,9 @@ existing legacy checks.
 
 CI resolves the build artifact to an immutable digest, compares downloaded RPMs with that OCI
 manifest's filenames and SHA-256 digests, then records
-source, selected, and foreign-architecture outputs in `rpm-artifacts.json`. Every new test rechecks
+source, selected, and foreign-architecture outputs in `rpm-artifacts.json`. Acquisition verifies RPM
+digests for all outputs, including foreign outputs, and requires an actual source RPM. Every new test
+rechecks
 the staged candidates against this catalog. Local artifact directories get the same acquisition
 catalog, but have no external manifest against which to prove completeness.
 

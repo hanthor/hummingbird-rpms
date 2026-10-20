@@ -22,7 +22,10 @@ def catalog(tmp_path, monkeypatch):
         artifacts.subprocess,
         "run",
         lambda argv, **kwargs: subprocess.CompletedProcess(
-            argv, 0, "foreign" if "foreign" in argv[-1] else "noarch", ""
+            argv,
+            0,
+            "1" if "%{SOURCEPACKAGE}" in argv else "foreign" if "foreign" in argv[-1] else "noarch",
+            "",
         ),
     )
     manifest = tmp_path / "oci.json"
@@ -82,4 +85,24 @@ def test_oci_manifest_is_authoritative_for_acquisition(catalog, failure):
     manifest.write_text(json.dumps(data))
     with pytest.raises(ValueError):
         artifacts.capture(source, binaries, "native", output, manifest)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("failure", ["integrity", "source-type"])
+def test_catalog_validates_rpms_even_when_no_native_output_is_selected(
+    catalog, monkeypatch, failure
+):
+    source, binaries, output, _ = catalog
+    original = artifacts.subprocess.run
+
+    def query(argv, **kwargs):
+        if failure == "integrity" and "-K" in argv and "foreign" in argv[-1]:
+            raise subprocess.CalledProcessError(1, argv, stderr="Payload digest mismatch")
+        if failure == "source-type" and "%{SOURCEPACKAGE}" in argv:
+            return subprocess.CompletedProcess(argv, 0, "(none)", "")
+        return original(argv, **kwargs)
+
+    monkeypatch.setattr(artifacts.subprocess, "run", query)
+    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+        artifacts.capture(source, binaries, "unsupported", output)
     assert not output.exists()

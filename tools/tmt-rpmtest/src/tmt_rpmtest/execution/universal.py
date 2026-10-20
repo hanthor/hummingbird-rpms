@@ -68,13 +68,21 @@ def check_source(source: Path, selected: list[tuple[Path, str]], package: str | 
         timeout=60,
     )
     query = subprocess.run(
-        ["rpm", "-qp", "--qf", "%{NAME}\\t%{NAME}-%{VERSION}-%{RELEASE}.src.rpm", str(source)],
+        [
+            "rpm",
+            "-qp",
+            "--qf",
+            "%{SOURCEPACKAGE}\\t%{NAME}\\t%{NAME}-%{VERSION}-%{RELEASE}.src.rpm",
+            str(source),
+        ],
         check=True,
         capture_output=True,
         text=True,
         timeout=60,
     )
-    source_name, expected = query.stdout.split("\t")
+    is_source, source_name, expected = query.stdout.split("\t")
+    if is_source != "1":
+        raise ContractFailure(f"Source artifact is not an SRPM: {source}")
     if package is not None and source_name != package:
         raise ContractFailure(f"Source package {source_name!r} does not match {package!r}.")
     for path, _ in selected:

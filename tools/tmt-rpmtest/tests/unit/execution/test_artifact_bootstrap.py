@@ -17,7 +17,10 @@ def test_artifact_disposition_and_transfer_integrity(tmp_path, case):
     tools = tmp_path / "bin"
     tools.mkdir()
     query = tools / "rpm"
-    query.write_text("#!/bin/sh\nprintf '%s' \"$FIXTURE_ARCH\"\n")
+    query.write_text(
+        '#!/bin/sh\ncase "$*" in *SOURCEPACKAGE*) printf 1;; '
+        '*) printf "%s" "$FIXTURE_ARCH";; esac\n'
+    )
     query.chmod(0o755)
     if case == "tampered":
         copy = tools / "cp"
@@ -67,7 +70,7 @@ def test_remote_tag_is_resolved_once_before_manifest_and_files_are_fetched(tmp_p
     tools = tmp_path / "bin"
     tools.mkdir()
     for name, script in {
-        "rpm": "printf noarch",
+        "rpm": 'case "$*" in *SOURCEPACKAGE*) printf 1;; *) printf noarch;; esac',
         "curl": ":",
         "tar": '/usr/bin/cp "$FIXTURE_ORAS" "$HOME/.local/bin/oras"',
     }.items():

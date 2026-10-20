@@ -69,3 +69,33 @@ def test_session_cleanup_and_guest_exit_125(tmp_path, monkeypatch, failure):
     else:
         run()
     assert [args[0] for args in removed] == ["rm", "rmi"]
+
+
+@pytest.mark.parametrize(
+    "state,accepted",
+    [
+        ({"Status": "exited", "ExitCode": 37}, True),
+        ({"Status": "stopped", "ExitCode": 37, "Running": False}, True),
+        ({"Status": "stopped", "ExitCode": 0, "Error": "OCI runtime failure"}, False),
+        ({"Status": "stopped", "ExitCode": 137, "OOMKilled": True}, False),
+        ({"Status": "running", "ExitCode": 0, "Running": True}, False),
+        ({"Status": "created", "ExitCode": 0}, False),
+    ],
+)
+def test_completed_container_states_preserve_command_exit_status(tmp_path, state, accepted):
+    class Runtime(Podman):
+        def _command(self, *args, **kwargs):
+            if args[0] == "inspect":
+                return json.dumps([{"State": state}])
+            return "a" * 64
+
+        def _process(self, argv, **kwargs):
+            return subprocess.CompletedProcess(argv, state["ExitCode"])
+
+    with Runtime().session(tmp_path / "root.tar", LIMITS) as session:
+        if accepted:
+            result = session.run(["/probe"], timeout=1, environment={}, directory=tmp_path)
+            assert result.returncode == 37
+        else:
+            with pytest.raises(RuntimeError, match="did not finish normally"):
+                session.run(["/probe"], timeout=1, environment={}, directory=tmp_path)

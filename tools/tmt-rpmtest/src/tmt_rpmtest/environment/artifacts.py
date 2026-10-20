@@ -31,7 +31,23 @@ def capture(
                 raise ValueError(f"Artifact differs from OCI manifest: {name}")
     records = []
     for name, path in sorted(paths.items()):
+        subprocess.run(
+            ["rpm", "-K", "--nosignature", str(path)],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=60,
+        )
         if name.endswith(".src.rpm"):
+            query = subprocess.run(
+                ["rpm", "-qp", "--qf", "%{SOURCEPACKAGE}", str(path)],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=60,
+            )
+            if query.stdout.strip() != "1":
+                raise ValueError(f"Source artifact is not an SRPM: {name}")
             disposition = "source"
             current = path
             arch = "src"
@@ -53,6 +69,7 @@ def capture(
             {
                 "name": name,
                 "sha256": sha,
+                "rpm_digests": "verified",
                 "architecture": arch,
                 "disposition": disposition,
                 "path": str(current.resolve()),

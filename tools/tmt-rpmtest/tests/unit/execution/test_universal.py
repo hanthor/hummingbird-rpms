@@ -109,7 +109,7 @@ def test_dependency_repository_priority_precedes_file_order(tmp_path):
     ]
 
 
-@pytest.mark.parametrize("failure", [None, "package", "binary", "integrity"])
+@pytest.mark.parametrize("failure", [None, "package", "binary", "integrity", "not-source"])
 def test_source_identity_is_checked_in_new_framework(tmp_path, monkeypatch, failure):
     def query(argv, **kwargs):
         if "-K" in argv:
@@ -119,7 +119,7 @@ def test_source_identity_is_checked_in_new_framework(tmp_path, monkeypatch, fail
         elif "%{SOURCERPM}" in argv:
             output = "other.src.rpm" if failure == "binary" else "hello-1-1.hum1.src.rpm"
         else:
-            output = "hello\thello-1-1.hum1.src.rpm"
+            output = ("0" if failure == "not-source" else "1") + "\thello\thello-1-1.hum1.src.rpm"
         return subprocess.CompletedProcess(argv, 0, output, "")
 
     monkeypatch.setattr(universal.subprocess, "run", query)
