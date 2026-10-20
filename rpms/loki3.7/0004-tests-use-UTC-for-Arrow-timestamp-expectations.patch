@@ -1,0 +1,25 @@
+tests: use UTC for Arrow timestamp expectations
+
+When the local timezone is UTC, Arrow decodes timestamps with the canonical
+UTC location while time.Unix retains time.Local. Those Location values
+compare differently even though the timestamps represent the same instant.
+Make the fixtures explicitly UTC so equality is independent of the host's
+local timezone representation.
+
+--- a/pkg/util/arrowtest/arrowtest_test.go
++++ b/pkg/util/arrowtest/arrowtest_test.go
+@@ -98,10 +98,10 @@
+ 
+ func TestRows_Record_Time(t *testing.T) {
+ 	expect := arrowtest.Rows{
+-		{"name": "Alice", "last_ping": time.Unix(30, 0)},
+-		{"name": "Bob", "last_ping": time.Unix(25, 0)},
+-		{"name": "Dennis", "last_ping": time.Unix(40, 0)},
+-		{"name": "Eve", "last_ping": time.Unix(35, 0)},
++		{"name": "Alice", "last_ping": time.Unix(30, 0).UTC()},
++		{"name": "Bob", "last_ping": time.Unix(25, 0).UTC()},
++		{"name": "Dennis", "last_ping": time.Unix(40, 0).UTC()},
++		{"name": "Eve", "last_ping": time.Unix(35, 0).UTC()},
+ 	}
+ 
+ 	record := expect.Record(memory.DefaultAllocator, expect.Schema())
