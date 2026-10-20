@@ -1,0 +1,11 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/gnome-srpm-macros.git",
+    "release": "2",
+    "sha": "5a47b4e979c09b39465766ba46fd2affd68dc22f"
+  },
+  "modification_status": "clean",
+  "upstream_repo": "https://src.fedoraproject.org/rpms/gnome-srpm-macros",
+  "version": "1.0"
+}

@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Verifies the development alpha/beta/rc releases are written properly
+# in the Version field. That is, they use a tilde, not a dot, in the version.
+#
+# Use it below the Version field definition.
+%gnome_check_version() %{lua:
+    local ver = rpm.expand("%{?1}%{!?1:%{version}}")
+    if ver == "%{version}" then
+        rpm.expand("%{error: gnome_check_version can be used only after the Version field is declared}")
+    end
+    if string.match(ver, "%.alpha") or string.match(ver, "%.beta") or string.match(ver, "%.rc") then
+        rpm.expand("%{error: Use tilde in Version field in front of alpha/beta/rc; checked '" .. ver .. "'}")
+    end
+}
+
+# Some of the GNOME projects use the development release versions
+# with alpha/beta/rc instead of numbers, which should use tilde
+# in the Version field, but the released tarballs use a dot at
+# the separator. This macro converts the Version field to use
+# the dot instead of the tilde, making it easy to get back to
+# the upstream version string.
+#
+# Use it below the Version field definition.
+%gnome_tarball_version %{lua:
+    local ver = rpm.expand("%{version}")
+    if ver == "%{version}" then
+        rpm.expand("%{error: gnome_tarball_version can be used only after the Version field is declared}")
+    end
+    ver = ver:gsub('~', '.')
+    print(ver)
+}
+
+# Extracts the major version number from the Version field.
+# It simply turns "50.2.3" into "50". The only requirement
+# is that the major part of the version is a number.
+# It uses the gnome_tarball_version, thus it works fine
+# with the tildes.
+#
+# Use it below the Version field definition.
+%gnome_major_version %{lua:
+    if rpm.expand("%{version}") == "%{version}" then
+        rpm.expand("%{error: gnome_major_version can be used only after the Version field is declared}")
+    end
+    local ver = rpm.expand("%{gnome_tarball_version}")
+    local major = string.match(ver, "^(%d+)")
+    print(major or ver)
+}
+
+# Extracts the major.minor version numbers from the Version field.
+# It simply turns "50.2.3" into "50.2". The only requirement
+# is that the major and minor parts of the version are numbers.
+# It uses the gnome_tarball_version, thus it works fine
+# with the tildes.
+#
+# Use it below the Version field definition.
+%gnome_major_minor_version %{lua:
+    if rpm.expand("%{version}") == "%{version}" then
+        rpm.expand("%{error: gnome_major_minor_version can be used only after the Version field is declared}")
+    end
+    local ver = rpm.expand("%{gnome_tarball_version}")
+    local maj_min = string.match(ver, "^(%d+%.%d+)")
+    if maj_min then
+        print(maj_min)
+    else
+        rpm.expand("%{error: Failed to extract major.minor version numbers from '" .. ver .. "'}")
+    end
+}
