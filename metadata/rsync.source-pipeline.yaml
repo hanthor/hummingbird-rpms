@@ -1,0 +1,7 @@
+fetch:
+  - type: spec-source
+    index: 0
+
+publish:
+  files:
+    - "rsync-${VERSION}.tar.gz"
