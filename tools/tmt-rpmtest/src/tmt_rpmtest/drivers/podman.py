@@ -58,7 +58,14 @@ class Podman:
         self._command("pull", "--quiet", "--policy=missing", image, timeout=300)
 
     def build(
-        self, image: str, work: Path, script: str, *args: str, internet=False, check=True
+        self,
+        image: str,
+        work: Path,
+        script: str,
+        *args: str,
+        internet=False,
+        check=True,
+        cache: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         name = f"tmt-rpmtest-builder-{uuid.uuid4().hex}"
         command = [
@@ -80,6 +87,8 @@ class Podman:
         ]
         if not internet:
             command.append("--network=none")
+        if cache is not None:
+            command.extend(["--volume", f"{cache}:/pool:z"])
         try:
             result = self._process(
                 [*command, image, "-c", script, "rpmtest", *args],

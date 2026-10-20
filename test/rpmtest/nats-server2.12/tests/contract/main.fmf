@@ -2,6 +2,7 @@ summary: Check NATS 2.12 contract
 test: '"$RPMTEST_PYTHON" -m tmt_rpmtest.execution.test --plan ../../plans/contract.fmf ../../../shared/nats/contract.py'
 duration: 30m
 component: nats-server2-12-main
+tag: contract
 environment:
   NATS_PACKAGE: nats-server2.12
   NATS_VERSION_PREFIX: 2.12.

@@ -2,3 +2,4 @@ summary: Check hello contract
 test: '"$RPMTEST_PYTHON" -m tmt_rpmtest.execution.test --plan ../../plans/contract.fmf hello_contract.py'
 duration: 30m
 component: hello-main
+tag: contract

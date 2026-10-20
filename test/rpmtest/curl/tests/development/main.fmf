@@ -2,3 +2,4 @@ summary: Check curl development
 test: '"$RPMTEST_PYTHON" -m tmt_rpmtest.execution.test --plan ../../plans/development.fmf curl_development.py'
 duration: 30m
 component: curl-main
+tag: functional

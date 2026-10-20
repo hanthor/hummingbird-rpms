@@ -2,6 +2,14 @@
 
 Prepare minimal RPM roots for ordinary tmt tests.
 
+The [standard package contract](../../documentation/operating/testing-rpms-with-rpmtest.md#standard-package-contract)
+separates universal checks from package-specific interfaces and functional behavior. CI runs the
+installed contract for every native/noarch output of components with enabled fmf package tests.
+Adoption follows `component` metadata automatically; no separate package list is required.
+The execution helper also checks each package test's pristine environment before its assertions.
+Contract observations and functional coverage declarations are retained separately from native
+test results.
+
 The Python plugin resolves packages, installs their exact artifacts into an empty root, and records
 installed identities.
 Tests run on tmt's provisioned guest through its standard executor.
@@ -192,10 +200,19 @@ Subjects have no network by default. Opt in for the commands that need internet 
 ```python
 with subject() as target:
     with target.network(internet=True):
-        response = target.run([
-            "/usr/bin/curl", "--fail", "--silent", "--show-error",
-            "--connect-timeout", "5", "--max-time", "30", "https://github.com/",
-        ])
+        response = target.run(
+            [
+                "/usr/bin/curl",
+                "--fail",
+                "--silent",
+                "--show-error",
+                "--connect-timeout",
+                "5",
+                "--max-time",
+                "30",
+                "https://github.com/",
+            ]
+        )
         assert response.returncode == 0, response.stderr
 ```
 
@@ -292,14 +309,24 @@ Testing Farm needs only tmt's built-in plugins on its controller. No helper invo
 Identical package requests reuse an assembled root within the same run on the same guest.
 Local plans share a cache under the run directory's `rpmtest-cache/<guest>/`.
 The shared CI plan uses `TMT_PLAN_DATA/rpmtest-cache/` across its selected tests.
+The universal runner uses this same directory. `RPMTEST_CACHE` identifies the shared cache;
+standalone universal runs can pass `--cache` explicitly.
 No test definitions or extra configuration are needed.
 
 The key includes the package set, candidate RPM contents, ordered repository URLs, builder digest,
-native architecture, and assembly settings. Repository contents are resolved on the first miss and
-remain fixed for that request during the run. A new run resolves them again.
+native architecture, and assembly settings. A second cache shares downloaded RPMs across different
+requests, so a runtime suite can reuse dependencies fetched by a development suite.
+Repository metadata is frozen per repository on its first successful use in the run. Later solves
+use DNF's `cacheonly=metadata`; only missing RPMs require the network. A new run resolves metadata
+again. Repository IDs depend on their URLs, allowing the same repository to be reused across
+different repository sets. Builder digests and architectures have separate download pools.
 Only successful, verified roots are published. Cache hits verify the archive and manifest, then copy
 them into a private environment with fresh ownership and runtime limits. Containers and filesystem
 changes are never shared. `session.json` records the cache key and whether preparation was a hit.
+Root manifests record repository metadata hashes and counts of reused and downloaded RPMs.
+Only the current transaction's RPMs enter its root, regardless of other cached packages.
+The download pool is locked during resolution and validates published metadata and RPM hashes.
+Corrupted entries fail rather than triggering a silent refresh to newer repository contents.
 The cache remains in the run directory with `--keep`; it is not a global cache.
 
 ## Download retries
@@ -309,7 +336,8 @@ attempts, with delays of 2, 4, and 8 seconds. Diagnostics are retained for every
 Unknown errors, authentication failures, missing packages or manifests, certificate failures, and
 interruptions fail immediately. Offline installation and test assertions are not retried.
 RPM resolution stays within the builder's ten-minute timeout; failed attempts discard partial
-download state. Artifact bootstrap requests have a 60-second timeout, and each ORAS pull has a
+transactions while retaining completed RPM downloads. Artifact bootstrap requests and OCI manifest
+fetches have a 60-second timeout, and each ORAS pull has a
 120-second timeout with a ten-second termination grace period. Image pulls retain Podman's native
 three retries and exponential backoff within the framework's five-minute pull timeout.
 
@@ -458,8 +486,9 @@ Weak dependencies and documentation are disabled. Normal dependencies can still 
 utilities.
 The plugin does not add test harness packages to the root.
 
-Hashes identify artifact bytes and installed RPM identities. They do not authenticate publishers or
-pin remote repository snapshots.
+Hashes identify artifact bytes and installed RPM identities. Repository metadata is frozen within
+the run, but these hashes do not authenticate publishers or guarantee that upstream retains every
+referenced RPM. Retained downloads and manifests supply evidence for that run.
 This version disables signature checks and supports the runner's native architecture.
 It pins tmt 1.78.0 because it uses tmt's Python plugin interfaces.
 Podman is the current runtime adapter.

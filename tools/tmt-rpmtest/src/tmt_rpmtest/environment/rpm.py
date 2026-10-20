@@ -10,6 +10,9 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from tmt_rpmtest.drivers.podman import Podman
+from tmt_rpmtest.environment.downloads import RESOLVE as RESOLVE
+from tmt_rpmtest.environment.downloads import resolve
+from tmt_rpmtest.environment.integrity import digest
 
 DEFAULT_BUILDER = (
     "quay.io/hummingbird-ci/hummingbird-builder@sha256:"
@@ -43,31 +46,6 @@ def verify_installed(expected: list[Identity], installed: list[Identity]) -> Non
     if not expected or set(expected) != set(installed):
         raise ValueError("The installed RPM inventory differs from the selected artifacts.")
 
-
-def digest(path: Path) -> str:
-    with path.open("rb") as source:
-        return hashlib.file_digest(source, "sha256").hexdigest()
-
-
-RESOLVE = (
-    Path(__file__).with_name("download.sh").read_text()
-    + r"""
-set -eu
-mkdir -p /work/packages
-rpmtest_resolve() {
-  # Failed attempts must not leave stale RPM versions in the final transaction.
-  rm -rf /work/cache /work/resolve-root || return
-  mkdir -p /work/cache /work/resolve-root || return
-  dnf5 --installroot=/work/resolve-root --use-host-config --releasever=rpmtest \
-    --setopt=reposdir=/work/repos --setopt=cachedir=/work/cache \
-    --setopt=keepcache=True --setopt=install_weak_deps=False \
-    --setopt=timeout=30 --setopt=minrate=1000 \
-    --no-gpgchecks -y install --downloadonly "$@" >&2
-}
-rpmtest_download rpmtest_resolve "$@"
-find /work/resolve-root /work/cache -name '*.rpm' -exec cp '{}' /work/packages/ \;
-"""
-)
 
 ASSEMBLE = r"""
 set -eu
@@ -111,6 +89,8 @@ class RPMBuilder:
         artifacts: list[str],
         source: Path,
         work: Path,
+        *,
+        download_cache: Path | None = None,
     ) -> Path:
         if not packages:
             raise ValueError("Specify the packages required by this environment.")
@@ -150,17 +130,26 @@ class RPMBuilder:
             if len(set(names)) != len(names):
                 raise ValueError("Supply only one candidate version and architecture per package.")
             self.runtime.build(self.image, work, "createrepo_c /work/candidates >&2")
+            candidate_id = (
+                "candidate-"
+                + hashlib.sha256(
+                    "\n".join(path.stem for path in candidate_paths).encode()
+                ).hexdigest()
+            )
             (work / "repos/candidate.repo").write_text(
-                "[candidate]\nname=candidate\nbaseurl=file:///work/candidates\n"
+                f"[{candidate_id}]\nname=candidate\nbaseurl=file:///work/candidates\n"
                 "enabled=1\ngpgcheck=0\npriority=1\n"
             )
         excluded = ",".join(item["name"] for item in candidates.values())
         for index, url in enumerate(repositories):
+            repo_id = "source-" + hashlib.sha256(url.encode()).hexdigest()
             (work / "repos" / f"source-{index}.repo").write_text(
-                f"[source-{index}]\nname=source-{index}\nbaseurl={url}\nenabled=1\ngpgcheck=0\n"
-                f"excludepkgs={excluded}\n"
+                f"[{repo_id}]\nname={repo_id}\nbaseurl={url}\nenabled=1\ngpgcheck=0\n"
+                f"excludepkgs={excluded}\npriority={index + 10}\n"
             )
-        self.runtime.build(self.image, work, RESOLVE, *packages, internet=True)
+        resolution = resolve(
+            self.runtime, self.image, work, packages, download_cache or work / "downloads"
+        )
         files = sorted((work / "packages").glob("*.rpm"))
         if not files:
             raise ValueError("The RPM transaction selected no artifacts.")
@@ -183,6 +172,7 @@ class RPMBuilder:
             "builder": self.image,
             "packages": packages,
             "repositories": repositories,
+            "resolution": resolution,
             "candidates": [
                 {**item, "selected": nevra in selected_nevras} for nevra, item in candidates.items()
             ],

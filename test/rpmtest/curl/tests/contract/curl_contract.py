@@ -4,9 +4,6 @@ from tmt_rpmtest import subject
 
 with subject() as target:
     names = ["curl", "libcurl", "libcurl-devel"]
-    assert set(names) <= target.packages.installed()
-    verified = target.packages.verify(*names)
-    assert verified.returncode == 0, verified.stdout + verified.stderr
     paths = ["/usr/bin/curl", "/usr/lib64/libcurl.so.4", "/usr/include/curl/curl.h"]
     for path, package in zip(paths, names, strict=True):
         assert target.packages.owners(path) == {package}

@@ -29,7 +29,7 @@ def prepare_root(builder, settings: dict, source: Path, work: Path, cache: Path 
             raise ValueError(f"No RPM artifacts match {pattern!r}.")
         candidates.update(digest(Path(path)) for path in matches)
     inputs = {
-        "version": 1,
+        "version": 2,
         "architecture": platform.machine(),
         "builder": builder.image,
         "packages": sorted(set(packages)),
@@ -54,7 +54,9 @@ def prepare_root(builder, settings: dict, source: Path, work: Path, cache: Path 
             if hashes != {name: digest(work / name) for name in FILES}:
                 raise ValueError("The cached RPM root changed while it was copied.")
         else:
-            builder.prepare(packages, repositories, artifacts, source, work)
+            builder.prepare(
+                packages, repositories, artifacts, source, work, download_cache=cache / "downloads"
+            )
             manifest = json.loads((work / "manifest.json").read_text())
             if {item["sha256"] for item in manifest["candidates"]} != candidates:
                 raise ValueError("RPM candidates changed during cache preparation.")

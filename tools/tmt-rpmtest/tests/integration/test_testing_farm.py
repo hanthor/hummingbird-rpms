@@ -66,7 +66,15 @@ def test_flat_ci_executes_only_selected_component_test(tmp_path):
             key: value
             for key, value in os.environ.items()
             if key
-            in {"HOME", "PATH", "LANG", "USER", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"}
+            in {
+                "HOME",
+                "PATH",
+                "LANG",
+                "USER",
+                "XDG_RUNTIME_DIR",
+                "DBUS_SESSION_BUS_ADDRESS",
+                "CONTAINERS_CONF_OVERRIDE",
+            }
         },
     )
     assert result.returncode == 0, result.stdout

@@ -7,20 +7,28 @@ prepare:
   - how: shell
     script: |
       set -euo pipefail
-      ci/prepare_rpm_artifacts.sh
-  - how: shell
-    script: git submodule update --init --recursive
+      if [[ -z ${CONTAINERS_CONF_OVERRIDE:-} ]]; then
+        configuration="${TMT_PLAN_DATA}/containers.conf"
+        printf '%s\n' '[containers]' 'dns_servers = ["1.1.1.1", "8.8.8.8"]' > "$configuration"
+        printf 'CONTAINERS_CONF_OVERRIDE=%q\n' "$configuration" >> "$TMT_PLAN_ENVIRONMENT_FILE"
+      fi
   - how: shell
     script: |
       set -euo pipefail
-      [[ -d "${TMT_TREE}/test/rpmtest/${RPMTEST_PACKAGE}/tests" ]] || exit 0
+      ci/prepare_rpm_artifacts.sh
+  - how: shell
+    script: |
+      set -euo pipefail
       bootstrap="${TMT_PLAN_DATA}/bootstrap"
       python3.11 -m venv "$bootstrap"
       "$bootstrap/bin/pip" install --quiet uv==0.13.1
       export UV_PROJECT_ENVIRONMENT="${TMT_PLAN_DATA}/python"
       "$bootstrap/bin/uv" sync --python python3.11 --frozen --no-dev \
         --project "${TMT_TREE}/tools/tmt-rpmtest"
+      test -x "$UV_PROJECT_ENVIRONMENT/bin/python"
+      "$UV_PROJECT_ENVIRONMENT/bin/python" -c 'import tmt_rpmtest'
       printf 'RPMTEST_PYTHON=%q\n' "$UV_PROJECT_ENVIRONMENT/bin/python" >> "$TMT_PLAN_ENVIRONMENT_FILE"
+      printf 'RPMTEST_CACHE=%q\n' "${TMT_PLAN_DATA}/rpmtest-cache" >> "$TMT_PLAN_ENVIRONMENT_FILE"
 
 finish:
   how: shell
@@ -46,6 +54,22 @@ discover:
           done
           ci/run_tests_rpm.sh -j "${rpm_arguments[@]}" \
             --repo-dir "${RPMTEST_RPMS}" --src-rpm "${RPMTEST_SOURCE_RPM}" "${RPMTEST_PACKAGE}"
+      - name: Installed package contracts
+        duration: 8h
+        test: |
+          set -euo pipefail
+          if [[ ${RPMTEST_NO_NATIVE:-false} == true ]]; then
+            echo "Build contains only RPMs for another architecture."
+            tmt-report-result / skip
+            exit 0
+          fi
+          "$RPMTEST_PYTHON" -m tmt_rpmtest.execution.universal \
+            --artifacts "${RPMTEST_RPMS:?}" \
+            --directory "${TMT_PLAN_DATA}/rpmtest/universal" \
+            --cache "${TMT_PLAN_DATA}/rpmtest-cache" \
+            --catalog "${RPMTEST_ARTIFACT_MANIFEST:?}" \
+            --source "${RPMTEST_SOURCE_RPM:?Build source RPM is required}" \
+            --package "${RPMTEST_PACKAGE:?}"
   - name: rpmtest
     how: fmf
     path: $TMT_TREE/test/rpmtest

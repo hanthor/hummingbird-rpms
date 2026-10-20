@@ -20,7 +20,7 @@ def owner_file(directory: Path) -> Path:
 
 def finish(directory: Path):
     errors = []
-    for state in [owner_file(directory), *directory.glob(".*.owner")]:
+    for state in [owner_file(directory), *directory.rglob(".*.owner")]:
         if state.exists():
             try:
                 Podman(owner=state.read_text().strip()).cleanup()
@@ -63,6 +63,8 @@ def prepare(
         if not publish:
             return
         variables = {"RPMTEST_PYTHON": sys.executable, "RPMTEST_DIRECTORY": str(directory)}
+        if cache is not None:
+            variables["RPMTEST_CACHE"] = str(cache)
         if os.environ.get("PYTHONPATH"):
             variables["PYTHONPATH"] = os.environ["PYTHONPATH"]
         with Path(os.environ["TMT_PLAN_ENVIRONMENT_FILE"]).open("a") as output:

@@ -46,6 +46,7 @@ def test_tmt_subject_fixtures_state_and_exact_candidate(tmp_path, monkeypatch, r
         "LOGNAME",
         "XDG_RUNTIME_DIR",
         "DBUS_SESSION_BUS_ADDRESS",
+        "CONTAINERS_CONF_OVERRIDE",
     }
     for name in set(os.environ) - keep:
         monkeypatch.delenv(name)

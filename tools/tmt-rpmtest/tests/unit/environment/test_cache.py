@@ -15,7 +15,7 @@ class Builder:
     def __init__(self):
         self.calls = []
 
-    def prepare(self, packages, repositories, artifacts, source, work):
+    def prepare(self, packages, repositories, artifacts, source, work, **kwargs):
         self.calls.append(work)
         work.mkdir(parents=True)
         (work / "rootfs.tar").write_bytes(b"assembled root")
@@ -86,8 +86,8 @@ def test_failed_build_is_not_published(tmp_path, request_root, monkeypatch):
     builder, request = request_root
     prepare = builder.prepare
 
-    def failure(*args):
-        prepare(*args)
+    def failure(*args, **kwargs):
+        prepare(*args, **kwargs)
         raise OSError("assembly failed")
 
     monkeypatch.setattr(builder, "prepare", failure)
@@ -117,9 +117,9 @@ def test_candidate_change_during_preparation_is_not_cached(tmp_path, request_roo
     rpm.write_bytes(b"before")
     prepare = builder.prepare
 
-    def replace_candidate(*args):
+    def replace_candidate(*args, **kwargs):
         rpm.write_bytes(b"after")
-        prepare(*args)
+        prepare(*args, **kwargs)
 
     monkeypatch.setattr(builder, "prepare", replace_candidate)
     with pytest.raises(ValueError, match="candidates changed"):

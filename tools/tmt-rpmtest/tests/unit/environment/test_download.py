@@ -120,7 +120,8 @@ def test_command_timeout_is_retryable(tmp_path):
 
 def test_only_resolution_retries_and_installation_stays_offline():
     assert "rpmtest_download rpmtest_resolve" in rpm.RESOLVE
-    assert "--downloadonly" in rpm.RESOLVE
+    assert "--store=/work/transaction" in rpm.RESOLVE
+    assert "cacheonly=metadata" in rpm.RESOLVE
     assert "rpmtest_download" not in rpm.ASSEMBLE
 
 
@@ -131,12 +132,16 @@ def test_resolution_retry_discards_partial_transaction(tmp_path):
     dnf.write_text("""#!/bin/sh
 if [ ! -e "$STATE" ]; then
     touch "$STATE"
-    echo stale > "$WORK/cache/stale.rpm"
+    mkdir -p "$WORK/transaction/packages"
+    echo stale > "$WORK/transaction/packages/stale.rpm"
+    echo retained > "$WORK/retained.rpm"
     echo 'Curl error (6): Could not resolve host' >&2
     exit 1
 fi
-test ! -e "$WORK/cache/stale.rpm" || exit 99
-echo selected > "$WORK/cache/selected.rpm"
+test ! -e "$WORK/transaction/packages/stale.rpm" || exit 99
+test -e "$WORK/retained.rpm" || exit 98
+mkdir -p "$WORK/transaction/packages"
+echo selected > "$WORK/transaction/packages/selected.rpm"
 """)
     dnf.chmod(0o755)
     sleep = tmp_path / "sleep"

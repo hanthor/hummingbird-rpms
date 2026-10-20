@@ -5,6 +5,13 @@ This directory contains ordinary Python assertions run through tmt. The framewor
 [operating guide](../../documentation/operating/testing-rpms-with-rpmtest.md) for runner setup.
 Root repository instructions still apply. Keep package onboarding separate from framework redesign.
 
+The [standard package contract](../../documentation/operating/testing-rpms-with-rpmtest.md#standard-package-contract)
+defines the separation between universal checks and package-specific tests. Universal rules belong
+in the central framework. The execution helper runs identity, file verification, and ELF linkage
+checks before package assertions; do not repeat those checks in package scripts. Package tests
+supply expected interfaces and useful functional scenarios. Preserve legacy coverage until its
+replacement has been verified.
+
 ## Execution model and host effects
 
 There are three places code can run:
@@ -44,8 +51,11 @@ Use the exact directory name from `rpms/<package>/`. All packages share the fmf 
 6. Validate discovery and run the affected tests against local candidates.
 
 These files are maintained by hand. `make generate` updates build resources and triggers;
-it does not create plans or Python tests. There is no `suite.yaml` configuration or automatically
-added baseline suite in the current framework.
+it does not create plans or Python tests. There is no `suite.yaml` configuration. Enabled tests with
+matching `component` metadata automatically adopt a component; no rollout
+package list is maintained. Include a scenario tagged `functional`. The CI universal runner checks
+every native/noarch candidate independently of these package tests. Validate the suite before
+enabling it. `RPMTEST_ROLLOUT=off` disables the new CI tests during an incident.
 
 For example, `jq/plans/contract.fmf` would contain:
 
@@ -80,6 +90,7 @@ summary: Check jq installation and version output
 test: '"$RPMTEST_PYTHON" -m tmt_rpmtest.execution.test --plan ../../plans/contract.fmf contract.py'
 duration: 30m
 component: jq-main
+tag: contract
 ```
 
 The command runs from the test directory. Relative script and plan paths must work there.
@@ -93,9 +104,6 @@ as the assertions.
 from tmt_rpmtest import subject
 
 with subject() as target:
-    assert "jq" in target.packages.installed()
-    verified = target.packages.verify("jq")
-    assert verified.returncode == 0, verified.stdout + verified.stderr
     assert target.packages.owners("/usr/bin/jq") == {"jq"}
     assert target.stat("/usr/bin/jq").mode & 0o111
     version = target.run(["/usr/bin/jq", "--version"])
@@ -104,7 +112,9 @@ with subject() as target:
 ```
 
 Choose assertions that fit the package. A library need not have a CLI, and programs need not support
-`--version` or `--help`. Existing legacy checks still run through the shared RPM-check path in CI.
+`--version` or `--help`. Add a separate `tag: functional` test that processes a representative fixture
+and checks its result; a version check alone is insufficient. CI reports missing functional
+coverage explicitly. Existing legacy checks still run through the unchanged legacy RPM-check path.
 Do not remove legacy coverage until its replacement has been verified.
 
 ## CI discovery is automatic
@@ -148,9 +158,11 @@ Identical package sets reuse a verified prepared archive within one run on the s
 This happens automatically for local plans and the shared CI plan. Each environment still gets a
 private archive copy and fresh container ownership; test writes and running services are not shared.
 Candidate contents, repository URLs, builder digest, architecture, and assembly settings determine
-reuse. Repository contents stay fixed after the first preparation of a request in that run.
+reuse. Different package sets share verified RPM downloads as well. Each repository's metadata stays
+fixed after its first successful use in the run, even when later tests request additional packages.
 Start a new run to resolve published packages again. `session.json` records cache hits and misses.
 Do not change package sets just to obtain a cache hit, or modify the cached files directly.
+Read `resolution.reused_rpms` and `resolution.downloaded_rpms` in root manifests to inspect reuse.
 
 Preparation retries recognized transient download failures with bounded exponential backoff.
 Image pulls use Podman's native retries. Do not wrap installation or assertions in broad retry

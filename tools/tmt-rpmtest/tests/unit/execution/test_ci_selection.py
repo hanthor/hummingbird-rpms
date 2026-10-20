@@ -69,13 +69,17 @@ def test_native_discovery_excludes_unrelated_components(tmp_path, component, exp
     selected = [test for test in tests if test.get("component")]
     assert {test["name"].rsplit("/", 1)[-1] for test in selected} == expected
     assert all(test["component"] == [component] for test in selected)
-    assert len(tests) == len(expected) + 1  # Shared RPM checks always run.
+    assert len(tests) == len(expected) + 2  # Legacy RPM checks and new installed contracts.
+    commands = [test["test"] for test in tests]
+    assert sum(command.count("ci/run_tests_rpm.sh") for command in commands) == 1
+    assert all("--suite" not in command for command in commands)
 
 
 @pytest.mark.parametrize("failure", [None, "prepare", "assertion", "interrupt"])
 def test_test_environment_is_private_and_cleanup_runs(tmp_path, monkeypatch, failure):
     plan = REPO / "test/rpmtest/curl/plans/development.fmf"
     calls = []
+    monkeypatch.setattr(execution, "check_contract", lambda directory: None)
     monkeypatch.delenv("RPMTEST_DIRECTORY", raising=False)
     monkeypatch.setenv("TMT_PLAN_DATA", str(tmp_path))
     monkeypatch.setenv("RPMTEST_RPMS", str(tmp_path / "candidates"))
@@ -116,10 +120,19 @@ def test_test_environment_is_private_and_cleanup_runs(tmp_path, monkeypatch, fai
 def test_local_plugin_environment_is_reused(tmp_path, monkeypatch):
     monkeypatch.setenv("RPMTEST_DIRECTORY", str(tmp_path))
     calls = []
+    monkeypatch.setattr(execution, "check_contract", lambda directory: None)
     monkeypatch.setattr(execution.runpy, "run_path", lambda path, **kwargs: calls.append(path))
     execution.execute(tmp_path / "unused-plan.fmf", tmp_path / "test.py")
     assert calls == [str(tmp_path / "test.py")]
     assert os.environ["RPMTEST_DIRECTORY"] == str(tmp_path)
+
+
+def test_foreign_architecture_is_reported_as_skip_without_running_tests(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPMTEST_NO_NATIVE", "true")
+    calls = []
+    monkeypatch.setattr(execution.subprocess, "run", lambda argv, **kwargs: calls.append(argv))
+    execution.execute(tmp_path / "absent-plan.fmf", tmp_path / "absent-test.py")
+    assert calls == [["tmt-report-result", "/", "skip"]]
 
 
 def test_finish_recovers_all_test_environments_after_one_cleanup_fails(tmp_path, monkeypatch):
@@ -127,6 +140,8 @@ def test_finish_recovers_all_test_environments_after_one_cleanup_fails(tmp_path,
 
     (tmp_path / ".first.owner").write_text("first")
     (tmp_path / ".second.owner").write_text("second")
+    (tmp_path / "universal").mkdir()
+    (tmp_path / "universal/.third.owner").write_text("third")
     cleaned = []
 
     class Runtime:
@@ -141,7 +156,7 @@ def test_finish_recovers_all_test_environments_after_one_cleanup_fails(tmp_path,
     monkeypatch.setattr(lifecycle, "Podman", Runtime)
     with pytest.raises(ExceptionGroup, match="cleanup failed"):
         lifecycle.finish(tmp_path)
-    assert set(cleaned) == {"first", "second"}
+    assert set(cleaned) == {"first", "second", "third"}
 
 
 @pytest.mark.parametrize(
