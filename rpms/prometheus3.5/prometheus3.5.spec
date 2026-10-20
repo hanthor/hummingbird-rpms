@@ -8,8 +8,10 @@ Version:                3.5.5
 %gometa -L -f
 
 Name:           prometheus3.5
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Monitoring system and time series database
+# The offline frontend cache does not include Rollup's native s390x module.
+ExcludeArch:    s390x
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
 URL:            %{gourl}
 Source0:        %{gosource}
