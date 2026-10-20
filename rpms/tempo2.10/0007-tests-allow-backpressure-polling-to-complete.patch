@@ -1,0 +1,36 @@
+tests: allow backpressure polling to finish
+
+The writer deliberately waits one second before checking capacity again.
+A one-second test deadline races that polling delay. Allow ten seconds
+and cancel the writer context on early test exit; keep trace assertions.
+
+--- a/modules/livestore/instance_test.go
++++ b/modules/livestore/instance_test.go
+@@ -183,12 +183,17 @@
+ 
+ 	id2 := test.ValidTraceID(nil)
+ 
++	// Backpressure polls once per second; allow scheduling headroom and cancel
++	// the blocked writer if the test exits early.
++	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
++	defer cancel()
++
+ 	// Use a channel to coordinate the blocking push operation
+ 	pushComplete := make(chan struct{})
+ 	go func() {
+ 		defer close(pushComplete)
+ 		// Second write will block waiting for the live traces to have room
+-		pushTrace(t.Context(), t, instance, test.MakeTrace(1, id2), id2)
++		pushTrace(ctx, t, instance, test.MakeTrace(1, id2), id2)
+ 	}()
+ 
+ 	// Give goroutine time to start and block
+@@ -214,7 +219,7 @@
+ 	select {
+ 	case <-pushComplete:
+ 		// Push completed successfully
+-	case <-time.After(1 * time.Second):
++	case <-ctx.Done():
+ 		t.Fatal("push operation did not complete within timeout")
+ 	}
+ 
