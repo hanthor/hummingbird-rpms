@@ -1472,6 +1472,9 @@
       "rpm-mpi-hooks--rpms": [
         "^rpms/rpm\\-mpi\\-hooks/"
       ],
+      "rsync--rpms": [
+        "^rpms/rsync/"
+      ],
       "ruby3-3--rpms": [
         "^rpms/ruby3\\.3/"
       ],
