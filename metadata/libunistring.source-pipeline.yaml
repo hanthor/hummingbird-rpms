@@ -1,0 +1,14 @@
+# Signing keys from https://ftp.gnu.org/gnu/gnu-keyring.gpg.
+# Current: E0FFBD975397F77A32AB76ECB6301D9E1BBEAC08
+# Historical releases: 9001B85AF9E1B83DF1BDA942F5BE8B267C6A406D
+fetch:
+  - type: url
+    url: "https://ftp.gnu.org/gnu/libunistring/libunistring-${VERSION}.tar.xz"
+  - type: url
+    url: "https://ftp.gnu.org/gnu/libunistring/libunistring-${VERSION}.tar.xz.sig"
+
+verify:
+  - type: gpg-signature
+    target: "libunistring-${VERSION}.tar.xz"
+    signature: "libunistring-${VERSION}.tar.xz.sig"
+    keyring: "libunistring.gpg"
