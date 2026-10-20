@@ -6,7 +6,7 @@
 
 Name:           orangefs
 Version:        2.10.1
-Release:        5.1%{?dist}
+Release:        5.2%{?dist}
 Summary:        Parallel network file system client
 URL:            https://www.orangefs.org/
 # BSD (2 clause) maint/config/ssl.m4
