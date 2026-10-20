@@ -1,0 +1,25 @@
+diff --git a/test/waliter.test b/test/waliter.test
+index 9b5af87..7d7b179 100644
+--- a/test/waliter.test
++++ b/test/waliter.test
+@@ -65,9 +65,17 @@ do_execsql_test 1.1 {
+   UPDATE t1 SET b = randomblob(900);
+ } {0}
+ 
+-do_test 1.2 {
+-  file size test.db-shm
+-} [expr 32768 * 3]
++if {$tcl_platform(machine)=="ppc64le"} {
++  # ppc64le on fedora uses 64KiB pages,
++  # so the minimum size is 2x that
++  do_test 1.2 {
++    file size test.db-shm
++  } [expr 65536 * 2]
++} else {
++  do_test 1.2 {
++    file size test.db-shm
++  } [expr 32768 * 3]
++}
+ 
+ do_execsql_test 1.3 {
+   PRAGMA wal_checkpoint
