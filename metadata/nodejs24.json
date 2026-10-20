@@ -2,7 +2,7 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/nodejs24.git",
-    "sha": "85e6a886ffd47368769e3f0ea552fb397c6e9799"
+    "sha": "2c39b0e31468ed3b45f9b38b6e1e9b2f35f48ddd"
   },
   "modification_reason": "Update to upstream version 24.22.1; retain brace-expansion hardening and npm undici 6.29.1 backports; preserve shared-build snapshot workaround",
   "modification_status": "modified",
