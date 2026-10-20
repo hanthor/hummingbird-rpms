@@ -1,0 +1,67 @@
+tests: budget for manager setup on loaded builders
+
+A three-second bootstrap SVID can expire before Initialize finishes. Use
+a one-minute lifetime while retaining mock-clock-driven rotation. Start
+synchronizer test deadlines after expensive setup, and allow one minute
+for their actual RPC work without changing retry or trust assertions.
+
+--- a/pkg/agent/manager/manager_test.go
++++ b/pkg/agent/manager/manager_test.go
+@@ -395,7 +395,9 @@
+ 
+ 	clk := clock.NewMock(t)
+ 
+-	baseTTLSeconds := 3
++	// Setup includes key generation, disk I/O and a TLS handshake. Keep the
++	// certificate valid long enough on loaded builders; rotation uses mock time.
++	baseTTLSeconds := 60
+ 	api := newMockAPI(t, &mockAPIConfig{
+ 		km: km,
+ 		getAuthorizedEntries: func(*mockAPI, int32, *entryv1.GetAuthorizedEntriesRequest) (*entryv1.GetAuthorizedEntriesResponse, error) {
+@@ -1178,11 +1180,9 @@
+ 		c <- startAt.Add(time.Second)
+ 		return c
+ 	})
+-	timeout := time.Second * 10
+ 	getAuthorizedEntriesAttempts := 0
+ 
+-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+-	defer cancel()
++	var cancel context.CancelFunc
+ 
+ 	api := newMockAPI(t, &mockAPIConfig{
+ 		km: km,
+@@ -1249,6 +1249,10 @@
+ 
+ 	m := newManager(c)
+ 
++	// Start the deadline after key generation, plugin and storage setup.
++	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
++	defer cancel()
++
+ 	// initialize generates the first attempt at fetching entries
+ 	if err := m.Initialize(ctx); err != nil {
+ 		t.Fatal(err)
+@@ -1289,11 +1293,7 @@
+ 		c <- startAt.Add(time.Second)
+ 		return c
+ 	})
+-	timeout := time.Second * 10
+ 	getAuthorizedEntriesAttempts := 0
+-
+-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+-	defer cancel()
+ 
+ 	api := newMockAPI(t, &mockAPIConfig{
+ 		km: km,
+@@ -1358,6 +1358,10 @@
+ 
+ 	m := newManager(c)
+ 
++	// Start the deadline after key generation, plugin and storage setup.
++	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
++	defer cancel()
++
+ 	// initialize generates the first attempt at fetching entries
+ 	if err := m.Initialize(ctx); err != nil {
+ 		t.Fatal(err)
