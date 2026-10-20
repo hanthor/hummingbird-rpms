@@ -1,0 +1,9 @@
+# Use the prepared upstream release, not GitHub's generated tag archive.
+# The latter retains a stale version and a wall-clock-dependent DEVEL suffix.
+fetch:
+  - type: url
+    url: "${UPSTREAM_REPO}/releases/download/${VERSION}/orangefs-${VERSION}.tar.gz"
+
+publish:
+  files:
+    - "orangefs-${VERSION}.tar.gz"

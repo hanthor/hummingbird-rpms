@@ -5,7 +5,8 @@
     "release": "5",
     "sha": "2584d953b210a70cdbc0d8e64bc57c744e8dd36b"
   },
-  "modification_status": "clean",
+  "modification_reason": "Use the prepared upstream release tarball and source pipeline to preserve correct, deterministic release versioning",
+  "modification_status": "modified",
   "release_monitoring_project_id": 93317,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/waltligon/orangefs",
