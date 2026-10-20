@@ -6,6 +6,8 @@
     "sha": "7f3f0d686ab54dfe3b789c95ea158788ecef27c7"
   },
   "modification_status": "clean",
+  "release_monitoring_project_id": 8651,
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/nghttp2/nghttp2",
   "version": "1.69.0"
 }
