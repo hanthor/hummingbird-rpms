@@ -1,5 +1,6 @@
 """Tests for generate_resources.py releng generation."""
 
+import re
 import shutil
 import textwrap
 from pathlib import Path
@@ -122,7 +123,7 @@ class TestExpandTaskRunSpecs:
 
 class TestBuildPacVariables:
     @pytest.mark.parametrize("event_type", ["pull-request", "push"])
-    def test_fmf_pilot_changes_trigger_only_the_corresponding_package(
+    def test_package_test_changes_trigger_only_the_corresponding_package(
         self, gen_module, mock_repo, event_type
     ):
         tests = mock_repo / "test/rpmtest/alpha/tests"
@@ -132,11 +133,34 @@ class TestBuildPacVariables:
         for package in variables["rpms"]:
             expected = package["dname"] == "alpha" and event_type == "pull-request"
             assert ("^test/rpmtest/alpha/" in package["manifest_triggers"]) == expected
-            assert ("^tools/tmt-rpmtest/" in package["manifest_triggers"]) == expected
-            assert ("^test/rpmtest/shared/" in package["manifest_triggers"]) == expected
-            assert (r"^test/rpmtest/\.fmf/" in package["manifest_triggers"]) == expected
-            shared = r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$"
-            assert (shared in package["manifest_triggers"]) == expected
+
+    @pytest.mark.parametrize("event_type", ["pull-request", "push"])
+    @pytest.mark.parametrize("path", [
+        "tools/tmt-rpmtest/src/tmt_rpmtest/execution/contract.py",
+        "tools/tmt-rpmtest/tests/unit/execution/test_universal.py",
+        "test/rpmtest/shared/nats/client.py",
+        "test/rpmtest/.fmf/version",
+        "ci/run_tests_rpm.fmf",
+        "ci/prepare_rpm_artifacts.sh",
+    ])
+    def test_shared_framework_changes_do_not_fan_out_package_builds(
+        self, gen_module, mock_repo, event_type, path
+    ):
+        (mock_repo / "rpms" / gen_module.BUILD_TRIGGER_RPM_NAME).mkdir()
+        for directory in (mock_repo / "rpms").iterdir():
+            (mock_repo / "test/rpmtest" / directory.name / "tests").mkdir(parents=True)
+        with patch.object(gen_module, "ROOT_DIR", mock_repo):
+            variables = gen_module.build_pac_variables("main", "hummingbird-tenant", event_type)
+        triggered = {
+            package["dname"] for package in variables["rpms"]
+            if any(re.search(pattern, path) for pattern in package["manifest_triggers"])
+        }
+        # CI plumbing retains its existing fixed canary, independently of test adoption.
+        expected = (
+            {gen_module.BUILD_TRIGGER_RPM_NAME}
+            if event_type == "pull-request" and path.startswith("ci/") else set()
+        )
+        assert triggered == expected
 
     @pytest.mark.parametrize("event_type", ["pull-request", "push"])
     def test_default_build_targets(self, gen_module, mock_repo, event_type):

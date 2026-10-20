@@ -184,6 +184,10 @@ The `setup` package acts as a canary: changes to `ci/` or `mock/` directories
 also trigger a `setup` build on pull requests, validating build infrastructure
 changes before they reach main.
 
+Shared rpmtest plugin, fixture, and fmf root changes are validated by the framework checks in
+GitLab CI. They do not trigger builds of all packages with rpmtest suites. Package-specific test
+changes trigger only their corresponding package; CI plumbing still uses the `setup` canary.
+
 [pac]: https://pipelinesascode.com/
 [pr-template]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/.tekton/rpms-on-pull-request.yaml.j2
 [pr-pipeline]: https://gitlab.com/redhat/hummingbird/rpms/-/blob/main/.tekton/rpms-on-pull-request.yaml

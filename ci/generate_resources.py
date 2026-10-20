@@ -199,15 +199,7 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
             if resource_type == "pull-request":
                 triggers.append(rf"^test/rpms/{escaped_dname}\.yml$")
                 if (ROOT_DIR / "test" / "rpmtest" / dname / "tests").is_dir():
-                    triggers.extend(
-                        [
-                            rf"^test/rpmtest/{escaped_dname}/",
-                            r"^test/rpmtest/shared/",
-                            r"^test/rpmtest/\.fmf/",
-                            r"^tools/tmt-rpmtest/",
-                            r"^ci/(run_tests_rpm\.fmf|prepare_rpm_artifacts\.sh)$",
-                        ]
-                    )
+                    triggers.append(rf"^test/rpmtest/{escaped_dname}/")
                 if dname == BUILD_TRIGGER_RPM_NAME:
                     triggers.extend(["^ci/", "^mock/"])
             rpm_data["manifest_triggers"] = triggers

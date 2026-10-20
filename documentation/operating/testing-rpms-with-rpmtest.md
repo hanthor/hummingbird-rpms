@@ -353,5 +353,8 @@ Always filter local plans: a package subdirectory used as `--root` still resolve
 See [the authoring guide](../../test/rpmtest/AGENTS.md) for onboarding examples.
 
 After adding a package's `tests/` directory, run `make generate` to update build triggers.
-Adopted packages watch their own tests, the shared test directory, the plugin,
-and the shared CI entry points.
+Package builds watch their own sources and package-specific tests. Shared plugin, fixture, and fmf
+root changes run the framework checks in GitLab CI without rebuilding every adopted package.
+CI plumbing changes retain the existing single `setup` canary. Run selected live suites against
+published RPMs or retained build artifacts when broader integration validation is needed; a shared
+framework change does not need fresh builds of those RPMs.

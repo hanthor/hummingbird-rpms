@@ -145,8 +145,11 @@ Shared scripts and fixtures under `test/rpmtest/shared/` are copied with the sha
 They need no `sync-repo` option. Keep test assets under this root; avoid copying the whole repository
 for ordinary package tests. See the NATS plans and `shared/nats/` for examples.
 
-A package's `tests/` directory enables test build triggers when `make generate` runs. Commit the
-updated `.tekton` resources with the tests. Never hand-edit generated Tekton resources.
+A package's `tests/` directory enables build triggers for that package's own tests when
+`make generate` runs. Shared framework and fixture changes run GitLab framework checks; they do not
+rebuild every adopted package. CI plumbing retains the existing single `setup` canary. Validate
+selected live suites against published RPMs or retained artifacts when needed. Commit the updated
+`.tekton` resources with trigger changes. Never hand-edit generated Tekton resources.
 
 ## Use the framework
 
