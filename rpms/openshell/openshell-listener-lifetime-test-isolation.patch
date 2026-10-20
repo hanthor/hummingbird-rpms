@@ -1,0 +1,44 @@
+Subject: [PATCH] test: isolate listener lifetime from concurrent forks
+
+Seccomp behavioral tests fork in the same test process. Their children
+inherit sockets from concurrently running broker tests, including CLOEXEC
+descriptors because the children do not exec. Those copies can keep a
+listener alive after its workload aliases close.
+
+Run the listener-lifetime test in a fresh process, as nextest does upstream.
+Keep the existing procfs, connection-refusal, and port-reuse assertions.
+
+--- a/crates/openshell-sandbox/src/network_broker.rs
++++ b/crates/openshell-sandbox/src/network_broker.rs
+@@ -1764,6 +1764,31 @@
+ 
+     #[test]
+     fn listening_socket_lives_only_as_long_as_workload_aliases() {
++        const CHILD_MARKER: &str = "OPENSHELL_TEST_LISTENER_LIFETIME_CHILD";
++
++        // Other tests fork without exec and temporarily inherit every open
++        // socket in this process, even CLOEXEC descriptors. Keep this test's
++        // listeners out of their descriptor tables so close is observable.
++        if std::env::var_os(CHILD_MARKER).is_none() {
++            let output = std::process::Command::new(std::env::current_exe().unwrap())
++                .args([
++                    "--exact",
++                    "network_broker::tests::listening_socket_lives_only_as_long_as_workload_aliases",
++                    "--nocapture",
++                    "--test-threads=1",
++                ])
++                .env(CHILD_MARKER, "1")
++                .output()
++                .expect("run isolated listener-lifetime test");
++            assert!(
++                output.status.success(),
++                "isolated listener-lifetime test failed: {}\n{}",
++                String::from_utf8_lossy(&output.stdout),
++                String::from_utf8_lossy(&output.stderr),
++            );
++            return;
++        }
++
+         for address in ["127.0.0.1:0", "[::1]:0"] {
+             let address: SocketAddr = address.parse().unwrap();
+             let (launcher, listener) = crate::linux::workload_launcher::start().unwrap();
