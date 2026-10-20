@@ -52,7 +52,7 @@
 
 Name:    %{compatiblename}-portable%{?pkgos:-%{pkgos}}
 Version: %{newjavaver}.%{buildver}
-Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}.1%{?dist}
 
 %global fullversion     %{compatiblename}-%{version}-%{release}
 
