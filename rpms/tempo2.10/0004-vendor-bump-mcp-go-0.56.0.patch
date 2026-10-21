@@ -154,7 +154,7 @@ index c8579b7b8e67..0f91df45cdcb 100644
  require (
 +	github.com/google/jsonschema-go v0.4.2 // indirect
  	github.com/spaolacci/murmur3 v1.1.0 // indirect
- 	go.opentelemetry.io/contrib/bridges/otelzap v0.18.0 // indirect
+ 	go.opentelemetry.io/contrib/bridges/otelzap v0.20.0 // indirect
  	go.opentelemetry.io/contrib/propagators/b3 v1.43.0 // indirect
 @@ -247,7 +248,6 @@ require (
  	github.com/hashicorp/serf v0.10.2 // indirect
