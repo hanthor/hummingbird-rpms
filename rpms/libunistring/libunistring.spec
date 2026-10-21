@@ -1,6 +1,6 @@
 # This spec file has been automatically updated
-Version:	1.1
-Release: 12.1%{?dist}
+Version:	1.5
+Release: 0.1%{?dist}
 Name: libunistring
 Summary: GNU Unicode string library
 License: GPL-2.0-or-later OR LGPL-3.0-or-later
