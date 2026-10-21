@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/cairo.git",
+    "release": "1",
+    "sha": "9d78fc67267541b2bfa3260bf187e60eed0739f0"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 247,
+  "track_upstream": "latest",
+  "upstream_repo": "https://src.fedoraproject.org/rpms/cairo",
+  "version": "1.18.6"
+}
