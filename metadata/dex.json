@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 374886,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/dexidp/dex",
-  "version": "2.46.0"
+  "version": "2.46.1"
 }
