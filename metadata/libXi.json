@@ -1,11 +1,12 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/libXi.git",
-    "sha": "2260b6ab21ca1461dfc3456f78aac9d1c7226d75"
-  },
-  "modification_reason": "Update to upstream version 1.8.4",
+  "version": "1.8.4",
   "modification_status": "modified",
   "upstream_repo": "https://gitlab.freedesktop.org/xorg/lib/libxi",
-  "version": "1.8.4"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/libXi.git",
+    "branch": "rawhide",
+    "sha": "1b3c52b15ea14793237fbf44d62ef08a7f674743",
+    "release": "1"
+  },
+  "modification_reason": "Update to upstream version 1.8.4"
 }
