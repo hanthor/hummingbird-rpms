@@ -1,4 +1,4 @@
-From c5df0bfbb8de0b1536476f200a9af3ecf0c10485 Mon Sep 17 00:00:00 2001
+From a7151c0c1eb4dbb24a126142142adf9dfcc9b03f Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:06:47 +0200
 Subject: [PATCH 03/53] Implement SELinux environment variable setup for
@@ -29,14 +29,14 @@ Changes:
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ---
- auth-pam.c                       |   2 +-
- auth-pam.h                       |   3 +-
- openbsd-compat/Makefile.in       |   3 +-
- openbsd-compat/port-linux-sshd.c | 454 +++++++++++++++++++++++++++++++
- openbsd-compat/port-linux.c      |  37 +--
- openbsd-compat/port-linux.h      |   5 +-
- platform.c                       |   8 +-
- sshd-session.c                   |   7 +-
+ auth-pam.c                          |   2 +-
+ auth-pam.h                          |   3 +-
+ openbsd-compat/Makefile.in          |   3 +-
+ openbsd-compat/port-linux-selinux.c |  37 +--
+ openbsd-compat/port-linux-sshd.c    | 454 ++++++++++++++++++++++++++++
+ openbsd-compat/port-linux.h         |   5 +-
+ platform.c                          |   8 +-
+ sshd-session.c                      |   7 +-
  8 files changed, 480 insertions(+), 39 deletions(-)
  create mode 100644 openbsd-compat/port-linux-sshd.c
 
@@ -68,10 +68,10 @@ index 491336701..f9167cfc8 100644
  char ** fetch_pam_child_environment(void);
  void free_pam_environment(char **);
 diff --git a/openbsd-compat/Makefile.in b/openbsd-compat/Makefile.in
-index 53c87db6d..39531ae77 100644
+index 643aefed6..b2ae7a7c8 100644
 --- a/openbsd-compat/Makefile.in
 +++ b/openbsd-compat/Makefile.in
-@@ -102,7 +102,8 @@ PORTS=	port-aix.o \
+@@ -103,7 +103,8 @@ PORTS=	port-aix.o \
  	port-prngd.o \
  	port-solaris.o \
  	port-net.o \
@@ -81,6 +81,61 @@ index 53c87db6d..39531ae77 100644
  
  .c.o:
  	$(CC) $(CFLAGS_NOPIE) $(PICFLAG) $(CPPFLAGS) -c $<
+diff --git a/openbsd-compat/port-linux-selinux.c b/openbsd-compat/port-linux-selinux.c
+index e36e2ec94..2b6a26b8b 100644
+--- a/openbsd-compat/port-linux-selinux.c
++++ b/openbsd-compat/port-linux-selinux.c
+@@ -105,37 +105,6 @@ ssh_selinux_getctxbyname(char *pwname)
+ 	return sc;
+ }
+ 
+-/* Set the execution context to the default for the specified user */
+-void
+-ssh_selinux_setup_exec_context(char *pwname)
+-{
+-	char *user_ctx = NULL;
+-
+-	if (!ssh_selinux_enabled())
+-		return;
+-
+-	debug3("%s: setting execution context", __func__);
+-
+-	user_ctx = ssh_selinux_getctxbyname(pwname);
+-	if (setexeccon(user_ctx) != 0) {
+-		switch (security_getenforce()) {
+-		case -1:
+-			fatal("%s: security_getenforce() failed", __func__);
+-		case 0:
+-			error("%s: Failed to set SELinux execution "
+-			    "context for %s", __func__, pwname);
+-			break;
+-		default:
+-			fatal("%s: Failed to set SELinux execution context "
+-			    "for %s (in enforcing mode)", __func__, pwname);
+-		}
+-	}
+-	if (user_ctx != NULL)
+-		freecon(user_ctx);
+-
+-	debug3("%s: done", __func__);
+-}
+-
+ /* Set the TTY context for the specified user */
+ void
+ ssh_selinux_setup_pty(char *pwname, const char *tty)
+@@ -148,7 +117,11 @@ ssh_selinux_setup_pty(char *pwname, const char *tty)
+ 
+ 	debug3("%s: setting TTY context on %s", __func__, tty);
+ 
+-	user_ctx = ssh_selinux_getctxbyname(pwname);
++	if (getexeccon(&user_ctx) != 0) {
++		error_f("getexeccon: %s", strerror(errno));
++		goto out;
++	}
++
+ 
+ 	/* XXX: should these calls fatal() upon failure in enforcing mode? */
+ 
 diff --git a/openbsd-compat/port-linux-sshd.c b/openbsd-compat/port-linux-sshd.c
 new file mode 100644
 index 000000000..ab083a637
@@ -541,61 +596,6 @@ index 000000000..ab083a637
 +#endif
 +#endif
 +
-diff --git a/openbsd-compat/port-linux.c b/openbsd-compat/port-linux.c
-index c1d54f38d..7426f6f79 100644
---- a/openbsd-compat/port-linux.c
-+++ b/openbsd-compat/port-linux.c
-@@ -109,37 +109,6 @@ ssh_selinux_getctxbyname(char *pwname)
- 	return sc;
- }
- 
--/* Set the execution context to the default for the specified user */
--void
--ssh_selinux_setup_exec_context(char *pwname)
--{
--	char *user_ctx = NULL;
--
--	if (!ssh_selinux_enabled())
--		return;
--
--	debug3("%s: setting execution context", __func__);
--
--	user_ctx = ssh_selinux_getctxbyname(pwname);
--	if (setexeccon(user_ctx) != 0) {
--		switch (security_getenforce()) {
--		case -1:
--			fatal("%s: security_getenforce() failed", __func__);
--		case 0:
--			error("%s: Failed to set SELinux execution "
--			    "context for %s", __func__, pwname);
--			break;
--		default:
--			fatal("%s: Failed to set SELinux execution context "
--			    "for %s (in enforcing mode)", __func__, pwname);
--		}
--	}
--	if (user_ctx != NULL)
--		freecon(user_ctx);
--
--	debug3("%s: done", __func__);
--}
--
- /* Set the TTY context for the specified user */
- void
- ssh_selinux_setup_pty(char *pwname, const char *tty)
-@@ -152,7 +121,11 @@ ssh_selinux_setup_pty(char *pwname, const char *tty)
- 
- 	debug3("%s: setting TTY context on %s", __func__, tty);
- 
--	user_ctx = ssh_selinux_getctxbyname(pwname);
-+	if (getexeccon(&user_ctx) != 0) {
-+		error_f("getexeccon: %s", strerror(errno));
-+		goto out;
-+	}
-+
- 
- 	/* XXX: should these calls fatal() upon failure in enforcing mode? */
- 
 diff --git a/openbsd-compat/port-linux.h b/openbsd-compat/port-linux.h
 index 959430de1..26c5f773b 100644
 --- a/openbsd-compat/port-linux.h
@@ -648,7 +648,7 @@ index fd1a7a7c2..66d0c2a6b 100644
  }
  
 diff --git a/sshd-session.c b/sshd-session.c
-index 06a72daaf..1a40a43f1 100644
+index 1af9bcf4c..54af7fdf4 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
 @@ -123,7 +123,7 @@ char *config_file_name = _PATH_SERVER_CONFIG_FILE;
@@ -660,7 +660,7 @@ index 06a72daaf..1a40a43f1 100644
  
  /* debug goes to stderr unless inetd_flag is set */
  static int log_stderr = 0;
-@@ -1277,6 +1277,11 @@ main(int ac, char **av)
+@@ -1264,6 +1264,11 @@ main(int ac, char **av)
  		restore_uid();
  	}
  #endif
@@ -673,5 +673,5 @@ index 06a72daaf..1a40a43f1 100644
  	if (options.use_pam) {
  		do_pam_setcred();
 -- 
-2.55.0
+2.56.0
 

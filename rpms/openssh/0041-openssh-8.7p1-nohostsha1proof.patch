@@ -1,4 +1,4 @@
-From 8555dd3916d311cbef5bff785523cd27a193c720 Mon Sep 17 00:00:00 2001
+From df77d50fd29fa47b14681341232b24e1b42daee9 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 41/53] openssh-8.7p1-nohostsha1proof
@@ -65,7 +65,7 @@ index 1a19060fc..2e6db5bf9 100644
  /* #define unused		0x00000020 */
  #define SSH_BUG_DEBUG		0x00000040
 diff --git a/monitor.c b/monitor.c
-index 733a3460f..8269e78c3 100644
+index 3ae9705c3..71d11a679 100644
 --- a/monitor.c
 +++ b/monitor.c
 @@ -741,11 +741,18 @@ int
@@ -296,10 +296,10 @@ index 5af39bb39..88232c6ed 100644
  			goto out;
  		}
 diff --git a/sshconnect2.c b/sshconnect2.c
-index c21b3a11a..3660873a6 100644
+index da15bddcc..c18d4872e 100644
 --- a/sshconnect2.c
 +++ b/sshconnect2.c
-@@ -1440,6 +1440,14 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
+@@ -1446,6 +1446,14 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
  			retried = 1;
  			goto retry_pin;
  		}
@@ -315,10 +315,10 @@ index c21b3a11a..3660873a6 100644
  	}
  
 diff --git a/sshd-session.c b/sshd-session.c
-index 0a9708d3a..adf5b1b49 100644
+index e206ec49a..d7168f80a 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -1261,6 +1261,27 @@ main(int ac, char **av)
+@@ -1247,6 +1247,27 @@ main(int ac, char **av)
  
  	check_ip_options(ssh);
  
@@ -347,5 +347,5 @@ index 0a9708d3a..adf5b1b49 100644
  	channel_init_channels(ssh);
  	channel_set_af(ssh, options.address_family);
 -- 
-2.55.0
+2.56.0
 

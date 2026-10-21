@@ -1,0 +1,34 @@
+From: Hummingbird maintainers
+Subject: [PATCH] Preserve Fedora GSSAPI cleanup and post-authentication rekeying
+OpenSSH 10.6p1 includes the CVE-2026-106555 client-state reset from
+https://github.com/openssh/openssh-portable/commit/670510d1e190b0f4e47066f24498c04ada1da0f0.
+This is a Fedora GSSAPI compatibility adjustment, not a CVE backport.
+Retain cleanup of Fedora's extra GSS name and only reset the monitor's state before
+authentication, preserving authorized credentials and cache ownership for
+Fedora's post-authentication GSSAPI rekeying.
+
+diff --git a/gss-serv.c b/gss-serv.c
+--- a/gss-serv.c
++++ b/gss-serv.c
+@@ -918,6 +918,7 @@ ssh_gssapi_cleanup_global_client()
+ 	gss_release_buffer(&lmin, &gssapi_client.displayname);
+ 	gss_release_buffer(&lmin, &gssapi_client.exportedname);
+ 	gss_release_cred(&lmin, &gssapi_client.creds);
++	gss_release_name(&lmin, &gssapi_client.name);
+ 
+ 	if (gssapi_client.indicators != NULL) {
+ 		for (i = 0; gssapi_client.indicators[i] != NULL; i++)
+diff --git a/monitor.c b/monitor.c
+--- a/monitor.c
++++ b/monitor.c
+@@ -2160,7 +2160,9 @@ mm_answer_gss_setup_ctx(struct ssh *ssh, int sock, struct sshbuf *m)
+ 	if (!options.gss_authentication && !options.gss_keyex)
+ 		fatal_f("GSSAPI not enabled");
+ 
+-	ssh_gssapi_cleanup_global_client();
++	/* Keep authorized credentials available for post-authentication rekeying. */
++	if (!authctxt->authenticated)
++		ssh_gssapi_cleanup_global_client();
+ 
+ 	if ((r = sshbuf_get_string(m, &p, &len)) != 0)
+ 		fatal_fr(r, "parse");

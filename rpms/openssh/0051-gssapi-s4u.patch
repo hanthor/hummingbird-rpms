@@ -1,4 +1,4 @@
-From 13df14017a530856a20dcc0208a67e126178d392 Mon Sep 17 00:00:00 2001
+From 467b4214eecc48e620c0bd60f1e2f1473a5fe7ca Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:25:21 +0200
 Subject: [PATCH 51/53] gssapi-s4u
@@ -10,11 +10,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
  gss-serv-krb5.c | 225 ++++++++++++++++++++++++++++
  gss-serv.c      | 388 ++++++++++++++++++++++++++++++++++++++++++++++--
  servconf.c      |  46 ++++++
- servconf.h      |   8 +-
+ servconf.h      |   7 +-
  ssh-gss.h       |  13 ++
  sshd-session.c  |  98 ++++++++++++
  sshd_config.5   |  70 +++++++++
- 9 files changed, 851 insertions(+), 20 deletions(-)
+ 9 files changed, 850 insertions(+), 20 deletions(-)
 
 diff --git a/auth-krb5.c b/auth-krb5.c
 index 2e3c1c80f..9cd3618b2 100644
@@ -41,10 +41,10 @@ index 2e3c1c80f..9cd3618b2 100644
  		ret = krb5_cc_new_unique(ctx, type, NULL, ccache);
  		free(type);
 diff --git a/configure.ac b/configure.ac
-index d6274328b..b2c959ff3 100644
+index e850041fb..4d65e4d7e 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5075,11 +5075,17 @@ AC_ARG_WITH([kerberos5],
+@@ -5084,11 +5084,17 @@ AC_ARG_WITH([kerberos5],
  # include <gssapi_generic.h>
  #elif defined(HAVE_GSSAPI_GSSAPI_GENERIC_H)
  # include <gssapi/gssapi_generic.h>
@@ -301,19 +301,19 @@ index fc7cabc09..06d450d4d 100644
  	"toWM5Slw5Ew8Mqkay+al2g==",
  	"Kerberos",
 diff --git a/gss-serv.c b/gss-serv.c
-index 237a3c40a..d7206499d 100644
+index 66d92e4fe..970386127 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
 @@ -55,7 +55,7 @@ extern ServerOptions options;
  
  static ssh_gssapi_client gssapi_client =
-     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER, GSS_C_NO_CREDENTIAL,
--    GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, NULL};
-+    GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, NULL, 0};
+     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,
+-    GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, 0, NULL};
++    GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, 0, NULL, 0};
  
  ssh_gssapi_mech gssapi_null_mech =
      { NULL, NULL, {0, NULL}, NULL, NULL, NULL, NULL, NULL};
-@@ -492,26 +492,382 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+@@ -493,26 +493,382 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  	return (ctx->major);
  }
  
@@ -712,10 +712,10 @@ index 237a3c40a..d7206499d 100644
  /* As user */
  int
 diff --git a/servconf.c b/servconf.c
-index 8746a2417..667468590 100644
+index dc9624fb5..fda06529d 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -1498,6 +1498,43 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1547,6 +1547,43 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (options->gss_indicators == NULL)
  			options->gss_indicators = xstrdup(arg);
  		break;
@@ -759,7 +759,7 @@ index 8746a2417..667468590 100644
  #endif /* GSSAPI */
  
  	case sPasswordAuthentication:
-@@ -4290,6 +4327,15 @@ dump_config(ServerOptions *o)
+@@ -4420,6 +4457,15 @@ dump_config(ServerOptions *o)
  	dump_cfg_fmtint(sGSSAPIStoreCredentialsOnRekey, o->gss_store_rekey);
  	dump_cfg_string(sGSSAPIKexAlgorithms, o->gss_kex_algorithms);
  	dump_cfg_string(sGSSAPIIndicators, o->gss_indicators);
@@ -776,36 +776,42 @@ index 8746a2417..667468590 100644
  	dump_cfg_fmtint(sPasswordAuthentication, o->password_authentication);
  	dump_cfg_fmtint(sKbdInteractiveAuthentication,
 diff --git a/servconf.h b/servconf.h
-index 4e5f7edc6..9ee4a089d 100644
+index ccf6134f3..52a0d1b42 100644
 --- a/servconf.h
 +++ b/servconf.h
-@@ -329,7 +329,9 @@ SSHCONF_INTFLAG(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE
+@@ -239,6 +239,7 @@ SSHCONF_INTFLAG(expose_userauth_info, ExposeAuthInfo, SSHCFG_ALL, 0, SSHCFG_COPY
+ SSHCONF_STRING(sk_provider, SecurityKeyProvider, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
+ SSHCONF_INT(required_rsa_size, RequiredRSASize, SSHCFG_ALL, NULL, SSH_RSA_MINIMUM_MODULUS_SIZE, SSHCFG_COPY_MATCH) \
+ SSHCONF_STRARRAY(channel_timeouts, num_channel_timeouts, ChannelTimeout, SSHCFG_ALL, SSHCFG_COPY_MATCH) \
++SSHCONF_STRARRAY(gss_proxy_services, num_gss_proxy_services, GSSAPIProxyS4U2Services, SSHCFG_ALL, SSHCFG_COPY_MATCH) \
+ SSHCONF_INT(unused_connection_timeout, UnusedConnectionTimeout, SSHCFG_ALL, NULL, 0, SSHCFG_COPY_MATCH) \
+ SSHCONF_STRING(sshd_session_path, SshdSessionPath, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
+ SSHCONF_STRING(sshd_auth_path, SshdAuthPath, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
+@@ -336,7 +337,8 @@ SSHCONF_INTFLAG(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE
  SSHCONF_INTFLAG(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
  SSHCONF_STRING(gss_kex_algorithms, GSSAPIKexAlgorithms, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(enable_k5users, GSSAPIEnablek5users, SSHCFG_ALL, 0, SSHCFG_COPY_MATCH) \
 -SSHCONF_STRING(gss_indicators, GSSAPIIndicators, SSHCFG_ALL, SSHCFG_COPY_MATCH)
 +SSHCONF_STRING(gss_indicators, GSSAPIIndicators, SSHCFG_ALL, SSHCFG_COPY_MATCH) \
-+SSHCONF_INTFLAG(gss_allow_s4u2self, GSSAPIAllowS4U2Self, SSHCFG_ALL, 0, SSHCFG_COPY_MATCH) \
-+SSHCONF_STRARRAY(gss_proxy_services, num_gss_proxy_services, GSSAPIProxyS4U2Services, SSHCFG_ALL, SSHCFG_COPY_MATCH)
++SSHCONF_INTFLAG(gss_allow_s4u2self, GSSAPIAllowS4U2Self, SSHCFG_ALL, 0, SSHCFG_COPY_MATCH)
  #else /* GSSAPI */
  #define SSHD_CONFIG_ENTRIES_GSS \
  SSHCONF_UNSUPPORTED_INT(gss_authentication, GSSAPIAuthentication, SSHCFG_ALL) \
-@@ -340,7 +342,9 @@ SSHCONF_UNSUPPORTED_INT(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL) \
+@@ -347,7 +349,8 @@ SSHCONF_UNSUPPORTED_INT(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_STRING(gss_kex_algorithms, GSSAPIKexAlgorithms, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(enable_k5users, GSSAPIEnablek5users, SSHCFG_ALL) \
 -SSHCONF_UNSUPPORTED_STRING(gss_indicators, GSSAPIIndicators, SSHCFG_ALL)
 +SSHCONF_UNSUPPORTED_STRING(gss_indicators, GSSAPIIndicators, SSHCFG_ALL) \
-+SSHCONF_UNSUPPORTED_INT(gss_allow_s4u2self, GSSAPIAllowS4U2Self, SSHCFG_ALL) \
-+SSHCONF_UNSUPPORTED_STRING(gss_proxy_services, GSSAPIProxyS4U2Services, SSHCFG_ALL)
++SSHCONF_UNSUPPORTED_INT(gss_allow_s4u2self, GSSAPIAllowS4U2Self, SSHCFG_ALL)
  #endif /* GSSAPI */
  
  #define SSHD_CONFIG_ENTRIES \
 diff --git a/ssh-gss.h b/ssh-gss.h
-index 1506719a9..a0d51c9be 100644
+index e67700417..8ae50fd77 100644
 --- a/ssh-gss.h
 +++ b/ssh-gss.h
-@@ -119,6 +119,7 @@ typedef struct {
+@@ -120,6 +120,7 @@ typedef struct {
  	int used;
  	int updated;
  	char **indicators; /* auth indicators */
@@ -813,7 +819,7 @@ index 1506719a9..a0d51c9be 100644
  } ssh_gssapi_client;
  
  typedef struct ssh_gssapi_mech_struct {
-@@ -199,6 +200,18 @@ OM_uint32 ssh_gssapi_checkmic(Gssctxt *, gss_buffer_t, gss_buffer_t);
+@@ -200,6 +201,18 @@ OM_uint32 ssh_gssapi_checkmic(Gssctxt *, gss_buffer_t, gss_buffer_t);
  void ssh_gssapi_do_child(char ***, u_int *);
  void ssh_gssapi_cleanup_creds(void);
  int ssh_gssapi_storecreds(void);
@@ -830,13 +836,13 @@ index 1506719a9..a0d51c9be 100644
 +#define SSH_GSSAPI_CCFILTER_PROXY  (1u << 2) /* S4U2Proxy service tickets */
 +void ssh_gssapi_krb5_filter_ccache(u_int, char **, u_int);
  const char *ssh_gssapi_displayname(void);
+ void ssh_gssapi_cleanup_global_client();
  
- char *ssh_gssapi_server_mechanisms(void);
 diff --git a/sshd-session.c b/sshd-session.c
-index adf5b1b49..7d0e25ca1 100644
+index d7168f80a..2f807b4ae 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -1396,6 +1396,104 @@ main(int ac, char **av)
+@@ -1383,6 +1383,104 @@ main(int ac, char **av)
  		authctxt->krb5_set_env = ssh_gssapi_storecreds();
  		restore_uid();
  	}
@@ -942,10 +948,10 @@ index adf5b1b49..7d0e25ca1 100644
  #ifdef WITH_SELINUX
  	sshd_selinux_setup_exec_context(authctxt->pw->pw_name,
 diff --git a/sshd_config.5 b/sshd_config.5
-index bf9efc897..ca8a8131e 100644
+index e2c0ac7e5..5f77ca3d0 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -857,6 +857,76 @@ FIDO2-based pre-authentication in FreeIPA, using FIDO2 USB and NFC tokens
+@@ -883,6 +883,76 @@ FIDO2-based pre-authentication in FreeIPA, using FIDO2 USB and NFC tokens
  The default
  .Dq none
  is to not use GSSAPI authentication indicators for access decisions.
@@ -1023,5 +1029,5 @@ index bf9efc897..ca8a8131e 100644
  The default is handled system-wide by
  .Xr crypto-policies 7 .
 -- 
-2.55.0
+2.56.0
 

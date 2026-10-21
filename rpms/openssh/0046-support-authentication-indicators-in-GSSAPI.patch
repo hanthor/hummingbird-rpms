@@ -1,4 +1,4 @@
-From 5348ff4f4c59dac677b8348b1213c6ef1e530e31 Mon Sep 17 00:00:00 2001
+From 12f718a27b18fee507b28959c942f8fe3f84efa3 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:23:51 +0200
 Subject: [PATCH 46/53] support authentication indicators in GSSAPI
@@ -8,19 +8,19 @@ https://github.com/openssh/openssh-portable/pull/500
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ---
  configure.ac    |   1 +
- gss-serv-krb5.c |  89 ++++++++++++++++++++++++++++++++++----
- gss-serv.c      | 112 ++++++++++++++++++++++++++++++++++++++++++++++--
+ gss-serv-krb5.c |  89 +++++++++++++++++++++++++++++++++++----
+ gss-serv.c      | 108 +++++++++++++++++++++++++++++++++++++++++++++++-
  servconf.c      |  11 +++++
  servconf.h      |   6 ++-
- ssh-gss.h       |   7 +++
- sshd_config.5   |  46 ++++++++++++++++++++
- 7 files changed, 258 insertions(+), 14 deletions(-)
+ ssh-gss.h       |   7 ++++
+ sshd_config.5   |  46 +++++++++++++++++++++
+ 7 files changed, 256 insertions(+), 12 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 394acc3d8..d6274328b 100644
+index 831b611bd..e850041fb 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5059,6 +5059,7 @@ AC_ARG_WITH([kerberos5],
+@@ -5068,6 +5068,7 @@ AC_ARG_WITH([kerberos5],
  		AC_CHECK_HEADERS([gssapi.h gssapi/gssapi.h])
  		AC_CHECK_HEADERS([gssapi_krb5.h gssapi/gssapi_krb5.h])
  		AC_CHECK_HEADERS([gssapi_generic.h gssapi/gssapi_generic.h])
@@ -161,15 +161,15 @@ index 723509409..fc7cabc09 100644
  	return retval;
  }
 diff --git a/gss-serv.c b/gss-serv.c
-index 6eb7d2163..237a3c40a 100644
+index 5bc31289e..66d92e4fe 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
 @@ -55,7 +55,7 @@ extern ServerOptions options;
  
  static ssh_gssapi_client gssapi_client =
-     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER, GSS_C_NO_CREDENTIAL,
--    GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0};
-+    GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, NULL};
+     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,
+-    GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, 0};
++    GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME, NULL, {NULL, NULL, NULL, NULL, NULL}, 0, 0, 0, NULL};
  
  ssh_gssapi_mech gssapi_null_mech =
      { NULL, NULL, {0, NULL}, NULL, NULL, NULL, NULL, NULL};
@@ -273,7 +273,7 @@ index 6eb7d2163..237a3c40a 100644
  /* Extract the client details from a given context. This can only reliably
   * be called once for a context */
  
-@@ -386,6 +479,12 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+@@ -387,6 +480,12 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  	}
  
  	gss_release_buffer(&ctx->minor, &ename);
@@ -286,44 +286,37 @@ index 6eb7d2163..237a3c40a 100644
  
  	/* We can't copy this structure, so we just move the pointer to it */
  	client->creds = ctx->client_creds;
-@@ -453,6 +552,7 @@ int
- ssh_gssapi_userok(char *user, struct passwd *pw, int kex)
+@@ -458,10 +557,17 @@ void
+ ssh_gssapi_cleanup_global_client()
  {
  	OM_uint32 lmin;
 +	size_t i;
  
- 	(void) kex; /* used in privilege separation */
+ 	gss_release_buffer(&lmin, &gssapi_client.displayname);
+ 	gss_release_buffer(&lmin, &gssapi_client.exportedname);
+ 	gss_release_cred(&lmin, &gssapi_client.creds);
++
++	if (gssapi_client.indicators != NULL) {
++		for (i = 0; gssapi_client.indicators[i] != NULL; i++)
++			free(gssapi_client.indicators[i]);
++		free(gssapi_client.indicators);
++	}
+ 	explicit_bzero(&gssapi_client, sizeof(ssh_gssapi_client));
+ }
  
-@@ -471,8 +571,14 @@ ssh_gssapi_userok(char *user, struct passwd *pw, int kex)
- 			gss_release_buffer(&lmin, &gssapi_client.displayname);
- 			gss_release_buffer(&lmin, &gssapi_client.exportedname);
- 			gss_release_cred(&lmin, &gssapi_client.creds);
--			explicit_bzero(&gssapi_client,
--			    sizeof(ssh_gssapi_client));
-+
-+			if (gssapi_client.indicators != NULL) {
-+				for (i = 0; gssapi_client.indicators[i] != NULL; i++)
-+					free(gssapi_client.indicators[i]);
-+				free(gssapi_client.indicators);
-+			}
-+
-+			explicit_bzero(&gssapi_client, sizeof(ssh_gssapi_client));
- 			return 0;
- 		}
- 	else
 diff --git a/servconf.c b/servconf.c
-index 846f5d212..d9cccc17c 100644
+index a79958252..0d55461e6 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -456,6 +456,7 @@ fill_default_server_options(ServerOptions *options)
- 	CLEAR_ON_NONE(options->routing_domain);
+@@ -478,6 +478,7 @@ fill_default_server_options(ServerOptions *options)
  	CLEAR_ON_NONE(options->host_key_agent);
  	CLEAR_ON_NONE(options->per_source_penalty_exempt);
+ 	CLEAR_ON_NONE(options->agent_socket_path);
 +	CLEAR_ON_NONE(options->gss_indicators);
  
  	for (i = 0; i < options->num_host_key_files; i++)
  		CLEAR_ON_NONE(options->host_key_files[i]);
-@@ -1488,6 +1489,15 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1537,6 +1538,15 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (*activep && options->gss_kex_algorithms == NULL)
  			options->gss_kex_algorithms = xstrdup(arg);
  		break;
@@ -339,7 +332,7 @@ index 846f5d212..d9cccc17c 100644
  #endif /* GSSAPI */
  
  	case sPasswordAuthentication:
-@@ -4274,6 +4284,7 @@ dump_config(ServerOptions *o)
+@@ -4404,6 +4414,7 @@ dump_config(ServerOptions *o)
  	dump_cfg_fmtint(sGSSAPIStrictAcceptorCheck, o->gss_strict_acceptor);
  	dump_cfg_fmtint(sGSSAPIStoreCredentialsOnRekey, o->gss_store_rekey);
  	dump_cfg_string(sGSSAPIKexAlgorithms, o->gss_kex_algorithms);
@@ -348,10 +341,10 @@ index 846f5d212..d9cccc17c 100644
  	dump_cfg_fmtint(sPasswordAuthentication, o->password_authentication);
  	dump_cfg_fmtint(sKbdInteractiveAuthentication,
 diff --git a/servconf.h b/servconf.h
-index c55b64c73..81e699655 100644
+index f6d1ecf09..31425c4b2 100644
 --- a/servconf.h
 +++ b/servconf.h
-@@ -326,7 +326,8 @@ SSHCONF_INTFLAG(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_GLOBAL, 1
+@@ -333,7 +333,8 @@ SSHCONF_INTFLAG(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_GLOBAL, 1
  SSHCONF_INTFLAG(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
  SSHCONF_STRING(gss_kex_algorithms, GSSAPIKexAlgorithms, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
@@ -361,7 +354,7 @@ index c55b64c73..81e699655 100644
  #else /* GSSAPI */
  #define SSHD_CONFIG_ENTRIES_GSS \
  SSHCONF_UNSUPPORTED_INT(gss_authentication, GSSAPIAuthentication, SSHCFG_ALL) \
-@@ -336,7 +337,8 @@ SSHCONF_UNSUPPORTED_INT(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_G
+@@ -343,7 +344,8 @@ SSHCONF_UNSUPPORTED_INT(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_G
  SSHCONF_UNSUPPORTED_INT(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_STRING(gss_kex_algorithms, GSSAPIKexAlgorithms, SSHCFG_GLOBAL) \
@@ -372,7 +365,7 @@ index c55b64c73..81e699655 100644
  
  #define SSHD_CONFIG_ENTRIES \
 diff --git a/ssh-gss.h b/ssh-gss.h
-index 329dc9da0..1506719a9 100644
+index 5fc1a97e2..e67700417 100644
 --- a/ssh-gss.h
 +++ b/ssh-gss.h
 @@ -34,6 +34,12 @@
@@ -388,8 +381,8 @@ index 329dc9da0..1506719a9 100644
  #ifdef KRB5
  # ifndef HEIMDAL
  #  ifdef HAVE_GSSAPI_GENERIC_H
-@@ -112,6 +118,7 @@ typedef struct {
- 	ssh_gssapi_ccache store;
+@@ -113,6 +119,7 @@ typedef struct {
+ 	int userok;
  	int used;
  	int updated;
 +	char **indicators; /* auth indicators */
@@ -397,10 +390,10 @@ index 329dc9da0..1506719a9 100644
  
  typedef struct ssh_gssapi_mech_struct {
 diff --git a/sshd_config.5 b/sshd_config.5
-index b72757895..2a8f3abea 100644
+index a2f87b0c0..3ae479eda 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -811,6 +811,52 @@ This option only applies to connections using GSSAPI.
+@@ -837,6 +837,52 @@ This option only applies to connections using GSSAPI.
  .Pp
  The list of supported key exchange algorithms may also be obtained using
  .Qq ssh -Q GSSAPIKexAlgorithms .
@@ -454,5 +447,5 @@ index b72757895..2a8f3abea 100644
  The default is handled system-wide by
  .Xr crypto-policies 7 .
 -- 
-2.55.0
+2.56.0
 

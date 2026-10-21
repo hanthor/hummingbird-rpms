@@ -1,4 +1,4 @@
-From ee385dfe54142b1f8c03f20b8a63b9f8f1b52b3f Mon Sep 17 00:00:00 2001
+From fefcd308985886865df45b55af79059951af04a0 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 32/53] openssh-8.7p1-scp-kill-switch
@@ -11,7 +11,7 @@ Subject: [PATCH 32/53] openssh-8.7p1-scp-kill-switch
  3 files changed, 16 insertions(+)
 
 diff --git a/pathnames.h b/pathnames.h
-index 2f0b9f4f6..ce5ddc14f 100644
+index 8713153dc..a94aec6ac 100644
 --- a/pathnames.h
 +++ b/pathnames.h
 @@ -41,6 +41,7 @@
@@ -23,7 +23,7 @@ index 2f0b9f4f6..ce5ddc14f 100644
  #ifndef _PATH_SSH_PROGRAM
  #define _PATH_SSH_PROGRAM		"/usr/bin/ssh"
 diff --git a/scp.1 b/scp.1
-index 7bce0fe6f..2bb838c7d 100644
+index 6daf59420..cd7b91c80 100644
 --- a/scp.1
 +++ b/scp.1
 @@ -334,6 +334,13 @@ during download or upload.
@@ -41,10 +41,10 @@ index 7bce0fe6f..2bb838c7d 100644
  .Ex -std scp
  .Sh SEE ALSO
 diff --git a/scp.c b/scp.c
-index ac43ec5f4..5775be457 100644
+index 7eb8310c4..134231ecd 100644
 --- a/scp.c
 +++ b/scp.c
-@@ -628,6 +628,14 @@ main(int argc, char **argv)
+@@ -630,6 +630,14 @@ main(int argc, char **argv)
  	if (iamremote)
  		mode = MODE_SCP;
  
@@ -60,5 +60,5 @@ index ac43ec5f4..5775be457 100644
  		fatal("unknown user %u", (u_int) userid);
  
 -- 
-2.55.0
+2.56.0
 

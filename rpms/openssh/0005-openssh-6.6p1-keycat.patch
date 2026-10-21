@@ -1,4 +1,4 @@
-From 6164d9589be5125b95da999ed6615aa431a42e70 Mon Sep 17 00:00:00 2001
+From 40cb1cdd8561ba61047536c5adce51efcc5a1dd7 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 05/53] openssh-6.6p1-keycat
@@ -15,7 +15,7 @@ Subject: [PATCH 05/53] openssh-6.6p1-keycat
  create mode 100644 ssh-keycat.c
 
 diff --git a/.depend b/.depend
-index 845fadceb..7d2d00bbf 100644
+index 997f1369d..32b9cf875 100644
 --- a/.depend
 +++ b/.depend
 @@ -135,6 +135,7 @@ ssh-ed25519-sk.o: includes.h config.h defines.h platform.h openbsd-compat/openbs
@@ -57,7 +57,7 @@ index 000000000..630ec628c
 +
 +
 diff --git a/Makefile.in b/Makefile.in
-index e9503e7b7..2a449680a 100644
+index ffc13e069..52bc9ac23 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -23,6 +23,7 @@ SSH_PROGRAM=@bindir@/ssh
@@ -104,10 +104,10 @@ index e9503e7b7..2a449680a 100644
  	$(INSTALL) -m 0755 $(STRIP_OPT) sftp-server$(EXEEXT) $(DESTDIR)$(SFTP_SERVER)$(EXEEXT)
  	$(INSTALL) -m 644 ssh.1.out $(DESTDIR)$(mandir)/$(mansubdir)1/ssh.1
 diff --git a/configure.ac b/configure.ac
-index cb1711f6b..4b3cff38c 100644
+index bb4d065f1..5eaa998d0 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3639,6 +3639,7 @@ AC_ARG_WITH([pam],
+@@ -3646,6 +3646,7 @@ AC_ARG_WITH([pam],
  			PAM_MSG="yes"
  
  			SSHDLIBS="$SSHDLIBS -lpam"
@@ -115,7 +115,7 @@ index cb1711f6b..4b3cff38c 100644
  			AC_DEFINE([USE_PAM], [1],
  				[Define if you want to enable PAM support])
  
-@@ -3649,6 +3650,7 @@ AC_ARG_WITH([pam],
+@@ -3656,6 +3657,7 @@ AC_ARG_WITH([pam],
  					;;
  				*)
  					SSHDLIBS="$SSHDLIBS -ldl"
@@ -123,7 +123,7 @@ index cb1711f6b..4b3cff38c 100644
  					;;
  				esac
  			fi
-@@ -4892,6 +4894,7 @@ AC_ARG_WITH([selinux],
+@@ -4901,6 +4903,7 @@ AC_ARG_WITH([selinux],
  	fi ]
  )
  AC_SUBST([SSHDLIBS])
@@ -131,7 +131,7 @@ index cb1711f6b..4b3cff38c 100644
  
  # Check whether user wants Kerberos 5 support
  KRB5_MSG="no"
-@@ -5905,6 +5908,9 @@ fi
+@@ -5904,6 +5907,9 @@ fi
  if test ! -z "${SSHDLIBS}"; then
  echo "         +for sshd: ${SSHDLIBS}"
  fi
@@ -389,5 +389,5 @@ index 000000000..8bb17c73e
 +	return ev;
 +}
 -- 
-2.55.0
+2.56.0
 

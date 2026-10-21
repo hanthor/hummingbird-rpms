@@ -1,4 +1,4 @@
-From 876a71d2fa9c9eea5b4263216413e9f3864956d2 Mon Sep 17 00:00:00 2001
+From 50aac8bc7ee285b84b4b4b5ca09177ebcb421b65 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 16 May 2025 14:53:54 +0200
 Subject: [PATCH 44/53] openssh-9.9p2-error_processing
@@ -9,10 +9,10 @@ Subject: [PATCH 44/53] openssh-9.9p2-error_processing
  1 file changed, 2 insertions(+)
 
 diff --git a/ssh-agent.c b/ssh-agent.c
-index 1604f540a..4c8e1a4da 100644
+index 9951345dd..f08f7c3b1 100644
 --- a/ssh-agent.c
 +++ b/ssh-agent.c
-@@ -1359,6 +1359,8 @@ process_add_identity(SocketEntry *e)
+@@ -1361,6 +1361,8 @@ process_add_identity(SocketEntry *e)
  	if ((r = sshkey_private_deserialize(e->request, &k)) != 0 ||
  	    k == NULL ||
  	    (r = sshbuf_get_cstring(e->request, &comment, NULL)) != 0) {
@@ -22,5 +22,5 @@ index 1604f540a..4c8e1a4da 100644
  		goto out;
  	}
 -- 
-2.55.0
+2.56.0
 
