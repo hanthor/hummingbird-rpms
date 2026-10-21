@@ -1,13 +1,14 @@
 {
+  "version": "4.3.7",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/rabbitmq/rabbitmq-server",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rabbitmq-server.git",
-    "sha": "5e7c0db2c1c054d1abc4e77a555e63ceb3381353"
+    "branch": "rawhide",
+    "sha": "8d5782aa8649d5c993e823fa4ef03449a1659543",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 4.3.7",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 5585,
   "track_upstream": "4.3",
-  "upstream_repo": "https://github.com/rabbitmq/rabbitmq-server",
-  "version": "4.3.7"
+  "release_monitoring_project_id": 5585
 }

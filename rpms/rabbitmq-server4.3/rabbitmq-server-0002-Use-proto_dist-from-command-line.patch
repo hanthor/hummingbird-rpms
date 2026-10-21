@@ -12,7 +12,7 @@ first one.
 Signed-off-by: Peter Lemenkov <lemenkov@gmail.com>
 
 diff --git a/deps/rabbit_common/src/rabbit_nodes_common.erl b/deps/rabbit_common/src/rabbit_nodes_common.erl
-index 661d21a1ae..a273608e58 100644
+index a7ec9403d6..8df3111e9d 100644
 --- a/deps/rabbit_common/src/rabbit_nodes_common.erl
 +++ b/deps/rabbit_common/src/rabbit_nodes_common.erl
 @@ -116,10 +116,15 @@ ensure_epmd() ->
