@@ -6,6 +6,8 @@
     "sha": "d10d46b552d287b0921c9bc5077053b2e1f8f069"
   },
   "modification_status": "clean",
+  "release_monitoring_project_id": 15235,
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/google/brotli",
   "version": "1.2.0"
 }
