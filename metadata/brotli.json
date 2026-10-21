@@ -2,10 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/brotli.git",
-    "release": "6",
     "sha": "d10d46b552d287b0921c9bc5077053b2e1f8f069"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.2.1",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 15235,
+  "track_upstream": "latest",
   "upstream_repo": "https://github.com/google/brotli",
-  "version": "1.2.0"
+  "version": "1.2.1"
 }
