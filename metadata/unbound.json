@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/unbound.git",
-    "release": "1",
     "sha": "6ba39990468c3c6bcb1c82a475c067172cff0009"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.26.2",
+  "modification_status": "modified",
   "release_monitoring_project_id": 5042,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/NLnetLabs/unbound",
-  "version": "1.26.1"
+  "version": "1.26.2"
 }
