@@ -1,4 +1,4 @@
-From dd953f0572ef6b53825afb50cc44d65b2047831e Mon Sep 17 00:00:00 2001
+From 157671a6eeef976de0f2bf7777c810ff0000aa8c Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 24/53] openssh-7.2p2-s390-closefrom
@@ -47,5 +47,5 @@ index 49a4f35ff..f61124585 100644
  	(void) closedir(dirp);
  	return;
 -- 
-2.55.0
+2.56.0
 

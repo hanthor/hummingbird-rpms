@@ -1,4 +1,4 @@
-From 4672febd5ff5082fe25b18069485f05491238dc2 Mon Sep 17 00:00:00 2001
+From 30a14b0785de651321467eb2c7307c8833c1cd66 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 17/53] openssh-6.6p1-kuserok
@@ -189,10 +189,10 @@ index 7df31c6af..6f5826ce8 100644
  	if ((fp = fopen(file, "r")) == NULL) {
  		int saved_errno = errno;
 diff --git a/servconf.c b/servconf.c
-index ae18d56fd..5de03f3bf 100644
+index fff2e1480..ee30f0426 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -2229,6 +2229,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -2302,6 +2302,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		}
  		break;
  
@@ -203,7 +203,7 @@ index ae18d56fd..5de03f3bf 100644
  	case sMatch:
  		if (cmdline)
  			fatal("Match directive not supported as a command-line "
-@@ -4242,6 +4246,7 @@ dump_config(ServerOptions *o)
+@@ -4372,6 +4376,7 @@ dump_config(ServerOptions *o)
  	dump_cfg_fmtint(sKerberosGetAFSToken, o->kerberos_get_afs_token);
  # endif
  	dump_cfg_fmtint(sKerberosUniqueCCache, o->kerberos_unique_ccache);
@@ -212,10 +212,10 @@ index ae18d56fd..5de03f3bf 100644
  #ifdef GSSAPI
  	dump_cfg_fmtint(sGSSAPIAuthentication, o->gss_authentication);
 diff --git a/servconf.h b/servconf.h
-index 5f5672082..7c003b8c5 100644
+index 74ac5282d..e9089ca0a 100644
 --- a/servconf.h
 +++ b/servconf.h
-@@ -304,6 +304,7 @@ SSHCONF_INTFLAG(kerberos_authentication, KerberosAuthentication, SSHCFG_ALL, 0,
+@@ -311,6 +311,7 @@ SSHCONF_INTFLAG(kerberos_authentication, KerberosAuthentication, SSHCFG_ALL, 0,
  SSHCONF_INTFLAG(kerberos_or_local_passwd, KerberosOrLocalPasswd, SSHCFG_GLOBAL, 1, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(kerberos_ticket_cleanup, KerberosTicketCleanup, SSHCFG_GLOBAL, 1, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(kerberos_unique_ccache, KerberosUniqueCCache, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
@@ -223,7 +223,7 @@ index 5f5672082..7c003b8c5 100644
  SSHD_CONFIG_KRB5_AFS
  #else /* KRB5 */
  #define SSHD_CONFIG_ENTRIES_KRB5 \
-@@ -311,6 +312,7 @@ SSHCONF_UNSUPPORTED_INT(kerberos_authentication, KerberosAuthentication, SSHCFG_
+@@ -318,6 +319,7 @@ SSHCONF_UNSUPPORTED_INT(kerberos_authentication, KerberosAuthentication, SSHCFG_
  SSHCONF_UNSUPPORTED_INT(kerberos_or_local_passwd, KerberosOrLocalPasswd, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(kerberos_ticket_cleanup, KerberosTicketCleanup, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(kerberos_unique_ccache, KerberosUniqueCCache, SSHCFG_GLOBAL) \
@@ -244,10 +244,10 @@ index 404aa1bbb..76279d795 100644
  # GSSAPI options
  #GSSAPIAuthentication no
 diff --git a/sshd_config.5 b/sshd_config.5
-index 08a304cdc..0077ee096 100644
+index cb4c74899..a700cfd3f 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -1082,6 +1082,10 @@ The default value
+@@ -1108,6 +1108,10 @@ The default value
  .Cm no
  can lead to overwriting previous tickets by subseqent connections to the same
  user account.
@@ -258,7 +258,7 @@ index 08a304cdc..0077ee096 100644
  .It Cm KexAlgorithms
  Specifies the permitted KEX (Key Exchange) algorithms that the server will
  offer to clients.
-@@ -1398,6 +1402,7 @@ Available keywords are
+@@ -1424,6 +1428,7 @@ Available keywords are
  .Cm IPQoS ,
  .Cm KbdInteractiveAuthentication ,
  .Cm KerberosAuthentication ,
@@ -267,5 +267,5 @@ index 08a304cdc..0077ee096 100644
  .Cm MaxAuthTries ,
  .Cm MaxSessions ,
 -- 
-2.55.0
+2.56.0
 

@@ -1,4 +1,4 @@
-From 10feee43540cbebad70f9903a6cbd59409f9f0c4 Mon Sep 17 00:00:00 2001
+From 1290a977c0151b679cb5408271cba8401f74fe03 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 12/53] openssh-7.8p1-UsePAM-warning
@@ -10,10 +10,10 @@ Subject: [PATCH 12/53] openssh-7.8p1-UsePAM-warning
  2 files changed, 6 insertions(+)
 
 diff --git a/sshd-session.c b/sshd-session.c
-index 0f41756ff..6e9b28dec 100644
+index 2a19260ff..c671c782d 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -1076,6 +1076,10 @@ main(int ac, char **av)
+@@ -1062,6 +1062,10 @@ main(int ac, char **av)
  			    "enabled authentication methods");
  	}
  
@@ -38,5 +38,5 @@ index f43aa8093..f626d5801 100644
  
  #AllowAgentForwarding yes
 -- 
-2.55.0
+2.56.0
 

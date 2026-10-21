@@ -1,4 +1,4 @@
-From b7b287396f0792287ee4be08702ff70876cd401d Mon Sep 17 00:00:00 2001
+From b2a9a77f3e51adbc6d7278766d17103ed7f6dc26 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 06/53] openssh-6.6p1-allow-ip-opts
@@ -9,10 +9,10 @@ Subject: [PATCH 06/53] openssh-6.6p1-allow-ip-opts
  1 file changed, 26 insertions(+), 6 deletions(-)
 
 diff --git a/sshd-session.c b/sshd-session.c
-index 1a40a43f1..0f41756ff 100644
+index 54af7fdf4..2a19260ff 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -727,12 +727,32 @@ check_ip_options(struct ssh *ssh)
+@@ -713,12 +713,32 @@ check_ip_options(struct ssh *ssh)
  
  	if (getsockopt(sock_in, IPPROTO_IP, IP_OPTIONS, opts,
  	    &option_size) >= 0 && option_size != 0) {
@@ -52,5 +52,5 @@ index 1a40a43f1..0f41756ff 100644
  #endif /* IP_OPTIONS */
  }
 -- 
-2.55.0
+2.56.0
 

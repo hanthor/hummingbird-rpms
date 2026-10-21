@@ -1,4 +1,4 @@
-From 648348f34e3f4279e030184a318a9c0326fd82a1 Mon Sep 17 00:00:00 2001
+From fc3fc20d8fe4ecb76d625bc5e52c775fbc63fb56 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 43/53] openssh-9.9p1-openssl-mlkem
@@ -398,5 +398,5 @@ index e2c2c0a86..36658120f 100644
  #else /* USE_MLKEM768X25519 */
  int
 -- 
-2.55.0
+2.56.0
 

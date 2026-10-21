@@ -1,0 +1,39 @@
+From: Hummingbird maintainers
+Subject: [PATCH] Preserve Fedora GSSAPI cleanup and post-authentication rekeying
+
+OpenSSH 10.6p1 resets the global GSSAPI client state when setting up a
+context. Fedora also uses this path for post-authentication rekeying,
+where the reset clears state needed to refresh delegated credentials.
+
+Restrict the monitor's reset to pre-authentication. Also release Fedora's
+additional GSS name before clearing the client state.
+
+Fedora's existing %check tests pass but do not cover delegated credential
+refresh after rekeying. The published Fedora 10.6p1 RPM reproduces the
+failure; this patch restores credential refresh.
+
+diff --git a/gss-serv.c b/gss-serv.c
+--- a/gss-serv.c
++++ b/gss-serv.c
+@@ -918,6 +918,7 @@ ssh_gssapi_cleanup_global_client()
+ 	gss_release_buffer(&lmin, &gssapi_client.displayname);
+ 	gss_release_buffer(&lmin, &gssapi_client.exportedname);
+ 	gss_release_cred(&lmin, &gssapi_client.creds);
++	gss_release_name(&lmin, &gssapi_client.name);
+ 
+ 	if (gssapi_client.indicators != NULL) {
+ 		for (i = 0; gssapi_client.indicators[i] != NULL; i++)
+diff --git a/monitor.c b/monitor.c
+--- a/monitor.c
++++ b/monitor.c
+@@ -2160,7 +2160,9 @@ mm_answer_gss_setup_ctx(struct ssh *ssh, int sock, struct sshbuf *m)
+ 	if (!options.gss_authentication && !options.gss_keyex)
+ 		fatal_f("GSSAPI not enabled");
+ 
+-	ssh_gssapi_cleanup_global_client();
++	/* Keep authorized credentials available for post-authentication rekeying. */
++	if (!authctxt->authenticated)
++		ssh_gssapi_cleanup_global_client();
+ 
+ 	if ((r = sshbuf_get_string(m, &p, &len)) != 0)
+ 		fatal_fr(r, "parse");

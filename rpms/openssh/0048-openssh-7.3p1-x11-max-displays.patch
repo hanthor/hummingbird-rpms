@@ -1,4 +1,4 @@
-From 9e952349b6b64ff2916199323b1db909c3f1d6f3 Mon Sep 17 00:00:00 2001
+From e390af2fd555754b9c311e8369fad452c22ade8b Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 12 Dec 2025 15:35:14 +0100
 Subject: [PATCH 48/53] openssh-7.3p1-x11-max-displays
@@ -14,10 +14,10 @@ Move MAX_DISPLAYS to a configuration option (#1341302)
  6 files changed, 24 insertions(+), 6 deletions(-)
 
 diff --git a/channels.c b/channels.c
-index bae84e5f9..48ec0ab83 100644
+index a8e77e2b5..5b1b11fd3 100644
 --- a/channels.c
 +++ b/channels.c
-@@ -5085,7 +5085,7 @@ rdynamic_connect_finish(struct ssh *ssh, Channel *c)
+@@ -5142,7 +5142,7 @@ rdynamic_connect_finish(struct ssh *ssh, Channel *c)
   */
  int
  x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
@@ -26,7 +26,7 @@ index bae84e5f9..48ec0ab83 100644
      u_int *display_numberp, int **chanids)
  {
  	Channel *nc = NULL;
-@@ -5098,8 +5098,11 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
+@@ -5155,8 +5155,11 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
  	    x11_display_offset > UINT16_MAX - X11_BASE_PORT - MAX_DISPLAYS)
  		return -1;
  
@@ -39,7 +39,7 @@ index bae84e5f9..48ec0ab83 100644
  	    display_number++) {
  		port = X11_BASE_PORT + display_number;
  		memset(&hints, 0, sizeof(hints));
-@@ -5164,7 +5167,7 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
+@@ -5221,7 +5224,7 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
  		if (num_socks > 0)
  			break;
  	}
@@ -49,12 +49,12 @@ index bae84e5f9..48ec0ab83 100644
  		return -1;
  	}
 diff --git a/channels.h b/channels.h
-index f69096498..bc3b52aa2 100644
+index 6b84e2f2d..39f9b645c 100644
 --- a/channels.h
 +++ b/channels.h
-@@ -391,7 +391,7 @@ int	 permitopen_port(const char *);
+@@ -385,7 +385,7 @@ int	 permitopen_port(const char *);
  
- void	 channel_set_x11_refuse_time(struct ssh *, time_t);
+ void	 channel_set_x11_refuse_time(struct ssh *, double);
  int	 x11_connect_display(struct ssh *);
 -int	 x11_create_display_inet(struct ssh *, int, int, int, u_int *, int **);
 +int	 x11_create_display_inet(struct ssh *, int, int, int, int, u_int *, int **);
@@ -62,10 +62,10 @@ index f69096498..bc3b52aa2 100644
  	    const char *, const char *, const char *, int);
  int      x11_channel_used_recently(struct ssh *ssh);
 diff --git a/servconf.c b/servconf.c
-index d9cccc17c..8746a2417 100644
+index 0d55461e6..dc9624fb5 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -1533,6 +1533,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -1582,6 +1582,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  			*intptr = value;
  		break;
  
@@ -76,7 +76,7 @@ index d9cccc17c..8746a2417 100644
  	case sX11UseLocalhost:
  		intptr = &options->x11_use_localhost;
  		goto parse_flag;
-@@ -4249,6 +4253,7 @@ dump_config(ServerOptions *o)
+@@ -4379,6 +4383,7 @@ dump_config(ServerOptions *o)
  #endif
  	dump_cfg_int(sLoginGraceTime, o->login_grace_time);
  	dump_cfg_int(sX11DisplayOffset, o->x11_display_offset);
@@ -85,7 +85,7 @@ index d9cccc17c..8746a2417 100644
  	dump_cfg_int(sMaxSessions, o->max_sessions);
  	dump_cfg_int(sClientAliveInterval, o->client_alive_interval);
 diff --git a/servconf.h b/servconf.h
-index 81e699655..4e5f7edc6 100644
+index 31425c4b2..ccf6134f3 100644
 --- a/servconf.h
 +++ b/servconf.h
 @@ -40,6 +40,7 @@ struct sshbuf;
@@ -96,7 +96,7 @@ index 81e699655..4e5f7edc6 100644
  
  /* Magic name for internal sftp-server */
  #define INTERNAL_SFTP_NAME	"internal-sftp"
-@@ -172,6 +173,7 @@ SSHCONF_INTFLAG(ignore_user_known_hosts, IgnoreUserKnownHosts, SSHCFG_GLOBAL, 0,
+@@ -178,6 +179,7 @@ SSHCONF_INTFLAG(ignore_user_known_hosts, IgnoreUserKnownHosts, SSHCFG_GLOBAL, 0,
  SSHCONF_INTFLAG(print_motd, PrintMotd, SSHCFG_GLOBAL, 1, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(x11_forwarding, X11Forwarding, SSHCFG_ALL, 0, SSHCFG_COPY_MATCH) \
  SSHCONF_INT(x11_display_offset, X11DisplayOffset, SSHCFG_ALL, NULL, SSHD_DEFAULT_X11_DISPLAY_OFFSET, SSHCFG_COPY_MATCH) \
@@ -105,10 +105,10 @@ index 81e699655..4e5f7edc6 100644
  SSHCONF_STRING(xauth_location, XAuthLocation, SSHCFG_GLOBAL, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(permit_tty, PermitTTY, SSHCFG_ALL, 1, SSHCFG_COPY_MATCH) \
 diff --git a/session.c b/session.c
-index bd8dc808c..e2cf13bdc 100644
+index da116cada..0007f2a57 100644
 --- a/session.c
 +++ b/session.c
-@@ -2693,8 +2693,9 @@ session_setup_x11fwd(struct ssh *ssh, Session *s)
+@@ -2698,8 +2698,9 @@ session_setup_x11fwd(struct ssh *ssh, Session *s)
  		return 0;
  	}
  	if (x11_create_display_inet(ssh, options.x11_display_offset,
@@ -121,18 +121,18 @@ index bd8dc808c..e2cf13bdc 100644
  		return 0;
  	}
 diff --git a/sshd_config.5 b/sshd_config.5
-index 2a8f3abea..bf9efc897 100644
+index 3ae479eda..e2c0ac7e5 100644
 --- a/sshd_config.5
 +++ b/sshd_config.5
-@@ -1430,6 +1430,7 @@ Available keywords are
- .Cm TrustedUserCAKeys ,
+@@ -1457,6 +1457,7 @@ Available keywords are
  .Cm UnusedConnectionTimeout ,
  .Cm X11DisplayOffset ,
+ .Cm X11Forwarding ,
 +.Cm X11MaxDisplays ,
- .Cm X11Forwarding
  and
  .Cm X11UseLocalhost .
-@@ -2147,6 +2148,12 @@ Specifies the first display number available for
+ .It Cm MaxAuthTries
+@@ -2207,6 +2208,12 @@ Specifies the first display number available for
  X11 forwarding.
  This prevents sshd from interfering with real X11 servers.
  The default is 10.
@@ -146,5 +146,5 @@ index 2a8f3abea..bf9efc897 100644
  Specifies whether X11 forwarding is permitted.
  The argument must be
 -- 
-2.55.0
+2.56.0
 

@@ -1,4 +1,4 @@
-From 3bb305e252bed53087559ccedfe631a09b870a9c Mon Sep 17 00:00:00 2001
+From 39970245627d15f7f1b1b9db595a74df301aac0a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:59:26 +0200
 Subject: [PATCH 49/53] Fix ssh-pkcs11-client helper termination
@@ -44,5 +44,5 @@ index 6d74d7280..30a4cf5dc 100644
  	}
  	sshbuf_free(msg);
 -- 
-2.55.0
+2.56.0
 

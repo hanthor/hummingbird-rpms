@@ -1,4 +1,4 @@
-From 6991682335fb1dded7b50d903b7f9cc600535ba2 Mon Sep 17 00:00:00 2001
+From 069e1c8c675b7159653ef33a5897805130fa7d40 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 36/53] openssh-7.1p2-audit-race-condition
@@ -11,10 +11,10 @@ Subject: [PATCH 36/53] openssh-7.1p2-audit-race-condition
  3 files changed, 102 insertions(+), 7 deletions(-)
 
 diff --git a/monitor_wrap.c b/monitor_wrap.c
-index bdac7d3f9..4dc64857b 100644
+index 0f2a01920..a9251a075 100644
 --- a/monitor_wrap.c
 +++ b/monitor_wrap.c
-@@ -1396,4 +1396,50 @@ mm_audit_destroy_sensitive_data(struct ssh *ssh, const char *fp, pid_t pid, uid_
+@@ -1400,4 +1400,50 @@ mm_audit_destroy_sensitive_data(struct ssh *ssh, const char *fp, pid_t pid, uid_
  	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_SERVER_KEY_FREE, m);
  	sshbuf_free(m);
  }
@@ -79,7 +79,7 @@ index 7f846f085..41e4b79fe 100644
  
  struct Session;
 diff --git a/session.c b/session.c
-index d36c1b702..bd8dc808c 100644
+index 226bdfc81..da116cada 100644
 --- a/session.c
 +++ b/session.c
 @@ -161,6 +161,10 @@ static Session *sessions = NULL;
@@ -93,7 +93,7 @@ index d36c1b702..bd8dc808c 100644
  static int is_child = 0;
  static int in_chroot = 0;
  static int have_dev_log = 1;
-@@ -359,6 +363,8 @@ xauth_valid_string(const char *s)
+@@ -364,6 +368,8 @@ xauth_valid_string(const char *s)
  	return 1;
  }
  
@@ -102,7 +102,7 @@ index d36c1b702..bd8dc808c 100644
  #define USE_PIPES 1
  /*
   * This is called to fork and execute a command when we have no tty.  This
-@@ -482,6 +488,8 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
+@@ -487,6 +493,8 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
  		close(err[0]);
  #endif
  
@@ -111,7 +111,7 @@ index d36c1b702..bd8dc808c 100644
  		/* Do processing for the child (exec command etc). */
  		do_child(ssh, s, command);
  		/* NOTREACHED */
-@@ -596,6 +604,9 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
+@@ -601,6 +609,9 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
  		/* Close the extra descriptor for the pseudo tty. */
  		close(ttyfd);
  
@@ -121,7 +121,7 @@ index d36c1b702..bd8dc808c 100644
  		/* record login, etc. similar to login(1) */
  #ifndef HAVE_OSF_SIA
  		do_login(ssh, s, command);
-@@ -730,6 +741,8 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
+@@ -735,6 +746,8 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
  	}
  	if (s->command != NULL && s->ptyfd == -1)
  		s->command_handle = mm_audit_run_command(ssh, s->command);
@@ -130,7 +130,7 @@ index d36c1b702..bd8dc808c 100644
  #endif
  	if (s->ttyfd != -1)
  		ret = do_exec_pty(ssh, s, command);
-@@ -745,6 +758,20 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
+@@ -750,6 +763,20 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
  	 */
  	sshbuf_reset(loginmsg);
  
@@ -151,7 +151,7 @@ index d36c1b702..bd8dc808c 100644
  	return ret;
  }
  
-@@ -1497,6 +1524,33 @@ child_close_fds(struct ssh *ssh)
+@@ -1502,6 +1529,33 @@ child_close_fds(struct ssh *ssh)
  	log_redirect_stderr_to(NULL);
  }
  
@@ -185,7 +185,7 @@ index d36c1b702..bd8dc808c 100644
  /*
   * Performs common processing for the child, such as setting up the
   * environment, closing extra file descriptors, setting the user and group
-@@ -1514,13 +1568,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
+@@ -1519,13 +1573,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
  
  	sshpkt_fmt_connection_id(ssh, remote_id, sizeof(remote_id));
  
@@ -200,5 +200,5 @@ index d36c1b702..bd8dc808c 100644
  	if (s->authctxt->force_pwchange) {
  		do_setusercontext(pw);
 -- 
-2.55.0
+2.56.0
 

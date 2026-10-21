@@ -1,4 +1,4 @@
-From fa6f77d16574bf45434431c2fd60fcd34e9a0c8f Mon Sep 17 00:00:00 2001
+From bbc321ac230fc4d16357c598e9b1e1650b913b25 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 7 Aug 2026 17:25:07 +0200
 Subject: [PATCH 01/53] openssh-6.7p1-coverity
@@ -60,10 +60,10 @@ index 7499aa975..2807cad4a 100644
  	    MIN_SIZEOF(ut->ut_host, li->hostname));
  # endif
 diff --git a/misc.c b/misc.c
-index 517fa7a97..88dc78821 100644
+index 866f7b8e2..f44aa98d8 100644
 --- a/misc.c
 +++ b/misc.c
-@@ -1612,6 +1612,8 @@ sanitise_stdfd(void)
+@@ -1625,6 +1625,8 @@ sanitise_stdfd(void)
  	}
  	if (nullfd > STDERR_FILENO)
  		close(nullfd);
@@ -72,7 +72,7 @@ index 517fa7a97..88dc78821 100644
  }
  
  char *
-@@ -2815,6 +2817,7 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
+@@ -2829,6 +2831,7 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
  	}
  	if (devnull > STDERR_FILENO)
  		close(devnull);
@@ -81,7 +81,7 @@ index 517fa7a97..88dc78821 100644
  }
  
 diff --git a/monitor.c b/monitor.c
-index 149671145..0e5871994 100644
+index 940dc275a..5630e8855 100644
 --- a/monitor.c
 +++ b/monitor.c
 @@ -367,7 +367,7 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
@@ -147,10 +147,10 @@ index 26bdc3e08..8e2939b95 100644
  		FD_CLR(notify_pipe[0], readset);
  	}
 diff --git a/readconf.c b/readconf.c
-index bc48b4f55..7465216f3 100644
+index 9b557dedf..e80db7527 100644
 --- a/readconf.c
 +++ b/readconf.c
-@@ -2111,6 +2111,7 @@ parse_pubkey_algos:
+@@ -2121,6 +2121,7 @@ parse_pubkey_algos:
  			} else if (r != 0) {
  				error("%.200s line %d: glob failed for %s.",
  				    filename, linenum, arg2);
@@ -159,10 +159,10 @@ index bc48b4f55..7465216f3 100644
  			}
  			free(arg2);
 diff --git a/servconf.c b/servconf.c
-index ac0c31d95..e7819d59a 100644
+index 044043b74..bfb227a03 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -2026,8 +2026,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -2099,8 +2099,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		if (*activep && *charptr == NULL) {
  			*charptr = tilde_expand_filename(arg, getuid());
  			/* increase optional counter */
@@ -188,5 +188,5 @@ index 9d8a3429e..c22681483 100644
  		    auth_opts->force_tun_device != (int)tun)
  			goto done;
 -- 
-2.55.0
+2.56.0
 

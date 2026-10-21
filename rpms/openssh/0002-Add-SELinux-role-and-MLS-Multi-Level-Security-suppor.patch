@@ -1,4 +1,4 @@
-From 3c47f2bb223e4e400fac08c12bf36a2a88fa55ba Mon Sep 17 00:00:00 2001
+From 2e901e0c17cf7907d374e45d8d998852f8165dd0 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:06:32 +0200
 Subject: [PATCH 02/53] Add SELinux role and MLS (Multi-Level Security) support
@@ -35,10 +35,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
  10 files changed, 131 insertions(+), 8 deletions(-)
 
 diff --git a/auth.h b/auth.h
-index 0f11458ca..efe819323 100644
+index 17227cffb..ca6f507cc 100644
 --- a/auth.h
 +++ b/auth.h
-@@ -65,6 +65,9 @@ struct Authctxt {
+@@ -67,6 +67,9 @@ struct Authctxt {
  	char		*service;
  	struct passwd	*pw;		/* set if 'valid' */
  	char		*style;
@@ -85,10 +85,10 @@ index 9e9496e53..553fba328 100644
  
  	if (!authenticated)
 diff --git a/auth2-hostbased.c b/auth2-hostbased.c
-index 564a8d3cc..6a6704d93 100644
+index cca06745e..4322d7b4f 100644
 --- a/auth2-hostbased.c
 +++ b/auth2-hostbased.c
-@@ -131,7 +131,16 @@ userauth_hostbased(struct ssh *ssh, const char *method)
+@@ -138,7 +138,16 @@ userauth_hostbased(struct ssh *ssh, const char *method)
  	/* reconstruct packet */
  	if ((r = sshbuf_put_stringb(b, ssh->kex->session_id)) != 0 ||
  	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
@@ -106,7 +106,7 @@ index 564a8d3cc..6a6704d93 100644
  	    (r = sshbuf_put_cstring(b, method)) != 0 ||
  	    (r = sshbuf_put_string(b, pkalg, alen)) != 0 ||
 diff --git a/auth2-pubkey.c b/auth2-pubkey.c
-index c15b1ba71..dc07faa92 100644
+index 1a4afd473..88cbab533 100644
 --- a/auth2-pubkey.c
 +++ b/auth2-pubkey.c
 @@ -71,6 +71,8 @@
@@ -118,7 +118,7 @@ index c15b1ba71..dc07faa92 100644
  extern struct authmethod_cfg methodcfg_pubkey;
  
  static char *
-@@ -201,9 +203,16 @@ userauth_pubkey(struct ssh *ssh, const char *method)
+@@ -223,9 +225,16 @@ userauth_pubkey(struct ssh *ssh, const char *method)
  			goto done;
  		}
  		/* reconstruct packet */
@@ -137,7 +137,7 @@ index c15b1ba71..dc07faa92 100644
  		if ((r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
  		    (r = sshbuf_put_cstring(b, userstyle)) != 0 ||
  		    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
-@@ -473,7 +482,8 @@ match_principals_command(struct passwd *user_pw, const struct sshkey *key,
+@@ -510,7 +519,8 @@ match_principals_command(struct passwd *user_pw, const struct sshkey *key,
  	if ((pid = subprocess("AuthorizedPrincipalsCommand", command,
  	    ac, av, &f,
  	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD,
@@ -147,7 +147,7 @@ index c15b1ba71..dc07faa92 100644
  		goto out;
  
  	uid_swapped = 1;
-@@ -749,7 +759,8 @@ user_key_command_allowed2(struct passwd *user_pw, struct sshkey *key,
+@@ -786,7 +796,8 @@ user_key_command_allowed2(struct passwd *user_pw, struct sshkey *key,
  	if ((pid = subprocess("AuthorizedKeysCommand", command,
  	    ac, av, &f,
  	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD,
@@ -158,7 +158,7 @@ index c15b1ba71..dc07faa92 100644
  
  	uid_swapped = 1;
 diff --git a/auth2.c b/auth2.c
-index 3f353a719..497fa8ed2 100644
+index 2da7a4da9..f4f72270d 100644
 --- a/auth2.c
 +++ b/auth2.c
 @@ -277,6 +277,9 @@ input_userauth_request(int type, uint32_t seq, struct ssh *ssh)
@@ -204,10 +204,10 @@ index 3f353a719..497fa8ed2 100644
  		if ((r = kex_server_update_ext_info(ssh)) != 0)
  			fatal_fr(r, "kex_server_update_ext_info failed");
 diff --git a/misc.c b/misc.c
-index 88dc78821..f5275d108 100644
+index f44aa98d8..a38dd7a36 100644
 --- a/misc.c
 +++ b/misc.c
-@@ -869,6 +869,7 @@ char *
+@@ -882,6 +882,7 @@ char *
  colon(char *cp)
  {
  	int flag = 0;
@@ -215,7 +215,7 @@ index 88dc78821..f5275d108 100644
  
  	if (*cp == ':')		/* Leading colon is part of file name. */
  		return NULL;
-@@ -884,6 +885,13 @@ colon(char *cp)
+@@ -897,6 +898,13 @@ colon(char *cp)
  			return (cp);
  		if (*cp == '/')
  			return NULL;
@@ -229,7 +229,7 @@ index 88dc78821..f5275d108 100644
  	}
  	return NULL;
  }
-@@ -2833,7 +2841,8 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
+@@ -2847,7 +2855,8 @@ stdfd_devnull(int do_stdin, int do_stdout, int do_stderr)
  pid_t
  subprocess(const char *tag, const char *command,
      int ac, char **av, FILE **child, u_int flags,
@@ -239,7 +239,7 @@ index 88dc78821..f5275d108 100644
  {
  	FILE *f = NULL;
  	struct stat st;
-@@ -2966,6 +2975,13 @@ subprocess(const char *tag, const char *command,
+@@ -2980,6 +2989,13 @@ subprocess(const char *tag, const char *command,
  			error("%s: dup2: %s", tag, strerror(errno));
  			_exit(1);
  		}
@@ -254,7 +254,7 @@ index 88dc78821..f5275d108 100644
  			execve(av[0], av, env);
  		else
 diff --git a/monitor.c b/monitor.c
-index 0e5871994..c659e99e0 100644
+index 5630e8855..eb9703c06 100644
 --- a/monitor.c
 +++ b/monitor.c
 @@ -111,6 +111,9 @@ int mm_answer_sign(struct ssh *, int, struct sshbuf *);
@@ -366,10 +366,10 @@ index fe0b00b2e..1b46e794e 100644
  	MONITOR_REQ_PAM_ACCOUNT = 102, MONITOR_ANS_PAM_ACCOUNT = 103,
  	MONITOR_REQ_PAM_INIT_CTX = 104, MONITOR_ANS_PAM_INIT_CTX = 105,
 diff --git a/monitor_wrap.c b/monitor_wrap.c
-index e9a771b34..af0252964 100644
+index c828fce04..a909950b5 100644
 --- a/monitor_wrap.c
 +++ b/monitor_wrap.c
-@@ -440,6 +440,27 @@ mm_inform_authserv(char *service, char *style)
+@@ -443,6 +443,27 @@ mm_inform_authserv(char *service, char *style)
  	sshbuf_free(m);
  }
  
@@ -412,5 +412,5 @@ index f43759b21..30585187c 100644
  char *mm_auth2_read_banner(void);
  int mm_auth_password(struct ssh *, char *);
 -- 
-2.55.0
+2.56.0
 

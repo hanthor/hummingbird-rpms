@@ -1,4 +1,4 @@
-From e864b54e074914b1bdc2a239d02b9cabc97e9ca4 Mon Sep 17 00:00:00 2001
+From 0cc83d529914b43353f9fb6d6cb14d12c3f1cfa8 Mon Sep 17 00:00:00 2001
 From: Zoltan Fridrich <zfridric@redhat.com>
 Date: Mon, 5 May 2025 11:52:25 +0200
 Subject: [PATCH 45/53] Ignore bad hostkeys in known_hosts file
@@ -64,7 +64,7 @@ index a24a4e329..0e9b1a19a 100644
  
  #endif
 diff --git a/ssh.c b/ssh.c
-index 00c0edefc..0182cc567 100644
+index 323c5a1f9..68c16c79c 100644
 --- a/ssh.c
 +++ b/ssh.c
 @@ -97,6 +97,7 @@
@@ -84,5 +84,5 @@ index 00c0edefc..0182cc567 100644
  		fatal("Invalid number of ConnectionAttempts");
  
 -- 
-2.55.0
+2.56.0
 

@@ -1,4 +1,4 @@
-From e9eba7f4adb59d308ff9dec4f8ec1a426cfe3e39 Mon Sep 17 00:00:00 2001
+From 8f5a3dbf908afab34dc3e4f0fb94e783b810b5b2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 42/53] openssh-9.9p1-separate-keysign
@@ -8,7 +8,7 @@ Subject: [PATCH 42/53] openssh-9.9p1-separate-keysign
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/ssh_config.5 b/ssh_config.5
-index c4c72f587..f2ff8585c 100644
+index a003e37b8..a4fbecf35 100644
 --- a/ssh_config.5
 +++ b/ssh_config.5
 @@ -834,7 +834,7 @@ or
@@ -21,5 +21,5 @@ index c4c72f587..f2ff8585c 100644
  Sets the escape character (default:
  .Ql ~ ) .
 -- 
-2.55.0
+2.56.0
 
