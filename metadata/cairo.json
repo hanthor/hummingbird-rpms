@@ -8,6 +8,6 @@
   "modification_status": "clean",
   "release_monitoring_project_id": 247,
   "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/cairo",
+  "upstream_repo": "https://gitlab.freedesktop.org/cairo/cairo",
   "version": "1.18.6"
 }
