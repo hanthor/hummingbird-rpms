@@ -2901,6 +2901,51 @@ def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
     assert metadata['fedora']['release'] == '1'
 
 
+@pytest.mark.parametrize('use_indirect', [False, True], ids=['direct', 'indirect'])
+def test_update_merged_autorelease_resets_local_release(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module, use_indirect: bool, caplog,
+) -> None:
+    """A failed normalization rebase must not retain a local release suffix."""
+    upstream = upstream_repos['vanilla']
+    spec = upstream / 'vanilla.spec'
+    definition = ('%global my_release %{autorelease}\nRelease: %{my_release}'
+                  if use_indirect else 'Release: %{autorelease}')
+    spec.write_text(spec.read_text().replace('Release: 1%{?dist}', definition))
+    subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '1.0', 'release': '1.fc99'}):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+
+    local = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    # The adjacent Version change makes the normalization rebase fail.
+    local.write_text(local.read_text().replace('Version: 1.0', 'Version: 1.5')
+                     .replace('1%{?dist}', '1.5%{?dist}')
+                     + '\n%package extra\nSummary: Extra\nRelease: %{release}\n'
+                     + '%description extra\nExtra package\n%files extra\n')
+    run_dist_git(dist_git_module, workdir, 'mark-modified', 'vanilla',
+                 '--modified', '--reason', 'Local package changes')
+    subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Local changes'], cwd=workdir, check=True)
+    spec.write_text(spec.read_text().replace('%files', '# Fedora change\n%files'))
+    subprocess.run(['git', 'commit', '-am', 'Fedora change'], cwd=upstream, check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '1.0', 'release': '3.fc99'}):
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+    result = local.read_text()
+    assert '# Fedora change' in result
+    assert 'Version: 1.5' in result
+    assert 'falling back to direct diff' in caplog.text
+    assert '1.5%{?dist}' not in result
+    assert 'Release: %{release}' in result
+    if use_indirect:
+        assert '%global my_release 3%{?dist}' in result
+        assert 'Release: %{my_release}' in result
+    else:
+        assert 'Release: 3%{?dist}' in result
+    assert json.loads((workdir / 'metadata' / 'vanilla.json').read_text())['fedora']['release'] == '3'
+
+
 def _koji_search_server(builds: list[dict]) -> MagicMock:
     """Build a mock Koji server whose search()/getBuild() return the given builds."""
     server = MagicMock()

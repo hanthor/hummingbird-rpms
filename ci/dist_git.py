@@ -196,6 +196,25 @@ def replace_autorelease_in_spec(package_dir: Path, release: str, required: bool 
         logging.info("Replaced %%autorelease with %s%%{?dist} in %s", release, spec_file.name)
 
 
+def restore_autorelease_definitions(package_dir: Path, upstream_spec: str) -> None:
+    """Restore Fedora's autorelease fields after a merge replaces them with literals."""
+    for spec_file in package_dir.glob('*.spec'):
+        content = spec_file.read_text()
+        for line in upstream_spec.splitlines():
+            if line.lstrip().startswith('#') or not re.search(AUTORELEASE_PATTERN, line):
+                continue
+            definition = re.match(r'^(Release:|%(?:global|define)[ \t]+\S+)[ \t]+', line)
+            if definition is None:
+                raise ValueError(f"Unsupported %autorelease definition: {line}")
+            field = re.escape(definition.group(1))
+            content, count = re.subn(
+                rf'^{field}[ \t]+.*$', lambda _: line, content, count=1, flags=re.MULTILINE,
+            )
+            if count != 1:
+                raise ValueError(f"Expected one {definition.group(1)} field in {spec_file.name}")
+        spec_file.write_text(content)
+
+
 def parse_spec_version(
     package_dir: Path, *, tolerate_orphaned_patches: bool = False
 ) -> tuple[str, str]:
@@ -2146,6 +2165,9 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                 logging.info("Skipping %s: %s-%s not built in Koji", package_name, version, release)
                 return
 
+        # Save the definitions before the merge can replace autorelease with local literals.
+        upstream_spec = next(upstream_dir.glob('*.spec')).read_text() if has_autorelease else ''
+
         # Update mode: merge local modifications with upstream changes
         # Sync mode: discard local modifications
         has_modifications = not is_package_unmodified(package_name, metadata, upstream_dir)
@@ -2165,8 +2187,10 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             shutil.copytree(upstream_dir, package_dir)
 
         # Replace %autorelease in package_dir (now safe, no longer a git repo)
-        if has_autorelease:
-            replace_autorelease_in_spec(package_dir, release, required=False)
+        if has_autorelease and not has_conflicts:
+            if took_merge_path:
+                restore_autorelease_definitions(package_dir, upstream_spec)
+            replace_autorelease_in_spec(package_dir, release)
 
         logging.info("Updated to %s-%s", version, release)
 
