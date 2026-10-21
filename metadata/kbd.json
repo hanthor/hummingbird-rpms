@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/kbd.git",
-    "release": "3",
-    "sha": "485f45872e83bfd88a095166d784dd9da36ad462"
+    "release": "4",
+    "sha": "1e4f932e58cf4a3ec76bc8d5c4dc3cef51cff413"
   },
   "modification_reason": "Added gorget source-pipeline.yaml (HUM-4620 audit finding): ftp.altlinux.org's directory only has versions through 2.2.0 -- switched to fetching the equivalent git tag plus a real (temporary) autotools bootstrap (autogen.sh), since %build calls %configure directly and the generated configure script isn't checked into git. Verified with a real rpmbuild -bp run: all 8 Fedora patches plus the spec's own aclocal/autoconf re-invocation succeed against the fetched tree.",
   "modification_status": "modified",
