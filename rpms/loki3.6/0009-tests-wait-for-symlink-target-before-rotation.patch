@@ -1,0 +1,37 @@
+tests: wait for the first symlink target before rotating
+
+Writing one hundred lines with one-millisecond sleeps does not guarantee
+Promtail has discovered the first symlink target. Wait until all its lines
+are received before replacing the symlink, then retain the final assertion
+that both targets deliver all two hundred lines.
+
+--- a/clients/pkg/promtail/promtail_test.go
++++ b/clients/pkg/promtail/promtail_test.go
+@@ -147,7 +147,7 @@
+ 
+ 	logFile3 := testDir + "/testSymlinkRoll.log"
+ 	prefix3 := "sym"
+-	expectedCounts[logFile3] = symlinkRoll(t, testDir, logFile3, prefix3)
++	expectedCounts[logFile3] = symlinkRoll(t, testDir, logFile3, prefix3, handler)
+ 
+ 	logFile4 := testDir + "/testsubdir/testFile.log"
+ 	prefix4 := "sub"
+@@ -372,7 +372,7 @@
+ 	return 200
+ }
+ 
+-func symlinkRoll(t *testing.T, testDir string, filename string, prefix string) int {
++func symlinkRoll(t *testing.T, testDir string, filename string, prefix string, handler *testServerHandler) int {
+ 	symlinkDir := testDir + "/symlink"
+ 	if err := os.Mkdir(symlinkDir, 0o750); err != nil {
+ 		t.Fatal(err)
+@@ -397,6 +397,9 @@
+ 		}
+ 		time.Sleep(1 * time.Millisecond)
+ 	}
++
++	// Wait until the first target has been discovered and read before rotating.
++	require.NoError(t, waitForEntries(20, handler, map[string]int{filename: 100}))
+ 
+ 	// Remove the link, make a new file, link to the new file.
+ 	if err := os.Remove(filename); err != nil {

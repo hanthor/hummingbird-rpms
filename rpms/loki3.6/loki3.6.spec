@@ -1,7 +1,7 @@
 %bcond check 1
 
 %global goipath github.com/grafana/loki/v3
-Version: 3.6.18
+Version: 3.6.19
 
 %gometa -L
 
@@ -27,6 +27,14 @@ Patch2:         0003-tests-wait-for-async-cleanup.patch
 Patch3:         0004-tests-fix-index-builder-partition-revocation.patch
 # Use explicit UTC timestamp fixtures so equality is timezone-independent.
 Patch4:         0005-tests-use-UTC-for-Arrow-timestamp-expectations.patch
+# Allow the stop goroutine to be scheduled on busy builders.
+Patch5:         0006-tests-allow-time-for-memstore-stop.patch
+# Wait for each ingester instead of assuming their completion order.
+Patch6:         0007-tests-wait-for-all-ingester-pushes.patch
+# Check timer intervals without wall-clock scheduling delays.
+Patch7:         0008-tests-use-fake-clock-for-backoff-timer.patch
+# Read the first symlink target before the rotation test replaces it.
+Patch8:         0009-tests-wait-for-symlink-target-before-rotation.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26

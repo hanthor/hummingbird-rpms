@@ -1,0 +1,21 @@
+tests: allow time for the MemStore stop goroutine to run
+
+TestMemStoreStopBeforeStart gives a newly launched goroutine only one
+millisecond to run. On a busy builder this can expire before the goroutine
+is scheduled, even though Stop returns immediately for an unstarted store.
+Allow five seconds for completion while retaining the deadlock check and
+reporting which operation timed out.
+
+--- a/pkg/ruler/memstore_test.go
++++ b/pkg/ruler/memstore_test.go
+@@ -155,8 +155,8 @@
+ 		done <- struct{}{}
+ 	}()
+ 	select {
+-	case <-time.After(time.Millisecond):
+-		t.FailNow()
++	case <-time.After(5 * time.Second):
++		t.Fatal("Stop blocked before Start was called")
+ 	case <-done:
+ 	}
+ }

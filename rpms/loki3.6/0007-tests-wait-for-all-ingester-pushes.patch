@@ -1,0 +1,31 @@
+tests: wait for all ingester pushes in the Kafka test
+
+Push returns after an ingester quorum completes. The test assumes the two
+ingesters with the shortest sleeps always finish first, which is not
+guaranteed when the builder is busy. Wait for each ingester's request while
+holding its mutex, retaining the assertion that all three receive one push.
+
+--- a/pkg/distributor/distributor_test.go
++++ b/pkg/distributor/distributor_test.go
+@@ -677,13 +677,14 @@
+ 
+ 		require.Equal(t, uint64(1), kafkaWriter.pushes)
+ 
+-		require.Equal(t, 1, len(ingesters[0].pushed))
+-		require.Equal(t, 1, len(ingesters[1].pushed))
+-		require.Eventually(t, func() bool {
+-			ingesters[2].mu.Lock()
+-			defer ingesters[2].mu.Unlock()
+-			return len(ingesters[2].pushed) == 1
+-		}, time.Second, 10*time.Millisecond)
++		for i := range ingesters {
++			ingester := &ingesters[i]
++			require.Eventually(t, func() bool {
++				ingester.mu.Lock()
++				defer ingester.mu.Unlock()
++				return len(ingester.pushed) == 1
++			}, 5*time.Second, 10*time.Millisecond)
++		}
+ 	})
+ }
+ 
