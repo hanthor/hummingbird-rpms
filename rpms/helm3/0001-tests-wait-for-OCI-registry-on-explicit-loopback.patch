@@ -1,0 +1,55 @@
+tests: wait for the OCI registry on its explicit listener address
+
+The registry listens on IPv4 but localhost can resolve to IPv6. Login also
+races the server goroutine starting its listener. Use the same explicit
+address and a bounded readiness check before authenticating; report server
+startup errors instead of ignoring them.
+
+--- a/pkg/repo/repotest/server.go
++++ b/pkg/repo/repotest/server.go
+@@ -114,7 +114,6 @@
+ 	}
+ 	defer ln.Close()
+ 
+-	port := ln.Addr().(*net.TCPAddr).Port
+ 	config.HTTP.Addr = ln.Addr().String()
+ 	config.HTTP.DrainTimeout = time.Duration(10) * time.Second
+ 	config.Storage = map[string]configuration.Parameters{"inmemory": map[string]interface{}{}}
+@@ -125,7 +124,7 @@
+ 		},
+ 	}
+ 
+-	registryURL := fmt.Sprintf("localhost:%d", port)
++	registryURL := ln.Addr().String()
+ 
+ 	r, err := registry.NewRegistry(context.Background(), config)
+ 	if err != nil {
+@@ -147,7 +146,27 @@
+ 		fn(cfg)
+ 	}
+ 
+-	go srv.ListenAndServe()
++	serverErr := make(chan error, 1)
++	go func() { serverErr <- srv.ListenAndServe() }()
++
++	// Login must use the listener's address and wait until it is accepting TCP.
++	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
++	defer cancel()
++	var dialer net.Dialer
++	for {
++		conn, err := dialer.DialContext(ctx, "tcp", srv.RegistryURL)
++		if err == nil {
++			conn.Close()
++			break
++		}
++		select {
++		case err := <-serverErr:
++			t.Fatalf("test registry stopped before becoming ready: %v", err)
++		case <-ctx.Done():
++			t.Fatalf("test registry did not become ready: %v", err)
++		case <-time.After(10 * time.Millisecond):
++		}
++	}
+ 
+ 	credentialsFile := filepath.Join(srv.Dir, "config.json")
+ 

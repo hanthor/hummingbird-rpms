@@ -1,0 +1,55 @@
+tests: wait for the unsupported cipher configuration error
+
+ListenAndServe rejects the deliberately invalid cipher before listening.
+Assert that error directly instead of racing a default select and then
+attempting a connection to a server that cannot start.
+
+--- a/registry/registry_test.go
++++ b/registry/registry_test.go
+@@ -420,36 +420,18 @@
+ 		t.Fatal(err)
+ 	}
+ 
+-	// run registry server
++	// An invalid configured cipher suite must fail before the listener starts.
++	// Wait for the result instead of racing a nonblocking channel read.
+ 	errchan := make(chan error, 1)
+-	go func() {
+-		errchan <- registry.ListenAndServe()
+-	}()
++	go func() { errchan <- registry.ListenAndServe() }()
+ 	select {
+-	case err = <-errchan:
+-		t.Fatalf("Error listening: %v", err)
+-	default:
+-	}
+-
+-	// Wait for some unknown random time for server to start listening
+-	time.Sleep(3 * time.Second)
+-
+-	// send tls request with server unsupported cipher suite
+-	clientTLS := tls.Config{
+-		InsecureSkipVerify: true,
+-		CipherSuites:       []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256},
+-	}
+-	dialer := net.Dialer{
+-		Timeout: time.Second * 5,
+-	}
+-	_, err = tls.DialWithDialer(&dialer, "tcp", addr, &clientTLS)
+-	if err == nil {
+-		t.Error("expected TLS connection to timeout")
+-	}
+-
+-	// send stop signal
+-	registry.quit <- os.Interrupt
+-	time.Sleep(100 * time.Millisecond)
++	case err := <-errchan:
++		if err == nil || !strings.Contains(err.Error(), "unknown TLS cipher suite") {
++			t.Fatalf("expected an unknown TLS cipher suite error, got %v", err)
++		}
++	case <-time.After(10 * time.Second):
++		t.Fatal("registry did not reject the unsupported cipher suite")
++	}
+ }
+ 
+ func TestConfigureLogging(t *testing.T) {

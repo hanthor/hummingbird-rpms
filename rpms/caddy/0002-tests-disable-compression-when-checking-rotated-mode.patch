@@ -1,0 +1,38 @@
+tests: keep the rotated file stable for mode checks
+
+Asynchronous compression can remove the rotated log between ReadDir and
+Stat. Disable compression for this rotation-mode test and require exactly
+two files; retain the filename and permission assertions.
+
+--- a/modules/logging/filewriter_test.go
++++ b/modules/logging/filewriter_test.go
+@@ -115,10 +115,11 @@
+ 	roll := true
+ 	mode := fileMode(0o640)
+ 	fw := FileWriter{
+-		Filename:   fpath,
+-		Mode:       mode,
+-		Roll:       &roll,
+-		RollSizeMB: 1,
++		Filename:        fpath,
++		Mode:            mode,
++		Roll:            &roll,
++		RollSizeMB:      1,
++		RollCompression: "none", // Keep the rotated file stable while checking its mode.
+ 	}
+ 
+ 	logger, err := fw.OpenWriter()
+@@ -136,11 +137,8 @@
+ 		t.Fatalf("failed to read temporary log dir: %v", err)
+ 	}
+ 
+-	// We might get 2 or 3 files depending
+-	// on the race between compressed log file generation,
+-	// removal of the non compressed file and reading the directory.
+-	// Ordering of the files are [ test-*.log test-*.log.gz test.log ]
+-	if len(files) < 2 || len(files) > 3 {
++	// Compression is disabled, so both files remain available for stat.
++	if len(files) != 2 {
+ 		t.Log("got files: ", files)
+ 		t.Fatalf("got %v files want 2", len(files))
+ 	}

@@ -6,7 +6,7 @@ Version: 2.10.8
 %gometa -L
 
 Name:           tempo2.10
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        High-volume distributed tracing backend
 # s390x is unsupported.
 ExcludeArch:    s390x
@@ -27,6 +27,7 @@ Patch4:         0005-fix-mcp-CallToolParams-test-helper.patch
 # roots. Backport the upstream two-line fix rather than bumping the module, which
 # would pull otel 1.45 and regenerated semconv through the whole in-tree vendor tree.
 Patch5:       0006-backport-otlploggrpc-tls-CVE-2026-81871.patch
+Patch6:         0007-tests-allow-backpressure-polling-to-complete.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26
