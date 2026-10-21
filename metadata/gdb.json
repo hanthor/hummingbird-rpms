@@ -1,12 +1,12 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/gdb.git",
-    "release": "6",
-    "sha": "c9593886da9a79ec828477c9a9e89c2a7c0df7e9"
-  },
-  "modification_reason": "Drop texlive/PDF/HTML from gdb-doc: not needed in Hummingbird; gdb-doc ships info pages only; Fix worker-dependent GDB address maps for RPM reproducibility (upstream review pending)",
+  "version": "18.1",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/binutils-gdb.git",
-  "version": "17.2"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/gdb.git",
+    "branch": "rawhide",
+    "sha": "3ae91bd3995f70b162b56d5a80e83250691d8a8b",
+    "release": "1"
+  },
+  "modification_reason": "Drop texlive/PDF/HTML from gdb-doc: not needed in Hummingbird; gdb-doc ships info pages only; Fix worker-dependent GDB address maps for RPM reproducibility (upstream review pending)"
 }
