@@ -1,3 +1,19 @@
+* Tue Oct 20 2026 Zdenek Pytela <zpytela@redhat.com> - 45.22-1
+- Allow systemd-oomd signull systemd-resolved
+- Allow login_userdomain watch localization files for changes
+- Allow login_userdomain mounton gnome generic data home dirs
+- Label /run/gnome-remote-desktop with gnome_remote_desktop_var_run_t
+- Allow systemd_nsresourced_t setuid/setgid inside a userns (bsc#1285095)
+- Allow access to systemd-nsresourced runtime socket (bsc#1284651)
+- Allow smbd watch public directories used for file transfer services
+- Allow sshd-session read systemd-nsresourced runtime socket file
+- Allow chrome_sandbox_t map its private tmpfs files
+- Allow sysadm_t to create iSCSI netlink sockets
+- Allow ktlshd connect to pcscd over a unix stream socket
+- Add iptables_dontaudit_read_var_run_dirs() interface
+- Allow polkit-auth read systemd-nsresourced runtime socket file
+- Allow systemd-nsresourced the sys_admin capability
+
 * Mon Oct 05 2026 Zdenek Pytela <zpytela@redhat.com> - 45.21-1
 - Label /var/cache/boomaga with cupsd_rw_etc_t
 - Allow dirsrv to read filesystem sysctls
