@@ -3,12 +3,12 @@
 # https://github.com/prometheus/prometheus
 %global goipath         github.com/prometheus/prometheus
 %global forgeurl        https://github.com/prometheus/prometheus
-Version:                3.13.4
+Version:                3.13.5
 
 %gometa -L -f
 
 Name:           prometheus3.13
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Monitoring system and time series database
 # The offline frontend cache does not include Rollup's native s390x module.
 ExcludeArch:    s390x
