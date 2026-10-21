@@ -12,8 +12,8 @@
 
 Summary: Experimental HTTP/2 client, server and proxy
 Name: nghttp2
-Version: 1.69.0
-Release: 6.1%{?dist}
+Version: 1.70.0
+Release: 0.1%{?dist}
 
 # Parts of ruby bindings are additionally under GPL-2.0-or-later, MIT and
 # HPND-Kevlin-Henney but they are NOT shipped.
@@ -24,8 +24,6 @@ Source0: https://github.com/tatsuhiro-t/nghttp2/releases/download/v%{version}/ng
 Source1: https://github.com/%{name}/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.xz.asc
 Source2: tatsuhiro-t.pgp
 
-# fix HTTP Request/Response Smuggling and Response-Queue Poisoning via ambiguous HTTP/1.1 Upgrade requests (CVE-2026-58055)
-Patch001: 0001-nghttp2-1.69.0-CVE-2026-58055.patch
 
 BuildRequires: CUnit-devel
 BuildRequires: c-ares-devel
