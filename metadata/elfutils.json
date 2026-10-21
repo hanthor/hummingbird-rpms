@@ -3,10 +3,10 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/elfutils.git",
     "release": "1",
-    "sha": "f7a54473db0437cf0953cc60c278d2ed154fcd4a"
+    "sha": "c8fc3fc52dd360a8c61c12fa6a2b7d3f83e73476"
   },
   "modification_reason": "Skip stackprof system tests when perf_event_open is unavailable in CI",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/elfutils.git",
-  "version": "0.196"
+  "version": "0.197"
 }

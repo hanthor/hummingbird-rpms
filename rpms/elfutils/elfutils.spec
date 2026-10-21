@@ -3,9 +3,9 @@
 %bcond_with static
 
 Name: elfutils
-Version: 0.196
-%global baserelease 1.1
-Release: %{baserelease}.1%{?dist}
+Version: 0.197
+%global baserelease 1
+Release: %{baserelease}%{?dist}
 URL: http://elfutils.org/
 %global source_url ftp://sourceware.org/pub/elfutils/%{version}/
 License: GPL-3.0-or-later AND (GPL-2.0-or-later OR LGPL-3.0-or-later) AND GFDL-1.3-no-invariants-or-later
@@ -403,7 +403,7 @@ fi
 
 %files
 %license COPYING COPYING-GPLV2 COPYING-LGPLV3 doc/COPYING-GFDL
-%doc README TODO CONTRIBUTING
+%doc README TODO CONTRIBUTING THREAD-SAFETY
 %{_bindir}/eu-addr2line
 %{_bindir}/eu-ar
 %{_bindir}/eu-elfclassify
@@ -535,6 +535,10 @@ exit 0
 %systemd_postun_with_restart debuginfod.service
 
 %changelog
+* Tue Oct 20 2026 Aaron Merey <amerey@redhat.com> - 0.197-1
+- Upgrade to upstream elfutils 0.197
+- Include the upstream thread-safety documentation in elfutils
+
 * Mon Aug 17 2026 Aaron Merey <amerey@redhat.com> - 0.196-1
 - Upgrade to upstream elfutils 0.196 (rhbz#2516216)
 - Obsolete all versions of elfutils-default-yama-scope so that the
