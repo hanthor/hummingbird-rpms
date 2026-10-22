@@ -938,6 +938,9 @@
       "nats-server2-14--rpms": [
         "^rpms/nats\\-server2\\.14/"
       ],
+      "nats-server2-15--rpms": [
+        "^rpms/nats\\-server2\\.15/"
+      ],
       "ncurses--rpms": [
         "^rpms/ncurses/"
       ],

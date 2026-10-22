@@ -1,0 +1,7 @@
+{
+  "modification_status": "independent",
+  "release_monitoring_project_id": 24287,
+  "track_upstream": "2.15",
+  "upstream_repo": "https://github.com/nats-io/nats-server",
+  "version": "2.15.1"
+}
