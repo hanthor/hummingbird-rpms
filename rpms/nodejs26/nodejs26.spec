@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.11.1-0.5%{?dist} -p
+%nodejs_define_version node 1:26.12.1-0.1%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -15,46 +15,46 @@
 # expect anything between the markers to be overwritten on any update.
 
 # BEGIN automatic-version-macros  # DO NOT REMOVE THIS LINE!
-# Version from node-v26.11.1/src/node_version.h
+# Version from node-v26.12.1/src/node_version.h
 %global node_soversion 147
 
-# Version from node-v26.11.1/deps/ada/ada.h
+# Version from node-v26.12.1/deps/ada/ada.h
 %nodejs_define_version ada 4.0.0
-# Version from node-v26.11.1/deps/brotli/c/common/version.h
+# Version from node-v26.12.1/deps/brotli/c/common/version.h
 %nodejs_define_version brotli 1.2.0
-# Version from node-v26.11.1/deps/cares/include/ares_version.h
-%nodejs_define_version c_ares 1.34.8
-# Version from node-v26.11.1/deps/histogram/include/hdr/hdr_histogram_version.h
+# Version from node-v26.12.1/deps/cares/include/ares_version.h
+%nodejs_define_version c_ares 1.34.9
+# Version from node-v26.12.1/deps/histogram/include/hdr/hdr_histogram_version.h
 %nodejs_define_version histogram 0.12.0
-# Version from node-v26.11.1/tools/icu/current_ver.dep
+# Version from node-v26.12.1/tools/icu/current_ver.dep
 %nodejs_define_version icu 78.3 -p
-# Version from node-v26.11.1/deps/uv/include/uv/version.h
+# Version from node-v26.12.1/deps/uv/include/uv/version.h
 %nodejs_define_version libuv 1.52.1
-# Version from node-v26.11.1/deps/llhttp/include/llhttp.h
+# Version from node-v26.12.1/deps/llhttp/include/llhttp.h
 %nodejs_define_version llhttp 9.4.3
-# Version from node-v26.11.1/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
+# Version from node-v26.12.1/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
 %nodejs_define_version nghttp2 1.70.0
-# Version from node-v26.11.1/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
+# Version from node-v26.12.1/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
 %nodejs_define_version nghttp3 1.18.0
-# Version from node-v26.11.1/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
+# Version from node-v26.12.1/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
 %nodejs_define_version ngtcp2 1.25.0
-# Version from node-v26.11.1/deps/merve/merve.h
+# Version from node-v26.12.1/deps/merve/merve.h
 %nodejs_define_version merve 1.2.2
-# Version from node-v26.11.1/lib/punycode.js
+# Version from node-v26.12.1/lib/punycode.js
 %nodejs_define_version nodejs-punycode 2.1.0
-# Version from node-v26.11.1/deps/undici/src/package.json
-%nodejs_define_version nodejs-undici 8.11.2
-# Version from node-v26.11.1/deps/npm/package.json
+# Version from node-v26.12.1/deps/undici/src/package.json
+%nodejs_define_version nodejs-undici 8.12.2
+# Version from node-v26.12.1/deps/npm/package.json
 %nodejs_define_version npm 1:11.20.0-%{nodejs_subpackage_release}
-# Version from node-v26.11.1/deps/sqlite/sqlite3.h
-%nodejs_define_version sqlite 3.53.4
-# Version from node-v26.11.1/deps/uvwasi/include/uvwasi.h
+# Version from node-v26.12.1/deps/sqlite/sqlite3.h
+%nodejs_define_version sqlite 3.54.0
+# Version from node-v26.12.1/deps/uvwasi/include/uvwasi.h
 %nodejs_define_version uvwasi 0.0.23
-# Version from node-v26.11.1/deps/v8/include/v8-version.h
+# Version from node-v26.12.1/deps/v8/include/v8-version.h
 %nodejs_define_version v8 3:14.6.202.34-%{nodejs_subpackage_release} -p
-# Version from node-v26.11.1/deps/zlib/zlib.h
+# Version from node-v26.12.1/deps/zlib/zlib.h
 %nodejs_define_version zlib 1.3.2.1-motley
-# Version from node-v26.11.1/deps/zstd/lib/zstd.h
+# Version from node-v26.12.1/deps/zstd/lib/zstd.h
 %nodejs_define_version zstd 1.5.7
 # END automatic-version-macros  # DO NOT REMOVE THIS LINE!
 
@@ -163,20 +163,8 @@ Source101:      nodejs.srpm.macros
 0001-v8-memcopy-include-climits.patch
 0002-CVE-2026-102278-brace-expansion-max-depth.patch
 0003-CVE-2026-102276-102277-brace-expansion.patch
-# The following 8 patches backport the undici 8.12.2 security release
-# (undici is vendored at 8.11.2 under deps/undici/src) for CVEs not yet
-# picked up by an upstream Node.js release. Generated against the exact
-# deps/undici/src tree in this tarball; see each patch's Upstream: trailer.
-0004-CVE-2026-87018-undici-tls-renegotiation.patch
-0005-CVE-2026-87029-undici-decompress-interceptor.patch
-0006-CVE-2026-109932-undici-websocket-pong-backpressure.patch
-0007-CVE-2026-109383-undici-agent-tls-options.patch
-0008-CVE-2026-109869-undici-content-encodings.patch
-0009-CVE-2026-109841-undici-sri-lowercase.patch
-0010-CVE-2026-109924-undici-eventsource-memory.patch
-0011-CVE-2026-109829-undici-cache-redirect-poisoning.patch
-# Follow-up: upgrade npm-bundled undici (deps/npm/node_modules/undici)
-# from 6.28.0 to 6.29.1 for the 6.x-line subset of the same CVE set.
+# Upgrade npm-bundled undici (deps/npm/node_modules/undici)
+# from 6.28.0 to 6.29.1 for the remaining security fixes.
 0012-CVE-2026-87018-undici-npm-6.29.1.patch
 
 %description

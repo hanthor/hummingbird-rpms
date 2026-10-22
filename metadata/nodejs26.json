@@ -4,5 +4,5 @@
   "track_upstream": "26",
   "upstream_branch": "v26.x",
   "upstream_repo": "https://github.com/nodejs/node",
-  "version": "26.11.1"
+  "version": "26.12.1"
 }
