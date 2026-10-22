@@ -12,6 +12,9 @@ Fedora's existing %check tests pass but do not cover delegated credential
 refresh after rekeying. The published Fedora 10.6p1 RPM reproduces the
 failure; this patch restores credential refresh.
 
+Extend the Kerberos regression tests to check delegated credential storage
+and refresh after post-authentication rekeying.
+
 diff --git a/gss-serv.c b/gss-serv.c
 --- a/gss-serv.c
 +++ b/gss-serv.c
@@ -37,3 +40,120 @@ diff --git a/monitor.c b/monitor.c
  
  	if ((r = sshbuf_get_string(m, &p, &len)) != 0)
  		fatal_fr(r, "parse");
+
+diff --git a/regress/gss-auth.sh b/regress/gss-auth.sh
+index c349fbe..fbfeb49 100644
+--- a/regress/gss-auth.sh
++++ b/regress/gss-auth.sh
+@@ -145,7 +145,7 @@ setup_krb_principal_with_pw() {
+     authenticate="$3"
+     kadmin.local add_principal -pw "$password" "$name"
+     if $authenticate; then
+-        echo "$password" | kinit "$name"
++        echo "$password" | kinit -f "$name"
+     fi
+ }
+ 
+@@ -156,6 +156,7 @@ test_gss_auth() {
+     auth_client="$4"        # whether the client will be authenticated via kinit
+     strict_acceptor="$5"    # whether to be strict about the identity of the sshd server
+     expect="$6"             # the expected return value of the sshd command
++    delegate="${7:-no}"
+ 
+     setup_sshd "$sshd_mock_hostname" "$strict_acceptor"
+     setup_nss_emulation
+@@ -164,7 +165,12 @@ test_gss_auth() {
+     setup_krb_principal_with_key "host/$sshd_principal" "$auth_sshd"
+     setup_krb_principal_with_pw "$client" "foo" "$auth_client"
+ 
+-    ${SSH} -F "$OBJ/ssh_config" -o "GSSAPIAuthentication Yes" "$client@$sshd_hostname" true
++    remote_command=true
++    if [ "$delegate" = yes ]; then
++        remote_command="test -n \"\$KRB5CCNAME\" && test \"\$KRB5CCNAME\" != '$KRB5CCNAME' && klist -s"
++    fi
++    ${SSH} -F "$OBJ/ssh_config" -o "GSSAPIAuthentication Yes" \
++        -o "GSSAPIDelegateCredentials $delegate" "$client@$sshd_hostname" "$remote_command"
+     status=$?
+ 
+     teardown_kdc
+@@ -187,6 +193,8 @@ test_gss_auth  $bad_hostname       $sshd_hostname  true       true         false
+                || fail "valid authentication without strict acceptor check failed"
+ test_gss_auth  $bad_hostname       $bad_hostname   true       true         true             255    \
+                || fail "authentication succeeded with a hostname/principal mismatch on client side"
++test_gss_auth  $sshd_hostname      $sshd_hostname  true       true         true             0 yes  \
++               || fail "authorized delegated credentials were not stored"
+ 
+ unset KRB5CCNAME
+ unset KRB5_CONFIG
+diff --git a/regress/gss-kex.sh b/regress/gss-kex.sh
+index 63b2e17..413aadd 100644
+--- a/regress/gss-kex.sh
++++ b/regress/gss-kex.sh
+@@ -76,6 +76,7 @@ PubkeyAuthentication no
+ PasswordAuthentication no
+ GSSAPIAuthentication yes
+ GSSAPIKeyExchange yes
++GSSAPIStoreCredentialsOnRekey yes
+ GSSAPIKexAlgorithms $kex_alg
+ GSSAPIStrictAcceptorCheck no
+ EOF
+@@ -130,6 +131,7 @@ test_gss_kex() {
+     kex_family="$1"
+     auth_sshd="$2"
+     expect="$3"
++    delegate="${4:-no}"
+ 
+     # Check if the algorithm family is recognized by ssh
+     if ! ${REAL_SSH} -G -F "$OBJ/ssh_config" \
+@@ -149,15 +151,35 @@ test_gss_kex() {
+         kadmin.local ktadd "host/$sshd_hostname"
+     fi
+     kadmin.local add_principal -pw "foo" "$client"
+-    echo "foo" | kinit "$client"
+-
+-    ${SSH} -F "$OBJ/ssh_config" \
++    echo "foo" | kinit -f "$client"
++
++    input=/dev/null
++    remote_command=true
++    set --
++    if [ "$delegate" = yes ]; then
++        set -- -vv -E "$gssdir/client.log"
++        input="$gssdir/data"
++        dd if=/dev/zero of="$input" bs=65536 count=16 2>/dev/null
++        remote_command="cat >/dev/null; test -n \"\$KRB5CCNAME\" && test \"\$KRB5CCNAME\" != '$KRB5CCNAME' && klist -s"
++    fi
++    ${SSH} "$@" -F "$OBJ/ssh_config" \
+         -o "GSSAPIAuthentication yes" \
+         -o "GSSAPIKeyExchange yes" \
+         -o "GSSAPIKexAlgorithms $kex_family" \
+-        -o "GSSAPIDelegateCredentials no" \
+-        "$client@$sshd_hostname" true
++        -o "PreferredAuthentications gssapi-keyex" \
++        -o "RekeyLimit 64K" \
++        -o "GSSAPIDelegateCredentials $delegate" \
++        "$client@$sshd_hostname" "$remote_command" < "$input"
+     status=$?
++    if [ "$delegate" = yes ]; then
++        if ! grep -q 'rekeying in progress' "$gssdir/client.log"; then
++            fail "no post-authentication GSSAPI rekey occurred"
++        fi
++        if ! grep -q 'Rekeyed credentials stored successfully' "$TEST_SSHD_LOGFILE"; then
++            fail "GSSAPI rekey did not update the delegated credentials"
++        fi
++        rm -f "$gssdir/client.log"
++    fi
+ 
+     teardown_kdc
+     teardown_nss_emulation
+@@ -185,6 +207,10 @@ for kex_family in $gss_kex_families; do
+         || fail "gss kex $kex_family failed"
+ done
+ 
++verbose "gss kex delegation and post-authentication rekey"
++test_gss_kex "gss-group14-sha256-" true 0 yes \
++    || fail "delegated credentials were not preserved across rekey"
++
+ # Negative test: connection must fail when keytab is missing
+ verbose "gss kex negative test: no keytab"
+ test_gss_kex "gss-group14-sha256-" false 255 \
