@@ -3727,8 +3727,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "cmake.spec"
@@ -8086,8 +8086,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "fftw.spec"
@@ -12983,8 +12983,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "hdf5.spec"
@@ -24290,8 +24290,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "mariadb10.11.spec"
@@ -38315,8 +38315,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "qt5-qtbase.spec"
@@ -38473,8 +38473,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "qt6-qtbase.spec"
@@ -39600,8 +39600,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "ruby.spec"
