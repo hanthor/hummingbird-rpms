@@ -415,9 +415,17 @@ nodejs20-lts:
 
 nodejs22:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_platforms:
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
+    - "linux/s390x"
 
 nodejs24:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  build_platforms:
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
+    - "linux/s390x"
 
 nodejs25:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
