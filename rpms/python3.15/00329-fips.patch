@@ -539,12 +539,12 @@ Subject: [PATCH 4/7] Test equivalence of hashes for the various digests with
  usedforsecurity=True/False
 
 Origin: https://gitlab.com/redhat/rhel/rpms/python3.14/-/blob/d8c83ce1648d668492c6ed478e411e7edbc4b7c4/00329-fips.patch
-Rebased-for: CPython v3.15.0 (7212e49729737c864e3f17b69ed83c8443c75acf)
+Rebased-for: CPython v3.15.1 (c37e74cb6bcdadcd5f46f289498f6b3298ddee61)
 
 ---
  Lib/test/test_fips.py    | 24 +++++++++++++++++++++++
- Lib/test/test_hashlib.py | 41 +++++++++++++++++++++++++++++++++++-----
- 2 files changed, 60 insertions(+), 5 deletions(-)
+ Lib/test/test_hashlib.py | 40 +++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 59 insertions(+), 5 deletions(-)
  create mode 100644 Lib/test/test_fips.py
 
 diff --git a/Lib/test/test_fips.py b/Lib/test/test_fips.py
@@ -581,15 +581,7 @@ diff --git a/Lib/test/test_hashlib.py b/Lib/test/test_hashlib.py
 index 61e943f..e40f606 100644
 --- a/Lib/test/test_hashlib.py
 +++ b/Lib/test/test_hashlib.py
-@@ -25,6 +25,7 @@
- from test.support import requires_resource
- from test.support import threading_helper
- from http.client import HTTPException
-+from functools import partial
- 
- 
- default_builtin_hashes = {'md5', 'sha1', 'sha2', 'sha3', 'blake2'}
-@@ -59,6 +60,11 @@
+@@ -61,6 +61,11 @@
      def get_fips_mode():
          return 0
  
@@ -598,9 +590,9 @@ index 61e943f..e40f606 100644
 +else:
 +    FIPS_DISABLED = set()
 +
+ 
  try:
-     import _blake2
- except ImportError:
+     import _md5
 @@ -109,6 +115,16 @@ def read_vectors(hash_name):
  )
  
@@ -837,7 +829,7 @@ Test rejected hashes, approved operations, non-security hash overrides,
 HMAC custom constructors and overflow, unavailable builtin modules,
 concurrent digest-cache use, and RHEL's fallback without OpenSSL.
 Origin: Hummingbird downstream Python 3.15 adaptation and policy tests
-Rebased-for: CPython v3.15.0 (7212e49729737c864e3f17b69ed83c8443c75acf)
+Rebased-for: CPython v3.15.1 (c37e74cb6bcdadcd5f46f289498f6b3298ddee61)
 
 ---
  Lib/hashlib.py        |   2 +-
@@ -879,9 +871,9 @@ index be2e485..3d15f7b 100644
  def _compute_digest_fallback(key, msg, digest):
 +    if _hashopenssl is not None and _hashopenssl.get_fips_mode():
 +        return _hashopenssl.hmac_digest(key, msg, digest)
-     digest_cons = _get_digest_constructor(digest)
-     if _is_shake_constructor(digest_cons):
-         raise ValueError(f"unsupported hash algorithm {digest}")
+     if not isinstance(key, (bytes, bytearray)):
+         raise TypeError(f"key: expected bytes or bytearray, "
+                         f"but got {type(key).__name__!r}")
 diff --git a/Lib/test/test_fips.py b/Lib/test/test_fips.py
 index 1f99dd7..a195996 100644
 --- a/Lib/test/test_fips.py
@@ -1068,4 +1060,3 @@ index 1f99dd7..a195996 100644
      unittest.main()
 -- 
 2.55.0
-
