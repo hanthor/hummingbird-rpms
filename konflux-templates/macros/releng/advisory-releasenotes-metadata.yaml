@@ -19,8 +19,7 @@ description: |
         {%- set purl_path = artifact.purl.split('?')[0] %}
         {%- set name_version = purl_path.split('/')[-1] %}
         {%- set src_name = name_version.split('@')[0] %}
-        {%- set src_version = name_version.split('@')[1] %}
-        {%- set _ = src_rpms.update({artifact.component: {'name': src_name, 'version': src_version, 'rpms': {}}}) %}
+        {%- set _ = src_rpms.update({artifact.component: {'name': src_name, 'rpms': {}}}) %}
       {%- endif %}
     {%- endfor %}
     {#- Second pass: collect all RPMs under their src RPM, keeping src separate #}

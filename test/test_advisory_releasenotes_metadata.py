@@ -14,9 +14,9 @@ TEMPLATE = (
 VERSION = "9.20.27-0.1.hum1"
 
 
-def artifact(architecture, qualifiers="", name="bind", cves=None):
+def artifact(architecture, qualifiers="", cves=None):
     """Make an advisory artifact with a realistic RPM PURL."""
-    purl = f"pkg:rpm/redhat/{name}@{VERSION}"
+    purl = f"pkg:rpm/redhat/bind@{VERSION}"
     if qualifiers:
         purl += f"?{qualifiers}"
     return {
@@ -101,4 +101,5 @@ def test_different_epochs_do_not_share_one_binary_row():
 
     assert "* bind-32:9.20.27-0.1.hum1 (x86_64)" in description
     assert "* bind-31:9.20.27-0.1.hum1 (aarch64)" in description
+    assert "* bind-32:9.20.27-0.1.hum1.src (src)" in description
     assert "* bind-32:9.20.27-0.1.hum1 (aarch64, x86_64)" not in description
