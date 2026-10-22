@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 391002,
   "track_upstream": "1.14",
   "upstream_repo": "https://github.com/spiffe/spire",
-  "version": "1.14.8"
+  "version": "1.14.9"
 }
