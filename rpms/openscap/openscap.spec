@@ -1,12 +1,13 @@
 Name:           openscap
 Version:        1.4.5
-Release:        2%{?dist}
+Release:        2.1%{?dist}
 Epoch:          1
 Summary:        Set of open source libraries enabling integration of the SCAP line of standards
 License:        LGPL-2.1-or-later
 URL:            http://www.open-scap.org/
 VCS:            git:https://github.com/OpenSCAP/openscap
 Source0:        https://github.com/OpenSCAP/openscap/releases/download/%{version}/%{name}-%{version}.tar.gz
+Patch0:         openscap-CVE-2026-85518.patch
 
 %global         common_description %{expand:
 OpenSCAP is a set of open source libraries providing an easier path
@@ -237,6 +238,9 @@ make docs
 # Skip failing test in sce/test_sce_in_ds.sh
 # %{?_smp_mflags} not used as it is failing many other tests
 ctest -V -E sce/test_sce_in_ds.sh
+# Run the path traversal regression from the out-of-source CMake build dir.
+cd %{_vpath_builddir}
+ctest -V -R ds_sds_path_traversal
 %endif
 
 %install
@@ -1025,4 +1029,3 @@ pathfix.py -i %{__python3} -p -n %{buildroot}%{_bindir}/scap-as-rpm
 
 * Thu Jan 15 2009 Tomas Heinrich <theinric@redhat.com> 0.1.1-1
 - Initial rpm
-
