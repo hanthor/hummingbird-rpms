@@ -48,6 +48,9 @@ transform:
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
+    checksum: "b5da6fb65b9e9a04c60b7cb306319a2a21e2c098ead0a527d797d1aef547a067e9c688493cbd17f100e67f180b692508b59c61326d66bab56fc1edd8f45d79b4"
+    reason: "grafana-storybook-follow-redirects-cve.patch bumps storybook 8.6.18/10.0.8->8.6.19/10.6.2 and follow-redirects 1.16.0->1.16.1 for CVE-2026-114126/114125/111756/111755; yarn cache regenerated without stale zips"
+  - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "411cb7da051153f76f14932ba3c3c3e66c1a78977c553ea58538d79ccb94c279d444ad611ad43884dcbae91a5b41b813a24df83dccf6e41e5cbfa51125c9adf6"
     reason: "Rebuilt the 12.4.13 offline Yarn cache after applying grafana-hono-4.13.11-cve.patch from main for CVE-2026-109955"
   - file: "grafana-yarn-cache-12.4.12.tar.bz2"
