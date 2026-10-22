@@ -1,4 +1,4 @@
-From 5e5ea62ca23bdce9f3cad2ea11c8f053faeb42ee Mon Sep 17 00:00:00 2001
+From 6f1d20630d0b07ff213fa91b55748fd6cf4f0856 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
 Subject: [PATCH 39/53] openssh-8.7p1-negotiate-supported-algs
@@ -113,7 +113,7 @@ index 58004b80e..036a7c2b9 100644
 +	    fail "ssh connect failed for keytype $keytype"
  done
 diff --git a/sshconnect2.c b/sshconnect2.c
-index 244c725f7..c21b3a11a 100644
+index 0e7511e0b..da15bddcc 100644
 --- a/sshconnect2.c
 +++ b/sshconnect2.c
 @@ -224,7 +224,7 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr_storage *hostaddr,
@@ -158,5 +158,5 @@ index 244c725f7..c21b3a11a 100644
  	/* start key exchange */
  	if ((r = kex_setup(ssh, myproposal)) != 0)
 -- 
-2.55.0
+2.56.0
 

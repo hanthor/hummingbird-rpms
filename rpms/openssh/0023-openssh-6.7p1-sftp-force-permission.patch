@@ -1,4 +1,4 @@
-From 71b2ca7bbf39514e96da573758d157a7d52625bc Mon Sep 17 00:00:00 2001
+From ddf3bce18db9921dd13c3a871c14e4273e0af06e Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 23/53] openssh-6.7p1-sftp-force-permission
@@ -10,7 +10,7 @@ Subject: [PATCH 23/53] openssh-6.7p1-sftp-force-permission
  2 files changed, 29 insertions(+), 2 deletions(-)
 
 diff --git a/sftp-server.8 b/sftp-server.8
-index d9060ab9a..cd5b035d6 100644
+index 711067eb1..4b40cd07e 100644
 --- a/sftp-server.8
 +++ b/sftp-server.8
 @@ -38,6 +38,7 @@
@@ -112,5 +112,5 @@ index eef9a96f8..567cf6e9a 100644
  		default:
  			sftp_server_usage();
 -- 
-2.55.0
+2.56.0
 

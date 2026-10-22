@@ -1,4 +1,4 @@
-From bf4e65b7335e516bae78a0bd0c085ab55f377973 Mon Sep 17 00:00:00 2001
+From 8d2df84e6caedbcc0dfdf4bf88c2cb606f3fcdab Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 07/53] openssh-5.9p1-ipv6man
@@ -10,7 +10,7 @@ Subject: [PATCH 07/53] openssh-5.9p1-ipv6man
  2 files changed, 4 insertions(+)
 
 diff --git a/ssh.1 b/ssh.1
-index 60ee3ab34..089bd348a 100644
+index 557cf66d3..4930a51f5 100644
 --- a/ssh.1
 +++ b/ssh.1
 @@ -1579,6 +1579,8 @@ manual page for more information.
@@ -23,7 +23,7 @@ index 60ee3ab34..089bd348a 100644
  .Xr scp 1 ,
  .Xr sftp 1 ,
 diff --git a/sshd.8 b/sshd.8
-index a65aae75d..24e5639a3 100644
+index 92842e345..4bfbeaf63 100644
 --- a/sshd.8
 +++ b/sshd.8
 @@ -1024,6 +1024,8 @@ concurrently for different ports, this contains the process ID of the one
@@ -36,5 +36,5 @@ index a65aae75d..24e5639a3 100644
  .Xr scp 1 ,
  .Xr sftp 1 ,
 -- 
-2.55.0
+2.56.0
 

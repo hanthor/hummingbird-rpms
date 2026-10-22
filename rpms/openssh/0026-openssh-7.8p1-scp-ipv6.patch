@@ -1,4 +1,4 @@
-From 46c63b52afa8136a46a9094a69b4c011f22b44ac Mon Sep 17 00:00:00 2001
+From dcd4c76ef216e4493d4a469304afe71bd8ed7f43 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 26/53] openssh-7.8p1-scp-ipv6
@@ -9,10 +9,10 @@ Subject: [PATCH 26/53] openssh-7.8p1-scp-ipv6
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/scp.c b/scp.c
-index fca4393f3..ac43ec5f4 100644
+index 8408e61ef..7eb8310c4 100644
 --- a/scp.c
 +++ b/scp.c
-@@ -1164,7 +1164,9 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
+@@ -1166,7 +1166,9 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
  			addargs(&alist, "%s", host);
  			addargs(&alist, "%s", cmd);
  			addargs(&alist, "%s", src);
@@ -24,5 +24,5 @@ index fca4393f3..ac43ec5f4 100644
  			    thost, targ);
  			if (do_local_cmd(&alist) != 0)
 -- 
-2.55.0
+2.56.0
 

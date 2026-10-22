@@ -1,4 +1,4 @@
-From dd1871972173c9f4836c4d8096411981d291ff85 Mon Sep 17 00:00:00 2001
+From d112cb6d64b91e564dd965fdbd8fdb6b7404bdbc Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 21/53] openssh-6.6p1-GSSAPIEnablek5users
@@ -32,10 +32,10 @@ index 6f5826ce8..723509409 100644
                                          k5login_exists);
  	}
 diff --git a/servconf.c b/servconf.c
-index 5de03f3bf..3dbfccea8 100644
+index ee30f0426..0cfc2f3d8 100644
 --- a/servconf.c
 +++ b/servconf.c
-@@ -2233,6 +2233,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
+@@ -2306,6 +2306,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
  		intptr = &options->use_kuserok;
  		goto parse_flag;
  
@@ -46,7 +46,7 @@ index 5de03f3bf..3dbfccea8 100644
  	case sMatch:
  		if (cmdline)
  			fatal("Match directive not supported as a command-line "
-@@ -4247,6 +4251,7 @@ dump_config(ServerOptions *o)
+@@ -4377,6 +4381,7 @@ dump_config(ServerOptions *o)
  # endif
  	dump_cfg_fmtint(sKerberosUniqueCCache, o->kerberos_unique_ccache);
  	dump_cfg_fmtint(sKerberosUseKuserok, o->use_kuserok);
@@ -55,10 +55,10 @@ index 5de03f3bf..3dbfccea8 100644
  #ifdef GSSAPI
  	dump_cfg_fmtint(sGSSAPIAuthentication, o->gss_authentication);
 diff --git a/servconf.h b/servconf.h
-index 7c003b8c5..c55b64c73 100644
+index e9089ca0a..f6d1ecf09 100644
 --- a/servconf.h
 +++ b/servconf.h
-@@ -325,7 +325,8 @@ SSHCONF_INTFLAG(gss_deleg_creds, GSSAPIDelegateCredentials, SSHCFG_GLOBAL, 1, SS
+@@ -332,7 +332,8 @@ SSHCONF_INTFLAG(gss_deleg_creds, GSSAPIDelegateCredentials, SSHCFG_GLOBAL, 1, SS
  SSHCONF_INTFLAG(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_GLOBAL, 1, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
  SSHCONF_INTFLAG(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL, 0, SSHCFG_COPY_NONE) \
@@ -68,7 +68,7 @@ index 7c003b8c5..c55b64c73 100644
  #else /* GSSAPI */
  #define SSHD_CONFIG_ENTRIES_GSS \
  SSHCONF_UNSUPPORTED_INT(gss_authentication, GSSAPIAuthentication, SSHCFG_ALL) \
-@@ -334,7 +335,8 @@ SSHCONF_UNSUPPORTED_INT(gss_deleg_creds, GSSAPIDelegateCredentials, SSHCFG_GLOBA
+@@ -341,7 +342,8 @@ SSHCONF_UNSUPPORTED_INT(gss_deleg_creds, GSSAPIDelegateCredentials, SSHCFG_GLOBA
  SSHCONF_UNSUPPORTED_INT(gss_strict_acceptor, GSSAPIStrictAcceptorCheck, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(gss_keyex, GSSAPIKeyExchange, SSHCFG_GLOBAL) \
  SSHCONF_UNSUPPORTED_INT(gss_store_rekey, GSSAPIStoreCredentialsOnRekey, SSHCFG_GLOBAL) \
@@ -91,5 +91,5 @@ index 76279d795..d38d899a6 100644
  # Set this to 'yes' to enable PAM authentication, account processing,
  # and session processing. If this is enabled, PAM authentication will
 -- 
-2.55.0
+2.56.0
 

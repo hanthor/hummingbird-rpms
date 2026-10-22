@@ -1,4 +1,4 @@
-From 90f47f37aa1b16d2039f3ed1a37ab418be09a2e1 Mon Sep 17 00:00:00 2001
+From 3ae6218eb5b77a5d66158d570df485f9a4197bbf Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 53/53] gssapi-tests
@@ -226,5 +226,5 @@ index 000000000..63b2e178b
 +unset KRB5RCACHETYPE
 +rm -rf "$gssdir"
 -- 
-2.55.0
+2.56.0
 

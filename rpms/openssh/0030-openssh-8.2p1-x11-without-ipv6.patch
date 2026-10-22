@@ -1,4 +1,4 @@
-From a29df25b1ed0d2945d0990bc7ca8918c16c7d264 Mon Sep 17 00:00:00 2001
+From e83d40875ee3ea7927d564b067a0f77deae4c448 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 30/53] openssh-8.2p1-x11-without-ipv6
@@ -9,10 +9,10 @@ Subject: [PATCH 30/53] openssh-8.2p1-x11-without-ipv6
  1 file changed, 10 insertions(+)
 
 diff --git a/channels.c b/channels.c
-index fcd80288f..bae84e5f9 100644
+index abae44b92..a8e77e2b5 100644
 --- a/channels.c
 +++ b/channels.c
-@@ -5141,6 +5141,16 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
+@@ -5198,6 +5198,16 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
  				debug2_f("bind port %d: %.100s", port,
  				    strerror(errno));
  				close(sock);
@@ -30,5 +30,5 @@ index fcd80288f..bae84e5f9 100644
  					close(socks[n]);
  				num_socks = 0;
 -- 
-2.55.0
+2.56.0
 

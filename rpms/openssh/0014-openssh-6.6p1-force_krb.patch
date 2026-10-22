@@ -1,4 +1,4 @@
-From 5d1debdaee7b6dc51c5f10530b4698a7a2f1bb80 Mon Sep 17 00:00:00 2001
+From 86e6acc12639c293fb98f1949348a1d6a7f77702 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 14/53] openssh-6.6p1-force_krb
@@ -218,10 +218,10 @@ index be401fe0e..c26174928 100644
  /* This writes out any forwarded credentials from the structure populated
   * during userauth. Called after we have setuid to the user */
 diff --git a/session.c b/session.c
-index 7b76f1f71..b4db64ea4 100644
+index 2fbc1f735..27e09cccd 100644
 --- a/session.c
 +++ b/session.c
-@@ -643,6 +643,29 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
+@@ -648,6 +648,29 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
  		command = auth_opts->force_command;
  		forced = "(key-option)";
  	}
@@ -252,7 +252,7 @@ index 7b76f1f71..b4db64ea4 100644
  	if (forced != NULL) {
  		s->forced = 1;
 diff --git a/ssh-gss.h b/ssh-gss.h
-index 8ec451926..db34d77f4 100644
+index 122830f39..7df47cae2 100644
 --- a/ssh-gss.h
 +++ b/ssh-gss.h
 @@ -49,6 +49,10 @@
@@ -267,7 +267,7 @@ index 8ec451926..db34d77f4 100644
  
  /* draft-ietf-secsh-gsskeyex-06 */
 diff --git a/sshd.8 b/sshd.8
-index 24e5639a3..8ef358cd5 100644
+index 4bfbeaf63..d8a4b8090 100644
 --- a/sshd.8
 +++ b/sshd.8
 @@ -287,6 +287,7 @@ Finally, the server and the client enter an authentication dialog.
@@ -292,5 +292,5 @@ index 24e5639a3..8ef358cd5 100644
  This directory is the default location for all user-specific configuration
  and authentication information.
 -- 
-2.55.0
+2.56.0
 

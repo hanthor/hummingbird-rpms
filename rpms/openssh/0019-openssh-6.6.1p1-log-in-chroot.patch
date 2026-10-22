@@ -1,4 +1,4 @@
-From 2316543bf85035762d9aadf200067fcaf2d0e338 Mon Sep 17 00:00:00 2001
+From 100c5fe6e0a7e838b8c4793279dc18aa6d19074c Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
 Subject: [PATCH 19/53] openssh-6.6.1p1-log-in-chroot
@@ -57,7 +57,7 @@ index 8e8dfc23f..70048a8af 100644
  int      log_change_level(LogLevel);
  int      log_is_on_stderr(void);
 diff --git a/monitor.c b/monitor.c
-index fa477899e..14cdccf2f 100644
+index 98f47eaef..9d562012d 100644
 --- a/monitor.c
 +++ b/monitor.c
 @@ -2014,9 +2014,22 @@ monitor_init(void)
@@ -99,7 +99,7 @@ index 75a0d6181..f4721c472 100644
  struct Authctxt;
  void monitor_child_preauth(struct ssh *, struct monitor *);
 diff --git a/session.c b/session.c
-index c2cdd6c4f..572487b4a 100644
+index 84a7d7a4f..105995f25 100644
 --- a/session.c
 +++ b/session.c
 @@ -162,6 +162,7 @@ login_cap_t *lc;
@@ -110,7 +110,7 @@ index c2cdd6c4f..572487b4a 100644
  
  /* File containing userauth info, if ExposeAuthInfo set */
  static char *auth_info_file = NULL;
-@@ -633,6 +634,7 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
+@@ -638,6 +639,7 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
  	int ret;
  	const char *forced = NULL, *tty = NULL;
  	char session_type[1024];
@@ -118,7 +118,7 @@ index c2cdd6c4f..572487b4a 100644
  
  	if (options.adm_forced_command) {
  		original_command = command;
-@@ -692,6 +694,10 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
+@@ -697,6 +699,10 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
  			tty += 5;
  	}
  
@@ -129,7 +129,7 @@ index c2cdd6c4f..572487b4a 100644
  	verbose("Starting session: %s%s%s for %s from %.200s port %d id %d",
  	    session_type,
  	    tty == NULL ? "" : " on ",
-@@ -1476,14 +1482,6 @@ child_close_fds(struct ssh *ssh)
+@@ -1481,14 +1487,6 @@ child_close_fds(struct ssh *ssh)
  
  	/* Stop directing logs to a high-numbered fd before we close it */
  	log_redirect_stderr_to(NULL);
@@ -144,7 +144,7 @@ index c2cdd6c4f..572487b4a 100644
  }
  
  /*
-@@ -1616,8 +1614,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
+@@ -1621,8 +1619,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
  			exit(1);
  	}
  
@@ -153,7 +153,7 @@ index c2cdd6c4f..572487b4a 100644
  	do_rc_files(ssh, s, shell);
  
  	/* restore SIGPIPE for child */
-@@ -1646,9 +1642,17 @@ do_child(struct ssh *ssh, Session *s, const char *command)
+@@ -1651,9 +1647,17 @@ do_child(struct ssh *ssh, Session *s, const char *command)
  #ifdef WITH_SELINUX
  		ssh_selinux_change_context("sftpd_t");
  #endif
@@ -226,19 +226,19 @@ index 2bde8bb7f..ddf1a3968 100644
 +int	sftp_server_main(int, char **, struct passwd *, int);
  void	sftp_server_cleanup_exit(int) __attribute__((noreturn));
 diff --git a/sshd-session.c b/sshd-session.c
-index 8a3121d01..8a06616fd 100644
+index ea812ae72..7ecefff77 100644
 --- a/sshd-session.c
 +++ b/sshd-session.c
-@@ -387,7 +387,7 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
- #endif
- 
+@@ -372,7 +372,7 @@ static void
+ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
+ {
  	/* New socket pair */
 -	monitor_reinit(pmonitor);
 +	monitor_reinit(pmonitor, options.chroot_directory);
  
  	pmonitor->m_pid = fork();
  	if (pmonitor->m_pid == -1)
-@@ -406,6 +406,11 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
+@@ -391,6 +391,11 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
  
  	close(pmonitor->m_sendfd);
  	pmonitor->m_sendfd = -1;
@@ -251,5 +251,5 @@ index 8a3121d01..8a06616fd 100644
  	/* Demote the private keys to public keys. */
  	demote_sensitive_data();
 -- 
-2.55.0
+2.56.0
 
