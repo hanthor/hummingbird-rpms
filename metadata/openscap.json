@@ -5,7 +5,8 @@
     "release": "2",
     "sha": "1888e2cbd3b8862e6e5cae2ceb0fbff3262e6701"
   },
-  "modification_status": "clean",
+  "modification_reason": "Backport CVE-2026-85518",
+  "modification_status": "modified",
   "upstream_repo": "https://github.com/OpenSCAP/openscap",
   "version": "1.4.5"
 }
