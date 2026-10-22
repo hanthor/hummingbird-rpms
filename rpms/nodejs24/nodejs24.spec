@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
-Version:        24.21.0
-Release:        1.5%{?dist}
+Version:        24.22.1
+Release:        0.1%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -24,46 +24,46 @@ URL:            https://nodejs.org
 # expect anything between the markers to be overwritten on any update.
 
 # BEGIN automatic-version-macros  # DO NOT REMOVE THIS LINE!
-# Version from node-v24.21.0/src/node_version.h
+# Version from node-v24.22.1/src/node_version.h
 %global node_soversion 137
 
-# Version from node-v24.21.0/deps/ada/ada.h
+# Version from node-v24.22.1/deps/ada/ada.h
 %nodejs_define_version ada 4.0.0
-# Version from node-v24.21.0/deps/brotli/c/common/version.h
+# Version from node-v24.22.1/deps/brotli/c/common/version.h
 %nodejs_define_version brotli 1.2.0
-# Version from node-v24.21.0/deps/cares/include/ares_version.h
-%nodejs_define_version c_ares 1.34.8
-# Version from node-v24.21.0/deps/histogram/include/hdr/hdr_histogram_version.h
+# Version from node-v24.22.1/deps/cares/include/ares_version.h
+%nodejs_define_version c_ares 1.34.9
+# Version from node-v24.22.1/deps/histogram/include/hdr/hdr_histogram_version.h
 %nodejs_define_version histogram 0.11.10
-# Version from node-v24.21.0/tools/icu/current_ver.dep
+# Version from node-v24.22.1/tools/icu/current_ver.dep
 %nodejs_define_version icu 78.3 -p
-# Version from node-v24.21.0/deps/uv/include/uv/version.h
+# Version from node-v24.22.1/deps/uv/include/uv/version.h
 %nodejs_define_version libuv 1.52.1
-# Version from node-v24.21.0/deps/llhttp/include/llhttp.h
+# Version from node-v24.22.1/deps/llhttp/include/llhttp.h
 %nodejs_define_version llhttp 9.4.3
-# Version from node-v24.21.0/deps/merve/merve.h
+# Version from node-v24.22.1/deps/merve/merve.h
 %nodejs_define_version merve 1.2.2
-# Version from node-v24.21.0/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
+# Version from node-v24.22.1/deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h
 %nodejs_define_version nghttp2 1.70.0
-# Version from node-v24.21.0/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
+# Version from node-v24.22.1/deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h
 %nodejs_define_version nghttp3 1.18.0
-# Version from node-v24.21.0/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
+# Version from node-v24.22.1/deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h
 %nodejs_define_version ngtcp2 1.25.0
-# Version from node-v24.21.0/deps/minimatch/package.json
+# Version from node-v24.22.1/deps/minimatch/package.json
 %nodejs_define_version nodejs-minimatch 10.2.6
-# Version from node-v24.21.0/lib/punycode.js
+# Version from node-v24.22.1/lib/punycode.js
 %nodejs_define_version nodejs-punycode 2.1.0
-# Version from node-v24.21.0/deps/undici/src/package.json
-%nodejs_define_version nodejs-undici 7.29.1
-# Version from node-v24.21.0/deps/npm/package.json
-%nodejs_define_version npm 2:11.19.0-%{nodejs_subpackage_release}
-# Version from node-v24.21.0/deps/sqlite/sqlite3.h
+# Version from node-v24.22.1/deps/undici/src/package.json
+%nodejs_define_version nodejs-undici 7.30.1
+# Version from node-v24.22.1/deps/npm/package.json
+%nodejs_define_version npm 2:11.19.1-%{nodejs_subpackage_release}
+# Version from node-v24.22.1/deps/sqlite/sqlite3.h
 %nodejs_define_version sqlite 3.53.4
-# Version from node-v24.21.0/deps/uvwasi/include/uvwasi.h
+# Version from node-v24.22.1/deps/uvwasi/include/uvwasi.h
 %nodejs_define_version uvwasi 0.0.23
-# Version from node-v24.21.0/deps/v8/include/v8-version.h
+# Version from node-v24.22.1/deps/v8/include/v8-version.h
 %nodejs_define_version v8 3:13.6.233.17-%{nodejs_subpackage_release} -p
-# Version from node-v24.21.0/deps/zlib/zlib.h
+# Version from node-v24.22.1/deps/zlib/zlib.h
 %nodejs_define_version zlib 1.3.2.1-motley
 # END automatic-version-macros  # DO NOT REMOVE THIS LINE!
 
@@ -162,10 +162,8 @@ Source101:      nodejs.srpm.macros
 %patchlist
 0001-Remove-unused-OpenSSL-config.patch
 0002-Disable-FIPS-options.patch
-0005-CVE-2026-69152-brace-expansion-5.0.9.patch
 0006-CVE-2026-102278-brace-expansion-max-depth.patch
 0007-CVE-2026-102276-102277-brace-expansion.patch
-0008-CVE-2026-87018-undici-7.30.1.patch
 0009-CVE-2026-87018-undici-npm-6.29.1.patch
 
 %description
@@ -397,6 +395,9 @@ readonly -a configure_flags=(
 %if %{without bundled_nodejs_undici}
     --shared-builtin-undici/undici-path=%{nodejs_common_sitelib}/undici/loader.js
 %endif
+    # Preserve the shared-build workaround from MR !3921.
+    # https://github.com/nodejs/node/issues/65110#issuecomment-5224669364
+    --without-node-snapshot --without-node-code-cache
     # Compile with small icu, extendable via full-i18n subpackage
     --with-intl=small-icu --with-icu-default-data-dir=%{nodejs_datadir}/icudata
     # Do not ship corepack

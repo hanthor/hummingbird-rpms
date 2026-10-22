@@ -2,14 +2,13 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/nodejs24.git",
-    "release": "1",
     "sha": "85e6a886ffd47368769e3f0ea552fb397c6e9799"
   },
-  "modification_reason": "Update to upstream version 24.18.1; CVE-2026-69152; Backport CVE-2026-102278; Backport CVE-2026-102276 and CVE-2026-102277; Restore the Node.js version for npm-bin advisory matches; Backport CVE-2026-87018 and related undici CVEs",
+  "modification_reason": "Update to upstream version 24.22.1; retain brace-expansion hardening and npm undici 6.29.1 backports; preserve shared-build snapshot workaround",
   "modification_status": "modified",
   "release_monitoring_project_id": 8251,
   "track_upstream": "24",
   "upstream_branch": "v24.x",
   "upstream_repo": "https://github.com/nodejs/node",
-  "version": "24.21.0"
+  "version": "24.22.1"
 }
