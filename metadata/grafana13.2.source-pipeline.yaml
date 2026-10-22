@@ -37,6 +37,9 @@ transform:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.2.4.tar.bz2"
+    checksum: "a94e3cc9e3274ddb2437e18e843061ece208133fc9b9476c7e1c6b2b2017bac6b0079d07daaf10c868c62730377bd5744d3b19651185b97a56dae4322b2ce10a"
+    reason: "grafana-storybook-follow-redirects-cve.patch bumps storybook 10.3.6->10.6.2 (CVE-2026-114125/114126) and follow-redirects 1.16.0->1.16.1 (CVE-2026-111755/111756); yarn cache regenerated without stale zips"
   - file: "grafana-13.2.4-vendor.tar.bz2"
     checksum: "b1010bde77e2bc76cfdeffc3bf2447a30a711b7c4e68b59d46b33805332c315b69a2770d5bbac525c8f9bf00317abfa1e9562cd1ad401672ed01fd0874a4cf83"
     reason: "Regenerate the 13.2.4 Go vendor archive with kin-openapi 0.149.0 and jsonschema/v6 6.0.3 security updates from main"
