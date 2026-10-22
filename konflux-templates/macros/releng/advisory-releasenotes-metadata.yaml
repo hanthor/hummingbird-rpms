@@ -29,11 +29,22 @@ description: |
       {%- set name_version = purl_path.split('/')[-1] %}
       {%- set rpm_name = name_version.split('@')[0] %}
       {%- set rpm_version = name_version.split('@')[1] %}
+      {%- set epoch = namespace(value='') %}
+      {%- if '?' in artifact.purl %}
+        {%- for qualifier in artifact.purl.split('?', 1)[1].split('&') %}
+          {%- if qualifier.startswith('epoch=') %}
+            {%- set epoch.value = qualifier.split('=', 1)[1] %}
+          {%- endif %}
+        {%- endfor %}
+      {%- endif %}
+      {%- if epoch.value and epoch.value != '0' %}
+        {%- set rpm_version = epoch.value ~ ':' ~ rpm_version %}
+      {%- endif %}
       {%- if artifact.component in src_rpms %}
         {%- set src = src_rpms[artifact.component] %}
         {#- Use different key for src RPMs to keep them separate from binary RPMs #}
         {%- if artifact.architecture == 'src' %}
-          {%- set rpm_key = rpm_name ~ '.src' %}
+          {%- set rpm_key = rpm_name ~ '@' ~ rpm_version ~ '.src' %}
           {%- if rpm_key not in src['rpms'] %}
             {%- set _ = src['rpms'].update({rpm_key: {'name': rpm_name, 'version': rpm_version, 'arches': [], 'is_src': true}}) %}
           {%- endif %}
@@ -41,11 +52,12 @@ description: |
             {%- set _ = src['rpms'][rpm_key]['arches'].append(artifact.architecture) %}
           {%- endif %}
         {%- else %}
-          {%- if rpm_name not in src['rpms'] %}
-            {%- set _ = src['rpms'].update({rpm_name: {'name': rpm_name, 'version': rpm_version, 'arches': [], 'is_src': false}}) %}
+          {%- set rpm_key = rpm_name ~ '@' ~ rpm_version %}
+          {%- if rpm_key not in src['rpms'] %}
+            {%- set _ = src['rpms'].update({rpm_key: {'name': rpm_name, 'version': rpm_version, 'arches': [], 'is_src': false}}) %}
           {%- endif %}
-          {%- if artifact.architecture not in src['rpms'][rpm_name]['arches'] %}
-            {%- set _ = src['rpms'][rpm_name]['arches'].append(artifact.architecture) %}
+          {%- if artifact.architecture not in src['rpms'][rpm_key]['arches'] %}
+            {%- set _ = src['rpms'][rpm_key]['arches'].append(artifact.architecture) %}
           {%- endif %}
         {%- endif %}
       {%- endif %}
