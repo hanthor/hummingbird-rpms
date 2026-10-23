@@ -12,7 +12,7 @@ provides-ruby:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^ruby = "; then
+    if grep -q "^ruby = " <<< "${provides}"; then
       echo "PASS: ruby4.0 provides unversioned 'ruby'"
       echo "${provides}" | grep "^ruby = "
     else
@@ -29,7 +29,7 @@ provides-ruby-devel:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^ruby-devel = "; then
+    if grep -q "^ruby-devel = " <<< "${provides}"; then
       echo "PASS: ruby4.0-devel provides unversioned 'ruby-devel'"
       echo "${provides}" | grep "^ruby-devel = "
     else
@@ -46,7 +46,7 @@ provides-ruby-libs:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^ruby-libs = "; then
+    if grep -q "^ruby-libs = " <<< "${provides}"; then
       echo "PASS: ruby4.0-libs provides unversioned 'ruby-libs'"
       echo "${provides}" | grep "^ruby-libs = "
     else
@@ -63,7 +63,7 @@ provides-rubygem-test-unit:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^rubygem-test-unit = "; then
+    if grep -q "^rubygem-test-unit = " <<< "${provides}"; then
       echo "PASS: rubygem4.0-test-unit provides unversioned 'rubygem-test-unit'"
       echo "${provides}" | grep "^rubygem-test-unit = "
     else
@@ -80,7 +80,7 @@ provides-rubygem-json:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^rubygem-json = "; then
+    if grep -q "^rubygem-json = " <<< "${provides}"; then
       echo "PASS: rubygem4.0-json provides unversioned 'rubygem-json'"
       echo "${provides}" | grep "^rubygem-json = "
     else
@@ -97,7 +97,7 @@ provides-rubygem-bundler:
     fi
 
     provides=$(rpm -qp --provides "${TEST_RPM}")
-    if echo "${provides}" | grep -q "^rubygem-bundler = "; then
+    if grep -q "^rubygem-bundler = " <<< "${provides}"; then
       echo "PASS: rubygem4.0-bundler provides unversioned 'rubygem-bundler'"
       echo "${provides}" | grep "^rubygem-bundler = "
     else
@@ -114,19 +114,19 @@ paths-libs-use-ruby-not-ruby4:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "^/usr/lib64/ruby/"; then
+    if grep -q "^/usr/lib64/ruby/" <<< "${files}"; then
       echo "PASS: ruby4.0-libs installs to /usr/lib64/ruby/"
     else
       TEST_FAIL "ruby4.0-libs does not install to /usr/lib64/ruby/"
     fi
 
-    if echo "${files}" | grep -q "^/usr/lib64/ruby4.0/"; then
+    if grep -q "^/usr/lib64/ruby4.0/" <<< "${files}"; then
       TEST_FAIL "ruby4.0-libs still uses versioned path /usr/lib64/ruby4.0/"
     else
       echo "PASS: No files under /usr/lib64/ruby4.0/"
     fi
 
-    if echo "${files}" | grep -q "^/usr/share/ruby/"; then
+    if grep -q "^/usr/share/ruby/" <<< "${files}"; then
       echo "PASS: ruby4.0-libs installs to /usr/share/ruby/"
     else
       TEST_FAIL "ruby4.0-libs does not install to /usr/share/ruby/"
@@ -142,7 +142,7 @@ paths-devel-use-ruby-not-ruby4:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "^/usr/include/ruby"; then
+    if grep -q "^/usr/include/ruby" <<< "${files}"; then
       echo "PASS: ruby4.0-devel installs headers under /usr/include/"
     else
       TEST_FAIL "ruby4.0-devel does not install headers under /usr/include/"
@@ -158,14 +158,14 @@ paths-gem-extensions-use-ruby:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "^/usr/lib64/gems/ruby/"; then
+    if grep -q "^/usr/lib64/gems/ruby/" <<< "${files}"; then
       echo "PASS: gem extensions install to /usr/lib64/gems/ruby/"
-      echo "${files}" | grep "^/usr/lib64/gems/ruby/" | head -3
+      grep "^/usr/lib64/gems/ruby/" <<< "${files}" | sed -n '1,3p'
     else
       TEST_FAIL "gem extensions do not install to /usr/lib64/gems/ruby/"
     fi
 
-    if echo "${files}" | grep -q "^/usr/lib64/gems/ruby4.0/"; then
+    if grep -q "^/usr/lib64/gems/ruby4.0/" <<< "${files}"; then
       TEST_FAIL "gem extensions still use versioned path /usr/lib64/gems/ruby4.0/"
     else
       echo "PASS: No files under /usr/lib64/gems/ruby4.0/"
@@ -184,9 +184,9 @@ paths-ruby-binary:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "^/usr/bin/ruby$"; then
+    if grep -q "^/usr/bin/ruby$" <<< "${files}"; then
       echo "PASS: ruby4.0 includes /usr/bin/ruby"
-    elif echo "${files}" | grep -q "^/usr/bin/ruby4.0-mri$"; then
+    elif grep -q "^/usr/bin/ruby4.0-mri$" <<< "${files}"; then
       echo "PASS: ruby4.0 includes /usr/bin/ruby4.0-mri (rubypick mode)"
     else
       TEST_FAIL "ruby4.0 does not include /usr/bin/ruby or /usr/bin/ruby4.0-mri"
@@ -203,7 +203,7 @@ paths-ruby-mri-symlink:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "^/usr/bin/ruby-mri$"; then
+    if grep -q "^/usr/bin/ruby-mri$" <<< "${files}"; then
       echo "PASS: ruby4.0 includes /usr/bin/ruby-mri symlink"
     else
       TEST_FAIL "ruby4.0 does not include /usr/bin/ruby-mri (required by rubypick)"
@@ -219,7 +219,7 @@ paths-pkgconfig:
     fi
 
     files=$(rpm -qlp "${TEST_RPM}")
-    if echo "${files}" | grep -q "pkgconfig/ruby.pc"; then
+    if grep -q "pkgconfig/ruby.pc" <<< "${files}"; then
       echo "PASS: ruby4.0-devel provides ruby.pc"
     else
       TEST_FAIL "ruby4.0-devel does not provide ruby.pc"
