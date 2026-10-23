@@ -1,13 +1,14 @@
 {
+  "version": "10.49",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/PCRE2Project/pcre2",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/pcre2.git",
-    "sha": "7564d9d768d993dc417a65d0c9c66d9a857d527d"
+    "branch": "rawhide",
+    "sha": "9e02906734d9c59b4a90e6ebc301462bed38251d",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 10.49",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 5832,
   "track_upstream": "latest",
-  "upstream_repo": "https://github.com/PCRE2Project/pcre2",
-  "version": "10.49"
+  "release_monitoring_project_id": 5832
 }
