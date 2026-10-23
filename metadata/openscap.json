@@ -2,11 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/openscap.git",
-    "release": "2",
-    "sha": "1888e2cbd3b8862e6e5cae2ceb0fbff3262e6701"
+    "release": "1",
+    "sha": "3d6c519382fa33a8fe4ecd40779e44c20e2b9356"
   },
-  "modification_reason": "Backport CVE-2026-85518",
+  "modification_reason": "Run CVE-2026-85518 path traversal regression test",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/OpenSCAP/openscap",
-  "version": "1.4.5"
+  "version": "1.4.6"
 }
