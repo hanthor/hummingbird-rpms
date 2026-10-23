@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.2
+%global openshell_version 0.1.4
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -21,7 +21,7 @@
 
 Name:           openshell
 Version:        %{openshell_version}
-Release:        0.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Safe, sandboxed runtimes for autonomous AI agents
 
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -59,7 +59,9 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
-Patch1:  0001-russh-0.63.3-dependency-update.patch
+Patch1:  openshell-e2fsprogs-busy-retry.patch
+Patch2:  openshell-landlock-fd-test-isolation.patch
+Patch3:  openshell-listener-lifetime-test-isolation.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -74,6 +76,7 @@ BuildRequires:  cargo-rpm-macros >= 25
 BuildRequires:  git-core
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
+BuildRequires:  mold
 BuildRequires:  make
 BuildRequires:  cmake
 BuildRequires:  pkg-config
@@ -125,6 +128,9 @@ Recommends:     %{name}
 Python SDK for OpenShell providing programmatic access to sandbox
 management, agent execution, and inference routing via gRPC.
 
+# Link the large Rust test executables with mold without changing compiler settings.
+%global build_rustflags %{build_rustflags} -Clink-arg=-fuse-ld=mold
+
 %prep
 %autosetup -n %{name}-%{version} -p1
 
@@ -146,7 +152,7 @@ export OPENSHELL_IMAGE_TAG=%{image_tag}
 # (NVIDIA/OpenShell#2324). Bundled Mozilla roots are only compiled into the
 # in-container sandbox supervisor, which is not an RPM artifact. No feature
 # flags are required; both shipped binaries use the system trust store.
-%cargo_build
+%cargo_build -- --timings
 
 # Generate vendored crate manifest and license metadata.
 # cargo-vendor.txt is consumed by an RPM generator (from cargo-rpm-macros)
@@ -306,7 +312,9 @@ skip="${skip-} --skip linux::proc_fd::tests::installed_socket_snapshot_can_exclu
 skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_output_writes"
 # Starts a sandboxed workload and broker that need kernel notification privileges.
 skip="${skip-} --skip network_broker::tests::accepted_loopback_stream_is_registered_for_notified_operations"
-%cargo_test -- -- ${skip-}
+# Starts real DNS mediation, which requires a nameserver absent from hermetic Mock's resolv.conf.
+skip="${skip-} --skip backend_setup::tests::shared_startup_uses_selected_backend_through_readiness_and_shutdown"
+%cargo_test -- --timings -- ${skip-}
 
 # Smoke-test the CLI binary
 %{buildroot}%{_bindir}/%{name} --version
