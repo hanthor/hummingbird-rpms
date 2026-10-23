@@ -30,7 +30,7 @@ jobs:
     packages: [containers-common-fedora]
     notifications: &ephemeral_build_failure_notification
       failure_comment:
-        message: "Packit jobs failed. @containers/packit-build please check."
+        message: "Packit jobs failed. @podman-container-tools/packit-jobs please check."
     enable_net: true
     targets:
       - fedora-all
@@ -73,7 +73,7 @@ jobs:
   - job: propose_downstream
     trigger: release
     packages: [containers-common-fedora]
-    dist_git_branches: &fedora_targets
+    dist_git_branches:
       - fedora-rawhide
       - fedora-45
 
@@ -85,6 +85,12 @@ jobs:
       - c10s
       - c9s
 
+  # ***NOTE***: On the Fedora dist-git side, packit only triggers koji_build job
+  # for targets in .packit.yaml on the `rawhide` branch.
+  # So, enablement for fedora release branches needs to be on the rawhide
+  # branch itself.
+  # So, for koji_build, the target should typically be: fedora-all.
+  #
   # Fedora Koji build
   - job: koji_build
     trigger: commit
@@ -95,4 +101,5 @@ jobs:
     # Ref: https://packit.dev/docs/fedora-releases-guide/releasing-multiple-packages
     dependents:
       - podman
-    dist_git_branches: *fedora_targets
+    dist_git_branches:
+      - fedora-all
