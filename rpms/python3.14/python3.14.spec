@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -440,6 +440,9 @@ Patch487: 00487-cve-2026-8723.patch
 
 Patch500: 00500-cve-2026-87910.patch
 Patch501: 00501-cve-2026-87910-windows-test-adjustment.patch
+Patch502: 0502-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch503: 0503-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch504: 0504-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
