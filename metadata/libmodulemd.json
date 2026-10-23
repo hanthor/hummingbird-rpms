@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libmodulemd.git",
-    "release": "3",
-    "sha": "83ec358d581e40d27e8237fa8fb14e5c3e90eaba"
+    "release": "4",
+    "sha": "4feb361f9e62b635189b9c88cbf44839dc5be313"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/fedora-modularity/libmodulemd",
