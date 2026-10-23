@@ -351,6 +351,9 @@ libkcapi:
 libpng:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libpq:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 libunistring:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

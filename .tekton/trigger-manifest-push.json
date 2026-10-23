@@ -722,6 +722,9 @@
       "libpng--rpms": [
         "^rpms/libpng/"
       ],
+      "libpq--rpms": [
+        "^rpms/libpq/"
+      ],
       "libpsl--rpms": [
         "^rpms/libpsl/"
       ],

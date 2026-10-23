@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libpq.git",
+    "release": "4",
+    "sha": "c534db6935b1e7296658a6c613ae6df73b811952"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 5601,
+  "track_upstream": "latest",
+  "upstream_repo": "https://git.postgresql.org/git/postgresql.git",
+  "version": "18.4"
+}

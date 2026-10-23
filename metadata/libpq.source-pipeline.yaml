@@ -1,0 +1,18 @@
+# Fetch pristine PostgreSQL release artifacts. No repacking: both outputs must
+# retain the SHA512 checksums recorded in Fedora's sources manifest.
+fetch:
+  - type: spec-source
+    index: 0
+  - type: spec-source
+    index: 1
+
+verify:
+  - type: checksum-file
+    target: "postgresql-${VERSION}.tar.bz2"
+    checksums_file: "postgresql-${VERSION}.tar.bz2.sha256"
+    algorithm: sha256
+
+publish:
+  files:
+    - "postgresql-${VERSION}.tar.bz2"
+    - "postgresql-${VERSION}.tar.bz2.sha256"
