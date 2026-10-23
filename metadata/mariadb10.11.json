@@ -5,7 +5,7 @@
     "release": "4",
     "sha": "130fc2a37ac42191b3c2f3ecacb4a153aaca5c59"
   },
-  "modification_reason": "Remove runtime dependency on systemd",
+  "modification_reason": "Remove runtime dependency on systemd; HUM-10973: CVE-2026-85746",
   "modification_status": "modified",
   "upstream_branch": "10.11",
   "upstream_repo": "https://github.com/MariaDB/server",

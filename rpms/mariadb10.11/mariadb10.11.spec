@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4.1%{?with_debug:.debug}.1%{?dist}
+Release:          4.1%{?with_debug:.debug}.2%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -285,6 +285,7 @@ Patch26:          CVE-2026-85985.patch
 Patch27:          CVE-2026-86047.patch
 #   Patch28: CVE-2026-97380 - privilege escalation via empty password in GRANT PROXY statement
 Patch28:          CVE-2026-97380.patch
+Patch29:          0042-cve-2026-85746-out-of-bound-buffer-write-st-astext-nested.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -967,6 +968,15 @@ fi
 
 
 
+%ifarch x86_64
+%patch -P 29 -p1
+%endif
+%ifarch aarch64
+%patch -P 29 -p1
+%endif
+%ifarch s390x
+%patch -P 29 -p1
+%endif
 %build
 # fail quickly and obviously if user tries to build as root
 %if %runselftest
