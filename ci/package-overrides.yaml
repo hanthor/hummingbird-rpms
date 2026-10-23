@@ -643,6 +643,12 @@ ruby3.4:
     - "linux-c2xlarge/amd64"
     - "linux/s390x"
 
+ruby4.0:
+  build_platforms:
+    - "linux-c2xlarge/arm64"
+    - "linux-c2xlarge/amd64"
+    - "linux/s390x"
+
 ruff:
   timeout_hours: 8
   build_platforms:

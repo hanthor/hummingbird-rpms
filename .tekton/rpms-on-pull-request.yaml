@@ -39762,8 +39762,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "ruby.spec"
