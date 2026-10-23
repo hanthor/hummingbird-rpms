@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/redhat-rpm-config.git",
-    "release": "5",
-    "sha": "89089cb9ce106a702a1094ae59132980e1bc3883"
+    "release": "6",
+    "sha": "ba749272b7a4e2e6aaadbd5881ce36f79cb5ad19"
   },
   "modification_status": "clean",
   "upstream_repo": "https://src.fedoraproject.org/rpms/redhat-rpm-config",
