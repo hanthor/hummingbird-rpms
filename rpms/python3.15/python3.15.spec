@@ -50,7 +50,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 0.1%{?dist}
+Release: 0.2%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -428,6 +428,9 @@ Patch329: 00329-fips.patch
 # 00486 # 1a2c71465a24c72fd06c7839e7cbd2d17ddf4ebc
 # gh-148646: Add --enable-prebuilt-jit-stencils configure flag
 Patch486: 00486-gh-148646-add---enable-prebuilt-jit-stencils-configure-flag.patch
+Patch487: 0487-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch488: 0488-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch489: 0489-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
 
 # (New patches go here ^^^)
 #
