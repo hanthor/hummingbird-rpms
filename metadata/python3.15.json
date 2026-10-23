@@ -1,14 +1,15 @@
 {
+  "version": "3.15.1",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/python/cpython",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python3.15.git",
-    "sha": "729e1e7bdd0a6eff07c0b09c8b56eb73e37cd8fd"
+    "branch": "rawhide",
+    "sha": "d8764685db196c0885739f4b884768bb567f060c",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 3.15.1",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 13254,
-  "track_upstream": "3.15",
   "upstream_branch": "3.15",
-  "upstream_repo": "https://github.com/python/cpython",
-  "version": "3.15.1"
+  "track_upstream": "3.15",
+  "release_monitoring_project_id": 13254
 }

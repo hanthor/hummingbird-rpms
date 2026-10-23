@@ -26,10 +26,10 @@ backported function is available.
  4 files changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/Lib/test/test_pyexpat.py b/Lib/test/test_pyexpat.py
-index ff993c3b58..75909aa13d 100644
+index d1aa0a8f86..fdfed0e15b 100644
 --- a/Lib/test/test_pyexpat.py
 +++ b/Lib/test/test_pyexpat.py
-@@ -1048,7 +1048,7 @@ def test_error_path_no_crash(self):
+@@ -1039,7 +1039,7 @@ def test_error_path_no_crash(self):
  class ReparseDeferralTest(unittest.TestCase):
      def test_getter_setter_round_trip(self):
          parser = expat.ParserCreate()
@@ -38,7 +38,7 @@ index ff993c3b58..75909aa13d 100644
  
          self.assertIs(parser.GetReparseDeferralEnabled(), enabled)
          parser.SetReparseDeferralEnabled(False)
-@@ -1057,7 +1057,7 @@ def test_getter_setter_round_trip(self):
+@@ -1048,7 +1048,7 @@ def test_getter_setter_round_trip(self):
          self.assertIs(parser.GetReparseDeferralEnabled(), enabled)
  
      def test_reparse_deferral_enabled(self):
@@ -47,7 +47,7 @@ index ff993c3b58..75909aa13d 100644
              self.skipTest(f'Expat {expat.version_info} does not '
                            'support reparse deferral')
  
-@@ -1088,7 +1088,7 @@ def start_element(name, _):
+@@ -1079,7 +1079,7 @@ def start_element(name, _):
  
          parser = expat.ParserCreate()
          parser.StartElementHandler = start_element
@@ -57,10 +57,10 @@ index ff993c3b58..75909aa13d 100644
          self.assertFalse(parser.GetReparseDeferralEnabled())
  
 diff --git a/Lib/test/test_sax.py b/Lib/test/test_sax.py
-index 29babd7bf6..b07a3e6dba 100644
+index 46b29650d9..29cc2c662b 100644
 --- a/Lib/test/test_sax.py
 +++ b/Lib/test/test_sax.py
-@@ -1216,7 +1216,7 @@ def test_expat_incremental_reset(self):
+@@ -1232,7 +1232,7 @@ def test_expat_incremental_reset(self):
  
          self.assertEqual(result.getvalue(), start + b"<doc>text</doc>")
  
@@ -69,7 +69,7 @@ index 29babd7bf6..b07a3e6dba 100644
                       f'Expat {pyexpat.version_info} does not '
                       'support reparse deferral')
      def test_flush_reparse_deferral_enabled(self):
-@@ -1250,7 +1250,7 @@ def test_flush_reparse_deferral_disabled(self):
+@@ -1266,7 +1266,7 @@ def test_flush_reparse_deferral_disabled(self):
          for chunk in ("<doc", ">"):
              parser.feed(chunk)
  
@@ -79,10 +79,10 @@ index 29babd7bf6..b07a3e6dba 100644
              self.assertEqual(result.getvalue(), start)  # i.e. no elements started
  
 diff --git a/Lib/test/test_xml_etree.py b/Lib/test/test_xml_etree.py
-index 620fb1c5aa..d0db89c383 100644
+index 38148e78a4..7b6cc24850 100644
 --- a/Lib/test/test_xml_etree.py
 +++ b/Lib/test/test_xml_etree.py
-@@ -1898,7 +1898,7 @@ def test_unknown_event(self):
+@@ -1969,7 +1969,7 @@ def test_unknown_event(self):
          with self.assertRaisesRegex(ValueError, "unknown event 'bogus'"):
              ET.XMLPullParser(events=(x.decode() for x in (b'start', b'end', b'bogus')))
  
@@ -91,7 +91,7 @@ index 620fb1c5aa..d0db89c383 100644
                       f'Expat {pyexpat.version_info} does not '
                       'support reparse deferral')
      def test_flush_reparse_deferral_enabled(self):
-@@ -1928,7 +1928,7 @@ def test_flush_reparse_deferral_disabled(self):
+@@ -1999,7 +1999,7 @@ def test_flush_reparse_deferral_disabled(self):
          for chunk in ("<doc", ">"):
              parser.feed(chunk)
  
@@ -101,10 +101,10 @@ index 620fb1c5aa..d0db89c383 100644
                  self.skipTest(f'XMLParser.(Get|Set)ReparseDeferralEnabled '
                                'methods not available in C')
 diff --git a/Modules/pyexpat.c b/Modules/pyexpat.c
-index cf34ccb972..949ad0c319 100644
+index f82325276c..7d08c885c2 100644
 --- a/Modules/pyexpat.c
 +++ b/Modules/pyexpat.c
-@@ -844,7 +844,7 @@ pyexpat_xmlparser_SetReparseDeferralEnabled_impl(xmlparseobject *self,
+@@ -858,7 +858,7 @@ pyexpat_xmlparser_SetReparseDeferralEnabled_impl(xmlparseobject *self,
                                                   int enabled)
  /*[clinic end generated code: output=5ec539e3b63c8c49 input=6d3743500dcee799]*/
  {
@@ -113,7 +113,7 @@ index cf34ccb972..949ad0c319 100644
      XML_SetReparseDeferralEnabled(self->itself, enabled ? XML_TRUE : XML_FALSE);
      self->reparse_deferral_enabled = (bool)enabled;
  #endif
-@@ -1523,7 +1523,7 @@ newxmlparseobject(pyexpat_state *state, const char *encoding,
+@@ -1549,7 +1549,7 @@ newxmlparseobject(pyexpat_state *state, const char *encoding,
      self->ns_prefixes = 0;
      self->handlers = NULL;
      self->intern = Py_XNewRef(intern);
@@ -122,7 +122,7 @@ index cf34ccb972..949ad0c319 100644
      self->reparse_deferral_enabled = true;
  #else
      self->reparse_deferral_enabled = false;
-@@ -2444,7 +2444,7 @@ _Py_COMP_DIAG_POP
+@@ -2473,7 +2473,7 @@ _Py_COMP_DIAG_POP
  #else
      capi->SetHashSalt16Bytes = NULL;
  #endif
