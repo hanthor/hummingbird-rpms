@@ -1,13 +1,12 @@
 Name:           openscap
-Version:        1.4.5
-Release:        2.1%{?dist}
+Version:        1.4.6
+Release:        1%{?dist}
 Epoch:          1
 Summary:        Set of open source libraries enabling integration of the SCAP line of standards
 License:        LGPL-2.1-or-later
 URL:            http://www.open-scap.org/
 VCS:            git:https://github.com/OpenSCAP/openscap
 Source0:        https://github.com/OpenSCAP/openscap/releases/download/%{version}/%{name}-%{version}.tar.gz
-Patch0:         openscap-CVE-2026-85518.patch
 
 %global         common_description %{expand:
 OpenSCAP is a set of open source libraries providing an easier path
@@ -324,6 +323,10 @@ pathfix.py -i %{__python3} -p -n %{buildroot}%{_bindir}/scap-as-rpm
 %{_mandir}/man8/oscap-podman.8*
 
 %changelog
+* Fri Oct 23 2026 Jan Černý <jcerny@redhat.com> - 1:1.4.6-1
+- Upgrade to the latest upstream release
+- CVE-2026-85518: Fix path traversal when dumping SDS components (RHBZ#2558499)
+
 * Tue Oct 13 2026 Jan Černý <jcerny@redhat.com> - 1:1.4.5-2
 - Remove unused patches
 
