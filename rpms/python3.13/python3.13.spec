@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -409,6 +409,9 @@ Patch475: 00475-cve-2025-15367.patch
 # which is modified with this patch, hence they need a
 # direct call to the check function.
 Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-different-python-version.patch
+Patch478: 0478-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch479: 0479-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch480: 0480-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
 
 # (New patches go here ^^^)
 #
