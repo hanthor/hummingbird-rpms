@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.4
+%global openshell_version 0.1.5
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -59,14 +59,14 @@ URL:            https://github.com/NVIDIA/OpenShell
 Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
-Patch1:  openshell-e2fsprogs-busy-retry.patch
-Patch2:  openshell-landlock-fd-test-isolation.patch
-Patch3:  openshell-listener-lifetime-test-isolation.patch
+Patch1:  openshell-listener-lifetime-test-isolation.patch
+Patch2:  0001-CVE-2026-111061-russh-0.64.1.patch
+Patch3:  openshell-closed-socket-test-isolation.patch
 
 ExclusiveArch:  x86_64 aarch64
 
 # Rust build dependencies
-# NOTE: MSRV is 1.89 (russh 0.63.3; Rust edition 2024). As of mid-2025, this requires
+# NOTE: MSRV is 1.89 (russh 0.64.1; Rust edition 2024). As of mid-2025, this requires
 # Fedora Rawhide or newer. Stable Fedora and EPEL-10 may ship older Rust;
 # adjust targets in .packit.yaml accordingly or provide a supplementary
 # Rust toolchain via additional_repos in the COPR build config.
