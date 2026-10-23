@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -421,6 +421,9 @@ Patch475: 00475-cve-2025-15367.patch
 #
 # It has started to fail randomly when run on s390x architecture.
 Patch494: 00494-increase-the-timeout-of-test_large_content_length_truncated.patch
+Patch495: 0495-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch496: 0496-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch497: 0497-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
 
 # 00329 #
 # Support OpenSSL FIPS mode
