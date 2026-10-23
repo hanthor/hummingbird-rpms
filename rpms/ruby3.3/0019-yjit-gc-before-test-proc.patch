@@ -1,0 +1,28 @@
+From 56acaf32b28227e46be75372ad74ac7ebd8b3a9c Mon Sep 17 00:00:00 2001
+From: Jarek Prokop <33065078+jackorp@users.noreply.github.com>
+Date: Wed, 5 Aug 2026 17:08:57 +0200
+Subject: [PATCH] YJIT: Ensure GC ran before executing the test proc in YJIT
+ tests. (GH-18197)
+
+[Bug #22228]
+
+Upstream: https://github.com/ruby/ruby/commit/56acaf32b28227e46be75372ad74ac7ebd8b3a9c
+
+Adapted to the Ruby 3.3 assert_compiles signature.
+---
+--- a/test/ruby/test_yjit.rb
++++ b/test/ruby/test_yjit.rb
+@@ -1564,2 +1564,9 @@
+   def assert_compiles(test_script, insns: [], call_threshold: 1, stdout: nil, exits: {}, result: ANY, frozen_string_literal: nil, mem_size: nil, code_gc: false)
++    # [Bug #22228] Run a major GC to collect objects registered during
++    # initialization that would otherwise cause unexpected YJIT side
++    # exits when GC.stress is enabled.
++    run_gc = <<~RUBY
++      GC.start
++    RUBY
++
+     reset_stats = <<~RUBY
+@@ -1592,2 +1599,3 @@
+       }
++      #{run_gc}
+       #{reset_stats}
