@@ -1,6 +1,6 @@
 %global major_version 3
 %global minor_version 4
-%global teeny_version 10
+%global teeny_version 12
 %global major_minor_version %{major_version}.%{minor_version}
 %global ruby_major_minor %{major_version}.%{minor_version}
 %global _rubygem_pkg rubygem%{ruby_major_minor}
@@ -41,7 +41,7 @@
 %global rubygems_net_http_version 0.6.0
 %global rubygems_net_protocol_version 0.2.2
 %global rubygems_optparse_version 0.6.0
-%global rubygems_resolv_version 0.6.0
+%global rubygems_resolv_version 0.7.2
 %global rubygems_securerandom_version 0.4.1
 %global rubygems_timeout_version 0.4.3
 %global rubygems_tsort_version 0.2.0
@@ -192,7 +192,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 31.8%{?dist}
+Release: 33.1%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -303,9 +303,9 @@ Patch11: ruby-3.4.8-Skip-Socket-connect-timeout-test.patch
 # Fix heap buffer overflow when streaming JSON to an IO (CVE-2026-54696).
 # https://github.com/ruby/json/security/advisories/GHSA-x2f5-4prf-w687
 Patch12: ruby-3.4.10-json-CVE-2026-54696-fbuffer-capa.patch
-# Bump default gem resolv to 0.7.2 (CVE-2026-80212, CVE-2026-80213).
+# Update the RubyGems vendored resolv copy to 0.7.2.
 # https://github.com/ruby/ruby/pull/18529
-Patch13: ruby-3.4.10-resolv-0.7.2-CVE-2026-80212-80213.patch
+Patch13: ruby-3_4-pr18529-update-resolv-0_7_2.patch
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
@@ -1949,6 +1949,19 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
+* Fri Oct 23 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.12-33
+- Update to Ruby 3.4.12
+- Fixes the following bugs in Omigumo regexp compilation
+- Resolves: CVE-2026-89078
+- Resolves: CVE-2026-93577
+- Resolves: CVE-2026-97229
+- Resolves: CVE-2026-110264
+
+* Fri Sep 04 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-32
+- Backport upstream patch to update resolv to 0.7.2
+- Resolves: CVE-2026-80212 (rhbz#2527308)
+- Resolves: CVE-2026-80213 (rhbz#2527310)
+
 * Wed Jul 08 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.4.10-31
 - Update to Ruby 3.4.10
 - Resolves: CVE-2026-41316 (rhbz#2463216)
