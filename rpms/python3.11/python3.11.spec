@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -407,6 +407,9 @@ Patch489: 00489-cve-2026-6019.patch
 #
 # (cherry-picked from commit 1f9958f909c1b41a4ffc0b613ef8ec8fa5e7c474)
 Patch495: 00495-cve-2026-3446.patch
+Patch496: 0496-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch497: 0497-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
+Patch498: 0498-cve-2026-114583-arbitrary-file-write-tarfile-extraction.patch
 
 # (New patches go here ^^^)
 #
