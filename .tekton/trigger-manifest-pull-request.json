@@ -961,6 +961,10 @@
         "^rpms/libpng/",
         "^test/rpms/libpng\\.yml$"
       ],
+      "libpq--rpms": [
+        "^rpms/libpq/",
+        "^test/rpms/libpq\\.yml$"
+      ],
       "libpsl--rpms": [
         "^rpms/libpsl/",
         "^test/rpms/libpsl\\.yml$"
