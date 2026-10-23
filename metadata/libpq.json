@@ -8,6 +8,6 @@
   "modification_status": "clean",
   "release_monitoring_project_id": 5601,
   "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/libpq",
+  "upstream_repo": "https://git.postgresql.org/git/postgresql.git",
   "version": "18.4"
 }
