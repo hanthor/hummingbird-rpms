@@ -37634,7 +37634,7 @@ spec:
     - name: ociStorage
       value: quay.io/redhat-user-workloads/hummingbird-tenant/ruby3-3-main:{{revision}}
     - name: package-name
-      value: ruby
+      value: ruby3.3
     - name: target-branch
       value: '{{target_branch}}'
     - name: build-architectures
@@ -37644,8 +37644,8 @@ spec:
         - s390x
     - name: build-platforms
       value:
-        - "linux/x86_64"
-        - "linux/arm64"
+        - "linux-c2xlarge/arm64"
+        - "linux-c2xlarge/amd64"
         - "linux/s390x"
     - name: specfile
       value: "ruby.spec"
@@ -37653,6 +37653,10 @@ spec:
       value: "rpms/ruby3.3"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:

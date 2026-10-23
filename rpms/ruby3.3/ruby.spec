@@ -1,6 +1,6 @@
 %global major_version 3
 %global minor_version 3
-%global teeny_version 10
+%global teeny_version 13
 %global major_minor_version %{major_version}.%{minor_version}
 %global ruby_major_minor %{major_version}.%{minor_version}
 %global _rubygem_pkg rubygem%{ruby_major_minor}
@@ -45,7 +45,7 @@
 %global rubygems_securerandom_version 0.3.1
 %global rubygems_timeout_version 0.4.1
 %global rubygems_tsort_version 0.2.0
-%global rubygems_uri_version 0.13.1
+%global rubygems_uri_version 0.13.3
 
 # Default gems.
 %global bundler_version 2.5.22
@@ -56,7 +56,7 @@
 %global bundler_securerandom_version 0.3.1
 %global bundler_thor_version 1.3.0
 %global bundler_tsort_version 0.2.0
-%global bundler_uri_version 0.13.1
+%global bundler_uri_version 0.13.3
 
 %global abbrev_version 0.1.2
 %global base64_version 0.2.0
@@ -69,7 +69,7 @@
 %global digest_version 3.1.1
 %global drb_version 2.2.0
 %global english_version 0.8.0
-%global erb_version 4.0.3
+%global erb_version 4.0.3.1
 %global error_highlight_version 0.6.0
 %global etc_version 1.4.3
 %global fcntl_version 1.1.0
@@ -88,14 +88,14 @@
 %global nkf_version 0.1.3
 %global observer_version 0.1.2
 %global open3_version 0.2.1
-%global openssl_version 3.2.2
+%global openssl_version 3.2.4
 %global open_uri_version 0.4.1
 %global optparse_version 0.4.0
 %global ostruct_version 0.6.0
 %global pathname_version 0.3.0
 %global pp_version 0.5.0
 %global prettyprint_version 0.2.0
-%global pstore_version 0.1.3
+%global pstore_version 0.2.1
 %global readline_version 0.0.4
 %global reline_version 0.5.10
 %global resolv_version 0.3.2
@@ -108,7 +108,7 @@
 %global singleton_version 0.2.0
 %global stringio_version 3.1.1
 %global strscan_version 3.0.9
-%global syntax_suggest_version 2.0.1
+%global syntax_suggest_version 2.0.3
 %global syslog_version 0.1.2
 %global tempfile_version 0.2.1
 %global time_version 0.3.0
@@ -121,7 +121,7 @@
 %global win32ole_version 1.8.10
 %global yaml_version 0.3.0
 %global prism_version 0.19.0
-%global zlib_version 3.1.1
+%global zlib_version 3.1.2
 
 # Gemified default gems.
 %global bigdecimal_version 3.1.5
@@ -134,7 +134,7 @@
 # Bundled gems.
 %global debug_version 1.9.2
 %global net_ftp_version 0.3.4
-%global net_imap_version 0.4.21
+%global net_imap_version 0.4.25
 %global net_pop_version 0.1.2
 %global net_smtp_version 0.5.1
 %global matrix_version 0.4.2
@@ -188,7 +188,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 23.7%{?dist}
+Release: 23.8%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -301,27 +301,12 @@ Patch12: ruby-3.4.0-Extract-hardening-CFLAGS-to-a-special-hardenflags-variable.p
 # https://github.com/ruby/openssl/pull/710
 # https://github.com/ruby/ruby/commit/6213ab1a51387fd9cdcb5e87908722f3bbdf78cb
 Patch13: ruby-3.4.0-openssl-respect-crypto-policies-tls-min.patch
-# Backport net-imap 0.4.21 -> 0.4.24 security fixes:
-# CVE-2026-42246: Net::IMAP info disclosure via MitM bypassing TLS (Important)
-# CVE-2026-42245: Net::IMAP DoS via crafted IMAP responses (Moderate)
-# CVE-2026-42256: Net::IMAP DoS via large SCRAM iteration count (Moderate)
-Patch14: ruby-3.3.10-net-imap-0.4.24-security-fixes.patch
-# Backport net-imap 0.4.24 -> 0.4.25 security fixes:
-# CVE-2026-47240: Net::IMAP command injection via non-synchronizing literals
-# CVE-2026-47241: Net::IMAP denial of service via malformed command input
-# CVE-2026-47242: Net::IMAP command injection via improper input validation
-Patch15: ruby-3.3.10-net-imap-0.4.25-security-fixes.patch
-# Backport upstream test fix for implementation-defined lgamma sign at poles.
-# https://bugs.ruby-lang.org/issues/21666
-Patch16: ruby-3.3.10-lgamma-unspecified-sign-tests.patch
-# Backport resolv 0.3.1 -> 0.3.2 security fixes:
-# CVE-2026-80212: resolv DoS via uncontrolled memory growth from crafted DNS responses
-# CVE-2026-80213: resolv DNS allowlist/egress bypass and cache poisoning via crafted hostnames
-# https://github.com/ruby/ruby/pull/18530
-Patch17: ruby-3.3.10-resolv-0.3.2-security-fixes.patch
 
 # https://github.com/ruby/ruby/commit/9cfc1362aa6f42f2c654ee155b1cffb9063879f6
 Patch18: 0018-mkmf-compiler-test-timeouts.patch
+# Collect initialization objects before YJIT tests enable GC.stress.
+# https://bugs.ruby-lang.org/issues/22228
+Patch19: 0019-yjit-gc-before-test-proc.patch
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 %{?with_rubypick:Suggests: rubypick}
@@ -831,11 +816,8 @@ analysis result in RBS format, a standard type description format for Ruby
 %patch 9 -p1
 %patch 12 -p1
 %patch 13 -p1
-%patch 14 -p1 -d .bundle/gems/net-imap-0.4.21
-%patch 15 -p1 -d .bundle/gems/net-imap-0.4.21
-%patch 16 -p1
-%patch 17 -p1
 %patch 18 -p1
+%patch 19 -p1
 
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE3} .
@@ -1620,7 +1602,6 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 %files doc -f .ruby-doc.en -f .ruby-doc.ja
 %doc README.md
-%doc ChangeLog
 %{?with_systemtap:%doc ruby-exercise.stp}
 %{_datadir}/ri
 
