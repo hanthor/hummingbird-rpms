@@ -1,2 +1,4 @@
 /postgresql-*.tar.bz2*
 /rpms
+postgresql-18.6.tar.bz2
+postgresql-18.6.tar.bz2.sha256

@@ -3,8 +3,8 @@
 
 Summary: PostgreSQL client library
 Name: libpq
-Version: %{majorversion}.4
-Release: 4%{?dist}
+Version: %{majorversion}.6
+Release: 0.1%{?dist}
 
 License: PostgreSQL
 Url: http://www.postgresql.org/
