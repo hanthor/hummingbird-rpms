@@ -141,6 +141,10 @@
         "^rpms/caddy/",
         "^test/rpms/caddy\\.yml$"
       ],
+      "cairo--rpms": [
+        "^rpms/cairo/",
+        "^test/rpms/cairo\\.yml$"
+      ],
       "capstone--rpms": [
         "^rpms/capstone/",
         "^test/rpms/capstone\\.yml$"

@@ -1,0 +1,7 @@
+fetch:
+  - type: url
+    url: "https://cairographics.org/releases/cairo-${VERSION}.tar.xz"
+
+publish:
+  files:
+    - "cairo-${VERSION}.tar.xz"

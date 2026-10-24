@@ -151,6 +151,8 @@ spec:
           contentType: rpm
         - name: caddy-main
           contentType: rpm
+        - name: cairo-main
+          contentType: rpm
         - name: capstone-main
           contentType: rpm
         - name: cargo-rpm-macros-main

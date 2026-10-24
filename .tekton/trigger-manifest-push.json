@@ -107,6 +107,9 @@
       "caddy--rpms": [
         "^rpms/caddy/"
       ],
+      "cairo--rpms": [
+        "^rpms/cairo/"
+      ],
       "capstone--rpms": [
         "^rpms/capstone/"
       ],

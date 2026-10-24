@@ -69,6 +69,9 @@ bubblewrap:
 caddy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+cairo:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 capstone:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
