@@ -1,3 +1,16 @@
+* Sat Oct 24 2026 Zdenek Pytela <zpytela@redhat.com>
+- Allow httpd map its private runtime files
+- Allow qatlib get attributes of a hugetlbfs filesystem
+- Allow rhsmcertd list insights-client config dirs
+- Allow svirt_tcg_t to use the passt user-mode networking backend
+- Allow sshd_session_t to forward connections to a container runtime socket
+- Allow systemd-oomd the kill capability in the user namespace
+- Allow systemd-oomd signull all domains
+- Revert "Allow systemd-oomd signull systemd-resolved"
+- Update the nvme block devices regex in file context specification
+- Allow keepalived getpgid of its unconfined scripts
+- Allow init mounton system dbus pid socket files
+
 * Tue Oct 20 2026 Zdenek Pytela <zpytela@redhat.com> - 45.22-1
 - Allow systemd-oomd signull systemd-resolved
 - Allow login_userdomain watch localization files for changes
