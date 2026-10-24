@@ -8,7 +8,7 @@
 Summary: The Cyrus SASL library
 Name: cyrus-sasl
 Version: 2.1.28
-Release: 37.2%{?dist}
+Release: 37.3%{?dist}
 License: BSD-Attribution-HPND-disclaimer
 URL: https://www.cyrusimap.org/sasl/
 
@@ -48,6 +48,8 @@ Patch503: cyrus-sasl-2.1.28-SAST.patch
 
 Patch599: cyrus-sasl-2.1.28-fedora-c99.patch
 Patch600: cyrus-sasl-2.1.28-gcc15.patch
+# https://github.com/cyrusimap/cyrus-sasl/commit/f79bfeb393fc0f1f9a614b35f50e2e72fde8f6e2
+Patch601: cyrus-sasl-2.1.28-CVE-2026-107161-add_to_challenge-overflow.patch
 
 BuildRequires: autoconf, automake, libtool, gdbm-devel, groff
 BuildRequires: krb5-devel >= 1.2.2, openssl-devel, pam-devel, pkgconfig
@@ -181,6 +183,7 @@ the GS2 authentication scheme.
 %patch -P503 -p1 -b .sast
 %patch -P599 -p1 -b .c99
 %patch -P600 -p1 -b .gcc15
+%patch -P601 -p1 -b .cve2026107161
 
 %build
 # reconfigure
