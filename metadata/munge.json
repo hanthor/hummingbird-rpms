@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/munge.git",
-    "release": "3",
-    "sha": "1bb740e59a33eabc2db4a28fecfff69ccb125870"
+    "release": "4",
+    "sha": "57044a978161df436bffc57aec3ca6579f70ec47"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 138097,
