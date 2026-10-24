@@ -133,6 +133,11 @@ API_DELAY = 0.2
 # Default distribution to look up packages
 DEFAULT_DISTRO = "Fedora"
 
+# A distribution macro is part of the normal literal Release form. Other
+# macros can carry package-specific release semantics and must not be replaced
+# by the generic local-release reset.
+_RELEASE_MACRO_RE = re.compile(r"%\{(?:\?|!)?([A-Za-z_][A-Za-z0-9_]*)")
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -1178,10 +1183,12 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
     Default behaviour (no hooks file):
 
     - Sets ``Version:`` to *new_version*
-    - Resets ``Release:`` to ``0.1%{?dist}`` (unless ``%autorelease``
-      is used).  ``0.1`` is chosen so that when the same version is
-      later imported from Fedora (with ``Release >= 1``), it sorts
-      higher and replaces this locally-built version.
+    - Resets a literal ``Release:`` to ``0.1%{?dist}`` (unless
+      ``%autorelease`` or another package-specific release macro is used).
+      ``0.1`` is chosen so that when the same version is later imported from
+      Fedora (with ``Release >= 1``), it sorts higher and replaces this
+      locally-built version. Macro-based releases are left intact because the
+      generic updater cannot know which macro value is valid for the package.
     - Downloads new source archives and updates the ``sources`` file
     - Marks the package metadata as modified and writes the resolved
       ``version``. For Fedora-origin packages, removes metadata ``release``
@@ -1262,13 +1269,28 @@ def update_spec_version(package: str, new_version: str) -> list[str]:
             # Preserve macro indirection when Version expands from another value.
             spec.update_version(new_version)
         if not spec.has_autorelease:
-            logger.info("%s: updating spec release", package)
-            # Use Release 0.1 so that when the same version is later
-            # imported from Fedora (with Release >= 1), it sorts higher
-            # and replaces this locally-built version.
-            spec.update_tag(
-                "Release", "0.1%{?dist}", protected_entities=".*"
-            )
+            with spec.tags() as tags:
+                raw_release = tags.release.value
+            release_macros = {
+                match.group(1)
+                for match in _RELEASE_MACRO_RE.finditer(raw_release)
+                if match.group(1) != "dist"
+            }
+            if release_macros:
+                logger.info(
+                    "%s: preserving macro-based Release %r (macros: %s)",
+                    package,
+                    raw_release,
+                    ", ".join(sorted(release_macros)),
+                )
+            else:
+                logger.info("%s: updating spec release", package)
+                # Use Release 0.1 so that when the same version is later
+                # imported from Fedora (with Release >= 1), it sorts higher
+                # and replaces this locally-built version.
+                spec.update_tag(
+                    "Release", "0.1%{?dist}", protected_entities=".*"
+                )
         logger.info("%s: saving updated spec", package)
         spec.save()
 
