@@ -6,8 +6,8 @@ Upstream: https://github.com/ljharb/qs/commit/a952e7519338ef0cfb25694a2988848f93
 qs.stringify with arrayFormat: 'comma' throws TypeError: Cannot convert
 object to primitive value when an array element cannot be coerced to a
 string. Fixed in 6.16.1.
-Generated against the post-storybook-follow-redirects lockfile.
-Yarn cache regenerated and uploaded to lookaside.
+Generated against yarn.lock after pacote + storybook/follow-redirects
+(%prep order through Patch20).
 
 --- a/package.json
 +++ b/package.json
@@ -23,24 +23,6 @@ Yarn cache regenerated and uploaded to lookaside.
      "packages": [
 --- a/yarn.lock
 +++ b/yarn.lock
-@@ -28813,7 +28813,7 @@
-     tar: "npm:^7.4.3"
-   bin:
-     pacote: bin/index.js
--  checksum: 10c0/df4755db6a11982371e5c37763364dbb6cb281de911221a079d896bbb4dbef3411b01c3a13f4489eac1b992984850f7888bbc4bcdd8c01bdd610918b8a4781fc
-+  checksum: 10c0/5c97ce60b64afc3e4ab0399d03fd1271db2d821a0e83870c9934b64dd50c4256323c384413c4116c0f038b29b916e64a2e9954c39badf7cdd87245e31aa50761
-   languageName: node
-   linkType: hard
- 
-@@ -28840,7 +28840,7 @@
-     tar: "npm:^7.4.3"
-   bin:
-     pacote: bin/index.js
--  checksum: 10c0/42ba048d7f463d2f0683bc7632a64c921d164463c17fb94b48ff412c5b852d2f58bb11bb510e0fb990d851e5c1f37f5669d20881b229797baba865b1c70a9fb6
-+  checksum: 10c0/daa70bc650f8b758ff2705ab4597c570bf8761c834dd7d44e353540b8540c17822f5eea05d9fc4ff6b2d2a8da29e7866d69a42ef515889d10801932602e44a5d
-   languageName: node
-   linkType: hard
- 
 @@ -30458,30 +30458,13 @@
    languageName: node
    linkType: hard
