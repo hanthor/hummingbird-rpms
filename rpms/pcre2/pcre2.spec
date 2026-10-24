@@ -9,7 +9,7 @@
 #%%global rcversion RC1
 Name:       pcre2
 Version:    10.49
-Release:    0.2%{?dist}
+Release:    %{?rcversion:0.}1%{?rcversion:.%rcversion}%{?dist}
 %global     myversion %{version}%{?rcversion:-%rcversion}
 Summary:    Perl-compatible regular expression library
 # the library:                          BSD with exceptions
@@ -254,6 +254,17 @@ make %{?_smp_mflags} check VERBOSE=yes
 %{_mandir}/man1/pcre2test.*
 
 %changelog
+* Mon Sep 21 2026 Daniel Handzus <dhandzus@redhat.com> - 10.49-1
+- Rebase to the latest upstream version 10.49
+- Regenerate multilib patch for the 10.49 (upstream changed -L flag logic)
+- Resolves: rhbz#2526344
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 10.47-1.2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
+* Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 10.47-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
+
 * Fri Nov 07 2025 Lukas Javorsky <ljavorsk@redhat.com> - 10.47-1
 - Rebase to version 10.47
 - Resolves: rhbz#2405255
