@@ -531,8 +531,8 @@ Subject: [PATCH 4/6] Test equivalence of hashes for the various digests with
 
 ---
  Lib/test/test_fips.py    | 24 ++++++++++++++++++++++++
- Lib/test/test_hashlib.py | 39 ++++++++++++++++++++++++++++++++++-----
- 2 files changed, 58 insertions(+), 5 deletions(-)
+ Lib/test/test_hashlib.py | 38 +++++++++++++++++++++++++++++++++-----
+ 2 files changed, 57 insertions(+), 5 deletions(-)
  create mode 100644 Lib/test/test_fips.py
 
 diff --git a/Lib/test/test_fips.py b/Lib/test/test_fips.py
@@ -569,15 +569,7 @@ diff --git a/Lib/test/test_hashlib.py b/Lib/test/test_hashlib.py
 index da03826..a2854e9 100644
 --- a/Lib/test/test_hashlib.py
 +++ b/Lib/test/test_hashlib.py
-@@ -26,6 +26,7 @@ from test.support.import_helper import import_fresh_module
- from test.support import requires_resource
- from test.support import threading_helper
- from http.client import HTTPException
-+from functools import partial
- 
- 
- default_builtin_hashes = {'md5', 'sha1', 'sha2', 'sha3', 'blake2'}
-@@ -60,6 +61,11 @@ if not get_fips_mode:
+@@ -60,6 +60,11 @@ if not get_fips_mode:
      def get_fips_mode():
          return 0
  
@@ -586,9 +578,9 @@ index da03826..a2854e9 100644
 +else:
 +    FIPS_DISABLED = set()
 +
+ 
  try:
-     import _blake2
- except ImportError:
+     import _md5
 @@ -101,6 +107,14 @@ def read_vectors(hash_name):
              parts[0] = bytes.fromhex(parts[0])
              yield parts
