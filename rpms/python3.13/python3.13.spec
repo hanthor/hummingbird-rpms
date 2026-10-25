@@ -45,11 +45,11 @@ URL: https://www.python.org/
 
 #  WARNING  When rebasing to a new Python version,
 #           remember to update the python3-docs package as well
-%global general_version %{pybasever}.16
+%global general_version %{pybasever}.17
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1%{?dist}
 License: Python-2.0.1
 
 
@@ -109,14 +109,14 @@ License: Python-2.0.1
 # This needs to be manually updated when we update Python.
 # Explore the sources tarball (you need the version before %%prep is executed):
 #  $ tar -tf Python-%%{upstream_version}.tar.xz | grep whl
-%global pip_version 26.2.1
+%global pip_version 26.2.2
 %global setuptools_version 79.0.1
 # All of those also include a list of indirect bundled libs:
 # pip
 #  $ %%{_rpmconfigdir}/pythonbundles.py <(unzip -p Lib/ensurepip/_bundled/pip-*.whl pip/_vendor/vendor.txt)
 %global pip_bundled_provides %{expand:
 Provides: bundled(python3dist(cachecontrol)) = 0.14.4
-Provides: bundled(python3dist(certifi)) = 2026.6.17
+Provides: bundled(python3dist(certifi)) = 2026.10.19
 Provides: bundled(python3dist(distlib)) = 0.4.2
 Provides: bundled(python3dist(distro)) = 1.9
 Provides: bundled(python3dist(idna)) = 3.18
@@ -260,13 +260,13 @@ BuildRequires: gcc
 BuildRequires: gdbm-devel
 BuildRequires: git-core
 BuildRequires: glibc-devel
-BuildRequires: gnupg2
 BuildRequires: libX11-devel
 BuildRequires: libffi-devel
 BuildRequires: libuuid-devel
 BuildRequires: make
 BuildRequires: mpdecimal-devel
 BuildRequires: ncurses-devel
+BuildRequires: openpgpverify
 BuildRequires: pkgconfig
 BuildRequires: python-rpm-macros
 BuildRequires: readline-devel
@@ -313,8 +313,7 @@ BuildRequires: libappstream-glib
 # the first compatible version of pip is 23.1.2.
 BuildRequires: %{python_wheel_pkg_prefix}-pip-wheel >= 23.1.2
 %if %{with tests}
-BuildRequires: %{python_wheel_pkg_prefix}-setuptools-wheel
-BuildRequires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+BuildRequires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 %endif
 %endif
 
@@ -714,12 +713,11 @@ Requires: %{pkgname} = %{version}-%{release}
 Requires: %{pkgname}-libs%{?_isa} = %{version}-%{release}
 
 %if %{with rpmwheels}
-Requires: %{python_wheel_pkg_prefix}-setuptools-wheel
-Requires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+Requires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 %else
 Provides: bundled(python3dist(setuptools)) = %{setuptools_version}
 %setuptools_bundled_provides
-# License manually combined from Python + setuptools + wheel
+# License manually combined from Python + setuptools
 License: Python-2.0.1 AND MIT AND Apache-2.0 AND (Apache-2.0 OR BSD-2-Clause)
 %endif
 
@@ -777,8 +775,7 @@ Summary: Free Threading (PEP 703) version of the Python runtime
 
 %if %{with rpmwheels}
 Requires: %{python_wheel_pkg_prefix}-pip-wheel >= 23.1.2
-Requires: %{python_wheel_pkg_prefix}-setuptools-wheel
-Requires: (%{python_wheel_pkg_prefix}-wheel-wheel if %{python_wheel_pkg_prefix}-setuptools-wheel < 71)
+Requires: %{python_wheel_pkg_prefix}-setuptools-wheel >= 71
 License: %{libs_license}
 %else
 Provides: bundled(python3dist(pip)) = %{pip_version}
@@ -842,7 +839,7 @@ extension modules.
 # ======================================================
 
 %prep
-%gpgverify -k2 -s1 -d0
+%openpgpverify -k2 -s1 -d0
 %autosetup -S git_am -n Python-%{upstream_version}
 
 # Verify the second level of bundled provides is up to date
@@ -1824,6 +1821,10 @@ CheckPython freethreading
 # ======================================================
 
 %changelog
+* Thu Oct 22 2026 Miro Hrončok <miro@hroncok.cz> - 3.13.17-1
+- Update to Python 3.13.17
+- No significant changes for Fedora or EPEL
+
 * Thu Oct 01 2026 Miro Hrončok <miro@hroncok.cz> - 3.13.16-1
 - Update to Python 3.13.16
 - Security fix for CVE-2026-15310
