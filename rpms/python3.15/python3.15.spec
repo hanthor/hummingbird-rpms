@@ -50,7 +50,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 0.1%{?dist}
+Release: 1%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -271,7 +271,6 @@ BuildRequires: gcc
 BuildRequires: gdbm-devel
 BuildRequires: git-core
 BuildRequires: glibc-devel
-BuildRequires: gnupg2
 BuildRequires: libX11-devel
 BuildRequires: libffi-devel
 BuildRequires: libuuid-devel
