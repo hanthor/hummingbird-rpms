@@ -4,10 +4,10 @@
     "git_url": "https://src.fedoraproject.org/rpms/trivy.git",
     "sha": "1741a090d7d41332bef492d4d294226992a9e4ed"
   },
-  "modification_reason": "Update to upstream version 0.76.0 and refresh the module-sync patch to match its vendor archive",
+  "modification_reason": "Update to upstream version 0.76.1 and refresh the module sync patch to match its vendor archive",
   "modification_status": "modified",
   "release_monitoring_project_id": 141362,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/aquasecurity/trivy",
-  "version": "0.76.0"
+  "version": "0.76.1"
 }

@@ -1,4 +1,4 @@
-Sync go.mod/go.sum with the generated 0.76.0 vendor archive.
+Sync go.mod/go.sum with the generated 0.76.1 vendor archive.
 
 Regenerated from the checksum-verified source and vendor archives in sources.
 Match the vendor archive's module files exactly, including the system-linked
@@ -12,7 +12,7 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
  	github.com/mattn/go-shellwords v1.0.16
 +	github.com/mattn/go-sqlite3 v1.14.52
  	github.com/mitchellh/hashstructure/v2 v2.0.2
- 	github.com/moby/buildkit v0.33.1
+ 	github.com/moby/buildkit v0.34.0
  	github.com/moby/docker-image-spec v1.3.1
 @@ -127,7 +128,6 @@
  	helm.sh/helm/v4 v4.3.0
@@ -50,8 +50,8 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
 -github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3/go.mod h1:jl5iWTm0/hd5PjEYEOuwAJ57L/CibdZfrqZ5XA5GrCk=
 +github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 h1:EwtI+Al+DeppwYX2oXJCETMO23COyaKGP6fHVpkpWpg=
 +github.com/google/pprof v0.0.0-20260402051712-545e8a4df936/go.mod h1:MxpfABSjhmINe3F1It9d+8exIHFvUqtLIRCdOGNXqiI=
- github.com/google/s2a-go v0.1.9 h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=
- github.com/google/s2a-go v0.1.9/go.mod h1:YA0Ei2ZQL3acow2O62kdp9UlnvMmU7kA6Eutn0dXayM=
+ github.com/google/s2a-go v0.1.10 h1:EMp+aOuXN6l8cE/gjF5Bt+vyZxsUuyCWe9chDWR/+uU=
+ github.com/google/s2a-go v0.1.10/go.mod h1:pz4tyvwXvJLLbyrkh6FW1eS2zPUXMaTmyNhYtyP2tNw=
  github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 h1:SJ+NtwL6QaZ21U+IrK7d0gGgpjGGvd2kz+FzTHVzdqI=
 @@ -622,6 +622,8 @@
  github.com/josephburnett/jd/v2 v2.3.0/go.mod h1:0I5+gbo7y8diuajJjm79AF44eqTheSJy1K7DSbIUFAQ=
