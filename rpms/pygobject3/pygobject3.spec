@@ -5,11 +5,11 @@
 
 Name:           pygobject3
 Version:        3.58.1
-Release:        0.1%{?dist}
+Release:        6%{?dist}
 Summary:        Python bindings for GObject Introspection
 
 License:        LGPL-2.1-or-later
-URL:            https://wiki.gnome.org/Projects/PyGObject
+URL:            https://pygobject.gnome.org/
 Source0:        https://download.gnome.org/sources/pygobject/%{gnome_major_minor_version}/pygobject-%{version}.tar.gz
 
 BuildRequires:  pkgconfig(cairo-gobject)
@@ -74,12 +74,7 @@ This package contains files required to embed PyGObject
 
 %check
 export TEST_GTK_VERSION=3.0
-# The refcounting tests fail with Python 3.14
-# Reported: https://gitlab.gnome.org/GNOME/pygobject/-/issues/694
-export PYTEST_ADDOPTS="-k 'not (ref_count or has_two_refs)'"
-# Tests are disabled until Xwayland can run in mock (i.e. it finds
-# /tmp/.X11-unix owned by root).
-%{shrink:xwfb-run -c mutter -- %meson_test --timeout-multiplier=5 || exit 0}
+%{shrink:xwfb-run -c mutter -- %meson_test --timeout-multiplier=5 -v}
 
 
 %files -n python3-gobject
