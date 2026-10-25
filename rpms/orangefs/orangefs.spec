@@ -6,7 +6,7 @@
 
 Name:           orangefs
 Version:        2.10.1
-Release:        5.1%{?dist}
+Release:        5.2%{?dist}
 Summary:        Parallel network file system client
 URL:            https://www.orangefs.org/
 # BSD (2 clause) maint/config/ssl.m4
@@ -20,7 +20,8 @@ URL:            https://www.orangefs.org/
 # LGPLv2+ remainder
 # Automatically converted from old format: LGPLv2+ and LGPLv2 and BSD and MIT and zlib - review is highly recommended.
 License:       LicenseRef-Callaway-LGPLv2+ AND LicenseRef-Callaway-LGPLv2 AND LicenseRef-Callaway-BSD AND LicenseRef-Callaway-MIT AND Zlib
-Source0:       https://github.com/waltligon/orangefs/archive/refs/tags/2.10.1.tar.gz
+# The prepared release archive has corrected version metadata and ChangeLog.
+Source0:       https://github.com/waltligon/orangefs/releases/download/%{version}/orangefs-%{version}.tar.gz
 Source1:       orangefs-server.service
 Source2:       orangefs-client.service
 Source3:       orangefs.conf
@@ -111,7 +112,7 @@ Requires:      %{name}%{?_isa} = %{version}-%{release}
 This package contains documentation of the Parallel network file system
 
 %prep
-%autosetup -p1 -n orangefs-%{version}
+%autosetup -p1 -n orangefs
 rm -r src/apps/devel/lmdb
 rm -r src/common/lmdb
 mv doc/man/pvfs2.conf.5 doc/man/orangefs.conf.5

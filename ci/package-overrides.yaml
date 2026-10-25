@@ -546,6 +546,9 @@ opentofu1.11:
 opentofu1.12:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+orangefs:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 oras:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
