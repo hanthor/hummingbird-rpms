@@ -1,7 +1,7 @@
 Name:           nodejs24
 Epoch:          1
 Version:        24.22.1
-Release:        0.1%{?dist}
+Release:        3%{?dist}
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -609,6 +609,13 @@ done
 %check
 # === Common test environment
 export LD_LIBRARY_PATH="${RPM_BUILD_ROOT}%{_libdir}:${LD_LIBRARY_PATH}"
+
+# Use non-SIMD llhttp build to fix:
+# - parallel/test-inspector-network-content-type.js
+# - es-module/test-wasm-web-api.js
+%ifarch riscv64
+export UNDICI_NO_WASM_SIMD=1
+%endif
 
 # "aliases" to the just-build binaries
 node() {
