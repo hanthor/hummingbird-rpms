@@ -39,6 +39,13 @@
 # *private_lookaside_cache_url to avoid repeating the literal string for every package.
 _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i0.cloudfront.net/"
 
+abseil-cpp:
+  # Parallel C++ test compilation exceeds the default builders' memory.
+  build_platforms:
+    - "linux-d160-c8xlarge/arm64"
+    - "linux-d160-c8xlarge/amd64"
+    - "linux/s390x"
+
 acl:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

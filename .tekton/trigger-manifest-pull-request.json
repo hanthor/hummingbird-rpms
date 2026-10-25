@@ -21,6 +21,10 @@
         "^rpms/abattis\\-cantarell\\-fonts/",
         "^test/rpms/abattis\\-cantarell\\-fonts\\.yml$"
       ],
+      "abseil-cpp--rpms": [
+        "^rpms/abseil\\-cpp/",
+        "^test/rpms/abseil\\-cpp\\.yml$"
+      ],
       "acl--rpms": [
         "^rpms/acl/",
         "^test/rpms/acl\\.yml$"
