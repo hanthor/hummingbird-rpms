@@ -91,6 +91,8 @@ spec:
           contentType: rpm
         - name: abattis-cantarell-fonts-main
           contentType: rpm
+        - name: abseil-cpp-main
+          contentType: rpm
         - name: acl-main
           contentType: rpm
         - name: alsa-lib-main
