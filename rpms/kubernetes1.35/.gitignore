@@ -68,5 +68,10 @@ newrelease.conf
 /kubernetes-1.35.7.tar.gz
 /kubernetes-1.35.8-vendor.tar.bz2
 /kubernetes-1.35.8.tar.gz
+<<<<<<< HEAD
+/kubernetes-1.35.9-vendor.tar.bz2
+/kubernetes-1.35.9.tar.gz
+=======
 kubernetes-1.35.9-vendor.tar.bz2
 kubernetes-1.35.9.tar.gz
+>>>>>>> hummingbird-local
