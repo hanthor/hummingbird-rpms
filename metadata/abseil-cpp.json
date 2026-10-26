@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "f44",
     "git_url": "https://src.fedoraproject.org/rpms/abseil-cpp.git",
-    "release": "1",
     "sha": "b9eac243270f811c1c0d594b41c1669f3025a7a4"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 20260817.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 115295,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/abseil/abseil-cpp",
-  "version": "20260107.1"
+  "version": "20260817.0"
 }
