@@ -2079,6 +2079,10 @@
         "^rpms/spdlog/",
         "^test/rpms/spdlog\\.yml$"
       ],
+      "spiffe-helper--rpms": [
+        "^rpms/spiffe\\-helper/",
+        "^test/rpms/spiffe\\-helper\\.yml$"
+      ],
       "spire1-14--rpms": [
         "^rpms/spire1\\.14/",
         "^test/rpms/spire1\\.14\\.yml$"

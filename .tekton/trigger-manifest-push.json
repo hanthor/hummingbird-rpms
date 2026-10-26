@@ -1559,6 +1559,9 @@
       "spdlog--rpms": [
         "^rpms/spdlog/"
       ],
+      "spiffe-helper--rpms": [
+        "^rpms/spiffe\\-helper/"
+      ],
       "spire1-14--rpms": [
         "^rpms/spire1\\.14/"
       ],
