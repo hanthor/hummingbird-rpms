@@ -1,0 +1,42 @@
+Subject: [PATCH] test: isolate closed-socket errno check
+
+Parallel tests can reuse the closed descriptor before the seccomp-mediated
+listen call, changing the observed errno. Run this assertion in a fresh test
+process while preserving the strict EBADF expectation, using the subprocess-
+isolation pattern from openshell-listener-lifetime-test-isolation.patch.
+
+Upstream: https://github.com/NVIDIA/OpenShell/tree/v0.1.5
+---
+diff --git a/crates/openshell-sandbox/src/network_broker.rs b/crates/openshell-sandbox/src/network_broker.rs
+index faaff92..429c4c6 100644
+--- a/crates/openshell-sandbox/src/network_broker.rs
++++ b/crates/openshell-sandbox/src/network_broker.rs
+@@ -2174,6 +2174,28 @@ mod tests {
+     #[test]
+     #[allow(unsafe_code)]
+     fn closed_workload_socket_reports_bad_descriptor() {
++        const CHILD: &str = "OPENSHELL_CLOSED_SOCKET_TEST_CHILD";
++
++        if std::env::var_os(CHILD).is_none() {
++            let output = std::process::Command::new(std::env::current_exe().unwrap())
++                .args([
++                    "--exact",
++                    "network_broker::tests::closed_workload_socket_reports_bad_descriptor",
++                    "--nocapture",
++                    "--test-threads=1",
++                ])
++                .env(CHILD, "1")
++                .output()
++                .expect("run isolated closed-socket test");
++            assert!(
++                output.status.success(),
++                "isolated closed-socket test failed: {}\n{}",
++                String::from_utf8_lossy(&output.stdout),
++                String::from_utf8_lossy(&output.stderr),
++            );
++            return;
++        }
++
+         let (launcher, listener) = crate::linux::workload_launcher::start().unwrap();
+         let _broker = NetworkBroker::start_for_test(listener).unwrap();
+         let error = launcher
