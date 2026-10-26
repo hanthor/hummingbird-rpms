@@ -1685,6 +1685,10 @@
         "^rpms/procps\\-ng/",
         "^test/rpms/procps\\-ng\\.yml$"
       ],
+      "prometheus-blackbox-exporter--rpms": [
+        "^rpms/prometheus\\-blackbox\\-exporter/",
+        "^test/rpms/prometheus\\-blackbox\\-exporter\\.yml$"
+      ],
       "prometheus3-13--rpms": [
         "^rpms/prometheus3\\.13/",
         "^test/rpms/prometheus3\\.13\\.yml$"

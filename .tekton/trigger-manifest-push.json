@@ -1265,6 +1265,9 @@
       "procps-ng--rpms": [
         "^rpms/procps\\-ng/"
       ],
+      "prometheus-blackbox-exporter--rpms": [
+        "^rpms/prometheus\\-blackbox\\-exporter/"
+      ],
       "prometheus3-13--rpms": [
         "^rpms/prometheus3\\.13/"
       ],

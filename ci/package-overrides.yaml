@@ -61,6 +61,9 @@ bash:
 bind:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+prometheus-blackbox-exporter:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 bootc:
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
