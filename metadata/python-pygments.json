@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-pygments.git",
-    "release": "5",
-    "sha": "95c1da99e394a3f5368777ad62f98fdf8fdba801"
+    "release": "1",
+    "sha": "bbf5642ceaa1ada05d62c1a20688fcaf6f626e85"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/pygments/pygments",
-  "version": "2.20.0"
+  "version": "2.21.0"
 }

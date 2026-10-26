@@ -4,8 +4,8 @@
 %bcond tests 1
 
 Name:           python-pygments
-Version:        2.20.0
-Release:        5.1%{?dist}
+Version:        2.21.0
+Release:        1%{?dist}
 Summary:        Syntax highlighting engine written in Python
 
 License:        BSD-2-Clause
