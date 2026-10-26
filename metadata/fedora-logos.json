@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/fedora-logos.git",
-    "release": "6",
-    "sha": "861bd4abf5767da1a178d081dda9720ad1d67e88"
+    "release": "1",
+    "sha": "f63afff414a6d343ec1a0d0c2d006531f55e0a30"
   },
   "modification_status": "clean",
   "upstream_repo": "https://src.fedoraproject.org/rpms/fedora-logos",
-  "version": "42.0.1"
+  "version": "46.0.0"
 }
