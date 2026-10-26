@@ -4176,6 +4176,85 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- coredns ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/coredns/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: coredns-main
+    pipelines.appstudio.openshift.io/type: build
+  name: coredns-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/coredns-main:{{revision}}
+    - name: package-name
+      value: coredns
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "coredns.spec"
+    - name: monorepo-subdir
+      value: "rpms/coredns"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-coredns-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- coreutils ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
