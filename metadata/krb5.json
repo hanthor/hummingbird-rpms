@@ -3,8 +3,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/krb5.git",
-    "release": "10",
-    "sha": "e2fb2112fee3ef99bc6d49d4319fbe5a0bfe21b4"
+    "release": "11",
+    "sha": "f50fddae606929218cdb9f8a9de170664202174f"
   },
   "modification_reason": "Backport CVE-2026-107778 CVE-2026-107708",
   "modification_status": "modified",
