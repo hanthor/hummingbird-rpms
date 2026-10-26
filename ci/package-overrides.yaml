@@ -650,6 +650,9 @@ rabbitmq-server4.3:
 rekor:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+rsync:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 ruby3.3:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:

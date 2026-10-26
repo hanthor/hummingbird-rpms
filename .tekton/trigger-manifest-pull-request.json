@@ -1965,6 +1965,10 @@
         "^rpms/rpm\\-mpi\\-hooks/",
         "^test/rpms/rpm\\-mpi\\-hooks\\.yml$"
       ],
+      "rsync--rpms": [
+        "^rpms/rsync/",
+        "^test/rpms/rsync\\.yml$"
+      ],
       "ruby3-3--rpms": [
         "^rpms/ruby3\\.3/",
         "^test/rpms/ruby3\\.3\\.yml$"
