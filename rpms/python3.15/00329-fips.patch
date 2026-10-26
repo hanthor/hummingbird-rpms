@@ -680,7 +680,7 @@ Date: Mon, 26 Aug 2019 19:39:48 +0200
 Subject: [PATCH 5/7] Guard against Python HMAC in FIPS mode
 
 Origin: https://gitlab.com/redhat/rhel/rpms/python3.14/-/blob/d8c83ce1648d668492c6ed478e411e7edbc4b7c4/00329-fips.patch
-Rebased-for: CPython v3.15.0 (7212e49729737c864e3f17b69ed83c8443c75acf)
+Rebased-for: CPython v3.15.2 (5e58eaad7c58df58dfa8ea549c87996e01dd1077)
 
 ---
  Lib/hmac.py           | 13 +++++++++----
@@ -719,15 +719,13 @@ index e0c040b..be2e485 100644
          if _hmac and isinstance(digestmod, str):
              try:
                  self._init_builtin_hmac(key, msg, digestmod)
-@@ -116,6 +118,9 @@ def _init_builtin_hmac(self, key, msg, digestmod):
+@@ -137,4 +139,7 @@ def _init_builtin_hmac(self, key, msg, digestmod):
          self.block_size = self._hmac.block_size
  
      def _init_old(self, key, msg, digestmod):
 +        if _hashopenssl is not None and _hashopenssl.get_fips_mode():
 +            # In FIPS mode, use OpenSSL anyway: raise the appropriate error
 +            return self._init_openssl_hmac(key, msg, digestmod)
-         import warnings
- 
          digest_cons = _get_digest_constructor(digestmod)
 diff --git a/Lib/test/test_hmac.py b/Lib/test/test_hmac.py
 index c43188c..44a50f4 100644
@@ -757,9 +755,15 @@ index c43188c..44a50f4 100644
  @hashlib_helper.requires_hashdigest('sha256')
  class PythonCopyTestCase(CopyBaseTestCase, unittest.TestCase):
  
-@@ -1502,6 +1505,11 @@ def update(self, v):
+@@ -1500,12 +1503,17 @@ def update(self, v):
+             def update(self, v):
+                 self._x.update(v)
              def digest(self):
                  return self._x.digest()
+             def copy(self):
+                 h = MockCrazyHash()
+                 h._x = self._x.copy()
+                 return h
  
 +        if get_fips_mode():
 +            with self.assertRaises(ValueError):
@@ -769,10 +773,7 @@ index c43188c..44a50f4 100644
          with warnings.catch_warnings():
              warnings.simplefilter('error', RuntimeWarning)
              with self.assertRaises(RuntimeWarning):
-@@ -1513,6 +1521,7 @@ def digest(self):
-                 hmac.HMAC(b'a', b'b', digestmod=MockCrazyHash)
-                 self.fail('Expected warning about small block_size')
- 
+@@ -1535,3 +1543,4 @@
 +    @unittest.skipIf(get_fips_mode(), "No builtin constructors in FIPS mode")
      @hashlib_helper.requires_hashdigest('sha256')
      def test_with_fallback(self):
