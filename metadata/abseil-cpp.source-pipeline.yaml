@@ -1,0 +1,28 @@
+fetch:
+  - type: spec-source
+    index: 0
+
+# Read the ABI from the release archive and update the tracked spec.
+post:
+  - type: run
+    artifacts: ["abseil-cpp-${VERSION}.tar.gz"]
+    command:
+      - "bash"
+      - "-c"
+      - |
+        set -euo pipefail
+        lib_version=$(tar -xOf "abseil-cpp-${VERSION}.tar.gz" "abseil-cpp-${VERSION}/CMakeLists.txt" |
+          sed -nE 's/^[[:space:]]*set\(ABSL_SOVERSION[[:space:]]+"([0-9]+\.[0-9]+\.[0-9]+)"[[:space:]]*\)[[:space:]]*$/\1/p')
+        if [[ ! "$lib_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Expected exactly one numeric ABSL_SOVERSION in CMakeLists.txt" >&2
+          exit 1
+        fi
+        if [[ $(grep -cE '^%global[[:space:]]+lib_version[[:space:]]+' "${SPEC_FILE}") != 1 ]]; then
+          echo "Expected exactly one lib_version macro in the Abseil spec" >&2
+          exit 1
+        fi
+        sed -Ei "s/^(%global[[:space:]]+lib_version[[:space:]]+).*/\1${lib_version}/" "${SPEC_FILE}"
+
+publish:
+  files:
+    - "abseil-cpp-${VERSION}.tar.gz"

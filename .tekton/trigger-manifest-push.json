@@ -17,6 +17,9 @@
       "abattis-cantarell-fonts--rpms": [
         "^rpms/abattis\\-cantarell\\-fonts/"
       ],
+      "abseil-cpp--rpms": [
+        "^rpms/abseil\\-cpp/"
+      ],
       "acl--rpms": [
         "^rpms/acl/"
       ],
