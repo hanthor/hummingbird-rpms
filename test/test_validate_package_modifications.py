@@ -91,6 +91,25 @@ Test
 
 
 #
+# Tests — superseded historical package commits
+#
+
+
+def test_superseded_qt6_cve_backport_does_not_mark_package_modified(validator, monkeypatch) -> None:
+    """The Qt 6.12 update supersedes the historical CVE-2026-15037 backport."""
+    commit = '376c36ccdf1f4d8b2ec652575e77a79c7878e97f'
+
+    def fake_run_git(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args, 0, f'{commit} Backport CVE-2026-15037 fix to qt6-qtbase\n', ''
+        )
+
+    monkeypatch.setattr(validator, 'run_git', fake_run_git)
+
+    assert validator.check_git_history_state('qt6-qtbase', 'sync-sha') == (True, None)
+
+
+#
 # Tests — track_upstream type validation
 #
 
