@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/chrony.git",
-    "release": "2",
-    "sha": "9de8c668e8f195bf349c1637962dd537a3098d1e"
+    "release": "3",
+    "sha": "558f4b849661bf67a209fa750e00cffc04dc584a"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 8810,
