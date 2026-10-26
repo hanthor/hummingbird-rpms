@@ -99,6 +99,16 @@ Patch21:        grafana-qs-6.16.1.patch
 # santhosh-tekuri/jsonschema/v6 6.0.2 -> 6.0.3) for CVE-2026-100352,
 # CVE-2026-100353, CVE-2026-100354.
 Patch22:        grafana-kin-openapi-0.149.0-cve.patch
+# Generated against the post-Patch21 lockfile (grafana-qs-6.16.1.patch),
+# so this comes after the yarn CVE patch series. Bumps vendored fast-uri
+# 3.1.8 -> 3.1.9 for CVE-2026-110306, CVE-2026-110180, CVE-2026-110095,
+# CVE-2026-110725.
+Patch23:        grafana-fast-uri-3.1.9-cve.patch
+# Generated against the post-Patch23 lockfile
+# (grafana-fast-uri-3.1.9-cve.patch), so this comes after it. Bumps
+# vendored body-parser 1.20.3 -> 1.20.9 and 2.2.1 -> 2.4.0 for
+# CVE-2026-111181.
+Patch24:        grafana-body-parser-cve.patch
 
 # The bundled @swc/core 1.15.3 has no published linux-s390x native build
 # (s390x support was only added in @swc/core 1.15.21), so the frontend
@@ -820,7 +830,8 @@ Provides:       bundled(npm(better-opn)) = 3.0.2
 Provides:       bundled(npm(binary-extensions)) = 2.2.0
 Provides:       bundled(npm(bl)) = 4.1.0
 Provides:       bundled(npm(bl)) = 5.1.0
-Provides:       bundled(npm(body-parser)) = 2.2.1
+Provides:       bundled(npm(body-parser)) = 1.20.9
+Provides:       bundled(npm(body-parser)) = 2.4.0
 Provides:       bundled(npm(boolbase)) = 1.0.0
 Provides:       bundled(npm(brace)) = 0.11.1
 Provides:       bundled(npm(brace-expansion)) = 1.1.18
@@ -921,6 +932,7 @@ Provides:       bundled(npm(constant-case)) = 3.0.4
 Provides:       bundled(npm(constants-browserify)) = 1.0.0
 Provides:       bundled(npm(content-disposition)) = 1.0.0
 Provides:       bundled(npm(content-type)) = 1.0.5
+Provides:       bundled(npm(content-type)) = 2.1.0
 Provides:       bundled(npm(convert-source-map)) = 1.9.0
 Provides:       bundled(npm(convert-source-map)) = 2.0.0
 Provides:       bundled(npm(cookie)) = 0.7.2
@@ -1126,7 +1138,7 @@ Provides:       bundled(npm(fast-json-patch)) = 3.1.1
 Provides:       bundled(npm(fast-json-stable-stringify)) = 2.1.0
 Provides:       bundled(npm(fast-safe-stringify)) = 2.1.1
 Provides:       bundled(npm(fast-shallow-equal)) = 1.0.0
-Provides:       bundled(npm(fast-uri)) = 3.1.8
+Provides:       bundled(npm(fast-uri)) = 3.1.9
 Provides:       bundled(npm(fast_array_intersect)) = 1.1.0
 Provides:       bundled(npm(fastest-stable-stringify)) = 2.0.2
 Provides:       bundled(npm(fastq)) = 1.17.1
@@ -1259,6 +1271,7 @@ Provides:       bundled(npm(i18next-pseudo)) = 2.2.1
 Provides:       bundled(npm(iconv-lite)) = 0.4.24
 Provides:       bundled(npm(iconv-lite)) = 0.6.3
 Provides:       bundled(npm(iconv-lite)) = 0.7.0
+Provides:       bundled(npm(iconv-lite)) = 0.7.3
 Provides:       bundled(npm(icss-utils)) = 5.1.0
 Provides:       bundled(npm(ieee754)) = 1.2.1
 Provides:       bundled(npm(ignore)) = 5.3.2
@@ -1861,9 +1874,7 @@ Provides:       bundled(npm(should-format)) = 3.0.3
 Provides:       bundled(npm(should-type)) = 1.4.0
 Provides:       bundled(npm(should-type-adaptors)) = 1.1.0
 Provides:       bundled(npm(should-util)) = 1.0.1
-Provides:       bundled(npm(side-channel)) = 1.1.0
 Provides:       bundled(npm(side-channel)) = 1.1.1
-Provides:       bundled(npm(side-channel-list)) = 1.0.0
 Provides:       bundled(npm(side-channel-list)) = 1.0.1
 Provides:       bundled(npm(side-channel-map)) = 1.0.1
 Provides:       bundled(npm(side-channel-weakmap)) = 1.0.2
@@ -2003,6 +2014,7 @@ Provides:       bundled(npm(type-fest)) = 0.8.1
 Provides:       bundled(npm(type-fest)) = 3.13.1
 Provides:       bundled(npm(type-fest)) = 4.41.0
 Provides:       bundled(npm(type-is)) = 2.0.1
+Provides:       bundled(npm(type-is)) = 2.1.0
 Provides:       bundled(npm(type-of)) = 2.0.1
 Provides:       bundled(npm(typed-array-buffer)) = 1.0.3
 Provides:       bundled(npm(typedarray-to-buffer)) = 3.1.5
