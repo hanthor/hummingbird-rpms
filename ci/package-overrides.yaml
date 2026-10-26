@@ -711,6 +711,9 @@ scap-security-guide:
 snappy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+spiffe-helper:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 spire1.14:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

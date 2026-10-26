@@ -1111,6 +1111,8 @@ spec:
           contentType: rpm
         - name: spdlog-main
           contentType: rpm
+        - name: spiffe-helper-main
+          contentType: rpm
         - name: spire1-14-main
           contentType: rpm
         - name: spire1-15-main
