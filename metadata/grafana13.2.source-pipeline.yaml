@@ -38,6 +38,9 @@ transform:
 # exception for the new hash.
 accepted-checksums:
   - file: "grafana-yarn-cache-13.2.4.tar.bz2"
+    checksum: "369b5fa87967aa36fe32278feda4d06213f89662786e188201e36a4b7b52ba639c8ffd647cd1142052b8106bdfdfe2fa431328289606d88f0dbdc64f5b08d4a1"
+    reason: "grafana-body-parser-fast-uri-cve.patch bumps body-parser 2.2.1->2.4.0 (CVE-2026-111181) and fast-uri 3.1.8->3.1.9 (CVE-2026-110306/110180/110095/110725); yarn cache regenerated without stale zips"
+  - file: "grafana-yarn-cache-13.2.4.tar.bz2"
     checksum: "a94e3cc9e3274ddb2437e18e843061ece208133fc9b9476c7e1c6b2b2017bac6b0079d07daaf10c868c62730377bd5744d3b19651185b97a56dae4322b2ce10a"
     reason: "grafana-storybook-follow-redirects-cve.patch bumps storybook 10.3.6->10.6.2 (CVE-2026-114125/114126) and follow-redirects 1.16.0->1.16.1 (CVE-2026-111755/111756); yarn cache regenerated without stale zips"
   - file: "grafana-13.2.4-vendor.tar.bz2"
