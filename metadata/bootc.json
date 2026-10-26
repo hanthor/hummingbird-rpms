@@ -7,6 +7,6 @@
   },
   "modification_reason": "Historical commit missing Upstream trailer",
   "modification_status": "modified",
-  "upstream_repo": "https://github.com/containers/bootc",
+  "upstream_repo": "https://github.com/bootc-dev/bootc",
   "version": "1.17.1"
 }
