@@ -34,7 +34,15 @@ def test_module_only_vendoring_has_no_workspace_pre_commands() -> None:
     ],
 )
 def test_security_bump_is_retained_in_both_modules(prefix: list[str]) -> None:
-    commands = [command for command in _pre_commands() if command[:len(prefix)] == prefix]
+    # Filter by the go-openapi/swag package so additional independent root-module
+    # go get bumps (e.g. klauspost/compress for CVE-2026-116591) do not break this
+    # guard, which only protects the CVE-2026-93450 swag bump in both modules.
+    commands = [
+        command
+        for command in _pre_commands()
+        if command[:len(prefix)] == prefix
+        and any(arg.startswith("github.com/go-openapi/swag@") for arg in command[len(prefix):])
+    ]
     assert len(commands) == 1
     assert "github.com/go-openapi/swag@v0.27.1" in commands[0][len(prefix):]
     assert "github.com/go-openapi/swag/pools@v0.27.1" in commands[0][len(prefix):]
