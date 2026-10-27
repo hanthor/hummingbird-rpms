@@ -16,6 +16,8 @@ pre_commands = [
   ["go", "get", "github.com/mattn/go-sqlite3"],
   # CVE-2026-49834
   ["go", "get", "github.com/sigstore/sigstore-go@v1.2.2"],
+  # CVE-2026-116591
+  ["go", "get", "github.com/klauspost/compress@v1.20.3"],
 ]
 post_commands = [
   # Copy missing license files that go mod vendor doesn't include

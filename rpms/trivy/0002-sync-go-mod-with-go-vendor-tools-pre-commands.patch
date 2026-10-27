@@ -2,7 +2,8 @@ Sync go.mod/go.sum with the generated 0.76.1 vendor archive.
 
 Regenerated from the checksum-verified source and vendor archives in sources.
 Match the vendor archive's module files exactly, including the system-linked
-SQLite backend selected by go-vendor-tools.toml's pre_commands.
+SQLite backend selected by go-vendor-tools.toml's pre_commands and the
+klauspost/compress v1.20.3 bump for CVE-2026-116591.
 
 --- a/go.mod
 +++ b/go.mod
@@ -22,6 +23,15 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
  )
  
  require (
+@@ -312,7 +312,7 @@
+ 	github.com/josephburnett/jd/v2 v2.3.0 // indirect
+ 	github.com/json-iterator/go v1.1.12 // indirect
+ 	github.com/kevinburke/ssh_config v1.2.0 // indirect
+-	github.com/klauspost/compress v1.20.1 // indirect
++	github.com/klauspost/compress v1.20.3 // indirect
+ 	github.com/klauspost/pgzip v1.2.6 // indirect
+ 	github.com/knqyf263/labeler v0.0.0-20200423181506-7a6e545148c3 // indirect
+ 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 @@ -353,7 +353,6 @@
  	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
  	github.com/morikuni/aec v1.1.0 // indirect
@@ -62,7 +72,16 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
  github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=
  github.com/kevinburke/ssh_config v1.2.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
  github.com/keybase/go-keychain v0.0.1 h1:way+bWYa6lDppZoZcgMbYsvC7GxljxrskdNInRtuthU=
-@@ -716,8 +718,8 @@
+@@ -629,6 +631,8 @@
+ github.com/klauspost/compress v1.4.1/go.mod h1:RyIbtBH6LamlWaDj8nUwkbUhJ87Yi3uG0guNDohfE1A=
+ github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=
+ github.com/klauspost/compress v1.20.1/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
++github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=
++github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+ github.com/klauspost/cpuid v1.2.0 h1:NMpwD2G9JSFOE1/TJjGSo5zG7Yb2bTe7eq1jH+irmeE=
+ github.com/klauspost/cpuid v1.2.0/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
+ github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
+@@ -716,8 +720,8 @@
  github.com/mattn/go-shellwords v1.0.16 h1:RRxAaRzU1YbzOSCj9NJqg2/VIbSWv0dnPoD3EwE8kxI=
  github.com/mattn/go-shellwords v1.0.16/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
  github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
@@ -73,7 +92,7 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
  github.com/miekg/dns v1.1.72 h1:vhmr+TF2A3tuoGNkLDFK9zi36F2LS+hKTRW0Uf8kbzI=
  github.com/miekg/dns v1.1.72/go.mod h1:+EuEPhdHOsfk6Wk5TT2CzssZdqkmFhf8r+aVyDEToIs=
  github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
-@@ -774,8 +776,6 @@
+@@ -774,8 +778,6 @@
  github.com/morikuni/aec v1.1.0/go.mod h1:xDRgiq/iw5l+zkao76YTKzKttOp2cwPEne25HDkJnBw=
  github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
  github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
@@ -82,7 +101,7 @@ SQLite backend selected by go-vendor-tools.toml's pre_commands.
  github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
  github.com/nikolalohinski/gonja/v2 v2.9.1 h1:ZDG0zYs5oR3fsqQFAlkaWiWYxPOBrCUK9k2IsRZhMa8=
  github.com/nikolalohinski/gonja/v2 v2.9.1/go.mod h1:UIzXPVuOsr5h7dZ5DUbqk3/Z7oFA/NLGQGMjqT4L2aU=
-@@ -1243,34 +1243,26 @@
+@@ -1243,34 +1245,26 @@
  k8s.io/kubectl v0.37.0/go.mod h1:RSeEl8e/yqDx6srG8Azr0uAtVPNIZljA0PNh9HCBcdg=
  k8s.io/utils v0.0.0-20260626114624-be93311217bd h1:Ea7fgQ5we8Y9T0OX5o0dAHzQOBRI07D/dEYRaB9ZZEs=
  k8s.io/utils v0.0.0-20260626114624-be93311217bd/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
