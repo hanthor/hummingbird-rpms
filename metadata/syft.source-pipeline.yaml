@@ -3,6 +3,22 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/syft/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-11249 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "syft-1.55.0.tar.gz"
+    checksum: "931103b9aa804dae476f9203b9c7921d398cb56041835dd6dd3aa09bcd2ecb0566f1bad10f32cc2810dda1e73228d32eaa51a574b1a47879e8dfc2efa982bb64"
+    reason: "HUM-11249: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v1.55.0."
+  - file: "syft-1.55.0-vendor.tar.bz2"
+    checksum: "ef77f478abbf278355309ebaaffbdfe689fa078e9d0f1a6cdc634854db5ceb2dfae64bc74612352f04c15cf01b831d09ae54243361f7e206f358f8d3838343db"
+    reason: "HUM-11249: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
