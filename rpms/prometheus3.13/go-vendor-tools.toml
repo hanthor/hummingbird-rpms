@@ -29,6 +29,9 @@ pre_commands = [
    "github.com/go-openapi/swag/stringutils@v0.27.1",
    "github.com/go-openapi/swag/typeutils@v0.27.1",
    "github.com/go-openapi/swag/yamlutils@v0.27.1"],
+  # CVE-2026-116591: bump klauspost/compress to v1.20.2 (zstd DoS via crafted
+  # two-block frame). Root module only; remote_storage does not depend on it.
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
   # The source pipeline and RPM build use GOWORK=off. Gorget tidies and vendors
   # the root module after these bumps; do not run workspace-only commands here.
 ]

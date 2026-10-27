@@ -38,3 +38,8 @@ post:
       - |
         set -euo pipefail
         ./generate-bundled-npm-provides.py "${VERSION}"
+
+accepted-checksums:
+  - file: "prometheus-3.13.5-vendor.tar.bz2"
+    checksum: "054cca226d3360f7b281f411f5587f13f1928e1b4fe6bfeac0a16c2458b4cab93c196a4074a69b012f969e7f62f56bfad8daf6d184641c0ada496ed1d325215f"
+    reason: "go-vendor-tools.toml pre_commands bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591; vendor archive regenerated to include the patched dependency"
