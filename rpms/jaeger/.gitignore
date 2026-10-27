@@ -1,5 +1,11 @@
 /jaeger-*.tar.gz
 /jaeger-*-vendor.tar.bz2
 /jaeger-ui-assets-*.tar.gz
-jaeger-2.21.0.tar.gz
+jaeger-2.20.0.tar.gz
+jaeger-2.20.0-vendor.tar.bz2
 jaeger-2.21.0-vendor.tar.bz2
+jaeger-2.21.0.tar.gz
+jaeger-ui-pnpm-cache-2.21.0.tar.bz2
+jaeger-2.22.0-vendor.tar.bz2
+jaeger-2.22.0.tar.gz
+jaeger-ui-pnpm-cache-2.22.0.tar.bz2

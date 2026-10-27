@@ -3,9 +3,7 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "jaeger-${VERSION}.tar.gz"
-  - type: vendor
-    ecosystem: go
-    archive_name: "jaeger-${VERSION}-vendor.tar.bz2"
+    submodules: full
 
 toolchain:
   - name: node
@@ -13,83 +11,20 @@ toolchain:
     minimum-version: "24.16.0"
 
 transform:
-  - type: run
-    path: "."
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        root="$(pwd)"
+  - type: vendor
+    ecosystem: go
+    archive_name: "jaeger-${VERSION}-vendor.tar.bz2"
+  - type: vendor
+    ecosystem: pnpm
+    modules:
+      - path: jaeger-ui
+    archive_name: "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
+    offline-cache: true
+    metadata-packages:
+      - "@adobe/css-tools"
 
-        # The Jaeger UI lives in a separate repo, pinned as a submodule --
-        # resolve its commit for this tag rather than assuming a matching
-        # jaeger-ui release tag exists.
-        ui_workdir="$(mktemp -d)"
-        trap 'rm -rf "${ui_workdir}"' EXIT
-        git clone --quiet --depth 1 --filter=blob:none --no-checkout \
-          --branch "v${VERSION}" https://github.com/jaegertracing/jaeger.git \
-          "${ui_workdir}/jaeger-git"
-        ui_commit="$(git -C "${ui_workdir}/jaeger-git" ls-tree HEAD jaeger-ui | \
-          awk '$1 == "160000" && $2 == "commit" { print $3 }')"
-        if [[ ! "${ui_commit}" =~ ^[0-9a-f]{40}$ ]]; then
-          echo "Could not resolve Jaeger UI submodule for v${VERSION}" >&2
-          exit 1
-        fi
-
-        ui_archive="jaeger-ui-${VERSION}.tar.gz"
-        curl -fSL -o "${ui_archive}" \
-          "https://github.com/jaegertracing/jaeger-ui/archive/${ui_commit}/${ui_archive}"
-
-        mkdir "${root}/.jaeger-ui-src"
-        tar -xzf "${ui_archive}" -C "${root}/.jaeger-ui-src" --strip-components=1
-        patch -d "${root}/.jaeger-ui-src" -p1 < "${PACKAGE_DIR}/jaeger-ui-pnpm-cache.patch"
-
-        # Follow the exact pnpm version selected by Jaeger UI. pnpm 12's
-        # generated .bin/pnpm wrapper requires a lifecycle script, which is
-        # intentionally disabled here, so invoke its JavaScript entry point.
-        pnpm_spec="$(node -e '
-        const declared = require(process.argv[1]).packageManager
-        const spec = declared?.split("+")[0]
-        if (!/^pnpm@[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(spec)) {
-          console.error(`Invalid or missing pnpm packageManager declaration: ${declared}`)
-          process.exit(1)
-        }
-        process.stdout.write(spec)
-        ' "${root}/.jaeger-ui-src/package.json")"
-        pnpm_version="${pnpm_spec#pnpm@}"
-        pnpm_major="${pnpm_version%%.*}"
-        if ((pnpm_major >= 12)); then
-          # npm filters pnpm's optional native executable to the host
-          # architecture. Cache both Hummingbird build targets explicitly.
-          npm install --prefix "${root}/.pnpm" --ignore-scripts --force \
-            "${pnpm_spec}" \
-            "@pnpm/exe.linux-x64@${pnpm_version}" \
-            "@pnpm/exe.linux-arm64@${pnpm_version}"
-        else
-          npm install --prefix "${root}/.pnpm" --ignore-scripts "${pnpm_spec}"
-        fi
-        pnpm_mjs="${root}/.pnpm/node_modules/pnpm/bin/pnpm.mjs"
-        pnpm_wrapper="${root}/.pnpm/node_modules/.bin/pnpm"
-        if [[ -f "${pnpm_mjs}" ]]; then
-          run_pnpm() { node "${pnpm_mjs}" "$@"; }
-        elif [[ -x "${pnpm_wrapper}" ]]; then
-          run_pnpm() { "${pnpm_wrapper}" "$@"; }
-        else
-          echo "pnpm entry point not found: ${pnpm_mjs} or ${pnpm_wrapper}" >&2
-          exit 1
-        fi
-        pnpm_store="${root}/.pnpm-store"
-        # Preserve registry metadata and verified lockfile results for offline builds.
-        export XDG_CACHE_HOME="${root}/.pnpm-cache"
-        (cd "${root}/.jaeger-ui-src" && run_pnpm fetch --store-dir "${pnpm_store}")
-        tar -cjf "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2" -C "${root}" .pnpm .pnpm-store .pnpm-cache
-    outputs:
-      - "jaeger-ui-${VERSION}.tar.gz"
-      - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
-
-# Same-version regeneration adds pnpm's registry and lockfile-verification cache.
-accepted-checksums:
-  - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
-    checksum: "fb05150fc12d3e3f80cdf8381c05f08c3823678838d4116ca4889f3a85a3d6467a3f15cbc149d3aa166ac7b3410512faa291289cbf9825cd8c2b931ba7af94fa"
-    reason: "Regenerated offline cache with registry metadata and verified-lockfile results required by pnpm 12; dependency versions and package contents are unchanged."
+publish:
+  files:
+    - "jaeger-${VERSION}.tar.gz"
+    - "jaeger-${VERSION}-vendor.tar.bz2"
+    - "jaeger-ui-pnpm-cache-${VERSION}.tar.bz2"
