@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "29d3064f2cc9abf8b7399e6fc0f373c3c9411ea8"
   },
-  "modification_reason": "backport fix for CVE-2026-15792, CVE-2026-56852, CVE-2026-17106",
+  "modification_reason": "backport fix for CVE-2026-15792, CVE-2026-56852, CVE-2026-17106, CVE-2026-116591",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/containers/podman",
   "version": "6.1.4"
