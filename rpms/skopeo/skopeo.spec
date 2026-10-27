@@ -43,7 +43,7 @@ Epoch: %{conditional_epoch}
 Version: 1.24.1
 # The `AND` needs to be uppercase in the License for SPDX compatibility
 License: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 %if %{defined golang_arches_future}
 ExclusiveArch: %{golang_arches_future}
 %else
@@ -53,6 +53,7 @@ Summary: Inspect container images and repositories on registries
 URL: https://github.com/containers/%{name}
 # Tarball fetched from upstream
 Source0: %{url}/archive/v%{version}.tar.gz
+Patch0: 0001-Bump-klauspost-compress-to-v1.20.3.patch
 BuildRequires: %{_bindir}/go-md2man
 %if %{defined build_with_btrfs}
 BuildRequires: btrfs-progs-devel
@@ -99,7 +100,7 @@ Recommends: fakeroot
 This package installs system test dependencies for %{name}
 
 %prep
-%autosetup -Sgit %{name}-%{version}
+%autosetup -Sgit -p1 %{name}-%{version}
 # The %%install stage should not rebuild anything but only install what's
 # built in the %%build stage. So, remove any dependency on build targets.
 sed -i 's/^install-binary: bin\/%{name}.*/install-binary:/' Makefile

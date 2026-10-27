@@ -5,7 +5,8 @@
     "release": "1",
     "sha": "701428fd2275f8e6aef4346eff8decec78239d78"
   },
-  "modification_status": "clean",
+  "modification_reason": "Backport CVE-2026-116591",
+  "modification_status": "modified",
   "upstream_repo": "https://github.com/containers/skopeo",
   "version": "1.24.1"
 }
