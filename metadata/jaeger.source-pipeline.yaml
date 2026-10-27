@@ -93,3 +93,6 @@ accepted-checksums:
   - file: "jaeger-ui-pnpm-cache-2.21.0.tar.bz2"
     checksum: "fb05150fc12d3e3f80cdf8381c05f08c3823678838d4116ca4889f3a85a3d6467a3f15cbc149d3aa166ac7b3410512faa291289cbf9825cd8c2b931ba7af94fa"
     reason: "Regenerated offline cache with registry metadata and verified-lockfile results required by pnpm 12; dependency versions and package contents are unchanged."
+  - file: "jaeger-2.21.0-vendor.tar.bz2"
+    checksum: "9dd0c98c6456373fec2191db8cc087450db12ebedcaebf7d29dbcb9355208a596d6f8e9a499d33a913a7ac31dbf404e55b697478566f90cb24e2763946ff4367"
+    reason: "go-vendor-tools.toml pre_commands bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591; vendor archive regenerated to include the patched dependency"

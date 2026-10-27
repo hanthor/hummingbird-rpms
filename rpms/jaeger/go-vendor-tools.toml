@@ -1,3 +1,9 @@
+[archive]
+# CVE-2026-116591: keep in sync with CVE-2026-116591-klauspost-compress.patch.
+pre_commands = [
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
+]
+
 [licensing]
 detector = "askalono"
 [[licensing.licenses]]
