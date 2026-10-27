@@ -9,7 +9,7 @@ Version:                2.21.0
 
 
 Name:           jaeger
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        CNCF Jaeger, a Distributed Tracing Platform
 # pnpm 12 provides native executables only for x86_64 and aarch64.
 ExcludeArch:    s390x
@@ -26,6 +26,8 @@ Source3:        go-vendor-tools.toml
 # pnpm CLI, content-addressed store, and registry metadata for offline builds.
 Source6:        jaeger-ui-pnpm-cache-%{version}.tar.bz2
 Source7:        jaeger-ui-pnpm-cache.patch
+# CVE-2026-116591: sync go.mod/go.sum with vendor archive klauspost/compress v1.20.2 bump
+Patch0:         CVE-2026-116591-klauspost-compress.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  nodejs24
