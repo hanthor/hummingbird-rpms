@@ -3,6 +3,22 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/grype/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-11270 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "grype-0.121.0.tar.gz"
+    checksum: "71edbcb315c47de9309af5f52594c84226ac65483a3fe88dc6c44a6034807d98a76d52074235065ed024400c3ea5a5490dcda2b702f4cbd7b490eb1785579258"
+    reason: "HUM-11270: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v0.121.0."
+  - file: "grype-0.121.0-vendor.tar.bz2"
+    checksum: "b24d8a6281b27f9cf002b3b4ccf4e9da012d0a36e0ac874f1851e43b7e3149478c5030f96f95e84c42b7f24db394b9963031bf6fb2c62e8142ba71e1fa7bd019"
+    reason: "HUM-11270: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
