@@ -4,10 +4,10 @@
     "git_url": "https://src.fedoraproject.org/rpms/hugo.git",
     "sha": "948282631868ca0a00f8a41baf4f01d99fb732bf"
   },
-  "modification_reason": "Update to upstream version 0.168.0",
+  "modification_reason": "Update to upstream version 0.169.0; remove missing CLAUDE.md from packaged documentation",
   "modification_status": "modified",
   "release_monitoring_project_id": 12959,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/gohugoio/hugo",
-  "version": "0.168.0"
+  "version": "0.169.0"
 }
