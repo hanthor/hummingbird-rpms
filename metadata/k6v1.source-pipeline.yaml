@@ -8,3 +8,22 @@ fetch:
   - type: url
     url: "https://raw.githubusercontent.com/grafana/k6-cloud-openapi-client-go/97c96146fa7c3cf455a330c6c36cc69fdf6a43e5/LICENSE"
     filename: "k6-cloud-openapi-client-go-LICENSE"
+
+transform:
+  - type: vendor
+    ecosystem: go
+    archive_name: "k6-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/k6v1/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-11265 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "k6-1.8.2.tar.gz"
+    checksum: "c5ab34b8e4c875c1e276a7a6d89f178637ba938c9b2b145d7a2d2e6372fc7b65b3b5b7c8fb0e415aa38db2b371113a201d1f5d85192df2286920ab91ed63f7dc"
+    reason: "HUM-11265: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v1.8.2."
+  - file: "k6-1.8.2-vendor.tar.bz2"
+    checksum: "d911a900095ebd73910eed5d3db54aa638bac859e59eba3653d074993ef08a6d8d339ebd11b5e602e42d8fd9cb90d93b7e6468e49dce7be223b9b6d5d5fbfa0a"
+    reason: "HUM-11265: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
