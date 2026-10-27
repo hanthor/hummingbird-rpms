@@ -3,9 +3,16 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/caddy/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
 accepted-checksums:
   - file: "caddy-2.11.6-vendor.tar.bz2"
     checksum: "c7e523a700063021e550ecff4ef0a3e1a3e0a32c5cef6c2662ae7987b01b244c077111d878f0ff7489cffc358e890d6be707248114b7c9609b994756598909d9"
@@ -14,3 +21,11 @@ accepted-checksums:
       the obsolete CVE-2026-81871 pre-command that downgraded OpenTelemetry
       log exporters to v0.21.0. Upstream requires v0.22.0, which includes
       the security fix. The source archive is unchanged.
+  # HUM-11275 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "caddy-2.11.7.tar.gz"
+    checksum: "95d30ed58ed6e51dfeefc23679358b6da93c4bb7925afc1d68bea278aa30d31b169779c874ad4bbc8fba77b69cd772c228c729b80a8af922ec6c2155a749cfff"
+    reason: "HUM-11275: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v2.11.7."
+  - file: "caddy-2.11.7-vendor.tar.bz2"
+    checksum: "55bd82532b377556460999fcc3d5b312ab95d1d04614fcd742fcbc3829c7462f85352ae85f267414b2f5a799644560b4e533e27b5399a5b8df60beb0932599fa"
+    reason: "HUM-11275: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
