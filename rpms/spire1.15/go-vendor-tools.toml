@@ -11,6 +11,8 @@ post_commands = [
 "github.com/sigstore/sigstore-go" = "v1.2.1"
 # CVE-2026-93450
 "github.com/go-openapi/swag" = "v0.27.1"
+# CVE-2026-116591
+"github.com/klauspost/compress" = "v1.20.2"
 
 [licensing]
 detector = "askalono"
