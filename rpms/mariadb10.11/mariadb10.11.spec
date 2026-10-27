@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4.1%{?with_debug:.debug}.4%{?dist}
+Release:          4.1%{?with_debug:.debug}.5%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
