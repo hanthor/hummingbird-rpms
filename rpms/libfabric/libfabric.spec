@@ -10,7 +10,7 @@
 
 Name:           libfabric
 Version:        2.7.0
-Release:        0.2%{?dist}
+Release:        1%{?dist}
 Summary:        Open Fabric Interfaces
 
 License:        BSD-2-Clause OR GPL-2.0-only
