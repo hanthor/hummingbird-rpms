@@ -10,7 +10,7 @@
 
 Name: rabbitmq-server4.3
 Version: 4.3.7
-Release: 0.1%{?dist}
+Release: 0.2%{?dist}
 Summary: The RabbitMQ server
 License: MPL-2.0
 Source0: https://github.com/rabbitmq/rabbitmq-server/releases/download/v%{version}/%{srcname}_%{version}.orig.tar.xz
@@ -27,6 +27,7 @@ Patch: rabbitmq-server-0002-Use-proto_dist-from-command-line.patch
 Patch: rabbitmq-server-0003-force-python3.patch
 Patch: rabbitmq-server-0004-Greatly-simplified-wrapper-script-which-works-proper.patch
 Patch: rabbitmq-server-0005-rabbit_plugins-demote-duplicate-plugin-warnings-from.patch
+Patch: rabbitmq-server-0006-Update-jose-to-1.11.13-for-CVE-2026-65627.patch
 
 URL: https://www.rabbitmq.com/
 BuildRequires: elixir
