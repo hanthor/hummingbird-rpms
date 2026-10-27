@@ -8,7 +8,7 @@ Version:                3.13.5
 %gometa -L -f
 
 Name:           prometheus3.13
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Monitoring system and time series database
 # The offline frontend cache does not include Rollup's native s390x module.
 ExcludeArch:    s390x
@@ -27,6 +27,8 @@ Patch0:         0001-Disable-pprof-debug-endpoints.patch
 Patch2:         0003-pnpm-cache-both-rpm-architectures.patch
 # CVE-2026-93450: sync go.mod/go.sum with vendor archive go-openapi/swag v0.27.1 bump
 Patch5:         0006-bump-go-openapi-swag-to-0.27.1-gomod.patch
+# CVE-2026-116591: sync go.mod/go.sum with vendor archive klauspost/compress v1.20.2 bump
+Patch6:         0007-bump-klauspost-compress-to-1.20.2-gomod.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25
