@@ -10,8 +10,8 @@
 %bcond_with tests
 
 Name:              valkey
-Version:           9.0.6
-Release:           0.2%{?dist}
+Version:           9.0.7
+Release:           0.1%{?dist}
 Summary:           A persistent key-value database
 # valkey: BSD-3-Clause
 # hiredis: BSD-3-Clause
