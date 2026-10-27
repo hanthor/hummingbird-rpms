@@ -6,3 +6,10 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "opentofu-${VERSION}-vendor.tar.bz2"
+
+accepted-checksums:
+  # HUM-11257 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # go-vendor-tools.toml pre_commands; Spec Patch1 syncs Source0 go.mod/go.sum.
+  - file: "opentofu-1.12.9-vendor.tar.bz2"
+    checksum: "4600e809d1f54d55bf15eb3154ae6641637794eec297d4962c4b6b95c27f3d0a181fe6add58c215b097dbfb11bc5ef4aa22625e7e3979d797633e6cd8e9628de"
+    reason: "HUM-11257: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."

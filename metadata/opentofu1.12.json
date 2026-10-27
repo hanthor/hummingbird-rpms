@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/opentofu.git",
     "sha": "e3d77326ba2334b04dbb933997709abcc33fec00"
   },
-  "modification_reason": "Update to upstream version 1.12.9",
+  "modification_reason": "Backport CVE-2026-116591",
   "modification_status": "modified",
   "release_monitoring_project_id": 371292,
   "track_upstream": "1.12",
