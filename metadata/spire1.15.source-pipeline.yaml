@@ -28,3 +28,11 @@ accepted-checksums:
   - file: "spire-1.15.2-vendor.tar.bz2"
     checksum: "8c8db9eef38cfa92fd7d594eb28b34dcc0a85ce956e959d2dc9d64a256b9a3be5c6ffffe7dd78725d4f81fc041c5ad9a93538441c7543aa37731c3ef14ea558e"
     reason: "HUM-7296: extracted vendor content matches the published archive; Gorget deterministically re-encodes the tarball."
+  # HUM-11248 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "spire-1.15.5.tar.gz"
+    checksum: "261db6d229a2128b772f732d357e0e48088e903473e8ff0fcfd537649d0e6b9db62c6c178500aef9525da65e0852c3ffa5b5c8e3cfb78ad2833dc8f966df161d"
+    reason: "HUM-11248: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v1.15.5."
+  - file: "spire-1.15.5-vendor.tar.bz2"
+    checksum: "cf6779d99a45e603d78a300dcc198126781bea3f1e982adbb7e39f174811e698004582dc683e0cb19116f95c6f80a7d541379a786db7c5dfd75563b18d48d0a0"
+    reason: "HUM-11248: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
