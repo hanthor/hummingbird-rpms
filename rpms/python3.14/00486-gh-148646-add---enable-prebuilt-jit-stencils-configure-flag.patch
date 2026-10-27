@@ -70,7 +70,7 @@ index a073300592..5580985974 100644
          )
      jit_stencils_h = args.output_dir / "jit_stencils.h"
 diff --git a/configure b/configure
-index 93339120cc..28e1934ef6 100755
+index 2a4b6fc96c..0f412533ac 100755
 --- a/configure
 +++ b/configure
 @@ -1105,6 +1105,7 @@ with_strict_overflow
@@ -121,7 +121,7 @@ index 93339120cc..28e1934ef6 100755
    # GH-133171: This configuration builds the JIT but never actually uses it,
    # which is surprising (and strictly worse than not building it at all):
 diff --git a/configure.ac b/configure.ac
-index 24089d0839..a960b70e03 100644
+index f51935d881..b940cffd9f 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -2883,6 +2883,19 @@ AC_SUBST([REGEN_JIT_COMMAND])
