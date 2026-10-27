@@ -3,6 +3,22 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/distribution/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-11271 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "distribution-3.1.2.tar.gz"
+    checksum: "70b7ecaa834f42c979a3ba127626017eec4ca14aa55841d2a55d9b1e96cf71baa4db569093fa74f9fff7a2baa3a7d6bef596a0666e684610a9104319aaae4395"
+    reason: "HUM-11271: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v3.1.2."
+  - file: "distribution-3.1.2-vendor.tar.bz2"
+    checksum: "4ce2d54db1203f2157c2b2b32dbf1720a74db4ff94a80b450c7dfca084e0265dc97c6f429170986f54c32b6996dac513aa62844a4ba7403908f0fab528ad8405"
+    reason: "HUM-11271: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
