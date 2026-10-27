@@ -373,6 +373,12 @@ libpq:
 libunistring:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+libxkbcommon:
+  # Local version bump ahead of Fedora (1.13.2): the source tarball at that
+  # version is not in Fedora's lookaside cache, only Hummingbird's. Use the
+  # Hummingbird lookaside cache instead of Fedora.
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 libXi:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

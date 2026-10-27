@@ -1,0 +1,3 @@
+fetch:
+  - type: url
+    url: "https://github.com/xkbcommon/libxkbcommon/archive/refs/tags/xkbcommon-${VERSION}.tar.gz"
