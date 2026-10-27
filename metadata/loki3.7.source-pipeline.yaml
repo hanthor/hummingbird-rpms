@@ -3,3 +3,14 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "loki-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: go
+    archive_name: "loki-${VERSION}-vendor.tar.bz2"
+    sync_go_modules: true
+
+accepted-checksums:
+  - file: "loki-3.7.9.tar.gz"
+    checksum: "23f136094d1ba05e04ed4f199da0339c9949abebe8fb99c01e529f5a4a9ee251dc0cfd2f6c1283e52fef93f472a34a08a894f6c4ba1eeae7be67400460d6ed7f"
+    reason: "Synchronize Go module manifests with the existing swag v0.27.1 overrides for CVE-2026-93450."
