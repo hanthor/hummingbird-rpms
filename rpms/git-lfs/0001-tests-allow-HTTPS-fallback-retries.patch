@@ -5,7 +5,8 @@ The invalid fallback hostname can produce a retryable DNS error in a
 hermetic build. In that case the Locking and Batch API requests repeat
 SSH authentication and HTTPS fallback, producing ten calls instead of
 two. Require at least one fallback for each API without fixing the total
-number of attempts. Keep checking that the push fails.
+number of attempts. Keep checking that the push fails. Apply the same
+allowance to the URL-encoded newline case added in git-lfs 3.8.1.
 
 Upstream-Status: Pending
 Reference: https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/4781
@@ -13,14 +14,19 @@ Reference: https://gitlab.com/redhat/hummingbird/rpms/-/merge_requests/4781
 diff --git a/t/t-ssh.sh b/t/t-ssh.sh
 --- a/t/t-ssh.sh
 +++ b/t/t-ssh.sh
-@@ -102,5 +102,7 @@ ssh_authenticate_unavailable_test() {
-   # an HTTPS URL, which should in turn fail because the host name is invalid.
--  [ 2 -eq "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
+@@ -110,9 +110,9 @@
+   if echo "$encoded_reponame" | grep -qF "%0A"; then
+-    [ 2 -eq "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate '\\\\''/${encoded_reponame%%%0A-newline}" push.log)" ]
+-    [ 2 -eq "$(grep -c "exec (cont\.): -newline'\\\\'' upload" push.log)" ]
++    [ 2 -le "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate '\\\\''/${encoded_reponame%%%0A-newline}" push.log)" ]
++    [ 2 -le "$(grep -c "exec (cont\.): -newline'\\\\'' upload" push.log)" ]
+   else
+-    [ 2 -eq "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
+-  fi
 -  [ 2 -eq "$(grep -c -F "ssh: git@$invalid_host does not provide git-lfs-authenticate, falling back to guessed LFS endpoint" push.log)" ]
--  [ 2 -eq "$(grep -c -F "HTTP: POST https://$invalid_host/$reponame/" push.log)" ]
-+  # Retryable DNS failures can repeat these calls. Require both API requests
-+  # to fall back without depending on the resolver's error or retry count.
-+  [ 2 -le "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
+-  [ 2 -eq "$(grep -c -F "HTTP: POST https://$invalid_host/$encoded_reponame/" push.log)" ]
++    [ 2 -le "$(grep -c "exec: lfs-ssh-echo.*git-lfs-authenticate /$reponame upload" push.log)" ]
++  fi
 +  [ 2 -le "$(grep -c -F "ssh: git@$invalid_host does not provide git-lfs-authenticate, falling back to guessed LFS endpoint" push.log)" ]
-+  [ 2 -le "$(grep -c -F "HTTP: POST https://$invalid_host/$reponame/" push.log)" ]
++  [ 2 -le "$(grep -c -F "HTTP: POST https://$invalid_host/$encoded_reponame/" push.log)" ]
  }
