@@ -8,6 +8,10 @@ post_commands = [
     ],
 ]
 
+[archive.dependency_overrides]
+# CVE-2026-116591
+"github.com/klauspost/compress" = "v1.20.2"
+
 [licensing]
 detector = "askalono"
 

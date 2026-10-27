@@ -3,14 +3,22 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/cosign/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
 accepted-checksums:
+  # HUM-11273 / CVE-2026-116591: bump klauspost/compress to v1.20.2 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "cosign-3.1.4.tar.gz"
+    checksum: "594fcc2d752d1f89ab51d711c0e14b42dffb0a0146d76ee17441f4bc1aca519d63250e98f90677ba0f9fe8772129c3d85af79388d8eb693abd43c6a68e6fa5b5"
+    reason: "HUM-11273: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591); remaining source files unchanged from v3.1.4."
   - file: "cosign-3.1.4-vendor.tar.bz2"
-    checksum: "70174496103ddc5ed7908b822300740c29cee74e9522ed80b3f3afb206d4253118b1cba8392847a38d60e2dddfa6b74e2f7fbdf014e98f409d1044aea0f96d40"
-    reason: >-
-      Regenerated from cosign 3.1.4 after removing obsolete CVE pins that
-      downgraded x/text, x/tools, and go-openapi/swag. Upstream selects
-      x/text v0.43.0, x/tools v0.51.0, and swag v0.28.0 with jsonutils
-      v0.29.2, preserving both security fixes. The source archive is unchanged.
+    checksum: "c8c7ec76f61479633f69c8db86c39b931b157aaf918410a0ce31fba06fe4944cc554a64e220c7a26235f9c7d6f69477187df931401ee061e48dfacf174355638"
+    reason: "HUM-11273: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
