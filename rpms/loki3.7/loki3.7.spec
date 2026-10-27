@@ -6,7 +6,7 @@ Version: 3.7.9
 %gometa -L
 
 Name:           loki3.7
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Horizontally scalable log aggregation system
 # Exclude s390x alongside the Loki 3.6 package.
 ExcludeArch:    s390x
@@ -50,6 +50,10 @@ ingest and query them.
 
 %prep
 %autosetup -p1 -n loki-%{version}
+# Source0 ships a vendor/ tree; drop it so the regenerated Source2 archive
+# cannot leave stale files from older dependency versions (e.g. compress
+# renamed fse_decoder_amd64.go -> fse_decoder_asm.go in v1.20.2).
+rm -rf vendor
 tar -xf %{S:2}
 
 %generate_buildrequires

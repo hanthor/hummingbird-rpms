@@ -12,5 +12,8 @@ transform:
 
 accepted-checksums:
   - file: "loki-3.7.9.tar.gz"
-    checksum: "23f136094d1ba05e04ed4f199da0339c9949abebe8fb99c01e529f5a4a9ee251dc0cfd2f6c1283e52fef93f472a34a08a894f6c4ba1eeae7be67400460d6ed7f"
-    reason: "Synchronize Go module manifests with the existing swag v0.27.1 overrides for CVE-2026-93450."
+    checksum: "1e2c115bc999ba109c1fba6b2b49a79b3a5a2489d859647e97aaa535e4865810d102d73b7aa1797df73f67f2487552c85529b0d667fa3d591a2a4bde906f0dfd"
+    reason: "HUM-11269: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591) and existing swag v0.27.1 overrides; remaining source files unchanged from v3.7.9."
+  - file: "loki-3.7.9-vendor.tar.bz2"
+    checksum: "0b1ec03f5ab82504f2fa376b5075316383cdf682fcb5b9448c310c43787886f20beed940250ac8aed336c4dad21e169c1843b35b1b591e1164c28e9558692d9a"
+    reason: "HUM-11269: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
