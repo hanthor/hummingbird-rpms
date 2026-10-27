@@ -1,2 +1,4 @@
 /prometheus-blackbox-exporter-*.tar.gz
 /prometheus-blackbox-exporter-*-vendor.tar.bz2
+prometheus-blackbox-exporter-0.29.1-vendor.tar.bz2
+prometheus-blackbox-exporter-0.29.1.tar.gz

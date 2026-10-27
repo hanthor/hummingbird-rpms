@@ -2,7 +2,7 @@
 
 %global goipath github.com/prometheus/blackbox_exporter
 %global forgeurl https://github.com/prometheus/blackbox_exporter
-Version: 0.28.0
+Version: 0.29.1
 
 %gometa -L -f
 
@@ -11,7 +11,7 @@ Name: prometheus-blackbox-exporter
 %global gosourcedir %{_builddir}/%{name}-%{version}
 Release: 0.1%{?dist}
 Summary: Prometheus exporter for probing network endpoints
-License: Apache-2.0 AND BSD-3-Clause AND MIT
+License: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT
 URL: %{gourl}
 Source0: %{name}-%{version}.tar.gz
 Source1: %{name}-%{version}-vendor.tar.bz2
@@ -39,6 +39,8 @@ export GO_LDFLAGS="-X github.com/prometheus/common/version.Version=%{version}"
 %go_vendor_license_install -c %{S:2}
 install -D -p -m 0755 %{gobuilddir}/bin/blackbox_exporter %{buildroot}%{_bindir}/blackbox_exporter
 install -D -p -m 0644 blackbox.yml %{buildroot}%{_sysconfdir}/blackbox-exporter/blackbox.yml
+install -d %{buildroot}%{_sysconfdir}/blackbox_exporter
+ln -s ../blackbox-exporter/blackbox.yml %{buildroot}%{_sysconfdir}/blackbox_exporter/config.yml
 
 %check
 %go_vendor_license_check -c %{S:2}
@@ -52,6 +54,8 @@ install -D -p -m 0644 blackbox.yml %{buildroot}%{_sysconfdir}/blackbox-exporter/
 %{_bindir}/blackbox_exporter
 %dir %{_sysconfdir}/blackbox-exporter
 %config(noreplace) %{_sysconfdir}/blackbox-exporter/blackbox.yml
+%dir %{_sysconfdir}/blackbox_exporter
+%{_sysconfdir}/blackbox_exporter/config.yml
 
 %changelog
 %autochangelog
