@@ -48,6 +48,9 @@ transform:
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
+    checksum: "725d63f575251b94608681935c5b1c94fe4c8d532a6652e31431087d2ca058136c78adce85abf8051964e4bdb61085151d1a43da76a6d5328ccfa5cd25a7b17f"
+    reason: "grafana-fast-uri-3.1.9-cve.patch and grafana-body-parser-cve.patch bump fast-uri 3.1.8->3.1.9 and body-parser 1.20.3/2.2.1->1.20.9/2.4.0 for CVE-2026-110306/110180/110095/110725/111181; yarn cache regenerated"
+  - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "fdaba72db7e5305dcef0458d04a7d0a8c3dbc532a0ccfd4a0b4f83169db1f2ec3f3ce289f5eff21ca63af0e0943118f90aca5e31cec3a53150ac73af44e5d406"
     reason: "grafana-qs-6.16.1.patch bumps qs 6.14.1->6.16.1 for CVE-2026-110816 on top of storybook/follow-redirects; yarn cache regenerated without stale qs-6.14.1 zip"
   - file: "grafana-12.4.13-vendor.tar.bz2"
