@@ -12,16 +12,16 @@
 # dotnet-host and netstandard-targeting-pack-2.1
 %global is_latest_dotnet 0
 
-%global host_version 8.0.32
-%global runtime_version 8.0.32
-%global aspnetcore_runtime_version 8.0.32
-%global sdk_version 8.0.132
+%global host_version 8.0.33
+%global runtime_version 8.0.33
+%global aspnetcore_runtime_version 8.0.33
+%global sdk_version 8.0.133
 %global sdk_feature_band_version %(echo %{sdk_version} | cut -d '-' -f 1 | sed -e 's|[[:digit:]][[:digit:]]$|00|')
 %global templates_version %{runtime_version}
 #%%global templates_version %%(echo %%{runtime_version} | awk 'BEGIN { FS="."; OFS="." } {print $1, $2, $3+1 }')
 
 # upstream can produce releases with a different tag than the SDK version
-%global upstream_tag v8.0.132
+%global upstream_tag v8.0.133
 %global upstream_tag_without_v %(echo %{upstream_tag} | sed -e 's|^v||')
 
 %global host_rpm_version %{host_version}
@@ -250,8 +250,8 @@ Requires:       dotnet-hostfxr-%{dotnetver}%{?_isa} >= %{host_rpm_version}-%{rel
 # libicu is dlopen()ed
 Requires:       libicu%{?_isa}
 
-# See src/runtime/src/libraries/Native/AnyOS/brotli-version.txt
-Provides: bundled(libbrotli) = 1.0.9
+# See src/runtime/src/native/external/brotli-version.txt
+Provides: bundled(libbrotli) = 1.0.10
 %if %{use_bundled_libunwind}
 # See src/runtime/src/coreclr/pal/src/libunwind/libunwind-version.txt
 Provides: bundled(libunwind) = 1.5.rc1.28.g9165d2a1
