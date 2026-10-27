@@ -19,3 +19,6 @@ opentelemetry-collector-releases-0.163.1.tar.gz
 opentelemetry-collector-k8s-0.163.2-generated.tar.bz2
 opentelemetry-collector-k8s-0.163.2-vendor.tar.bz2
 opentelemetry-collector-releases-0.163.2.tar.gz
+opentelemetry-collector-k8s-0.164.0-generated.tar.bz2
+opentelemetry-collector-k8s-0.164.0-vendor.tar.bz2
+opentelemetry-collector-releases-0.164.0.tar.gz
