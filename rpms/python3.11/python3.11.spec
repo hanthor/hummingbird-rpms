@@ -13,11 +13,11 @@ URL: https://www.python.org/
 
 #  WARNING  When rebasing to a new Python version,
 #           remember to update the python3-docs package as well
-%global general_version %{pybasever}.17
+%global general_version %{pybasever}.18
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1%{?dist}
 License: Python-2.0.1
 
 
@@ -203,7 +203,6 @@ BuildRequires: git-core
 BuildRequires: glibc-all-langpacks
 BuildRequires: glibc-devel
 BuildRequires: gmp-devel
-BuildRequires: gnupg2
 BuildRequires: libappstream-glib
 %if %{undefined rhel}
 BuildRequires: libb2-devel
@@ -218,7 +217,7 @@ BuildRequires: libX11-devel
 BuildRequires: make
 BuildRequires: mpdecimal-devel
 BuildRequires: ncurses-devel
-
+BuildRequires: openpgpverify
 BuildRequires: pkgconfig
 BuildRequires: readline-devel
 BuildRequires: redhat-rpm-config >= 127
@@ -727,7 +726,7 @@ The debug runtime additionally supports debug builds of C-API extensions
 # ======================================================
 
 %prep
-%gpgverify -k2 -s1 -d0
+%openpgpverify -k2 -s1 -d0
 %autosetup -S git_am -n Python-%{upstream_version}
 
 %if %{with rpmwheels}
@@ -1731,6 +1730,11 @@ CheckPython optimized
 # ======================================================
 
 %changelog
+* Mon Oct 26 2026 Miro Hrončok <miro@hroncok.cz> - 3.11.18-1
+- Update to Python 3.11.18
+- CVE 2026-114583: tar filter allows writing outside destination via empty-named symlink
+- CVE 2026-115557: Distrust compromised intermediate certificates in ssl module
+
 * Thu Oct 01 2026 Karolina Surma <ksurma@redhat.com> - 3.11.17-1
 - Update to Python 3.11.17
 - Security fix for CVE-2026-15310
