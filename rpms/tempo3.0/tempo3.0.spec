@@ -6,7 +6,7 @@ Version: 3.0.4
 %gometa -L
 
 Name:           tempo3.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        High-volume distributed tracing backend
 # s390x is unsupported.
 ExcludeArch:    s390x
@@ -22,6 +22,8 @@ Patch0:         0001-tests-use-explicit-loopback-addresses.patch
 Patch2:         0003-vendor-bump-mcp-go-to-0.56.0.patch
 # Use named mcp.CallToolParams in tests (required by mcp-go >= 0.54)
 Patch3:         0004-mcp-tools-test-use-CallToolParams.patch
+# Bump vendored github.com/klauspost/compress to v1.20.2 for CVE-2026-116591
+Patch4:         0005-bump-klauspost-compress-to-1.20.2-for-CVE-2026-116591.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26
@@ -35,6 +37,10 @@ requires object storage to operate.
 
 %prep
 %autosetup -p1 -n tempo-%{version}
+# Source0 ships a vendor/ tree; drop it so the regenerated Source2 archive
+# cannot leave stale files from older dependency versions (e.g. compress
+# renamed fse_decoder_amd64.go -> fse_decoder_asm.go in v1.20.2).
+rm -rf vendor
 tar -xf %{S:2}
 
 %generate_buildrequires

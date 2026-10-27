@@ -8,3 +8,8 @@ transform:
   - type: vendor
     ecosystem: go
     archive_name: "tempo-${VERSION}-vendor.tar.bz2"
+
+accepted-checksums:
+  - file: "tempo-3.0.4-vendor.tar.bz2"
+    checksum: "86dd5c6a37e769482928a6b9b8e9572504ecd37ca68910509f7420e1fffb3b3af10df90a71545b872809fd3d5eddcb3a2ac8076176ced0fde7be229c5940e59c"
+    reason: "go-vendor-tools.toml dependency_overrides bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591; vendor archive regenerated to include the patched dependency"
