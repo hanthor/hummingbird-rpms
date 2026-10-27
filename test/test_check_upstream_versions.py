@@ -747,6 +747,7 @@ def test_check_package_version_empty_response_remains_error(
 @pytest.mark.parametrize('failure', [
     ValueError('Project not found'),
     ConnectionError('Connection failed'),
+    TimeoutError('The read operation timed out'),
     urllib.error.URLError('Request timed out'),
     urllib.error.HTTPError('https://example.com', 429, 'Rate limited', Message(), None),
     urllib.error.HTTPError('https://example.com', 503, 'Unavailable', Message(), None),
@@ -3541,8 +3542,13 @@ def test_cli_missing_tracked_release_warns_without_updating(
     assert metadata_file.read_text() == original_metadata
 
 
+@pytest.mark.parametrize('failure', [
+    urllib.error.URLError('Request timed out'),
+    TimeoutError('The read operation timed out'),
+])
 def test_cli_tracked_lookup_failure_remains_nonzero(
     cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+    failure: Exception,
 ) -> None:
     """Transport errors still fail CLI checks of tracked version lines."""
     _create_package(workdir, 'pkg', '3.15.0~rc2', metadata={
@@ -3552,7 +3558,7 @@ def test_cli_tracked_lookup_failure_remains_nonzero(
     cuv_module.METADATA_DIR = workdir / 'metadata'
 
     with patch.object(cuv_module, 'query_anitya_by_project_id',
-                      side_effect=urllib.error.URLError('Request timed out')), \
+                      side_effect=failure), \
          patch('sys.argv', ['check_upstream_versions.py', 'check', '--json', 'pkg']), \
          pytest.raises(SystemExit) as exc_info:
         cuv_module.main()
@@ -3561,6 +3567,63 @@ def test_cli_tracked_lookup_failure_remains_nonzero(
     output = json.loads(capsys.readouterr().out)
     assert output['errors'] == 1
     assert output['warnings'] == 0
+
+
+@pytest.mark.parametrize('lookup', ['query_anitya', 'query_anitya_by_project_id', 'query_gitlab_tags'])
+def test_cli_lookup_timeout_does_not_block_other_updates(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str], lookup: str,
+) -> None:
+    """A lookup timeout preserves JSON output and lets later updates commit."""
+    metadata: dict = {}
+    if lookup == 'query_anitya_by_project_id':
+        metadata['track_upstream'] = 'latest'
+        metadata['release_monitoring_project_id'] = 42
+    elif lookup == 'query_gitlab_tags':
+        metadata['version_source'] = 'gitlab_tags'
+        metadata['upstream_repo'] = 'https://gitlab.com/example/project'
+    for package in ['bad', 'good']:
+        _create_package(workdir, package, '1.0', metadata=metadata)
+    subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Add packages'], cwd=workdir, check=True)
+
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    cuv_module._METADATA_REPO = cuv_module.MetadataRepository(workdir)
+
+    with (
+        patch.object(cuv_module, lookup, side_effect=[
+            TimeoutError('The read operation timed out'),
+            {'version': '2.0', 'stable_versions': ['2.0']},
+        ]),
+        patch.object(cuv_module, 'download_new_sources', return_value=[]),
+        patch('sys.argv', [
+            'check_upstream_versions.py', 'check', '--json', '--update',
+            '--delay=0', 'bad', 'good',
+        ]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    assert exc_info.value.code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output['total_packages'] == 2
+    assert output['errors'] == 1
+    assert output['updates_applied'] == 1
+    bad, good = output['results']
+    assert bad['package'] == 'bad'
+    assert bad['error'] == 'The read operation timed out'
+    assert bad['updated'] is False
+    assert good['package'] == 'good'
+    assert good['error'] is None
+    assert good['updated'] is True
+    assert 'Version: 1.0' in (workdir / 'rpms/bad/bad.spec').read_text()
+    assert 'Version: 2.0' in (workdir / 'rpms/good/good.spec').read_text()
+    subject = subprocess.run(
+        ['git', 'log', '-1', '--format=%s'],
+        cwd=workdir, capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    assert subject == 'Update good to 2.0'
 
 
 def test_cli_warning_only_package_is_not_counted_as_up_to_date(

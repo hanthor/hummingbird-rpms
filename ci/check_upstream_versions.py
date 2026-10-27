@@ -1836,7 +1836,7 @@ def check_package_version(
         else:
             lookup_name = project_id if isinstance(project_id, str) else package
             anitya_data = query_anitya(lookup_name, distro)
-    except (ValueError, ConnectionError, urllib.error.URLError) as e:
+    except (ValueError, ConnectionError, TimeoutError, urllib.error.URLError) as e:
         return VersionCheckResult(
             package=package,
             current_version=current_version,
