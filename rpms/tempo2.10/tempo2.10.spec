@@ -1,7 +1,7 @@
 %bcond check 1
 
 %global goipath github.com/grafana/tempo
-Version: 2.10.9
+Version: 2.10.10
 
 %gometa -L
 
