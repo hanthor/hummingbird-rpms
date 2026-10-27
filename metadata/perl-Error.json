@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/perl-Error.git",
-    "release": "4",
-    "sha": "c924b8e4181adbe701f7ed3da6b07cfc1e069416"
+    "release": "1",
+    "sha": "2b9dd26eb02cd9086b076e198cf815849718c016"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/shlomif/perl-error.pm",
-  "version": "0.17030"
+  "version": "0.17031"
 }
