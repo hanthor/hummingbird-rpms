@@ -15,13 +15,13 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" . "${VERSION}" --generate
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
         # suppress a binary download for.
         YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
+          node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
         # Deterministic flags: yarn's own cache writes carry live wall-clock
         # mtimes and directory listing order isn't guaranteed sorted, so a
         # plain `tar -cjf` here reproduced a different checksum on every
@@ -32,6 +32,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-frontend-${VERSION}.patch"
 
 # Same-version yarn-cache regeneration (CVE npm bump) changes the archive
 # checksum while keeping the filename, so gorget needs an accepted-checksums
