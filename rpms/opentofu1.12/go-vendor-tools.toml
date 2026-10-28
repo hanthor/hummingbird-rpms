@@ -55,6 +55,7 @@ expression = "MIT AND BSD-3-Clause"
 # CVE-2026-81871. The OTLP log exporters share the pre-1.0 go.opentelemetry.io/otel/log
 # API, so they must move together; bumping otlploggrpc alone leaves the siblings
 # calling symbols that no longer exist. Keep in sync with CVE-2026-81871.patch.
+# CVE-2026-116591: keep in sync with CVE-2026-116591-klauspost-compress.patch.
 pre_commands = [
   [
     "go", "get",
@@ -62,4 +63,6 @@ pre_commands = [
     "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0",
     "go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0",
   ],
+  # CVE-2026-116591
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
