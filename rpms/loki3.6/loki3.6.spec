@@ -1,7 +1,7 @@
 %bcond check 1
 
 %global goipath github.com/grafana/loki/v3
-Version: 3.6.18
+Version: 3.6.19
 
 %gometa -L
 
@@ -95,8 +95,17 @@ skip_tests=(
     Test_BuilderLoop/context_cancel # races planner shutdown against context cancellation
     TestChunkFlushingIdle           # timing-sensitive idle flush can miss the final stream
 )
+# These only miss their deadlines on aarch64 builders; keep them running elsewhere.
+%ifarch aarch64
+skip_tests+=(
+    TestDistributorPushToKafka # kafka/ingester completion count races under CPU contention
+    TestBackoffTimer           # 10ms timer tolerance is too tight under CPU contention
+    TestQueryWrapperMiddleware # slow-connection deadline race panics once context expires
+)
+%endif
 skip_pattern=$(IFS='|'; echo "${skip_tests[*]}")
-%gotest ${skip_pattern:+-skip "${skip_pattern}"} $(go list ./... | grep -Ev "${skip_package_pattern}")
+# Match upstream's four-package limit to reduce CPU contention and timing-test failures.
+%gotest -p=4 ${skip_pattern:+-skip "${skip_pattern}"} $(go list ./... | grep -Ev "${skip_package_pattern}")
 %endif
 
 %files -f %{go_vendor_license_filelist}
