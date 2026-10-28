@@ -112,3 +112,11 @@ Using a specific config file:
 ./create-pulp-resources.sh --domain public-hummingbird \
   --config ./cli.toml
 ```
+
+### Private-product download access
+
+After creating the signed and unsigned private product domains and arranging the content guard
+setup with the Pulp team, verify that their RPM distributions use the expected guard and that
+authenticated downloads work. Follow
+[Verify RPM download access](../../documentation/operating/private-rpm-repositories.md#verify-rpm-download-access)
+for the verification steps.

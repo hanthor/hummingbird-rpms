@@ -11,9 +11,10 @@ aliases: [/l/private-rpm-repositories]
 
 ## Overview
 
-Hummingbird LTS products (e.g., LTS OpenJDK, LTS DotNet) require subscription-gated RPMs that
-must not be publicly accessible. Each LTS product gets its own private Pulp repository with
-independent credentials, enabling per-product subscription enforcement.
+Hummingbird LTS products (e.g., LTS OpenJDK, LTS DotNet) require RPMs that must not be publicly
+accessible. Each LTS product gets separate private Pulp domains. Currently, downloads require
+authentication, but access is not restricted to customers of a particular product. Per-product
+subscription enforcement requires a SKU and is not yet available.
 
 The private RPM pipeline uses the same build infrastructure as public RPMs but routes packages
 to separate Pulp domains via dedicated Konflux Applications and ReleasePlanAdmissions (RPAs).
@@ -156,6 +157,61 @@ If using a dedicated service account, add `--config <path-to-cli.toml>` to each 
 This creates per-architecture RPM repositories (`source`, `x86_64`, `s390x`, `ppc64le`,
 `aarch64`) with distributions, and file repositories (`metadata`, `rpm-catalog`) for
 SBOM and attestation storage.
+
+#### Verify RPM download access
+
+RPM downloads are served by the Pulp content application and authorized separately from Pulp
+API access by each distribution's content guard.
+
+For now, Hummingbird private RPM distributions are expected to use the
+`hosted-pulp-default-identity-check` header content guard. It checks for the trusted
+`x-rh-identity` header inserted by the `packages.redhat.com` gateway. The guard does not
+inspect Pulp group membership; it permits the download when the request has an authenticated
+identity. Clients must therefore authenticate with their Terms-Based Registry credentials.
+Unauthenticated downloads remain denied, but this guard does not enforce product subscriptions.
+
+After setting up the content guard in step 7, list both domains' RPM distributions and confirm
+that every distribution has a non-null `content_guard`:
+
+```bash
+pulp --domain private-hummingbird-<product>-unsigned rpm distribution list \
+  --field name \
+  --field base_path \
+  --field content_guard
+
+pulp --domain private-hummingbird-<product> rpm distribution list \
+  --field name \
+  --field base_path \
+  --field content_guard
+```
+
+Inspect the referenced guard and confirm that its name is
+`hosted-pulp-default-identity-check`, its header is `x-rh-identity`, and its expected value is
+`identity-present`:
+
+```bash
+pulp --domain <domain> content-guard header show \
+  --href <content-guard-href>
+```
+
+Finally, use a Terms-Based Registry account to make an authenticated request for repository
+metadata. Supplying only the username makes `curl` prompt for the token instead of placing it in
+shell history:
+
+```bash
+curl --fail --head --location \
+  --user '<org>|<service-account>' \
+  'https://packages.redhat.com/api/pulp-content/<domain>/x86_64/repodata/repomd.xml'
+```
+
+A successful request returns HTTP 200. The download requirements are:
+
+1. Every RPM distribution uses the expected identity-check content guard.
+2. The download request authenticates through `packages.redhat.com`, causing the trusted gateway
+   to insert `x-rh-identity`.
+
+See the hosted Pulp documentation for more information about the distinction between
+[domain API access and content guards](https://gitlab.cee.redhat.com/hosted-pulp/pulp-docs/-/blob/main/domain-access-policies.md?ref_type=heads#relationship-to-content-guards).
 
 ### 3. Deploy the Pulp credentials secret
 
@@ -345,17 +401,15 @@ This produces:
 
 ### 7. Set up Pulp content guard
 
-To restrict access to the private Pulp repositories, a content guard must be configured
-so only customers with the correct subscription can access the content:
+Contact the Pulp team to attach the `hosted-pulp-default-identity-check` content guard to every
+RPM distribution in both the signed and unsigned private domains. Then follow
+[Verify RPM download access](#verify-rpm-download-access) to check the guards and test an
+authenticated download. The setup script creates distributions but does not attach guards.
 
-1. Obtain a **SKU** for the private product's subscription offering.
-2. Create a **feature** for that SKU in the Feature service.
-3. Contact the **Pulp team** to:
-   - Map the organization ID to the feature
-   - Set up the content guard on the private Pulp domain(s)
-
-This step is required before customers can access the private repositories. Without it,
-the repositories are created but have no access control.
+This is an interim authentication requirement. The identity-check guard allows any authenticated
+Terms-Based Registry identity; it does not check whether the customer has a subscription to this
+product. When a SKU is available, work with the Feature service and Pulp teams to configure
+per-product subscription enforcement.
 
 ### Pulp credentials
 
@@ -363,9 +417,8 @@ If using a dedicated service account (step 1), see [Pulp Access](pulp-access.md)
 vault storage instructions.
 
 If using the shared service account, private RPAs reuse the same Pulp publishing credentials
-as the public RPA (`hummingbird-pulp-credentials-production-secret`). Per-product access
-control for customers is handled downstream by Red Hat's subscription entitlement system,
-not at the Pulp publishing layer.
+as the public RPA (`hummingbird-pulp-credentials-production-secret`). These credentials control
+publishing, while the content guard controls downloads.
 
 ## Public/Private Routing
 
