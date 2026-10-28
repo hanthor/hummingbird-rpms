@@ -17,14 +17,7 @@ transform:
         set -euo pipefail
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
-        CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
-        # CVE-2026-9496 is backported inside the two cached pacote archives.
-        # Patch the freshly generated archives before changing yarn.lock to
-        # expect their new checksums, then verify the result offline.
-        "${PACKAGE_DIR}/patch-pacote-cache.py" .yarn/cache
-        patch -p1 < "${PACKAGE_DIR}/grafana-pacote-cve.patch"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" . "${VERSION}" --generate
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
           node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
         # Deterministic flags: yarn's own cache writes carry live wall-clock
@@ -37,6 +30,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-frontend-${VERSION}.patch"
 
 # gorget 0.1.16 fixed a bug where a single-module Go vendor archive packed
 # only "vendor/" at its top level, which go_vendor_license --use-archive
