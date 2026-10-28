@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/tbb.git",
-    "release": "1",
     "sha": "50dac7dc6304ec3e4bde95d6dbb79bdcea76c66c"
   },
-  "modification_reason": "Update to upstream version 2023.1.0",
+  "modification_reason": "Update to upstream version 2023.2.0 and package the TCM runtime and development files",
   "modification_status": "modified",
   "release_monitoring_project_id": 8217,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/uxlfoundation/oneTBB",
-  "version": "2023.1.0"
+  "version": "2023.2.0"
 }
