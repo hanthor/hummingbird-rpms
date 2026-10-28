@@ -1,0 +1,104 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] deps: bump russh to 0.65.0
+
+russh 0.65.0 is the fixed release for two vendored-dependency CVEs and
+four further advisories:
+
+  GHSA-4p9f-7p9m-5vfg / CVE-2026-116773 - client unbounded allocations
+    via private EXT_INFO packets (commit b33e93b)
+  GHSA-9wfm-jcj8-jfv9 / CVE-2026-116696 - agent unbounded allocations
+    via repeated SSH_AGENT_CONSTRAIN_CONFIRM records (commit 23aa5d2)
+  GHSA-fw5c-8223-6h42, GHSA-662x-8wvj-2276, GHSA-vp5q-ff62-jwqv,
+  GHSA-3hm4-p7h4-rvwp
+
+The only source-level break affecting OpenShell is the server Handler
+signature change from #785: auth_publickey now receives a
+server::VerifiedPublicKey instead of &PublicKey (the key is read from its
+public_key field, which the unconditional Auth::Accept here does not need).
+russh also dropped its async-trait crate feature (#786); OpenShell
+implements the trait methods as native async fns, so nothing else changes.
+
+Upstream: https://github.com/Eugeny/russh/releases/tag/v0.65.0
+---
+ Cargo.lock                                     | 6 +++---
+ crates/openshell-server/Cargo.toml             | 2 +-
+ crates/openshell-supervisor-process/Cargo.toml | 2 +-
+ crates/openshell-supervisor-process/src/ssh.rs | 4 ++--
+ 4 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 9c8d097..96d43dc 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -6705,9 +6705,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "russh"
+-version = "0.64.1"
++version = "0.65.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "ba61e87b9ec9a39a59a6bbed4c0b8ff7fb07073405b24a767a1f2c8560ac8f58"
++checksum = "3bb77a4b259312b2abbc541bca1c13cb4e9b61c560a7fd894068c3b92e0c9dc3"
+ dependencies = [
+  "aes",
+  "aws-lc-rs",
+@@ -7971,7 +7971,7 @@ dependencies = [
+  "parking_lot",
+  "rustix 1.1.4",
+  "signal-hook",
+- "windows-sys 0.60.2",
++ "windows-sys 0.61.2",
+ ]
+ 
+ [[package]]
+diff --git a/crates/openshell-server/Cargo.toml b/crates/openshell-server/Cargo.toml
+index 9160719..1c8c43c 100644
+--- a/crates/openshell-server/Cargo.toml
++++ b/crates/openshell-server/Cargo.toml
+@@ -107,7 +107,7 @@ async-trait = "0.1"
+ url = { workspace = true }
+ glob = { workspace = true }
+ hex = "0.4"
+-russh = "0.64.1"
++russh = "0.65.0"
+ rand = { workspace = true }
+ rand-ssh = { package = "rand", version = "0.10" }
+ petname = "2"
+diff --git a/crates/openshell-supervisor-process/Cargo.toml b/crates/openshell-supervisor-process/Cargo.toml
+index 2283370..3a3caf3 100644
+--- a/crates/openshell-supervisor-process/Cargo.toml
++++ b/crates/openshell-supervisor-process/Cargo.toml
+@@ -23,7 +23,7 @@ bytes = { workspace = true }
+ hex = "0.4"
+ miette = { workspace = true }
+ rand = "0.10"
+-russh = "0.64.1"
++russh = "0.65.0"
+ serde_json = { workspace = true }
+ sha2 = { workspace = true }
+ tokio = { workspace = true }
+diff --git a/crates/openshell-supervisor-process/src/ssh.rs b/crates/openshell-supervisor-process/src/ssh.rs
+index 8b7361d..1099d76 100644
+--- a/crates/openshell-supervisor-process/src/ssh.rs
++++ b/crates/openshell-supervisor-process/src/ssh.rs
+@@ -24,7 +24,7 @@ use openshell_ocsf::{
+     ActionId, ActivityId, DispositionId, SeverityId, SshActivityBuilder, StatusId, ocsf_emit,
+ };
+ use russh::keys::{Algorithm, PrivateKey};
+-use russh::server::{Auth, ChannelOpenHandle, Handle, Session};
++use russh::server::{Auth, ChannelOpenHandle, Handle, Session, VerifiedPublicKey};
+ use russh::{ChannelId, ChannelOpenFailure, Sig};
+ use std::borrow::Cow;
+ use std::collections::HashMap;
+@@ -472,7 +472,7 @@ impl russh::server::Handler for SshHandler {
+     async fn auth_publickey(
+         &mut self,
+         _user: &str,
+-        _public_key: &russh::keys::PublicKey,
++        _public_key: VerifiedPublicKey<'_>,
+     ) -> Result<Auth, Self::Error> {
+         Ok(Auth::Accept)
+     }
+-- 
+2.51.0
+

@@ -8,17 +8,13 @@ transform:
     command:
       - bash
       - -c
-      - patch -p1 --fuzz=0 --batch < "${PACKAGE_DIR}/0001-CVE-2026-111061-russh-0.64.1.patch"
+      - patch -p1 --fuzz=0 --batch < "${PACKAGE_DIR}/0001-russh-0.65.0.patch"
   - type: vendor
     ecosystem: cargo
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.xz"
-accepted-checksums:
-  - file: "openshell-0.1.5-vendor.tar.xz"
-    checksum: "bbf8e4a2387976e8f64d12b3ed2c1e3167cd2fff8153f644b41ac52b35985c7c2f35a1d8f1072022f0ffd25c3de772780c44ffb1ec94346e1d4225a0c78782fe"
-    reason: "Regenerated the vendor archive from upstream russh 0.64.1 for CVE-2026-111061."
 policy:
   vendor-constraints:
     - package: russh
       ecosystem: cargo
-      version: "0.64.1"
-      reason: "CVE-2026-111061"
+      version: "0.65.0"
+      reason: "CVE-2026-116696, CVE-2026-116773"
