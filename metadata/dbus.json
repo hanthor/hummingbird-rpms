@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dbus.git",
-    "release": "6",
-    "sha": "a936cf4dce0469d38fb3be0a844434154b34ac93"
+    "release": "7",
+    "sha": "c21251b53b4f24dd6d8d6957d45e41e87a280497"
   },
   "modification_status": "clean",
   "upstream_repo": "https://gitlab.freedesktop.org/dbus/dbus",
