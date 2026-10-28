@@ -15,6 +15,7 @@ def test_generated_patch_replays_manifest_lockfile_and_asset(tmp_path):
     package_dir = tmp_path / "grafana13.2"
     package_dir.mkdir()
     config = {
+        "pre_patches": ["grafana-yarn-cache.patch"],
         "manifests": {
             "package.json": {"resolutions": {"fast-uri": "3.1.9"}},
         },
@@ -22,12 +23,26 @@ def test_generated_patch_replays_manifest_lockfile_and_asset(tmp_path):
     }
     (package_dir / "frontend-overrides.json").write_text(json.dumps(config))
     (package_dir / "storybook.patch").write_text("storybook fix\n")
+    (package_dir / "grafana-yarn-cache.patch").write_text(
+        "--- a/.yarnrc.yml\n"
+        "+++ b/.yarnrc.yml\n"
+        "@@ -1,3 +1,6 @@\n"
+        " compressionLevel: mixed\n"
+        "-enableGlobalCache: true\n"
+        "+enableGlobalCache: false\n"
+        "+cacheFolder: .yarn/cache\n"
+        "+supportedArchitectures:\n"
+        "+  cpu: [x64, arm64, s390x]\n"
+        " nodeLinker: node-modules\n"
+    )
 
     source = tmp_path / "source"
     (source / ".yarn/releases").mkdir(parents=True)
     (source / ".yarn/releases/yarn-test.cjs").write_text("")
     (source / "package.json").write_text('{"resolutions": {}}\n')
-    (source / ".yarnrc.yml").write_text("compressionLevel: mixed\n")
+    (source / ".yarnrc.yml").write_text(
+        "compressionLevel: mixed\nenableGlobalCache: true\nnodeLinker: node-modules\n"
+    )
     (source / "yarn.lock").write_text("original lock\n")
     pristine = tmp_path / "pristine"
     shutil.copytree(source, pristine)
@@ -50,10 +65,48 @@ def test_generated_patch_replays_manifest_lockfile_and_asset(tmp_path):
 
     generated = source / "grafana-frontend-13.2.5.patch"
     assert generated.is_file()
-    subprocess.run(["patch", "--batch", "--forward", "-p1", "-i", str(generated)],
-                   cwd=pristine, check=True, capture_output=True)
+    shutil.copyfile(generated, package_dir / generated.name)
+    subprocess.run(
+        [sys.executable, str(SCRIPT), str(package_dir), str(pristine), "13.2.5", "apply"],
+        check=True, capture_output=True,
+    )
     for name in ("package.json", ".yarnrc.yml", "yarn.lock", ".yarn/patches/storybook.patch"):
         assert (pristine / name).read_bytes() == (source / name).read_bytes()
+
+
+def test_generated_patch_includes_requested_native_architectures(tmp_path):
+    package_dir = tmp_path / "grafana12.4"
+    package_dir.mkdir()
+    (package_dir / "frontend-overrides.json").write_text(json.dumps({
+        "manifests": {}, "assets": {},
+        "supported_architectures": ["x64", "arm64"],
+    }))
+    source = tmp_path / "source"
+    (source / ".yarn/releases").mkdir(parents=True)
+    (source / ".yarn/releases/yarn-test.cjs").write_text("")
+    (source / ".yarnrc.yml").write_text("compressionLevel: mixed\n")
+    (source / "yarn.lock").write_text("original lock\n")
+    pristine = tmp_path / "pristine"
+    shutil.copytree(source, pristine)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    node = bin_dir / "node"
+    node.write_text("#!/bin/sh\nexit 0\n")
+    node.chmod(0o755)
+
+    subprocess.run(
+        [sys.executable, str(SCRIPT), str(package_dir), str(source), "12.4.14", "generate"],
+        env=os.environ | {"PATH": f"{bin_dir}:{os.environ['PATH']}"},
+        check=True, capture_output=True,
+    )
+    generated = source / "grafana-frontend-12.4.14.patch"
+    subprocess.run(
+        ["patch", "--batch", "--forward", "--fuzz=0", "-p1", "-i", str(generated)],
+        cwd=pristine, check=True, capture_output=True,
+    )
+    yarnrc = (pristine / ".yarnrc.yml").read_text()
+    assert "supportedArchitectures:" in yarnrc
+    assert "    - arm64\n" in yarnrc
 
 
 def test_activate_spec_switches_patch_stacks_after_version_update(tmp_path):
