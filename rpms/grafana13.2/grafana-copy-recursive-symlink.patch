@@ -1,0 +1,43 @@
+--- a/pkg/infra/fs/copy.go
++++ b/pkg/infra/fs/copy.go
+@@ -134,7 +134,7 @@
+ 		srcPath := filepath.Join(src, entry.Name())
+ 		dstPath := filepath.Join(dst, entry.Name())
+ 
+-		srcFi, err := os.Stat(srcPath)
++		srcFi, err := os.Lstat(srcPath)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -158,11 +158,6 @@
+ 			}
+ 		}
+ 
+-		if srcFi.Mode()&os.ModeSymlink != 0 {
+-			if err := os.Chmod(dstPath, srcFi.Mode()); err != nil {
+-				return err
+-			}
+-		}
+ 	}
+ 
+ 	return nil
+--- a/pkg/infra/fs/copy_test.go
++++ b/pkg/infra/fs/copy_test.go
+@@ -150,3 +150,17 @@
+ 	})
+ 	require.NoError(t, err)
+ }
++
++func TestCopyRecursive_SymlinkBeforeTarget(t *testing.T) {
++	src := t.TempDir()
++	require.NoError(t, os.Mkdir(filepath.Join(src, ".bin"), 0750))
++	require.NoError(t, os.Mkdir(filepath.Join(src, "uuid"), 0750))
++	require.NoError(t, os.WriteFile(filepath.Join(src, "uuid", "uuid"), []byte("binary"), 0600))
++	require.NoError(t, os.Symlink("../uuid/uuid", filepath.Join(src, ".bin", "uuid")))
++
++	dst := filepath.Join(t.TempDir(), "copy")
++	require.NoError(t, CopyRecursive(src, dst))
++	link, err := os.Readlink(filepath.Join(dst, ".bin", "uuid"))
++	require.NoError(t, err)
++	assert.Equal(t, "../uuid/uuid", link)
++}

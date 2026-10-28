@@ -1,4 +1,5 @@
 {
+  "pre_patches": ["grafana-yarn-cache.patch"],
   "manifests": {
     "package.json": {
       "resolutions": {

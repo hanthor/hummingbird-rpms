@@ -85,6 +85,8 @@ Patch2:         grafana-xorm-go122-build-constraint.patch
 # (CVE-2026-110306, CVE-2026-110180, CVE-2026-110095, CVE-2026-110725).
 #Patch18:        grafana-body-parser-fast-uri-cve.patch
 Patch19:        grafana-frontend-%{version}.patch
+# Copy plugin symlinks without chmod following a target not copied yet.
+Patch20:        grafana-copy-recursive-symlink.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.6
