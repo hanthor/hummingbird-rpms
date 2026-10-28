@@ -73,6 +73,12 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.1.9.tar.bz2"
+    checksum: "16397a36df93862692ce1ae89f77246ee7b17a9358f42efeda46777f3a6f63544b33b57ab9154488b940ec74c2fef63dba3d3f3203f6efe2c92d8f17f85d63d1"
+    reason: "Regenerate the 13.1.9 offline cache with s390x native packages after applying the base Yarn patch"
+  - file: "grafana-frontend-13.1.9.patch"
+    checksum: "fbca1c2a47d726d1f6f25d4c3b61ba68d10b85a679a6b1c7413010bb7f72cbe55df0f6f3b9054614f1b13f7a4b855c00a20455994da7d409cc2949658c1907e2"
+    reason: "Generate the 13.1.9 frontend patch against RPM's post-Patch0 source state"
   - file: "grafana-yarn-cache-13.1.8.tar.bz2"
     checksum: "989dfc022eb3ff865a259a2bb5bf58200b53d0dc3a3b452ae1a2e89efed32a6182a0e91fb1cd6b629919f3e23fd3a8f1ec31ee6f22f5ceee01196e586a28d372"
     reason: "grafana-fast-uri-body-parser-cve.patch bumps fast-uri 3.1.8->3.1.9 and body-parser 2.2.1->2.4.0; yarn cache regenerated"

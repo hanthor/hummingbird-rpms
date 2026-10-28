@@ -11,8 +11,17 @@ import shutil
 import subprocess
 
 
+def apply_patch(patch: Path, source_dir: Path) -> None:
+    subprocess.run(
+        ["patch", "--batch", "--forward", "--fuzz=0", "-p1", "-i", str(patch)],
+        cwd=source_dir, check=True,
+    )
+
+
 def generate(package_dir: Path, source_dir: Path, version: str) -> None:
     config = json.loads((package_dir / "frontend-overrides.json").read_text())
+    for name in config.get("pre_patches", []):
+        apply_patch(package_dir / name, source_dir)
     paths = [*config["manifests"], ".yarnrc.yml", "yarn.lock", *config["assets"]]
     before = {name: (source_dir / name).read_text() if (source_dir / name).exists() else None
               for name in paths}
@@ -28,6 +37,18 @@ def generate(package_dir: Path, source_dir: Path, version: str) -> None:
     updated, count = re.subn(r"(?m)^compressionLevel:.*$", "compressionLevel: 0", yarnrc.read_text())
     if count != 1:
         raise ValueError("expected one compressionLevel in .yarnrc.yml")
+    architectures = config.get("supported_architectures", [])
+    if architectures:
+        if re.search(r"(?m)^supportedArchitectures:", updated):
+            raise ValueError("supportedArchitectures already present in .yarnrc.yml")
+        updated += (
+            "\n# Retain native packages for all RPM build architectures.\n"
+            "supportedArchitectures:\n"
+            "  os:\n    - linux\n"
+            "  cpu:\n"
+            + "".join(f"    - {arch}\n" for arch in architectures)
+            + "  libc:\n    - glibc\n"
+        )
     yarnrc.write_text(updated)
 
     for name, asset in config["assets"].items():
@@ -98,9 +119,10 @@ def main() -> None:
     elif args.mode == "activate-spec":
         activate_spec(package_dir, args.version)
     else:
-        patch = package_dir / f"grafana-frontend-{args.version}.patch"
-        subprocess.run(["patch", "--batch", "--forward", "-p1", "-i", str(patch)],
-                       cwd=source_dir, check=True)
+        config = json.loads((package_dir / "frontend-overrides.json").read_text())
+        for name in config.get("pre_patches", []):
+            apply_patch(package_dir / name, source_dir)
+        apply_patch(package_dir / f"grafana-frontend-{args.version}.patch", source_dir)
 
 
 if __name__ == "__main__":

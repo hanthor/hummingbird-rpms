@@ -97,6 +97,8 @@ Patch0:         grafana-yarn-cache.patch
 # (CVE-2026-111181).
 #Patch26:        grafana-fast-uri-body-parser-cve.patch
 Patch27:        grafana-frontend-%{version}.patch
+# Copy plugin symlinks without chmod following a target not copied yet.
+Patch28:        grafana-copy-recursive-symlink.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.6
