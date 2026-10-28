@@ -1,0 +1,68 @@
+go:
+  # CVE-2026-100347, CVE-2026-100348, CVE-2026-100349, CVE-2026-100351,
+  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354, CVE-2026-93450.
+  - dependency: github.com/getkin/kin-openapi
+    version: v0.149.0
+  - dependency: github.com/santhosh-tekuri/jsonschema/v6
+    version: v6.0.3
+  # CVE-2026-93450. Newer upstream releases already meet this minimum.
+  - dependency: github.com/go-openapi/swag
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/jsonutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/cmdutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/conv
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/fileutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/loading
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/mangling
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/netutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/pools
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/stringutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/typeutils
+    version: v0.27.1
+  - dependency: github.com/go-openapi/swag/yamlutils
+    version: v0.27.1
+yarn:
+  # CVE-2026-110306, CVE-2026-110180, CVE-2026-110095, CVE-2026-110725.
+  - dependency: fast-uri
+    version: 3.1.9
+  # CVE-2026-75838.
+  - dependency: dompurify
+    version: 3.4.13
+  # CVE-2026-109955.
+  - dependency: hono
+    version: 4.13.11
+  # CVE-2026-101903.
+  - dependency: axios
+    version: 1.20.0
+  # CVE-2026-111755, CVE-2026-111756, CVE-2026-40895.
+  - dependency: follow-redirects
+    version: 1.16.1
+  # CVE-2026-110816.
+  - dependency: qs
+    version: 6.16.1
+  # CVE-2026-84375.
+  - dependency: js-yaml
+    version: ["3.15.2", "4.3.2"]
+  # CVE-2026-90771.
+  - dependency: joi
+    version: ["17.13.8", "18.2.9"]
+  # CVE-2026-111181.
+  - dependency: body-parser
+    version: ["2.4.0"]
+  # CVE-2026-114125, CVE-2026-114126.
+  - dependency: storybook
+    version: ["10.6.2"]
+  - dependency: '@storybook/*'
+    version: ["10.6.2"]
+  # Version 1.15.21 provides the native binding for s390x.
+  - dependency: '@swc/core'
+    version: ["1.15.21"]

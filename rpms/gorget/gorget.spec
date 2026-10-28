@@ -2,7 +2,7 @@
 
 Name:           gorget
 Version:        0.1.28
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Containerized source-pipeline tool for RPM package supply-chain trust
 License:        MIT
 
@@ -12,8 +12,8 @@ URL:            https://github.com/gorget-project/gorget
 # the #/ fragment tells rpmbuild the local filename to expect instead of
 # deriving it from the URL, matching what's actually in "sources".
 Source:         %{url}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
-# Support per-major Yarn updates through version arrays.
-Patch0:         0001-yarn-version-arrays.patch
+# Support dependency files, native patches, and per-major Yarn updates.
+Patch0:         0001-native-dependency-updates.patch
 
 BuildArch:      noarch
 
@@ -34,7 +34,7 @@ exactly how its sources are produced. When no pipeline YAML exists, gorget
 falls back to fetching every Source URL declared in the package's spec file.
 
 %prep
-%autosetup -n gorget-%{version}
+%autosetup -n gorget-%{version} -p1
 
 %generate_buildrequires
 %pyproject_buildrequires

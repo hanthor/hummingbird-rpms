@@ -474,20 +474,6 @@ The patch will be applied automatically if the spec uses `%autosetup -p1`. If th
 
 ### 3. Check for a gorget source-pipeline
 
-For `grafana12.4`, use native `vendor-bump` pins in
-`metadata/grafana12.4.source-pipeline.yaml` for ordinary Go and Yarn dependency updates.
-Use the `v` prefix for Go module versions in `pins`.
-Gorget regenerates Source0, the vendor archives, and `bundled-npm-provides.inc` together.
-Do not add an RPM patch for these generated dependency edits.
-
-For Yarn packages with parallel major versions, set the pin's `version` to an array.
-For example, `version: ["1.1.18", "2.1.4", "5.0.9"]` sets one minimum for each matching major.
-Gorget reads the lockfile and generates the required selectors.
-It also retargets upstream Yarn patch references and retains their source patch files.
-A string `version` applies its minimum to every copy of a package.
-Regenerate sources and record checksum exceptions.
-Upload the resulting archives before you submit the change.
-
 If `metadata/<package>.source-pipeline.yaml` exists, check whether its `transform:` step applies
 patches or otherwise runs against patched source (e.g. resolving a lockfile with `yarn install`,
 `pnpm fetch`, `npm ci`):

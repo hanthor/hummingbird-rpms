@@ -1,0 +1,757 @@
+diff --git a/src/gorget/config/loader.py b/src/gorget/config/loader.py
+index c0e49ed..4358978 100644
+--- a/src/gorget/config/loader.py
++++ b/src/gorget/config/loader.py
+@@ -102,7 +102,12 @@ def _parse_fetch_step(raw_step: object) -> FetchStep:
+         raise GorgetConfigError(f"Invalid {step_type} fetch step: {exc}") from exc
+
+
+-def _parse_transform_step(raw_step: object) -> TransformStep:
++def _parse_transform_step(
++    raw_step: object,
++    *,
++    config_dir: Path | None = None,
++    substitution_vars: SubstitutionVars | None = None,
++) -> TransformStep:
+     if not isinstance(raw_step, dict):
+         raise GorgetConfigError(f"Each transform step must be a mapping, got: {raw_step!r}")
+     step = _snake_case_keys(raw_step)
+@@ -113,8 +118,47 @@ def _parse_transform_step(raw_step: object) -> TransformStep:
+             f"{sorted(TRANSFORM_STEP_TYPES)})"
+         )
+     step_cls = TRANSFORM_STEP_TYPES[step_type]
++    if step_type == "vendor-bump" and "deps" in step:
++        if "pins" in step:
++            raise GorgetConfigError("vendor-bump accepts either pins or deps, not both")
++        deps = step["deps"]
++        if not isinstance(deps, str) or not deps.strip():
++            raise GorgetConfigError("vendor-bump deps must be a nonempty file path")
++        if config_dir is None:
++            raise GorgetConfigError("vendor-bump deps requires the pipeline file directory")
++        declarations = load_yaml(config_dir / deps)
++        if substitution_vars is not None:
++            substituted = walk_and_substitute(declarations, substitution_vars)
++            assert isinstance(substituted, dict)
++            declarations = substituted
++        ecosystem = step.get("ecosystem")
++        if ecosystem not in declarations:
++            raise GorgetConfigError(f"Dependency file {deps} has no {ecosystem!r} section")
++        step["pins"] = declarations[ecosystem]
+     if step_type == "vendor-bump" and "pins" in step:
+-        step["pins"] = [VendorBumpEntry(**_snake_case_keys(pin)) for pin in step["pins"]]
++        if not isinstance(step["pins"], list):
++            raise GorgetConfigError("vendor-bump pins must be a list of entries")
++        entries = []
++        for pin in step["pins"]:
++            if not isinstance(pin, dict):
++                raise GorgetConfigError("Each vendor-bump pin must be a mapping")
++            try:
++                entry = VendorBumpEntry(**_snake_case_keys(pin))
++            except TypeError as exc:
++                raise GorgetConfigError(f"Invalid vendor-bump pin: {exc}") from exc
++            if not isinstance(entry.dependency, str) or not entry.dependency.strip():
++                raise GorgetConfigError("Pin dependency must be a nonempty string")
++            entries.append(entry)
++        step["pins"] = entries
++        for pin in step["pins"]:
++            version = pin.version
++            if isinstance(version, list):
++                if step.get("ecosystem") != "yarn":
++                    raise GorgetConfigError("Version arrays require ecosystem: yarn")
++                if not version or any(not isinstance(v, str) or not v.strip() for v in version):
++                    raise GorgetConfigError("Version arrays must contain nonempty version strings")
++            elif not isinstance(version, str) or not version.strip():
++                raise GorgetConfigError("Pin version must be a string or a nonempty string array")
+     if "modules" in step:
+         step["modules"] = [VendorModule(**_snake_case_keys(mod)) for mod in step["modules"]]
+     if step_type == "vendor" and "outputs" in step:
+@@ -242,7 +286,12 @@ def _parse_publish_section(raw: dict) -> PublishSection | None:
+     return PublishSection(files=files)
+
+
+-def parse_pipeline_spec(raw: dict) -> PipelineSpec:
++def parse_pipeline_spec(
++    raw: dict,
++    *,
++    config_dir: Path | None = None,
++    substitution_vars: SubstitutionVars | None = None,
++) -> PipelineSpec:
+     raw, moved_vendor_steps = move_fetch_vendor_steps(raw)
+     if moved_vendor_steps:
+         logger.warning(
+@@ -263,7 +312,10 @@ def parse_pipeline_spec(raw: dict) -> PipelineSpec:
+     raw_transform = raw.get("transform", [])
+     if not isinstance(raw_transform, list):
+         raise GorgetConfigError("The 'transform' section must be a list of steps")
+-    transform_steps = [_parse_transform_step(step) for step in raw_transform]
++    transform_steps = [
++        _parse_transform_step(step, config_dir=config_dir, substitution_vars=substitution_vars)
++        for step in raw_transform
++    ]
+
+     raw_toolchain = raw.get("toolchain", [])
+     if not isinstance(raw_toolchain, list):
+@@ -314,7 +366,9 @@ def build_pipeline_spec(path: Path, *, substitution_vars: SubstitutionVars) -> P
+     raw = load_yaml(path)
+     substituted = walk_and_substitute(raw, substitution_vars)
+     assert isinstance(substituted, dict)
+-    return parse_pipeline_spec(substituted)
++    return parse_pipeline_spec(
++        substituted, config_dir=path.parent, substitution_vars=substitution_vars
++    )
+
+
+ __all__ = [
+diff --git a/src/gorget/config/schema.py b/src/gorget/config/schema.py
+index 271537a..3ab7f37 100644
+--- a/src/gorget/config/schema.py
++++ b/src/gorget/config/schema.py
+@@ -76,8 +76,8 @@ class VendorModule:
+ @dataclass(frozen=True, kw_only=True)
+ class VendorPlatform:
+     cpu: str    # "x64", "arm64"
+-    os: str     # "linux"
+-    libc: str   # "glibc"
++    os: str = "linux"
++    libc: str = "glibc"
+
+
+ _DEFAULT_NPM_PLATFORMS: list[VendorPlatform] = [
+@@ -166,7 +166,7 @@ class PackStep:
+ @dataclass(frozen=True, kw_only=True)
+ class VendorBumpEntry:
+     dependency: str
+-    version: str    # "0.39.0" = minimum (>=), "~4.18" = prefix pin
++    version: str | list[str]  # A list sets minimums within matching Yarn major versions.
+
+
+ @dataclass(frozen=True, kw_only=True)
+@@ -174,9 +174,17 @@ class VendorBumpStep:
+     type: Literal["vendor-bump"] = "vendor-bump"
+     ecosystem: Literal["go", "npm", "pnpm", "yarn", "cargo", "maven"]
+     pins: list[VendorBumpEntry] = field(default_factory=list)
++    deps: str | None = None
+     modules: list[VendorModule] = field(default_factory=lambda: [VendorModule(path=".")])
+
+
++@dataclass(frozen=True, kw_only=True)
++class PatchStep:
++    type: Literal["patch"] = "patch"
++    file: str
++    strip: int = 1
++
++
+ @dataclass(frozen=True, kw_only=True)
+ class RunStep:
+     type: Literal["run"] = "run"
+@@ -207,9 +215,10 @@ class RunStep:
+
+ # Vendoring consumes a source workspace and creates a derived artifact, so it is
+ # a transform step even when no earlier transform mutates the source.
+-TransformStep = StripTarballStep | VendorBumpStep | RunStep | VendorStep | PackStep
++TransformStep = StripTarballStep | VendorBumpStep | PatchStep | RunStep | VendorStep | PackStep
+
+ TRANSFORM_STEP_TYPES: dict[str, type] = {
++    "patch": PatchStep,
+     "strip-tarball": StripTarballStep,
+     "vendor-bump": VendorBumpStep,
+     "run": RunStep,
+diff --git a/src/gorget/dependencies/update.py b/src/gorget/dependencies/update.py
+index 152ed84..9756045 100644
+--- a/src/gorget/dependencies/update.py
++++ b/src/gorget/dependencies/update.py
+@@ -10,6 +10,7 @@ import re
+ import shutil
+ import xml.etree.ElementTree as ET
+ from collections.abc import Callable, Sequence
++from fnmatch import fnmatchcase
+ from pathlib import Path
+ from typing import Protocol
+
+@@ -20,14 +21,17 @@ from gorget.dependencies import read_inventory
+ from gorget.exceptions import GorgetConfigError, GorgetTransientError
+ from gorget.package_manager import PackageManager, yarn_is_berry
+ from gorget.util.subprocess_run import run
++from gorget.util.version import meets_minimum
+
+
+-def _parse_constraint(version: str) -> tuple[str, str]:
++def _parse_constraint(version: str | list[str]) -> tuple[str, str]:
+     """Parse version into (mode, version).
+
+     Returns ("minimum", "0.39.0") for plain versions,
+     or ("prefix", "4.18") for tilde-prefixed versions.
+     """
++    if not isinstance(version, str):
++        raise GorgetConfigError("Version arrays require the Yarn array update path")
+     if version.startswith("~"):
+         return ("prefix", version[1:])
+     return ("minimum", version)
+@@ -95,7 +99,7 @@ class _GoPin:
+             )
+
+
+-def _specifier(version: str) -> str:
++def _specifier(version: str | list[str]) -> str:
+     mode, ver = _parse_constraint(version)
+     return f"~{ver}" if mode == "prefix" else f">={ver}"
+
+@@ -476,6 +480,14 @@ def update_dependencies(
+     toolchain: Sequence[ToolchainEntry] = (),
+ ) -> None:
+     """Apply a complete pin set and validate every resolved copy afterward."""
++    array_pins = [entry for entry in pins if isinstance(entry.version, list)]
++    if array_pins:
++        if ecosystem != "yarn":
++            raise GorgetConfigError("Version arrays require ecosystem: yarn")
++        _update_yarn_versions(module_dir, array_pins, toolchain)
++    pins = [entry for entry in pins if isinstance(entry.version, str)]
++    if not pins:
++        return
+     strategy = _STRATEGIES[ecosystem]
+     names = [entry.dependency for entry in pins]
+     inventory = read_inventory(
+@@ -486,12 +498,12 @@ def update_dependencies(
+         runner=run,
+         use_workspace=False,
+     )
+-    pending = [
+-        entry
+-        for entry in pins
+-        if not inventory.find(entry.dependency)
+-        or inventory.violations(entry.dependency, entry.version)
+-    ]
++    pending = []
++    for entry in pins:
++        assert isinstance(entry.version, str)
++        if (not inventory.find(entry.dependency)
++                or inventory.violations(entry.dependency, entry.version)):
++            pending.append(entry)
+     if not pending:
+         return
+     strategy.apply_many(module_dir, pending, toolchain)
+@@ -504,6 +516,7 @@ def update_dependencies(
+         use_workspace=False,
+     )
+     for entry in pins:
++        assert isinstance(entry.version, str)
+         if not resolved.find(entry.dependency):
+             raise GorgetConfigError(
+                 f"vendor-bump: {entry.dependency} is not present in the dependency tree "
+@@ -519,5 +532,97 @@ def update_dependencies(
+             )
+
+
++def _update_yarn_versions(
++    module_dir: Path,
++    pins: Sequence[VendorBumpEntry],
++    toolchain: Sequence[ToolchainEntry] = (),
++) -> None:
++    """Derive Yarn selectors from the lockfile and preserve existing major versions."""
++    floors: dict[str, dict[str, str]] = {}
++    for pin in pins:
++        pattern = pin.dependency
++        declared_versions = pin.version
++        assert isinstance(declared_versions, list)
++        if not declared_versions:
++            raise GorgetConfigError("Version arrays must contain nonempty version strings")
++        by_major = {}
++        for version in declared_versions:
++            if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
++                raise GorgetConfigError(f"Invalid Yarn array version: {version!r}")
++            major = version.split(".")[0]
++            if major in by_major:
++                raise GorgetConfigError(f"Duplicate Yarn array major for {pattern}: {major}")
++            by_major[major] = version
++        floors[pattern] = by_major
++    lockfile = module_dir / "yarn.lock"
++    lock = yaml.safe_load(lockfile.read_text()) or {}
++    if "__metadata" not in lock:
++        raise GorgetConfigError("Yarn version arrays require a Berry lockfile")
++    manifest = module_dir / "package.json"
++    data = json.loads(manifest.read_text())
++    resolutions = data.setdefault("resolutions", {})
++    targets: dict[str, dict[str, str]] = {}
++    pending = False
++    for descriptors, entry in lock.items():
++        if descriptors == "__metadata":
++            continue
++        name, protocol, _ = entry.get("resolution", "").partition("@npm:")
++        if not protocol:
++            continue
++        matching = [versions for pattern, versions in floors.items() if fnmatchcase(name, pattern)]
++        if not matching:
++            continue
++        by_major = targets.setdefault(name, {})
++        for versions in matching:
++            for major, branch_floor in versions.items():
++                if major not in by_major or meets_minimum(branch_floor, by_major[major]):
++                    by_major[major] = branch_floor
++        actual = str(entry["version"])
++        floor = by_major.get(actual.split(".")[0])
++        if floor is None or meets_minimum(actual, floor):
++            continue
++        reference = floor
++        # Existing overrides can redirect requests to descriptors absent from the lockfile.
++        for selector, value in list(resolutions.items()):
++            if not isinstance(value, str) or not re.fullmatch(
++                rf"(?:.*/)?{re.escape(name)}(?:@.*)?", selector
++            ):
++                continue
++            version_match = re.fullmatch(r"(?:npm:)?[~^=]*(\d+\.\d+\.\d+)", value)
++            if version_match is not None:
++                inherited = version_match[1]
++                if (inherited.split(".")[0] == actual.split(".")[0]
++                        and not meets_minimum(inherited, floor)):
++                    resolutions[selector] = floor
++        # Retarget upstream patch: references and keep their source patch files.
++        patch_prefix = f"patch:{name}@npm%3A"
++        for selector, value in list(resolutions.items()):
++            if not isinstance(value, str) or not value.startswith(patch_prefix):
++                continue
++            patched_version, separator, patch_path = value[len(patch_prefix):].partition("#")
++            if separator and patched_version.split(".")[0] == actual.split(".")[0]:
++                reference = f"{patch_prefix}{floor}#{patch_path}"
++                resolutions[selector] = reference
++                resolutions[f"{name}@npm:{floor}"] = reference
++        for descriptor in descriptors.split(", "):
++            resolutions[descriptor] = reference
++        pending = True
++    if not pending:
++        return
++    manifest.write_text(json.dumps(data, indent=2) + "\n")
++    command = _yarn_install_cmd(module_dir)
++    result = PackageManager(module_dir, toolchain, runner=run).run(command, lockfile_only=True)
++    if result.returncode != 0:
++        raise GorgetTransientError(f"yarn install failed in {module_dir}: {result.stderr.strip()}")
++    resolved = read_inventory("yarn", module_dir, list(targets), toolchain=toolchain, runner=run)
++    for name, versions in targets.items():
++        for copy in resolved.find(name):
++            floor = versions.get(copy.version.split(".")[0])
++            if floor is not None and not meets_minimum(copy.version, floor):
++                raise GorgetTransientError(
++                    f"Yarn floor failed: {copy.location} is {copy.version}, need {floor}"
++                )
++
++
+ def update_source_files(ecosystem: str) -> tuple[str, ...]:
+     return _STRATEGIES[ecosystem].source_files
+diff --git a/src/gorget/pipeline/stages/transform.py b/src/gorget/pipeline/stages/transform.py
+index fb9d54d..c8d51eb 100644
+--- a/src/gorget/pipeline/stages/transform.py
++++ b/src/gorget/pipeline/stages/transform.py
+@@ -7,6 +7,7 @@ from typing import Any, ClassVar
+
+ from gorget.config.schema import (
+     PackStep,
++    PatchStep,
+     PipelineSpec,
+     RunStep,
+     StripTarballStep,
+@@ -18,7 +19,7 @@ from gorget.pipeline.result import StageResult
+ from gorget.pipeline.state import StageState
+ from gorget.transform.base import TransformContext
+ from gorget.transform.pack import PackHandler
+-from gorget.transform.run_step import RunHandler
++from gorget.transform.run_step import PatchHandler, RunHandler
+ from gorget.transform.strip_tarball import StripTarballHandler
+ from gorget.transform.vendor import VendorHandler
+ from gorget.transform.vendor.base import VendorResult
+@@ -43,6 +44,7 @@ class _VendorStepAdapter:
+ # See `fetch/stages/fetch.py` for why this dict is typed loosely rather than
+ # fighting Protocol contravariance for a dynamic, type-based dispatch table.
+ _HANDLERS: dict[type, Any] = {
++    PatchStep: PatchHandler(),
+     StripTarballStep: StripTarballHandler(),
+     VendorBumpStep: VendorBumpHandler(),
+     RunStep: RunHandler(),
+diff --git a/src/gorget/transform/run_step.py b/src/gorget/transform/run_step.py
+index 6b9eba6..72b044a 100644
+--- a/src/gorget/transform/run_step.py
++++ b/src/gorget/transform/run_step.py
+@@ -10,7 +10,7 @@ from __future__ import annotations
+ import shutil
+ from pathlib import Path
+
+-from gorget.config.schema import RunStep
++from gorget.config.schema import PatchStep, RunStep
+ from gorget.exceptions import GorgetConfigError, GorgetTransientError
+ from gorget.pipeline.artifact import build_derived_artifact, derived_artifact_path
+ from gorget.pipeline.state import StageState
+@@ -20,6 +20,23 @@ from gorget.util.archive import repack_tar_gz
+ from gorget.util.subprocess_run import run
+
+
++class PatchHandler:
++    def run(self, step: PatchStep, ctx: TransformContext, state: StageState) -> None:
++        if ctx.dry_run:
++            return
++        if not isinstance(step.strip, int) or step.strip < 0:
++            raise GorgetConfigError("Patch strip must be a nonnegative integer")
++        patch = ctx.package_dir / step.file
++        if not patch.is_file():
++            raise GorgetConfigError(f"Patch file does not exist: {patch}")
++        source = ensure_source_dir(ctx, state)
++        # Git applies all hunks atomically and rejects paths outside the source tree.
++        result = run(["git", "apply", f"-p{step.strip}", str(patch.resolve())], cwd=source)
++        if result.returncode != 0:
++            raise GorgetTransientError(f"Patch {step.file} failed: {result.stderr.strip()}")
++        state.source.mark_dirty()
++
++
+ class RunHandler:
+     def run(self, step: RunStep, ctx: TransformContext, state: StageState) -> None:
+         description = f"run:{' '.join(step.command)}"
+diff --git a/tests/test_config_loader.py b/tests/test_config_loader.py
+index 1587eb2..dbb3545 100644
+--- a/tests/test_config_loader.py
++++ b/tests/test_config_loader.py
+@@ -1,6 +1,7 @@
+ from pathlib import Path
+
+ import pytest
++import yaml
+
+ from gorget.config.loader import build_pipeline_spec, load_yaml, parse_pipeline_spec
+ from gorget.config.schema import (
+@@ -38,6 +39,33 @@ def test_load_yaml_malformed_raises_config_error():
+         load_yaml(FIXTURES / "malformed.yaml")
+
+
++@pytest.mark.parametrize("version", [[], [""], [1], [None], {}, 1, ""])
++def test_pin_version_rejects_invalid_values(version):
++    with pytest.raises(GorgetConfigError, match="version|Version"):
++        parse_pipeline_spec({"transform": [{
++            "type": "vendor-bump", "ecosystem": "yarn",
++            "pins": [{"dependency": "foo", "version": version}],
++        }]})
++
++
++@pytest.mark.parametrize("ecosystem", ["go", "npm", "pnpm", "cargo", "maven"])
++def test_version_arrays_reject_unsupported_ecosystems(ecosystem):
++    with pytest.raises(GorgetConfigError, match="require ecosystem: yarn"):
++        parse_pipeline_spec({"transform": [{
++            "type": "vendor-bump", "ecosystem": ecosystem,
++            "pins": [{"dependency": "foo", "version": ["1.0.0"]}],
++        }]})
++
++
++def test_pin_version_accepts_string_and_array_together():
++    spec = parse_pipeline_spec({"transform": [{
++        "type": "vendor-bump", "ecosystem": "yarn",
++        "pins": [{"dependency": "foo", "version": "1.0.1"},
++                 {"dependency": "bar", "version": ["1.0.1", "2.0.1"]}],
++    }]})
++    assert [p.version for p in spec.transform.steps[0].pins] == ["1.0.1", ["1.0.1", "2.0.1"]]
++
++
+ def test_build_pipeline_spec_full_schema_round_trips():
+     spec = build_pipeline_spec(FIXTURES / "full-schema.yaml", substitution_vars=make_vars())
+     assert spec.package == "example"
+@@ -404,3 +432,105 @@ def test_policy_defaults_when_section_absent():
+     assert spec.policy.vendor_constraints == []
+     assert spec.policy.audit is False
+     assert spec.policy.license_compliance.disallowed == []
++
++
++def test_dependency_file_matches_inline_pins(tmp_path, monkeypatch):
++    declarations = {
++        "go": [{"dependency": "example.com/module", "version": "v1.2.3"}],
++        "yarn": [{"dependency": "brace-expansion", "version": ["1.1.18", "2.1.4"]}],
++    }
++    (tmp_path / "deps.yaml").write_text(yaml.safe_dump(declarations))
++    steps = [
++        {"type": "vendor-bump", "ecosystem": ecosystem, "deps": "deps.yaml"}
++        for ecosystem in declarations
++    ]
++    pipeline = tmp_path / "pipeline.yaml"
++    pipeline.write_text(yaml.safe_dump({"transform": steps}))
++    elsewhere = tmp_path / "elsewhere"
++    elsewhere.mkdir()
++    monkeypatch.chdir(elsewhere)
++    spec = build_pipeline_spec(pipeline, substitution_vars=make_vars())
++    for step in spec.transform.steps:
++        inline = parse_pipeline_spec({"transform": [{
++            "type": "vendor-bump", "ecosystem": step.ecosystem,
++            "pins": declarations[step.ecosystem],
++        }]}).transform.steps[0]
++        assert step.pins == inline.pins
++        assert step.modules == inline.modules
++        assert step.deps == "deps.yaml"
++
++
++def test_dependency_file_substitution(tmp_path):
++    (tmp_path / "deps.yaml").write_text(
++        'yarn:\n  - dependency: example\n    version: "${VERSION}"\n'
++    )
++    pipeline = tmp_path / "pipeline.yaml"
++    pipeline.write_text(
++        "transform:\n  - type: vendor-bump\n    ecosystem: yarn\n    deps: deps.yaml\n"
++    )
++    spec = build_pipeline_spec(pipeline, substitution_vars=make_vars())
++    assert spec.transform.steps[0].pins[0].version == make_vars().version
++
++
++@pytest.mark.parametrize("contents, message", [
++    ("yarn: []", "no 'go' section"),
++    ("go: {}", "must be a list"),
++    ("go: [not-a-mapping]", "must be a mapping"),
++    ("go: [{dependency: x}]", "Invalid vendor-bump pin"),
++    ('go: [{dependency: "", version: v1.0.0}]', "nonempty string"),
++    ("go: [{dependency: x, version: [v1.0.0]}]", "require ecosystem: yarn"),
++    ("go: [", "Invalid YAML"),
++    ("- invalid", "must be a mapping at the top level"),
++])
++def test_invalid_dependency_file(tmp_path, contents, message):
++    (tmp_path / "deps.yaml").write_text(contents)
++    pipeline = tmp_path / "pipeline.yaml"
++    pipeline.write_text(
++        "transform:\n  - type: vendor-bump\n    ecosystem: go\n    deps: deps.yaml\n"
++    )
++    with pytest.raises(GorgetConfigError, match=message):
++        build_pipeline_spec(pipeline, substitution_vars=make_vars())
++
++
++def test_missing_dependency_file(tmp_path):
++    pipeline = tmp_path / "pipeline.yaml"
++    pipeline.write_text(
++        "transform:\n  - type: vendor-bump\n    ecosystem: go\n    deps: absent.yaml\n"
++    )
++    with pytest.raises(GorgetConfigError, match="Could not read.*absent.yaml"):
++        build_pipeline_spec(pipeline, substitution_vars=make_vars())
++
++
++@pytest.mark.parametrize("deps", [None, "", [], 42])
++def test_invalid_dependency_file_path(deps):
++    with pytest.raises(GorgetConfigError, match="nonempty file path"):
++        parse_pipeline_spec({"transform": [{
++            "type": "vendor-bump", "ecosystem": "go", "deps": deps,
++        }]})
++
++
++def test_dependency_file_and_inline_pins_conflict():
++    with pytest.raises(GorgetConfigError, match="either pins or deps"):
++        parse_pipeline_spec({"transform": [{
++            "type": "vendor-bump", "ecosystem": "go", "deps": "deps.yaml", "pins": [],
++        }]})
++
++
++def test_vendor_platform_defaults():
++    spec = parse_pipeline_spec({"transform": [{
++        "type": "vendor", "ecosystem": "yarn",
++        "platforms": [{"cpu": "s390x"}, {"cpu": "arm64", "os": "freebsd", "libc": "musl"}],
++    }]})
++    platforms = spec.transform.steps[0].platforms
++    assert platforms[0].os == "linux"
++    assert platforms[0].libc == "glibc"
++    assert platforms[0].cpu == "s390x"
++    assert platforms[1].os == "freebsd"
++    assert platforms[1].libc == "musl"
++
++
++def test_patch_transform_parses():
++    spec = parse_pipeline_spec({"transform": [{"type": "patch", "file": "fix.patch"}]})
++    step = spec.transform.steps[0]
++    assert step.file == "fix.patch"
++    assert step.strip == 1
+diff --git a/tests/test_transform_run_step.py b/tests/test_transform_run_step.py
+index 7bd4ec8..87f6013 100644
+--- a/tests/test_transform_run_step.py
++++ b/tests/test_transform_run_step.py
+@@ -1,9 +1,10 @@
++import shutil
+ import subprocess
+ import tarfile
+
+ import pytest
+
+-from gorget.config.schema import RunStep, ToolchainEntry
++from gorget.config.schema import PatchStep, RunStep, ToolchainEntry
+ from gorget.config.substitution import SubstitutionVars
+ from gorget.exceptions import GorgetConfigError, GorgetTransientError
+ from gorget.fetch.base import FetchedArtifact
+@@ -11,7 +12,7 @@ from gorget.pipeline.result import PipelineReport
+ from gorget.pipeline.source import SourceWorkspace
+ from gorget.pipeline.state import StageState
+ from gorget.transform.base import TransformContext
+-from gorget.transform.run_step import RunHandler
++from gorget.transform.run_step import PatchHandler, RunHandler
+ from gorget.util.archive import make_tar_gz
+
+
+@@ -355,3 +356,33 @@ def test_artifacts_names_unknown_artifact_raises_config_error(tmp_path, mocker):
+     step = RunStep(command=["verify.sh"], artifacts=["does-not-exist.tar.gz"])
+     with pytest.raises(GorgetConfigError, match="does-not-exist.tar.gz"):
+         RunHandler().run(step, ctx, state)
++
++
++@pytest.mark.parametrize("fail", [False, True])
++def test_patch_transform_applies_atomically(tmp_path, fail):
++    if shutil.which("git") is None:
++        pytest.skip("git is not installed")
++    source = tmp_path / "source"
++    source.mkdir()
++    (source / "file").write_text("before\n")
++    patch = "--- a/file\n+++ b/file\n@@ -1 +1 @@\n-before\n+after\n"
++    if fail:
++        patch += "--- a/missing\n+++ b/missing\n@@ -1 +1 @@\n-before\n+after\n"
++    (tmp_path / "fix.patch").write_text(patch)
++    ctx = make_ctx(tmp_path, source)
++    state = make_state(tmp_path)
++    if fail:
++        with pytest.raises(GorgetTransientError, match="fix.patch"):
++            PatchHandler().run(PatchStep(file="fix.patch"), ctx, state)
++        assert (source / "file").read_text() == "before\n"
++        assert not state.source.dirty
++    else:
++        PatchHandler().run(PatchStep(file="fix.patch"), ctx, state)
++        assert (source / "file").read_text() == "after\n"
++        assert state.source.dirty
++
++
++def test_patch_transform_requires_file(tmp_path):
++    ctx = make_ctx(tmp_path, tmp_path)
++    with pytest.raises(GorgetConfigError, match="Patch file does not exist"):
++        PatchHandler().run(PatchStep(file="absent.patch"), ctx, make_state(tmp_path))
+diff --git a/tests/test_transform_vendor_bump.py b/tests/test_transform_vendor_bump.py
+index b9d55a3..a5a536f 100644
+--- a/tests/test_transform_vendor_bump.py
++++ b/tests/test_transform_vendor_bump.py
+@@ -619,6 +619,137 @@ def test_yarn_bump_keeps_install_state_outside_source(tmp_path, mocker):
+     assert not (tmp_path / ".yarn/install-state.gz").exists()
+
+
++def test_yarn_version_array_derives_selectors_and_keeps_major_versions(tmp_path, mocker):
++    import yaml
++
++    from gorget.dependencies.update import update_dependencies
++
++    manifest = tmp_path / "package.json"
++    patch = "patch:foo@npm%3A1.0.0#./.yarn/patches/foo.patch"
++    manifest.write_text(json.dumps({
++        "packageManager": "yarn@4.0.0", "resolutions": {
++            "foo@npm:1.0.0": patch,
++            "foo@npm:1.0.2": "^1.0.0",
++            "foo@npm:1.0.3": "1.2.0",
++        },
++    }))
++    lock = {
++        "__metadata": {"version": 8},
++        "foo@npm:1.0.0, foo@npm:^1": {"version": "1.0.0", "resolution": "foo@npm:1.0.0"},
++        "foo@npm:^2": {"version": "2.0.0", "resolution": "foo@npm:2.0.0"},
++        "foo@npm:^3": {"version": "3.0.0", "resolution": "foo@npm:3.0.0"},
++    }
++    (tmp_path / "yarn.lock").write_text(yaml.safe_dump(lock))
++
++    def install(args, cwd=None, env=None):
++        resolutions = json.loads(manifest.read_text())["resolutions"]
++        reference = patch.replace("npm%3A1.0.0#", "npm%3A1.0.1#")
++        assert resolutions == {
++            "foo@npm:1.0.0": reference, "foo@npm:^1": reference,
++            "foo@npm:1.0.1": reference, "foo@npm:^2": "2.0.1",
++            "foo@npm:1.0.2": "1.0.1", "foo@npm:1.0.3": "1.2.0",
++        }
++        assert not Path(env["YARN_INSTALL_STATE_PATH"]).is_relative_to(tmp_path)
++        for entry in list(lock.values())[1:]:
++            if entry["version"] != "3.0.0":
++                entry["version"] = entry["version"][:-1] + "1"
++        (tmp_path / "yarn.lock").write_text(yaml.safe_dump(lock))
++        return _ok()
++
++    mock_run = mocker.patch("gorget.dependencies.update.run", side_effect=install)
++    update_dependencies(
++        "yarn", tmp_path, [VendorBumpEntry(dependency="fo*", version=["1.0.1", "2.0.1"])]
++    )
++    assert mock_run.call_count == 1
++    # A repeated run keeps all selectors and performs no install.
++    update_dependencies(
++        "yarn", tmp_path, [VendorBumpEntry(dependency="fo*", version=["1.0.1", "2.0.1"])]
++    )
++    assert mock_run.call_count == 1
++
++
++def test_yarn_version_array_failure_preserves_source(tmp_path, mocker):
++    import yaml
++
++    source = tmp_path / "source"
++    source.mkdir()
++    manifest = source / "package.json"
++    manifest.write_text('{"packageManager":"yarn@4.0.0"}\n')
++    (source / "yarn.lock").write_text(yaml.safe_dump({
++        "__metadata": {"version": 8},
++        "foo@npm:^1": {"version": "1.0.0", "resolution": "foo@npm:1.0.0"},
++    }))
++    mocker.patch("gorget.dependencies.update.run", return_value=_fail("invalid patch"))
++    ctx = make_ctx(tmp_path, source)
++    state = make_state(tmp_path)
++    state.source = ctx.source
++    step = VendorBumpStep(
++        ecosystem="yarn", pins=[VendorBumpEntry(dependency="foo", version=["1.0.1"])]
++    )
++    with pytest.raises(GorgetTransientError, match="invalid patch"):
++        VendorBumpHandler().run(step, ctx, state)
++    assert manifest.read_text() == '{"packageManager":"yarn@4.0.0"}\n'
++    assert not state.source.dirty
++
++
++def test_yarn_version_array_rejects_unchanged_vulnerable_lockfile(tmp_path, mocker):
++    import yaml
++
++    from gorget.dependencies.update import update_dependencies
++
++    (tmp_path / "package.json").write_text('{"packageManager":"yarn@4.0.0"}')
++    (tmp_path / "yarn.lock").write_text(yaml.safe_dump({
++        "__metadata": {"version": 8},
++        "foo@npm:^1": {"version": "1.0.0", "resolution": "foo@npm:1.0.0"},
++    }))
++    mocker.patch("gorget.dependencies.update.run", return_value=_ok())
++    with pytest.raises(GorgetTransientError, match="Yarn floor failed"):
++        update_dependencies(
++            "yarn", tmp_path, [VendorBumpEntry(dependency="foo", version=["1.0.1"])]
++        )
++
++
++def test_yarn_mixed_version_forms_keep_distinct_scopes(tmp_path, mocker):
++    import yaml
++
++    from gorget.dependencies.update import update_dependencies
++
++    manifest = tmp_path / "package.json"
++    manifest.write_text('{"packageManager":"yarn@4.0.0"}')
++    lock = {"__metadata": {"version": 8}}
++    for name in ("branch", "global"):
++        for major in (1, 2):
++            version = f"{major}.0.0"
++            lock[f"{name}@npm:^{major}"] = {
++                "version": version, "resolution": f"{name}@npm:{version}",
++            }
++    lockfile = tmp_path / "yarn.lock"
++    lockfile.write_text(yaml.safe_dump(lock))
++
++    def install(args, cwd=None, env=None):
++        resolutions = json.loads(manifest.read_text())["resolutions"]
++        for descriptor, entry in lock.items():
++            if descriptor == "__metadata":
++                continue
++            name = descriptor.partition("@npm:")[0]
++            reference = resolutions.get(name, resolutions.get(descriptor))
++            if reference:
++                entry["version"] = reference.removeprefix(">=")
++                entry["resolution"] = f'{name}@npm:{entry["version"]}'
++        lockfile.write_text(yaml.safe_dump(lock))
++        return _ok()
++
++    mocker.patch("gorget.dependencies.update.run", side_effect=install)
++    update_dependencies("yarn", tmp_path, [
++        VendorBumpEntry(dependency="global", version="3.0.1"),
++        VendorBumpEntry(dependency="branch", version=["1.0.1"]),
++    ])
++    assert lock["branch@npm:^1"]["version"] == "1.0.1"
++    assert lock["branch@npm:^2"]["version"] == "2.0.0"
++    assert lock["global@npm:^1"]["version"] == "3.0.1"
++    assert lock["global@npm:^2"]["version"] == "3.0.1"
++
++
+ @pytest.mark.parametrize("ecosystem", ["npm", "pnpm", "yarn"])
+ def test_node_pin_set_resolves_once_after_all_manifest_edits(tmp_path, mocker, ecosystem):
+     import yaml
