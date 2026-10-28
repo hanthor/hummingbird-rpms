@@ -1,0 +1,78 @@
+{
+  "manifests": {
+    "package.json": {
+      "resolutions": {
+        "browserslist@npm:^4.0.0": "4.28.7",
+        "browserslist@npm:^4.21.4": "4.28.7",
+        "browserslist@npm:^4.24.0": "4.28.7",
+        "browserslist@npm:^4.24.4": "4.28.7",
+        "browserslist@npm:^4.24.5": "4.28.7",
+        "browserslist@npm:^4.25.1": "4.28.7",
+        "browserslist@npm:^4.28.1": "4.28.7",
+        "nanoid@npm:^5.0.9": "5.1.16",
+        "fast-uri@npm:^3.0.1": "3.1.9",
+        "body-parser@npm:^2.2.1": "2.4.0",
+        "qs@npm:^6.14.0": "6.16.1",
+        "qs@npm:^6.4.0": "6.16.1",
+        "axios": "1.20.0",
+        "swagger-ui-react/dompurify": "3.4.13",
+        "dompurify": "3.4.13",
+        "js-yaml@npm:4.1.1": "4.3.2",
+        "js-yaml@npm:=4.1.1": "4.3.2",
+        "storybook@npm:10.6.2": "patch:storybook@npm%3A10.6.2#~/.yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch",
+        "js-yaml@npm:^3.10.0": "3.15.2",
+        "js-yaml@npm:^3.13.1": "3.15.2",
+        "js-yaml@npm:^4.1.0": "4.3.2",
+        "joi@npm:^17.11.0": "17.13.8",
+        "joi@npm:^18.2.1": "18.2.9",
+        "hono": "4.13.11",
+        "follow-redirects": "1.16.1"
+      },
+      "dependencies": {
+        "dompurify": "3.4.13"
+      }
+    },
+    "packages/grafana-flamegraph/package.json": {
+      "devDependencies": {
+        "@storybook/react": "10.6.2",
+        "@storybook/react-webpack5": "10.6.2",
+        "storybook": "10.6.2"
+      }
+    },
+    "packages/grafana-ui/package.json": {
+      "devDependencies": {
+        "@storybook/addon-a11y": "10.6.2",
+        "@storybook/addon-docs": "10.6.2",
+        "@storybook/react": "10.6.2",
+        "@storybook/react-webpack5": "10.6.2",
+        "storybook": "10.6.2"
+      }
+    }
+  },
+  "assets": {
+    ".yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch": "storybook-npm-10.6.2-7da1cdbbd6.patch"
+  },
+  "legacy_patches": [
+    1,
+    3,
+    6,
+    7,
+    8,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "frontend_patch_number": 27
+}

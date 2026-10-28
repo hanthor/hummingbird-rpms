@@ -7,33 +7,7 @@
 go_mod_dir = "."
 
 [archive]
-pre_commands = [
-  # Only the currently packaged releases need this CVE-2026-93450 backport.
-  # New upstream Grafana releases already require go-openapi/swag 0.28.0.
-  ["sh", "-ec", '''
-    if grep -Eq '^[[:space:]]*github[.]com/go-openapi/swag/jsonutils[[:space:]]+v0[.]26[.]' go.mod; then
-      go get \
-        github.com/go-openapi/swag@v0.27.1 \
-        github.com/go-openapi/swag/jsonutils@v0.27.1 \
-        github.com/go-openapi/swag/cmdutils@v0.27.1 \
-        github.com/go-openapi/swag/conv@v0.27.1 \
-        github.com/go-openapi/swag/fileutils@v0.27.1 \
-        github.com/go-openapi/swag/loading@v0.27.1 \
-        github.com/go-openapi/swag/mangling@v0.27.1 \
-        github.com/go-openapi/swag/netutils@v0.27.1 \
-        github.com/go-openapi/swag/pools@v0.27.1 \
-        github.com/go-openapi/swag/stringutils@v0.27.1 \
-        github.com/go-openapi/swag/typeutils@v0.27.1 \
-        github.com/go-openapi/swag/yamlutils@v0.27.1
-    fi
-  '''],
-  # CVE-2026-100347, CVE-2026-100348, CVE-2026-100349, CVE-2026-100351,
-  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354, CVE-2026-93450.
-  # Bumps getkin/kin-openapi to v0.149.0 (pulling in
-  # santhosh-tekuri/jsonschema/v6 v6.0.3) to fix multiple Denial of
-  # Service issues and an authentication bypass via URL path decoding.
-  ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
-]
+# Upstream Grafana uses go-openapi/swag 0.28.0 and kin-openapi 0.151.0.
 post_commands = [
   # These nested modules do not carry separate license files. They use the
   # license of their parent repository or state their license in README.md.

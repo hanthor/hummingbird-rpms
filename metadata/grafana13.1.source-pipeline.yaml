@@ -17,10 +17,9 @@ transform:
         set -euo pipefail
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        # Apply the complete frontend patch sequence and generate this
-        # release's compression patch before creating the offline cache.
+        # Resolve security overrides and generate a patch for this release.
         bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
-          . "${VERSION}" --generate-compression
+          . "${VERSION}" --generate
         # Unlike grafana12.4, 13.1's yarn.lock has no Cypress dependency to
         # suppress a binary download for.
         # YARN_NPM_MINIMAL_AGE_GATE=0: qs 6.16.0 is newer than the 3-day gate
@@ -38,7 +37,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
-      - "grafana-yarn-cache-compression-${VERSION}.patch"
+      - "grafana-frontend-${VERSION}.patch"
 
 post:
   # Generate the spec's bundled npm Provides from the same patched dependency
@@ -46,7 +45,7 @@ post:
   - type: run
     artifacts:
       - "grafana-${VERSION}.tar.gz"
-      - "grafana-yarn-cache-compression-${VERSION}.patch"
+      - "grafana-frontend-${VERSION}.patch"
     command:
       - "sh"
       - "-c"
@@ -60,6 +59,8 @@ post:
             's/^Patch14:[[:space:]]*grafana-ngalert-datasource-authz-cve\.patch/#Patch14:        grafana-ngalert-datasource-authz-cve.patch/' \
             grafana13.1.spec
         fi
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
+          . "${VERSION}" --activate-spec
         work_dir=$(mktemp -d)
         trap 'rm -rf "${work_dir}"' EXIT
         tar -xzf "grafana-${VERSION}.tar.gz" -C "${work_dir}"
