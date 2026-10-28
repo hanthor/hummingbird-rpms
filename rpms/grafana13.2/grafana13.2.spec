@@ -92,6 +92,8 @@ Patch2:         grafana-xorm-go122-build-constraint.patch
 Patch20:        grafana-compress-1.20.2-cve.patch
 #Patch21:        grafana-joi-cve-2026-118772.patch
 Patch22:        grafana-frontend-%{version}.patch
+# Copy plugin symlinks without chmod following a target not copied yet.
+Patch23:        grafana-copy-recursive-symlink.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.6
