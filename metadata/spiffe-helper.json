@@ -3,5 +3,5 @@
   "release_monitoring_project_id": 392507,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/spiffe/spiffe-helper",
-  "version": "0.12.2"
+  "version": "0.12.3"
 }

@@ -3,7 +3,7 @@
 # https://github.com/spiffe/spiffe-helper
 %global goipath         github.com/spiffe/spiffe-helper
 %global forgeurl        https://github.com/spiffe/spiffe-helper
-Version:                0.12.2
+Version:                0.12.3
 
 %gometa -L
 %forgemeta
