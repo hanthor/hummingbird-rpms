@@ -1043,6 +1043,8 @@ spec:
           contentType: rpm
         - name: rabbitmq-server4-3-main
           contentType: rpm
+        - name: rclone-main
+          contentType: rpm
         - name: rdma-core-main
           contentType: rpm
         - name: re2-main
