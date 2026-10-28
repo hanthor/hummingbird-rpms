@@ -702,16 +702,16 @@ index 16022c9..cda0780 100644
          if _hmac and isinstance(digestmod, str):
              try:
                  self._init_builtin_hmac(key, msg, digestmod)
-@@ -106,6 +108,9 @@ class HMAC:
+@@ -127,6 +129,9 @@ class HMAC:
          self.block_size = self._hmac.block_size
  
      def _init_old(self, key, msg, digestmod):
 +        if _hashopenssl is not None and _hashopenssl.get_fips_mode():
 +            # In FIPS mode, use OpenSSL anyway: raise the appropriate error
 +            return self._init_openssl_hmac(key, msg, digestmod)
-         import warnings
- 
          digest_cons = _get_digest_constructor(digestmod)
+ 
+         self._hmac = None
 diff --git a/Lib/test/test_hmac.py b/Lib/test/test_hmac.py
 index 344c6dd..82d5694 100644
 --- a/Lib/test/test_hmac.py
@@ -740,9 +740,11 @@ index 344c6dd..82d5694 100644
  @hashlib_helper.requires_hashdigest('sha256')
  class PythonCopyTestCase(CopyBaseTestCase, unittest.TestCase):
  
-@@ -1480,6 +1483,11 @@ class PyMiscellaneousTests(unittest.TestCase):
-             def digest(self):
-                 return self._x.digest()
+@@ -1497,8 +1500,13 @@ class PyMiscellaneousTests(unittest.TestCase):
+             def copy(self):
+                 h = MockCrazyHash()
+                 h._x = self._x.copy()
+                 return h
  
 +        if get_fips_mode():
 +            with self.assertRaises(ValueError):
@@ -752,9 +754,9 @@ index 344c6dd..82d5694 100644
          with warnings.catch_warnings():
              warnings.simplefilter('error', RuntimeWarning)
              with self.assertRaises(RuntimeWarning):
-@@ -1491,6 +1499,7 @@ class PyMiscellaneousTests(unittest.TestCase):
-                 hmac.HMAC(b'a', b'b', digestmod=MockCrazyHash)
-                 self.fail('Expected warning about small block_size')
+@@ -1525,6 +1533,7 @@ class PyMiscellaneousTests(unittest.TestCase):
+             self.assertEqual(h.digest(), expect)
+             self.assertEqual(hmac.digest(b'a', b'b', MockCrazyHash), expect)
  
 +    @unittest.skipIf(get_fips_mode(), "No builtin constructors in FIPS mode")
      @hashlib_helper.requires_hashdigest('sha256')
