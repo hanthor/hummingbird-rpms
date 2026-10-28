@@ -22,6 +22,7 @@ Source3:        grafana-yarn-cache-%{version}.tar.bz2
 Patch0:         grafana-yarn-cache.patch
 #Patch1:         grafana-yarn-cache-compression.patch
 Patch2:         grafana-xorm-go122-build-constraint.patch
+Patch3:         grafana-vector-sql-testdata.patch
 # Bump vendored fast-uri to 3.1.6 (CVE-2026-76172, CVE-2026-75975,
 # CVE-2026-75931, CVE-2026-75899).
 #Patch4:         grafana-fast-uri-3.1.6.patch
