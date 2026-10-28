@@ -8,5 +8,6 @@ post_update: |
   trap 'rm -rf "${work_dir}"' EXIT
   tar -xzf "grafana-${UPDATE_NEW_VERSION}.tar.gz" -C "${work_dir}"
   source_dir="${work_dir}/grafana-${UPDATE_NEW_VERSION}"
-  bash ./prepare-yarn-cache-source.sh "${source_dir}"
+  bash ./prepare-yarn-cache-source.sh . "${UPDATE_NEW_VERSION}" --activate-spec
+  bash ./prepare-yarn-cache-source.sh "${source_dir}" "${UPDATE_NEW_VERSION}"
   ./generate-bundled-npm-provides.py "${UPDATE_NEW_VERSION}" "${source_dir}"
