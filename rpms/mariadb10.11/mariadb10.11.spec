@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4.1%{?with_debug:.debug}.2%{?dist}
+Release:          4.1%{?with_debug:.debug}.10%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -246,6 +246,8 @@ Source72:         mariadb-server-galera.cil
 # Script to support encrypted rsync transfers when SST is required between nodes.
 # https://github.com/dciabrin/wsrep_sst_rsync_tunnel/blob/master/wsrep_sst_rsync_tunnel
 Source73:         wsrep_sst_rsync_tunnel
+# Binary mysql50# test fixtures for CVE-2026-92262 (RPM %%patch cannot apply git binary diffs)
+Source74:         CVE-2026-92262-mysql50-testdata.tar
 
 #   Patch4: Use the correct log file pathname for Red Hat installations
 Patch4:           %{majorname}-logrotate.patch
@@ -286,6 +288,10 @@ Patch27:          CVE-2026-86047.patch
 #   Patch28: CVE-2026-97380 - privilege escalation via empty password in GRANT PROXY statement
 Patch28:          CVE-2026-97380.patch
 Patch29:          0042-cve-2026-85746-out-of-bound-buffer-write-st-astext-nested.patch
+#   Patch30: CVE-2026-92262 - #mysql50# tablename encoding bypass
+Patch30:          CVE-2026-92262.patch
+#   Patch31: CVE-2026-92262 - Galera SST test follow-up
+Patch31:          CVE-2026-92262-test-followup.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -916,6 +922,10 @@ rm -r storage/rocksdb/
 %patch -P26 -p1
 %patch -P27 -p1
 %patch -P28 -p1
+%patch -P30 -p1
+%patch -P31 -p1
+# Binary fixtures for CVE-2026-92262 upgrade/partition tests (not representable in %%patch)
+tar -xf %{SOURCE74}
 
 # generate a list of tests that fail, but are not disabled by upstream
 cat %{SOURCE50} | tee -a mysql-test/unstable-tests

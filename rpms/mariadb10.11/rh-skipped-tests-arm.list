@@ -1,2 +1,4 @@
 # Fails since 10.11.13
 main.mysql_client_test_nonblock            : #2373007
+# Flaky on aarch64: TLS/SSL error string gains a trailing errno on retry-pass
+main.openssl_1                             : intermittent TLS error format
