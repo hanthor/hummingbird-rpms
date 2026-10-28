@@ -2,7 +2,7 @@
 
 Name:           gorget
 Version:        0.1.28
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Containerized source-pipeline tool for RPM package supply-chain trust
 License:        MIT
 
@@ -12,6 +12,8 @@ URL:            https://github.com/gorget-project/gorget
 # the #/ fragment tells rpmbuild the local filename to expect instead of
 # deriving it from the URL, matching what's actually in "sources".
 Source:         %{url}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
+# Support per-major Yarn updates through version arrays.
+Patch0:         0001-yarn-version-arrays.patch
 
 BuildArch:      noarch
 

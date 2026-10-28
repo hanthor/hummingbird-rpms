@@ -1,12 +1,4 @@
 [archive]
-pre_commands = [
-  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354.
-  # Bumps getkin/kin-openapi to v0.149.0 (pulling in
-  # santhosh-tekuri/jsonschema/v6 v6.0.3) to fix Denial of Service via
-  # non-finite numeric values, nil-pointer dereference in request decoding,
-  # and unbounded recursion during schema validation.
-  ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
-]
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
   ["cp", "-p", "vendor/github.com/mattn/go-localereader/README.md", "vendor/github.com/mattn/go-localereader/LICENSE"],
