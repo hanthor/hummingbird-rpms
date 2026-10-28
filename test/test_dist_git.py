@@ -454,6 +454,84 @@ def test_import_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist
     assert metadata['fedora']['release'] == '5'
 
 
+# HUM-11324: dist_git.py import --ref resolves %autorelease from wrong Koji build
+def test_import_ref_autorelease_uses_koji(workdir: Path, upstream_repos: dict[str, Path],
+                                          dist_git_module) -> None:
+    """Import --ref with %autorelease resolves release from Koji, not MDAPI.
+
+    When a pinned commit is requested, MDAPI may return the release for a
+    different version.  The import must use resolve_release_from_koji() which
+    validates both version and commit.  HUM-11324.
+    """
+    repo = upstream_repos['vanilla']
+    spec = repo / 'vanilla.spec'
+
+    # Switch to %autorelease
+    spec.write_text(spec.read_text().replace('Release: 1%{?dist}', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Switch to autorelease'], cwd=repo, check=True)
+    autorelease_sha = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=repo, text=True,
+        stdout=subprocess.PIPE, check=True,
+    ).stdout.strip()
+
+    # Commit 2: bump to version 2.0 (still %autorelease)
+    spec.write_text(spec.read_text().replace('Version: 1.0', 'Version: 2.0'))
+    subprocess.run(['git', 'commit', '-am', 'Bump to 2.0'], cwd=repo, check=True)
+
+    # Import the v1.0 autorelease commit by --ref.
+    # MDAPI would return the *current* build (version 2.0, release 1) — wrong version.
+    # Koji should be queried instead and return release "2" for version 1.0 at that commit.
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi, \
+         patch.object(dist_git_module, 'resolve_release_from_koji', return_value='2') as mock_koji:
+        mock_mdapi.return_value = {'version': '2.0', 'release': '1.fc99'}
+
+        run_dist_git(dist_git_module, workdir, 'import', '--ref', autorelease_sha,
+                     f'file://{repo}')
+
+    # resolve_release_from_koji must have been called with the pinned version and commit
+    mock_koji.assert_called_once_with('vanilla', '1.0', autorelease_sha)
+    # MDAPI should NOT have been consulted
+    mock_mdapi.assert_not_called()
+
+    # Spec and metadata must reflect the Koji-resolved release
+    spec_content = (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+    assert 'Release: 2%{?dist}' in spec_content
+
+    with open(workdir / 'metadata' / 'vanilla.json') as f:
+        metadata = json.load(f)
+    assert metadata['fedora']['release'] == '2'
+    assert metadata['fedora']['sha'] == autorelease_sha
+    assert metadata['version'] == '1.0'
+
+
+def test_import_ref_autorelease_no_koji_build_fails(workdir: Path, upstream_repos: dict[str, Path],
+                                                     dist_git_module) -> None:
+    """Import --ref with %autorelease must fail when no Koji build matches.
+
+    Rather than silently falling back to MDAPI (which returns an unrelated
+    version's release), the tool should exit with an error.  HUM-11324.
+    """
+    repo = upstream_repos['vanilla']
+    spec = repo / 'vanilla.spec'
+
+    spec.write_text(spec.read_text().replace('Release: 1%{?dist}', 'Release: %autorelease'))
+    subprocess.run(['git', 'commit', '-am', 'Switch to autorelease'], cwd=repo, check=True)
+    sha = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=repo, text=True,
+        stdout=subprocess.PIPE, check=True,
+    ).stdout.strip()
+
+    with patch.object(dist_git_module, 'resolve_release_from_koji', return_value=None), \
+         patch.object(dist_git_module, 'get_mdapi_latest_build') as mock_mdapi, \
+         pytest.raises(SystemExit):
+        mock_mdapi.return_value = {'version': '2.0', 'release': '1.fc99'}
+        run_dist_git(dist_git_module, workdir, 'import', '--ref', sha,
+                     f'file://{repo}')
+
+    mock_mdapi.assert_not_called()
+    assert not (workdir / 'rpms' / 'vanilla').exists(), "failed import should clean up the cloned directory"
+
+
 def test_import_anitya_found(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Import stores release_monitoring_project_id when Anitya lookup succeeds."""
     with patch.object(dist_git_module, 'lookup_anitya_project_id', return_value=12345):
@@ -3028,6 +3106,17 @@ def test_resolve_release_from_koji_ignores_module_build(dist_git_module) -> None
     ])
     with patch.object(dist_git_module, 'get_koji_server', return_value=server):
         assert dist_git_module.resolve_release_from_koji('nginx', '1.30.5', sha) == '1'
+
+
+def test_resolve_release_from_koji_accepts_prerelease(dist_git_module) -> None:
+    """A pre-release autorelease value like 0.1.rc1.fc46 must be accepted."""
+    sha = 'a' * 40
+    server = _koji_search_server([{
+        'nvr': 'foo-1.0-0.1.rc1.fc46', 'state': 1, 'version': '1.0',
+        'release': '0.1.rc1.fc46', 'source': f'git+https://example.com/foo.git#{sha}',
+    }])
+    with patch.object(dist_git_module, 'get_koji_server', return_value=server):
+        assert dist_git_module.resolve_release_from_koji('foo', '1.0', sha) == '0.1.rc1'
 
 
 def test_update_autorelease_prefers_koji_over_stale_mdapi(

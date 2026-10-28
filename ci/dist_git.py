@@ -939,11 +939,13 @@ def resolve_release_from_koji(package_name: str, version: str,
         source = build.get('source') or ''
         if '#' not in source or source.split('#')[1] != expected_commit:
             continue
-        # Accept only a plain N[.N…] release carrying a recognised dist suffix. A module
-        # build reuses the same dist-git commit, so it can reach this point, but its
-        # release ("1.module_f38+1234+abcdef") is not a %autorelease value: it would both
-        # survive unstripped and win the max() below, yielding an NVR that never existed.
-        matched = re.fullmatch(r'(\d+(?:\.\d+)*)\.(?:fc|el)\d+', build['release'])
+        # Accept autorelease values (e.g. "1.fc46", "0.1.rc1.fc46") but reject
+        # module builds ("1.module_f38+1234+abcdef") which reuse the same dist-git
+        # commit and would yield an NVR that never existed as a normal build.
+        if 'module_' in build.get('release', ''):
+            logging.info("Ignoring Koji build %s: module build", nvr)
+            continue
+        matched = re.fullmatch(r'(\d+(?:\.[0-9A-Za-z_+]+)*)\.(?:fc|el)\d+', build['release'])
         if not matched:
             logging.info("Ignoring Koji build %s: release is not a plain dist release", nvr)
             continue
@@ -1121,7 +1123,17 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
 
     # Resolve %autorelease if present
     if uses_autorelease(package_dir):
-        resolved_release = query_autorelease_from_mdapi(package_name, branch, release)
+        if ref:
+            resolved_release = resolve_release_from_koji(package_name, version, sha)
+            if not resolved_release:
+                shutil.rmtree(package_dir)
+                sys.exit(
+                    f"ERROR: No completed Koji build for {package_name}-{version} "
+                    f"at commit {sha[:8]}.\n"
+                    f"       Cannot resolve %%autorelease for pinned import."
+                )
+        else:
+            resolved_release = query_autorelease_from_mdapi(package_name, branch, release)
         if resolved_release:
             release = resolved_release
             replace_autorelease_in_spec(package_dir, release)
