@@ -4,11 +4,11 @@
 # **** release metadata ****
 # populated by envsubst in newrelease
 %global k8s_name                kubernetes1.36
-%global k8s_ver                 1.36.5
+%global k8s_ver                 1.36.6
 # major:minor version substring
 %global k8s_minver              1.36
 %global k8s_nextver             1.37
-%global k8s_tag                 v1.36.5
+%global k8s_tag                 v1.36.6
 # golang 'built with' version
 %global golangver               1.26.8
 
@@ -25,7 +25,7 @@ Version:                %{k8s_ver}
 %gometa -L -f
 
 Name:           %{k8s_name}
-Release:        1.2%{?dist}
+Release:        0.1%{?dist}
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 # Node shutdown manager tests fail on the s390x builder.
 ExcludeArch:    s390x
