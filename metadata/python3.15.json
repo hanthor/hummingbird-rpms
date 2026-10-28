@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/python3.15.git",
     "sha": "d8764685db196c0885739f4b884768bb567f060c"
   },
-  "modification_reason": "Update to upstream version 3.15.2",
+  "modification_reason": "Update to upstream version 3.15.2; HUM-11300: CVE-2026-103995",
   "modification_status": "modified",
   "release_monitoring_project_id": 13254,
   "track_upstream": "3.15",
