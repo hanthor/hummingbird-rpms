@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/debugedit.git",
-    "release": "3",
-    "sha": "05b2db3e94a36c92cf4ae55ac1272e5e1ea4068b"
+    "release": "1",
+    "sha": "ca646adff7e8d8a7645d8d75415600422198d203"
   },
   "modification_status": "clean",
   "upstream_repo": "https://sourceware.org/git/debugedit.git",
-  "version": "5.3"
+  "version": "5.4"
 }
