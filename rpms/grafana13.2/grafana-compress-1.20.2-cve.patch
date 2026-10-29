@@ -1,0 +1,45 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump klauspost/compress v1.19.1->v1.20.2 for CVE-2026-116591
+
+Upstream: https://github.com/klauspost/compress/commit/7f5d8528720c895a6106f201719f87eb030a565d
+
+klauspost/compress before v1.20.2 panics in the zstd DecodeAll and
+streaming decoder paths when a crafted two-block frame reaches
+huff0.ReadTable with an FSE normalized count of 32768 stored in int16
+as -32768.  The wrapped count lets buildDtable retain stale decode-table
+state from the prior block; nextFast then derives an out-of-range state
+and indexes past the table.  Untrusted zstd input can crash the process.
+Fixed in v1.20.2 by rejecting normalized counts that do not fit in int16.
+
+Grafana exposes this via its unified-storage Parquet reader and the
+Badger v4 key-value store, both of which call zstd.DecodeAll or
+zstd.NewReader on data that can originate from untrusted sources.
+
+Updated vendor tarball (Source1) holds the v1.20.2 compress vendor tree
+and the corrected vendor/modules.txt entry.  This patch updates only
+go.mod and go.sum.
+
+--- a/go.mod	2026-10-30 06:49:21.957696914 -0400
++++ b/go.mod	2026-10-30 06:49:21.971789024 -0400
+@@ -507,7 +507,7 @@
+ 	github.com/jpillora/backoff v1.0.0 // indirect
+ 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
+ 	github.com/jtolds/gls v4.20.0+incompatible // indirect
+-	github.com/klauspost/compress v1.19.1 // indirect
++	github.com/klauspost/compress v1.20.2 // indirect
+ 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
+ 	github.com/kylelemons/godebug v1.1.0 // indirect
+ 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+--- a/go.sum	2026-10-30 06:49:21.960466677 -0400
++++ b/go.sum	2026-10-30 06:49:21.981776251 -0400
+@@ -1843,8 +1843,8 @@
+ github.com/klauspost/compress v1.13.6/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47etQ6QUkpK6sk=
+ github.com/klauspost/compress v1.15.9/go.mod h1:PhcZ0MbTNciWF3rruxRgKxI5NkcHHrHUDtV4Yw2GlzU=
+ github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+-github.com/klauspost/compress v1.19.1 h1:VsB4HPswih7mmZ8WleSFQ75c/Ui1M4trX5oAsJnhSlk=
+-github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
++github.com/klauspost/compress v1.20.2 h1:v5tiZvm1KGLyg5d5oXdXe3lsSPrbEUiKoXGia//I7Qo=
++github.com/klauspost/compress v1.20.2/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+ github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+ github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
+ github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
