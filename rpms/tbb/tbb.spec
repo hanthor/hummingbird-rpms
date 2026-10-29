@@ -5,9 +5,9 @@
 
 Name:    tbb
 Summary: The Threading Building Blocks library abstracts low-level threading details
-Version: 2023.1.0
-Release: 1.1%{?dist}
-License: Apache-2.0 AND BSD-3-Clause
+Version: 2023.2.0
+Release: 0.1%{?dist}
+License: Apache-2.0 AND BSD-3-Clause AND Apache-2.0 WITH LLVM-exception
 URL:     https://uxlfoundation.github.io/oneTBB/
 VCS:     git:%{giturl}.git
 
@@ -77,6 +77,7 @@ Python 3 TBB module.
 
 %prep
 %autosetup -p1 -n oneTBB-%{version}
+cp -p thread_composability_manager/licensing/LICENSE.txt TCM-LICENSE.txt
 
 %generate_buildrequires
 %pyproject_buildrequires -d python
@@ -129,11 +130,12 @@ ctest --output-on-failure --force-new-ctest-process
 
 %files
 %doc README.md
-%license LICENSE.txt
+%license LICENSE.txt TCM-LICENSE.txt
 %{_libdir}/libtbb.so.12{,.*}
 %{_libdir}/libtbbmalloc.so.2{,.*}
 %{_libdir}/libtbbmalloc_proxy.so.2{,.*}
 %{_libdir}/libirml.so.1
+%{_libdir}/libtcm.so.1{,.*}
 
 %files bind
 %{_libdir}/libtbbbind_2_5.so.3{,.*}
@@ -142,8 +144,11 @@ ctest --output-on-failure --force-new-ctest-process
 %doc cmake/README.md
 %{_includedir}/oneapi/
 %{_includedir}/tbb/
+%{_includedir}/tcm.h
+%{_includedir}/tcm/
 %{_libdir}/*.so
 %{_libdir}/cmake/TBB/
+%{_libdir}/cmake/TCM/
 %{_libdir}/pkgconfig/*.pc
 
 %files -n python3-%{name} -f %{pyproject_files}
