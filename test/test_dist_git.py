@@ -943,7 +943,8 @@ def test_koji_retry_on_transient_error(dist_git_module) -> None:
     """Verify that 502 Bad Gateway errors are retried and eventually succeed."""
     import http.client
 
-    with patch('xmlrpc.client.ServerProxy') as mock_server_class:
+    with patch('xmlrpc.client.ServerProxy') as mock_server_class, \
+         patch.object(dist_git_module.time, 'sleep') as mock_sleep:
         mock_server = MagicMock()
 
         # First two attempts fail with 502, third succeeds
@@ -972,6 +973,7 @@ def test_koji_retry_on_transient_error(dist_git_module) -> None:
         assert result is not None
         assert result['build_id'] == 12345
         assert mock_server.getBuild.call_count == 3  # 2 failures + 1 success
+        assert mock_sleep.call_args_list == [call(2), call(4)]
 
 
 def test_koji_no_retry_on_fault(dist_git_module) -> None:

@@ -5,6 +5,7 @@ import subprocess
 import sys
 import types
 from pathlib import Path
+from unittest.mock import call, patch
 
 import pytest
 import yaml
@@ -397,8 +398,14 @@ def test_get_changed_packages_in_mr_diff_base_sha_fetch_failure_raises(validator
     subprocess.CalledProcessError unchanged rather than inventing one just
     for this call site."""
     monkeypatch.setenv('CI_MERGE_REQUEST_DIFF_BASE_SHA', '0' * 40)
-    with pytest.raises(subprocess.CalledProcessError):
+    with patch('time.sleep') as mock_sleep, \
+         patch.object(validator.subprocess, 'run', wraps=validator.subprocess.run) as mock_run, \
+         pytest.raises(subprocess.CalledProcessError) as exc_info:
         validator.get_changed_packages_in_mr()
+
+    assert mock_run.call_count == 3
+    assert exc_info.value.cmd == ['git', 'fetch', '--quiet', 'origin', '0' * 40]
+    assert mock_sleep.call_args_list == [call(2), call(4)]
 
 
 def test_get_changed_packages_in_mr_fallback_to_target_branch(validator, monkeypatch):

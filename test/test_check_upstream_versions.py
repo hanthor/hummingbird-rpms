@@ -3764,12 +3764,14 @@ def test_update_continues_after_package_failure(
     with patch.object(cuv_module, 'check_package_version',
                       side_effect=lambda package, distro='Fedora': results[package]), \
          patch.object(cuv_module, 'update_spec_version', side_effect=fake_update), \
+         patch.object(cuv_module.time, 'sleep') as mock_sleep, \
          patch('sys.argv', ['check_upstream_versions.py', 'check', '--update',
                             '--quiet', 'bad', 'good']), \
          pytest.raises(SystemExit) as exc_info:
         cuv_module.main()
 
     assert exc_info.value.code == 1
+    mock_sleep.assert_called_once_with(cuv_module.API_DELAY)
     assert 'Version: 1.0' in (workdir / 'rpms' / 'bad' / 'bad.spec').read_text()
     assert 'Version: 2.0' in (workdir / 'rpms' / 'good' / 'good.spec').read_text()
 
@@ -3956,11 +3958,13 @@ def test_list_subcommand_includes_all_packages(
     }
 
     with patch.object(cuv_module, 'query_anitya', return_value=mock_response), \
+         patch.object(cuv_module.time, 'sleep') as mock_sleep, \
          patch('sys.argv', ['check_upstream_versions.py', 'list', '--quiet']), \
          pytest.raises(SystemExit) as exc_info:
         cuv_module.main()
 
     assert exc_info.value.code == 0
+    mock_sleep.assert_called_once_with(cuv_module.API_DELAY)
     output = capsys.readouterr().out
     assert 'tracked-pkg' in output
     assert 'untracked-pkg' in output
@@ -4068,12 +4072,14 @@ def test_list_subcommand_json_output(
     }
 
     with patch.object(cuv_module, 'query_anitya', return_value=mock_response), \
+         patch.object(cuv_module.time, 'sleep') as mock_sleep, \
          patch('sys.argv', ['check_upstream_versions.py', 'list',
                             '--quiet', '--json']), \
          pytest.raises(SystemExit) as exc_info:
         cuv_module.main()
 
     assert exc_info.value.code == 0
+    mock_sleep.assert_called_once_with(cuv_module.API_DELAY)
     output = capsys.readouterr().out
     data = json.loads(output)
     assert isinstance(data, list)
@@ -4111,12 +4117,14 @@ def test_list_subcommand_shows_tracking_status(
     }
 
     with patch.object(cuv_module, 'query_anitya', return_value=mock_response), \
+         patch.object(cuv_module.time, 'sleep') as mock_sleep, \
          patch('sys.argv', ['check_upstream_versions.py', 'list',
                             '--quiet', '--json']), \
          pytest.raises(SystemExit) as exc_info:
         cuv_module.main()
 
     assert exc_info.value.code == 0
+    mock_sleep.assert_called_once_with(cuv_module.API_DELAY)
     output = capsys.readouterr().out
     data = json.loads(output)
 

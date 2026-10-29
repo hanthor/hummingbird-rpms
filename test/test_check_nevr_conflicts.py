@@ -535,17 +535,23 @@ def test_query_pulp_evrs_retries_nonzero_exit_until_exhausted(checker, monkeypat
 
 
 def test_check_candidates_partial_dnf_failure_is_cannot_determine_not_ok(
-    checker, fake_dnf, monkeypatch,
+    checker, fake_dnf, monkeypatch, tmp_path,
 ):
     """End-to-end: a partial dnf failure must surface as CANNOT_DETERMINE,
     never as a false-negative OK."""
     fake_dnf({PUBLIC_BASE_URLS['x86_64']: {'widget': ['1.0-3.hum1']}})
     monkeypatch.setenv('FAKE_DNF_EXIT_CODE', '1')
+    call_log = tmp_path / 'dnf_calls.log'
+    monkeypatch.setenv('FAKE_DNF_CALL_LOG', str(call_log))
+    delays = []
+    monkeypatch.setattr(checker.time, 'sleep', delays.append)
     candidates = [checker.Candidate('widget', 'widget', '1.0-9.hum1', 'x86_64')]
 
     results = checker.check_candidates(candidates, PUBLIC_BASE_URLS, timeout=5)
 
     assert results[0].status == 'CANNOT_DETERMINE'
+    assert call_log.read_text().splitlines() == ['call'] * 3
+    assert delays == [2, 4]
 
 
 def test_check_candidates_unrecognized_arch_is_cannot_determine(checker, fake_dnf):
