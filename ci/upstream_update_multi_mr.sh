@@ -467,8 +467,10 @@ for FAILURE_RECORD in "${UPDATE_FAILURE_RECORDS[@]}"; do
     # GitLab receives the description as a Git push option, whose protocol
     # packet cannot hold an unbounded report. Keep a useful opening excerpt;
     # the scheduled job log retains the complete error.
+    # Escaping never shortens the string. Keep one character beyond the output
+    # limit so truncation is still detected when the input has no newlines.
     UPDATE_ERROR=$(jq -r '
-        ((.update_error // .error // "unknown error") | gsub("\n"; "\\n")) as $error
+        ((.update_error // .error // "unknown error")[:4001] | gsub("\n"; "\\n")) as $error
         | if ($error | length) > 4000
           then $error[:4000] + "\\n...[truncated; see full CI job log]"
           else $error
