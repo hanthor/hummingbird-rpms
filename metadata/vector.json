@@ -1,0 +1,7 @@
+{
+  "modification_status": "independent",
+  "release_monitoring_project_id": 369096,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/vectordotdev/vector",
+  "version": "0.60.0"
+}
