@@ -103,7 +103,7 @@ index 16b8f4ac9c..14687584e7 100644
              jit_shim_object=args.output_dir / f"jit_shim-{target.triple}.o",
              jit_unwind_info=args.output_dir / f"jit_unwind_info-{target.triple}.h",
 diff --git a/configure b/configure
-index 5a728e8ba6..9e142cd1ec 100755
+index 6f7ff1b04a..f49481574a 100755
 --- a/configure
 +++ b/configure
 @@ -1119,6 +1119,7 @@ enable_safety
@@ -154,7 +154,7 @@ index 5a728e8ba6..9e142cd1ec 100755
    # GH-133171: This configuration builds the JIT but never actually uses it,
    # which is surprising (and strictly worse than not building it at all):
 diff --git a/configure.ac b/configure.ac
-index 08cfd620af..d07695b307 100644
+index 99238054b9..593a48a23c 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -2967,6 +2967,19 @@ AS_VAR_IF([jit_flags],

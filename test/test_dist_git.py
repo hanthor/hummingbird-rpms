@@ -5097,6 +5097,68 @@ def test_update_continue(workdir: Path, upstream_repos: dict[str, Path]) -> None
         "Metadata committed by --continue should contain the updated version"
 
 
+@pytest.mark.parametrize(('resolved_release', 'legacy_state'), [
+    ('%autorelease', False),
+    ('0.1%{?dist}', False),
+    ('%autorelease', True),
+])
+def test_update_continue_resolves_autorelease(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module, monkeypatch,
+    resolved_release: str, legacy_state: bool,
+) -> None:
+    """A conflict outside the spec must not leave an unresolved or stale Release."""
+    state_file = workdir / '.dist_git_update_state.json'
+    monkeypatch.setattr(dist_git_module, 'UPDATE_STATE_FILE', state_file)
+    upstream = upstream_repos['vanilla']
+    upstream_spec = upstream / 'vanilla.spec'
+    upstream_spec.write_text(upstream_spec.read_text().replace('Release: 1%{?dist}', 'Release: %autorelease'))
+    (upstream / 'notes.txt').write_text('original\n')
+    subprocess.run(['git', 'add', '-A'], cwd=upstream, check=True)
+    subprocess.run(['git', 'commit', '-m', 'Use autorelease'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '1.0', 'release': '2.fc99'}):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+
+    package_dir = workdir / 'rpms' / 'vanilla'
+    (package_dir / 'notes.txt').write_text('local\n')
+    run_dist_git(dist_git_module, workdir, 'mark-modified', 'vanilla', '--modified',
+                 '--reason', 'Local notes')
+    subprocess.run(['git', 'commit', '-am', 'Local notes'], cwd=workdir, check=True)
+    (upstream / 'notes.txt').write_text('upstream\n')
+    subprocess.run(['git', 'commit', '-am', 'Upstream notes'], cwd=upstream, check=True)
+
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '1.0', 'release': '3.fc99'}), \
+         pytest.raises(SystemExit) as exc:
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+    assert exc.value.code == 2
+    state = json.loads(state_file.read_text())
+    assert 'Release: %autorelease' in state['upstream_spec']
+    assert state['metadata']['fedora']['release'] == '3'
+    if legacy_state:
+        del state['upstream_spec']
+        state_file.write_text(json.dumps(state))
+
+    # Resolve the unrelated conflict. A user can retain either upstream's
+    # macro or a local literal when resolving a simultaneous spec conflict.
+    (package_dir / 'notes.txt').write_text('local\n')
+    spec = package_dir / 'vanilla.spec'
+    spec.write_text(re.sub(r'^Release:.*$', f'Release: {resolved_release}',
+                           spec.read_text(), flags=re.MULTILINE))
+    with patch.object(dist_git_module, 'get_mdapi_latest_build') as mdapi, \
+         patch.object(dist_git_module, 'get_koji_server') as koji:
+        run_dist_git(dist_git_module, workdir, 'update', '--continue')
+    mdapi.assert_not_called()
+    koji.assert_not_called()
+    committed_spec = subprocess.run(
+        ['git', 'show', 'HEAD:rpms/vanilla/vanilla.spec'], cwd=workdir,
+        capture_output=True, text=True, check=True,
+    ).stdout
+    assert 'Release: 3%{?dist}\n' in committed_spec
+    assert '%autorelease' not in committed_spec
+    assert not state_file.exists()
+
+
 def test_update_continue_no_state(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """--continue with no state file exits with error."""
     result = subprocess.run(

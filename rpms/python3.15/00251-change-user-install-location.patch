@@ -127,10 +127,10 @@ index b93155131c..1f60c9ea3d 100644
          # On Windows we want to substitute 'lib' for schemes rather
          # than the native value (without modifying vars, in case it
 diff --git a/Lib/test/test_sysconfig.py b/Lib/test/test_sysconfig.py
-index 5263799a4c..adeea5df23 100644
+index ce3a3c6fe4..c3b881c1b8 100644
 --- a/Lib/test/test_sysconfig.py
 +++ b/Lib/test/test_sysconfig.py
-@@ -132,8 +132,19 @@ def test_get_path(self):
+@@ -134,8 +134,19 @@ def test_get_path(self):
          for scheme in _INSTALL_SCHEMES:
              for name in _INSTALL_SCHEMES[scheme]:
                  expected = _INSTALL_SCHEMES[scheme][name].format(**config_vars)
@@ -151,7 +151,7 @@ index 5263799a4c..adeea5df23 100644
                      os.path.normpath(expected),
                  )
  
-@@ -393,7 +404,7 @@ def test_get_config_h_filename(self):
+@@ -395,7 +406,7 @@ def test_get_config_h_filename(self):
          self.assertTrue(os.path.isfile(config_h), config_h)
  
      def test_get_scheme_names(self):
@@ -160,7 +160,7 @@ index 5263799a4c..adeea5df23 100644
          if HAS_USER_BASE:
              wanted.extend(['nt_user', 'osx_framework_user', 'posix_user'])
          self.assertEqual(get_scheme_names(), tuple(sorted(wanted)))
-@@ -405,6 +416,8 @@ def test_symlink(self): # Issue 7880
+@@ -407,6 +418,8 @@ def test_symlink(self): # Issue 7880
              cmd = "-c", "import sysconfig; print(sysconfig.get_platform())"
              self.assertEqual(py.call_real(*cmd), py.call_link(*cmd))
  
