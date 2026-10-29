@@ -19,8 +19,8 @@
 %global __brp_remove_la_files %nil
 
 Name: openldap
-Version: 2.6.15
-Release: 1.1%{?dist}
+Version: 2.6.16
+Release: 1%{?dist}
 Summary: LDAP support libraries
 License: OLDAP-2.8
 URL: http://www.openldap.org/
@@ -558,6 +558,9 @@ exit 0
 %endif
 
 %changelog
+* Thu Oct 22 2026 Xavier Bachelot <xavier@bachelot.org> - 2.6.16-1
+- Update to 2.6.16
+
 * Thu Sep 10 2026 Xavier Bachelot <xavier@bachelot.org> - 2.6.15-1
 - Update to 2.6.15
 
