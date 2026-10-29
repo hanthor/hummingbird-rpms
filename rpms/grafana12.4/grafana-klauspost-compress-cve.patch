@@ -1,0 +1,25 @@
+Bump github.com/klauspost/compress 1.19.1 -> 1.20.2 for CVE-2026-116591.
+Keep in sync with go-vendor-tools.toml's matching pre_command.
+Upstream: https://github.com/klauspost/compress/commit/7f5d8528720c895a6106f201719f87eb030a565d
+--- a/go.mod
++++ b/go.mod
+@@ -501,7 +501,7 @@
+ 	github.com/jpillora/backoff v1.0.0 // indirect
+ 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
+ 	github.com/klauspost/asmfmt v1.3.2 // indirect
+-	github.com/klauspost/compress v1.19.1 // indirect
++	github.com/klauspost/compress v1.20.2 // indirect
+ 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+ 	github.com/kylelemons/godebug v1.1.0 // indirect
+ 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+--- a/go.sum
++++ b/go.sum
+@@ -1969,6 +1969,8 @@
+ github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+ github.com/klauspost/compress v1.19.1 h1:VsB4HPswih7mmZ8WleSFQ75c/Ui1M4trX5oAsJnhSlk=
+ github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
++github.com/klauspost/compress v1.20.2 h1:v5tiZvm1KGLyg5d5oXdXe3lsSPrbEUiKoXGia//I7Qo=
++github.com/klauspost/compress v1.20.2/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+ github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+ github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
+ github.com/klauspost/cpuid/v2 v2.3.0/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
