@@ -72,6 +72,12 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-13.1.8-vendor.tar.bz2"
+    checksum: "fed97c406dbf4d5a7bf8fe05dbd910a606cc0a799564bcc1e33b68943d698f866f1d3a550980c16c9b896e67b6ba392d37b1cbcb8a7b8c320947bb988d849005"
+    reason: "go-vendor-tools.toml pre_command bumps klauspost/compress 1.19.1->1.20.2 for CVE-2026-116591; vendor archive regenerated"
+  - file: "grafana-yarn-cache-13.1.8.tar.bz2"
+    checksum: "8997ed86d294a77945e476d6d0a0197141f77130ceab08d0e9e32877822859c72814fd14a956989b32bb58d7c2281b3e930d93c86e805445db26554b69fbb884"
+    reason: "grafana-follow-redirects-1.16.2-cve.patch bumps follow-redirects 1.16.1->1.16.2 for CVE-2026-116689; yarn cache regenerated"
   - file: "grafana-yarn-cache-13.1.8.tar.bz2"
     checksum: "989dfc022eb3ff865a259a2bb5bf58200b53d0dc3a3b452ae1a2e89efed32a6182a0e91fb1cd6b629919f3e23fd3a8f1ec31ee6f22f5ceee01196e586a28d372"
     reason: "grafana-fast-uri-body-parser-cve.patch bumps fast-uri 3.1.8->3.1.9 and body-parser 2.2.1->2.4.0; yarn cache regenerated"

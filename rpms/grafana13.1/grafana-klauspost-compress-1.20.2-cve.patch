@@ -1,0 +1,40 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump klauspost/compress to v1.20.2 for CVE-2026-116591
+
+Upstream: https://github.com/klauspost/compress/releases/tag/v1.20.2
+
+readNCount accepted a normalized FSE count of 32768, stored as int16
+-32768, so huff0.ReadTable built a Huffman-weights decode table that
+kept the previous blocks stale fse.Scratch state. zstd DecodeAll and
+the streaming decoder reused that stale state across a crafted
+two-block frame and indexed past the table, panicking on untrusted
+input. Fixed by rejecting counts that cannot fit the table before
+they are truncated, and by capping the FSE tableLog of Huffman
+weights at 6 per RFC 8878.
+
+Match go-vendor-tools.toml pre_command that runs
+  go get github.com/klauspost/compress@v1.20.2
+Keep go.mod/go.sum in the source tree in sync with the regenerated
+vendor.
+--- a/go.mod
++++ b/go.mod
+@@ -528,7 +528,7 @@
+ 	github.com/jpillora/backoff v1.0.0 // indirect
+ 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
+ 	github.com/jtolds/gls v4.20.0+incompatible // indirect
+-	github.com/klauspost/compress v1.19.1 // indirect
++	github.com/klauspost/compress v1.20.2 // indirect
+ 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+ 	github.com/kylelemons/godebug v1.1.0 // indirect
+ 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+--- a/go.sum
++++ b/go.sum
+@@ -1891,6 +1891,8 @@
+ github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+ github.com/klauspost/compress v1.19.1 h1:VsB4HPswih7mmZ8WleSFQ75c/Ui1M4trX5oAsJnhSlk=
+ github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
++github.com/klauspost/compress v1.20.2 h1:v5tiZvm1KGLyg5d5oXdXe3lsSPrbEUiKoXGia//I7Qo=
++github.com/klauspost/compress v1.20.2/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+ github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+ github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
+ github.com/klauspost/cpuid/v2 v2.3.0/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
