@@ -8,6 +8,7 @@ import subprocess
 import sys
 import types
 import xmlrpc.client
+from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
@@ -20,18 +21,20 @@ project_root = Path(__file__).parent.parent
 # Fixtures
 #
 
-@pytest.fixture
-def dist_git_module():
-    """Load the dist_git script as a Python module.
-
-    For tests which need to mock internal functions.
-    """
+def _load_dist_git_module():
+    """Load a fresh module so tests do not share mutable script globals."""
     script_path = Path(__file__).parent.parent / 'ci' / 'dist_git.py'
     module = types.ModuleType("dist_git")
     module.__file__ = str(script_path)
     code = compile(script_path.read_text(), str(script_path), 'exec')
     exec(code, module.__dict__)
     return module
+
+
+@pytest.fixture
+def dist_git_module():
+    """Load the dist_git script for tests which mock internal functions."""
+    return _load_dist_git_module()
 
 
 def test_run_git_retries_ls_remote(dist_git_module) -> None:
@@ -69,9 +72,10 @@ def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
     ]
 
 
-@pytest.fixture
-def workdir(tmp_path: Path) -> Path:
-    """Shallow copy of the project with no imports"""
+@pytest.fixture(scope='session')
+def _workdir_seed(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Build the empty project once; tests only receive independent clones."""
+    tmp_path = tmp_path_factory.mktemp('workdir-seed')
 
     rpms_dir = tmp_path / 'workdir'
     rpms_dir.mkdir()
@@ -111,8 +115,15 @@ def workdir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def upstream_repos(tmp_path: Path) -> dict[str, Path]:
-    """Create two mock upstream dist_git repositories."""
+def workdir(tmp_path: Path, _workdir_seed: Path) -> Path:
+    """Clone the empty project for import tests and custom package setups."""
+    return _clone_workdir(_workdir_seed, tmp_path / 'workdir')
+
+
+@pytest.fixture(scope='session')
+def _upstream_seeds(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
+    """Build the mock upstream history once, without exposing it to tests."""
+    tmp_path = tmp_path_factory.mktemp('upstream-seeds')
     repos: dict[str, Path] = {}
 
     # Create first upstream repo: vanilla
@@ -198,9 +209,89 @@ Test package chocolate (f99)
     return repos
 
 
+@pytest.fixture
+def upstream_repos(tmp_path: Path, _upstream_seeds: dict[str, Path]) -> dict[str, Path]:
+    """Copy upstreams, including every local branch, without sharing Git files."""
+    repos = {}
+    for name, seed in _upstream_seeds.items():
+        destination = tmp_path / 'upstream' / seed.name
+        shutil.copytree(seed, destination)
+        repos[name] = destination
+    return repos
+
+
+@pytest.fixture(scope='session')
+def _imported_workdir_seeds(
+    tmp_path_factory: pytest.TempPathFactory,
+    _workdir_seed: Path,
+    _upstream_seeds: dict[str, Path],
+) -> Callable[..., Path]:
+    """Cache real imports for each package/branch combination, not module state."""
+    seeds: dict[tuple[tuple[str, ...], str], Path] = {}
+
+    def get_seed(*packages: str, branch: str = 'rawhide') -> Path:
+        key = (packages, branch)
+        if key not in seeds:
+            destination = tmp_path_factory.mktemp('imported-workdir-seed') / 'workdir'
+            _clone_workdir(_workdir_seed, destination)
+            module = _load_dist_git_module()
+            for package in packages:
+                run_dist_git(module, destination, 'import', '--branch', branch,
+                             f'file://{_upstream_seeds[package]}')
+            seeds[key] = destination
+        return seeds[key]
+
+    return get_seed
+
+
+@pytest.fixture
+def imported_workdir(
+    tmp_path: Path,
+    upstream_repos: dict[str, Path],
+    _imported_workdir_seeds: Callable[..., Path],
+) -> Callable[..., Path]:
+    """Create private imported workdirs pointing at this test's private upstreams."""
+    created = 0
+
+    def create(*packages: str, branch: str = 'rawhide') -> Path:
+        nonlocal created
+        seed = _imported_workdir_seeds(*packages, branch=branch)
+        destination = _clone_workdir(seed, tmp_path / f'imported-workdir-{created}')
+        created += 1
+        for package in packages:
+            metadata_file = destination / 'metadata' / f'{package}.json'
+            metadata = json.loads(metadata_file.read_text())
+            metadata['fedora']['git_url'] = f'file://{upstream_repos[package]}'
+            metadata_file.write_text(json.dumps(metadata, indent=2, sort_keys=True) + '\n')
+        # Amend to preserve import counts and trailers. Only HEAD's metadata
+        # is retargeted; earlier commits may retain seed upstream URLs.
+        # Tests inspecting historical metadata must use workdir and perform
+        # their own imports.
+        subprocess.run(['git', 'add', 'metadata'], cwd=destination, check=True)
+        subprocess.run(['git', 'commit', '--amend', '--no-edit'], cwd=destination, check=True)
+        return destination
+
+    return create
+
+
 #
 # Helpers
 #
+
+def _clone_workdir(seed: Path, destination: Path) -> Path:
+    subprocess.run(
+        ['git', 'clone', '--quiet', '--local', '--no-hardlinks',
+         '--config', 'user.name=Test', '--config', 'user.email=test@example.com',
+         str(seed), str(destination)],
+        check=True,
+    )
+    # The old fixtures had no remote. Do not leave a push target into the seed.
+    subprocess.run(['git', 'remote', 'remove', 'origin'], cwd=destination, check=True)
+    # Git does not track the empty directories in the unimported seed.
+    for directory in ('rpms', 'metadata'):
+        (destination / directory).mkdir(exist_ok=True)
+    return destination
+
 
 def add_upstream_commit(repo_path: Path, package_name: str, old_version: str, new_version: str) -> str:
     """Add a commit to an upstream repository updating the version.
@@ -249,6 +340,105 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
 #
 # Tests
 #
+
+def test_workdir_clones_do_not_modify_seed(workdir: Path, _workdir_seed: Path, tmp_path: Path) -> None:
+    """Working files, Git configuration, and commits belong to each test clone."""
+    other = _clone_workdir(_workdir_seed, tmp_path / 'other-workdir')
+    original = (_workdir_seed / 'ci' / 'dist_git.py').read_bytes()
+    original_commit = get_last_commit_info(_workdir_seed)
+    assert list((workdir / 'rpms').iterdir()) == []
+    assert list((workdir / 'metadata').iterdir()) == []
+    assert not (workdir / '.git' / 'objects' / 'info' / 'alternates').exists()
+    assert subprocess.check_output(['git', 'remote'], cwd=workdir, text=True) == ''
+
+    (workdir / 'ci' / 'dist_git.py').write_bytes(b'# Private test change\n' + original)
+    subprocess.run(['git', 'config', 'user.name', 'Private Test'], cwd=workdir, check=True)
+    subprocess.run(['git', 'commit', '-am', 'Change private workdir'], cwd=workdir, check=True)
+
+    for untouched in (_workdir_seed, other):
+        assert (untouched / 'ci' / 'dist_git.py').read_bytes() == original
+        assert get_last_commit_info(untouched) == original_commit
+        assert subprocess.check_output(['git', 'config', 'user.name'], cwd=untouched, text=True).strip() == 'Test'
+
+
+@pytest.mark.parametrize('packages,branch', [
+    (('vanilla',), 'rawhide'),
+    (('chocolate',), 'f40'),
+    (('vanilla', 'chocolate'), 'rawhide'),
+], ids=['vanilla', 'chocolate-f40', 'both'])
+def test_imported_workdir_clones_do_not_modify_seed(
+    imported_workdir, _imported_workdir_seeds, upstream_repos: dict[str, Path],
+    packages: tuple[str, ...], branch: str,
+) -> None:
+    """Retargeting metadata and changing packages must never alter a cached seed."""
+    seed = _imported_workdir_seeds(*packages, branch=branch)
+    original_commit = get_last_commit_info(seed)
+    original_metadata = {package: (seed / 'metadata' / f'{package}.json').read_bytes()
+                         for package in packages}
+    first = imported_workdir(*packages, branch=branch)
+    second = imported_workdir(*packages, branch=branch)
+    assert first != second
+    assert get_last_commit_info(first) == original_commit
+    assert get_last_commit_info(second) == original_commit
+    assert not (first / '.git' / 'objects' / 'info' / 'alternates').exists()
+    assert subprocess.check_output(['git', 'remote'], cwd=first, text=True) == ''
+    for package in packages:
+        metadata = json.loads((second / 'metadata' / f'{package}.json').read_text())
+        assert metadata['fedora']['git_url'] == f'file://{upstream_repos[package]}'
+        assert metadata['fedora']['branch'] == branch
+        assert metadata['fedora']['sha'] == subprocess.check_output(
+            ['git', 'rev-parse', branch], cwd=upstream_repos[package], text=True,
+        ).strip()
+
+    package = packages[0]
+    spec_path = first / 'rpms' / package / f'{package}.spec'
+    original_spec = spec_path.read_bytes()
+    spec_path.write_bytes(original_spec + b'\n# Private test change\n')
+    metadata_path = first / 'metadata' / f'{package}.json'
+    metadata = json.loads(metadata_path.read_text())
+    metadata['version'] = '999'
+    metadata_path.write_text(json.dumps(metadata) + '\n')
+    subprocess.run(['git', 'commit', '-am', 'Change private package'], cwd=first, check=True)
+
+    assert (second / 'rpms' / package / f'{package}.spec').read_bytes() == original_spec
+    assert json.loads((second / 'metadata' / f'{package}.json').read_text())['version'] != '999'
+    assert get_last_commit_info(second) == original_commit
+    assert _imported_workdir_seeds(*packages, branch=branch) == seed
+    assert get_last_commit_info(seed) == original_commit
+    for package in packages:
+        assert (seed / 'metadata' / f'{package}.json').read_bytes() == original_metadata[package]
+    for untouched in (seed, second):
+        assert subprocess.check_output(['git', 'status', '--porcelain'], cwd=untouched, text=True) == ''
+
+
+@pytest.mark.parametrize('package,version,new_version', [
+    ('vanilla', '1.0', '2.0'),
+    ('chocolate', '10', '11'),
+])
+def test_upstream_copies_do_not_modify_seed(
+    upstream_repos: dict[str, Path], _upstream_seeds: dict[str, Path], tmp_path: Path,
+    package: str, version: str, new_version: str,
+) -> None:
+    """New upstream commits must not leak into another test or its seed."""
+    seed = _upstream_seeds[package]
+    original_spec = (seed / f'{package}.spec').read_bytes()
+    original_commit = get_last_commit_info(seed)
+    other = tmp_path / 'other-upstream'
+    shutil.copytree(seed, other)
+
+    add_upstream_commit(upstream_repos[package], package, version, new_version)
+
+    for untouched in (seed, other):
+        assert (untouched / f'{package}.spec').read_bytes() == original_spec
+        assert get_last_commit_info(untouched) == original_commit
+    assert subprocess.check_output(
+        ['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'],
+        cwd=other, text=True,
+    ) == subprocess.check_output(
+        ['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'],
+        cwd=seed, text=True,
+    )
+
 
 def test_import(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """Import a new package."""
@@ -561,19 +751,9 @@ def test_import_anitya_not_found(workdir: Path, upstream_repos: dict[str, Path],
     assert 'release-monitoring.org' in warning_text
 
 
-def test_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """update command"""
-    # Case 1: Import vanilla (unmodified, current)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-
-    # Case 2: Import chocolate (unmodified, will become outdated)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
     # Get the sha that was imported
     chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
     with open(chocolate_import_json) as f:
@@ -635,13 +815,10 @@ def test_update(workdir: Path, upstream_repos: dict[str, Path]) -> None:
 
 
 def test_sync_restores_release_when_fedora_catches_up(
-    workdir: Path, upstream_repos: dict[str, Path],
+    imported_workdir, upstream_repos: dict[str, Path],
 ) -> None:
     """Sync returns an upstream-version package to Fedora's release."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     spec_file = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
     spec_file.write_text(spec_file.read_text().replace(
@@ -670,13 +847,9 @@ def test_sync_restores_release_when_fedora_catches_up(
     assert 'modification_reason' not in metadata
 
 
-def test_update_uses_ls_remote(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_uses_ls_remote(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """update uses ls-remote optimization for up-to-date packages."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Create a mock git wrapper that logs commands
     log_file = workdir / 'git_commands.log'
@@ -708,13 +881,9 @@ exec /usr/bin/git "$@"
     assert non_config_commands == ["ls-remote file://" + str(upstream_repos["vanilla"]) + " rawhide"]
 
 
-def test_update_unbuilt(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+def test_update_unbuilt(imported_workdir, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Update skips packages not built in Koji."""
-    # Import chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Update upstream chocolate
     add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
@@ -738,13 +907,9 @@ def test_update_unbuilt(workdir: Path, upstream_repos: dict[str, Path], dist_git
         assert import_data['version'] == '10', "Should not update when build missing in Koji"
 
 
-def test_update_built(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+def test_update_built(imported_workdir, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Update proceeds when built in Koji."""
-    # Import chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Update upstream chocolate
     new_sha = add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
@@ -769,13 +934,9 @@ def test_update_built(workdir: Path, upstream_repos: dict[str, Path], dist_git_m
         assert import_data['fedora']['sha'] == new_sha
 
 
-def test_update_branch_dist_tag(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+def test_update_branch_dist_tag(imported_workdir, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Update uses correct dist tag for non-rawhide branches."""
-    # Import chocolate from f40 branch
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', '--branch', 'f40', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate', branch='f40')
 
     # Switch to f40 branch and update upstream chocolate
     subprocess.run(['git', 'checkout', 'f40'], cwd=upstream_repos["chocolate"], check=True)
@@ -803,13 +964,9 @@ def test_update_branch_dist_tag(workdir: Path, upstream_repos: dict[str, Path], 
         assert import_data['fedora']['sha'] == new_sha
 
 
-def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
+def test_update_rawhide_fallback(imported_workdir, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Update finds rawhide build with previous release dist tag when current not found."""
-    # Import vanilla from rawhide
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Update upstream vanilla
     new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
@@ -854,14 +1011,10 @@ def test_update_rawhide_fallback(workdir: Path, upstream_repos: dict[str, Path],
 
 
 def test_update_rawhide_finds_build_for_unknown_dist_tag(
-    workdir: Path, upstream_repos: dict[str, Path], dist_git_module
+    imported_workdir, upstream_repos: dict[str, Path], dist_git_module
 ) -> None:
     """Update finds the rawhide build when the local release list is stale."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import',
-         f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     new_sha = add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
 
@@ -1057,13 +1210,9 @@ def test_koji_retry_on_connection_error(dist_git_module) -> None:
             mock_sleep.assert_called_once_with(2)
 
 
-def test_sync(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync discards local modifications."""
-    # Import chocolate (automatically commits)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True
-    )
+    workdir = imported_workdir('chocolate')
 
     # Make local modification, declare, and commit it
     choc_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
@@ -1122,13 +1271,9 @@ def test_sync(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert f"Upstream: {new_sha2}" in body
 
 
-def test_sync_already_in_sync(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_already_in_sync(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync fails when already at upstream."""
-    # Import chocolate (automatically commits)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Sync without upstream changes fails
     result = subprocess.run(
@@ -1139,13 +1284,9 @@ def test_sync_already_in_sync(workdir: Path, upstream_repos: dict[str, Path]) ->
     assert "already at upstream" in result.stderr
 
 
-def test_sync_mark(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_mark(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync --mark creates proper commit when already at upstream."""
-    # Import chocolate (automatically commits)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     chocolate_import_json = workdir / 'metadata' / 'chocolate.json'
     original_metadata = chocolate_import_json.read_bytes()
@@ -1179,13 +1320,9 @@ def test_sync_mark(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert diff_result.stdout == '', "Commit should be empty"
 
 
-def test_sync_mark_resets_modification_status(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_mark_resets_modification_status(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync --mark resets modification_status to clean and removes modification_reason."""
-    # Import chocolate (automatically commits)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     chocolate_json = workdir / 'metadata' / 'chocolate.json'
 
@@ -1324,16 +1461,12 @@ def test_expand_url_shortcut(dist_git_module) -> None:
     assert dist_git_module.expand_url_shortcut(full_url) == full_url
 
 
-def test_update_of_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_of_rebuild(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update proceeds when local changes only affect Release: field.
 
     This commonly happens for rebuilds.
     """
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify the Release: field locally (bump it for a rebuild)
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -1396,13 +1529,9 @@ def test_update_commit_uses_local_package_name(workdir: Path, upstream_repos: di
     assert subject == 'Update vanilla1.0 from 1.0-1 to 1.0-2'
 
 
-def test_mark_modified_with_reason(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_mark_modified_with_reason(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Mark a clean package as modified with a reason."""
-    # Import vanilla package
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Verify it starts as clean
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -1425,13 +1554,9 @@ def test_mark_modified_with_reason(workdir: Path, upstream_repos: dict[str, Path
     assert metadata['modification_reason'] == 'Backport CVE fix from upstream'
 
 
-def test_mark_clean(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_mark_clean(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Mark a modified package back to clean."""
-    # Import vanilla package
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Mark as modified
     subprocess.run(
@@ -1459,12 +1584,9 @@ def test_mark_clean(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert 'modification_reason' not in metadata
 
 
-def test_mark_clean_refuses_upstream_modified(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_mark_clean_refuses_upstream_modified(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Mark-clean is refused for upstream-modified packages without verified Fedora data."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Manually set metadata to modified-upstream state (no fedora.release)
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -1488,18 +1610,14 @@ def test_mark_clean_refuses_upstream_modified(workdir: Path, upstream_repos: dic
 
 
 @pytest.mark.parametrize("modify_release", [False, True], ids=["clean", "with_release"])
-def test_update_merge_clean(workdir: Path, upstream_repos: dict[str, Path], modify_release: bool) -> None:
+def test_update_merge_clean(imported_workdir, upstream_repos: dict[str, Path], modify_release: bool) -> None:
     """Update automatically merges non-conflicting local and upstream changes.
 
     Tests both:
     - Clean merge without local Release: changes
     - Merge with local Release: bump that is normalized out
     """
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Make local modification: add comment and optionally bump Release
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -1549,13 +1667,9 @@ def test_update_merge_clean(workdir: Path, upstream_repos: dict[str, Path], modi
     assert metadata['modification_status'] == 'modified'
 
 
-def test_update_merge_conflict(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_merge_conflict(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update leaves conflicts in working tree for manual resolution."""
-    # Import chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Make local modification: change License line
     chocolate_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
@@ -1625,13 +1739,10 @@ def test_update_merge_conflict(workdir: Path, upstream_repos: dict[str, Path]) -
 
 
 def test_multi_mr_commits_conflicted_update_for_dry_run_mr(
-    workdir: Path, upstream_repos: dict[str, Path]
+    imported_workdir, upstream_repos: dict[str, Path]
 ) -> None:
     """Multi-MR wrapper turns dist_git exit 2 into a conflict MR candidate."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     chocolate_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
     chocolate_spec.write_text(chocolate_spec.read_text().replace('License: GPL', 'License: MIT'))
@@ -1669,18 +1780,14 @@ def test_multi_mr_commits_conflicted_update_for_dry_run_mr(
     assert 'Updates failed:          0' in result.stdout
 
 
-def test_update_merge_version_bump(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_merge_version_bump(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update handles modified packages where the local change is a Version bump.
 
     When the local modification changes Version (adjacent to Release in the spec),
     the Release normalization rebase can fail due to diff hunk context overlap.
     The merge should fall back to applying raw local modifications.
     """
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Make local modification: bump Version (adjacent to Release — triggers rebase conflict)
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -2213,13 +2320,10 @@ def test_stage_package_for_commit_still_force_adds_patches(
     assert 'rpms/findutils/own-patch.patch' in staged
 
 
-def test_update_no_pipeline_file_unaffected(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_no_pipeline_file_unaffected(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Regression check: a package with no source-pipeline.yaml behaves
     exactly as before -- update() must not even look for gorget."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
     upstream_spec = upstream_repos['vanilla'] / 'vanilla.spec'
     upstream_spec.write_text(upstream_spec.read_text().replace('Version: 1.0', 'Version: 2.0')
                               .replace('Release: 1', 'Release: 1'))
@@ -2237,7 +2341,7 @@ def test_update_no_pipeline_file_unaffected(workdir: Path, upstream_repos: dict[
 
 
 def test_update_version_templated_pipeline_failure_needs_manual_run(
-        workdir: Path, upstream_repos: dict[str, Path], tmp_path: Path) -> None:
+        imported_workdir, upstream_repos: dict[str, Path], tmp_path: Path) -> None:
     """End-to-end (real subprocess): a package with a source-pipeline.yaml
     whose gorget run fails must not silently commit -- it needs to fall back
     to the same conflict-style, exit(2), needs-manual-resolution path, with a
@@ -2246,10 +2350,7 @@ def test_update_version_templated_pipeline_failure_needs_manual_run(
     Uses a fake `gorget` on PATH that always fails, rather than mocking
     Python internals -- update() runs as a real subprocess here, same as
     every other update() test in this file, so there's nothing to patch."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
     pipeline_file = workdir / 'metadata' / 'vanilla.source-pipeline.yaml'
     _write_pipeline(pipeline_file, [{'type': 'url', 'url': 'https://example.com/vanilla-${VERSION}.tar.gz'}])
     subprocess.run(['git', 'add', '-A'], cwd=workdir, check=True)
@@ -2325,13 +2426,10 @@ Signed stub
 
 
 def test_update_skips_upstream_without_spec(
-    workdir: Path, upstream_repos: dict[str, Path]
+    imported_workdir, upstream_repos: dict[str, Path]
 ) -> None:
     """Retired/no-spec upstream branches are skipped instead of failing all updates."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     vanilla_spec = upstream_repos['vanilla'] / 'vanilla.spec'
     vanilla_spec.unlink()
@@ -2390,13 +2488,9 @@ Independent package
     assert "Cannot update independent package independent-pkg" in result.stderr
 
 
-def test_list_all_packages(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_list_all_packages(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test list command shows all packages."""
-    # Import vanilla package
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Create an independent package
     independent_dir = workdir / 'rpms' / 'independent-pkg'
@@ -2438,13 +2532,9 @@ Independent package
     assert '[independent]' in result.stdout
 
 
-def test_list_modified_only(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_list_modified_only(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test list --modified shows only modified packages."""
-    # Import vanilla package
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Mark as modified
     subprocess.run(
@@ -2475,17 +2565,9 @@ def test_list_modified_only(workdir: Path, upstream_repos: dict[str, Path]) -> N
     assert result.stdout == 'vanilla\n'
 
 
-def test_list_clean_only(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_list_clean_only(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test list --clean shows only clean packages."""
-    # Import vanilla and chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Mark vanilla as modified
     subprocess.run(
@@ -2506,13 +2588,9 @@ def test_list_clean_only(workdir: Path, upstream_repos: dict[str, Path]) -> None
     assert 'vanilla' not in result.stdout
 
 
-def test_list_independent_only(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_list_independent_only(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test list --independent shows only independent packages."""
-    # Import vanilla package (clean)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Create an independent package
     independent_dir = workdir / 'rpms' / 'independent-pkg'
@@ -2553,13 +2631,9 @@ Independent package
     assert 'vanilla' not in result.stdout
 
 
-def test_diff_modified_package(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_diff_modified_package(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test diff shows changes for modified package."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify spec file
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -2587,13 +2661,9 @@ def test_diff_modified_package(workdir: Path, upstream_repos: dict[str, Path]) -
     assert 'Version: 1.1' in result.stdout
 
 
-def test_diff_clean_package(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_diff_clean_package(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test diff shows nothing for clean package."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Run diff command
     result = subprocess.run(
@@ -2645,13 +2715,9 @@ Independent package
     assert 'Independent package (no upstream to diff against)' in result.stdout
 
 
-def test_diff_raw_mode(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_diff_raw_mode(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test --raw mode shows Release: changes."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Bump Release only
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -2678,13 +2744,9 @@ def test_diff_raw_mode(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert 'Release: 2' in result.stdout
 
 
-def test_diff_name_only_mode(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_diff_name_only_mode(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test --name-only mode shows only filenames."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify spec file
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -2706,17 +2768,9 @@ def test_diff_name_only_mode(workdir: Path, upstream_repos: dict[str, Path]) -> 
     assert 'Version:' not in result.stdout or 'differ' in result.stdout
 
 
-def test_diff_all_modified(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_diff_all_modified(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test --all diffs all modified packages."""
-    # Import multiple packages
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Mark vanilla as modified and modify it
     subprocess.run(
@@ -2804,13 +2858,9 @@ def test_is_prerelease_in_release_field(dist_git_module) -> None:
     assert "in release" not in pattern  # Should be detected in version, not release
 
 
-def test_update_skips_prerelease(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_skips_prerelease(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update skips pre-release versions by default."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Update upstream to pre-release version
     vanilla_spec = upstream_repos["vanilla"] / 'vanilla.spec'
@@ -2836,13 +2886,9 @@ def test_update_skips_prerelease(workdir: Path, upstream_repos: dict[str, Path])
     assert import_data['version'] == '1.0'
 
 
-def test_update_allow_prerelease_flag(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_allow_prerelease_flag(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --allow-prerelease accepts pre-release versions."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Update upstream to pre-release version
     vanilla_spec = upstream_repos["vanilla"] / 'vanilla.spec'
@@ -2868,17 +2914,9 @@ def test_update_allow_prerelease_flag(workdir: Path, upstream_repos: dict[str, P
     assert import_data['version'] == '2.0~rc1'
 
 
-def test_update_batch_continues_on_prerelease(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_batch_continues_on_prerelease(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Batch update continues processing after encountering pre-release."""
-    # Import vanilla and chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Update vanilla to pre-release
     vanilla_spec = upstream_repos["vanilla"] / 'vanilla.spec'
@@ -3331,13 +3369,9 @@ License: MIT
     assert spec_file.read_text().count('Release: 0.1%{?dist}') == 1
 
 
-def test_update_with_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_ref(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --ref to get a specific older commit."""
-    # Import chocolate at latest
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Get the current SHA
     import_json_file = workdir / 'metadata' / 'chocolate.json'
@@ -3374,13 +3408,9 @@ def test_update_with_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None
     assert 'Version: 12' in spec_content
 
 
-def test_sync_bypasses_prerelease_check(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_bypasses_prerelease_check(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync command bypasses pre-release check."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Update upstream to pre-release version
     vanilla_spec = upstream_repos["vanilla"] / 'vanilla.spec'
@@ -3405,12 +3435,9 @@ def test_sync_bypasses_prerelease_check(workdir: Path, upstream_repos: dict[str,
     assert import_data['version'] == '2.0~rc1'
 
 
-def test_set_upstream_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_track(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --track-version latest sets track_upstream to 'latest'."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     metadata_file = workdir / 'metadata' / 'vanilla.json'
     with open(metadata_file) as f:
@@ -3429,12 +3456,9 @@ def test_set_upstream_track(workdir: Path, upstream_repos: dict[str, Path]) -> N
     assert metadata['release_monitoring_project_id'] == 12345
 
 
-def test_set_upstream_no_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_no_track(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --no-track-version --no-project-id removes tracking from metadata."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Enable first
     subprocess.run(
@@ -3460,12 +3484,9 @@ def test_set_upstream_no_track(workdir: Path, upstream_repos: dict[str, Path]) -
     assert 'release_monitoring_project_id' not in metadata
 
 
-def test_set_upstream_project_id_with_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_project_id_with_track(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --project-id with --track-version sets both fields."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
@@ -3480,12 +3501,9 @@ def test_set_upstream_project_id_with_track(workdir: Path, upstream_repos: dict[
     assert metadata['track_upstream'] == 'latest'
 
 
-def test_set_upstream_track_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_track_version(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --track-version stores version prefix in track_upstream."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
@@ -3500,12 +3518,9 @@ def test_set_upstream_track_version(workdir: Path, upstream_repos: dict[str, Pat
     assert metadata['release_monitoring_project_id'] == 12345
 
 
-def test_set_upstream_no_track_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_no_track_version(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --no-track-version --no-project-id removes upstream tracking."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set tracking first
     subprocess.run(
@@ -3531,12 +3546,9 @@ def test_set_upstream_no_track_version(workdir: Path, upstream_repos: dict[str, 
     assert 'release_monitoring_project_id' not in metadata
 
 
-def test_set_upstream_project_id(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_project_id(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --project-id with --track-version sets release_monitoring_project_id."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
@@ -3551,12 +3563,9 @@ def test_set_upstream_project_id(workdir: Path, upstream_repos: dict[str, Path])
     assert metadata['track_upstream'] == 'latest'
 
 
-def test_set_upstream_no_project_id_requires_no_track(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_no_project_id_requires_no_track(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream --no-project-id alone errors when track_upstream is still set."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set project ID and tracking first
     subprocess.run(
@@ -3579,12 +3588,9 @@ def test_set_upstream_no_project_id_requires_no_track(workdir: Path, upstream_re
     assert 'track_upstream requires release_monitoring_project_id' in result.stderr
 
 
-def test_set_upstream_combined(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_combined(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream with multiple flags sets all specified fields."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla',
@@ -3599,17 +3605,9 @@ def test_set_upstream_combined(workdir: Path, upstream_repos: dict[str, Path]) -
     assert metadata['release_monitoring_project_id'] == 13254
 
 
-def test_list_prerelease_packages(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_list_prerelease_packages(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test list --prerelease shows only packages with pre-release versions."""
-    # Import vanilla and chocolate
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Update vanilla to pre-release version
     vanilla_spec = upstream_repos["vanilla"] / 'vanilla.spec'
@@ -3650,12 +3648,9 @@ def test_set_upstream_unknown_package(workdir: Path) -> None:
     assert "Package nonexistent not found" in result.stderr
 
 
-def test_set_upstream_no_flags(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_set_upstream_no_flags(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """set-upstream with no flags exits with error."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'set-upstream', 'vanilla'],
@@ -3667,13 +3662,10 @@ def test_set_upstream_no_flags(workdir: Path, upstream_repos: dict[str, Path]) -
 
 
 def test_set_upstream_gitlab_tags_rejects_project_id(
-    workdir: Path, upstream_repos: dict[str, Path],
+    imported_workdir, upstream_repos: dict[str, Path],
 ) -> None:
     """set-upstream --project-id is refused for packages using gitlab_tags tracking."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set up gitlab_tags tracking directly in metadata
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -3697,13 +3689,10 @@ def test_set_upstream_gitlab_tags_rejects_project_id(
 
 
 def test_set_upstream_gitlab_tags_no_project_id_is_noop(
-    workdir: Path, upstream_repos: dict[str, Path],
+    imported_workdir, upstream_repos: dict[str, Path],
 ) -> None:
     """set-upstream --no-project-id on a gitlab_tags package is a no-op."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set up gitlab_tags tracking
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -3731,13 +3720,10 @@ def test_set_upstream_gitlab_tags_no_project_id_is_noop(
 
 
 def test_set_upstream_gitlab_tags_track_version(
-    workdir: Path, upstream_repos: dict[str, Path],
+    imported_workdir, upstream_repos: dict[str, Path],
 ) -> None:
     """set-upstream --track-version on a gitlab_tags package updates only track_upstream."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set up gitlab_tags tracking
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -3763,13 +3749,9 @@ def test_set_upstream_gitlab_tags_track_version(
     assert metadata.get('tag_strip_prefix', 'v') == 'v'
 
 
-def test_update_skips_when_track_version_mismatch(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_skips_when_track_version_mismatch(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update skips package when upstream version doesn't match track_version prefix."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set track_version to 1.0 (matches current version)
     subprocess.run(
@@ -3796,13 +3778,9 @@ def test_update_skips_when_track_version_mismatch(workdir: Path, upstream_repos:
     assert metadata['version'] == '1.0'
 
 
-def test_update_proceeds_when_track_version_matches(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_proceeds_when_track_version_matches(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update proceeds when upstream version matches track_version prefix."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Set track_version to 1 (matches 1.0 and 1.x)
     subprocess.run(
@@ -3829,13 +3807,9 @@ def test_update_proceeds_when_track_version_matches(workdir: Path, upstream_repo
     assert metadata['version'] == '1.5'
 
 
-def test_update_skips_older_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_skips_older_version(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update skips when upstream version is older than current version."""
-    # Import vanilla at 1.0
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Bump local version to 2.0 ahead of upstream
     add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
@@ -3865,13 +3839,9 @@ def test_update_skips_older_version(workdir: Path, upstream_repos: dict[str, Pat
     assert metadata['version'] == '2.0'
 
 
-def test_sync_allows_older_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_allows_older_version(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync allows downgrade to older upstream version."""
-    # Import vanilla at 1.0
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Bump local version to 2.0
     add_upstream_commit(upstream_repos["vanilla"], 'vanilla', '1.0', '2.0')
@@ -3898,13 +3868,9 @@ def test_sync_allows_older_version(workdir: Path, upstream_repos: dict[str, Path
     assert metadata['version'] == '1.5'
 
 
-def test_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild command bumps Release field correctly."""
-    # Import vanilla package
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Rebuild the package
     subprocess.run(
@@ -3938,12 +3904,9 @@ def test_rebuild(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert metadata['fedora']['release'] == '1'
 
 
-def test_rebuild_already_bumped(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_already_bumped(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild increments existing .N suffix."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify to have Release: 2.1%{?dist}
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -3974,12 +3937,9 @@ def test_rebuild_already_bumped(workdir: Path, upstream_repos: dict[str, Path]) 
     assert subject == 'Rebuild vanilla: second rebuild'
 
 
-def test_rebuild_dry_run(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_dry_run(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test --dry-run prevents commit."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     initial_subject, _ = get_last_commit_info(workdir)
 
@@ -4007,12 +3967,9 @@ def test_rebuild_dry_run(workdir: Path, upstream_repos: dict[str, Path]) -> None
     assert 'vanilla.spec' in status_result.stdout
 
 
-def test_rebuild_preserves_macros(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_preserves_macros(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild preserves macros in Release field."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify to have Release with macro: 8.%{revision}%{?dist}
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -4051,17 +4008,9 @@ def test_rebuild_nonexistent_package(workdir: Path) -> None:
     assert "Package 'nonexistent' not found" in result.stderr
 
 
-def test_rebuild_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_all(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild --all rebuilds all packages with one commit per package."""
-    # Import two packages
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Get commit count before rebuild
     result = subprocess.run(
@@ -4105,16 +4054,9 @@ def test_rebuild_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     assert len([s for s in commit_subjects if 'Rebuild' in s and 'test rebuild all' in s]) == 2
 
 
-def test_rebuild_all_with_exclude(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_all_with_exclude(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild --all --exclude skips the excluded package(s)."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Get commit count before rebuild
     result = subprocess.run(
@@ -4171,7 +4113,7 @@ def test_rebuild_all_with_exclude(workdir: Path, upstream_repos: dict[str, Path]
     ],
 )
 def test_rebuild_exclude_validation_errors(
-    workdir: Path, upstream_repos: dict[str, Path], extra_args: list[str], expected_stderr: str,
+    imported_workdir, upstream_repos: dict[str, Path], extra_args: list[str], expected_stderr: str,
 ) -> None:
     """Test that invalid --exclude usage is rejected with a clear, specific error and
     that no package is touched. Covers: combining --exclude with an explicit package
@@ -4185,14 +4127,7 @@ def test_rebuild_exclude_validation_errors(
     were recognized, the other package would remain in the rebuild set, the command
     would succeed instead of erroring, and this case would fail.
     """
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', *extra_args, '--reason', 'test'],
@@ -4208,16 +4143,9 @@ def test_rebuild_exclude_validation_errors(
     assert 'Release: 1%{?dist}' in chocolate_spec.read_text()
 
 
-def test_rebuild_exclude_duplicates(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_exclude_duplicates(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that duplicate names in --exclude are handled gracefully."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), 'rebuild', '--all',
@@ -4232,12 +4160,9 @@ def test_rebuild_exclude_duplicates(workdir: Path, upstream_repos: dict[str, Pat
     assert 'Release: 1%{?dist}' in chocolate_spec.read_text()
 
 
-def test_rebuild_all_vs_package_mutually_exclusive(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_all_vs_package_mutually_exclusive(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that --all and package name are mutually exclusive."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Should fail when both --all and package name are specified
     result = subprocess.run(
@@ -4249,12 +4174,9 @@ def test_rebuild_all_vs_package_mutually_exclusive(workdir: Path, upstream_repos
     assert 'Cannot specify both package names and --all' in result.stderr
 
 
-def test_rebuild_requires_package_or_all(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_requires_package_or_all(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild requires either package name or --all."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Should fail when neither --all nor package name is specified
     result = subprocess.run(
@@ -4265,13 +4187,9 @@ def test_rebuild_requires_package_or_all(workdir: Path, upstream_repos: dict[str
     assert 'Must specify either package name(s) or --all' in result.stderr
 
 
-def test_rebuild_rejects_macro_without_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_rejects_macro_without_dist(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild rejects macros that don't end with %{?dist}."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify spec to use a macro in Release field WITHOUT %{?dist}
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -4296,13 +4214,9 @@ def test_rebuild_rejects_macro_without_dist(workdir: Path, upstream_repos: dict[
     assert 'requires manual rebuild' in result.stderr
 
 
-def test_rebuild_macro_with_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_macro_with_dist(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild handles macro-based Release that ends with %{?dist}."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify spec to use a macro in Release field WITH %{?dist}
     # Simulates packages like rpm (%{baserelease}%{?dist}) or gcc (%{gcc_release}%{?dist})
@@ -4340,13 +4254,9 @@ def test_rebuild_macro_with_dist(workdir: Path, upstream_repos: dict[str, Path])
     assert 'Release: %{my_macro}.2%{?dist}' in spec_content
 
 
-def test_rebuild_with_content_after_dist(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_with_content_after_dist(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild preserves content after %{?dist}."""
-    # Import vanilla
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify spec to have content after %{?dist} (like unbound)
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -4383,12 +4293,9 @@ def test_rebuild_with_content_after_dist(workdir: Path, upstream_repos: dict[str
     assert 'Release: 5.2%{?dist} %{?extra_version:-e %{extra_version}}' in spec_content
 
 
-def test_rebuild_real_world_release_strings(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_real_world_release_strings(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild handles real-world Release field patterns seen in the repo."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
 
     cases = [
@@ -4443,17 +4350,9 @@ def test_rebuild_real_world_release_strings(workdir: Path, upstream_repos: dict[
             f"After second rebuild of {initial!r}: expected {after_second!r}"
 
 
-def test_rebuild_all_continues_on_failure(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_all_continues_on_failure(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test that rebuild --all continues processing when some packages fail."""
-    # Import two packages
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla', 'chocolate')
 
     # Break vanilla by using a macro in Release
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -4552,13 +4451,10 @@ Test independent package
 
 
 def test_rebuild_ahead_of_fedora_package_without_metadata_release(
-    workdir: Path, upstream_repos: dict[str, Path],
+    imported_workdir, upstream_repos: dict[str, Path],
 ) -> None:
     """An ahead-of-Fedora package increments its local 0.1 release to 0.2."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
     spec_file = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
     spec_file.write_text(spec_file.read_text().replace('Release: 1%{?dist}', 'Release: 0.1%{?dist}'))
     metadata_file = workdir / 'metadata' / 'vanilla.json'
@@ -4577,13 +4473,9 @@ def test_rebuild_ahead_of_fedora_package_without_metadata_release(
     assert 'Release: 0.2%{?dist}' in spec_file.read_text()
 
 
-def test_rebuild_rev_deps_direct(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_rev_deps_direct(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild-rev-deps with direct package name (go-rpm-macros)."""
-    # Import vanilla which BuildRequires: go-rpm-macros (simulated)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Modify vanilla spec to add BuildRequires: go-rpm-macros
     vanilla_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
@@ -4705,12 +4597,9 @@ def test_rebuild_rev_deps_virtual_buildrequires_not_latest(workdir: Path, upstre
     assert 'Latest version is golang1.26' in result.stderr
 
 
-def test_rebuild_rev_deps_no_dependencies(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_rebuild_rev_deps_no_dependencies(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Test rebuild-rev-deps with package that has no reverse dependencies."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["vanilla"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('vanilla')
 
     # Rebuild reverse dependencies of vanilla (which nothing depends on)
     result = subprocess.run(
@@ -4752,13 +4641,9 @@ def test_ls_sources() -> None:
 # --branch flag tests
 #
 
-def test_update_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --branch switches to a different upstream branch."""
-    # Import chocolate from rawhide (version 10)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Update with --branch f40 (version 4)
     subprocess.run(
@@ -4783,14 +4668,9 @@ def test_update_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> N
     assert 'Upstream:' in body
 
 
-def test_update_with_branch_release_upgrade(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch_release_upgrade(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --branch from one numbered release to a higher one (f40 -> f99)."""
-    # Import chocolate from f40 (version 4)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', '--branch', 'f40',
-         f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate', branch='f40')
 
     # Update with --branch f99 (version 99)
     subprocess.run(
@@ -4810,13 +4690,9 @@ def test_update_with_branch_release_upgrade(workdir: Path, upstream_repos: dict[
     assert '(f40 -> f99)' in subject
 
 
-def test_update_with_branch_modified_package(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch_modified_package(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --branch merges local modifications across branch change."""
-    # Import chocolate from rawhide (version 10)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Add a local modification (extra comment in spec) and mark as modified
     spec_path = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
@@ -4851,13 +4727,9 @@ def test_update_with_branch_modified_package(workdir: Path, upstream_repos: dict
     assert 'Version: 4' in spec_content
 
 
-def test_update_with_branch_same_branch(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch_same_branch(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --branch same as current behaves like normal update."""
-    # Import chocolate from rawhide (version 10)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Add upstream commit on rawhide
     add_upstream_commit(upstream_repos["chocolate"], 'chocolate', '10', '11')
@@ -4890,14 +4762,9 @@ def test_update_with_branch_requires_package(workdir: Path, upstream_repos: dict
     assert '--branch requires a package name' in result.stderr
 
 
-def test_update_with_branch_lower_version(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch_lower_version(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Forward branch move allows version downgrade; backward move blocks it."""
-    # Import chocolate from f99 (version 99)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', '--branch', 'f99',
-         f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate', branch='f99')
 
     # f99 -> f40 is a backward move — version downgrade should be blocked
     result = subprocess.run(
@@ -4939,13 +4806,9 @@ def test_update_with_branch_lower_version(workdir: Path, upstream_repos: dict[st
     assert metadata['version'] == '4'
 
 
-def test_sync_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_sync_with_branch(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Sync with --branch switches branch and discards local modifications."""
-    # Import chocolate from rawhide (version 10)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Add local modification and mark as modified
     spec_path = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
@@ -4984,13 +4847,9 @@ def test_sync_with_branch(workdir: Path, upstream_repos: dict[str, Path]) -> Non
     assert '(rawhide -> f40)' in subject
 
 
-def test_update_with_branch_and_ref(workdir: Path, upstream_repos: dict[str, Path]) -> None:
+def test_update_with_branch_and_ref(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update with --branch and --ref uses specific commit from new branch."""
-    # Import chocolate from rawhide (version 10)
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, check=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     # Add two commits to f40 branch
     subprocess.run(['git', 'checkout', 'f40'], cwd=upstream_repos["chocolate"], check=True)
@@ -5374,13 +5233,10 @@ def mock_infra_repo(tmp_path: Path) -> Path:
     return infra
 
 
-def test_add_private_product(workdir: Path, upstream_repos: dict[str, Path],
+def test_add_private_product(imported_workdir, upstream_repos: dict[str, Path],
                              mock_infra_repo: Path) -> None:
     """Test add-private-product dry run shows all planned actions."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, capture_output=True, check=True, text=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'add-private-product', 'testprod',
@@ -5410,13 +5266,10 @@ def test_add_private_product_nonexistent_package(workdir: Path, mock_infra_repo:
     assert 'does not exist' in result.stderr
 
 
-def test_add_private_product_duplicate_product(workdir: Path, upstream_repos: dict[str, Path],
+def test_add_private_product_duplicate_product(imported_workdir, upstream_repos: dict[str, Path],
                                                mock_infra_repo: Path) -> None:
     """Test add-private-product fails if product already exists."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, capture_output=True, check=True, text=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     with open(workdir / 'ci' / 'konflux_rpa_config.yml') as f:
         config = yaml.safe_load(f)
@@ -5435,13 +5288,10 @@ def test_add_private_product_duplicate_product(workdir: Path, upstream_repos: di
     assert 'already exists' in result.stderr
 
 
-def test_add_private_product_already_assigned(workdir: Path, upstream_repos: dict[str, Path],
+def test_add_private_product_already_assigned(imported_workdir, upstream_repos: dict[str, Path],
                                               mock_infra_repo: Path) -> None:
     """Test add-private-product fails if package already has a private_product."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, capture_output=True, check=True, text=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     overrides_path = workdir / 'ci' / 'package-overrides.yaml'
     with open(overrides_path) as f:
@@ -5461,15 +5311,12 @@ def test_add_private_product_already_assigned(workdir: Path, upstream_repos: dic
     assert 'already has private_product' in result.stderr
 
 
-def test_add_private_product_preserves_formatting(workdir: Path, upstream_repos: dict[str, Path],
+def test_add_private_product_preserves_formatting(imported_workdir, upstream_repos: dict[str, Path],
                                                    mock_infra_repo: Path, dist_git_module) -> None:
     """A real (non-dry-run) run must only add lines, not reformat/strip comments from
     ci/package-overrides.yaml or ci/konflux_rpa_config.yml (regression test for a bug where
     a full yaml.load/yaml.dump round-trip silently dropped every comment in both files)."""
-    subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'import', f'file://{upstream_repos["chocolate"]}'],
-        cwd=workdir, capture_output=True, check=True, text=True,
-    )
+    workdir = imported_workdir('chocolate')
 
     overrides_path = workdir / 'ci' / 'package-overrides.yaml'
     rpa_config_path = workdir / 'ci' / 'konflux_rpa_config.yml'
