@@ -29,6 +29,8 @@ Patch2:         0003-pnpm-cache-both-rpm-architectures.patch
 Patch5:         0006-bump-go-openapi-swag-to-0.27.1-gomod.patch
 # CVE-2026-116591: sync go.mod/go.sum with vendor archive klauspost/compress v1.20.2 bump
 Patch6:         0007-bump-klauspost-compress-to-1.20.2-gomod.patch
+# CVE-2026-116689: update follow-redirects to 1.16.2 in pnpm lockfile
+Patch7:         0008-bump-follow-redirects-to-1.16.2-pnpm-lock.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25
