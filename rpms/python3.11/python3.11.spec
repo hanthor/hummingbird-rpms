@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: Python-2.0.1
 
 
@@ -406,6 +406,12 @@ Patch489: 00489-cve-2026-6019.patch
 #
 # (cherry-picked from commit 1f9958f909c1b41a4ffc0b613ef8ec8fa5e7c474)
 Patch495: 00495-cve-2026-3446.patch
+
+# 0496 # 2eb2af805c156ca52b316bb4ced5e0ab3971d0ae
+# CVE-2026-103995
+#
+# gh-150751: validate http.client Content-Length and chunk-size
+Patch496: 0496-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
 
 # (New patches go here ^^^)
 #

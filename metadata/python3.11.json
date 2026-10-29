@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "b69da4acce235fc751de1ca5bba080b82eadcdcc"
   },
-  "modification_reason": "Add FIPS mode support (00329-fips.patch) - OpenSSL FIPS mode compliance for hashlib and hmac; backport fix for CVE-2026-3479; backport fix for CVE-2026-6019; backport fix for CVE-2026-3446 Base64 decoder",
+  "modification_reason": "Add FIPS mode support (00329-fips.patch) - OpenSSL FIPS mode compliance for hashlib and hmac; backport fix for CVE-2026-3479; backport fix for CVE-2026-6019; backport fix for CVE-2026-3446 Base64 decoder; HUM-11296: CVE-2026-103995",
   "modification_status": "modified",
   "upstream_branch": "3.11",
   "upstream_repo": "https://github.com/python/cpython",

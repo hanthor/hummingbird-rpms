@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 License: Python-2.0.1
 
 
@@ -442,6 +442,12 @@ Patch488: 00488-cve-2026-3479.patch
 #
 # gh-90309: Base64-encode cookie values embedded in JS
 Patch489: 00489-cve-2026-6019.patch
+
+# 0495 # 2eb2af805c156ca52b316bb4ced5e0ab3971d0ae
+# CVE-2026-103995
+#
+# gh-150751: validate http.client Content-Length and chunk-size
+Patch495: 0495-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
 
 # (New patches go here ^^^)
 #

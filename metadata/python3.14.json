@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "79cd876daf3447a4f528a96301813b4009bc284f"
   },
-  "modification_reason": "Add FIPS mode support (00329-fips.patch), CVE-2026-8723 fix for vendored qs; retain local build and test adjustments; rebase FIPS tests onto Python 3.14.9 and drop tarfile backports included upstream",
+  "modification_reason": "Add FIPS mode support (00329-fips.patch), CVE-2026-8723 fix for vendored qs; retain local build and test adjustments; rebase FIPS tests onto Python 3.14.9 and drop tarfile backports included upstream; HUM-11299: CVE-2026-103995",
   "modification_status": "modified",
   "upstream_branch": "3.14",
   "upstream_repo": "https://github.com/python/cpython",
