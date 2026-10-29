@@ -8,7 +8,7 @@ Version:                3.13.5
 %gometa -L -f
 
 Name:           prometheus3.13
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Monitoring system and time series database
 # The offline frontend cache does not include Rollup's native s390x module.
 ExcludeArch:    s390x
@@ -156,7 +156,7 @@ Provides:       bundled(npm(es-object-atoms)) = 1.1.2
 Provides:       bundled(npm(escape-string-regexp)) = 4.0.0
 Provides:       bundled(npm(eventemitter3)) = 4.0.7
 Provides:       bundled(npm(fill-range)) = 7.1.1
-Provides:       bundled(npm(follow-redirects)) = 1.16.0
+Provides:       bundled(npm(follow-redirects)) = 1.16.2
 Provides:       bundled(npm(fsevents)) = 2.3.3
 Provides:       bundled(npm(function-bind)) = 1.1.2
 Provides:       bundled(npm(functions-have-names)) = 1.2.3
