@@ -7,9 +7,16 @@ import shutil
 import subprocess
 import sys
 import types
+import urllib.request
 import xmlrpc.client
 from collections.abc import Callable
+from email.message import Message
+from inspect import getsource
+from io import BytesIO
 from pathlib import Path
+from textwrap import indent
+from urllib.error import HTTPError, URLError
+from urllib.request import Request
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -20,6 +27,47 @@ project_root = Path(__file__).parent.parent
 #
 # Fixtures
 #
+
+# _anitya_pythonpath copies this helper's source into child interpreters.
+# Keep it self-contained and declare its imports in the generated source.
+def _stub_anitya_urlopen(request: Request | str, *args, **kwargs):
+    """Serve missing fake packages without replacing the lookup implementation."""
+    url = request.full_url if isinstance(request, Request) else request
+    if not url.startswith('https://release-monitoring.org/api/project/Fedora/'):
+        raise AssertionError(f'Unexpected HTTP request in dist-git test: {url}')
+    raise HTTPError(url, 404, 'Not Found', Message(), None)
+
+
+@pytest.fixture(scope='session')
+def _anitya_pythonpath(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Install the same transport stub in child dist_git.py processes only."""
+    directory = tmp_path_factory.mktemp('anitya-http-stub')
+    source = (
+        'import urllib.request\n'
+        'from email.message import Message\n'
+        'from urllib.error import HTTPError\n'
+        'from urllib.request import Request\n'
+        + getsource(_stub_anitya_urlopen)
+        + '\nurllib.request.urlopen = _stub_anitya_urlopen\n'
+    )
+    # Prepending this module to PYTHONPATH shadows other sitecustomize hooks,
+    # even for non-dist_git.py children. If startup/coverage hooks are added,
+    # preserve their initialization here; the basename gate scopes HTTP only.
+    (directory / 'sitecustomize.py').write_text(
+        "import sys\nif sys.argv[0].rsplit('/', 1)[-1] == 'dist_git.py':\n"
+        + indent(source, '    ')
+    )
+    return directory
+
+
+@pytest.fixture(autouse=True)
+def _stub_anitya_http(monkeypatch: pytest.MonkeyPatch, _anitya_pythonpath: Path) -> None:
+    """Keep real lookup/error handling in both parent and child CLI processes."""
+    monkeypatch.setattr(urllib.request, 'urlopen', _stub_anitya_urlopen)
+    pythonpath = os.environ.get('PYTHONPATH')
+    monkeypatch.setenv('PYTHONPATH', str(_anitya_pythonpath)
+                       + (os.pathsep + pythonpath if pythonpath else ''))
+
 
 def _load_dist_git_module():
     """Load a fresh module so tests do not share mutable script globals."""
@@ -340,6 +388,76 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
 #
 # Tests
 #
+
+@pytest.mark.parametrize('filename,expected_module', [
+    ('dist_git.py', 'sitecustomize'),
+    ('other.py', 'urllib.request'),
+])
+def test_anitya_stub_is_scoped_to_child_dist_git(tmp_path: Path, filename: str, expected_module: str) -> None:
+    """The startup hook must affect the CLI, not unrelated Python tools."""
+    script = tmp_path / filename
+    script.write_text(
+        'import urllib.request\n'
+        'from urllib.error import HTTPError\n'
+        f'assert urllib.request.urlopen.__module__ == {expected_module!r}\n'
+        "if urllib.request.urlopen.__module__ == 'sitecustomize':\n"
+        '    try:\n'
+        "        urllib.request.urlopen('https://release-monitoring.org/api/project/Fedora/vanilla')\n"
+        '    except HTTPError as error:\n'
+        '        assert error.code == 404\n'
+        '    else:\n'
+        "        raise AssertionError('Expected the offline Anitya response')\n"
+    )
+    subprocess.run([sys.executable, str(script)], check=True)
+
+
+def test_anitya_stub_rejects_unexpected_http_requests(dist_git_module, monkeypatch) -> None:
+    monkeypatch.setattr(dist_git_module, 'ANITYA_API_BASE', 'https://example.invalid/api')
+    with pytest.raises(AssertionError, match='Unexpected HTTP request'):
+        dist_git_module.lookup_anitya_project_id('vanilla')
+
+
+@pytest.mark.parametrize('project_id', [12345, '12345'])
+def test_lookup_anitya_project_id_parses_response(dist_git_module, project_id: int | str) -> None:
+    response = BytesIO(json.dumps({'id': project_id}).encode())
+    with patch.object(dist_git_module.urllib.request, 'urlopen', return_value=response) as urlopen:
+        assert dist_git_module.lookup_anitya_project_id('vanilla') == 12345
+
+    assert urlopen.call_count == 1
+    request = urlopen.call_args.args[0]
+    assert request.full_url == 'https://release-monitoring.org/api/project/Fedora/vanilla'
+    assert request.get_header('User-agent') == 'hummingbird-rpms/1.0'
+    assert urlopen.call_args.kwargs == {'timeout': 5}
+
+
+@pytest.mark.parametrize('status', [404, 500])
+def test_lookup_anitya_project_id_handles_http_errors(dist_git_module, caplog, status: int) -> None:
+    error = HTTPError('https://release-monitoring.org/', status, 'Error', Message(), None)
+    with patch.object(dist_git_module.urllib.request, 'urlopen', side_effect=error), \
+         caplog.at_level('WARNING'):
+        assert dist_git_module.lookup_anitya_project_id('vanilla') is None
+
+    if status == 404:
+        assert 'Anitya lookup' not in caplog.text
+    else:
+        assert 'returned HTTP 500' in caplog.text
+
+
+@pytest.mark.parametrize('error', [URLError('unavailable'), TimeoutError('timed out')])
+def test_lookup_anitya_project_id_handles_transport_errors(dist_git_module, caplog, error) -> None:
+    with patch.object(dist_git_module.urllib.request, 'urlopen', side_effect=error), \
+         caplog.at_level('WARNING'):
+        assert dist_git_module.lookup_anitya_project_id('vanilla') is None
+    assert 'Anitya lookup for vanilla failed' in caplog.text
+
+
+@pytest.mark.parametrize('body', [b'not json', b'{}', b'{"id": "not-an-integer"}'])
+def test_lookup_anitya_project_id_handles_invalid_responses(dist_git_module, caplog, body: bytes) -> None:
+    with patch.object(dist_git_module.urllib.request, 'urlopen', return_value=BytesIO(body)), \
+         caplog.at_level('WARNING'):
+        assert dist_git_module.lookup_anitya_project_id('vanilla') is None
+    assert 'Anitya lookup for vanilla failed' in caplog.text
+
 
 def test_workdir_clones_do_not_modify_seed(workdir: Path, _workdir_seed: Path, tmp_path: Path) -> None:
     """Working files, Git configuration, and commits belong to each test clone."""
@@ -724,7 +842,7 @@ def test_import_ref_autorelease_no_koji_build_fails(workdir: Path, upstream_repo
 
 def test_import_anitya_found(workdir: Path, upstream_repos: dict[str, Path], dist_git_module) -> None:
     """Import stores release_monitoring_project_id when Anitya lookup succeeds."""
-    with patch.object(dist_git_module, 'lookup_anitya_project_id', return_value=12345):
+    with patch.object(dist_git_module.urllib.request, 'urlopen', return_value=BytesIO(b'{"id": 12345}')):
         run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
 
     with open(workdir / 'metadata' / 'vanilla.json') as f:
@@ -737,9 +855,8 @@ def test_import_anitya_not_found(workdir: Path, upstream_repos: dict[str, Path],
                                   caplog) -> None:
     """Import warns with set-upstream instructions when Anitya lookup returns None."""
     import logging
-    with patch.object(dist_git_module, 'lookup_anitya_project_id', return_value=None):
-        with caplog.at_level(logging.WARNING, logger='root'):
-            run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
+    with caplog.at_level(logging.WARNING, logger='root'):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream_repos["vanilla"]}')
 
     with open(workdir / 'metadata' / 'vanilla.json') as f:
         metadata = json.load(f)
