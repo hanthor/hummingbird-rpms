@@ -2353,6 +2353,7 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                         'commit_msg': commit_msg,
                         'metadata': staged_metadata.to_dict(),
                         'old_version': old_version,
+                        'upstream_spec': upstream_spec,
                     }, f)
 
                 logging.warning(
@@ -2429,6 +2430,18 @@ def continue_update(dry_run: bool = False) -> None:
             )
 
     if not dry_run:
+        # update() defers release normalization while merge conflicts exist.
+        # Use the saved upstream definitions and release, without querying a
+        # newer Fedora build when the user resumes the update later.
+        if 'metadata' in state:
+            release = state['metadata'].get('fedora', {}).get('release')
+            upstream_spec = state.get('upstream_spec', '')
+            if release:
+                if upstream_spec:
+                    restore_autorelease_definitions(package_dir, upstream_spec)
+                if uses_autorelease(package_dir):
+                    replace_autorelease_in_spec(package_dir, release)
+
         # Post-update spec sanitizer for orphaned %patch directives after the
         # human resolved conflicts. Only auto-strip for modified packages (they
         # already diverge from Fedora); a clean/sync package must stay
