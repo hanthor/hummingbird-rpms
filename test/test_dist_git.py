@@ -4746,6 +4746,43 @@ def test_ls_sources() -> None:
     assert len(list(tar_dir.glob('tar-*.tar.xz.sig'))) == 1
 
 
+@pytest.mark.parametrize('filename', ['foo.sig', 'foo.asc', 'foo.sign', 'foo.patch'])
+def test_list_archive_contents_skips_non_archives(dist_git_module, filename: str) -> None:
+    """Signature files and generated patches (e.g. gorget source-pipeline
+    transform outputs like a regenerated yarn-cache compression patch) are
+    not archives and must be skipped rather than raising."""
+    with patch.object(dist_git_module.subprocess, 'run') as run:
+        dist_git_module.list_archive_contents(Path(filename))
+
+    run.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('filename', 'expected_cmd_prefix'),
+    [
+        ('foo.tar.gz', ['tar', 'tf']),
+        ('foo.tar.bz2', ['tar', 'tf']),
+        ('foo.tar.xz', ['tar', 'tf']),
+        ('foo.zip', ['unzip', '-l']),
+    ],
+)
+def test_list_archive_contents_known_archives(
+    dist_git_module, filename: str, expected_cmd_prefix: list[str],
+) -> None:
+    """Known archive extensions are listed with the matching tool."""
+    with patch.object(dist_git_module.subprocess, 'run') as run:
+        dist_git_module.list_archive_contents(Path(filename))
+
+    run.assert_called_once_with(expected_cmd_prefix + [filename], check=True)
+
+
+def test_list_archive_contents_unknown_extension_raises(dist_git_module) -> None:
+    """Genuinely unrecognized extensions still raise, instead of being
+    silently skipped alongside signature files and patches."""
+    with pytest.raises(RuntimeError, match='Unknown archive type: foo.exe'):
+        dist_git_module.list_archive_contents(Path('foo.exe'))
+
+
 #
 # --branch flag tests
 #

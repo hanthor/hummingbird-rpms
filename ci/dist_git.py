@@ -382,8 +382,11 @@ def list_archive_contents(filepath: Path) -> None:
     """List contents of a tar or zip archive."""
     name_lower = filepath.name.lower()
 
-    # Skip signature files and other non-archives
-    if name_lower.endswith(('.sig', '.asc', '.sign')):
+    # Skip signature files and other non-archives. Sources files may also
+    # list generated, lookaside-cached patches (e.g. gorget source-pipeline
+    # transform outputs like a regenerated yarn-cache compression patch)
+    # that aren't archives either.
+    if name_lower.endswith(('.sig', '.asc', '.sign', '.patch')):
         return
 
     # Determine archive type and command
