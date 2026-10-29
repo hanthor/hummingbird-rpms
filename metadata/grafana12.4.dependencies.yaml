@@ -1,0 +1,66 @@
+go:
+  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354.
+  - dependency: github.com/getkin/kin-openapi
+    version: v0.149.0
+  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354.
+  - dependency: github.com/santhosh-tekuri/jsonschema/v6
+    version: v6.0.3
+yarn:
+  # CVE-2026-110306, CVE-2026-110180, CVE-2026-110095, CVE-2026-110725.
+  - dependency: fast-uri
+    version: 3.1.9
+  # CVE-2026-14257, CVE-2026-69152, CVE-2026-69153.
+  - dependency: postcss
+    version: 8.5.19
+  # CVE-2026-69192.
+  - dependency: ip-address
+    version: 10.3.1
+  # CVE-2026-73089, CVE-2026-73088, CVE-2026-73086.
+  - dependency: browserslist
+    version: 4.28.7
+  # CVE-2026-75838.
+  - dependency: dompurify
+    version: 3.4.13
+  # CVE-2026-84961, CVE-2026-19534, CVE-2026-18540, CVE-2026-84933, CVE-2026-18149,
+  # CVE-2026-84947, CVE-2026-85008, CVE-2026-84890, CVE-2026-85014.
+  - dependency: undici
+    version: 7.29.1
+  # CVE-2026-90771.
+  - dependency: joi
+    version: 17.13.8
+  # CVE-2026-109955.
+  - dependency: hono
+    version: 4.13.11
+  # CVE-2026-101903.
+  - dependency: axios
+    version: 1.20.0
+  # CVE-2026-111756, CVE-2026-111755.
+  - dependency: follow-redirects
+    version: 1.16.1
+  # CVE-2026-110816.
+  - dependency: qs
+    version: 6.16.1
+  # CVE-2026-9496. Use the upstream fix instead of modifying cache ZIPs.
+  - dependency: pacote
+    version: 21.5.1
+  # CVE-2026-14257, CVE-2026-69152, CVE-2026-69153.
+  - dependency: brace-expansion
+    version: ["1.1.18", "2.1.4", "5.0.9"]
+  # CVE-2026-84375.
+  - dependency: js-yaml
+    version: ["3.15.2", "4.3.2"]
+  # CVE-2026-111181.
+  - dependency: body-parser
+    version: ["1.20.9", "2.4.0"]
+  # CVE-2026-73089, CVE-2026-73088, CVE-2026-73086.
+  - dependency: nanoid
+    version: ["5.1.16"]
+  # CVE-2026-114126, CVE-2026-114125.
+  - dependency: storybook
+    version: ["8.6.19", "10.6.2"]
+  # CVE-2026-114126, CVE-2026-114125. Retain the upstream Yarn patch.
+  - dependency: '@storybook/*'
+    version: ["8.6.19", "10.6.2"]
+  # Version 1.15.21 provides the native binding for s390x.
+  - dependency: '@swc/core'
+    version: ["1.15.21"]

@@ -1,0 +1,18 @@
+diff --git a/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch b/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch
+index c583bbd42199..a6f135ea82c9 100644
+--- a/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch
++++ b/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch
+@@ -1,8 +1,8 @@
+-diff --git a/dist/_node-chunks/builder-manager-UBFFXMB4.js b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+-index 9284eef7282459f033478d34c63f791a001a4e81..7da25855f92b3047056744529dba55b38c677a78 100644
+---- a/dist/_node-chunks/builder-manager-UBFFXMB4.js
+-+++ b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+-@@ -1459,7 +1459,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
++diff --git a/dist/_node-chunks/builder-manager-7PMD5P2I.js b/dist/_node-chunks/builder-manager-7PMD5P2I.js
++index 93c3a52509880a568ee703c9c79c690f40e4542f..488ff63b6d804774d2367f1c35fde7b06237627c 100644
++--- a/dist/_node-chunks/builder-manager-7PMD5P2I.js
+++++ b/dist/_node-chunks/builder-manager-7PMD5P2I.js
++@@ -1493,7 +1493,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
+      // turn this on to assist with debugging the bundling of managerEntries
+      // treeShaking: true,
+      sourcemap: !1,

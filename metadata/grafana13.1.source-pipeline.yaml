@@ -1,77 +1,50 @@
+# Requires gorget 0.1.28-0.3 or newer for dependency files and Yarn version arrays.
+toolchain:
+  - name: node
+    version: '24'
 fetch:
   - type: git
-    repo: "${UPSTREAM_REPO}"
-    ref: "v${VERSION}"
-    archive_name: "grafana-${VERSION}.tar.gz"
-
+    repo: ${UPSTREAM_REPO}
+    ref: v${VERSION}
+    archive_name: grafana-${VERSION}.tar.gz
 transform:
+  - type: vendor-bump
+    ecosystem: go
+    deps: grafana13.1.dependencies.yaml
   - type: vendor
     ecosystem: go
-    archive_name: "grafana-${VERSION}-vendor.tar.bz2"
-  - type: run
-    path: "."
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
-        if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        # Apply the complete frontend patch sequence and generate this
-        # release's compression patch before creating the offline cache.
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
-          . "${VERSION}" --generate-compression
-        # Unlike grafana12.4, 13.1's yarn.lock has no Cypress dependency to
-        # suppress a binary download for.
-        # YARN_NPM_MINIMAL_AGE_GATE=0: qs 6.16.0 is newer than the 3-day gate
-        # in .yarnrc.yml (needed until 2026-09-04).
-        YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          YARN_NPM_MINIMAL_AGE_GATE=0 \
-          node .yarn/releases/yarn-*.cjs install --immutable
-        # Deterministic flags: yarn's own cache writes carry live wall-clock
-        # mtimes and directory listing order isn't guaranteed sorted, so a
-        # plain `tar -cjf` here reproduced a different checksum on every
-        # single run even with byte-identical cache contents.
-        source_date_epoch=$(git log -1 --format=%ct HEAD)
-        tar --sort=name --mtime="@${source_date_epoch}" \
-          --owner=0 --group=0 --numeric-owner \
-          -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
-    outputs:
-      - "grafana-yarn-cache-${VERSION}.tar.bz2"
-      - "grafana-yarn-cache-compression-${VERSION}.patch"
-
+    archive_name: grafana-${VERSION}-vendor.tar.bz2
+  - type: patch
+    file: grafana-storybook-chunk-path.patch
+  - type: vendor-bump
+    ecosystem: yarn
+    deps: grafana13.1.dependencies.yaml
+  - type: vendor
+    ecosystem: yarn
+    archive_name: grafana-yarn-cache-${VERSION}.tar.bz2
+    modules:
+      - path: .
+        name: .yarn/cache
+    platforms:
+      - cpu: x64
+      - cpu: arm64
+      - cpu: s390x
 post:
-  # Generate the spec's bundled npm Provides from the same patched dependency
-  # graph used to populate the offline Yarn cache.
-  - type: run
-    artifacts:
-      - "grafana-${VERSION}.tar.gz"
-      - "grafana-yarn-cache-compression-${VERSION}.patch"
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        # Grafana 13.1.4 incorporated the ngalert datasource authorization
-        # fix carried by Patch14. Retain its audit comment and patch file, but
-        # stop applying it once upstream includes the correction.
-        if [ "$(printf '%s\n%s\n' '13.1.4' "${VERSION}" | sort -V | head -n1)" = '13.1.4' ]; then
-          sed -i \
-            's/^Patch14:[[:space:]]*grafana-ngalert-datasource-authz-cve\.patch/#Patch14:        grafana-ngalert-datasource-authz-cve.patch/' \
-            grafana13.1.spec
-        fi
-        work_dir=$(mktemp -d)
-        trap 'rm -rf "${work_dir}"' EXIT
-        tar -xzf "grafana-${VERSION}.tar.gz" -C "${work_dir}"
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
-          "${work_dir}/grafana-${VERSION}" "${VERSION}"
-        ./generate-bundled-npm-provides.py "${VERSION}" \
-          "${work_dir}/grafana-${VERSION}"
+  - type: bundled-provides
+    ecosystem: yarn
+    scope: production
+    output: bundled-npm-provides.inc
 
-# Same-version yarn-cache regeneration (CVE npm bump) changes the archive
-# checksum while keeping the filename, so gorget needs an accepted-checksums
-# exception for the new hash.
 accepted-checksums:
+  - file: grafana-13.1.8-vendor.tar.bz2
+    checksum: 48604d3b366cf21396926cb69cc018a16f871dada6503de83525f199a5249a64866c305bf4ca0ae1ae13bca81f444942ae10f29c3192e6373a74304284b69d83
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: grafana-13.1.8.tar.gz
+    checksum: eadf90c442fe7182e94f3451598664b38caed8681d0013364fd022d7b83c153acd9ee7aab9f8cada11c96e9fab134280a220f84328d7d03f9d2e9f1bc295d857
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: grafana-yarn-cache-13.1.8.tar.bz2
+    checksum: bd661759982cb1064aea513804d7fa665a964c7133e3a2d99cea7cdb728a4a262a8333289dc5ff808a194dd5a8fd9ae0498f7008e313f46404e7664b81bcab89
+    reason: Generate sources through native dependency declarations and include s390x bindings.
   - file: "grafana-yarn-cache-13.1.8.tar.bz2"
     checksum: "989dfc022eb3ff865a259a2bb5bf58200b53d0dc3a3b452ae1a2e89efed32a6182a0e91fb1cd6b629919f3e23fd3a8f1ec31ee6f22f5ceee01196e586a28d372"
     reason: "grafana-fast-uri-body-parser-cve.patch bumps fast-uri 3.1.8->3.1.9 and body-parser 2.2.1->2.4.0; yarn cache regenerated"

@@ -1,52 +1,54 @@
+# Requires gorget 0.1.28-0.3 or newer for dependency files and Yarn version arrays.
+toolchain:
+  - name: node
+    version: '24'
 fetch:
   - type: git
-    repo: "${UPSTREAM_REPO}"
-    ref: "v${VERSION}"
-    archive_name: "grafana-${VERSION}.tar.gz"
+    repo: ${UPSTREAM_REPO}
+    ref: v${VERSION}
+    archive_name: grafana-${VERSION}.tar.gz
+transform:
+  - type: vendor-bump
+    ecosystem: go
+    deps: grafana12.4.dependencies.yaml
   - type: vendor
     ecosystem: go
-    archive_name: "grafana-${VERSION}-vendor.tar.bz2"
+    archive_name: grafana-${VERSION}-vendor.tar.bz2
+  - type: vendor-bump
+    ecosystem: yarn
+    deps: grafana12.4.dependencies.yaml
+  - type: vendor
+    ecosystem: yarn
+    archive_name: grafana-yarn-cache-${VERSION}.tar.bz2
+    modules:
+      - path: .
+        name: .yarn/cache
+    platforms:
+      - cpu: x64
+      - cpu: arm64
+      - cpu: s390x
+post:
+  - type: bundled-provides
+    ecosystem: yarn
+    scope: production
+    output: bundled-npm-provides.inc
 
-transform:
-  - type: run
-    path: "."
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
-        if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
-        CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
-        # CVE-2026-9496 is backported inside the two cached pacote archives.
-        # Patch the freshly generated archives before changing yarn.lock to
-        # expect their new checksums, then verify the result offline.
-        "${PACKAGE_DIR}/patch-pacote-cache.py" .yarn/cache
-        patch -p1 < "${PACKAGE_DIR}/grafana-pacote-cve.patch"
-        CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
-        # Deterministic flags: yarn's own cache writes carry live wall-clock
-        # mtimes and directory listing order isn't guaranteed sorted, so a
-        # plain `tar -cjf` here reproduced a different checksum on every
-        # single run even with byte-identical cache contents.
-        source_date_epoch=$(git log -1 --format=%ct HEAD)
-        tar --sort=name --mtime="@${source_date_epoch}" \
-          --owner=0 --group=0 --numeric-owner \
-          -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
-    outputs:
-      - "grafana-yarn-cache-${VERSION}.tar.bz2"
-
-# gorget 0.1.16 fixed a bug where a single-module Go vendor archive packed
-# only "vendor/" at its top level, which go_vendor_license --use-archive
-# mis-extracts as an independently-wrapped sibling of the source tree
-# instead of nesting it inside -- causing every go-vendor-tools.toml license
-# pin to spuriously report as "changed" in %check even though the vendor
-# content itself was untouched (gorget-project/gorget#32). The fix adds
-# go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
-# checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: grafana-12.4.13.tar.gz
+    checksum: 1c0260cf2e2add55759f7be68323cd545bfbe016c50fd87c93ff55f6af946fadd896234684f9ef71f820b67107ad267191bc28bbf52cca360d4b3d93c250562f
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: grafana-yarn-cache-12.4.13.tar.bz2
+    checksum: 0af329d422157e92bb7943b428dd8a5a32031104acc566b2da881ceefc0012bc2239ee95107c74590f4901b233e1987a5a85842c0a80773a479472080774bcb2
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: 'grafana-12.4.13-vendor.tar.bz2'
+    checksum: '142edcf84d1d2030d5f6c5463ca31a079486438ad2abec9a10b1962fc42e7bc2001cbf5a9679f8684774cfcd4a0a2175a25121602ff2b85f6d39389eb741ffae'
+    reason: 'Native Go vendor-bump replaces the go get pre-command and keeps Source0 aligned with the workspace vendor archive.'
+  - file: 'grafana-12.4.13.tar.gz'
+    checksum: 'b97b0872d444780948aa39f7704eb997bca18e175d49aed06e3e0424a1df5a417136b097b984eb7a72799ce30caae7ac20b88d027c504c3f03d943a2e084cb91'
+    reason: 'Native Go and Yarn bumps now publish module files, manifests, lockfiles, and offline Yarn configuration in Source0.'
+  - file: 'grafana-yarn-cache-12.4.13.tar.bz2'
+    checksum: '559688f24eb46ecaecdcbd381a1f2d7c33c0ed7d646d9c22bf491cb3e07b7ec8a62c1ae7f4bd7610bd97e33b4198824c70a3297c18b20f624d7737a58ef6e788'
+    reason: 'Native Yarn vendoring uses derived per-major security floors and the upstream pacote fix instead of patched cache ZIPs.'
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "725d63f575251b94608681935c5b1c94fe4c8d532a6652e31431087d2ca058136c78adce85abf8051964e4bdb61085151d1a43da76a6d5328ccfa5cd25a7b17f"
     reason: "grafana-fast-uri-3.1.9-cve.patch and grafana-body-parser-cve.patch bump fast-uri 3.1.8->3.1.9 and body-parser 1.20.3/2.2.1->1.20.9/2.4.0 for CVE-2026-110306/110180/110095/110725/111181; yarn cache regenerated"

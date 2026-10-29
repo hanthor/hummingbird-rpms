@@ -1,42 +1,50 @@
+# Requires gorget 0.1.28-0.3 or newer for dependency files and Yarn version arrays.
+toolchain:
+  - name: node
+    version: '24'
 fetch:
   - type: git
-    repo: "${UPSTREAM_REPO}"
-    ref: "v${VERSION}"
-    archive_name: "grafana-${VERSION}.tar.gz"
+    repo: ${UPSTREAM_REPO}
+    ref: v${VERSION}
+    archive_name: grafana-${VERSION}.tar.gz
+transform:
+  - type: vendor-bump
+    ecosystem: go
+    deps: grafana13.2.dependencies.yaml
   - type: vendor
     ecosystem: go
-    archive_name: "grafana-${VERSION}-vendor.tar.bz2"
+    archive_name: grafana-${VERSION}-vendor.tar.bz2
+  - type: patch
+    file: grafana-storybook-chunk-path.patch
+  - type: vendor-bump
+    ecosystem: yarn
+    deps: grafana13.2.dependencies.yaml
+  - type: vendor
+    ecosystem: yarn
+    archive_name: grafana-yarn-cache-${VERSION}.tar.bz2
+    modules:
+      - path: .
+        name: .yarn/cache
+    platforms:
+      - cpu: x64
+      - cpu: arm64
+      - cpu: s390x
+post:
+  - type: bundled-provides
+    ecosystem: yarn
+    scope: production
+    output: bundled-npm-provides.inc
 
-transform:
-  - type: run
-    path: "."
-    command:
-      - "sh"
-      - "-c"
-      - |
-        set -euo pipefail
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
-        if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
-        if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
-        # suppress a binary download for.
-        YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
-        # Deterministic flags: yarn's own cache writes carry live wall-clock
-        # mtimes and directory listing order isn't guaranteed sorted, so a
-        # plain `tar -cjf` here reproduced a different checksum on every
-        # single run even with byte-identical cache contents.
-        source_date_epoch=$(git log -1 --format=%ct HEAD)
-        tar --sort=name --mtime="@${source_date_epoch}" \
-          --owner=0 --group=0 --numeric-owner \
-          -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
-    outputs:
-      - "grafana-yarn-cache-${VERSION}.tar.bz2"
-
-# Same-version yarn-cache regeneration (CVE npm bump) changes the archive
-# checksum while keeping the filename, so gorget needs an accepted-checksums
-# exception for the new hash.
 accepted-checksums:
+  - file: grafana-13.2.4-vendor.tar.bz2
+    checksum: e863b0f9ae8b9dcf85fe40c7de56b6e85113ffd54ffed2c6a610d017d19c8c4a26f46290b3e0bb296fe3149e2de3a0c2e397f78efd11fc258b256be17d81433d
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: grafana-13.2.4.tar.gz
+    checksum: 13c5ea6923f9cfaa1eca8322c426f7f1c277df4e6751df2805c6dd836fa57bd43e16e760d8ad49b250d4515c64f9bd6aaa9bcfffe06f9812c8201af9e5832e54
+    reason: Generate sources through native dependency declarations and include s390x bindings.
+  - file: grafana-yarn-cache-13.2.4.tar.bz2
+    checksum: a647b611676c41884a33a32aef1b07df47d49a28d18f2cd5b647bbb5fdc6b6612455507db87aad59ac7d5dac8fdee2d2a8bb0dccc9c2ba0262acdea01859d750
+    reason: Generate sources through native dependency declarations and include s390x bindings.
   - file: "grafana-yarn-cache-13.2.4.tar.bz2"
     checksum: "369b5fa87967aa36fe32278feda4d06213f89662786e188201e36a4b7b52ba639c8ffd647cd1142052b8106bdfdfe2fa431328289606d88f0dbdc64f5b08d4a1"
     reason: "grafana-body-parser-fast-uri-cve.patch bumps body-parser 2.2.1->2.4.0 (CVE-2026-111181) and fast-uri 3.1.8->3.1.9 (CVE-2026-110306/110180/110095/110725); yarn cache regenerated without stale zips"
