@@ -6,7 +6,7 @@
 
 Name:           python-urllib3
 Version:        2.8.0
-Release:        3%{?dist}
+Release:        3.1%{?dist}
 Summary:        HTTP library with thread-safe connection pooling, file post, and more
 
 # SPDX
@@ -172,9 +172,6 @@ export PYTHONPATH="${hypercorndir}:%{buildroot}%{python3_sitelib}"
 # even when we export the CI environment variable to increase timeouts.
 k="${k-}${k+ and }not (TestHTTPProxyManager and test_tunneling_proxy_request_timeout[https-https])"
 
-# Skip test_http2_probe_blocked_per_thread tests - they require network access
-# to TARPIT_HOST which is unavailable in konflux build environments
-k="${k-}${k+ and }not test_http2_probe_blocked_per_thread"
 
 %pytest --verbose -rs ${ignore-} -k "${k-}"
 %pytest --verbose -rs ${ignore-} -k "${k-}" --integration

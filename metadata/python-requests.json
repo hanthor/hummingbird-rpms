@@ -5,7 +5,7 @@
     "release": "2",
     "sha": "b1ae59d326997934ddf40a9e262e7bd118fad637"
   },
-  "modification_reason": "Pre-existing modification - requires review",
+  "modification_reason": "Restore network timeout tests with isolated online checks; retain other test exclusions",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/psf/requests",
   "version": "2.34.2"

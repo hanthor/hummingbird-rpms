@@ -5,7 +5,7 @@
     "release": "3",
     "sha": "f99bffa115b820acdfd0a80c48955496514d662c"
   },
-  "modification_reason": "Pre-existing modification - requires review",
+  "modification_reason": "Restore HTTP2 probe tests with isolated online checks; retain flaky proxy timeout exclusion",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/urllib3/urllib3",
   "version": "2.8.0"

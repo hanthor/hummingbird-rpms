@@ -7,7 +7,7 @@
 
 Name:           python-requests
 Version:        2.34.2
-Release:        2.1%{?dist}
+Release:        2.2%{?dist}
 Summary:        HTTP library, written in Python, for human beings
 
 License:        Apache-2.0
@@ -90,10 +90,6 @@ k="${k-}${k+ and }not test_unicode_header_name"
 %if %{without extradeps}
 k="${k-}${k+ and }not test_use_proxy_from_environment"
 %endif
-# test_connect_timeout and test_total_timeout_connect require network access to
-# non-routable IPs (10.255.255.1) which fails in konflux build environments
-k="${k-}${k+ and }not test_connect_timeout"
-k="${k-}${k+ and }not test_total_timeout_connect"
 
 %pytest -v tests -k "${k-}"
 %endif
