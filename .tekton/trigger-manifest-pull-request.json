@@ -2227,6 +2227,10 @@
         "^rpms/valkey/",
         "^test/rpms/valkey\\.yml$"
       ],
+      "vector--rpms": [
+        "^rpms/vector/",
+        "^test/rpms/vector\\.yml$"
+      ],
       "vim--rpms": [
         "^rpms/vim/",
         "^test/rpms/vim\\.yml$"

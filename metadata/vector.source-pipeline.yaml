@@ -1,0 +1,10 @@
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "v${VERSION}"
+    archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: cargo
+    archive_name: "${PACKAGE}-${VERSION}-vendor.tar.xz"
