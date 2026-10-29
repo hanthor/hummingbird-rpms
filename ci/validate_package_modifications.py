@@ -9,11 +9,14 @@ accurately reflects the actual state of packages.
 import argparse
 import logging
 import os
+import re
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from threading import Lock
 
 import yaml
 
@@ -37,6 +40,191 @@ from hum.meta.model import (
     ModifiedUpstreamPackageMetadata,
 )
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+_RELEASE_ONLY_DIFF_ARGS = (
+    '-b', '--ignore-blank-lines',
+    '-I', '^Release:',
+    '-I', '^%.*[rR]elease',
+)
+
+
+class GitHistory:
+    """Read commit metadata once per validation run; leave path/date walks to Git.
+
+    Loading is lazy so independent or invalid packages do not require history.
+    Create a new instance for each run; a loaded instance keeps its HEAD snapshot.
+    """
+
+    def __init__(self, packages: list[str]):
+        self.root = ROOT_DIR
+        self.head = 'HEAD'
+        self._literal_packages = {pkg for pkg in packages if re.fullmatch(r'[A-Za-z0-9_+-]+', pkg)}
+        self._last_sync: dict[str, str] = {}
+        self._subjects: dict[str, str] = {}
+        self._missing_upstream: set[str] = set()
+        self._merges: set[str] = set()
+        self._bulk_sync = False
+        self._legacy_only = False
+        self._loaded = False
+        self._error: subprocess.CalledProcessError | None = None
+        self._lock = Lock()
+
+    @staticmethod
+    def _records(output: str, width: int) -> Iterator[tuple[str, ...]]:
+        fields = output.split('\0')
+        if len(fields) % width != 1 or fields[-1].strip():
+            raise ValueError('Unexpected Git commit metadata format')
+        for index in range(0, len(fields) - 1, width):
+            yield (fields[index].strip(), *fields[index + 1:index + width])
+
+    def _ensure_loaded(self) -> None:
+        if self._loaded:
+            return
+        with self._lock:
+            if self._error is not None:
+                raise self._error
+            if self._loaded:
+                return
+            try:
+                self._load()
+            except subprocess.CalledProcessError as error:
+                self._error = error
+                raise
+            self._loaded = True
+
+    def _load(self) -> None:
+        head = run_git('rev-parse', '--verify', 'HEAD', cwd=self.root, check=False)
+        if head.returncode:
+            # Keep the existing behavior for an unborn/non-repository workdir.
+            self._legacy_only = True
+            return
+        self.head = head.stdout.strip()
+        config = run_git(
+            'config', '--get-regexp',
+            r'^(grep\.(patterntype|extendedregexp)|log\.showsignature)$',
+            cwd=self.root, check=False,
+        )
+        if any(line.split(' ', 1)[0] == 'log.showsignature'
+               for line in config.stdout.splitlines()):
+            # Signature display adds text outside the structured format.
+            # Preserve the original queries for explicit signature settings.
+            self._legacy_only = True
+            return
+        result = run_git('log', '--format=%H%x00%P%x00%s%x00', self.head, cwd=self.root)
+        for sha, parents, subject in self._records(result.stdout, 3):
+            self._subjects[sha] = subject
+            if len(parents.split()) > 1:
+                self._merges.add(sha)
+        result = run_git('log', '--format=%H', '--invert-grep', '--grep=^Upstream:',
+                         self.head, cwd=self.root)
+        self._missing_upstream = set(result.stdout.splitlines())
+
+        # Explicit grep syntax settings and regex-bearing names keep their
+        # native queries. In particular, '+' is literal in Git's basic regexes.
+        self._bulk_sync = not config.stdout.strip()
+        if not self._bulk_sync:
+            return
+        result = run_git('log', '--format=%H%x00%B%x00', '--grep', '^Sync ',
+                         '--grep', '^Import ', self.head, cwd=self.root)
+        for sha, message in self._records(result.stdout, 2):
+            # --grep searches the whole message, including its body, and empty
+            # Sync --mark commits cannot be discovered by filtering paths.
+            for line in message.split('\n'):
+                if line.startswith('Sync '):
+                    package, separator, _ = line[5:].partition(' ')
+                    if separator and package in self._literal_packages:
+                        self._last_sync.setdefault(package, sha)
+                elif line.startswith('Import '):
+                    text = line[7:]
+                    # A version may contain more '-<digit>' sequences. Preserve
+                    # every matching package prefix, not just the longest one.
+                    for match in re.finditer(r'-[0-9]', text):
+                        package = text[:match.start()]
+                        if package in self._literal_packages:
+                            self._last_sync.setdefault(package, sha)
+
+    def last_sync_commit(self, package: str) -> str | None:
+        self._ensure_loaded()
+        if self._bulk_sync and package in self._literal_packages:
+            return self._last_sync.get(package)
+        result = run_git('log', '--format=%H', '--max-count=1', '--grep', f'^Sync {package} ',
+                         '--grep', f'^Import {package}-[0-9]', self.head,
+                         cwd=self.root, check=False)
+        return next(iter(result.stdout.strip().splitlines()), None)
+
+    def log(self, package: str, last_sync: str | None, *, since: bool = False,
+            subjects: bool = False) -> str:
+        self._ensure_loaded()
+        args = ['log', '--format=%H %s' if self._legacy_only and subjects else '--format=%H']
+        if since:
+            args.append('--since=2026-03-05')
+        if self._legacy_only:
+            args.extend(['--invert-grep', '--grep=^Upstream:'])
+        revision = f'{last_sync}..{self.head}' if last_sync else self.head
+        result = run_git(*args, revision, '--', f'rpms/{package}', cwd=self.root, check=False)
+        if self._legacy_only:
+            return result.stdout
+        # Git still performs path-history simplification, merge traversal and
+        # --since pruning. Avoid rereading all commit messages on each walk.
+        commits = [sha for sha in result.stdout.splitlines() if sha in self._missing_upstream]
+        return '\n'.join(f'{sha} {self._subjects[sha]}' if subjects else sha for sha in commits)
+
+    @staticmethod
+    def _chunks(commits: list[str]) -> Iterator[list[str]]:
+        # Bound argv and temporary diff output; do not cache full patches.
+        for index in range(0, len(commits), 32):
+            yield commits[index:index + 32]
+
+    def _show(self, commits: list[str], path: str, *args: str) -> dict[str, str] | None:
+        result = run_git('show', '--format=%x00%H%x00', *args, *commits, '--', path,
+                         cwd=self.root, check=False)
+        if result.returncode:
+            # A failed multi-commit show can omit later commits. Never treat
+            # missing output from a failed batch as evidence of a clean change.
+            return None
+        fields = result.stdout.split('\0')
+        if fields[0].strip() or len(fields) % 2 != 1:
+            raise ValueError('Unexpected Git diff batch format')
+        patches: dict[str, str] = {}
+        for index in range(1, len(fields), 2):
+            sha, patch = fields[index:index + 2]
+            if sha not in commits:
+                raise ValueError(f'Unexpected commit in Git diff batch: {sha}')
+            # Separate merge diffs can repeat the same commit once per parent.
+            patches[sha] = patches.get(sha, '') + patch
+        return patches
+
+    def spec_statuses(self, path: str, commits: list[str]) -> dict[str, str]:
+        self._ensure_loaded()
+        statuses = {}
+        for batch in self._chunks(commits):
+            result = None if self._legacy_only else self._show(batch, path, '--name-status')
+            for sha in batch:
+                statuses[sha] = (result.get(sha, '') if result is not None else
+                                 run_git('show', '--name-status', '--format=', sha, '--', path,
+                                         cwd=self.root, check=False).stdout)
+        return statuses
+
+    def release_only_commits(self, package: str, commits: list[str]) -> set[str]:
+        self._ensure_loaded()
+        release_only = set()
+        ordinary = []
+        for sha in commits:
+            if self._legacy_only or sha in self._merges:
+                # Combined merge diffs reject -I under Git's default settings.
+                # Keep the existing single-commit behavior and error handling.
+                if is_release_only_commit(sha, package):
+                    release_only.add(sha)
+            else:
+                ordinary.append(sha)
+        for batch in self._chunks(ordinary):
+            result = self._show(batch, f'rpms/{package}', *_RELEASE_ONLY_DIFF_ARGS)
+            for sha in batch:
+                only_release = (not result.get(sha, '').strip() if result is not None
+                                else is_release_only_commit(sha, package))
+                if only_release:
+                    release_only.add(sha)
+        return release_only
 
 
 def get_changed_packages_in_mr() -> list[str]:
@@ -147,10 +335,7 @@ def is_release_only_commit(commit_sha: str, package_name: str) -> bool:
     result = run_git(
         'show',
         '--format=',  # Don't show commit message
-        '-b',  # Ignore changes in amount of whitespace
-        '--ignore-blank-lines',
-        '-I', '^Release:',  # Ignore Release: field in spec file
-        '-I', '^%.*[rR]elease',  # Ignore release macros (%global baserelease, etc.)
+        *_RELEASE_ONLY_DIFF_ARGS,  # Ignore whitespace, Release fields and release macros
         commit_sha,
         '--',
         package_path,
@@ -162,7 +347,8 @@ def is_release_only_commit(commit_sha: str, package_name: str) -> bool:
     return not result.stdout.strip()
 
 
-def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tuple[bool, str | None]:
+def check_git_history_state(package_name: str, last_sync_sha: str | None,
+                            history: GitHistory | None = None) -> tuple[bool, str | None]:
     """
     Check if package is clean based on git commit history.
 
@@ -194,20 +380,16 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
         # No Sync found, check all commits
         git_range = 'HEAD'
 
-    result = run_git(
-        'log',
-        '--format=%H %s',
-        '--invert-grep',
-        '--grep=^Upstream:',
-        git_range,
-        '--',
-        package_path,
-        cwd=ROOT_DIR,
-        check=False
-    )
+    if history is None:
+        log_output = run_git(
+            'log', '--format=%H %s', '--invert-grep', '--grep=^Upstream:',
+            git_range, '--', package_path, cwd=ROOT_DIR, check=False,
+        ).stdout
+    else:
+        log_output = history.log(package_name, last_sync_sha, subjects=True)
 
     # If any commits found, package has modifications
-    bad_commits = [line for line in result.stdout.strip().split('\n') if line]
+    bad_commits = [line for line in log_output.strip().split('\n') if line]
 
     # historical accident: this commit removed unbound, e729d20ec3c2e9 reintroduced it and
     # landed in parallel with this validation. Ignore it.
@@ -308,11 +490,16 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
         # Filter out release-only commits (per project policy, Release-only changes
         # are not considered modifications)
         non_release_commits = []
+        release_only = (history.release_only_commits(
+            package_name, [line.split(' ', 1)[0] for line in bad_commits],
+        ) if history is not None else None)
         for commit_line in bad_commits:
             parts = commit_line.split(' ', 1)
             sha = parts[0]
 
-            if not is_release_only_commit(sha, package_name):
+            only_release = (sha in release_only if release_only is not None
+                            else is_release_only_commit(sha, package_name))
+            if not only_release:
                 non_release_commits.append(commit_line)
 
         if non_release_commits:
@@ -329,7 +516,8 @@ def check_git_history_state(package_name: str, last_sync_sha: str | None) -> tup
     return True, None
 
 
-def check_local_modifications(package_name: str, last_sync_sha: str | None) -> tuple[bool, str | None]:
+def check_local_modifications(package_name: str, last_sync_sha: str | None,
+                              history: GitHistory | None = None) -> tuple[bool, str | None]:
     """
     Check local modifications for policy compliance.
 
@@ -362,20 +550,15 @@ def check_local_modifications(package_name: str, last_sync_sha: str | None) -> t
         # No Sync found, check all commits
         git_range = 'HEAD'
 
-    result = run_git(
-        'log',
-        '--format=%H',
-        '--since=2026-03-05',  # Only commits on or after this date
-        '--invert-grep',
-        '--grep=^Upstream:',
-        git_range,
-        '--',
-        package_path,
-        cwd=ROOT_DIR,
-        check=False
-    )
+    if history is None:
+        log_output = run_git(
+            'log', '--format=%H', '--since=2026-03-05', '--invert-grep', '--grep=^Upstream:',
+            git_range, '--', package_path, cwd=ROOT_DIR, check=False,
+        ).stdout
+    else:
+        log_output = history.log(package_name, last_sync_sha, since=True)
 
-    local_commits = [sha for sha in result.stdout.strip().split('\n') if sha]
+    local_commits = [sha for sha in log_output.strip().split('\n') if sha]
     if not local_commits:
         # No local commits after cutoff date, nothing to check
         return True, None
@@ -383,24 +566,18 @@ def check_local_modifications(package_name: str, last_sync_sha: str | None) -> t
     # Check each local commit for policy violations
     for spec_file in spec_files:
         spec_path = f'{package_path}/{spec_file.name}'
+        statuses = history.spec_statuses(spec_path, local_commits) if history is not None else None
 
         for commit_sha in local_commits:
             # Check if this spec file was added or renamed in this commit
             # We don't want to flag %changelog in newly added/renamed files
-            status_result = run_git(
-                'show',
-                '--name-status',
-                '--format=',
-                commit_sha,
-                '--',
-                spec_path,
-                cwd=ROOT_DIR,
-                check=False
-            )
+            status_output = (statuses[commit_sha] if statuses is not None else
+                             run_git('show', '--name-status', '--format=', commit_sha,
+                                     '--', spec_path, cwd=ROOT_DIR, check=False).stdout)
 
             # Status line format: "A\tpath" or "R100\told\tnew" or "M\tpath"
-            if status_result.stdout.strip():
-                status_line = status_result.stdout.strip().split()[0]
+            if status_output.strip():
+                status_line = status_output.strip().split()[0]
                 if status_line.startswith('A') or status_line.startswith('R'):
                     # File was added or renamed, skip %changelog check
                     continue
@@ -463,7 +640,8 @@ def check_local_modifications(package_name: str, last_sync_sha: str | None) -> t
     return True, None
 
 
-def validate_package(package_name: str, check_actual_state: bool = True) -> tuple[bool, str | None]:
+def validate_package(package_name: str, check_actual_state: bool = True, *,
+                     history: GitHistory | None = None) -> tuple[bool, str | None]:
     """
     Validate modification_status for a package.
 
@@ -526,10 +704,11 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
         return True, None
 
     # Find the last Sync/Import commit once (used by multiple checks below)
-    last_sync_sha = find_last_sync_commit(package_name)
+    last_sync_sha = (history.last_sync_commit(package_name) if history is not None
+                     else find_last_sync_commit(package_name))
 
     # Check 3.5: Local modifications must follow policy (%changelog and Release)
-    is_valid, error = check_local_modifications(package_name, last_sync_sha)
+    is_valid, error = check_local_modifications(package_name, last_sync_sha, history)
     if not is_valid:
         return False, error
 
@@ -544,7 +723,7 @@ def validate_package(package_name: str, check_actual_state: bool = True) -> tupl
     is_modified = isinstance(metadata, (ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata))
 
     if not check_actual_state and (is_clean or is_modified):
-        is_clean_by_history, history_error = check_git_history_state(package_name, last_sync_sha)
+        is_clean_by_history, history_error = check_git_history_state(package_name, last_sync_sha, history)
 
         if is_clean and not is_clean_by_history:
             return False, history_error
@@ -604,10 +783,11 @@ def validate_packages(packages: list[str], check_actual_state: bool = True) -> i
             sys.exit(1)
 
     # Use thread pool for parallel validation (git operations release GIL)
+    history = GitHistory(packages) if not check_actual_state else None
     with ThreadPoolExecutor(max_workers=8) as executor:
         # Submit all validation tasks
         future_to_pkg = {
-            executor.submit(validate_package, pkg, check_actual_state): pkg
+            executor.submit(validate_package, pkg, check_actual_state, history=history): pkg
             for pkg in packages
         }
 
