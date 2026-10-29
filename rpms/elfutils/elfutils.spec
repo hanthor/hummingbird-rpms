@@ -5,7 +5,7 @@
 Name: elfutils
 Version: 0.197
 %global baserelease 1
-Release: %{baserelease}%{?dist}
+Release: %{baserelease}.1%{?dist}
 URL: http://elfutils.org/
 %global source_url ftp://sourceware.org/pub/elfutils/%{version}/
 License: GPL-3.0-or-later AND (GPL-2.0-or-later OR LGPL-3.0-or-later) AND GFDL-1.3-no-invariants-or-later
@@ -78,10 +78,9 @@ BuildRequires: ima-evm-utils-devel
 BuildRequires: openssl-devel
 BuildRequires: rpm-sign
 
-# For eu-stackprof
-%if %{enable_stackprof}
-BuildRequires: libpfm-devel
-%endif
+# Build eu-stackprof without libpfm, as in CentOS Stream 10.
+# libpfm is not available in the Hummingbird repository.
+# Disable its automatic detection with the configure overrides below.
 
 BuildRequires: automake
 BuildRequires: autoconf
@@ -339,6 +338,8 @@ trap 'cat config.log' EXIT
 %endif
 %if %{enable_stackprof}
 	--enable-stackprof \
+	ac_cv_header_perfmon_pfmlib_perf_event_h=no \
+	ac_cv_lib_pfm_pfm_get_os_event_encoding=no \
 %else
 	--disable-stackprof \
 %endif

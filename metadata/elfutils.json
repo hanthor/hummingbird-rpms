@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "c8fc3fc52dd360a8c61c12fa6a2b7d3f83e73476"
   },
-  "modification_reason": "Skip stackprof system tests when perf_event_open is unavailable in CI",
+  "modification_reason": "Skip stackprof system tests when perf_event_open is unavailable in CI; disable optional libpfm support as in CentOS Stream 10 to fix installation",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/elfutils.git",
   "version": "0.197"
