@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/apt.git",
-    "release": "1",
-    "sha": "1ba132acb6de84139733680a620da9baee405fe4"
+    "release": "2",
+    "sha": "6b068751a05294102936c868ad038df1c1d4cfbf"
   },
   "modification_status": "clean",
   "upstream_repo": "https://salsa.debian.org/apt-team/apt",
