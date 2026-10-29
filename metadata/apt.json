@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/apt.git",
     "release": "1",
-    "sha": "784805f12a7bae5116acfa1ac2dcff84dc63850e"
+    "sha": "1ba132acb6de84139733680a620da9baee405fe4"
   },
   "modification_status": "clean",
   "upstream_repo": "https://salsa.debian.org/apt-team/apt",
-  "version": "3.3.4"
+  "version": "3.3.5"
 }
