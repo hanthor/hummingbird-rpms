@@ -1,0 +1,9 @@
+# Opt in to isolated tests without changing the RPM compiler environment.
+# Like %%cargo_test, arguments after two -- separators reach the test runner.
+%cargo_nextest(naf:) \
+( \
+status=0 \
+%{__cargo} nextest run %{__cargo_common_opts} --cargo-profile rpm --no-fail-fast %{__cargo_parse_opts %{-n} %{-a} %{-f:-f%{-f*}}} %* || status=$? \
+%{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast --doc %{__cargo_parse_opts %{-n} %{-a} %{-f:-f%{-f*}}} %* || status=$? \
+exit "$status" \
+)

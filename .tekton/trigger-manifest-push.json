@@ -116,6 +116,9 @@
       "capstone--rpms": [
         "^rpms/capstone/"
       ],
+      "cargo-nextest--rpms": [
+        "^rpms/cargo\\-nextest/"
+      ],
       "cargo-rpm-macros--rpms": [
         "^rpms/cargo\\-rpm\\-macros/"
       ],
