@@ -1718,6 +1718,9 @@
       "valkey--rpms": [
         "^rpms/valkey/"
       ],
+      "vector--rpms": [
+        "^rpms/vector/"
+      ],
       "vim--rpms": [
         "^rpms/vim/"
       ],

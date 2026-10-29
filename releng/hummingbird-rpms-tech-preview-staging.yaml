@@ -1217,6 +1217,8 @@ spec:
           contentType: rpm
         - name: valkey-main
           contentType: rpm
+        - name: vector-main
+          contentType: rpm
         - name: vim-main
           contentType: rpm
         - name: vmaf-main

@@ -1,0 +1,2 @@
+u vector - "Vector observability data router" /var/lib/vector /sbin/nologin
+m vector systemd-journal

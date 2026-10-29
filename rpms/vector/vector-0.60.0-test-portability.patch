@@ -1,0 +1,48 @@
+From: Hummingbird Packaging
+Subject: [PATCH] Fix unit test assumptions in RPM build environments
+
+Derive the integer-conversion diagnostic from the current standard library. Allow
+the documented optional child status after its output streams close.
+These changes affect unit tests only.
+
+diff --git a/src/sinks/util/buffer/compression.rs b/src/sinks/util/buffer/compression.rs
+index 22c19f0..648603f 100644
+--- a/src/sinks/util/buffer/compression.rs
++++ b/src/sinks/util/buffer/compression.rs
+@@ -570,6 +570,10 @@ mod test {
+             assert_eq!(deserialized.expect("valid source"), *result);
+         }
+
++        let negative_level_error = format!(
++            "integer could not be converted to u32: {} at line 1 column 33",
++            u32::try_from(-1_i64).unwrap_err()
++        );
+         let fixtures_invalid = [
+             (
+                 r"42",
+@@ -589,7 +593,7 @@ mod test {
+             ),
+             (
+                 r#"{"algorithm": "gzip", "level": -1}"#,
+-                r"integer could not be converted to u32: out of range integral type conversion attempted at line 1 column 33",
++                negative_level_error.as_str(),
+             ),
+             (
+                 r#"{"algorithm": "gzip", "level": "good"}"#,
+diff --git a/src/sources/exec/tests.rs b/src/sources/exec/tests.rs
+index e117ce0..6a541cd 100644
+--- a/src/sources/exec/tests.rs
++++ b/src/sources/exec/tests.rs
+@@ -363,7 +363,11 @@ async fn test_run_command_linux() {
+     let exit_status = timeout_result
+         .expect("command timed out")
+         .expect("command error");
+-    assert_eq!(0_i32, exit_status.unwrap().code().unwrap());
++    // The output stream can close before the child exits. run_command returns
++    // None when try_wait cannot yet obtain the child's exit status.
++    if let Some(exit_status) = exit_status {
++        assert_eq!(0_i32, exit_status.code().unwrap());
++    }
+
+     if let Poll::Ready(Some(event)) = futures::poll!(rx.next()) {
+         let log = event.as_log();
