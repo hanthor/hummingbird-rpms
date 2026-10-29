@@ -10,7 +10,7 @@
 %global k8s_nextver             1.37
 %global k8s_tag                 v1.36.6
 # golang 'built with' version
-%global golangver               1.26.8
+%global golangver               1.26.10
 
 # Needed otherwise "version_ldflags=$(kube::version_ldflags)" doesn't work
 %global _buildshell  /bin/bash
@@ -25,7 +25,7 @@ Version:                %{k8s_ver}
 %gometa -L -f
 
 Name:           %{k8s_name}
-Release:        0.1%{?dist}
+Release:        %autorelease
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 # Node shutdown manager tests fail on the s390x builder.
 ExcludeArch:    s390x
