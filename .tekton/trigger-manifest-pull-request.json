@@ -989,6 +989,10 @@
         "^rpms/libpwquality/",
         "^test/rpms/libpwquality\\.yml$"
       ],
+      "librdkafka--rpms": [
+        "^rpms/librdkafka/",
+        "^test/rpms/librdkafka\\.yml$"
+      ],
       "librepo--rpms": [
         "^rpms/librepo/",
         "^test/rpms/librepo\\.yml$"
