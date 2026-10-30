@@ -519,13 +519,10 @@ def test_stale_patch_update_creates_review_required_mr(tmp_path: Path) -> None:
     assert "STALE PATCH: chore(rpms): Update protobuf to 36.2" in args
 
 
-def test_large_update_error_keeps_diagnostic_mr_push_option_bounded(
-    tmp_path: Path,
-) -> None:
+def _run_update_error_fixture(
+    tmp_path: Path, error: str,
+) -> tuple[subprocess.CompletedProcess[str], str]:
     repo, ci_dir = _create_success_fixture(tmp_path)
-    error = "go mod tidy failed: missing internal/obi-src/go.mod\n" + (
-        "module error repeated by Go\n" * 10_000
-    )
     (repo / "failure.json").write_text(json.dumps({"results": [{
         "package": "opentelemetry-collector-contrib",
         "current_version": "0.162.0",
@@ -562,9 +559,48 @@ exit 1
         capture_output=True, text=True, env=env,
     )
 
+    assert result.returncode == 1, result.stderr
+    return result, description_path.read_text()
+
+
+def test_large_update_error_keeps_diagnostic_mr_push_option_bounded(
+    tmp_path: Path,
+) -> None:
+    error = "go mod tidy failed: missing internal/obi-src/go.mod\n" + (
+        "module error repeated by Go\n" * 10_000
+    )
+    result, description = _run_update_error_fixture(tmp_path, error)
+
     assert result.returncode == 1, result.stderr  # The package update failed.
-    description = description_path.read_text()
     assert "go mod tidy failed: missing internal/obi-src/go.mod" in description
     assert "[truncated; see full CI job log]" in description
     assert "https://gitlab.example/jobs/123" in description
     assert len(description.encode()) < 8_000
+
+
+@pytest.mark.parametrize("error", [
+    pytest.param("", id="empty"),
+    pytest.param("short failure", id="short"),
+    pytest.param("first line\nsecond line\n", id="newlines"),
+    pytest.param(r"literal \n stays literal", id="literal-backslash"),
+    pytest.param("x" * 3999, id="raw-below-limit"),
+    pytest.param("x" * 4000, id="raw-at-limit"),
+    pytest.param("x" * 4001, id="raw-over-limit"),
+    pytest.param("\n" * 1999 + "x", id="escaped-below-limit"),
+    pytest.param("\n" * 2000, id="escaped-at-limit"),
+    pytest.param("\n" * 2000 + "x", id="escaped-over-limit"),
+    pytest.param("x" * 3999 + "\n", id="limit-splits-escape"),
+    pytest.param("é" * 4000, id="unicode-at-limit"),
+    pytest.param("🙂" * 4001, id="unicode-over-limit"),
+    pytest.param("e\u0301" * 2001, id="unicode-combining"),
+])
+def test_update_error_excerpt_preserves_escaped_limit(tmp_path: Path, error: str) -> None:
+    result, description = _run_update_error_fixture(tmp_path, error)
+
+    # Keep the original contract: escape first, then limit the escaped text.
+    expected = error.replace("\n", "\\n")
+    if len(expected) > 4000:
+        expected = expected[:4000] + "\\n...[truncated; see full CI job log]"
+
+    assert result.returncode == 1, result.stderr
+    assert f"Error:\\n```\\n{expected}\\n```\\n\\n" in description

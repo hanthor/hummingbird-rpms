@@ -1,6 +1,7 @@
 """Tests for upstream_diff analysis tool."""
 
 import json
+import subprocess
 import types
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +29,18 @@ def upstream_diff_module(tmp_path):
     (tmp_path / 'metadata').mkdir(parents=True, exist_ok=True)
 
     return module
+
+
+@pytest.fixture
+def pagure_responses(upstream_diff_module):
+    """Stub curl output, retaining Pagure URL construction and response parsing."""
+    def respond(command, **kwargs):
+        assert command[0] == 'curl'
+        assert command[-1].startswith(upstream_diff_module.PAGURE_API_BASE + '/')
+        return '{"requests": []}'
+
+    with patch.object(upstream_diff_module.subprocess, 'check_output', side_effect=respond) as curl:
+        yield curl
 
 
 @pytest.fixture
@@ -581,46 +594,54 @@ class TestCmdJiraTemplate:
 
 # --- Prepare output tests ---
 
+# Each selected Fedora package requests Open and Merged PRs. The expected
+# curl counts depend on sample_metadata and batch selection. Review these
+# expectations when changing the sample packages or their selection order.
 class TestCmdPrepare:
     def _make_args(self, packages=None, batch=10):
         import argparse
         return argparse.Namespace(packages=packages or [], batch=batch)
 
-    def test_batch_mode(self, upstream_diff_module, sample_metadata, capsys):
+    def test_batch_mode(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff output'):
             upstream_diff_module.cmd_prepare(self._make_args(batch=2))
         captured = capsys.readouterr()
         assert '=== UPSTREAM DIFF ANALYSIS: PREPARE ===' in captured.out
         assert '--- PACKAGE:' in captured.out
         assert '=== END PREPARE ===' in captured.out
+        assert pagure_responses.call_count == 4
 
-    def test_specific_packages(self, upstream_diff_module, sample_metadata, capsys):
+    def test_specific_packages(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff text'):
             upstream_diff_module.cmd_prepare(self._make_args(packages=['caddy']))
         captured = capsys.readouterr()
         assert '--- PACKAGE: caddy ---' in captured.out
         assert 'diff text' in captured.out
+        assert pagure_responses.call_count == 2
 
-    def test_includes_schema(self, upstream_diff_module, sample_metadata, capsys):
+    def test_includes_schema(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
             upstream_diff_module.cmd_prepare(self._make_args(batch=1))
         captured = capsys.readouterr()
         assert '--- CLASSIFICATION SCHEMA ---' in captured.out
         assert 'category: upstreamable|hummingbird-specific|complex|mixed|no-diff' in captured.out
+        assert pagure_responses.call_count == 2
 
-    def test_includes_category_definitions(self, upstream_diff_module, sample_metadata, capsys):
+    def test_includes_category_definitions(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
             upstream_diff_module.cmd_prepare(self._make_args(batch=1))
         captured = capsys.readouterr()
         assert '--- CATEGORY DEFINITIONS ---' in captured.out
         assert 'Hummingbird-specific' in captured.out
         assert 'upstreamable' in captured.out.lower()
+        assert pagure_responses.call_count == 2
 
-    def test_empty_diff_note(self, upstream_diff_module, sample_metadata, capsys):
+    def test_empty_diff_note(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value=''):
             upstream_diff_module.cmd_prepare(self._make_args(batch=1))
         captured = capsys.readouterr()
         assert 'no-diff' in captured.out
+        assert pagure_responses.call_count == 2
 
     def test_all_cached_message(self, upstream_diff_module, sample_metadata, sample_cache, tmp_path, capsys):
         cache = upstream_diff_module.load_cache()
@@ -639,12 +660,13 @@ class TestCmdPrepare:
         with pytest.raises(SystemExit):
             upstream_diff_module.cmd_prepare(self._make_args(packages=['nonexistent']))
 
-    def test_shows_modification_reason(self, upstream_diff_module, sample_metadata, capsys):
+    def test_shows_modification_reason(self, upstream_diff_module, sample_metadata, capsys, pagure_responses):
         with patch.object(upstream_diff_module, 'get_diff_output', return_value='diff'):
             upstream_diff_module.cmd_prepare(self._make_args(batch=3))
         captured = capsys.readouterr()
         assert 'Weaken systemd dependency' in captured.out
         assert 'Exclude gcc-objc BuildRequires' in captured.out
+        assert pagure_responses.call_count == 6
 
     def test_prepare_includes_upstream_prs(self, upstream_diff_module, sample_metadata, capsys):
         mock_prs = [{'id': 4, 'title': 'Fix dep', 'status': 'Open', 'user': 'dev1',
@@ -666,6 +688,34 @@ class TestCmdPrepare:
 
 
 # --- Upstream PR tests ---
+
+class TestFetchPagurePrs:
+    @pytest.mark.parametrize('status,suffix', [('Open', ''), ('Merged', '&per_page=10')])
+    def test_parses_response(self, upstream_diff_module, status: str, suffix: str):
+        prs = [{'id': 4, 'title': 'Fix dependency'}]
+        with patch.object(upstream_diff_module.subprocess, 'check_output',
+                          return_value=json.dumps({'requests': prs})) as curl:
+            assert upstream_diff_module._fetch_pagure_prs('caddy', status) == prs
+
+        curl.assert_called_once_with(
+            ['curl', '--silent', '--show-error', '--fail', '--retry', '3', '--max-time', '10',
+             f'https://src.fedoraproject.org/api/0/rpms/caddy/pull-requests?status={status}{suffix}'],
+            text=True, stderr=subprocess.DEVNULL,
+        )
+
+    def test_curl_failure(self, upstream_diff_module):
+        with patch.object(upstream_diff_module.subprocess, 'check_output',
+                          side_effect=subprocess.CalledProcessError(22, ['curl'])):
+            assert upstream_diff_module._fetch_pagure_prs('caddy', 'Open') is None
+
+    def test_invalid_json(self, upstream_diff_module):
+        with patch.object(upstream_diff_module.subprocess, 'check_output', return_value='not json'):
+            assert upstream_diff_module._fetch_pagure_prs('caddy', 'Open') is None
+
+    def test_missing_requests(self, upstream_diff_module):
+        with patch.object(upstream_diff_module.subprocess, 'check_output', return_value='{}'):
+            assert upstream_diff_module._fetch_pagure_prs('caddy', 'Open') == []
+
 
 class TestGetUpstreamPrs:
     def test_success_open_and_merged(self, upstream_diff_module):
@@ -800,5 +850,4 @@ class TestFormatUpstreamPrs:
                 'branch': 'rawhide', 'url': 'https://example.com/pr/4'}]
         result = upstream_diff_module.format_upstream_prs(prs, markdown=True)
         assert '    https://example.com/pr/4' not in result
-
 
