@@ -1,16 +1,16 @@
 # New Version-String scheme-style defines
 %global featurever 21
 %global interimver 0
-%global updatever 12
-%global patchver 1
-%global buildver 1
-%global portablerelease 1
+%global updatever 13
+%global patchver 0
+%global buildver 9
+%global portablerelease 3
 %global rpmrelease 0
 
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      6.0.0pre00-c848b93a8598
 # Define current Git revision for the FIPS support patches
-%global fipsver feef2dc3ca7
+%global fipsver 133f17d2ac4
 # Define JDK versions
 %global newjavaver %{featurever}.%{interimver}.%{updatever}.%{patchver}
 %global javaver         %{featurever}
@@ -50,7 +50,7 @@
 
 %global compatiblename  java-%{javaver}-%{origin}
 
-Name:    %{compatiblename}-portable%{?pkgos:-%{pkgos}}
+Name:    java-21-%{origin}-portable%{?pkgos:-%{pkgos}}
 Version: %{newjavaver}.%{buildver}
 Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}%{?dist}
 
@@ -668,6 +668,9 @@ Source15: TestSecurityProperties.java
 # Ensure vendor settings are correct
 Source16: CheckVendor.java
 
+# Ensure cacerts has no compromised certificates
+Source17: CheckCerts.java
+
 # Ensure translations are available for new timezones
 Source18: TestTranslations.java
 
@@ -676,8 +679,8 @@ Source18: TestTranslations.java
 # RPM/distribution specific patches
 #
 ############################################
-
 # Crypto policy and FIPS support patches
+
 # Patch is generated from the fips-21u tree at https://github.com/rh-openjdk/jdk/tree/fips-21u
 # as follows: git diff <vcstag> src make test > fips-21u-$(git show -s --format=%h HEAD).patch
 # Diff is limited to src and make subdirectories to exclude .github changes
@@ -724,8 +727,7 @@ Patch1001: fips-%{featurever}u-%{fipsver}.patch
 #
 #############################################
 
-# JDK-8375294: (fs) Files.copy can fail with EOPNOTSUPP when copy_file_range not supported
-Patch2001: jdk8375294-handle-EOPNOTSUPP-in-copying.patch
+# Currently empty
 
 #############################################
 #
@@ -733,7 +735,9 @@ Patch2001: jdk8375294-handle-EOPNOTSUPP-in-copying.patch
 #
 #############################################
 
-# Currently empty
+# JDK-8395142: CA Enhancements
+Patch2001: 0001-8395142-CA-Enhancements.patch
+Patch2002: jdk8395690-CA-certificate-improvements.patch
 
 #############################################
 #
@@ -787,7 +791,8 @@ BuildRequires: graphviz
 BuildRequires: pandoc
 %endif
 # cacerts build requirement in portable mode
-BuildRequires: ca-certificates
+# versioned to make sure ca-certificates has compromised certificates removed
+BuildRequires: ca-certificates >= 2026.2.92_v9.0.319-2
 
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
@@ -803,7 +808,7 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: zlib-devel
 %else
-# Version in src/java.desktop/share/legal/freetype.md
+# Version in src/java.desktop/share/native/libfreetype/include/freetype/freetype.h
 Provides: bundled(freetype) = 2.14.3
 # Version in src/java.desktop/share/native/libsplashscreen/giflib/gif_lib.h
 Provides: bundled(giflib) = 6.1.3
@@ -959,10 +964,11 @@ The %{origin_nice} %{featurever} full patched sources of portable JDK to build, 
 # Using the echo macro breaks rpmdev-bumpspec, as it parses the first line of stdout :-(
 echo "Preparing %{oj_vendor_version}"
 echo "System is RHEL=%{?rhel}%{!?rhel:0}, CentOS=%{?centos}%{!?centos:0}, EPEL=%{?epel}%{!?epel:0}, Fedora=%{?fedora}%{!?fedora:0}"
+echo "Portable suffix is %{?pkgos}%{!?pkgos:unset}"
 echo "Build JDK version is %{buildjdkver}, bootstrap JDK package is %{bootjdkpkg}"
 
-%if 0%{?_build_cpu:1}
-  echo "CPU: %{_target_cpu}, arch install directory: %{archinstall}, SystemTap install directory: %{_build_cpu}"
+%if 0%{?stapinstall:1}
+  echo "CPU: %{_target_cpu}, arch install directory: %{archinstall}, SystemTap install directory: %{stapinstall}"
 %else
   %{error:Unrecognised architecture %{_target_cpu}}
 %endif
@@ -1011,8 +1017,10 @@ sh %{SOURCE12} %{top_level_dir_name}
 pushd %{top_level_dir_name}
 # Add crypto policy and FIPS support
 %patch -P1001 -p1
-# Add EOPNOTSUPP patch
+# Add CA Enhancements patch
 %patch -P2001 -p1
+# Add CA certificate improvements
+%patch -P2002 -p1
 popd # openjdk
 
 echo "Generating %{alt_java_name} man page"
