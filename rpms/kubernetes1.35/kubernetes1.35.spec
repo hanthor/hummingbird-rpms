@@ -22,7 +22,7 @@
 %global k8s_nextver             1.36
 %global k8s_tag                 v1.35.10
 # golang 'built with' version
-%global golangver               1.26.8
+%global golangver               1.26.10
 
 # Needed otherwise "version_ldflags=$(kube::version_ldflags)" doesn't work
 %global _buildshell  /bin/bash
