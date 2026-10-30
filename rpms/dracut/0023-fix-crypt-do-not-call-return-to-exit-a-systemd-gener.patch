@@ -1,0 +1,42 @@
+From 5e7ae5de0a72da47790747cee8af58a5614af5be Mon Sep 17 00:00:00 2001
+From: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Date: Wed, 8 Jul 2026 08:53:02 +0200
+Subject: [PATCH 23/23] fix(crypt): do not call return to exit a systemd
+ generator
+
+systemd generators implemented via shell scripts are not sourced by systemd, so
+calling `return` within them to exit is incorrect.
+
+Fixes #2490
+
+(cherry picked from commit fbb7270edcf9fbc1c60959dc35e532dfe5c382b8)
+
+Resolves: rhbz#2516033
+---
+ modules.d/70crypt/crypt-generator.sh | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/modules.d/70crypt/crypt-generator.sh b/modules.d/70crypt/crypt-generator.sh
+index 5c65f4cf9..f543e6a6e 100755
+--- a/modules.d/70crypt/crypt-generator.sh
++++ b/modules.d/70crypt/crypt-generator.sh
+@@ -22,13 +22,13 @@ generator_set_device_timeout() {
+ 
+ if ! getargbool 1 rd.luks; then
+     # crypto LUKS detection is disabled
+-    return 0
++    exit 0
+ fi
+ 
+-[ -e /etc/crypttab ] || return 0
++[ -e /etc/crypttab ] || exit 0
+ 
+ GENERATOR_DIR="$1"
+-[ -n "$GENERATOR_DIR" ] || return 1
++[ -n "$GENERATOR_DIR" ] || exit 1
+ [ -d "$GENERATOR_DIR" ] || mkdir -p "$GENERATOR_DIR"
+ 
+ timeout=$(getarg rd.timeout)
+-- 
+2.55.0
+
