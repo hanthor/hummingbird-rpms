@@ -1,15 +1,15 @@
 {
-  "version": "3.15.2",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/python/cpython",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/python3.15.git",
     "branch": "rawhide",
-    "sha": "502477e6ab58792569f09b55278c7ae85e8be0c3",
-    "release": "1"
+    "git_url": "https://src.fedoraproject.org/rpms/python3.15.git",
+    "release": "1",
+    "sha": "502477e6ab58792569f09b55278c7ae85e8be0c3"
   },
-  "modification_reason": "Update to upstream version 3.15.2; HUM-11300: CVE-2026-103995",
-  "upstream_branch": "3.15",
+  "modification_reason": "Update to upstream version 3.15.2; HUM-11300: CVE-2026-103995; HUM-11399: CVE-2026-116566",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 13254,
   "track_upstream": "3.15",
-  "release_monitoring_project_id": 13254
+  "upstream_branch": "3.15",
+  "upstream_repo": "https://github.com/python/cpython",
+  "version": "3.15.2"
 }
