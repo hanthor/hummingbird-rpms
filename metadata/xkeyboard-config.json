@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/xkeyboard-config.git",
-    "release": "4",
-    "sha": "76177a7b6e38f1fc78184b4ad286ccce1464cc22"
+    "release": "1",
+    "sha": "47add802a94d2117db68e4bf472cadb7c3a13976"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 5191,
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config",
-  "version": "2.48"
+  "version": "2.49"
 }
