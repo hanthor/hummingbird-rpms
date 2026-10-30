@@ -6,7 +6,7 @@
 %global debug_package %{nil}
 %undefine _auto_set_build_flags
 
-Version: 6.4.1
+Version: 6.4.2
 
 # Main swift source and version
 %global forgeurl0  https://github.com/swiftlang/swift
