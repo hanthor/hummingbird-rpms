@@ -2,3 +2,5 @@ clog
 /composer-*.tgz
 composer-2.11.0-vendor.tar.gz
 composer-2.11.0.tar.gz
+composer-2.11.1-vendor.tar.gz
+composer-2.11.1.tar.gz
