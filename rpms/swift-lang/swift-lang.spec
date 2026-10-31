@@ -185,7 +185,7 @@ Version: 6.4.2
 # End forge sources
 
 Name:           swift-lang
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 %forgemeta -a
 
 Summary:        The Swift programming language
@@ -217,6 +217,7 @@ Patch%{source_swiftpm}01:                 swiftpm-toolchain-layout.patch
 Patch%{source_swift_foundation}:          swift-foundation.patch
 Patch%{source_swift_corelibs_libdispatch}: swift-corelibs-libdispatch.patch
 Patch%{source_swift_crypto}:              swift-crypto-CVE-2026-43823.patch
+Patch200:                                 swift-crypto-CVE-2026-86983.patch
 
 BuildRequires:  clang
 BuildRequires:  cmake
@@ -324,6 +325,7 @@ end
 %patch %{source_swift_foundation}
 %patch %{source_swift_corelibs_libdispatch}
 %patch %{source_swift_crypto}
+%patch 200 -p1 -d swift-crypto
 
 # Install custom Fedora preset
 cp %{SOURCE100} swift/utils/fedora-presets.ini
