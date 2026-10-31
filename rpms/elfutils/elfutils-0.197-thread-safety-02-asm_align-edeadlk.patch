@@ -1,0 +1,38 @@
+From defa4f7e8e0afbe9859e8e1e289c769c44694fae Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 11:21:37 -0400
+Subject: [PATCH] asm_align.c: Avoid EDEADLK in asm_align
+
+asm_align acquires asmscn->ctx->lock wrlock before updating a parent
+asmscn's alignment.  While doing this asm_align also attempts to acquire
+the parent asmscn's wrlock.  The parent and child share the same ctx,
+causing an EDEADLK error.
+
+Fix this by removing the inner acquisition of the wrlock.  Since the ctx
+is shared, this inner acquisition is redundant.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libasm/asm_align.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/libasm/asm_align.c b/libasm/asm_align.c
+index 19ec9a13..65d3198f 100644
+--- a/libasm/asm_align.c
++++ b/libasm/asm_align.c
+@@ -112,12 +112,8 @@ asm_align (AsmScn_t *asmscn, GElf_Word value)
+       /* Update the parent as well (if it exists).  */
+       if (asmscn->subsection_id != 0)
+ 	{
+-	  rwlock_wrlock (asmscn->data.up->ctx->lock);
+-
+ 	  if (asmscn->data.up->max_align < value)
+ 	    asmscn->data.up->max_align = value;
+-
+-	  rwlock_unlock (asmscn->data.up->ctx->lock);
+ 	}
+     }
+ 
+-- 
+2.56.0
+

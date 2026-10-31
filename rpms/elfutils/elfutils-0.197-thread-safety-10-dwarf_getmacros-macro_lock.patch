@@ -1,0 +1,44 @@
+From ec7371b89bb6dca00cf758b6870553c7e507ef14 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:06:48 -0400
+Subject: [PATCH] dwarf_getmacros.c: Acquire macro_lock before macro_ops_tree
+ find
+
+cache_op_table calls eu_tsearch_nolock on macro_ops_tree while holding
+a macro_lock mutex.  cache_op_table's fast path also contains a call to
+eu_tfind on macro_ops_tree when macro_lock is not held.  This creates a
+data race where one thread may attempt to read macro_ops_tree with eu_tfind
+while it's being modified by eu_tsearch_nolock in another thread.
+
+Fix this by acquiring macro_lock first and replacing eu_tfind with
+eu_tfind_nolock.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libdw/dwarf_getmacros.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/libdw/dwarf_getmacros.c b/libdw/dwarf_getmacros.c
+index e3efd083..183e885f 100644
+--- a/libdw/dwarf_getmacros.c
++++ b/libdw/dwarf_getmacros.c
+@@ -330,14 +330,11 @@ cache_op_table (Dwarf *dbg, int sec_index, Dwarf_Off macoff,
+ 		Dwarf_Die *cudie)
+ {
+   Dwarf_Macro_Op_Table fake = { .offset = macoff, .sec_index = sec_index };
+-  Dwarf_Macro_Op_Table **found = eu_tfind (&fake, &dbg->macro_ops_tree,
+-					macro_op_compare);
+-  if (found != NULL)
+-    return *found;
+ 
+   mutex_lock (dbg->macro_lock);
+ 
+-  found = eu_tfind_nolock (&fake, &dbg->macro_ops_tree, macro_op_compare);
++  Dwarf_Macro_Op_Table **found = eu_tfind_nolock (&fake, &dbg->macro_ops_tree,
++						  macro_op_compare);
+   if (found != NULL)
+     {
+       mutex_unlock (dbg->macro_lock);
+-- 
+2.56.0
+

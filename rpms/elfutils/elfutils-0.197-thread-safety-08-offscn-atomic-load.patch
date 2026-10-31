@@ -1,0 +1,39 @@
+From 0e2e8dd178fcb1bc53dbc1c612b3aeef79ffe865 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:05:36 -0400
+Subject: [PATCH] elf32_offscn.c: Use atomic_load_acquire for Elf_ScnList
+ fields
+
+elfNN_offscn reads Elf_ScnList fields cnt and data[0].shdr while not
+holding any lock.  These fields may be written to concurrently by
+elf_getscn and load_shdr_wrlock.
+
+Replace elfNN_offscn's plain loads of these fields with
+atomic_load_acquire to avoid data races.  Atomic ops are used instead
+of locking in order to avoid holding elf->lock when calling
+elfNN_getshdr, which may also need elf->lock's wrlock.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libelf/elf32_offscn.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/libelf/elf32_offscn.c b/libelf/elf32_offscn.c
+index 1a9a3b0a..5ddb3b58 100644
+--- a/libelf/elf32_offscn.c
++++ b/libelf/elf32_offscn.c
+@@ -58,8 +58,9 @@ elfw2(LIBELFBITS,offscn) (Elf *elf, ElfW2(LIBELFBITS,Off) offset)
+ 
+   /* If we have not looked at section headers before,
+      we might need to read them in first.  */
+-  if (runp->cnt > 0
+-      && unlikely (runp->data[0].shdr.ELFW(e,LIBELFBITS) == NULL)
++  if (atomic_load_acquire (&runp->cnt) > 0
++      && unlikely (atomic_load_acquire (&runp->data[0].shdr.ELFW(e,LIBELFBITS))
++		   == NULL)
+       && unlikely (elfw2(LIBELFBITS,getshdr) (&runp->data[0]) == NULL))
+     return NULL;
+ 
+-- 
+2.56.0
+

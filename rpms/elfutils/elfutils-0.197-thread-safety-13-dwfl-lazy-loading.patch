@@ -1,0 +1,357 @@
+From 0f8ae537506a24f220e2cbc876916c9260eeaa7a Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 01:16:14 -0400
+Subject: [PATCH] libdwfl: Serialize module lazy loading entry points
+
+Add load_lock to Dwfl for serializing module loading, including loading
+of module's elf, dwarf, symbols as well as performing relocations.
+
+load_lock is used only for lazy loading of these components.  Hot paths
+are kept lock-free using atomics.  New Dwfl_Module fields elf_loaded,
+dwarf_loaded and symbols_loaded have been added.  These are set to
+true when lazy loading of elf, dwarf and symbols is completed.  They are
+also set to true when initialization has been attempted and failed.
+
+This commit serializes only the lazy loading entry points.
+
+libdwfl/
+
+	* dwfl_begin.c (dwfl_begin): Initialize load_lock.  Also move
+	  the debuginfod_lock init to avoid NULL dereference.
+	* dwfl_end.c (dwfl_end): Tear down load_lock.
+	* dwfl_module_build_id.c (found_build_id): Store build_id_len
+	  atomically.
+	  (dwfl_module_build_id): Attempt to read build_id_len
+	  atomically.  If it hasn't been loaded, acquire load_lock
+	  first.
+	* dwfl_module_getdwarf.c (find_symtab_locked): Renamed from
+	  find_symtab.
+	  (find_symtab): Wrapper for find_symtab_locked that handles
+	  locking and checking symbols_loaded.
+	  (get_dwarf_locked): Renamed from dwfl_module_getdwarf.
+	  (dwfl_module_getdwarf): Wrapper for get_dwarf_locked that
+	  handles locking and checking dwarf_loaded.
+	  (__libdwfl_getelf): Add a comment stating why build_id_len
+	  does not need an atomic store.
+	* dwfl_module_getelf.c (get_elf_locked): Renamed from
+	  dwfl_module_getelf.
+	  (dwfl_module_getelf): Wrapper for get_elf_locked that handles
+	  locking and checking elf_loaded.
+	* dwfl_module_getsym.c (__libdwfl_getsym): Check symbols_loaded
+	  before calling dwfl_module_getsymtab.
+	* libdwflP.h (struct Dwfl): Add load_lock.
+	  (struct Dwfl_Module): Add bools symbols_loaded, dwarf_loaded
+	  and elf_loaded.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libdwfl/dwfl_begin.c           |  4 +-
+ libdwfl/dwfl_end.c             |  1 +
+ libdwfl/dwfl_module_build_id.c | 31 ++++++++++-----
+ libdwfl/dwfl_module_getdwarf.c | 70 +++++++++++++++++++++++++---------
+ libdwfl/dwfl_module_getelf.c   | 33 +++++++++++++---
+ libdwfl/dwfl_module_getsym.c   |  3 +-
+ libdwfl/libdwflP.h             |  8 ++++
+ 7 files changed, 114 insertions(+), 36 deletions(-)
+
+diff --git a/libdwfl/dwfl_begin.c b/libdwfl/dwfl_begin.c
+index 835de8e3..2b029426 100644
+--- a/libdwfl/dwfl_begin.c
++++ b/libdwfl/dwfl_begin.c
+@@ -48,10 +48,10 @@ dwfl_begin (const Dwfl_Callbacks *callbacks)
+     {
+       dwfl->callbacks = callbacks;
+       dwfl->offline_next_address = OFFLINE_REDZONE;
++      mutex_init (dwfl->debuginfod_lock);
++      mutex_init (dwfl->load_lock);
+     }
+ 
+-  mutex_init (dwfl->debuginfod_lock);
+-
+   return dwfl;
+ }
+ INTDEF (dwfl_begin)
+diff --git a/libdwfl/dwfl_end.c b/libdwfl/dwfl_end.c
+index c82d83fb..97516a01 100644
+--- a/libdwfl/dwfl_end.c
++++ b/libdwfl/dwfl_end.c
+@@ -54,6 +54,7 @@ dwfl_end (Dwfl *dwfl)
+   free (dwfl->lookup_segndx);
+   free (dwfl->sysroot);
+   mutex_fini (dwfl->debuginfod_lock);
++  mutex_fini (dwfl->load_lock);
+ 
+   Dwfl_Module *next = dwfl->modulelist;
+   while (next != NULL)
+diff --git a/libdwfl/dwfl_module_build_id.c b/libdwfl/dwfl_module_build_id.c
+index 0c198f23..c3ff08f8 100644
+--- a/libdwfl/dwfl_module_build_id.c
++++ b/libdwfl/dwfl_module_build_id.c
+@@ -52,7 +52,9 @@ found_build_id (Dwfl_Module *mod, bool set,
+ 
+   mod->build_id_bits = memcpy (copy, bits, len);
+   mod->build_id_vaddr = vaddr;
+-  mod->build_id_len = len;
++
++  /* Build id readers check len to tell if bits and vaddr are also loaded.  */
++  atomic_store_release (&mod->build_id_len, len);
+   return len;
+ }
+ 
+@@ -85,23 +87,34 @@ dwfl_module_build_id (Dwfl_Module *mod,
+   if (mod == NULL)
+     return -1;
+ 
+-  if (mod->build_id_len == 0 && mod->main.elf != NULL)
++  int len = atomic_load_acquire (&mod->build_id_len);
++  if (len == 0)
+     {
+-      /* We have the file, but have not examined it yet.  */
+-      int result = __libdwfl_find_build_id (mod, true, mod->main.elf);
+-      if (result <= 0)
++      mutex_lock (mod->dwfl->load_lock);
++      len = mod->build_id_len;
++      if (len == 0 && mod->main.elf != NULL)
+ 	{
+-	  mod->build_id_len = -1;	/* Cache negative result.  */
+-	  return result;
++	  /* We have the file, but have not examined it yet.  */
++	  len = __libdwfl_find_build_id (mod, true, mod->main.elf);
++	  if (len <= 0)
++	    {
++	      /* Cache negative result.  */
++	      atomic_store_release (&mod->build_id_len, -1);
++	      mutex_unlock (mod->dwfl->load_lock);
++	      return len;
++	    }
+ 	}
++
++      mutex_unlock (mod->dwfl->load_lock);
+     }
+ 
+-  if (mod->build_id_len <= 0)
++  if (len <= 0)
+     return 0;
+ 
+   *bits = mod->build_id_bits;
+   *vaddr = mod->build_id_vaddr;
+-  return mod->build_id_len;
++
++  return len;
+ }
+ NEW_INTDEF (dwfl_module_build_id)
+ 
+diff --git a/libdwfl/dwfl_module_getdwarf.c b/libdwfl/dwfl_module_getdwarf.c
+index 430c3236..6c62ee1d 100644
+--- a/libdwfl/dwfl_module_getdwarf.c
++++ b/libdwfl/dwfl_module_getdwarf.c
+@@ -234,7 +234,9 @@ __libdwfl_getelf (Dwfl_Module *mod)
+   if (!mod->main.valid)
+     {
+       /* Clear any explicitly reported build ID, just in case it was wrong.
+-	 We'll fetch it from the file when asked.  */
++	 We'll fetch it from the file when asked.  The main ELF must be set
++	 during a caller-serialized phase before MOD is shared across threads,
++	 so no atomic store is needed here.  */
+       free (mod->build_id_bits);
+       mod->build_id_bits = NULL;
+       mod->build_id_len = 0;
+@@ -1075,12 +1077,8 @@ find_aux_sym (Dwfl_Module *mod __attribute__ ((unused)),
+ 
+ /* Try to find a symbol table in either MOD->main.elf or MOD->debug.elf.  */
+ static void
+-find_symtab (Dwfl_Module *mod)
++find_symtab_locked (Dwfl_Module *mod)
+ {
+-  if (mod->symdata != NULL || mod->aux_symdata != NULL	/* Already done.  */
+-      || mod->symerr != DWFL_E_NOERROR) /* Cached previous failure.  */
+-    return;
+-
+   __libdwfl_getelf (mod);
+   mod->symerr = mod->elferr;
+   if (mod->symerr != DWFL_E_NOERROR)
+@@ -1325,6 +1323,24 @@ find_symtab (Dwfl_Module *mod)
+     }
+ }
+ 
++/* Load the symtab if it isn't already loaded.  */
++static void
++find_symtab (Dwfl_Module *mod)
++{
++  if (likely (atomic_load_acquire (&mod->symbols_loaded)))
++    return;
++
++  mutex_lock (mod->dwfl->load_lock);
++  if (!mod->symbols_loaded && mod->symdata == NULL
++      && mod->aux_symdata == NULL && mod->symerr == DWFL_E_NOERROR)
++    {
++      find_symtab_locked (mod);
++      mod->symerr = __libdwfl_canon_error (mod->symerr);
++      atomic_store_release (&mod->symbols_loaded, true);
++    }
++
++  mutex_unlock (mod->dwfl->load_lock);
++}
+ 
+ /* Try to open a libebl backend for MOD.  */
+ Dwfl_Error
+@@ -1411,10 +1427,6 @@ load_dw (Dwfl_Module *mod, struct dwfl_file *debugfile)
+ static void
+ find_dw (Dwfl_Module *mod)
+ {
+-  if (mod->dw != NULL		/* Already done.  */
+-      || mod->dwerr != DWFL_E_NOERROR) /* Cached previous failure.  */
+-    return;
+-
+   __libdwfl_getelf (mod);
+   mod->dwerr = mod->elferr;
+   if (mod->dwerr != DWFL_E_NOERROR)
+@@ -1471,12 +1483,9 @@ find_dw (Dwfl_Module *mod)
+   mod->dwerr = __libdwfl_canon_error (mod->dwerr);
+ }
+ 
+-Dwarf *
+-dwfl_module_getdwarf (Dwfl_Module *mod, Dwarf_Addr *bias)
++static void
++get_dwarf_locked (Dwfl_Module *mod)
+ {
+-  if (mod == NULL)
+-    return NULL;
+-
+   find_dw (mod);
+   if (mod->dwerr == DWFL_E_NOERROR)
+     {
+@@ -1489,13 +1498,36 @@ dwfl_module_getdwarf (Dwfl_Module *mod, Dwarf_Addr *bias)
+ 	  if (mod->debug.elf != mod->main.elf)
+ 	    (void) __libdwfl_relocate (mod, mod->debug.elf, false);
+ 	}
++    }
++
++}
++
++Dwarf *
++dwfl_module_getdwarf (Dwfl_Module *mod, Dwarf_Addr *bias)
++{
++  if (mod == NULL)
++    return NULL;
++
++  if (unlikely (!atomic_load_acquire (&mod->dwarf_loaded)))
++    {
++      mutex_lock (mod->dwfl->load_lock);
++      if (!mod->dwarf_loaded && mod->dw == NULL && mod->dwerr == DWFL_E_NOERROR)
++	{
++	  get_dwarf_locked (mod);
++	  atomic_store_release (&mod->dwarf_loaded, true);
++	}
+ 
+-      *bias = dwfl_adjusted_dwarf_addr (mod, 0);
+-      return mod->dw;
++      mutex_unlock (mod->dwfl->load_lock);
++    }
++
++  if (mod->dwerr != DWFL_E_NOERROR)
++    {
++      __libdwfl_seterrno (mod->dwerr);
++      return NULL;
+     }
+ 
+-  __libdwfl_seterrno (mod->dwerr);
+-  return NULL;
++  *bias = dwfl_adjusted_dwarf_addr (mod, 0);
++  return mod->dw;
+ }
+ INTDEF (dwfl_module_getdwarf)
+ 
+diff --git a/libdwfl/dwfl_module_getelf.c b/libdwfl/dwfl_module_getelf.c
+index 6358de4c..e3a0197b 100644
+--- a/libdwfl/dwfl_module_getelf.c
++++ b/libdwfl/dwfl_module_getelf.c
+@@ -32,12 +32,9 @@
+ 
+ #include "libdwflP.h"
+ 
+-Elf *
+-dwfl_module_getelf (Dwfl_Module *mod, GElf_Addr *loadbase)
++static Elf *
++get_elf_locked (Dwfl_Module *mod, GElf_Addr *loadbase)
+ {
+-  if (mod == NULL)
+-    return NULL;
+-
+   __libdwfl_getelf (mod);
+   if (mod->elferr == DWFL_E_NOERROR)
+     {
+@@ -68,4 +65,30 @@ dwfl_module_getelf (Dwfl_Module *mod, GElf_Addr *loadbase)
+   __libdwfl_seterrno (mod->elferr);
+   return NULL;
+ }
++
++Elf *
++dwfl_module_getelf (Dwfl_Module *mod, GElf_Addr *loadbase)
++{
++  if (mod == NULL)
++    return NULL;
++
++  if (likely (atomic_load_acquire (&mod->elf_loaded)))
++    {
++      if (mod->elferr != DWFL_E_NOERROR)
++	{
++	  __libdwfl_seterrno (mod->elferr);
++	  return NULL;
++	}
++
++      *loadbase = dwfl_adjusted_address (mod, 0);
++      return mod->main.elf;
++    }
++
++  mutex_lock (mod->dwfl->load_lock);
++  Elf *elf = get_elf_locked (mod, loadbase);
++  atomic_store_release (&mod->elf_loaded, true);
++  mutex_unlock (mod->dwfl->load_lock);
++
++  return elf;
++}
+ INTDEF (dwfl_module_getelf)
+diff --git a/libdwfl/dwfl_module_getsym.c b/libdwfl/dwfl_module_getsym.c
+index 8de9a3eb..2bb07fd8 100644
+--- a/libdwfl/dwfl_module_getsym.c
++++ b/libdwfl/dwfl_module_getsym.c
+@@ -41,7 +41,8 @@ __libdwfl_getsym (Dwfl_Module *mod, int ndx, GElf_Sym *sym, GElf_Addr *addr,
+   if (unlikely (mod == NULL))
+     return NULL;
+ 
+-  if (unlikely (mod->symdata == NULL))
++  if (unlikely (!atomic_load_acquire (&mod->symbols_loaded)
++		|| mod->symdata == NULL))
+     {
+       int result = INTUSE(dwfl_module_getsymtab) (mod);
+       if (result < 0)
+diff --git a/libdwfl/libdwflP.h b/libdwfl/libdwflP.h
+index 7a181029..6e2c2f8b 100644
+--- a/libdwfl/libdwflP.h
++++ b/libdwfl/libdwflP.h
+@@ -144,6 +144,10 @@ struct Dwfl
+ 
+   /* Serialize debuginfod_client usage.  */
+   mutex_define (, debuginfod_lock);
++
++  /* Serialize loading of ELF/DWARF, relocations, symbols as well as
++     Dwfl_Callbacks.*/
++  mutex_define (, load_lock);
+ };
+ 
+ #define OFFLINE_REDZONE		0x10000
+@@ -206,6 +210,10 @@ struct Dwfl_Module
+   Dwfl_Error symerr;		/* Previous failure to load symbols.  */
+   Dwfl_Error dwerr;		/* Previous failure to load DWARF.  */
+ 
++  bool symbols_loaded;		/* True if symbols loaded or failed to load.  */
++  bool dwarf_loaded;		/* True if dwarf loaded or failed to load.  */
++  bool elf_loaded;		/* True if elf loaded or failed to load.  */
++
+   /* Known CU's in this module.  */
+   struct dwfl_cu *first_cu, **cu;
+ 
+-- 
+2.56.0
+

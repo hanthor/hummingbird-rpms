@@ -1,0 +1,25 @@
+From 75adf5145ae14b2c7ef6abf59df9c6711ade0eee Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 11:15:47 -0400
+Subject: [PATCH] elf_rand.c: Add missing rwlock_unlock for early return
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libelf/elf_rand.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libelf/elf_rand.c b/libelf/elf_rand.c
+index c08eadc6..be5a39c2 100644
+--- a/libelf/elf_rand.c
++++ b/libelf/elf_rand.c
+@@ -54,6 +54,7 @@ elf_rand (Elf *elf, size_t offset)
+     {
+       /* Mark the archive header as unusable.  */
+       elf->elf_ar_hdr.ar_name = NULL;
++      rwlock_unlock (elf->lock);
+       return 0;
+     }
+ 
+-- 
+2.56.0
+

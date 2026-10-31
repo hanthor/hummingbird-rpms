@@ -1,0 +1,67 @@
+From 16e9cbdee8d27694e8405cde142b7fb45e26723c Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:05:37 -0400
+Subject: [PATCH] gelf_getsymshndx.c: Remove locking
+
+Remove all locking from gelf_getsymshndx.  Any functions that change
+any state associated with gelf_getsymshndx are not to be called
+concurrently with gelf_getsymshndx (see THREAD-SAFETY) so no locking is
+needed.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libelf/gelf_getsymshndx.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/libelf/gelf_getsymshndx.c b/libelf/gelf_getsymshndx.c
+index 534502e3..1be35360 100644
+--- a/libelf/gelf_getsymshndx.c
++++ b/libelf/gelf_getsymshndx.c
+@@ -58,8 +58,6 @@ gelf_getsymshndx (Elf_Data *symdata, Elf_Data *shndxdata, int ndx,
+       return NULL;
+     }
+ 
+-  rwlock_rdlock (symdata_scn->s->elf->lock);
+-
+   /* The user is not required to pass a data descriptor for an extended
+      section index table.  */
+   if (likely (shndxdata_scn != NULL))
+@@ -67,7 +65,7 @@ gelf_getsymshndx (Elf_Data *symdata, Elf_Data *shndxdata, int ndx,
+       if (INVALID_NDX (ndx, Elf32_Word, &shndxdata_scn->d))
+ 	{
+ 	  __libelf_seterrno (ELF_E_INVALID_INDEX);
+-	  goto out;
++	  return NULL;
+ 	}
+ 
+       shndx = ((Elf32_Word *) shndxdata_scn->d.d_buf)[ndx];
+@@ -87,7 +85,7 @@ gelf_getsymshndx (Elf_Data *symdata, Elf_Data *shndxdata, int ndx,
+       if (INVALID_NDX (ndx, Elf32_Sym, symdata))
+ 	{
+ 	  __libelf_seterrno (ELF_E_INVALID_INDEX);
+-	  goto out;
++	  return NULL;
+ 	}
+ 
+       src = &((Elf32_Sym *) symdata->d_buf)[ndx];
+@@ -116,7 +114,7 @@ gelf_getsymshndx (Elf_Data *symdata, Elf_Data *shndxdata, int ndx,
+       if (INVALID_NDX (ndx, GElf_Sym, symdata))
+ 	{
+ 	  __libelf_seterrno (ELF_E_INVALID_INDEX);
+-	  goto out;
++	  return NULL;
+ 	}
+ 
+       *dst = ((GElf_Sym *) symdata->d_buf)[ndx];
+@@ -128,8 +126,5 @@ gelf_getsymshndx (Elf_Data *symdata, Elf_Data *shndxdata, int ndx,
+ 
+   result = dst;
+ 
+- out:
+-  rwlock_unlock (symdata_scn->s->elf->lock);
+-
+   return result;
+ }
+-- 
+2.56.0
+

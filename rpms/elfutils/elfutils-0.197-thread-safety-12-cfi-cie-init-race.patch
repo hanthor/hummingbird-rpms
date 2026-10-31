@@ -1,0 +1,90 @@
+From 377447e9f704be430b4e0abc05cb56e6ebea8f38 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 01:16:13 -0400
+Subject: [PATCH] libdw/cfi.c: Prevent CIE init data race
+
+Concurrent calls to dwarf_cfi_addrframe are unsynchronized and can
+result in a CIE's initial state being initialized multiple times across
+threads or a thread reading a partially initialized initial state.
+
+Fix this by checking cie->initial_state atomically and if it isn't
+initialized, acquire cache->lock before performing the initialization.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libdw/cfi.c | 21 +++++++++++++++++----
+ libdw/cfi.h |  5 +++++
+ 2 files changed, 22 insertions(+), 4 deletions(-)
+
+diff --git a/libdw/cfi.c b/libdw/cfi.c
+index a9607246..4710b474 100644
+--- a/libdw/cfi.c
++++ b/libdw/cfi.c
+@@ -456,9 +456,14 @@ cie_cache_initial_state (Dwarf_CFI *cache, struct dwarf_cie *cie)
+ {
+   int result = DWARF_E_NOERROR;
+ 
+-  if (likely (cie->initial_state != NULL))
++  if (likely (atomic_load_acquire (&cie->initial_state) != NULL))
+     return result;
+ 
++  mutex_lock (cache->lock);
++
++  if (cie->initial_state != NULL)
++    goto out;
++
+   /* This CIE has not been used before.  Play out its initial
+      instructions and cache the initial state that results.
+      First we'll let the backend fill in the default initial
+@@ -477,11 +482,17 @@ cie_cache_initial_state (Dwarf_CFI *cache, struct dwarf_cie *cie)
+   /* Fetch the ABI's default CFI program.  */
+   if (likely (cache->ebl != (void *) -1l)
+       && unlikely (ebl_abi_cfi (cache->ebl, &abi_info) < 0))
+-    return DWARF_E_UNKNOWN_ERROR;
++    {
++      result = DWARF_E_UNKNOWN_ERROR;
++      goto out;
++    }
+ 
+   Dwarf_Frame *cie_fs = calloc (1, sizeof (Dwarf_Frame));
+   if (unlikely (cie_fs == NULL))
+-    return DWARF_E_NOMEM;
++    {
++      result = DWARF_E_NOMEM;
++      goto out;
++    }
+ 
+   /* If the default state of any register is not "undefined"
+      (i.e. call-clobbered), then the backend supplies instructions
+@@ -513,9 +524,11 @@ cie_cache_initial_state (Dwarf_CFI *cache, struct dwarf_cie *cie)
+       /* Now we have the initial state of things that all
+ 	 FDEs using this CIE will start from.  */
+       cie_fs->cache = cache;
+-      cie->initial_state = cie_fs;
++      atomic_store_release (&cie->initial_state, cie_fs);
+     }
+ 
++out:
++  mutex_unlock (cache->lock);
+   return result;
+ }
+ 
+diff --git a/libdw/cfi.h b/libdw/cfi.h
+index eb765205..fe8fbb69 100644
+--- a/libdw/cfi.h
++++ b/libdw/cfi.h
+@@ -48,6 +48,11 @@ struct dwarf_cie
+   const uint8_t *initial_instructions;
+   const uint8_t *initial_instructions_end;
+ 
++  /* Initial frame state holding instructions for unwinding frames associated
++     with FDEs using this CIE.  Set in cie_cache_initial_state while holding
++     the corresponding cfi->lock.  Destroyed by __libdw_destroy_frame_cache
++     called from either dwarf_end (for Dwarf_CFI acquired from dwarf_getcfi)
++     or dwarf_cfi_end (for Dwarf_CFI acquired from dwarf_getcfi_elf).  */
+   const Dwarf_Frame *initial_state;
+ 
+   uint8_t fde_encoding;		/* DW_EH_PE_* for addresses in FDEs.  */
+-- 
+2.56.0
+
