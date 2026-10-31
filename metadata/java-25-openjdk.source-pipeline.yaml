@@ -4,13 +4,21 @@
 # is out of scope here; it belongs to java-25-openjdk-portable's own
 # pipeline (see java-17-openjdk-portable's for the established pattern).
 #
-# The one exception is Source31 (nssadapter, RHEL-128413's FIPS support
-# library), which is a real, independently-fetchable release asset.
+# Source8 contains the IcedTea SystemTap tapsets. It has no upstream
+# release URL in the spec, so fetch the archive pinned in Fedora's
+# lookaside cache. Keep this URL in sync with %global icedteaver.
+# Gorget replaces the whole sources manifest, so both Source8 and
+# Source31 must be fetched here.
+#
+# Source31 (nssadapter, RHEL-128413's FIPS support library) is an
+# independently-fetchable release asset.
 # nssadapter_version (0.1.1) is tracked independently of java-25-openjdk's
 # own ${VERSION} -- no gorget substitution variable applies, so it's
 # hardcoded here and needs a manual bump alongside the spec's
 # %global nssadapter_version whenever RH-OpenJDK cuts a new nssadapter
 # release.
 fetch:
+  - type: url
+    url: "https://src.fedoraproject.org/repo/pkgs/java-25-openjdk/tapsets-icedtea-6.0.0pre00-c848b93a8598.tar.xz/sha512/97d026212363b3c83f6a04100ad7f6fdde833d16579717f8756e2b8c2eb70e144a41a330cb9ccde9c3badd37a2d54fdf4650a950ec21d8b686d545ecb2a64d30/tapsets-icedtea-6.0.0pre00-c848b93a8598.tar.xz"
   - type: url
     url: "https://github.com/rh-openjdk/nss-native-fips-key-import-export-adapter/releases/download/0.1.1/nssadapter-0.1.1.tar.xz"
