@@ -57,7 +57,7 @@
 Name:    qt5-qtbase
 Summary: Qt5 - QtBase components
 Version: 5.15.18
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 
 # See LGPL_EXCEPTIONS.txt, for exception details
 License: LGPL-3.0-only OR GPL-3.0-only WITH Qt-GPL-exception-1.0
@@ -195,6 +195,9 @@ Patch169: 0020-QGtk3Theme-define-light-midlight-mid-dark-shadow-colors.patch
 # Security
 # CVE-2026-19248, Unbounded recursion vulnerability in the QDomNode destructor of Qt XML impacts Qt
 Patch180: qt5-qtbase-CVE-2026-19248.patch
+
+# CVE-2026-105924, NULL pointer dereference in QCborValue to JSON conversion
+Patch181: qt5-qtbase-CVE-2026-105924.patch
 
 # Latest QGnomePlatform needs to be specified to be used
 Patch200: qtbase-use-qgnomeplatform-as-default-platform-theme-on-gnome.patch
@@ -517,6 +520,7 @@ Qt5 libraries used for drawing widgets and OpenGL items.
 %endif
 
 %patch -P180 -p1
+%patch -P181 -p1
 
 %if 0%{?fedora} < 39
 # Use QGnomePlatform by default
