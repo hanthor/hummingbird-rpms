@@ -9,3 +9,5 @@
 /i?86/
 /tarballs/
 /libzmq-*.*.*.tar.gz
+/.badfuncs-upstream-*/
+

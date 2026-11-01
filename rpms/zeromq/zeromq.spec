@@ -1,9 +1,9 @@
 %bcond_without pgm
-%bcond_without unwind
+%bcond_with unwind
 
 Name:           zeromq
 Version:        4.3.5
-Release:        23.2%{?dist}
+Release:        26%{?dist}
 Summary:        Software library for fast, message-based applications
 
 License:        MPL-2.0 AND BSD-3-Clause AND MIT
@@ -13,6 +13,9 @@ URL:            https://zeromq.org
 # artifact) by metadata/zeromq.source-pipeline.yaml.
 Source0:        https://github.com/%{name}/libzmq/releases/download/v%{version}/%{name}-%{version}.tar.gz
 Patch1:         zeromq-configure-c99.patch
+# Replace deprecated raw UDP IPv4 conversion functions.
+# https://github.com/zeromq/libzmq/pull/4948
+Patch2:         zeromq-numeric-ipv4.patch
 
 BuildRequires:  make
 BuildRequires:  autoconf
