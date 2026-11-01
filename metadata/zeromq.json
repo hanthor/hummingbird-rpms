@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/zeromq.git",
-    "release": "23",
-    "sha": "2b568b01363eff740cc72599500094aab3073dc8"
+    "release": "26",
+    "sha": "66502dc4c7a5db0ccbcc06b135610dba3b42efd0"
   },
   "modification_reason": "HUM-6877: remove the stale s390x test_radio_dish expected failure; preserve the HUM-5842 source pipeline and upstream release asset URL changes",
   "modification_status": "modified",
