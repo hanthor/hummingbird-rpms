@@ -4,7 +4,20 @@
 # This hook updates the individual macros instead, preserving the Release
 # expression intact.
 update_spec: |
-  IFS=. read -r _feat interim updatever patchver buildver <<< "${UPDATE_NEW_VERSION}"
+  IFS=. read -ra parts <<< "${UPDATE_NEW_VERSION}"
+  interim=${parts[1]}
+  updatever=${parts[2]}
+  patchver=${parts[3]}
+  buildver=${parts[-1]}
+  # RPM stores the build number last; OpenJDK allows extra version components.
+  extra=""
+  for ((i=4; i<${#parts[@]}-1; i++)); do
+    extra+=".${parts[i]}"
+  done
+  sed -i '/^%global extraversion /d' "${UPDATE_SPEC_FILE}"
+  if [ -n "${extra}" ]; then
+    sed -i '/^%global patchver /a %global extraversion '"${extra}" "${UPDATE_SPEC_FILE}"
+  fi
   sed -Ei \
     -e 's/^(%global interimver\s+)[0-9]+/\1'"${interim}"'/' \
     -e 's/^(%global updatever\s+)[0-9]+/\1'"${updatever}"'/' \
@@ -13,5 +26,24 @@ update_spec: |
     -e 's/^(%global rpmrelease\s+)[0-9]+/\10/' \
     "${UPDATE_SPEC_FILE}"
   if grep -qE '^%global portablerelease\s' "${UPDATE_SPEC_FILE}"; then
-    sed -Ei 's/^(%global portablerelease\s+)[0-9]+/\10/' "${UPDATE_SPEC_FILE}"
+    sed -Ei 's/^(%global portablerelease\s+)[0-9]+/\11/' "${UPDATE_SPEC_FILE}"
   fi
+download_sources: |
+  # Preserve the original OpenJDK archive layout when fetching GitHub tags.
+  version=${UPDATE_NEW_VERSION%.*}
+  build=${UPDATE_NEW_VERSION##*.}
+  while [[ ${version} == *.0 ]]; do version=${version%.0}; done
+  tag="jdk-${version}+${build}"
+  filename="open${tag}.tar.xz"
+  workdir=$(mktemp -d)
+  trap 'rm -rf "${workdir}"' EXIT
+  curl --fail --location --retry 3 --output "${workdir}/upstream.tar.gz" \
+    "https://github.com/openjdk/jdk21u/archive/refs/tags/${tag}.tar.gz"
+  mkdir "${workdir}/${tag}"
+  tar -xzf "${workdir}/upstream.tar.gz" --strip-components=1 -C "${workdir}/${tag}"
+  epoch=$(stat -c %Y "${workdir}/${tag}/make/conf/version-numbers.conf")
+  XZ_OPT=-T4 tar --sort=name --mtime="@${epoch}" --owner=0 --group=0 --numeric-owner \
+    -cJf "${UPDATE_PACKAGE_DIR}/${filename}" -C "${workdir}" "${tag}"
+  # This package has one remote archive; replace its previous checksum entry.
+  sed -i '/^SHA512 (.*\.tar\./d' "${UPDATE_SOURCES_FILE}"
+  printf '%s\n' "${filename}"

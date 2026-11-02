@@ -12,7 +12,7 @@
 # Define current Git revision for the FIPS support patches
 %global fipsver feef2dc3ca7
 # Define JDK versions
-%global newjavaver %{featurever}.%{interimver}.%{updatever}.%{patchver}
+%global newjavaver %{featurever}.%{interimver}.%{updatever}.%{patchver}%{?extraversion}
 %global javaver         %{featurever}
 # Strip up to 6 trailing zeros in newjavaver, as the JDK does, to get the correct version used in filenames
 %global filever %(svn=%{newjavaver}; for i in 1 2 3 4 5 6 ; do svn=${svn%%.0} ; done; echo ${svn})

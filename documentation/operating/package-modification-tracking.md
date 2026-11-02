@@ -241,6 +241,10 @@ may use `${VERSION}`, `${UPSTREAM_REPO}`, and `${TRACK_UPSTREAM}`:
 Legacy named checkers remain available for source layouts that need package-specific logic:
 
 - `openjdk_osci` — probes `https://openjdk-sources.osci.io/openjdk{feature}/openjdk-{version}.tar.xz`
+- `openjdk_ga` checks for a `jdk-<version>-ga` tag in `upstream_repo` and excludes build zero.
+  Use it when fetching OpenJDK archives directly from GitHub after Fedora maintenance ends.
+  The `openjdk_to_rpm` transform preserves extra version components, for example
+  `21.0.13.0.3+1` becomes `21.0.13.0.3.1`.
 - `tomcat_apache` — probes the Tomcat source archive on `downloads.apache.org`, and its
   detached signature for Tomcat 10 before allowing an update
 

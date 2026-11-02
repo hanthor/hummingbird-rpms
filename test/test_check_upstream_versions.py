@@ -1108,17 +1108,119 @@ def test_openjdk_to_rpm(cuv_module) -> None:
     assert fn('25.0.4.1+0') == '25.0.4.1.0'
     # Leading zeros in build number are stripped
     assert fn('21.0.12+08') == '21.0.12.0.8'
+    assert fn('21.0.13.0.3+1') == '21.0.13.0.3.1'
+    assert fn('21.0.13.0.3.1.2+01') == '21.0.13.0.3.1.2.1'
 
     with pytest.raises(ValueError):
         fn('not-a-version')
     with pytest.raises(ValueError):
         fn('21.0.12')  # missing +build
+    with pytest.raises(ValueError):
+        fn('21.0.13.0.3.1.2.4+1')  # more than seven version components
 
 
 def test_transform_upstream_version_unknown(cuv_module) -> None:
     """transform_upstream_version raises ValueError for unknown transform."""
     with pytest.raises(ValueError, match="unknown upstream_version_transform"):
         cuv_module.transform_upstream_version('1.0', 'nonexistent_transform')
+
+
+@pytest.mark.parametrize('version, published', [
+    ('21.0.13.0.3+1', True),
+    ('21.0.14+1', False),
+])
+def test_openjdk_ga_source_check(cuv_module, version, published) -> None:
+    metadata = types.SimpleNamespace(upstream_repo='https://github.com/openjdk/jdk21u')
+    with patch.object(cuv_module, '_check_source_exists', return_value=published) as probe:
+        assert cuv_module.check_source_available(version, 'openjdk_ga', metadata) is published
+    release = version.split('+')[0]
+    probe.assert_called_once_with(f'https://github.com/openjdk/jdk21u/tree/jdk-{release}-ga')
+
+
+@pytest.mark.parametrize('version', ['21.0.13.1+0', '21.0.13', '21.0.13+ea'])
+def test_openjdk_ga_source_check_rejects_unpromoted_builds(cuv_module, version) -> None:
+    with patch.object(cuv_module, '_check_source_exists') as probe:
+        assert not cuv_module.check_source_available(version, 'openjdk_ga', types.SimpleNamespace())
+    probe.assert_not_called()
+
+
+def test_openjdk_portable_hook_handles_extra_version_components(tmp_path: Path) -> None:
+    """Update to an extended GA version, then back to a regular quarterly version."""
+    import yaml
+
+    root = Path(__file__).resolve().parent.parent
+    hook = yaml.safe_load(
+        (root / 'metadata/java-21-openjdk-portable.update-hooks.yaml').read_text()
+    )['update_spec']
+    spec = tmp_path / 'java.spec'
+    spec.write_text('''%global interimver 0
+%global updatever 12
+%global patchver 1
+%global buildver 1
+%global rpmrelease 2
+%global portablerelease 1
+''')
+    for version, expected in [
+        ('21.0.13.0.3.1', '%global extraversion .3'),
+        ('21.0.14.0.9', '%global buildver 9'),
+    ]:
+        subprocess.run(
+            ['bash', '-e', '-c', 'UPDATE_SPEC_FILE=$1; UPDATE_NEW_VERSION=$2\n' + hook,
+             'update-spec', str(spec), version], check=True,
+        )
+        assert expected in spec.read_text()
+    text = spec.read_text()
+    assert '%global updatever 14' in text
+    assert '%global patchver 0' in text
+    assert '%global rpmrelease 0' in text
+    assert '%global portablerelease 1' in text
+    assert 'extraversion' not in text
+
+
+def test_openjdk_portable_source_hook_preserves_layout(tmp_path: Path) -> None:
+    """Generate a reproducible archive with the original OpenJDK directory name."""
+    import io
+    import yaml
+
+    root = Path(__file__).resolve().parent.parent
+    hook = yaml.safe_load(
+        (root / 'metadata/java-21-openjdk-portable.update-hooks.yaml').read_text()
+    )['download_sources']
+    fixture = tmp_path / 'upstream.tar.gz'
+    with tarfile.open(fixture, 'w:gz') as archive:
+        entry = tarfile.TarInfo('jdk21u-jdk-21.0.13.0.3-1/make/conf/version-numbers.conf')
+        entry.mtime = 1234567890
+        entry.size = 4
+        archive.addfile(entry, io.BytesIO(b'test'))
+    sources = tmp_path / 'sources'
+    sources.write_text('SHA512 (old.tar.gz) = oldhash\n')
+    command = '''UPDATE_PACKAGE_DIR=$1
+UPDATE_SOURCES_FILE=$1/sources
+UPDATE_NEW_VERSION=21.0.13.0.3.1
+fixture=$2
+curl() {
+  while (($#)); do
+    if [[ $1 == --output ]]; then cp "$fixture" "$2"; return; fi
+    shift
+  done
+}
+''' + hook
+    generated = tmp_path / 'openjdk-21.0.13.0.3+1.tar.xz'
+    previous = None
+    for _ in range(2):
+        result = subprocess.run(['bash', '-eu', '-c', command, 'download-sources',
+                                 str(tmp_path), str(fixture)], check=True, capture_output=True, text=True)
+        assert result.stdout.strip() == generated.name
+        with tarfile.open(generated) as archive:
+            assert archive.getnames()[0] == 'jdk-21.0.13.0.3+1'
+            entry = archive.getmember('jdk-21.0.13.0.3+1/make/conf/version-numbers.conf')
+            assert entry.mtime == 1234567890
+            assert entry.uid == entry.gid == 0
+        current = generated.read_bytes()
+        if previous is not None:
+            assert current == previous
+        previous = current
+    assert sources.read_text() == ''
 
 
 def test_check_package_version_transforms_openjdk_version(
