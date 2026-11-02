@@ -17898,6 +17898,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python-jsonpatch ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-jsonpatch-main
+spec:
+  application: rpms-main
+  componentName: python-jsonpatch-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-jsonpatch-main
+  source:
+    git:
+      context: rpms/python-jsonpatch
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-jsonpatch-main
+  name: python-jsonpatch-main
+spec:
+  image:
+    name: hummingbird-tenant/python-jsonpatch-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python-jsonpointer ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1

@@ -1355,6 +1355,9 @@
       "python-jinja2-cli--rpms": [
         "^rpms/python\\-jinja2\\-cli/"
       ],
+      "python-jsonpatch--rpms": [
+        "^rpms/python\\-jsonpatch/"
+      ],
       "python-jsonpointer--rpms": [
         "^rpms/python\\-jsonpointer/"
       ],
