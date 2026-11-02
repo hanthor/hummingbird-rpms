@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-configobj.git",
+    "release": "11",
+    "sha": "8d01385ca363beac3e69a10f97e11cbf2a68f4b3"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 3809,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/DiffSK/configobj",
+  "version": "5.0.9"
+}

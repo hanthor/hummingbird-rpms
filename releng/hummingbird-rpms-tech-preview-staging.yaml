@@ -961,6 +961,8 @@ spec:
           contentType: rpm
         - name: python-charset-normalizer-main
           contentType: rpm
+        - name: python-configobj-main
+          contentType: rpm
         - name: python-cryptography-main
           contentType: rpm
         - name: python-gitlab-main
