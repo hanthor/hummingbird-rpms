@@ -635,6 +635,9 @@
       "libbpf--rpms": [
         "^rpms/libbpf/"
       ],
+      "libbsd--rpms": [
+        "^rpms/libbsd/"
+      ],
       "libcap--rpms": [
         "^rpms/libcap/"
       ],

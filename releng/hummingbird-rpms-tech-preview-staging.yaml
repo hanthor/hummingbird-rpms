@@ -521,6 +521,8 @@ spec:
           contentType: rpm
         - name: libbpf-main
           contentType: rpm
+        - name: libbsd-main
+          contentType: rpm
         - name: libcap-main
           contentType: rpm
         - name: libcap-ng-main

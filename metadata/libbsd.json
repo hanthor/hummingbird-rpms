@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libbsd.git",
+    "release": "8",
+    "sha": "9898eab66e65ef86a0e9295eaa0e6076cce24d98"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 1567,
+  "track_upstream": "latest",
+  "upstream_repo": "https://gitlab.freedesktop.org/libbsd/libbsd",
+  "version": "0.12.2"
+}
