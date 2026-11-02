@@ -1637,13 +1637,15 @@ def _openjdk_to_rpm(version: str) -> str:
 
     21.0.12+8   -> 21.0.12.0.8
     21.0.12.1+0 -> 21.0.12.1.0
+    21.0.13.0.3+1 -> 21.0.13.0.3.1
     """
-    m = re.fullmatch(r'(\d+\.\d+\.\d+)(?:\.(\d+))?\+(\d+)', version)
+    m = re.fullmatch(r'(\d+\.\d+\.\d+(?:\.\d+){0,4})\+(\d+)', version)
     if not m:
         raise ValueError(f"version {version!r} is not a supported OpenJDK version")
-    base, patch, build = m.groups()
-    patch = patch or '0'
-    return f'{base}.{patch}.{int(build)}'
+    base, build = m.groups()
+    if base.count('.') == 2:
+        base += '.0'
+    return f'{base}.{int(build)}'
 
 
 UPSTREAM_VERSION_TRANSFORMS: dict[str, Callable[[str], str]] = {
@@ -1692,8 +1694,18 @@ def _tomcat_source_check(version: str, metadata: HumPackageMetadata) -> bool:
     return major != "10" or _check_source_exists(f"{base_url}.asc")
 
 
+def _openjdk_ga_source_check(version: str, metadata: HumPackageMetadata) -> bool:
+    """Require an OpenJDK GA tag before using a development build tag."""
+    release, separator, build = version.partition('+')
+    if not separator or not build.isdigit() or int(build) == 0:
+        return False
+    repo = (metadata.upstream_repo or '').rstrip('/')
+    return _check_source_exists(f'{repo}/tree/jdk-{release}-ga')
+
+
 SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, HumPackageMetadata], bool]] = {
     "openjdk_osci": _openjdk_source_check,
+    "openjdk_ga": _openjdk_ga_source_check,
     "tomcat_apache": _tomcat_source_check,
 }
 
