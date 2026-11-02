@@ -444,6 +444,9 @@ nats-server2.14:
 nftables:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+ngtcp2:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
