@@ -33,6 +33,10 @@ pre_commands = [
   # santhosh-tekuri/jsonschema/v6 v6.0.3) to fix multiple Denial of
   # Service issues and an authentication bypass via URL path decoding.
   ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
+  # CVE-2026-116591: zstd DecodeAll/streaming decoder can panic on a
+  # crafted two-block frame (stale fse.Scratch decode-table state reused
+  # across blocks). Bumps klauspost/compress to v1.20.2.
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
 post_commands = [
   # These nested modules do not carry separate license files. They use the
