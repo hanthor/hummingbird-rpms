@@ -1797,6 +1797,10 @@
         "^rpms/python\\-jinja2\\-cli/",
         "^test/rpms/python\\-jinja2\\-cli\\.yml$"
       ],
+      "python-jsonpointer--rpms": [
+        "^rpms/python\\-jsonpointer/",
+        "^test/rpms/python\\-jsonpointer\\.yml$"
+      ],
       "python-jsonschema--rpms": [
         "^rpms/python\\-jsonschema/",
         "^test/rpms/python\\-jsonschema\\.yml$"
