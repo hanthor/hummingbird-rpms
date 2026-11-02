@@ -749,6 +749,9 @@
       "librepo--rpms": [
         "^rpms/librepo/"
       ],
+      "libretls--rpms": [
+        "^rpms/libretls/"
+      ],
       "libseccomp--rpms": [
         "^rpms/libseccomp/"
       ],
