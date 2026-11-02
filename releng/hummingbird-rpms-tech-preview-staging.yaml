@@ -979,6 +979,8 @@ spec:
           contentType: rpm
         - name: python-jinja2-cli-main
           contentType: rpm
+        - name: python-jsonpatch-main
+          contentType: rpm
         - name: python-jsonpointer-main
           contentType: rpm
         - name: python-jsonschema-main

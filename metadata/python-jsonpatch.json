@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-jsonpatch.git",
+    "release": "2",
+    "sha": "8653edf3d5036b344fe8ea834ff7b894863150e5"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 3896,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/stefankoegl/python-json-patch",
+  "version": "1.39"
+}
