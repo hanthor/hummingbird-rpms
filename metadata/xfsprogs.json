@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/xfsprogs.git",
+    "release": "3",
+    "sha": "ba0c6cca2fe192c72fe8c9071c1480a47e08cf0b"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 5188,
+  "track_upstream": "latest",
+  "upstream_repo": "https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git",
+  "version": "7.2.1"
+}

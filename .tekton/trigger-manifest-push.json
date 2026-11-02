@@ -1718,6 +1718,9 @@
       "xcaddy--rpms": [
         "^rpms/xcaddy/"
       ],
+      "xfsprogs--rpms": [
+        "^rpms/xfsprogs/"
+      ],
       "xkeyboard-config--rpms": [
         "^rpms/xkeyboard\\-config/"
       ],
