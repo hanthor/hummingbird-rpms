@@ -1,0 +1,12 @@
+diff -up less-710/lesspipe-src/lesspipe.sh.gpg-fix less-710/lesspipe-src/lesspipe.sh
+--- less-710/lesspipe-src/lesspipe.sh.gpg-fix	2026-09-08 15:50:51.000000000 +0200
++++ less-710/lesspipe-src/lesspipe.sh	2026-11-02 11:43:09.961467808 +0100
+@@ -120,7 +120,7 @@ filetype () {
+ 				ftype=docx ;;
+ 			Apple\ binary\ property\ list)
+ 				ftype=plist ;;
+-			PGP\ *ncrypted*|GPG\ encrypted*)
++			PGP\ *ncrypted*|GPG\ *ncrypted*)
+ 				ftype=pgp ;;
+ 			Audio\ file\ with\ ID3\ *)
+ 				ftype=mp3 ;;
