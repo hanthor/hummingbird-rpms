@@ -2085,6 +2085,10 @@
         "^rpms/selinux\\-policy/",
         "^test/rpms/selinux\\-policy\\.yml$"
       ],
+      "setools--rpms": [
+        "^rpms/setools/",
+        "^test/rpms/setools\\.yml$"
+      ],
       "setup--rpms": [
         "^rpms/setup/",
         "^test/rpms/setup\\.yml$",
