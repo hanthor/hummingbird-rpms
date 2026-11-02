@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/inih.git",
+    "release": "1",
+    "sha": "b5df543ead559e5d6f5a2389f0e293ab26612354"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 11600,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/benhoyt/inih",
+  "version": "63"
+}

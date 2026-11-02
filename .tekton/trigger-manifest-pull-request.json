@@ -693,6 +693,10 @@
         "^rpms/ima\\-evm\\-utils/",
         "^test/rpms/ima\\-evm\\-utils\\.yml$"
       ],
+      "inih--rpms": [
+        "^rpms/inih/",
+        "^test/rpms/inih\\.yml$"
+      ],
       "iproute--rpms": [
         "^rpms/iproute/",
         "^test/rpms/iproute\\.yml$"
