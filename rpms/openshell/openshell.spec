@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.5
+%global openshell_version 0.1.6
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -60,13 +60,13 @@ Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
 Patch1:  openshell-listener-lifetime-test-isolation.patch
-Patch2:  0001-CVE-2026-111061-russh-0.64.1.patch
+Patch2:  0001-russh-0.65.0.patch
 Patch3:  openshell-closed-socket-test-isolation.patch
 
 ExclusiveArch:  x86_64 aarch64
 
 # Rust build dependencies
-# NOTE: MSRV is 1.89 (russh 0.64.1; Rust edition 2024). As of mid-2025, this requires
+# NOTE: MSRV is 1.89 (russh 0.65.0; Rust edition 2024). As of mid-2025, this requires
 # Fedora Rawhide or newer. Stable Fedora and EPEL-10 may ship older Rust;
 # adjust targets in .packit.yaml accordingly or provide a supplementary
 # Rust toolchain via additional_repos in the COPR build config.
@@ -314,7 +314,11 @@ skip="${skip-} --skip linux::seccomp_notify::tests::killable_listener_enables_ou
 skip="${skip-} --skip network_broker::tests::accepted_loopback_stream_is_registered_for_notified_operations"
 # Starts real DNS mediation, which requires a nameserver absent from hermetic Mock's resolv.conf.
 skip="${skip-} --skip backend_setup::tests::shared_startup_uses_selected_backend_through_readiness_and_shutdown"
-%cargo_test -- --timings -- ${skip-}
+# Starts the same DNS mediation before it can exercise suspension signals.
+skip="${skip-} --skip backend_setup::tests::suspend_signal_exits_without_terminating_boundary"
+# Match upstream's normal Cargo test profile while retaining Fedora hardening flags.
+test_rustflags=$(printf '%s\n' '%{build_rustflags}' | sed -E 's/-C(opt-level|debuginfo|codegen-units)=[^ ]+//g')
+CARGO_HOME=.cargo CARGO_INCREMENTAL=0 RUSTFLAGS="$test_rustflags" /usr/bin/cargo test -j%{_smp_build_ncpus} --no-fail-fast --timings -- ${skip-}
 
 # Smoke-test the CLI binary
 %{buildroot}%{_bindir}/%{name} --version
