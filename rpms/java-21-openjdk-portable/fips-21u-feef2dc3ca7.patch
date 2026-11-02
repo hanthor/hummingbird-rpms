@@ -208,10 +208,9 @@ index 1e0f66726d0..59fe923f2c5 100644
  # Create the symbols file for static builds.
  
 diff --git a/src/java.base/share/classes/com/sun/crypto/provider/SunJCE.java b/src/java.base/share/classes/com/sun/crypto/provider/SunJCE.java
-index 6a4e28372e5..6d06f69c50f 100644
 --- a/src/java.base/share/classes/com/sun/crypto/provider/SunJCE.java
 +++ b/src/java.base/share/classes/com/sun/crypto/provider/SunJCE.java
-@@ -31,6 +31,7 @@ import java.security.SecureRandom;
+@@ -31,6 +31,7 @@
  import java.security.PrivilegedAction;
  import java.util.HashMap;
  import java.util.List;
@@ -219,18 +218,18 @@ index 6a4e28372e5..6d06f69c50f 100644
  import static sun.security.util.SecurityConstants.PROVIDER_VER;
  import static sun.security.util.SecurityProviderConstants.*;
  
-@@ -82,6 +83,10 @@ import static sun.security.util.SecurityProviderConstants.*;
+@@ -83,6 +84,10 @@
+  */
  
  public final class SunJCE extends Provider {
- 
++
 +    private static final boolean systemFipsEnabled =
 +            SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
 +            .isSystemFipsEnabled();
-+
+ 
      @java.io.Serial
      private static final long serialVersionUID = 6812507587804302833L;
- 
-@@ -147,301 +152,302 @@ public final class SunJCE extends Provider {
+@@ -149,301 +154,302 @@
      void putEntries() {
          // reuse attribute map and reset before each reuse
          HashMap<String, String> attrs = new HashMap<>(3);
@@ -828,7 +827,7 @@ index 6a4e28372e5..6d06f69c50f 100644
  
          /*
           * Algorithm parameter generation engines
-@@ -450,15 +456,17 @@ public final class SunJCE extends Provider {
+@@ -452,15 +458,17 @@
                  "DiffieHellman", "com.sun.crypto.provider.DHParameterGenerator",
                  null);
  
@@ -855,7 +854,7 @@ index 6a4e28372e5..6d06f69c50f 100644
  
          /*
           * Algorithm Parameter engines
-@@ -628,10 +636,10 @@ public final class SunJCE extends Provider {
+@@ -630,10 +638,10 @@
                  "com.sun.crypto.provider.PBEKeyFactory$PBEWithHmacSHA512AndAES_128");
  
          ps("SecretKeyFactory", "PBEWithHmacSHA512/224AndAES_128",
@@ -868,7 +867,7 @@ index 6a4e28372e5..6d06f69c50f 100644
  
          ps("SecretKeyFactory", "PBEWithHmacSHA1AndAES_256",
                  "com.sun.crypto.provider.PBEKeyFactory$PBEWithHmacSHA1AndAES_256");
-@@ -654,136 +662,137 @@ public final class SunJCE extends Provider {
+@@ -656,153 +664,155 @@
          ps("SecretKeyFactory", "PBEWithHmacSHA512/256AndAES_256",
                  "com.sun.crypto.provider.PBEKeyFactory$PBEWithHmacSHA512_256AndAES_256");
  
@@ -977,6 +976,23 @@ index 6a4e28372e5..6d06f69c50f 100644
 -                "|java.security.interfaces.XECKey");
 -        ps("KEM", "DHKEM", "com.sun.crypto.provider.DHKEM", null, attrs);
 -
+-        attrs.clear();
+-        attrs.put("ImplementedIn", "Software");
+-        ps("KEM", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$K", null, attrs);
+-        psA("KEM", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$K2", attrs);
+-        psA("KEM", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$K3", attrs);
+-        psA("KEM", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$K5",attrs);
+-
+-        ps("KeyPairGenerator", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$KPG", null, attrs);
+-        psA("KeyPairGenerator", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$KPG2", attrs);
+-        psA("KeyPairGenerator", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$KPG3", attrs);
+-        psA("KeyPairGenerator", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$KPG5", attrs);
+-
+-        ps("KeyFactory", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$KF", null, attrs);
+-        psA("KeyFactory", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$KF2", attrs);
+-        psA("KeyFactory", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$KF3", attrs);
+-        psA("KeyFactory", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$KF5", attrs);
+-
 -        /*
 -         * SSL/TLS mechanisms
 -         *
@@ -1071,6 +1087,7 @@ index 6a4e28372e5..6d06f69c50f 100644
 +                    "com.sun.crypto.provider.HmacPKCS12PBECore$HmacPKCS12PBE_SHA512_256",
 +                    null, attrs);
 +
++
 +            // PBMAC1
 +            ps("Mac", "PBEWithHmacSHA1",
 +                    "com.sun.crypto.provider.PBMAC1Core$HmacSHA1", null, attrs);
@@ -1104,8 +1121,25 @@ index 6a4e28372e5..6d06f69c50f 100644
 +            attrs.clear();
 +            attrs.put("ImplementedIn", "Software");
 +            attrs.put("SupportedKeyClasses", "java.security.interfaces.ECKey" +
-+                      "|java.security.interfaces.XECKey");
++                    "|java.security.interfaces.XECKey");
 +            ps("KEM", "DHKEM", "com.sun.crypto.provider.DHKEM", null, attrs);
++
++            attrs.clear();
++            attrs.put("ImplementedIn", "Software");
++            ps("KEM", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$K", null, attrs);
++            psA("KEM", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$K2", attrs);
++            psA("KEM", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$K3", attrs);
++            psA("KEM", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$K5",attrs);
++
++            ps("KeyPairGenerator", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$KPG", null, attrs);
++            psA("KeyPairGenerator", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$KPG2", attrs);
++            psA("KeyPairGenerator", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$KPG3", attrs);
++            psA("KeyPairGenerator", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$KPG5", attrs);
++
++            ps("KeyFactory", "ML-KEM", "com.sun.crypto.provider.ML_KEM_Impls$KF", null, attrs);
++            psA("KeyFactory", "ML-KEM-512", "com.sun.crypto.provider.ML_KEM_Impls$KF2", attrs);
++            psA("KeyFactory", "ML-KEM-768", "com.sun.crypto.provider.ML_KEM_Impls$KF3", attrs);
++            psA("KeyFactory", "ML-KEM-1024", "com.sun.crypto.provider.ML_KEM_Impls$KF5", attrs);
 +
 +            /*
 +             * SSL/TLS mechanisms
@@ -1583,10 +1617,9 @@ index 06b141dcf22..e8cbf7f15d7 100644
          jdk.jlink,
          jdk.jfr,
 diff --git a/src/java.base/share/classes/sun/security/provider/SunEntries.java b/src/java.base/share/classes/sun/security/provider/SunEntries.java
-index f036a411f1d..1e9de933bd9 100644
 --- a/src/java.base/share/classes/sun/security/provider/SunEntries.java
 +++ b/src/java.base/share/classes/sun/security/provider/SunEntries.java
-@@ -38,6 +38,7 @@ import java.util.HashMap;
+@@ -38,6 +38,7 @@
  import java.util.Iterator;
  import java.util.LinkedHashSet;
  
@@ -1594,7 +1627,7 @@ index f036a411f1d..1e9de933bd9 100644
  import jdk.internal.util.StaticProperty;
  import sun.security.action.GetBooleanAction;
  
-@@ -91,6 +92,10 @@ import static sun.security.util.SecurityProviderConstants.getAliases;
+@@ -91,6 +92,10 @@
  
  public final class SunEntries {
  
@@ -1605,7 +1638,7 @@ index f036a411f1d..1e9de933bd9 100644
      // the default algo used by SecureRandom class for new SecureRandom() calls
      public static final String DEF_SECURE_RANDOM_ALGO;
  
-@@ -102,89 +107,92 @@ public final class SunEntries {
+@@ -102,98 +107,104 @@
          // common attribute map
          HashMap<String, String> attrs = new HashMap<>(3);
  
@@ -1616,59 +1649,6 @@ index f036a411f1d..1e9de933bd9 100644
 -        if (NativePRNG.isAvailable()) {
 -            add(p, "SecureRandom", "NativePRNG",
 -                    "sun.security.provider.NativePRNG", attrs);
--        }
--        if (NativePRNG.Blocking.isAvailable()) {
--            add(p, "SecureRandom", "NativePRNGBlocking",
--                    "sun.security.provider.NativePRNG$Blocking", attrs);
--        }
--        if (NativePRNG.NonBlocking.isAvailable()) {
--            add(p, "SecureRandom", "NativePRNGNonBlocking",
--                    "sun.security.provider.NativePRNG$NonBlocking", attrs);
--        }
--        attrs.put("ImplementedIn", "Software");
--        add(p, "SecureRandom", "DRBG", "sun.security.provider.DRBG", attrs);
--        add(p, "SecureRandom", "SHA1PRNG",
--                "sun.security.provider.SecureRandom", attrs);
--
--        /*
--         * Signature engines
--         */
--        attrs.clear();
--        String dsaKeyClasses = "java.security.interfaces.DSAPublicKey" +
--                "|java.security.interfaces.DSAPrivateKey";
--        attrs.put("SupportedKeyClasses", dsaKeyClasses);
--        attrs.put("ImplementedIn", "Software");
--
--        attrs.put("KeySize", "1024"); // for NONE and SHA1 DSA signatures
--
--        addWithAlias(p, "Signature", "SHA1withDSA",
--                "sun.security.provider.DSA$SHA1withDSA", attrs);
--        addWithAlias(p, "Signature", "NONEwithDSA",
--                "sun.security.provider.DSA$RawDSA", attrs);
--
--        // for DSA signatures with 224/256-bit digests
--        attrs.put("KeySize", "2048");
--
--        addWithAlias(p, "Signature", "SHA224withDSA",
--                "sun.security.provider.DSA$SHA224withDSA", attrs);
--        addWithAlias(p, "Signature", "SHA256withDSA",
--                "sun.security.provider.DSA$SHA256withDSA", attrs);
--
--        addWithAlias(p, "Signature", "SHA3-224withDSA",
--                "sun.security.provider.DSA$SHA3_224withDSA", attrs);
--        addWithAlias(p, "Signature", "SHA3-256withDSA",
--                "sun.security.provider.DSA$SHA3_256withDSA", attrs);
--
--        attrs.put("KeySize", "3072"); // for DSA sig using 384/512-bit digests
--
--        addWithAlias(p, "Signature", "SHA384withDSA",
--                "sun.security.provider.DSA$SHA384withDSA", attrs);
--        addWithAlias(p, "Signature", "SHA512withDSA",
--                "sun.security.provider.DSA$SHA512withDSA", attrs);
--        addWithAlias(p, "Signature", "SHA3-384withDSA",
--                "sun.security.provider.DSA$SHA3_384withDSA", attrs);
--        addWithAlias(p, "Signature", "SHA3-512withDSA",
--                "sun.security.provider.DSA$SHA3_512withDSA", attrs);
 +        if (!systemFipsEnabled) {
 +            /*
 +             * SecureRandom engines
@@ -1690,8 +1670,7 @@ index f036a411f1d..1e9de933bd9 100644
 +            add(p, "SecureRandom", "DRBG", "sun.security.provider.DRBG", attrs);
 +            add(p, "SecureRandom", "SHA1PRNG",
 +                    "sun.security.provider.SecureRandom", attrs);
- 
--        attrs.remove("KeySize");
++
 +            /*
 +             * Signature engines
 +             */
@@ -1754,7 +1733,63 @@ index f036a411f1d..1e9de933bd9 100644
 +                    "sun.security.provider.DSA$SHA3_384withDSAinP1363Format");
 +            add(p, "Signature", "SHA3-512withDSAinP1363Format",
 +                    "sun.security.provider.DSA$SHA3_512withDSAinP1363Format");
- 
++
+         }
+-        if (NativePRNG.Blocking.isAvailable()) {
+-            add(p, "SecureRandom", "NativePRNGBlocking",
+-                    "sun.security.provider.NativePRNG$Blocking", attrs);
+-        }
+-        if (NativePRNG.NonBlocking.isAvailable()) {
+-            add(p, "SecureRandom", "NativePRNGNonBlocking",
+-                    "sun.security.provider.NativePRNG$NonBlocking", attrs);
+-        }
+-        attrs.put("ImplementedIn", "Software");
+-        add(p, "SecureRandom", "DRBG", "sun.security.provider.DRBG", attrs);
+-        add(p, "SecureRandom", "SHA1PRNG",
+-                "sun.security.provider.SecureRandom", attrs);
+-
+-        /*
+-         * Signature engines
+-         */
+-        attrs.clear();
+-        String dsaKeyClasses = "java.security.interfaces.DSAPublicKey" +
+-                "|java.security.interfaces.DSAPrivateKey";
+-        attrs.put("SupportedKeyClasses", dsaKeyClasses);
+-        attrs.put("ImplementedIn", "Software");
+-
+-        attrs.put("KeySize", "1024"); // for NONE and SHA1 DSA signatures
+-
+-        addWithAlias(p, "Signature", "SHA1withDSA",
+-                "sun.security.provider.DSA$SHA1withDSA", attrs);
+-        addWithAlias(p, "Signature", "NONEwithDSA",
+-                "sun.security.provider.DSA$RawDSA", attrs);
+-
+-        // for DSA signatures with 224/256-bit digests
+-        attrs.put("KeySize", "2048");
+-
+-        addWithAlias(p, "Signature", "SHA224withDSA",
+-                "sun.security.provider.DSA$SHA224withDSA", attrs);
+-        addWithAlias(p, "Signature", "SHA256withDSA",
+-                "sun.security.provider.DSA$SHA256withDSA", attrs);
+-
+-        addWithAlias(p, "Signature", "SHA3-224withDSA",
+-                "sun.security.provider.DSA$SHA3_224withDSA", attrs);
+-        addWithAlias(p, "Signature", "SHA3-256withDSA",
+-                "sun.security.provider.DSA$SHA3_256withDSA", attrs);
+-
+-        attrs.put("KeySize", "3072"); // for DSA sig using 384/512-bit digests
+-
+-        addWithAlias(p, "Signature", "SHA384withDSA",
+-                "sun.security.provider.DSA$SHA384withDSA", attrs);
+-        addWithAlias(p, "Signature", "SHA512withDSA",
+-                "sun.security.provider.DSA$SHA512withDSA", attrs);
+-        addWithAlias(p, "Signature", "SHA3-384withDSA",
+-                "sun.security.provider.DSA$SHA3_384withDSA", attrs);
+-        addWithAlias(p, "Signature", "SHA3-512withDSA",
+-                "sun.security.provider.DSA$SHA3_512withDSA", attrs);
+-
+-        attrs.remove("KeySize");
+-
 -        add(p, "Signature", "SHA1withDSAinP1363Format",
 -                "sun.security.provider.DSA$SHA1withDSAinP1363Format");
 -        add(p, "Signature", "NONEwithDSAinP1363Format",
@@ -1775,26 +1810,55 @@ index f036a411f1d..1e9de933bd9 100644
 -                "sun.security.provider.DSA$SHA3_384withDSAinP1363Format");
 -        add(p, "Signature", "SHA3-512withDSAinP1363Format",
 -                "sun.security.provider.DSA$SHA3_512withDSAinP1363Format");
-+        }
  
          attrs.clear();
          attrs.put("ImplementedIn", "Software");
-@@ -196,9 +204,11 @@ public final class SunEntries {
+         addWithAlias(p, "Signature", "HSS/LMS", "sun.security.provider.HSS", attrs);
+ 
+-        add(p, "Signature", "ML-DSA", "sun.security.provider.ML_DSA_Impls$SIG", attrs);
+-        addWithAlias(p, "Signature", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$SIG2", attrs);
+-        addWithAlias(p, "Signature", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$SIG3", attrs);
+-        addWithAlias(p, "Signature", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$SIG5", attrs);
++        if (!systemFipsEnabled) {
++            add(p, "Signature", "ML-DSA", "sun.security.provider.ML_DSA_Impls$SIG", attrs);
++            addWithAlias(p, "Signature", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$SIG2", attrs);
++            addWithAlias(p, "Signature", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$SIG3", attrs);
++            addWithAlias(p, "Signature", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$SIG5", attrs);
++        }
++
+ 
+         /*
+          *  Key Pair Generator engines
+@@ -201,16 +212,18 @@
+         attrs.clear();
          attrs.put("ImplementedIn", "Software");
-         attrs.put("KeySize", "2048"); // for DSA KPG and APG only
  
 -        String dsaKPGImplClass = "sun.security.provider.DSAKeyPairGenerator$";
 -        dsaKPGImplClass += (useLegacyDSA? "Legacy" : "Current");
+-        attrs.put("KeySize", "2048");
 -        addWithAlias(p, "KeyPairGenerator", "DSA", dsaKPGImplClass, attrs);
+-        attrs.remove("KeySize");
+-
+-        add(p, "KeyPairGenerator", "ML-DSA", "sun.security.provider.ML_DSA_Impls$KPG", attrs);
+-        addWithAlias(p, "KeyPairGenerator", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$KPG2", attrs);
+-        addWithAlias(p, "KeyPairGenerator", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$KPG3", attrs);
+-        addWithAlias(p, "KeyPairGenerator", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$KPG5", attrs);
 +        if (!systemFipsEnabled) {
 +            String dsaKPGImplClass = "sun.security.provider.DSAKeyPairGenerator$";
 +            dsaKPGImplClass += (useLegacyDSA? "Legacy" : "Current");
++            attrs.put("KeySize", "2048");
 +            addWithAlias(p, "KeyPairGenerator", "DSA", dsaKPGImplClass, attrs);
++            attrs.remove("KeySize");
++
++            add(p, "KeyPairGenerator", "ML-DSA", "sun.security.provider.ML_DSA_Impls$KPG", attrs);
++            addWithAlias(p, "KeyPairGenerator", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$KPG2", attrs);
++            addWithAlias(p, "KeyPairGenerator", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$KPG3", attrs);
++            addWithAlias(p, "KeyPairGenerator", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$KPG5", attrs);
 +        }
  
          /*
           * Algorithm Parameter Generator engines
-@@ -213,44 +223,46 @@ public final class SunEntries {
+@@ -226,53 +239,55 @@
          addWithAlias(p, "AlgorithmParameters", "DSA",
                  "sun.security.provider.DSAParameters", attrs);
  
@@ -1806,6 +1870,11 @@ index f036a411f1d..1e9de933bd9 100644
 -        addWithAlias(p, "KeyFactory", "HSS/LMS",
 -                "sun.security.provider.HSS$KeyFactoryImpl", attrs);
 -
+-        add(p, "KeyFactory", "ML-DSA", "sun.security.provider.ML_DSA_Impls$KF", attrs);
+-        addWithAlias(p, "KeyFactory", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$KF2", attrs);
+-        addWithAlias(p, "KeyFactory", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$KF3", attrs);
+-        addWithAlias(p, "KeyFactory", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$KF5", attrs);
+-
 -        /*
 -         * Digest engines
 -         */
@@ -1815,15 +1884,7 @@ index f036a411f1d..1e9de933bd9 100644
 -                attrs);
 -        addWithAlias(p, "MessageDigest", "SHA-1", "sun.security.provider.SHA",
 -                attrs);
-+        if (!systemFipsEnabled) {
-+            /*
-+             * Key factories
-+             */
-+            addWithAlias(p, "KeyFactory", "DSA",
-+                    "sun.security.provider.DSAKeyFactory", attrs);
-+            addWithAlias(p, "KeyFactory", "HSS/LMS",
-+                    "sun.security.provider.HSS$KeyFactoryImpl", attrs);
- 
+-
 -        addWithAlias(p, "MessageDigest", "SHA-224",
 -                "sun.security.provider.SHA2$SHA224", attrs);
 -        addWithAlias(p, "MessageDigest", "SHA-256",
@@ -1844,15 +1905,33 @@ index f036a411f1d..1e9de933bd9 100644
 -                "sun.security.provider.SHA3$SHA384", attrs);
 -        addWithAlias(p, "MessageDigest", "SHA3-512",
 -                "sun.security.provider.SHA3$SHA512", attrs);
+-        addWithAlias(p, "MessageDigest", "SHAKE128-256",
+-                "sun.security.provider.SHA3$SHAKE128Hash", attrs);
+-        addWithAlias(p, "MessageDigest", "SHAKE256-512",
+-                "sun.security.provider.SHA3$SHAKE256Hash", attrs);
++        if (!systemFipsEnabled) {
++            /*
++             * Key factories
++             */
++            addWithAlias(p, "KeyFactory", "DSA",
++                    "sun.security.provider.DSAKeyFactory", attrs);
++            addWithAlias(p, "KeyFactory", "HSS/LMS",
++                    "sun.security.provider.HSS$KeyFactoryImpl", attrs);
++
++            add(p, "KeyFactory", "ML-DSA", "sun.security.provider.ML_DSA_Impls$KF", attrs);
++            addWithAlias(p, "KeyFactory", "ML-DSA-44", "sun.security.provider.ML_DSA_Impls$KF2", attrs);
++            addWithAlias(p, "KeyFactory", "ML-DSA-65", "sun.security.provider.ML_DSA_Impls$KF3", attrs);
++            addWithAlias(p, "KeyFactory", "ML-DSA-87", "sun.security.provider.ML_DSA_Impls$KF5", attrs);
++
 +            /*
 +             * Digest engines
 +             */
 +            addWithAlias(p, "MessageDigest", "MD2", "sun.security.provider.MD2",
-+                         attrs);
++                    attrs);
 +            addWithAlias(p, "MessageDigest", "MD5", "sun.security.provider.MD5",
-+                         attrs);
++                    attrs);
 +            addWithAlias(p, "MessageDigest", "SHA-1", "sun.security.provider.SHA",
-+                         attrs);
++                    attrs);
 +
 +            addWithAlias(p, "MessageDigest", "SHA-224",
 +                    "sun.security.provider.SHA2$SHA224", attrs);
@@ -1874,6 +1953,10 @@ index f036a411f1d..1e9de933bd9 100644
 +                    "sun.security.provider.SHA3$SHA384", attrs);
 +            addWithAlias(p, "MessageDigest", "SHA3-512",
 +                    "sun.security.provider.SHA3$SHA512", attrs);
++            addWithAlias(p, "MessageDigest", "SHAKE128-256",
++                    "sun.security.provider.SHA3$SHAKE128Hash", attrs);
++            addWithAlias(p, "MessageDigest", "SHAKE256-512",
++                    "sun.security.provider.SHA3$SHAKE256Hash", attrs);
 +        }
  
          /*

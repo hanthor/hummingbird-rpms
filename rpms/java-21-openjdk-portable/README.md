@@ -3,7 +3,10 @@
 The java-21-openjdk-portable package
 https://fedoraproject.org/wiki/MoveFedoraJDKsToBecomePortableJDKs
 
-OpenJDK 21 is the latest Long-Term Support (LTS) release of the Java platform.
+OpenJDK 21 is a Long-Term Support (LTS) release of the Java platform.
+Fedora no longer maintains this package. Hummingbird tracks GA releases from
+https://github.com/openjdk/jdk21u. The update hook generates source archives with
+the original OpenJDK directory layout.
 
 * https://fedoraproject.org/wiki/Changes/Java21
 
