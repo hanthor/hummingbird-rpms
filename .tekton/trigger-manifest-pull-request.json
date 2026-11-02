@@ -1817,6 +1817,10 @@
         "^rpms/python\\-mypy_extensions/",
         "^test/rpms/python\\-mypy_extensions\\.yml$"
       ],
+      "python-oauthlib--rpms": [
+        "^rpms/python\\-oauthlib/",
+        "^test/rpms/python\\-oauthlib\\.yml$"
+      ],
       "python-packaging--rpms": [
         "^rpms/python\\-packaging/",
         "^test/rpms/python\\-packaging\\.yml$"

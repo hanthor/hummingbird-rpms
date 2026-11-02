@@ -18019,6 +18019,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python-oauthlib ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-oauthlib-main
+spec:
+  application: rpms-main
+  componentName: python-oauthlib-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-oauthlib-main
+  source:
+    git:
+      context: rpms/python-oauthlib
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-oauthlib-main
+  name: python-oauthlib-main
+spec:
+  image:
+    name: hummingbird-tenant/python-oauthlib-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python-packaging ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
