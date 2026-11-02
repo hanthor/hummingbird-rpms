@@ -698,6 +698,9 @@
       "libmaxminddb--rpms": [
         "^rpms/libmaxminddb/"
       ],
+      "libmd--rpms": [
+        "^rpms/libmd/"
+      ],
       "libmnl--rpms": [
         "^rpms/libmnl/"
       ],
