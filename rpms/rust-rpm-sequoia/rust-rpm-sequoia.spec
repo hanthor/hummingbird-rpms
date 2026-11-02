@@ -4,15 +4,14 @@
 %global crate rpm-sequoia
 
 Name:           rust-rpm-sequoia
-Version:        1.10.1.1
-Release:        1.5%{?dist}
+Version:        1.10.3
+Release:        0.1%{?dist}
 Summary:        Implementation of the RPM PGP interface using Sequoia
 
 License:        LGPL-2.0-or-later
 URL:            https://crates.io/crates/rpm-sequoia
-# The version 1.10.1 upstream + patches to use pqc branches in openpgp and pqc-ossl in policy-config
 # Generated using:
-#  git archive --format=tar.gz --prefix rpm-sequoia-1.10.1.1/ -o ../rpm-sequoia-1.10.1.1.tar.gz pqc
+#  git archive --format=tar.gz --prefix rpm-sequoia-1.10.3/ -o ../rpm-sequoia-1.10.3.tar.gz v1.10.3
 Source:         %{crate}-%{version}.tar.gz
 # Generated using cargo-vendor-filterer:
 #   cargo vendor-filterer --platform x86_64-unknown-linux-gnu \
@@ -21,25 +20,9 @@ Source:         %{crate}-%{version}.tar.gz
 #                         --platform i686-unknown-linux-gnu \
 #                         --platform s390x-unknown-linux-gnu \
 #                         --all-features
-#   tar -czf ../rpm-sequoia-vendor-1.10.1.1.tar.gz vendor
+#   tar -czf ../rpm-sequoia-vendor-1.10.3.tar.gz vendor
 Source1:        %{crate}-vendor-%{version}.tar.gz
 Source2:        vendor.toml
-
-# CVE-2026-2625: reject signatures with invalid issuer subpackets
-# https://github.com/rpm-software-management/rpm-sequoia/pull/112
-Patch0:         CVE-2026-2625.patch
-# The vendored `ossl` crate's build-dependency on `bindgen` 0.71.1 fails to
-# compile against the F44 buildroot's openssl-devel + clang 22 combination:
-# bindgen 0.71.1 has a bug that causes it to emit an opaque (fieldless)
-# `ossl_param_st` binding instead of the real struct fields, even though
-# upstream OpenSSL's struct is fully public.
-# This is a bindgen bug fixed in 0.72.1 (verified: real upstream OpenSSL
-# 3.5.6 core.h still declares ossl_param_st with all fields; bindgen 0.72.1
-# correctly binds it, 0.71.1 does not, against the same headers/clang).
-# Bumps the vendored bindgen build-dependency from 0.71.1 to 0.72.1 (and
-# relaxes vendor/ossl's Cargo.toml requirement to allow it), regenerated via
-# `cargo vendor` + manual Cargo.lock reconciliation.
-Patch1:         0001-Update-vendored-bindgen-to-0.72.1.patch
 
 %if 0%{?rhel}
 BuildRequires:  rust-toolset
@@ -91,9 +74,7 @@ Requires:       %{crate}%{?_isa} = %{version}-%{release}
 %{_libdir}/pkgconfig/rpm-sequoia.pc
 
 %prep
-%autosetup -n %{crate}-%{version} -N -a1
-%patch 0 -p1
-%patch 1 -p1
+%autosetup -n %{crate}-%{version} -a1
 %cargo_prep -N
 # include full configuration for vendored dependencies
 cat %{SOURCE2} >> .cargo/config.toml
@@ -106,8 +87,6 @@ export LIBDIR="%{_libdir}"
 %{cargo_license_summary}
 %{cargo_license} > LICENSE.dependencies
 %{cargo_vendor_manifest}
-# replace un-parseable git snapshot dependency information
-sed 's/\(.*\) (.*#\(.*\))/\1+git\2/' -i cargo-vendor.txt
 
 %install
 # install shared library
