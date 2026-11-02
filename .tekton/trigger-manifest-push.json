@@ -1565,6 +1565,9 @@
       "selinux-policy--rpms": [
         "^rpms/selinux\\-policy/"
       ],
+      "setools--rpms": [
+        "^rpms/setools/"
+      ],
       "setup--rpms": [
         "^rpms/setup/"
       ],
