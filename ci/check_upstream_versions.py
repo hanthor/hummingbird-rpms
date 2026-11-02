@@ -1692,8 +1692,20 @@ def _tomcat_source_check(version: str, metadata: HumPackageMetadata) -> bool:
     return major != "10" or _check_source_exists(f"{base_url}.asc")
 
 
+def _openjdk_ga_source_check(version: str, metadata: HumPackageMetadata) -> bool:
+    """Select base GA releases; backport extra-component emergency fixes separately."""
+    release, separator, build = version.partition('+')
+    if not separator or not build.isdigit() or int(build) == 0:
+        return False
+    if not re.fullmatch(r'\d+\.\d+\.\d+(?:\.\d+)?', release):
+        return False
+    repo = (metadata.upstream_repo or '').rstrip('/')
+    return _check_source_exists(f'{repo}/tree/jdk-{release}-ga')
+
+
 SOURCE_AVAILABILITY_CHECKERS: dict[str, Callable[[str, HumPackageMetadata], bool]] = {
     "openjdk_osci": _openjdk_source_check,
+    "openjdk_ga": _openjdk_ga_source_check,
     "tomcat_apache": _tomcat_source_check,
 }
 
