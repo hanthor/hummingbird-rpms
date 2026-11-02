@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/libmd.git",
+    "release": "1",
+    "sha": "825284bb08bbc11b949bec809ecae69b68cd48d7"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 15525,
+  "track_upstream": "latest",
+  "upstream_repo": "https://git.hadrons.org/git/libmd.git",
+  "version": "1.3.0"
+}
