@@ -1,0 +1,3 @@
+addFilter('spelling-error \(\'mergerepo\'')
+addFilter('spelling-error \(\'modifyrepo\'')
+addFilter('spelling-error \(\'repodata\'')
