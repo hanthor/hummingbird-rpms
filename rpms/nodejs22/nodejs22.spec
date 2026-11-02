@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:22.23.4-2.3.2.3%{?dist} -p
+%nodejs_define_version node 1:22.23.4-2.3.2.3.1%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -172,6 +172,7 @@ Source101:      nodejs.srpm.macros
 0005-CVE-2026-102278-brace-expansion-max-depth.patch
 0006-CVE-2026-102276-102277-brace-expansion.patch
 CVE-2026-59869-js-yaml-merge-keys.patch
+CVE-2026-118764-minimatch-dos-fix.patch
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
