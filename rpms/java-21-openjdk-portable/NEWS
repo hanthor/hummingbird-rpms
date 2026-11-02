@@ -3,6 +3,14 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 21.0.13.0.3:
+=================================
+Upstream GA tag:
+  https://github.com/openjdk/jdk21u/tree/jdk-21.0.13.0.3-ga
+
+Changes since the previous packaged release:
+  https://github.com/openjdk/jdk21u/compare/jdk-21.0.12.1-ga...jdk-21.0.13.0.3-ga
+
 New in release OpenJDK 21.0.12.1 (2026-08-18):
 ==============================================
 Live versions of these release notes can be found at:
