@@ -1773,6 +1773,10 @@
         "^rpms/python\\-cryptography/",
         "^test/rpms/python\\-cryptography\\.yml$"
       ],
+      "python-distro--rpms": [
+        "^rpms/python\\-distro/",
+        "^test/rpms/python\\-distro\\.yml$"
+      ],
       "python-gitlab--rpms": [
         "^rpms/python\\-gitlab/",
         "^test/rpms/python\\-gitlab\\.yml$"

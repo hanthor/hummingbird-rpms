@@ -1331,6 +1331,9 @@
       "python-cryptography--rpms": [
         "^rpms/python\\-cryptography/"
       ],
+      "python-distro--rpms": [
+        "^rpms/python\\-distro/"
+      ],
       "python-gitlab--rpms": [
         "^rpms/python\\-gitlab/"
       ],
