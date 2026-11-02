@@ -52,7 +52,7 @@
 
 Name:    %{compatiblename}-portable%{?pkgos:-%{pkgos}}
 Version: %{newjavaver}.%{buildver}
-Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}.1%{?dist}
+Release: %{?eaprefix}%{portablerelease}.%{rpmrelease}%{?extraver}.2%{?dist}
 
 %global fullversion     %{compatiblename}-%{version}-%{release}
 
@@ -569,11 +569,6 @@ exit 1
 %ifarch %{fastdebug_arches}
 # %%global bootdebugpkg fastdebug
 %endif
-%ifarch s390x
-# Java 21 RPMs are unavailable in the s390x buildroot after Fedora retirement.
-%global bootjdkpkg %{nil}
-%global bootjdk %{_builddir}/%{uniquesuffix -- ""}/bootstrap-jdk
-%else
 %if %{use_portable_bootjdk}
 %global bootjdkpkg_name java-%{featurever}-%{origin}
 %global bootjdkpkg %{bootjdkpkg_name}-portable-devel%{?bootdebugpkg:-%{bootdebugpkg}} >= %{buildjdkver}
@@ -583,7 +578,6 @@ exit 1
 %global bootjdkpkg_name java-%{buildjdkver}-openjdk
 %global bootjdkpkg %{bootjdkpkg_name}-devel%{?bootdebugpkg:-%{bootdebugpkg}}
 %global bootjdk /usr/lib/jvm/%{bootjdkpkg_name}%{?bootdebugpkg:-%{bootdebugpkg}}
-%endif
 %endif
 # Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
 # This will only work where the bootstrap JDK is the same major version
@@ -679,11 +673,6 @@ Source17: CheckCerts.java
 
 # Ensure translations are available for new timezones
 Source18: TestTranslations.java
-
-%ifarch s390x
-# Pinned bootstrap JDK; independent of the version being built.
-Source20: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13+9/OpenJDK21U-jdk_s390x_linux_hotspot_21.0.13_9.tar.gz
-%endif
 
 ############################################
 #
@@ -792,9 +781,7 @@ BuildRequires: zip
 BuildRequires: tar
 BuildRequires: unzip
 BuildRequires: javapackages-filesystem
-%ifnarch s390x
 BuildRequires: %{bootjdkpkg}
-%endif
 # Zero-assembler build requirement
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
@@ -1083,11 +1070,6 @@ fi
 %endif
 %endif
 
-%ifarch s390x
-  mkdir -p %{bootjdk}
-  tar -xzf %{SOURCE20} --strip-components=1 -C %{bootjdk}
-  %{bootjdk}/bin/java -version
-%else
 %if %{use_portable_bootjdk}
   # Extract build JDK
   pushd %{_jvmdir}
@@ -1098,7 +1080,6 @@ fi
   # Print release information
   echo "Installed boot JDK:"
   cat %{bootjdk}/release
-%endif
 %endif
 
 %build
