@@ -427,6 +427,8 @@ spec:
           contentType: rpm
         - name: ima-evm-utils-main
           contentType: rpm
+        - name: inih-main
+          contentType: rpm
         - name: iproute-main
           contentType: rpm
         - name: iptables-main

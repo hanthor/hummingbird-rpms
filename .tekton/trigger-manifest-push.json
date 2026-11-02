@@ -521,6 +521,9 @@
       "ima-evm-utils--rpms": [
         "^rpms/ima\\-evm\\-utils/"
       ],
+      "inih--rpms": [
+        "^rpms/inih/"
+      ],
       "iproute--rpms": [
         "^rpms/iproute/"
       ],
