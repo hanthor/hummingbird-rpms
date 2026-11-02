@@ -5,7 +5,7 @@
 
 Name:           rust-rpm-sequoia
 Version:        1.10.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Implementation of the RPM PGP interface using Sequoia
 
 License:        LGPL-2.0-or-later
@@ -29,8 +29,8 @@ BuildRequires:  rust-toolset
 %else
 BuildRequires:  cargo-rpm-macros >= 24
 %endif
-# vendored openssl-sys
-BuildRequires:  openssl-devel clang-devel
+# vendored openssl-sys / nettle-sys (sequoia-openpgp 2.4+)
+BuildRequires:  openssl-devel clang-devel nettle-devel
 
 %global _description %{expand:
 An implementation of the RPM PGP interface using Sequoia.}
