@@ -6,6 +6,11 @@ pre_commands = [
   # non-finite numeric values, nil-pointer dereference in request decoding,
   # and unbounded recursion during schema validation.
   ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
+  # CVE-2026-116591.
+  # Bumps github.com/klauspost/compress to v1.20.2 to fix Denial of Service
+  # via crafted zstd compressed input (DecodeAll and streaming decoder panic
+  # on a crafted two-block frame with an FSE normalized count of 32768).
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
