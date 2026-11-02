@@ -48,7 +48,7 @@
 Summary: PostgreSQL client programs
 Name: %{majorname}%{majorversion}
 Version: 18.6
-Release: 0.2%{?dist}
+Release: 1%{?dist}
 
 # The PostgreSQL license is very similar to other MIT licenses, but the OSI
 # recognizes it as an independent license, so we do as well.
@@ -60,7 +60,7 @@ Url: http://www.postgresql.org/
 # that this be kept up with the latest minor release of the previous series;
 # but update when bugs affecting pg_dump output are fixed.
 %global prevmajorversion 17
-%global prevversion %{prevmajorversion}.9
+%global prevversion %{prevmajorversion}.11
 %global prev_prefix %{_libdir}/pgsql/postgresql-%{prevmajorversion}
 %global prevmajorversion16 16
 %global prevversion16 %{prevmajorversion16}.11
@@ -124,7 +124,7 @@ BuildRequires: perl-generators
 %endif
 BuildRequires: readline-devel zlib-devel
 BuildRequires: systemd systemd-devel util-linux
-BuildRequires: multilib-rpm-config
+%{!?rhel:BuildRequires: multilib-rpm-config}
 %if %external_libpq
 BuildRequires: libpq-devel >= %version
 %endif
@@ -904,12 +904,14 @@ rm $RPM_BUILD_ROOT/%{_libdir}/libpq.a
 install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/pgsql/contrib
 install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/pgsql/extension
 
+%if %{undefined rhel}
 # multilib header hack
 for header in \
 	%{_includedir}/pgsql/server/pg_config.h
 do
 %multilib_fix_c_header --file "$header"
 done
+%endif
 
 install -d -m 755 $RPM_BUILD_ROOT%{_libdir}/pgsql/tutorial
 cp -p src/tutorial/* $RPM_BUILD_ROOT%{_libdir}/pgsql/tutorial
@@ -1497,6 +1499,39 @@ make -C postgresql-setup-%{setup_version} check
 
 
 %changelog
+* Thu Sep 10 2026 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 18.3-12
+- Rebuilt for libxml-2.5.4
+
+* Thu Aug 13 2026 Packit <hello@packit.dev> - 18.6-1
+- Update to version 18.6
+- Resolves: rhbz#2477452
+
+* Fri Jul 24 2026 Python Maint <python-maint@redhat.com> - 18.3-11
+- Rebuilt for Python 3.15.0b4 ABI change
+
+* Thu Jul 23 2026 Jitka Plesnikova <jplesnik@redhat.com> - 18.3-10
+- Perl 5.44 rebuild
+
+* Wed Jul 22 2026 Python Maint <python-maint@redhat.com> - 18.3-9
+- Rebuilt for Python 3.15.0b4 ABI change
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 18.3-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
+* Fri Jun 12 2026 Yaakov Selkowitz <yselkowi@redhat.com> - 18.3-7
+- Rebuilt for openssl 4.0
+
+* Mon Jun 08 2026 František Zatloukal <fzatlouk@redhat.com> - 18.3-6
+- Rebuilt for icu 78.3
+
+* Wed Jun 03 2026 Python Maint <python-maint@redhat.com> - 18.3-5
+- Rebuilt for Python 3.15
+
+* Thu May 21 2026 Michal Schorm <mschorm@redhat.com> - 18.3-4
+- Drop multilib-rpm-config usage on RHEL
+  Related: RHEL-178013
+  Related: https://github.com/fedora-eln/eln/issues/525
+
 * Mon May 11 2026 Pavol Sloboda <psloboda@redhat.com> - 18.3-3
 - Release bump
 
