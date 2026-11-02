@@ -35,6 +35,15 @@ download_sources: |
   epoch=$(stat -c %Y "${workdir}/${tag}/make/conf/version-numbers.conf")
   XZ_OPT=-T4 tar --sort=name --mtime="@${epoch}" --owner=0 --group=0 --numeric-owner \
     -cJf "${UPDATE_PACKAGE_DIR}/${filename}" -C "${workdir}" "${tag}"
-  # This package has one remote archive; replace its previous checksum entry.
+  # Source20 is a literal URL for the pinned s390x bootstrap JDK.
+  source_files=("${filename}")
+  bootstrap_url=$(sed -n 's/^Source20:[[:space:]]*//p' "${UPDATE_SPEC_FILE}")
+  if [ -n "${bootstrap_url}" ]; then
+    bootstrap_filename=${bootstrap_url##*/}
+    curl --fail --location --retry 3 --output "${UPDATE_PACKAGE_DIR}/${bootstrap_filename}" \
+      "${bootstrap_url}"
+    source_files+=("${bootstrap_filename}")
+  fi
+  # Replace the base archive and bootstrap checksum entries together.
   sed -i '/^SHA512 (.*\.tar\./d' "${UPDATE_SOURCES_FILE}"
-  printf '%s\n' "${filename}"
+  printf '%s\n' "${source_files[@]}"

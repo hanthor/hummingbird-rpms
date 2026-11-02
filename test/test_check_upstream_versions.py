@@ -1173,7 +1173,8 @@ def test_openjdk_portable_hook_handles_base_versions(tmp_path: Path) -> None:
     assert 'extraversion' not in text
 
 
-def test_openjdk_portable_source_hook_preserves_layout(tmp_path: Path) -> None:
+@pytest.mark.parametrize('with_bootstrap', [False, True])
+def test_openjdk_portable_source_hook_preserves_layout(tmp_path: Path, with_bootstrap: bool) -> None:
     """Generate a reproducible archive with the original OpenJDK directory name."""
     import io
     import yaml
@@ -1190,8 +1191,13 @@ def test_openjdk_portable_source_hook_preserves_layout(tmp_path: Path) -> None:
         archive.addfile(entry, io.BytesIO(b'test'))
     sources = tmp_path / 'sources'
     sources.write_text('SHA512 (old.tar.gz) = oldhash\n')
+    bootstrap_name = 'bootstrap-s390x.tar.gz'
+    (tmp_path / 'java.spec').write_text(
+        f'Source20: https://example.com/{bootstrap_name}\n' if with_bootstrap else ''
+    )
     command = '''UPDATE_PACKAGE_DIR=$1
 UPDATE_SOURCES_FILE=$1/sources
+UPDATE_SPEC_FILE=$1/java.spec
 UPDATE_NEW_VERSION=21.0.13.0.9
 fixture=$2
 curl() {
@@ -1206,7 +1212,9 @@ curl() {
     for _ in range(2):
         result = subprocess.run(['bash', '-eu', '-c', command, 'download-sources',
                                  str(tmp_path), str(fixture)], check=True, capture_output=True, text=True)
-        assert result.stdout.strip() == generated.name
+        assert result.stdout.splitlines() == [generated.name] + ([bootstrap_name] if with_bootstrap else [])
+        if with_bootstrap:
+            assert (tmp_path / bootstrap_name).read_bytes() == fixture.read_bytes()
         with tarfile.open(generated) as archive:
             assert archive.getnames()[0] == 'jdk-21.0.13+9'
             entry = archive.getmember('jdk-21.0.13+9/make/conf/version-numbers.conf')
@@ -1217,6 +1225,26 @@ curl() {
             assert current == previous
         previous = current
     assert sources.read_text() == ''
+
+
+@pytest.mark.parametrize('arch', ['s390x', 'x86_64', 'aarch64'])
+def test_openjdk21_bootstrap_is_scoped_to_s390x(arch: str) -> None:
+    """The s390x build uses a source bootstrap; other architectures use RPMs."""
+    spec = Path(__file__).resolve().parent.parent / 'rpms/java-21-openjdk-portable/java-21-openjdk-portable.spec'
+    requires = subprocess.run(
+        ['rpmspec', '--target', arch, '--buildrequires', '-q', str(spec)],
+        check=True, capture_output=True, text=True,
+    ).stdout.splitlines()
+    parsed = subprocess.run(
+        ['rpmspec', '--target', arch, '--parse', str(spec)],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    if arch == 's390x':
+        assert not any(require.startswith('java-21-openjdk') for require in requires)
+        assert 'Source20: https://github.com/adoptium/temurin21-binaries/' in parsed
+    else:
+        assert 'java-21-openjdk-devel' in requires
+        assert 'Source20:' not in parsed
 
 
 def test_check_package_version_transforms_openjdk_version(
