@@ -1293,6 +1293,10 @@
         "^rpms/netavark/",
         "^test/rpms/netavark\\.yml$"
       ],
+      "netcat--rpms": [
+        "^rpms/netcat/",
+        "^test/rpms/netcat\\.yml$"
+      ],
       "nettle--rpms": [
         "^rpms/nettle/",
         "^test/rpms/nettle\\.yml$"
