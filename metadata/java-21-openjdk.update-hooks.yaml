@@ -10,7 +10,7 @@ update_spec: |
     -e 's/^(%global updatever\s+)[0-9]+/\1'"${updatever}"'/' \
     -e 's/^(%global patchver\s+)[0-9]+/\1'"${patchver}"'/' \
     -e 's/^(%global buildver\s+)[0-9]+/\1'"${buildver}"'/' \
-    -e 's/^(%global rpmrelease\s+)[0-9]+/\10/' \
+    -e 's/^(%global rpmrelease\s+)[0-9]+/\11/' \
     "${UPDATE_SPEC_FILE}"
   if grep -qE '^%global portablerelease\s' "${UPDATE_SPEC_FILE}"; then
     sed -Ei 's/^(%global portablerelease\s+)[0-9]+/\10/' "${UPDATE_SPEC_FILE}"
