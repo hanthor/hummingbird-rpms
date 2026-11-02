@@ -6,8 +6,6 @@
     "sha": "18d185d6a3a589c1f4e23b49ec90e5eb69f38970"
   },
   "modification_status": "clean",
-  "release_monitoring_project_id": 5377,
-  "track_upstream": "latest",
   "upstream_repo": "https://github.com/oauthlib/oauthlib",
   "version": "3.3.1"
 }

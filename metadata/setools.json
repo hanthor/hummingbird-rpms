@@ -6,8 +6,6 @@
     "sha": "85a4d763864bbf313df2b879f85e1ceba3988674"
   },
   "modification_status": "clean",
-  "release_monitoring_project_id": 8951,
-  "track_upstream": "latest",
   "upstream_repo": "https://github.com/SELinuxProject/setools",
   "version": "4.7.1"
 }

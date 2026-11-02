@@ -6,8 +6,6 @@
     "sha": "ae1ae68916b48cd333ff6fedc8b4a259c1225ab7"
   },
   "modification_status": "clean",
-  "release_monitoring_project_id": 3897,
-  "track_upstream": "latest",
   "upstream_repo": "https://github.com/stefankoegl/python-json-pointer",
   "version": "3.7"
 }

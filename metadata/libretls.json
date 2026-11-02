@@ -6,8 +6,6 @@
     "sha": "ec7988645cdc842bcfd0c032aa127fdaec7a5fd0"
   },
   "modification_status": "clean",
-  "release_monitoring_project_id": 148759,
-  "track_upstream": "latest",
   "upstream_repo": "https://git.causal.agency/libretls",
   "version": "3.8.1"
 }
