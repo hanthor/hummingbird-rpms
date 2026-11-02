@@ -1,0 +1,11 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/netcat.git",
+    "release": "2",
+    "sha": "929432b58de2d572113086b2a959da5634d99045"
+  },
+  "modification_status": "clean",
+  "upstream_repo": "https://github.com/openbsd/src",
+  "version": "1.238"
+}

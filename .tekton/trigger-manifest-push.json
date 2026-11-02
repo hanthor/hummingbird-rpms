@@ -971,6 +971,9 @@
       "netavark--rpms": [
         "^rpms/netavark/"
       ],
+      "netcat--rpms": [
+        "^rpms/netcat/"
+      ],
       "nettle--rpms": [
         "^rpms/nettle/"
       ],

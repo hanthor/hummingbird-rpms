@@ -727,6 +727,8 @@ spec:
           contentType: rpm
         - name: netavark-main
           contentType: rpm
+        - name: netcat-main
+          contentType: rpm
         - name: nettle-main
           contentType: rpm
         - name: nftables-main
