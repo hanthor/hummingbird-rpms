@@ -221,6 +221,9 @@
       "dex--rpms": [
         "^rpms/dex/"
       ],
+      "dhcpcd--rpms": [
+        "^rpms/dhcpcd/"
+      ],
       "diffutils--rpms": [
         "^rpms/diffutils/"
       ],

@@ -1,0 +1,13 @@
+---
+badfuncs:
+  allowed:
+# This is a rpminspect false positive. Both functions are deprecated in favor of inet_pton/inet_ntop,
+# but there is no exploitable security issue in dhcpcd's specific usage:
+# - inet_aton() only parses trusted admin config; error returns are checked.
+# - inet_ntoa() is used in a single-threaded context with no double-evaluation in any single format call.
+# Fixing it would require patching ~40 call sites in the upstream source to use inet_ntop(AF_INET, ...)
+# with a local buffer, which is a cosmetic/correctness improvement, not a security fix.
+    /usr/bin/dhcpcd:
+      - inet_aton
+      - inet_ntoa
+

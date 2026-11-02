@@ -293,6 +293,10 @@
         "^rpms/dex/",
         "^test/rpms/dex\\.yml$"
       ],
+      "dhcpcd--rpms": [
+        "^rpms/dhcpcd/",
+        "^test/rpms/dhcpcd\\.yml$"
+      ],
       "diffutils--rpms": [
         "^rpms/diffutils/",
         "^test/rpms/diffutils\\.yml$"

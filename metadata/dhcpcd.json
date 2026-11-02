@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/dhcpcd.git",
+    "release": "2",
+    "sha": "051387c2a373f65cabd86cafbb38e6140ac70f50"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 11429,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/NetworkConfiguration/dhcpcd",
+  "version": "10.5.2"
+}
