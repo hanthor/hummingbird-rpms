@@ -845,6 +845,10 @@
         "^rpms/libbpf/",
         "^test/rpms/libbpf\\.yml$"
       ],
+      "libbsd--rpms": [
+        "^rpms/libbsd/",
+        "^test/rpms/libbsd\\.yml$"
+      ],
       "libcap--rpms": [
         "^rpms/libcap/",
         "^test/rpms/libcap\\.yml$"
