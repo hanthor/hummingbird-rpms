@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/librepo.git",
     "release": "1",
-    "sha": "ddac784f3c3d28bef71427a294198a77a176c8b7"
+    "sha": "e562f01e6b376b2de5b120865c9f86e6224b4ec3"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/rpm-software-management/librepo",
-  "version": "1.21.3"
+  "version": "1.22.0"
 }
