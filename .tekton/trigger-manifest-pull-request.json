@@ -2287,6 +2287,10 @@
         "^rpms/xcaddy/",
         "^test/rpms/xcaddy\\.yml$"
       ],
+      "xfsprogs--rpms": [
+        "^rpms/xfsprogs/",
+        "^test/rpms/xfsprogs\\.yml$"
+      ],
       "xkeyboard-config--rpms": [
         "^rpms/xkeyboard\\-config/",
         "^test/rpms/xkeyboard\\-config\\.yml$"
