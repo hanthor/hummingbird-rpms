@@ -1,6 +1,6 @@
 Name:           python-charset-normalizer
 Version:        3.5.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        The Real First Universal Charset Detector
 # SPDX
 License:        MIT
@@ -31,7 +31,9 @@ library provides codecs are supported.
 %prep
 %autosetup -n charset_normalizer-%{version}
 # Drop mypy from build dependencies
-sed -i 's/"mypy.*"//' pyproject.toml
+%pyproject_patch_dependency mypy:ignore
+# Upstream pins and regularly adjust the pin, which complicates setuptools upgrades
+%pyproject_patch_dependency setuptools:drop_upper
 
 %generate_buildrequires
 %pyproject_buildrequires -r
