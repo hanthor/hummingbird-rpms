@@ -5,7 +5,7 @@
 Summary: X.Org X11 libXtst runtime library
 Name: libXtst
 Version: 1.2.5
-Release: 5%{?gitdate:.%{gitdate}git%{gitversion}}.2%{?dist}
+Release: 5%{?gitdate:.%{gitdate}git%{gitversion}}.3%{?dist}
 License: MIT-open-group AND HPND-sell-variant AND X11 AND HPND-doc AND HPND-doc-sell
 URL: http://www.x.org
 
@@ -28,6 +28,7 @@ BuildRequires: libXi-devel
 BuildRequires: xmlto
 
 Patch0: 0000-cve-2026-94286-denial-service-out-of-bounds-read-record.patch
+Patch1: 0001-cve-2026-109088-denial-of-service-via-malformed-record-enablecontext-replies.patch
 %description
 X.Org X11 libXtst runtime library
 
@@ -42,6 +43,7 @@ X.Org X11 libXtst development package
 %prep
 %setup -q -n %{tarball}-%{?gitdate:%{gitdate}}%{!?gitdate:%{version}}
 %patch -P 0 -p1
+%patch -P 1 -p1
 
 %build
 autoreconf -v --install --force
