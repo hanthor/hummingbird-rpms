@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-distro.git",
+    "release": "13",
+    "sha": "b9b137450a9203e60a1b0eaba799376fbc1277e0"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 12202,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/python-distro/distro",
+  "version": "1.9.0"
+}

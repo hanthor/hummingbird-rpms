@@ -965,6 +965,8 @@ spec:
           contentType: rpm
         - name: python-cryptography-main
           contentType: rpm
+        - name: python-distro-main
+          contentType: rpm
         - name: python-gitlab-main
           contentType: rpm
         - name: python-idna-main
