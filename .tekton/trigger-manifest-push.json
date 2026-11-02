@@ -1325,6 +1325,9 @@
       "python-charset-normalizer--rpms": [
         "^rpms/python\\-charset\\-normalizer/"
       ],
+      "python-configobj--rpms": [
+        "^rpms/python\\-configobj/"
+      ],
       "python-cryptography--rpms": [
         "^rpms/python\\-cryptography/"
       ],

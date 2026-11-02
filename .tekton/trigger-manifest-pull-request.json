@@ -1765,6 +1765,10 @@
         "^rpms/python\\-charset\\-normalizer/",
         "^test/rpms/python\\-charset\\-normalizer\\.yml$"
       ],
+      "python-configobj--rpms": [
+        "^rpms/python\\-configobj/",
+        "^test/rpms/python\\-configobj\\.yml$"
+      ],
       "python-cryptography--rpms": [
         "^rpms/python\\-cryptography/",
         "^test/rpms/python\\-cryptography\\.yml$"
