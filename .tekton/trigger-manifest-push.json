@@ -1364,6 +1364,9 @@
       "python-mypy-extensions--rpms": [
         "^rpms/python\\-mypy_extensions/"
       ],
+      "python-oauthlib--rpms": [
+        "^rpms/python\\-oauthlib/"
+      ],
       "python-packaging--rpms": [
         "^rpms/python\\-packaging/"
       ],

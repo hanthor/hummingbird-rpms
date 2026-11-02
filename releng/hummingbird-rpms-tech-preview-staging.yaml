@@ -987,6 +987,8 @@ spec:
           contentType: rpm
         - name: python-mypy-extensions-main
           contentType: rpm
+        - name: python-oauthlib-main
+          contentType: rpm
         - name: python-packaging-main
           contentType: rpm
         - name: python-pathspec-main
