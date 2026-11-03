@@ -5,7 +5,8 @@
     "release": "1",
     "sha": "47a5888b0b10c149ce64e4895cf3f4f970a0bb29"
   },
-  "modification_status": "clean",
+  "modification_reason": "Make optional integration dependencies suggestions for distroless containers",
+  "modification_status": "modified",
   "release_monitoring_project_id": 4880,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/squid-cache/squid",

@@ -1,9 +1,16 @@
-%define __perl_requires %{SOURCE98}
+# Optional helpers must not pull interpreters into a proxy-only image.
+%define __perl_requires %{nil}
+%define __perl_suggests %{SOURCE98}
+%global __script_requires %{nil}
+%global __script_suggests %{_rpmconfigdir}/script.req
+
+# Keep Fedora's shell scriptlets available for host-oriented builds.
+%bcond system_integration 0
 %define version_underscore %(echo %{version} | tr '.' '_')
 
 Name:     squid
 Version:  7.7
-Release:  1%{?dist}
+Release:  1.1%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -41,9 +48,9 @@ Patch204: squid-6.1-symlink-lang-err.patch
 Patch205: squid-7.5-openssl4.patch
 
 # cache_swap.sh
-Requires: bash gawk
+Suggests: bash gawk
 # for httpd conf file - cachemgr script alias
-Requires: httpd-filesystem
+Suggests: httpd-filesystem
 
 # squid_ldap_auth and other LDAP helpers require OpenLDAP
 BuildRequires: make
@@ -75,7 +82,7 @@ BuildRequires: systemd-rpm-macros
 # systemd notify
 BuildRequires: systemd-devel
 
-%{?systemd_requires}
+%{?systemd_ordering}
 %{?sysusers_requires_compat}
 
 # Old NetworkManager expects the dispatcher scripts in a different place
@@ -113,6 +120,7 @@ sed -i 's|@SYSCONFDIR@/squid.conf.documented|%{_pkgdocdir}/squid.conf.documented
    --with-logdir='%{_localstatedir}/log/squid' \
    --with-pidfile='/run/squid.pid' \
    --disable-dependency-tracking \
+   --without-systemd \
    --enable-eui \
    --enable-follow-x-forwarded-for \
    --enable-auth \
@@ -251,6 +259,7 @@ install -m 644 -p %{SOURCE10} %{buildroot}%{_tmpfilesdir}/squid.conf
 %{_sysusersdir}/squid.conf
 %{_tmpfilesdir}/squid.conf
 
+%if %{with system_integration}
 %pre
 %sysusers_create_compat %{SOURCE9}
 
@@ -263,6 +272,8 @@ for i in /var/log/squid /var/spool/squid ; do
 done
 
 exit 0
+
+%endif
 
 %pretrans -p <lua>
 -- temporarilly commented until https://bugzilla.redhat.com/show_bug.cgi?id=1936422 is resolved
@@ -295,6 +306,7 @@ do
   end
 end
 
+%if %{with system_integration}
 %post
 %systemd_post squid.service
 
@@ -311,6 +323,7 @@ fi
 /usr/sbin/usermod -a -G wbpriv squid >/dev/null 2>&1 || \
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
+%endif
 
 %changelog
 * Wed Sep 16 2026 Luboš Uhliarik <luhliari@redhat.com> - 7:7.7-1
