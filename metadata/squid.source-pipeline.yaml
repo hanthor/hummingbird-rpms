@@ -1,0 +1,19 @@
+fetch:
+  - type: spec-source
+    index: 0
+  - type: spec-source
+    index: 1
+  - type: url
+    url: "https://www.squid-cache.org/pgp.asc"
+
+verify:
+  - type: gpg-signature
+    target: "squid-${VERSION}.tar.xz"
+    signature: "squid-${VERSION}.tar.xz.asc"
+    keyring: "squid.gpg"
+
+publish:
+  files:
+    - "squid-${VERSION}.tar.xz"
+    - "squid-${VERSION}.tar.xz.asc"
+    - "pgp.asc"

@@ -735,6 +735,9 @@ spire1.15:
 sqlite:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+squid:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 swift-lang:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 24
