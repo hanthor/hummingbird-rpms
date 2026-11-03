@@ -10,7 +10,7 @@
 
 Name: hdf5
 Version: 2.2.0
-Release: 0.1.4%{?dist}
+Release: 0.1.5%{?dist}
 Summary: A general purpose library and file format for storing scientific data
 License: BSD-3-Clause
 URL: https://www.hdfgroup.org/solutions/hdf5/
@@ -41,6 +41,10 @@ Patch: hdf5-CVE-2026-19026-19027-19028.patch
 # CVE-2026-19024
 # https://github.com/HDFGroup/hdf5/pull/6507
 Patch: hdf5-CVE-2026-19024.patch
+# Fix uncontrolled recursion in H5B__iterate_helper via crafted B-tree node
+# CVE-2026-120689
+# https://github.com/HDFGroup/hdf5/commit/5bdd379a645c1a372ab0bd2e208a1cf960f25acc
+Patch: hdf5-CVE-2026-120689.patch
 
 BuildRequires: cmake
 BuildRequires: gcc-gfortran
