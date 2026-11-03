@@ -48,7 +48,7 @@ BuildRequires: pkgconfig(libsystemd)
 Name:    qt6-qtbase
 Summary: Qt6 - QtBase components
 Version: 6.12.0
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 
 License: LGPL-3.0-only OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 Url:     http://qt-project.org/
@@ -96,6 +96,9 @@ Patch56: qtbase-mysql.patch
 
 # fix FTBFS against libglvnd-1.3.4+
 Patch58: qtbase-libglvnd.patch
+
+# Security fixes
+Patch100: CVE-2026-105924-qtbase-6.12.patch
 
 
 # Upstream patches
