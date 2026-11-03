@@ -717,8 +717,8 @@ rust:
               memory: 10Gi
 
 rust-rpm-sequoia:
-  # Tracked from CentOS Stream c10s instead of Fedora
-  forked_from: "https://gitlab.com/redhat/centos-stream/rpms"
+  # Sources for 1.10.3+ are only in Hummingbird's lookaside (ahead of c10s).
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 scap-security-guide:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"

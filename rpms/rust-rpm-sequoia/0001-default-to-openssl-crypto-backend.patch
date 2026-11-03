@@ -1,0 +1,23 @@
+From: Prarit Bhargava <prarit@redhat.com>
+Date: Tue, 3 Nov 2026 08:00:00 -0500
+Subject: [PATCH] Default to OpenSSL crypto backend
+
+Match Fedora packaging: use crypto-openssl instead of crypto-nettle.
+Hummingbird nettle 4.0 dropped nettle/pgp.h, which breaks nettle-sys
+2.3.2 bindgen. OpenSSL is already required at runtime.
+
+Origin: https://src.fedoraproject.org/rpms/rust-rpm-sequoia/blob/rawhide/f/rpm-sequoia-fix-metadata.diff
+
+diff --git a/Cargo.toml b/Cargo.toml
+index b28ab141be03..8f23cace3a77 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -42,7 +42,7 @@ crate-type = ["cdylib"]
+ 
+ # We explicitly do not want to enable Sequoia's decompression support.
+ # Hence we only select a crypto backend.
+-default = ["crypto-nettle"]
++default = ["crypto-openssl"]
+ crypto-nettle = ["sequoia-openpgp/crypto-nettle"]
+ crypto-rust = ["sequoia-openpgp/crypto-rust"]
+ crypto-cng = ["sequoia-openpgp/crypto-cng"]
