@@ -22,6 +22,9 @@ pre_commands = [
   # CVE-2026-100347 through CVE-2026-100354 and CVE-2026-93450.
   # Bump kin-openapi and its jsonschema dependency in the source tree.
   ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
+  # CVE-2026-116591: crafted zstd input panics DecodeAll and the streaming
+  # decoder via a bad normalized FSE count.
+  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
 post_commands = [
   # These nested modules do not carry separate license files. They use the
