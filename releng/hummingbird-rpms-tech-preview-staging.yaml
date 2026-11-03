@@ -227,6 +227,8 @@ spec:
           contentType: rpm
         - name: dex-main
           contentType: rpm
+        - name: dhcpcd-main
+          contentType: rpm
         - name: diffutils-main
           contentType: rpm
         - name: distribution-main
@@ -427,6 +429,8 @@ spec:
           contentType: rpm
         - name: ima-evm-utils-main
           contentType: rpm
+        - name: inih-main
+          contentType: rpm
         - name: iproute-main
           contentType: rpm
         - name: iptables-main
@@ -517,6 +521,8 @@ spec:
           contentType: rpm
         - name: libbpf-main
           contentType: rpm
+        - name: libbsd-main
+          contentType: rpm
         - name: libcap-main
           contentType: rpm
         - name: libcap-ng-main
@@ -563,6 +569,8 @@ spec:
           contentType: rpm
         - name: libmaxminddb-main
           contentType: rpm
+        - name: libmd-main
+          contentType: rpm
         - name: libmnl-main
           contentType: rpm
         - name: libmodulemd-main
@@ -594,6 +602,8 @@ spec:
         - name: libpwquality-main
           contentType: rpm
         - name: librepo-main
+          contentType: rpm
+        - name: libretls-main
           contentType: rpm
         - name: libseccomp-main
           contentType: rpm
@@ -716,6 +726,8 @@ spec:
         - name: ncurses-main
           contentType: rpm
         - name: netavark-main
+          contentType: rpm
+        - name: netcat-main
           contentType: rpm
         - name: nettle-main
           contentType: rpm
@@ -953,7 +965,11 @@ spec:
           contentType: rpm
         - name: python-charset-normalizer-main
           contentType: rpm
+        - name: python-configobj-main
+          contentType: rpm
         - name: python-cryptography-main
+          contentType: rpm
+        - name: python-distro-main
           contentType: rpm
         - name: python-gitlab-main
           contentType: rpm
@@ -965,6 +981,8 @@ spec:
           contentType: rpm
         - name: python-jinja2-cli-main
           contentType: rpm
+        - name: python-jsonpointer-main
+          contentType: rpm
         - name: python-jsonschema-main
           contentType: rpm
         - name: python-jsonschema-specifications-main
@@ -972,6 +990,8 @@ spec:
         - name: python-markupsafe-main
           contentType: rpm
         - name: python-mypy-extensions-main
+          contentType: rpm
+        - name: python-oauthlib-main
           contentType: rpm
         - name: python-packaging-main
           contentType: rpm
@@ -1101,6 +1121,8 @@ spec:
           contentType: rpm
         - name: selinux-policy-main
           contentType: rpm
+        - name: setools-main
+          contentType: rpm
         - name: setup-main
           contentType: rpm
         - name: sgml-common-main
@@ -1194,6 +1216,8 @@ spec:
         - name: which-main
           contentType: rpm
         - name: xcaddy-main
+          contentType: rpm
+        - name: xfsprogs-main
           contentType: rpm
         - name: xkeyboard-config-main
           contentType: rpm

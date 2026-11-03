@@ -293,6 +293,10 @@
         "^rpms/dex/",
         "^test/rpms/dex\\.yml$"
       ],
+      "dhcpcd--rpms": [
+        "^rpms/dhcpcd/",
+        "^test/rpms/dhcpcd\\.yml$"
+      ],
       "diffutils--rpms": [
         "^rpms/diffutils/",
         "^test/rpms/diffutils\\.yml$"
@@ -693,6 +697,10 @@
         "^rpms/ima\\-evm\\-utils/",
         "^test/rpms/ima\\-evm\\-utils\\.yml$"
       ],
+      "inih--rpms": [
+        "^rpms/inih/",
+        "^test/rpms/inih\\.yml$"
+      ],
       "iproute--rpms": [
         "^rpms/iproute/",
         "^test/rpms/iproute\\.yml$"
@@ -837,6 +845,10 @@
         "^rpms/libbpf/",
         "^test/rpms/libbpf\\.yml$"
       ],
+      "libbsd--rpms": [
+        "^rpms/libbsd/",
+        "^test/rpms/libbsd\\.yml$"
+      ],
       "libcap--rpms": [
         "^rpms/libcap/",
         "^test/rpms/libcap\\.yml$"
@@ -929,6 +941,10 @@
         "^rpms/libmaxminddb/",
         "^test/rpms/libmaxminddb\\.yml$"
       ],
+      "libmd--rpms": [
+        "^rpms/libmd/",
+        "^test/rpms/libmd\\.yml$"
+      ],
       "libmnl--rpms": [
         "^rpms/libmnl/",
         "^test/rpms/libmnl\\.yml$"
@@ -992,6 +1008,10 @@
       "librepo--rpms": [
         "^rpms/librepo/",
         "^test/rpms/librepo\\.yml$"
+      ],
+      "libretls--rpms": [
+        "^rpms/libretls/",
+        "^test/rpms/libretls\\.yml$"
       ],
       "libseccomp--rpms": [
         "^rpms/libseccomp/",
@@ -1272,6 +1292,10 @@
       "netavark--rpms": [
         "^rpms/netavark/",
         "^test/rpms/netavark\\.yml$"
+      ],
+      "netcat--rpms": [
+        "^rpms/netcat/",
+        "^test/rpms/netcat\\.yml$"
       ],
       "nettle--rpms": [
         "^rpms/nettle/",
@@ -1749,9 +1773,17 @@
         "^rpms/python\\-charset\\-normalizer/",
         "^test/rpms/python\\-charset\\-normalizer\\.yml$"
       ],
+      "python-configobj--rpms": [
+        "^rpms/python\\-configobj/",
+        "^test/rpms/python\\-configobj\\.yml$"
+      ],
       "python-cryptography--rpms": [
         "^rpms/python\\-cryptography/",
         "^test/rpms/python\\-cryptography\\.yml$"
+      ],
+      "python-distro--rpms": [
+        "^rpms/python\\-distro/",
+        "^test/rpms/python\\-distro\\.yml$"
       ],
       "python-gitlab--rpms": [
         "^rpms/python\\-gitlab/",
@@ -1773,6 +1805,10 @@
         "^rpms/python\\-jinja2\\-cli/",
         "^test/rpms/python\\-jinja2\\-cli\\.yml$"
       ],
+      "python-jsonpointer--rpms": [
+        "^rpms/python\\-jsonpointer/",
+        "^test/rpms/python\\-jsonpointer\\.yml$"
+      ],
       "python-jsonschema--rpms": [
         "^rpms/python\\-jsonschema/",
         "^test/rpms/python\\-jsonschema\\.yml$"
@@ -1788,6 +1824,10 @@
       "python-mypy-extensions--rpms": [
         "^rpms/python\\-mypy_extensions/",
         "^test/rpms/python\\-mypy_extensions\\.yml$"
+      ],
+      "python-oauthlib--rpms": [
+        "^rpms/python\\-oauthlib/",
+        "^test/rpms/python\\-oauthlib\\.yml$"
       ],
       "python-packaging--rpms": [
         "^rpms/python\\-packaging/",
@@ -2053,6 +2093,10 @@
         "^rpms/selinux\\-policy/",
         "^test/rpms/selinux\\-policy\\.yml$"
       ],
+      "setools--rpms": [
+        "^rpms/setools/",
+        "^test/rpms/setools\\.yml$"
+      ],
       "setup--rpms": [
         "^rpms/setup/",
         "^test/rpms/setup\\.yml$",
@@ -2246,6 +2290,10 @@
       "xcaddy--rpms": [
         "^rpms/xcaddy/",
         "^test/rpms/xcaddy\\.yml$"
+      ],
+      "xfsprogs--rpms": [
+        "^rpms/xfsprogs/",
+        "^test/rpms/xfsprogs\\.yml$"
       ],
       "xkeyboard-config--rpms": [
         "^rpms/xkeyboard\\-config/",

@@ -221,6 +221,9 @@
       "dex--rpms": [
         "^rpms/dex/"
       ],
+      "dhcpcd--rpms": [
+        "^rpms/dhcpcd/"
+      ],
       "diffutils--rpms": [
         "^rpms/diffutils/"
       ],
@@ -521,6 +524,9 @@
       "ima-evm-utils--rpms": [
         "^rpms/ima\\-evm\\-utils/"
       ],
+      "inih--rpms": [
+        "^rpms/inih/"
+      ],
       "iproute--rpms": [
         "^rpms/iproute/"
       ],
@@ -629,6 +635,9 @@
       "libbpf--rpms": [
         "^rpms/libbpf/"
       ],
+      "libbsd--rpms": [
+        "^rpms/libbsd/"
+      ],
       "libcap--rpms": [
         "^rpms/libcap/"
       ],
@@ -698,6 +707,9 @@
       "libmaxminddb--rpms": [
         "^rpms/libmaxminddb/"
       ],
+      "libmd--rpms": [
+        "^rpms/libmd/"
+      ],
       "libmnl--rpms": [
         "^rpms/libmnl/"
       ],
@@ -745,6 +757,9 @@
       ],
       "librepo--rpms": [
         "^rpms/librepo/"
+      ],
+      "libretls--rpms": [
+        "^rpms/libretls/"
       ],
       "libseccomp--rpms": [
         "^rpms/libseccomp/"
@@ -955,6 +970,9 @@
       ],
       "netavark--rpms": [
         "^rpms/netavark/"
+      ],
+      "netcat--rpms": [
+        "^rpms/netcat/"
       ],
       "nettle--rpms": [
         "^rpms/nettle/"
@@ -1313,8 +1331,14 @@
       "python-charset-normalizer--rpms": [
         "^rpms/python\\-charset\\-normalizer/"
       ],
+      "python-configobj--rpms": [
+        "^rpms/python\\-configobj/"
+      ],
       "python-cryptography--rpms": [
         "^rpms/python\\-cryptography/"
+      ],
+      "python-distro--rpms": [
+        "^rpms/python\\-distro/"
       ],
       "python-gitlab--rpms": [
         "^rpms/python\\-gitlab/"
@@ -1331,6 +1355,9 @@
       "python-jinja2-cli--rpms": [
         "^rpms/python\\-jinja2\\-cli/"
       ],
+      "python-jsonpointer--rpms": [
+        "^rpms/python\\-jsonpointer/"
+      ],
       "python-jsonschema--rpms": [
         "^rpms/python\\-jsonschema/"
       ],
@@ -1342,6 +1369,9 @@
       ],
       "python-mypy-extensions--rpms": [
         "^rpms/python\\-mypy_extensions/"
+      ],
+      "python-oauthlib--rpms": [
+        "^rpms/python\\-oauthlib/"
       ],
       "python-packaging--rpms": [
         "^rpms/python\\-packaging/"
@@ -1541,6 +1571,9 @@
       "selinux-policy--rpms": [
         "^rpms/selinux\\-policy/"
       ],
+      "setools--rpms": [
+        "^rpms/setools/"
+      ],
       "setup--rpms": [
         "^rpms/setup/"
       ],
@@ -1684,6 +1717,9 @@
       ],
       "xcaddy--rpms": [
         "^rpms/xcaddy/"
+      ],
+      "xfsprogs--rpms": [
+        "^rpms/xfsprogs/"
       ],
       "xkeyboard-config--rpms": [
         "^rpms/xkeyboard\\-config/"

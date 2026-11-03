@@ -2895,6 +2895,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- dhcpcd ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: dhcpcd-main
+spec:
+  application: rpms-main
+  componentName: dhcpcd-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/dhcpcd-main
+  source:
+    git:
+      context: rpms/dhcpcd
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: dhcpcd-main
+  name: dhcpcd-main
+spec:
+  image:
+    name: hummingbird-tenant/dhcpcd-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- diffutils ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -6918,6 +6957,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- inih ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: inih-main
+spec:
+  application: rpms-main
+  componentName: inih-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/inih-main
+  source:
+    git:
+      context: rpms/inih
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: inih-main
+  name: inih-main
+spec:
+  image:
+    name: hummingbird-tenant/inih-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- intltool ---
 # PENDING
 # --- iproute ---
@@ -8687,6 +8765,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- libbsd ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: libbsd-main
+spec:
+  application: rpms-main
+  componentName: libbsd-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/libbsd-main
+  source:
+    git:
+      context: rpms/libbsd
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: libbsd-main
+  name: libbsd-main
+spec:
+  image:
+    name: hummingbird-tenant/libbsd-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- libcap ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -9584,6 +9701,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- libmd ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: libmd-main
+spec:
+  application: rpms-main
+  componentName: libmd-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/libmd-main
+  source:
+    git:
+      context: rpms/libmd
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: libmd-main
+  name: libmd-main
+spec:
+  image:
+    name: hummingbird-tenant/libmd-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- libmnl ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -10201,6 +10357,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/librepo-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- libretls ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: libretls-main
+spec:
+  application: rpms-main
+  componentName: libretls-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/libretls-main
+  source:
+    git:
+      context: rpms/libretls
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: libretls-main
+  name: libretls-main
+spec:
+  image:
+    name: hummingbird-tenant/libretls-main
     visibility: public
   notifications:
   - config:
@@ -12636,6 +12831,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/netavark-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- netcat ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: netcat-main
+spec:
+  application: rpms-main
+  componentName: netcat-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/netcat-main
+  source:
+    git:
+      context: rpms/netcat
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: netcat-main
+  name: netcat-main
+spec:
+  image:
+    name: hummingbird-tenant/netcat-main
     visibility: public
   notifications:
   - config:
@@ -17334,6 +17568,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python-configobj ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-configobj-main
+spec:
+  application: rpms-main
+  componentName: python-configobj-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-configobj-main
+  source:
+    git:
+      context: rpms/python-configobj
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-configobj-main
+  name: python-configobj-main
+spec:
+  image:
+    name: hummingbird-tenant/python-configobj-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python-cryptography ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -17377,6 +17650,45 @@ spec:
 # PENDING
 # --- python-decorator ---
 # PENDING
+# --- python-distro ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-distro-main
+spec:
+  application: rpms-main
+  componentName: python-distro-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-distro-main
+  source:
+    git:
+      context: rpms/python-distro
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-distro-main
+  name: python-distro-main
+spec:
+  image:
+    name: hummingbird-tenant/python-distro-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python-docutils ---
 # PENDING
 # --- python-filelock ---
@@ -17586,6 +17898,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python-jsonpointer ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-jsonpointer-main
+spec:
+  application: rpms-main
+  componentName: python-jsonpointer-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-jsonpointer-main
+  source:
+    git:
+      context: rpms/python-jsonpointer
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-jsonpointer-main
+  name: python-jsonpointer-main
+spec:
+  image:
+    name: hummingbird-tenant/python-jsonpointer-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python-jsonschema ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -17739,6 +18090,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/python-mypy-extensions-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python-oauthlib ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python-oauthlib-main
+spec:
+  application: rpms-main
+  componentName: python-oauthlib-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python-oauthlib-main
+  source:
+    git:
+      context: rpms/python-oauthlib
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python-oauthlib-main
+  name: python-oauthlib-main
+spec:
+  image:
+    name: hummingbird-tenant/python-oauthlib-main
     visibility: public
   notifications:
   - config:
@@ -20290,6 +20680,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- setools ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: setools-main
+spec:
+  application: rpms-main
+  componentName: setools-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/setools-main
+  source:
+    git:
+      context: rpms/setools
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: setools-main
+  name: setools-main
+spec:
+  image:
+    name: hummingbird-tenant/setools-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- setup ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -22130,6 +22559,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/xcaddy-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- xfsprogs ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: xfsprogs-main
+spec:
+  application: rpms-main
+  componentName: xfsprogs-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/xfsprogs-main
+  source:
+    git:
+      context: rpms/xfsprogs
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: xfsprogs-main
+  name: xfsprogs-main
+spec:
+  image:
+    name: hummingbird-tenant/xfsprogs-main
     visibility: public
   notifications:
   - config:

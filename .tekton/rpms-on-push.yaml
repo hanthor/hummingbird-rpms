@@ -5633,6 +5633,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- dhcpcd ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/dhcpcd/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: dhcpcd-main
+    pipelines.appstudio.openshift.io/type: build
+  name: dhcpcd-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/dhcpcd-main:{{revision}}
+    - name: package-name
+      value: dhcpcd
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "dhcpcd.spec"
+    - name: monorepo-subdir
+      value: "rpms/dhcpcd"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-dhcpcd-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- diffutils ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -13455,6 +13530,81 @@ spec:
       secret:
         secretName: '{{git_auth_secret}}'
 
+---
+# --- inih ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/inih/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: inih-main
+    pipelines.appstudio.openshift.io/type: build
+  name: inih-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/inih-main:{{revision}}
+    - name: package-name
+      value: inih
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "inih.spec"
+    - name: monorepo-subdir
+      value: "rpms/inih"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-inih-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
 # --- intltool ---
 # PENDING
 
@@ -16904,6 +17054,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- libbsd ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/libbsd/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: libbsd-main
+    pipelines.appstudio.openshift.io/type: build
+  name: libbsd-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/libbsd-main:{{revision}}
+    - name: package-name
+      value: libbsd
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "libbsd.spec"
+    - name: monorepo-subdir
+      value: "rpms/libbsd"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-libbsd-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- libcap ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -18645,6 +18870,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- libmd ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/libmd/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: libmd-main
+    pipelines.appstudio.openshift.io/type: build
+  name: libmd-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/libmd-main:{{revision}}
+    - name: package-name
+      value: libmd
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "libmd.spec"
+    - name: monorepo-subdir
+      value: "rpms/libmd"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-libmd-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- libmnl ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -19844,6 +20144,81 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-librepo-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- libretls ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/libretls/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: libretls-main
+    pipelines.appstudio.openshift.io/type: build
+  name: libretls-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/libretls-main:{{revision}}
+    - name: package-name
+      value: libretls
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "libretls.spec"
+    - name: monorepo-subdir
+      value: "rpms/libretls"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-libretls-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -24551,6 +24926,81 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-netavark-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- netcat ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/netcat/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: netcat-main
+    pipelines.appstudio.openshift.io/type: build
+  name: netcat-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/netcat-main:{{revision}}
+    - name: package-name
+      value: netcat
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "netcat.spec"
+    - name: monorepo-subdir
+      value: "rpms/netcat"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-netcat-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -33750,6 +34200,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- python-configobj ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python\\-configobj/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python-configobj-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python-configobj-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python-configobj-main:{{revision}}
+    - name: package-name
+      value: python-configobj
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-configobj.spec"
+    - name: monorepo-subdir
+      value: "rpms/python-configobj"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python-configobj-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- python-cryptography ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -33829,6 +34354,81 @@ spec:
 
 # --- python-decorator ---
 # PENDING
+
+---
+# --- python-distro ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python\\-distro/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python-distro-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python-distro-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python-distro-main:{{revision}}
+    - name: package-name
+      value: python-distro
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-distro.spec"
+    - name: monorepo-subdir
+      value: "rpms/python-distro"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python-distro-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
 
 # --- python-docutils ---
 # PENDING
@@ -34227,6 +34827,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- python-jsonpointer ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python\\-jsonpointer/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python-jsonpointer-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python-jsonpointer-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python-jsonpointer-main:{{revision}}
+    - name: package-name
+      value: python-jsonpointer
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-jsonpointer.spec"
+    - name: monorepo-subdir
+      value: "rpms/python-jsonpointer"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python-jsonpointer-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- python-jsonschema ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -34524,6 +35199,81 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-python-mypy-extensions-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python-oauthlib ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python\\-oauthlib/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python-oauthlib-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python-oauthlib-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python-oauthlib-main:{{revision}}
+    - name: package-name
+      value: python-oauthlib
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-oauthlib.spec"
+    - name: monorepo-subdir
+      value: "rpms/python-oauthlib"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python-oauthlib-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -39474,6 +40224,81 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- setools ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/setools/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: setools-main
+    pipelines.appstudio.openshift.io/type: build
+  name: setools-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/setools-main:{{revision}}
+    - name: package-name
+      value: setools
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "setools.spec"
+    - name: monorepo-subdir
+      value: "rpms/setools"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-setools-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- setup ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -43116,6 +43941,81 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-xcaddy-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- xfsprogs ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/xfsprogs/")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: xfsprogs-main
+    pipelines.appstudio.openshift.io/type: build
+  name: xfsprogs-main-on-push
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/xfsprogs-main:{{revision}}
+    - name: package-name
+      value: xfsprogs
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "xfsprogs.spec"
+    - name: monorepo-subdir
+      value: "rpms/xfsprogs"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-xfsprogs-main
   timeouts:
     pipeline: 4h
     tasks: 4h
