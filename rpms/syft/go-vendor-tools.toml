@@ -21,6 +21,11 @@ sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
 expression = "Apache-2.0"
 
 [[licensing.licenses]]
+path = "vendor/github.com/anchore/clio/COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
 path = "vendor/github.com/cloudflare/circl/LICENSE"
 sha256sum = "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
 expression = "BSD-3-Clause"
@@ -47,7 +52,7 @@ expression = "LicenseRef-scancode-public-domain"
 
 [[licensing.licenses]]
 path = "vendor/modernc.org/sqlite/LICENSE-3RD-PARTY.md"
-sha256sum = "b4366b9c27a9364633e015011a231913ed19bf1228f335bf617e50a6f7b168a6"
+sha256sum = "4194f8e7119be72babd499db4f6f1f7547e36e8a7bffcb2b9c8df241b8f1576a"
 expression = "Apache-2.0 AND BSD-3-Clause AND MIT AND MPL-2.0 AND LicenseRef-scancode-public-domain"
 
 [[licensing.licenses]]
