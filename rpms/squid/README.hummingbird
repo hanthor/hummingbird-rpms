@@ -1,0 +1,27 @@
+Squid in containers
+===================
+
+The core squid package contains the proxy and its disk, file logging, and
+certificate-generation helpers. It has no shell scripts or RPM scriptlets.
+The optional squid-helpers package contains authentication, external ACL,
+rewrite, and database logging helpers, including their script interpreters.
+
+Run /usr/bin/squid -N -f /etc/squid/squid.conf as the container process.
+The -N option keeps Squid in the foreground without a service manager.
+
+For container logs, set these directives in squid.conf:
+
+    access_log stdio:/dev/stdout
+    cache_log /dev/stderr
+    pid_filename none
+
+The image must provide the squid user and group, both with ID 23, as declared
+in /usr/lib/sysusers.d/squid.conf. Run Squid as that user. Mount writable
+directories at /var/log/squid and /var/spool/squid with suitable ownership.
+
+If the configuration enables a disk cache, initialize its directories with
+/usr/bin/squid -N -z -f /etc/squid/squid.conf before the main process starts.
+Use a separate container initialization step; no shell wrapper is required.
+
+The package does not include systemd, NetworkManager, Apache, or logrotate
+integration. The container runtime controls process startup and log rotation.
