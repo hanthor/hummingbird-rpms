@@ -17,7 +17,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 License: Python-2.0.1
 
 
@@ -412,6 +412,12 @@ Patch495: 00495-cve-2026-3446.patch
 #
 # gh-150751: validate http.client Content-Length and chunk-size
 Patch496: 0496-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
+
+# 00497 # 2cd10854b42f3ebe44072a501d06241fc250e161
+# CVE-2026-116566
+#
+# gh-160898: Reject null bytes in socket.getaddrinfo() host and port
+Patch497: 00497-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
 
 # (New patches go here ^^^)
 #
