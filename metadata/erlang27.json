@@ -5,8 +5,8 @@
   "fedora": {
     "git_url": "https://src.fedoraproject.org/rpms/erlang.git",
     "branch": "rawhide",
-    "sha": "f5ebb591cd13e1e9ff6f3686085e9ebc0d5d78f9",
-    "release": "2"
+    "sha": "f677b2d53f2aec7de9b52e8a68026c7b43c2f160",
+    "release": "3"
   },
   "modification_reason": "Update to upstream version 27.3.4.19",
   "track_upstream": "27",
