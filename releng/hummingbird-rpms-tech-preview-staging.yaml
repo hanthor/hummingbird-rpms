@@ -1123,6 +1123,8 @@ spec:
           contentType: rpm
         - name: sqlite-main
           contentType: rpm
+        - name: squid-main
+          contentType: rpm
         - name: subversion-main
           contentType: rpm
         - name: sudo-main
