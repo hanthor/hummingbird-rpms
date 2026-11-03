@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/hdf5.git",
     "sha": "1e302c76d38e567d7f856d27eb233da2b0f41fe2"
   },
-  "modification_reason": "Backport CVE-2026-19025 (mismatched chunk/dataspace rank at open); backport CVE-2026-19026, CVE-2026-19027, CVE-2026-19028 (N-Bit/Fletcher32 filter decode crashes); backport CVE-2026-19024 (H5Pget_fill_value NULL ptr deref, render_bin_output vlen SIGSEGV); previously updated to upstream 2.2.0",
+  "modification_reason": "Backport CVE-2026-19025 (mismatched chunk/dataspace rank at open); backport CVE-2026-19026, CVE-2026-19027, CVE-2026-19028 (N-Bit/Fletcher32 filter decode crashes); backport CVE-2026-19024 (H5Pget_fill_value NULL ptr deref, render_bin_output vlen SIGSEGV); backport CVE-2026-120756 (H5O__chunk_deserialize heap buffer over-read); backport CVE-2026-120758 (H5HL_unprotect NULL ptr deref); backport CVE-2026-120757 (H5L__extern_traverse heap buffer over-read); previously updated to upstream 2.2.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 1303,
   "track_upstream": "latest",
