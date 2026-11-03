@@ -8,6 +8,6 @@
   "modification_status": "clean",
   "release_monitoring_project_id": 4880,
   "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/squid",
+  "upstream_repo": "https://github.com/squid-cache/squid",
   "version": "7.7"
 }
