@@ -32,6 +32,7 @@ is JIRA_TOKEN plus JIRA_URL or rhjira's JIRA_SERVER / JIRA_EMAIL from
 
 import argparse
 import json
+import subprocess
 import sys
 import urllib.error
 from dataclasses import asdict
@@ -101,7 +102,7 @@ from lib.investigate import (  # noqa: E402
     strip_only_keyword,
     ticket_has_task_or_mr,
 )
-from lib.log import export_agent_log  # noqa: E402
+from lib.log import export_agent_log, export_claude_session_remote  # noqa: E402
 from lib.comments import (  # noqa: E402
     _add_comment_template_arguments,
     _emit_comment_body,
@@ -529,6 +530,16 @@ def build_parser() -> argparse.ArgumentParser:
         "then ~/.cursor/projects/<slug>/agent-transcripts/, preferring the "
         "newer source. Pass a composer id or agent-transcript uuid to select "
         "a specific session.",
+    )
+    log_cmd.add_argument(
+        "--claude-host",
+        default=None,
+        metavar="HOST",
+        help="SSH host where Claude Code session files live. When set, the "
+        "session JSONL is fetched from HOST:~/.claude/projects/<cwd>/ via "
+        "SSH instead of looking locally. Use when Claude runs on a different "
+        "machine than the one running cve_helper.py. Optionally combine with "
+        "--claude PATH to target a specific remote path.",
     )
     log_cmd.add_argument(
         "--print-only",
@@ -1092,28 +1103,67 @@ def cmd_release_bump(args: argparse.Namespace) -> int:
     return 0
 
 
+def _read_git_claudehost() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True,
+        )
+        f = Path(result.stdout.strip()) / ".git" / "claudehost"
+        return f.read_text().strip() or None if f.is_file() else None
+    except (subprocess.CalledProcessError, OSError):
+        return None
+
+
 def cmd_log_message(args: argparse.Namespace) -> int:
     file_path = args.file
-    agent_values = {
-        "opencode": args.opencode,
-        "claude": args.claude,
-        "cursor": args.cursor,
-    }
-    selected = {name: val for name, val in agent_values.items() if val is not None}
-    if selected:
-        if file_path is not None:
-            names = "/".join(f"--{n}" for n in selected)
-            print(f"error: pass either FILE or {names}, not both", file=sys.stderr)
+    claude_host: str | None = getattr(args, "claude_host", None)
+
+    if claude_host is not None:
+        if file_path is not None or args.opencode is not None or args.cursor is not None:
+            print(
+                "error: --claude-host cannot be combined with FILE, --opencode, or --cursor",
+                file=sys.stderr,
+            )
             return 2
-        ((agent, session_id),) = selected.items()
-        file_path = export_agent_log(agent, session_id or None)
-        print(f"Exported {agent} session -> {file_path}")
-    elif file_path is None:
-        print(
-            "error: FILE or one of --opencode/--claude/--cursor is required",
-            file=sys.stderr,
-        )
-        return 2
+        remote_path: str | None = args.claude if args.claude else None
+        file_path = export_claude_session_remote(claude_host, remote_path)
+        print(f"Exported claude session from {claude_host} -> {file_path}")
+    else:
+        agent_values = {
+            "opencode": args.opencode,
+            "claude": args.claude,
+            "cursor": args.cursor,
+        }
+        selected = {name: val for name, val in agent_values.items() if val is not None}
+        if selected:
+            if file_path is not None:
+                names = "/".join(f"--{n}" for n in selected)
+                print(f"error: pass either FILE or {names}, not both", file=sys.stderr)
+                return 2
+            ((agent, session_id),) = selected.items()
+            try:
+                file_path = export_agent_log(agent, session_id or None)
+                print(f"Exported {agent} session -> {file_path}")
+            except RuntimeError as e:
+                if agent == "claude" and "No Claude Code session files found" in str(e):
+                    claude_host = _read_git_claudehost()
+                    cmd = (
+                        "python .agents/skills/cve/cve_helper.py "
+                        f"log-message {args.ticket} --claude"
+                    )
+                    if args.print_only:
+                        cmd += " --print-only"
+                    where = claude_host or "your Claude host"
+                    print(f"Run on {where}, from the RPMs repository root:\n  {cmd}")
+                    return 0
+                raise
+        elif file_path is None:
+            print(
+                "error: FILE or one of --opencode/--claude/--cursor/--claude-host is required",
+                file=sys.stderr,
+            )
+            return 2
 
     target_file, msg = log_message(
         ticket=args.ticket,

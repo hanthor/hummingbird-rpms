@@ -8,6 +8,7 @@ import sys
 import time
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 ROOT = Path(__file__).resolve().parent.parent
 HELPER_PATH = ROOT / ".agents" / "skills" / "cve" / "cve_helper.py"
@@ -1696,6 +1697,168 @@ def test_log_message_cli(tmp_path: Path) -> None:
         ]
     )
     assert rc == 0
+
+
+def test_log_message_claude_host(tmp_path: Path, monkeypatch) -> None:
+    """--claude-host SSHes to the remote host and fetches the session JSONL."""
+    import lib.log as lib_log
+
+    fake_jsonl = json.dumps(
+        {
+            "type": "assistant",
+            "message": {"role": "assistant", "content": "hello from remote"},
+        }
+    )
+    fake_remote_path = "/home/prarit/.claude/projects/-home-prarit-hummingbird-rpms/abc123.jsonl"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock()
+        result.returncode = 0
+        result.stdout = (
+            fake_remote_path if cmd[-1].startswith("ls ") else fake_jsonl
+        )
+        return result
+
+    monkeypatch.setattr(lib_log.subprocess, "run", fake_run)
+
+    out_file = tmp_path / "out.txt"
+    exported = lib_log.export_claude_session_remote(
+        "prarit.bos.redhat.com", out_path=out_file
+    )
+    assert exported == out_file
+    content = out_file.read_text()
+    assert "ASSISTANT" in content
+    assert "hello from remote" in content
+
+
+def test_log_message_claude_fallback(tmp_path: Path, monkeypatch, capsys) -> None:
+    """--claude prints a ready-to-paste command when session files are not found locally."""
+    import lib.log as lib_log
+
+    monkeypatch.setattr(
+        lib_log,
+        "_claude_find_latest_jsonl",
+        lambda *a, **k: (_ for _ in ()).throw(
+            RuntimeError("No Claude Code session files found for /repo under /home/user/.claude/projects")
+        ),
+    )
+
+    claudehost = tmp_path / "claudehost"
+    claudehost.write_text("myhost.example.com")
+
+    monkeypatch.setattr(
+        helper,
+        "_read_git_claudehost",
+        lambda: "myhost.example.com",
+    )
+
+    rc = helper.main(["log-message", "HUM-9999", "--claude"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "myhost.example.com" in out
+    assert "HUM-9999" in out
+    assert "--claude" in out
+    assert "python .agents/skills/cve/cve_helper.py log-message HUM-9999 --claude" in out
+    assert "repository root" in out
+    assert "--print-only" not in out
+
+    # --print-only must be preserved in the suggested retry.
+    rc = helper.main(["log-message", "HUM-9999", "--claude", "--print-only"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "log-message HUM-9999 --claude --print-only" in out
+
+
+def test_export_claude_session_remote_quotes_fetch_path(monkeypatch) -> None:
+    """Paths with spaces/metacharacters are shell-quoted for the remote cat."""
+    import shlex
+
+    import lib.log as lib_log
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        result = MagicMock()
+        result.returncode = 0
+        result.stdout = json.dumps(
+            {"type": "assistant", "message": {"role": "assistant", "content": "x"}}
+        )
+        return result
+
+    monkeypatch.setattr(lib_log.subprocess, "run", fake_run)
+
+    explicit = "/home/user/Claude Projects/s;touch pwned$(id).jsonl"
+    lib_log.export_claude_session_remote("host", explicit)
+    assert calls[-1] == ["ssh", "host", f"cat {shlex.quote(explicit)}"]
+
+    # Discovered paths are quoted as well.
+    discovered = "/home/user/My Projects/abc.jsonl"
+
+    def fake_run_discover(cmd, **kwargs):
+        calls.append(cmd)
+        result = MagicMock()
+        result.returncode = 0
+        result.stdout = (
+            discovered
+            if cmd[-1].startswith("ls")
+            else json.dumps({"type": "assistant", "message": {"role": "assistant", "content": "x"}})
+        )
+        return result
+
+    monkeypatch.setattr(lib_log.subprocess, "run", fake_run_discover)
+    lib_log.export_claude_session_remote("host")
+    assert calls[-1] == ["ssh", "host", f"cat {shlex.quote(discovered)}"]
+
+
+def test_log_message_claude_host_no_session(monkeypatch) -> None:
+    """Empty ls output raises RuntimeError with a clear message."""
+    import lib.log as lib_log
+
+    def fake_run_empty(cmd, **kwargs):
+        result = MagicMock()
+        result.returncode = 1
+        result.stdout = ""
+        result.stderr = ""
+        return result
+
+    monkeypatch.setattr(lib_log.subprocess, "run", fake_run_empty)
+
+    with pytest.raises(RuntimeError, match="No Claude Code session files found"):
+        lib_log.export_claude_session_remote("remote.host.example.com")
+
+
+def test_log_message_claude_host_ssh_error_surfaced(monkeypatch) -> None:
+    """SSH stderr is included when no session path is discovered."""
+    import lib.log as lib_log
+
+    def fake_run_ssh_fail(cmd, **kwargs):
+        result = MagicMock()
+        result.returncode = 255
+        result.stdout = ""
+        result.stderr = "Permission denied (publickey)."
+        return result
+
+    monkeypatch.setattr(lib_log.subprocess, "run", fake_run_ssh_fail)
+
+    with pytest.raises(RuntimeError, match="Permission denied"):
+        lib_log.export_claude_session_remote("remote.host.example.com")
+
+
+def test_log_message_claude_host_conflict(capsys) -> None:
+    """--claude-host combined with --opencode returns rc=2 and prints an error."""
+    args = SimpleNamespace(
+        file=None,
+        claude_host="remote.host",
+        claude=None,
+        opencode="some-session",
+        cursor=None,
+        ticket="HUM-9999",
+        print_only=False,
+    )
+    rc = helper.cmd_log_message(args)
+    assert rc == 2
+    assert "--claude-host cannot be combined" in capsys.readouterr().err
 
 
 # ---- HUM-6847: exact NVR matching and NAB evidence gate ----
