@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/NetworkManager.git",
-    "release": "4",
-    "sha": "6b6bf980bda214804472280cf4f146c309e8bf51"
+    "release": "5",
+    "sha": "9a3d9febc04bbfe1ae6d242590d8a992f42d0e1d"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 21197,
