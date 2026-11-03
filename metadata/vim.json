@@ -3,10 +3,10 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/vim.git",
     "release": "1",
-    "sha": "0a97d98c98a7362617ad826630b95df9d782d524"
+    "sha": "b432bbc9eb0a935c8e486646632e7940c1c054a9"
   },
   "modification_reason": "gorget source-pipeline.yaml (HUM-4620): ftp.vim.org decommissioned, fetching from git tag instead",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/vim/vim",
-  "version": "9.2.1129"
+  "version": "9.2.1202"
 }
