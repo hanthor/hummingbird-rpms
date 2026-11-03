@@ -3,16 +3,15 @@
   "fedora": {
     "branch": "f43",
     "git_url": "https://src.fedoraproject.org/rpms/java-21-openjdk.git",
-    "release": "1.0",
     "sha": "6c809afd8edfcdc4d9f65d656e9048afa73015f6"
   },
-  "modification_reason": "Update to upstream version 21.0.12.0.8",
+  "modification_reason": "Update to upstream version 21.0.13.0.9",
   "modification_status": "modified",
   "release_monitoring_project_id": 369281,
   "source_availability_check": "openjdk_osci",
   "track_upstream": "21",
   "upstream_repo": "https://github.com/openjdk/jdk21u",
   "upstream_version_transform": "openjdk_to_rpm",
-  "version": "21.0.12.1.1",
+  "version": "21.0.13.0.9",
   "version_transform": "openjdk_to_oracle"
 }
