@@ -435,6 +435,9 @@ maven3.9:
 memcached:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+mokutil:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nats-server2.12:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

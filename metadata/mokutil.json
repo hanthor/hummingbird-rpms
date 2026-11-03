@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/mokutil.git",
-    "release": "7",
     "sha": "792347d8d84487c87fac94ed876d93367a395179"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 0.7.3",
+  "modification_status": "modified",
   "release_monitoring_project_id": 246006,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/lcp/mokutil",
-  "version": "0.7.2"
+  "version": "0.7.3"
 }
