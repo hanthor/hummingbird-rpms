@@ -1121,8 +1121,9 @@ def cmd_log_message(args: argparse.Namespace) -> int:
         print_only=args.print_only,
     )
     print(f"Log: {target_file}")
-    if not args.print_only:
-        print(msg)
+    # Always print msg, even in --print-only mode: it carries the secret
+    # redaction note, which matters most when the user is previewing.
+    print(msg)
     return 0
 
 

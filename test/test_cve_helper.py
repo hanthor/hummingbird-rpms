@@ -30,6 +30,7 @@ import lib.comments as lib_comments  # noqa: E402
 import lib.investigate as lib_investigate  # noqa: E402
 import lib.jira as lib_jira  # noqa: E402
 import lib.models as lib_models  # noqa: E402
+import lib.redact as lib_redact  # noqa: E402
 import lib.sbom as lib_sbom  # noqa: E402
 import lib.spec as lib_spec  # noqa: E402
 import lib.utils as lib_utils  # noqa: E402
@@ -1643,6 +1644,261 @@ def test_cmd_close_nab_without_tickets_or_print_only_raises() -> None:
     )
     with pytest.raises(RuntimeError, match="Pass HUM ticket key"):
         helper.cmd_close_nab(args)
+
+
+def test_redact_secrets_leaves_clean_text_unchanged() -> None:
+    text = "# My Investigation Log\nAll steps completed.\n"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert redacted == text
+    assert count == 0
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_substring", "secret_value"),
+    [
+        ('password = "hunter2hunter2"', 'password = "[SECRET]"', "hunter2hunter2"),
+        ("password: hunter2hunter2", "password: [SECRET]", "hunter2hunter2"),
+        ("DB_PASSWORD=supersecretvalue", "DB_PASSWORD=[SECRET]", "supersecretvalue"),
+        (
+            "aws_secret_access_key: abcd1234efgh5678ijkl",
+            "aws_secret_access_key: [SECRET]",
+            "abcd1234efgh5678ijkl",
+        ),
+        ("api_key='sk-abcdefghijklmnop'", "api_key='[SECRET]'", "sk-abcdefghijklmnop"),
+        ("JIRA_TOKEN=abcdef0123456789", "JIRA_TOKEN=[SECRET]", "abcdef0123456789"),
+        # Quoted JSON key.
+        (
+            '"password": "hunter2hunter2"',
+            '"password": "[SECRET]"',
+            "hunter2hunter2",
+        ),
+        # Quoted JSON key/value embedded in a larger object.
+        (
+            '{"user": "bob", "api_key": "sk-abcdefghijklmnop", "ok": true}',
+            '"api_key": "[SECRET]"',
+            "sk-abcdefghijklmnop",
+        ),
+        # Quoted value containing spaces -- only delimitable because it's quoted.
+        (
+            '"client_secret": "a secret phrase with spaces in it"',
+            '"client_secret": "[SECRET]"',
+            "a secret phrase with spaces in it",
+        ),
+    ],
+)
+def test_redact_secrets_generic_assignment(
+    text: str, expected_substring: str, secret_value: str
+) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert expected_substring in redacted
+    assert secret_value not in redacted
+
+
+# Regression guards for the exact examples raised in MR review (jstibran):
+# quoted JSON keys and quoted values containing internal spaces previously
+# survived unredacted.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ('{"password": "supersecretvalue"}', '{"password": "[SECRET]"}'),
+        ('password="super secret value"', 'password="[SECRET]"'),
+        ("password='super secret value'", "password='[SECRET]'"),
+    ],
+)
+def test_redact_secrets_reviewer_reported_gaps(text: str, expected: str) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert redacted == expected
+
+
+def test_redact_secrets_github_token() -> None:
+    text = "remote: ghp_" + "a" * 36
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "[SECRET]" in redacted
+    assert "ghp_" not in redacted
+
+
+def test_redact_secrets_aws_access_key_id() -> None:
+    text = "AWS_ACCESS_KEY_ID=AKIAABCDEFGHIJKLMNOP"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert "AKIAABCDEFGHIJKLMNOP" not in redacted
+    assert "[SECRET]" in redacted
+
+
+def test_redact_secrets_jwt() -> None:
+    jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dQw4w9WgXcQ_dQw4w9WgXcQ"
+    text = f"Authorization token: {jwt}"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count >= 1
+    assert jwt not in redacted
+    assert "[SECRET]" in redacted
+
+
+def test_redact_secrets_bearer_header() -> None:
+    text = "curl -H 'Authorization: Bearer abc123.def456-token'"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "abc123.def456-token" not in redacted
+    assert "Authorization: Bearer [SECRET]" in redacted
+
+
+def test_redact_secrets_url_credentials() -> None:
+    text = "git clone https://myuser:mysecretpass@example.com/repo.git"
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "mysecretpass" not in redacted
+    assert "myuser" not in redacted
+    assert "https://[SECRET]@example.com/repo.git" in redacted
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "token_count: 1000000",
+        "num_tokens: 150",
+        "password_attempts: 999",
+        "access_key_age_days: 365",
+        "token_present: true",
+        "has_secret: false",
+    ],
+)
+def test_redact_secrets_numeric_and_boolean_counters_not_redacted(text: str) -> None:
+    redacted, count = lib_redact.redact_secrets(text)
+    assert redacted == text
+    assert count == 0
+
+
+def test_redact_secrets_vendor_token_in_assignment_not_double_counted() -> None:
+    text = "GH_TOKEN=" + "ghp_" + "a" * 36
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert "[SECRET]" in redacted
+    assert "ghp_" not in redacted
+
+
+def test_redact_secrets_private_key_block() -> None:
+    text = (
+        "-----BEGIN RSA PRIVATE KEY-----\n"
+        "MIIBOgIBAAJBAK...\n"
+        "-----END RSA PRIVATE KEY-----"
+    )
+    redacted, count = lib_redact.redact_secrets(text)
+    assert count == 1
+    assert redacted == "[SECRET]"
+
+
+def test_write_redacted_copy_does_not_touch_original(tmp_path: Path) -> None:
+    original = tmp_path / "session.jsonl"
+    original.write_text("password=supersecretvalue", encoding="utf-8")
+    copy_path = lib_redact.write_redacted_copy(original, "password=[SECRET]")
+    assert copy_path != original
+    assert copy_path.suffix == ".jsonl"
+    assert copy_path.read_text(encoding="utf-8") == "password=[SECRET]"
+    assert original.read_text(encoding="utf-8") == "password=supersecretvalue"
+
+
+def test_log_message_redacts_secrets_before_attach(tmp_path: Path, monkeypatch) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text(
+        "# Investigation\npassword=supersecretvalue\nAll done.\n", encoding="utf-8"
+    )
+
+    calls: list[list[str]] = []
+    captured_content: list[str] = []
+
+    def fake_rhjira(args, *, cwd=None):
+        calls.append(args)
+        # Capture the attached file's content now: the real code deletes the
+        # redacted scratch copy right after this call returns.
+        captured_content.append(Path(args[2]).read_text(encoding="utf-8"))
+        return SimpleNamespace(returncode=0, stdout="attached", stderr="")
+
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
+
+    out_file, msg = lib_investigate.log_message("HUM-1234", log_file)
+
+    # The original file is always what's returned, never the scratch copy.
+    assert out_file == log_file
+    assert "Redacted 1 potential secret" in msg
+    assert "Attached" in msg
+    attached_path = Path(calls[0][2])
+    assert attached_path != log_file
+    assert "supersecretvalue" not in captured_content[0]
+    assert "[SECRET]" in captured_content[0]
+    # The redacted scratch copy is cleaned up after a successful attach.
+    assert not attached_path.exists()
+    # Original file on disk is left untouched.
+    assert "supersecretvalue" in log_file.read_text(encoding="utf-8")
+
+
+def test_log_message_attach_failure_still_cleans_up_scratch_copy(
+    tmp_path: Path, monkeypatch
+) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text("password=supersecretvalue", encoding="utf-8")
+
+    scratch_paths: list[Path] = []
+
+    def fake_rhjira(args, *, cwd=None):
+        scratch_paths.append(Path(args[2]))
+        return SimpleNamespace(returncode=1, stdout="", stderr="boom")
+
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        lib_investigate.log_message("HUM-1234", log_file)
+
+    assert scratch_paths and not scratch_paths[0].exists()
+
+
+def test_log_message_print_only_does_not_write_a_file(
+    tmp_path: Path, monkeypatch
+) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_text("token: abcdef0123456789", encoding="utf-8")
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError(
+            "write_redacted_copy must not run in --print-only mode"
+        )
+
+    monkeypatch.setattr(lib_investigate, "write_redacted_copy", fail_if_called)
+
+    out_file, msg = lib_investigate.log_message(
+        "HUM-9999", log_file, print_only=True
+    )
+
+    assert out_file == log_file
+    assert "Redacted 1 potential secret" in msg
+    assert "print-only" in msg.lower()
+
+
+def test_log_message_non_utf8_file_is_rejected(tmp_path: Path, monkeypatch) -> None:
+    log_file = tmp_path / "transcript.md"
+    # Invalid UTF-8 byte sequence (plus a password= string that can't be
+    # scanned) -- the file must be refused, never uploaded unscanned.
+    content = b"password=supersecretvalue\xff\xfe binary garbage"
+    log_file.write_bytes(content)
+
+    def fail_rhjira(*a, **k):
+        raise AssertionError("rhjira must not run for non-UTF-8 files")
+
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fail_rhjira)
+
+    with pytest.raises(ValueError, match="not valid UTF-8"):
+        lib_investigate.log_message("HUM-1234", log_file)
+    assert log_file.read_bytes() == content
+
+
+def test_log_message_non_utf8_file_print_only_is_rejected(tmp_path: Path) -> None:
+    log_file = tmp_path / "transcript.md"
+    log_file.write_bytes(b"\xff\xfe not valid utf-8")
+
+    with pytest.raises(ValueError, match="not valid UTF-8"):
+        lib_investigate.log_message("HUM-9999", log_file, print_only=True)
 
 
 def test_log_message_with_existing_file(tmp_path: Path, monkeypatch) -> None:
