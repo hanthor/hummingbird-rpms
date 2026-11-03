@@ -133,7 +133,7 @@ check:
 # documentation/background/rpm-pipeline.md for details and known
 # limitations (private products, the inherent race window).
 check_nevr_conflicts:
-  tags: [hum-1cpu-256m]
+  tags: [hum-1cpu-512m]
   needs: ["check"]
   script:
     # Ensure the target branch ref is available locally for the MR diff.
