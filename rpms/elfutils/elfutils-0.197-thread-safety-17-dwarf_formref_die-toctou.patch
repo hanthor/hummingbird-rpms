@@ -1,0 +1,33 @@
+From 89d5fa985bb074a25d635431f0e914b7e84d8125 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 12:08:06 -0400
+Subject: [PATCH] dwarf_formref_die.c: Avoid TOCTOU race in dwarf_formref_die
+
+dwarf_formref_die acquires attr->cu->dbg->dwarf_lock before interning a
+CU.  After acquiring there is a missing check for whether another thread
+interned the CU while the current thread was waiting for the lock.  Add
+this check.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libdw/dwarf_formref_die.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libdw/dwarf_formref_die.c b/libdw/dwarf_formref_die.c
+index 1bedf5e9..15aea2f6 100644
+--- a/libdw/dwarf_formref_die.c
++++ b/libdw/dwarf_formref_die.c
+@@ -95,7 +95,9 @@ dwarf_formref_die (Dwarf_Attribute *attr, Dwarf_Die *result)
+ 	  do
+ 	    {
+ 	      mutex_lock (attr->cu->dbg->dwarf_lock);
+-	      cu = __libdw_intern_next_unit (attr->cu->dbg, scan_debug_types);
++	      cu = Dwarf_Sig8_Hash_find (&attr->cu->dbg->sig8_hash, sig);
++	      if (cu == NULL)
++		cu = __libdw_intern_next_unit (attr->cu->dbg, scan_debug_types);
+ 	      mutex_unlock (attr->cu->dbg->dwarf_lock);
+ 
+ 	      if (cu == NULL)
+-- 
+2.56.0
+

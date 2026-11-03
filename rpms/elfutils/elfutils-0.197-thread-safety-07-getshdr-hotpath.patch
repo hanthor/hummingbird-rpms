@@ -1,0 +1,123 @@
+From 3f791bd50a5c3c7bf467fe874206fde180b4e9d2 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:05:35 -0400
+Subject: [PATCH] gelf_getshdr.c, elfNN_getshdr.c: Remove hotpath locks
+
+Check whether the target shdr has already been loaded without using
+scn->elf->lock.  Otherwise use this lock only for the one-time lazy
+loading of the shdr.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libelf/elf32_getshdr.c | 21 ++++++++++++++-------
+ libelf/gelf_getshdr.c  | 33 ++++++++++++++++++++-------------
+ 2 files changed, 34 insertions(+), 20 deletions(-)
+
+diff --git a/libelf/elf32_getshdr.c b/libelf/elf32_getshdr.c
+index e4bebe18..02f8d2a3 100644
+--- a/libelf/elf32_getshdr.c
++++ b/libelf/elf32_getshdr.c
+@@ -196,10 +196,13 @@ load_shdr_wrlock (Elf_Scn *scn)
+       goto out;
+     }
+ 
+-  /* Set the pointers in the `scn's.  */
+-  for (size_t cnt = 0; cnt < shnum; ++cnt)
+-    elf->state.ELFW(elf,LIBELFBITS).scns.data[cnt].shdr.ELFW(e,LIBELFBITS)
+-      = &elf->state.ELFW(elf,LIBELFBITS).shdr[cnt];
++  Elf_Scn *scns = elf->state.ELFW(elf,LIBELFBITS).scns.data;
++
++  /* Set the pointers in the `scn's.  Set section 0 last to indicate that
++     all sections have been set.  */
++  for (size_t cnt = shnum; cnt > 0; --cnt)
++    atomic_store_release (&scns[cnt - 1].shdr.ELFW(e,LIBELFBITS),
++			  &elf->state.ELFW(elf,LIBELFBITS).shdr[cnt - 1]);
+ 
+   result = scn->shdr.ELFW(e,LIBELFBITS);
+   assert (result != NULL);
+@@ -275,9 +278,13 @@ elfw2(LIBELFBITS,getshdr) (Elf_Scn *scn)
+   if (!scn_valid (scn))
+     return NULL;
+ 
+-  rwlock_rdlock (scn->elf->lock);
+-  result = __elfw2(LIBELFBITS,getshdr_rdlock) (scn);
+-  rwlock_unlock (scn->elf->lock);
++  result = atomic_load_acquire (&scn->shdr.ELFW(e,LIBELFBITS));
++  if (result == NULL)
++    {
++      rwlock_wrlock (scn->elf->lock);
++      result = __elfw2(LIBELFBITS,getshdr_wrlock) (scn);
++      rwlock_unlock (scn->elf->lock);
++    }
+ 
+   return result;
+ }
+diff --git a/libelf/gelf_getshdr.c b/libelf/gelf_getshdr.c
+index 3858c8e1..2b16e502 100644
+--- a/libelf/gelf_getshdr.c
++++ b/libelf/gelf_getshdr.c
+@@ -51,18 +51,22 @@ gelf_getshdr (Elf_Scn *scn, GElf_Shdr *dst)
+       return NULL;
+     }
+ 
+-  rwlock_rdlock (scn->elf->lock);
+-
+   if (scn->elf->class == ELFCLASS32)
+     {
+       /* Copy the elements one-by-one.  */
+-      Elf32_Shdr *shdr
+-	= scn->shdr.e32 ?: __elf32_getshdr_rdlock (scn);
++      Elf32_Shdr *shdr = atomic_load_acquire (&scn->shdr.e32);
+ 
+       if (shdr == NULL)
+ 	{
+-	  __libelf_seterrno (ELF_E_INVALID_OPERAND);
+-	  goto out;
++	  rwlock_wrlock (scn->elf->lock);
++	  shdr = __elf32_getshdr_wrlock (scn);
++	  rwlock_unlock (scn->elf->lock);
++
++	  if (shdr == NULL)
++	    {
++	      __libelf_seterrno (ELF_E_INVALID_OPERAND);
++	      return NULL;
++	    }
+ 	}
+ 
+ #define COPY(name) \
+@@ -82,22 +86,25 @@ gelf_getshdr (Elf_Scn *scn, GElf_Shdr *dst)
+     }
+   else
+     {
+-      Elf64_Shdr *shdr
+-	= scn->shdr.e64 ?: __elf64_getshdr_rdlock (scn);
++      Elf64_Shdr *shdr = atomic_load_acquire (&scn->shdr.e64);
+ 
+       if (shdr == NULL)
+ 	{
+-	  __libelf_seterrno (ELF_E_INVALID_OPERAND);
+-	  goto out;
++	  rwlock_wrlock (scn->elf->lock);
++	  shdr = __elf64_getshdr_wrlock (scn);
++	  rwlock_unlock (scn->elf->lock);
++
++	  if (shdr == NULL)
++	    {
++	      __libelf_seterrno (ELF_E_INVALID_OPERAND);
++	      return NULL;
++	    }
+ 	}
+ 
+       /* We only have to copy the data.  */
+       result = memcpy (dst, shdr, sizeof (GElf_Shdr));
+     }
+ 
+- out:
+-  rwlock_unlock (scn->elf->lock);
+-
+   return result;
+ }
+ INTDEF(gelf_getshdr)
+-- 
+2.56.0
+

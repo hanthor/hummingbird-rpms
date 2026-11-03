@@ -1,0 +1,46 @@
+From 50e0475db16506294d0c5767a415f0be9eb30334 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 11:30:59 -0400
+Subject: [PATCH] libasm: Add missing rwlock_unlock for early returns
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libasm/asm_newabssym.c | 5 ++++-
+ libasm/asm_newcomsym.c | 5 ++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/libasm/asm_newabssym.c b/libasm/asm_newabssym.c
+index 728d6043..38628f5f 100644
+--- a/libasm/asm_newabssym.c
++++ b/libasm/asm_newabssym.c
+@@ -73,7 +73,10 @@ asm_newabssym (AsmCtx_t *ctx, const char *name, GElf_Xword size,
+ 
+   result = malloc (sizeof (AsmSym_t));
+   if (result == NULL)
+-    return NULL;
++    {
++      rwlock_unlock (ctx->lock);
++      return NULL;
++    }
+ 
+   result->scn = (AsmScn_t *) &__libasm_abs_scn;
+   result->size = size;
+diff --git a/libasm/asm_newcomsym.c b/libasm/asm_newcomsym.c
+index 750a1380..b4c6e82b 100644
+--- a/libasm/asm_newcomsym.c
++++ b/libasm/asm_newcomsym.c
+@@ -73,7 +73,10 @@ asm_newcomsym (AsmCtx_t *ctx, const char *name, GElf_Xword size,
+ 
+   result = malloc (sizeof (AsmSym_t));
+   if (result == NULL)
+-    return NULL;
++    {
++      rwlock_unlock (ctx->lock);
++      return NULL;
++    }
+ 
+   result->scn = (AsmScn_t *) &__libasm_com_scn;
+   result->size = size;
+-- 
+2.56.0
+

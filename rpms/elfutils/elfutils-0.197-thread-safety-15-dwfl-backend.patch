@@ -1,0 +1,159 @@
+From 5accf0ec8251992fbe137cbe554e9c76f68a40c7 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Fri, 30 Oct 2026 01:16:16 -0400
+Subject: [PATCH] libdwfl: Synchronize access to backend
+
+Store a Dwfl_Module's ebl field atomically in __libdwfl_module_getebl
+while holding the associated Dwfl load_lock.
+
+Change usage of the ebl field so that before using it's either been
+atomically read or else it's used after __libdwfl_module_getebl returns
+DWFL_E_NOERROR.
+
+In __libdwfl_getsym also initialize the backend before calling
+ebl_func_addr_mask and return early if it fails.
+
+Also fix a bug where ebl wasn't initialized before calling
+ebl_func_addr_mask.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libdwfl/dwfl_module_getdwarf.c              | 24 +++++++++++++++------
+ libdwfl/dwfl_module_getsym.c                | 24 ++++++++++++---------
+ libdwfl/dwfl_module_register_names.c        | 11 ++++------
+ libdwfl/dwfl_module_return_value_location.c | 11 ++++------
+ 4 files changed, 40 insertions(+), 30 deletions(-)
+
+diff --git a/libdwfl/dwfl_module_getdwarf.c b/libdwfl/dwfl_module_getdwarf.c
+index 6c62ee1d..eb7b3f8c 100644
+--- a/libdwfl/dwfl_module_getdwarf.c
++++ b/libdwfl/dwfl_module_getdwarf.c
+@@ -1347,17 +1347,29 @@ Dwfl_Error
+ internal_function
+ __libdwfl_module_getebl (Dwfl_Module *mod)
+ {
++  if (likely (atomic_load_acquire (&mod->ebl) != NULL))
++    return DWFL_E_NOERROR;
++
++  Dwfl_Error ret = DWFL_E_NOERROR;
++  mutex_lock (mod->dwfl->load_lock);
++
+   if (mod->ebl == NULL)
+     {
+       __libdwfl_getelf (mod);
+-      if (mod->elferr != DWFL_E_NOERROR)
+-	return mod->elferr;
++      ret = mod->elferr;
+ 
+-      mod->ebl = ebl_openbackend (mod->main.elf);
+-      if (mod->ebl == NULL)
+-	return DWFL_E_LIBEBL;
++      if (ret == DWFL_E_NOERROR)
++	{
++	  Ebl *ebl = ebl_openbackend (mod->main.elf);
++	  if (ebl == NULL)
++	    ret = DWFL_E_LIBEBL;
++	  else
++	    atomic_store_release (&mod->ebl, ebl);
++	}
+     }
+-  return DWFL_E_NOERROR;
++
++  mutex_unlock (mod->dwfl->load_lock);
++  return ret;
+ }
+ 
+ /* Try to start up libdw on DEBUGFILE.  */
+diff --git a/libdwfl/dwfl_module_getsym.c b/libdwfl/dwfl_module_getsym.c
+index 2bb07fd8..3a364a76 100644
+--- a/libdwfl/dwfl_module_getsym.c
++++ b/libdwfl/dwfl_module_getsym.c
+@@ -123,6 +123,13 @@ __libdwfl_getsym (Dwfl_Module *mod, int ndx, GElf_Sym *sym, GElf_Addr *addr,
+      might know where the real value is (e.g. for function
+      descriptors).  */
+ 
++  Dwfl_Error error = __libdwfl_module_getebl (mod);
++  if (unlikely (error != DWFL_E_NOERROR))
++    {
++      __libdwfl_seterrno (error);
++      return NULL;
++    }
++
+   char *ident;
+   GElf_Addr st_value = sym->st_value & ebl_func_addr_mask (mod->ebl);
+   *resolved = false;
+@@ -132,18 +139,15 @@ __libdwfl_getsym (Dwfl_Module *mod, int ndx, GElf_Sym *sym, GElf_Addr *addr,
+ 	      && (ident = elf_getident (elf, NULL)) != NULL
+ 	      && ident[EI_OSABI] == ELFOSABI_LINUX)))
+     {
+-      if (likely (__libdwfl_module_getebl (mod) == DWFL_E_NOERROR))
++      if (elf != mod->main.elf)
+ 	{
+-	  if (elf != mod->main.elf)
+-	    {
+-	      st_value = dwfl_adjusted_st_value (mod, elf, st_value);
+-	      st_value = dwfl_deadjust_st_value (mod, mod->main.elf, st_value);
+-	    }
+-
+-	  *resolved = ebl_resolve_sym_value (mod->ebl, &st_value);
+-	  if (! *resolved)
+-	    st_value = sym->st_value;
++	  st_value = dwfl_adjusted_st_value (mod, elf, st_value);
++	  st_value = dwfl_deadjust_st_value (mod, mod->main.elf, st_value);
+ 	}
++
++      *resolved = ebl_resolve_sym_value (mod->ebl, &st_value);
++      if (! *resolved)
++	st_value = sym->st_value;
+     }
+ 
+   if (shndxp != NULL)
+diff --git a/libdwfl/dwfl_module_register_names.c b/libdwfl/dwfl_module_register_names.c
+index 9ea09371..a8aa8a65 100644
+--- a/libdwfl/dwfl_module_register_names.c
++++ b/libdwfl/dwfl_module_register_names.c
+@@ -43,14 +43,11 @@ dwfl_module_register_names (Dwfl_Module *mod,
+   if (unlikely (mod == NULL))
+     return -1;
+ 
+-  if (unlikely (mod->ebl == NULL))
++  Dwfl_Error error = __libdwfl_module_getebl (mod);
++  if (unlikely (error != DWFL_E_NOERROR))
+     {
+-      Dwfl_Error error = __libdwfl_module_getebl (mod);
+-      if (error != DWFL_E_NOERROR)
+-	{
+-	  __libdwfl_seterrno (error);
+-	  return -1;
+-	}
++      __libdwfl_seterrno (error);
++      return -1;
+     }
+ 
+   int nregs = ebl_register_info (mod->ebl, -1, NULL, 0,
+diff --git a/libdwfl/dwfl_module_return_value_location.c b/libdwfl/dwfl_module_return_value_location.c
+index ff6f56f8..8a3e63a9 100644
+--- a/libdwfl/dwfl_module_return_value_location.c
++++ b/libdwfl/dwfl_module_return_value_location.c
+@@ -40,14 +40,11 @@ dwfl_module_return_value_location (Dwfl_Module *mod, Dwarf_Die *functypedie,
+   if (mod == NULL)
+     return -1;
+ 
+-  if (mod->ebl == NULL)
++  Dwfl_Error error = __libdwfl_module_getebl (mod);
++  if (error != DWFL_E_NOERROR)
+     {
+-      Dwfl_Error error = __libdwfl_module_getebl (mod);
+-      if (error != DWFL_E_NOERROR)
+-	{
+-	  __libdwfl_seterrno (error);
+-	  return -1;
+-	}
++      __libdwfl_seterrno (error);
++      return -1;
+     }
+ 
+   int nops = ebl_return_value_location (mod->ebl, functypedie, locops);
+-- 
+2.56.0
+

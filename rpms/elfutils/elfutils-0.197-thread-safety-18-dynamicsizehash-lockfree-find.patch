@@ -1,0 +1,252 @@
+From eef98f2a160f6a6725b48ebe1f561c0b97eeefe7 Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:05:38 -0400
+Subject: [PATCH] lib/dynamicsizehash_concurrent.c: Implement lock-free lookups
+
+libdw's concurrent hash tables currently take an rwlock for every
+FIND operation, adding significant overhead for FIND-heavy workloads.
+
+Modify FIND to avoid taking a lock when the hash table isn't being
+resized.  To ensure that table pointers always remain valid for all
+threads, do not free the prior table when allocating a new one during
+resize.  All tables are freed during the hash table FREE operation.
+Excess memory consumed by old tables is always less than the size
+of the current table.
+
+dwflst_tracker_end now calls hash table FREE to ensure that all
+tables are freed.  Previously it manually freed the hash table.
+
+To facilitate this lock-free design, entry 0 of a hash table now
+stores its size and a pointer to the hash table used before the
+last resize (if any).
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ lib/dynamicsizehash_concurrent.c            | 89 +++++++++++++++------
+ lib/dynamicsizehash_concurrent.h            |  5 +-
+ libdwfl_stacktrace/dwflst_process_tracker.c |  6 +-
+ 3 files changed, 71 insertions(+), 29 deletions(-)
+
+diff --git a/lib/dynamicsizehash_concurrent.c b/lib/dynamicsizehash_concurrent.c
+index 2ea545e0..e5222bb3 100644
+--- a/lib/dynamicsizehash_concurrent.c
++++ b/lib/dynamicsizehash_concurrent.c
+@@ -38,35 +38,37 @@
+    TYPE      data type of the hash table entries
+  */
+ 
++/* Name of the table entry type.  */
++#define ENTRY(name) _ENTRY (name)
++#define _ENTRY(name) \
++  name##_ent
+ 
+ static size_t
+-lookup (NAME *htab, HASHTYPE hval)
++lookup (ENTRY(NAME) *table, size_t size, HASHTYPE hval)
+ {
+   /* First hash function: simply take the modulus but prevent zero.  Small values
+       can skip the division, which helps performance when this is common.  */
+-  size_t idx = 1 + (hval < htab->size ? hval : hval % htab->size);
++  size_t idx = 1 + (hval < size ? hval : hval % size);
+ 
+   HASHTYPE hash;
+ 
+-  hash = atomic_load_explicit(&htab->table[idx].hashval,
+-                              memory_order_acquire);
++  hash = atomic_load_explicit(&table[idx].hashval, memory_order_acquire);
+   if (hash == hval)
+     return idx;
+   else if (hash == 0)
+     return 0;
+ 
+   /* Second hash function as suggested in [Knuth].  */
+-  HASHTYPE second_hash = 1 + hval % (htab->size - 2);
++  HASHTYPE second_hash = 1 + hval % (size - 2);
+ 
+   for(;;)
+     {
+       if (idx <= second_hash)
+-          idx = htab->size + idx - second_hash;
++          idx = size + idx - second_hash;
+       else
+           idx -= second_hash;
+ 
+-      hash = atomic_load_explicit(&htab->table[idx].hashval,
+-                                  memory_order_acquire);
++      hash = atomic_load_explicit(&table[idx].hashval, memory_order_acquire);
+       if (hash == hval)
+ 	return idx;
+       else if (hash == 0)
+@@ -254,7 +256,7 @@ static void resize_helper(NAME *htab, int blocking)
+ 
+ /* Called by the main thread holding the htab->resize_rwl lock to
+    coordinate the moving of hash table data. Allocates the new hash
+-   table and frees the old one when moving all data is done.  */
++   table.  */
+ static void
+ resize_coordinator(NAME *htab)
+ {
+@@ -262,8 +264,17 @@ resize_coordinator(NAME *htab)
+   htab->old_table = htab->table;
+ 
+   htab->size = next_prime(htab->size * 2);
+-  htab->table = malloc((1 + htab->size) * sizeof(htab->table[0]));
+-  assert(htab->table);
++
++  ENTRY(NAME) *table = malloc((1 + htab->size) * sizeof(htab->table[0]));
++  assert(table);
++
++  /* Store this table's size with the table itself.  */
++  atomic_init (&table[0].hashval, htab->size);
++
++  /* Preserve old_table in case other threads are reading it.  */
++  atomic_init (&table[0].val_ptr, (uintptr_t) htab->old_table);
++
++  __atomic_store_n(&htab->table, table, __ATOMIC_RELEASE);
+ 
+   /* Change state from ALLOCATING_MEMORY to MOVING_DATA */
+   atomic_fetch_xor_explicit(&htab->resizing_state,
+@@ -288,12 +299,9 @@ resize_coordinator(NAME *htab)
+   atomic_store_explicit(&htab->next_move_block, 0, memory_order_relaxed);
+   atomic_store_explicit(&htab->num_moved_blocks, 0, memory_order_relaxed);
+ 
+-  free(htab->old_table);
+-
+   /* Change state to NO_RESIZING */
+   atomic_fetch_xor_explicit(&htab->resizing_state, CLEANING ^ NO_RESIZING,
+-                            memory_order_relaxed);
+-
++                            memory_order_release);
+ }
+ 
+ /* Called by any thread that wants to do an insert or find operation
+@@ -369,7 +377,12 @@ INIT(NAME) (NAME *htab, size_t init_size)
+   if (htab->table == NULL)
+       return -1;
+ 
+-  for (size_t i = 0; i <= init_size; i++)
++  /* Entry zero stores the size of this table as well as the previous table
++     used prior to the last resize (NULL in this case).  */
++  atomic_init(&htab->table[0].hashval, (uintptr_t) init_size);
++  atomic_init(&htab->table[0].val_ptr, (uintptr_t) NULL);
++
++  for (size_t i = 1; i <= init_size; i++)
+     {
+       atomic_init(&htab->table[i].hashval, (uintptr_t) NULL);
+       atomic_init(&htab->table[i].val_ptr, (uintptr_t) NULL);
+@@ -386,7 +399,16 @@ name##_free
+ FREE(NAME) (NAME *htab)
+ {
+   pthread_rwlock_destroy(&htab->resize_rwl);
+-  free (htab->table);
++
++  ENTRY(NAME) *cur = htab->table;
++  while (cur != NULL)
++    {
++      ENTRY(NAME) *t = cur;
++      cur = (ENTRY(NAME) *) atomic_load_explicit(&cur[0].val_ptr,
++                                                  memory_order_relaxed);
++      free (t);
++    }
++
+   return 0;
+ }
+ 
+@@ -470,17 +492,38 @@ TYPE
+   name##_find
+ FIND(NAME) (NAME *htab, HASHTYPE hval)
+ {
+-  /* If we cannot get the resize_rwl lock someone is resizing
+-     the hash table, try to help out by moving table data.  */
+-  while (pthread_rwlock_tryrdlock(&htab->resize_rwl) != 0)
+-    resize_worker(htab);
++  size_t idx = 0;
+ 
+-  size_t idx;
++  /* Snapshot of the current table.  This pointer stays valid even if a
++     new table is allocated during resize.  */
++  ENTRY(NAME) *table = __atomic_load_n(&htab->table, __ATOMIC_ACQUIRE);
+ 
+   /* Make the hash data nonzero.  */
+   hval = hval ?: 1;
+-  idx = lookup(htab, hval);
+ 
++  /* Make sure the current table isn't in the middle of a resize with
++     uninitialized entries present.  */
++  if (atomic_load_explicit(&htab->resizing_state, memory_order_acquire)
++      == NO_RESIZING)
++    {
++      size_t size = atomic_load_explicit(&table[0].hashval,
++                                         memory_order_acquire);
++
++      /* Lock-free check for whether the entry is present.  */
++      idx = lookup(table, size, hval);
++
++      if (idx == 0)
++        return NULL;
++      return (TYPE) atomic_load_explicit(&table[idx].val_ptr,
++                                         memory_order_acquire);
++    }
++
++  /* If we cannot get the resize_rwl lock someone is resizing
++     the hash table, try to help out by moving table data.  */
++  while (pthread_rwlock_tryrdlock(&htab->resize_rwl) != 0)
++    resize_worker(htab);
++
++  idx = lookup(htab->table, htab->size, hval);
+   if (idx == 0)
+     {
+       pthread_rwlock_unlock(&htab->resize_rwl);
+diff --git a/lib/dynamicsizehash_concurrent.h b/lib/dynamicsizehash_concurrent.h
+index be7e98f0..7dba72b9 100644
+--- a/lib/dynamicsizehash_concurrent.h
++++ b/lib/dynamicsizehash_concurrent.h
+@@ -54,8 +54,9 @@
+ /* Defined separately.  */
+ extern size_t next_prime (size_t seed);
+ 
+-
+-/* Table entry type.  */
++/* Table entry type.  Entry 0 does not hold data and is instead used
++   to store the table size and a pointer to the previous table (if a
++   resize has occurred).  */
+ #define _DYNHASHCONENTTYPE(name)       \
+   typedef struct name##_ent         \
+   {                                 \
+diff --git a/libdwfl_stacktrace/dwflst_process_tracker.c b/libdwfl_stacktrace/dwflst_process_tracker.c
+index 967c51ec..0e359e86 100644
+--- a/libdwfl_stacktrace/dwflst_process_tracker.c
++++ b/libdwfl_stacktrace/dwflst_process_tracker.c
+@@ -168,7 +168,6 @@ void dwflst_tracker_end (Dwflst_Process_Tracker *tracker)
+   /* HACK to allow iteration of dynamicsizehash_concurrent.  */
+   /* XXX Based on lib/dynamicsizehash_concurrent.c free().  */
+   rwlock_fini (tracker->elftab_lock);
+-  pthread_rwlock_destroy(&tracker->elftab.resize_rwl);
+   for (idx = 1; idx <= tracker->elftab.size; idx++)
+     {
+       dwflst_tracker_elftab_ent *ent = &tracker->elftab.table[idx];
+@@ -184,11 +183,10 @@ void dwflst_tracker_end (Dwflst_Process_Tracker *tracker)
+ 	elf_end(t->elf);
+       free(t); /* TODO: Check necessity. */
+     }
+-  free (tracker->elftab.table);
++  dwflst_tracker_elftab_free (&tracker->elftab);
+ 
+   /* XXX Based on lib/dynamicsizehash_concurrent.c free().  */
+   rwlock_fini (tracker->dwfltab_lock);
+-  pthread_rwlock_destroy(&tracker->dwfltab.resize_rwl);
+   for (idx = 1; idx <= tracker->dwfltab.size; idx++)
+     {
+       dwflst_tracker_dwfltab_ent *ent = &tracker->dwfltab.table[idx];
+@@ -201,7 +199,7 @@ void dwflst_tracker_end (Dwflst_Process_Tracker *tracker)
+ 	INTUSE(dwfl_end) (t->dwfl);
+       free(t);
+     }
+-  free (tracker->dwfltab.table);
++  dwflst_tracker_dwfltab_free (&tracker->dwfltab);
+ 
+   free (tracker);
+ }
+-- 
+2.56.0
+

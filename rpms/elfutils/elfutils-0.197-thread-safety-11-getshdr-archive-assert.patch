@@ -1,0 +1,94 @@
+From c8bbaed0921505ba0ce57951333a09004f7e53ba Mon Sep 17 00:00:00 2001
+From: Aaron Merey <amerey@redhat.com>
+Date: Wed, 30 Sep 2026 15:06:50 -0400
+Subject: [PATCH] elf32_getshdr.c: Avoid failed assert for archive member
+
+__libelf_readall reads an entire image into memory and sets
+ELF_F_MALLOCED for the associated elf descriptor.  For ELF_K_AR
+descriptors, member/child descriptors do not have ELF_F_MALLOCED
+set even though their image is in a malloced buffer.
+
+This causes an assert failure in elf32_getshdr.c:load_shdr_wrlock
+when attempting to read an shdr from an archive member.  The function
+asserts that ELF_F_MALLOCED is set because the member descriptor's
+map_address is non-NULL.
+
+Fix this by introducing a new internal flag ELF_F_PARENT_MALLOCED
+to indicate that this descriptor's image has been allocated but the
+memory is owned by a parent descriptor.  Also remove a redundant assert
+that is a repeat of the failing assert.
+
+Signed-off-by: Aaron Merey <amerey@redhat.com>
+---
+ libelf/elf32_getshdr.c | 12 ++++--------
+ libelf/elf_readall.c   |  4 ++++
+ libelf/libelfP.h       |  3 ++-
+ 3 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/libelf/elf32_getshdr.c b/libelf/elf32_getshdr.c
+index 02f8d2a3..cb4bad11 100644
+--- a/libelf/elf32_getshdr.c
++++ b/libelf/elf32_getshdr.c
+@@ -91,11 +91,12 @@ load_shdr_wrlock (Elf_Scn *scn)
+       /* All the data is already mapped.  If we could use it
+ 	 directly this would already have happened.  Unless
+ 	 we allocated the memory ourselves and the ELF_F_MALLOCED
+-	 flag is set.  */
++	 flag is set, or a parent archive allocated the memory
++	 and ELF_F_PARENT_MALLOCED is set.  */
+       void *file_shdr = ((char *) elf->map_address
+ 			 + elf->start_offset + ehdr->e_shoff);
+ 
+-      assert ((elf->flags & ELF_F_MALLOCED)
++      assert ((elf->flags & (ELF_F_MALLOCED | ELF_F_PARENT_MALLOCED))
+ 	      || ehdr->e_ident[EI_DATA] != MY_ELFDATA
+ 	      || elf->cmd == ELF_C_READ_MMAP
+ 	      || (! ALLOW_UNALIGNED
+@@ -104,12 +105,7 @@ load_shdr_wrlock (Elf_Scn *scn)
+ 
+       /* Now copy the data and at the same time convert the byte order.  */
+       if (ehdr->e_ident[EI_DATA] == MY_ELFDATA)
+-	{
+-	  assert ((elf->flags & ELF_F_MALLOCED)
+-		  || elf->cmd == ELF_C_READ_MMAP
+-		  || ! ALLOW_UNALIGNED);
+-	  memcpy (shdr, file_shdr, size);
+-	}
++	memcpy (shdr, file_shdr, size);
+       else
+ 	{
+ 	  bool copy = ! (ALLOW_UNALIGNED
+diff --git a/libelf/elf_readall.c b/libelf/elf_readall.c
+index 4ef8fe97..135e41f9 100644
+--- a/libelf/elf_readall.c
++++ b/libelf/elf_readall.c
+@@ -49,8 +49,12 @@ set_address (Elf *elf, size_t offset)
+ 	{
+ 	  if (child->map_address == NULL)
+ 	    {
++	      /* Record that child's archive image is backed by a parent
++		 archive's malloced buffer.  */
++	      child->flags |= ELF_F_PARENT_MALLOCED;
+ 	      child->map_address = elf->map_address;
+ 	      child->start_offset -= offset;
++
+ 	      if (child->kind == ELF_K_AR)
+ 		child->state.ar.offset -= offset;
+ 
+diff --git a/libelf/libelfP.h b/libelf/libelfP.h
+index 52767aa5..dae775c6 100644
+--- a/libelf/libelfP.h
++++ b/libelf/libelfP.h
+@@ -83,7 +83,8 @@ enum
+ {
+   ELF_F_MMAPPED = 0x40,
+   ELF_F_MALLOCED = 0x80,
+-  ELF_F_FILEDATA = 0x100
++  ELF_F_FILEDATA = 0x100,
++  ELF_F_PARENT_MALLOCED = 0x200
+ };
+ 
+ 
+-- 
+2.56.0
+
