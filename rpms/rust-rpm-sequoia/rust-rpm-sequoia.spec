@@ -5,7 +5,7 @@
 
 Name:           rust-rpm-sequoia
 Version:        1.10.3
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Implementation of the RPM PGP interface using Sequoia
 
 License:        LGPL-2.0-or-later
@@ -24,13 +24,17 @@ Source:         %{crate}-%{version}.tar.gz
 Source1:        %{crate}-vendor-%{version}.tar.gz
 Source2:        vendor.toml
 
+# Default to OpenSSL crypto backend (Fedora packaging); nettle 4.0 dropped
+# nettle/pgp.h which breaks nettle-sys 2.3.2 bindgen in the hermetic build.
+Patch0:         0001-default-to-openssl-crypto-backend.patch
+
 %if 0%{?rhel}
 BuildRequires:  rust-toolset
 %else
 BuildRequires:  cargo-rpm-macros >= 24
 %endif
-# vendored openssl-sys / nettle-sys (sequoia-openpgp 2.4+)
-BuildRequires:  openssl-devel clang-devel nettle-devel
+# vendored openssl-sys (crypto-openssl backend)
+BuildRequires:  openssl-devel clang-devel
 
 %global _description %{expand:
 An implementation of the RPM PGP interface using Sequoia.}
@@ -74,7 +78,7 @@ Requires:       %{crate}%{?_isa} = %{version}-%{release}
 %{_libdir}/pkgconfig/rpm-sequoia.pc
 
 %prep
-%autosetup -n %{crate}-%{version} -a1
+%autosetup -n %{crate}-%{version} -p1 -a1
 %cargo_prep -N
 # include full configuration for vendored dependencies
 cat %{SOURCE2} >> .cargo/config.toml
