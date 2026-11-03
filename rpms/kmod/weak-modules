@@ -129,6 +129,7 @@ read_modules_list() {
 decompress_initramfs() {
     local input=$1
     local output=$2
+    local zcmd
 
     # First, check if this is compressed at all
     if cpio -i -t < "$input" > /dev/null 2>/dev/null; then
@@ -146,15 +147,12 @@ decompress_initramfs() {
         return 0
     fi
 
-    # Try gzip
-    if gzip -cd < "$input" > "$output" 2>/dev/null ; then
-        return 0
-    fi
-
-    # Next try xz
-    if xz -cd < "$input" > "$output" 2>/dev/null ; then
-        return 0
-    fi
+    # Try zstd/xz/gzip for decompressing
+    for zcmd in zstd xz gzip; do
+        if "$zcmd" -cd < "$input" > "$output" 2>/dev/null ; then
+            return 0
+        fi
+    done
 
     echo "Unable to decompress $input: Unknown format" >&2
     return 1
@@ -164,7 +162,7 @@ decompress_initramfs() {
 # initramfs. The current directory must be the root of the uncompressed
 # initramfs. The unsorted list of files is output to stdout.
 list_module_files() {
-    find . -iname \*.ko -o -iname '*.ko.xz' -o -iname '*.ko.gz' 2>/dev/null
+    find . -iname \*.ko -o -iname '*.ko.xz' -o -iname '*.ko.gz' -o -iname '*.ko.zst' 2>/dev/null
     find etc/modprobe.d usr/lib/modprobe.d -name \*.conf 2>/dev/null
 }
 
@@ -287,6 +285,7 @@ module_has_changed() {
     module=${module%.ko}
     [[ $module == $orig_module ]] && module=${module%.ko.xz}
     [[ $module == $orig_module ]] && module=${module%.ko.gz}
+    [[ $module == $orig_module ]] && module=${module%.ko.zst}
     module=${module##*/}
 
     eval "changed_modules_${krel//[^a-zA-Z0-9]/_}=$krel"
@@ -356,17 +355,19 @@ is_weak_link() {
     [[ -L $link ]]
 }
 
-# is_extra_exists:
+# has_outoftree_module:
 # Takes a module filename, the module's kernel release and target kernel release.
-# The module filename should be a real, not a symlink, filename (i.e. in extra/).
+# The module filename should be a real, not a symlink, filename (i.e. in extra/, updates/).
 # Returns 'true' if the same module exists for the target kernel.
-is_extra_exists() {
+has_outoftree_module() {
     local module="$1"
     local module_krel="$2"
     local krel="$3"
     local subpath="${module#*/lib/modules/$module_krel/extra/}"
+    [[ "$subpath" = "$module" ]] && subpath="${module#*/lib/modules/$module_krel/updates/}"
 
-    [[ -f $BASEDIR/lib/modules/$krel/extra/$subpath ]]
+    [[ -f $BASEDIR/lib/modules/$krel/extra/$subpath ]] || \
+    [[ -f $BASEDIR/lib/modules/$krel/updates/$subpath ]]
 }
 
 is_kernel_installed() {
@@ -394,7 +395,7 @@ find_modules() {
 
     for dir in $dirs; do
         find $BASEDIR/lib/modules/$krel/$dir \
-             -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.gz' \
+             -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.gz' -o -name '*.ko.zst' \
              2>/dev/null
     done
 }
@@ -406,7 +407,7 @@ find_modules_dirs() {
     local dirs="$*"
 
     for dir in $dirs; do
-        find $dir -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.gz' \
+        find $dir -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.gz' -o -name '*.ko.zst' \
              2>/dev/null
     done
 }
@@ -417,16 +418,21 @@ find_installed_kernels() {
     ls $BASEDIR/lib/modules/
 }
 
-# find_kernels_with_extra:
-# Produces list of kernels, where exists extra/ directory
-find_kernels_with_extra() {
+# find_kernels_with_outoftree:
+# Produces list of kernels where directories extra/ or updates/ exist and
+# contain compatible modules.
+find_kernels_with_outoftree() {
     local krel
-    local extra_dir
+    local extra_dir updates_dir
+    local outoftree_kos=()
 
     for krel in $(find_installed_kernels); do
         extra_dir="$BASEDIR/lib/modules/$krel/extra"
-        [[ -d "$extra_dir" ]] || continue
-        echo "$krel"
+        updates_dir="$BASEDIR/lib/modules/$krel/updates"
+        outoftree_kos=($(find_modules "$krel" extra) $(find_modules "$krel" updates))
+        if [[ ${#outoftree_kos[@]} -gt 0 ]]; then
+            echo "$krel"
+        fi
     done
 }
 
@@ -466,7 +472,7 @@ prepare_sandbox() {
     weak_updates_dir_override="$dir"
 
     #config
-    echo "search external extra built-in weak-updates" >"$conf"
+    echo "search external updates extra built-in weak-updates" >"$conf"
     echo "external * $dir" >>"$conf"
 
     depmod="$depmod_orig -C $conf"
@@ -568,7 +574,7 @@ find_symvers_file() {
     local krel="$1"
     local print="$2"
 
-    find_kernel_file "$krel" symvers "$print" .xz .gz
+    find_kernel_file "$krel" symvers "$print" .xz .gz .zst
 }
 
 # find_systemmap_file:
@@ -679,7 +685,7 @@ add_weak_links() {
                 continue ;;
         esac
 
-        if is_extra_exists $module $module_krel $krel; then
+        if has_outoftree_module "$module" "$module_krel" "$krel"; then
             pr_verbose "found $(module_short_name $module) for $krel while installing for $module_krel, update case?"
         fi
 
@@ -768,9 +774,10 @@ validate_weak_links() {
 
         [[ -n "$symvers_path" ]] || return
         cat_prog="cat"
-        case "$symvers" in
+        case "$symvers_path" in
         *.gz) cat_prog="zcat" ;;
         *.xz) cat_prog="xzcat" ;;
+        *.zst) cat_prog="zstdcat" ;;
         esac
         "$cat_prog" "$symvers_path" > $tmpdir/symvers-$krel
     fi
@@ -915,7 +922,7 @@ global_link_state_announce_changes() {
 # Parameter (noreplace) is deprecated, acts always as "noreplace".
 # There is no sense in the "replace" functionality since according
 # to the current requirements RPM will track existing of only one version
-# of extra/ module (no same extra/ modules for different kernels).
+# of extra/ or updates/ module (no same extra/ or updates/ modules for different kernels).
 remove_modules() {
     update_modules remove_weak_links force_update
 }
@@ -937,7 +944,7 @@ add_modules() {
 # produces groups associative array
 # the group is a maximum subset of modules having at least a link
 #
-# more fine tuned extra filtering.
+# more fine tuned out-of-tree modules filtering.
 do_make_groups()
 {
     local tmp="$1"
@@ -948,7 +955,7 @@ do_make_groups()
     while read i; do
         read -a mods <<< "$i"
 
-        echo "${mods[0]}" |grep -q "extra/" || continue
+        echo "${mods[0]}" |grep -q "/\(extra\|updates\)/" || continue
 
         # if the module already met, then its dependencies already counted
         module_group="${grouped_modules[${mods[0]}]}"
@@ -958,7 +965,7 @@ do_make_groups()
         group_name="${mods[0]}"
 
         for mod in "${mods[@]}"; do
-            echo "$mod" |grep -q "extra/" || continue
+            echo "$mod" |grep -q "/\(extra\|updates\)/" || continue
 
             # if there is already such group,
             # it is a subset of the one being created
@@ -982,21 +989,21 @@ cut_depmod_deps()
     awk 'BEGIN { pr = 1 } /^#/{ pr = 0 } pr == 1 {sub(":",""); print $0}'
 }
 
-# filter_extra_absoluted:
+# filter_outoftree_absoluted:
 # Takes kernel version
 # makes full path from the relative module path
 # (produced by depmod for in-kernel-dir modules)
-# filter only extra/ modules
-filter_extra_absoluted()
+# filter only extra/ or updates/ modules
+filter_outoftree_absoluted()
 {
     local kver="$1"
     local mod
     declare -a mods
 
     while read i; do
-        # skip non-extra. The check is not perfect, but ok
+        # skip non extra or updates. The check is not perfect, but ok
         # to speed up handling in general cases
-        echo "$i" |grep -q "extra/" || continue
+        echo "$i" |grep -q "^\(extra\|updates\)/" || continue
 
         read -a mods <<< "$i"
         for j in "${!mods[@]}"; do
@@ -1023,7 +1030,7 @@ make_groups()
     grouped_modules=()
 
     $depmod -n $basedir $k 2>/dev/null |
-        cut_depmod_deps | filter_extra_absoluted $k > $tmp2
+        cut_depmod_deps | filter_outoftree_absoluted $k > $tmp2
 
     do_make_groups $tmp2
 
@@ -1044,9 +1051,9 @@ add_kernel() {
         exit 1
     fi
 
-    for k in $(find_kernels_with_extra | rpmsort -r); do
+    for k in $(find_kernels_with_outoftree | rpmsort -r); do
         [[ "$krel" == "$k" ]] && continue
-        find_modules $k extra > $tmp
+        find_modules $k extra updates > $tmp
 
         is_empty_file "$tmp" || make_groups $k
 
@@ -1089,7 +1096,7 @@ remove_kernel() {
     module_has_changed $weak_modules $remove_krel
 
     # Remove everything beneath the weak-updates directory
-    ( cd "$weak_modules" && doit rm -rf * )
+    ( [ -d "$weak_modules" ] && cd "$weak_modules" && doit rm -rf * )
 }
 
 ################################################################################

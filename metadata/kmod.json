@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/kmod.git",
-    "release": "6",
-    "sha": "53751118e6118ad60dc14a7a6a84698830e9a188"
+    "release": "1",
+    "sha": "a6ec55deb380e18df4970bb3d863b98c3c6a69b9"
   },
   "modification_status": "clean",
   "upstream_repo": "https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git",
-  "version": "34.2"
+  "version": "34.3"
 }
