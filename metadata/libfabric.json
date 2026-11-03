@@ -1,19 +1,20 @@
 {
+  "version": "2.7.0",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/ofiwg/libfabric",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libfabric.git",
-    "sha": "d77458f5f555772ac3c97df79df836a8d2a0a017"
+    "branch": "rawhide",
+    "sha": "c2d1389718bba89dc740f9a9c8fa10fc1e105feb",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 2.7.0",
-  "modification_status": "modified",
+  "track_upstream": "latest",
   "release_monitoring_project_id": 15790,
   "source_availability_check": {
     "type": "http",
     "urls": [
       "${UPSTREAM_REPO}/releases/download/v${VERSION}/libfabric-${VERSION}.tar.bz2"
     ]
-  },
-  "track_upstream": "latest",
-  "upstream_repo": "https://github.com/ofiwg/libfabric",
-  "version": "2.7.0"
+  }
 }
