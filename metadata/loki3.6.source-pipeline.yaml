@@ -12,3 +12,10 @@ transform:
     ecosystem: go
     archive_name: "loki-${VERSION}-vendor.tar.bz2"
     sync_go_modules: true
+accepted-checksums:
+  - file: "loki-3.6.19.tar.gz"
+    checksum: "ac96dd5949dc20ea86414049f3f779f10ed9518d81df1d2f6ea9eb62cbbfda5546542c4d58632c2dcd753f0c5e32baeb5bc2dd44090b5df6031d064164105ad1"
+    reason: "HUM-11657: Source0 go.mod/go.sum security pins synced for klauspost/compress v1.20.2 (CVE-2026-116591) and existing swag v0.27.1 overrides; remaining source files unchanged from v3.6.19."
+  - file: "loki-3.6.19-vendor.tar.bz2"
+    checksum: "d1f6a7917587a16c2d3442653a08915fa5ed589bd2e991b2a5f33885b8321ef1d41719e570871f3706b26740a98ab20a51d1b7fb5feb44a62d679950d9814384"
+    reason: "HUM-11657: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
