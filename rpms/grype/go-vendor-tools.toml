@@ -27,6 +27,11 @@ sha256sum = "59e80949c14925f65181757d837ed93dea3783f62b031f642281d9e5b1936917"
 expression = "MIT"
 
 [[licensing.licenses]]
+path = "vendor/github.com/anchore/clio/COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
 path = "vendor/github.com/cloudflare/circl/LICENSE"
 sha256sum = "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
 expression = "BSD-3-Clause"
