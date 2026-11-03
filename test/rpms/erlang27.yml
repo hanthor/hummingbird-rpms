@@ -30,9 +30,10 @@ unversioned-provides-alias:
     # qualifiers and whitespace differences between RPM implementations.
     provides=$(rpm -qp --qf '[%{PROVIDENAME}\t%{PROVIDEVERSION}\n]' "${TEST_RPM}")
 
+    # Read all input so printf cannot fail with SIGPIPE under pipefail.
     if printf '%s\n' "${provides}" | awk -F '\t' \
       -v expected_name="${expected}" -v expected_version="${version_release}" \
-      '$1 == expected_name && $2 == expected_version { found = 1; exit }
+      '$1 == expected_name && $2 == expected_version { found = 1 }
        END { exit !found }'; then
       echo "PASS: ${rpm_name} provides ${expected} = ${version_release}"
     else
