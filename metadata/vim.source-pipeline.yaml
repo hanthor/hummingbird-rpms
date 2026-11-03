@@ -1,27 +1,21 @@
-# ftp.vim.org has been fully decommissioned (NXDOMAIN) with no HTTPS/mirror
-# replacement -- the original release tarball (vim-9.2-1129.tar.bz2) is
-# permanently unavailable, so unlike other packages in this migration there
-# is no way to verify byte-identical content against it. Fetches the
-# equivalent git tag instead, and manually confirmed the extracted tree is
-# genuinely vim 9.2.1129 (src/version.c's included_patches[] top entry is
-# 1129, matching this package's patchlevel).
+# Fetch the upstream git tag that matches Fedora's Vim version.
+# Keep ref and vim.spec's baseversion/patchlevel in sync.
+# Vim tags pad patchlevels shorter than four digits with zeroes.
 #
-# vim's git tags zero-pad the patchlevel (v9.2.1129) but this package's
-# metadata `version` does not (9.2.1129), so the ref can't be templated from
-# ${VERSION} -- pinned literally instead, same manual-update model as
-# glibc's source-pipeline.yaml: update `ref` here together with
-# `baseversion`/`patchlevel` in vim.spec on each version bump.
-#
-# archive_name matches vim.spec's `%{vimdir}` macro (vim92) so
-# `%setup -n %{vimdir}` finds the expected directory name; this stays
-# "vim92" for the whole 9.2.x series and only changes when baseversion does.
+# Keep archive_name as vim92.tar.gz for the Vim 9.2 series.
+# Its root directory must match vim.spec's %{vimdir} setup directory.
+# The archive's src/version.c reports included_patches[0] == 1202.
 fetch:
   - type: git
     repo: "${UPSTREAM_REPO}"
-    ref: "v9.2.1129"
+    ref: "v9.2.1202"
     archive_name: "vim92.tar.gz"
 
 accepted-checksums:
+  - file: "vim92.tar.gz"
+    checksum: "fbe615ff2ffa903b8d9706ecf59d1c79c8bb026890fb9a6abd641c0c70a2c42ad2e16e4b2955c7dac8b1912328bdef149ae222c87778c38a3e9f9b7a543dcdd8"
+    reason: "Update from upstream tag v9.2.1129 to v9.2.1202 to match Fedora. The archive name remains vim92.tar.gz to match vim.spec's setup directory."
+
   # New upstream git tag for v9.2.1129; archive_name stays vim92.tar.gz
   # to match %{vimdir} in vim.spec.
   - file: "vim92.tar.gz"
