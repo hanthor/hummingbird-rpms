@@ -447,6 +447,9 @@ nftables:
 nghttp2:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+ngtcp2:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
