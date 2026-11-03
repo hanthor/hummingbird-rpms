@@ -89,10 +89,11 @@ Patch18:        grafana-body-parser-fast-uri-cve.patch
 # 6.16.1 -> 6.17.0 (CVE-2026-110910) and follow-redirects 1.16.1 -> 1.16.2
 # (CVE-2026-116689). Regenerated yarn cache in Source3.
 Patch19:        grafana-qs-6.17.0-follow-redirects-1.16.2-cve.patch
-# CVE-2026-116591: crafted zstd input panics DecodeAll and the streaming
-# decoder via a bad normalized FSE count. The vendor tarball (Source1) carries
-# the klauspost/compress v1.20.2 vendor tree; vendor/modules.txt retains
-# v1.19.1 to match go.mod so the Go consistency check passes at build time.
+# Match the go-vendor-tools klauspost/compress v1.20.2 pre_command in the
+# vendor archive. Bumps go.mod/go.sum only; Source1 carries the v1.20.2
+# vendor tree and vendor/modules.txt. CVE-2026-116591: crafted zstd input
+# panics DecodeAll and the streaming decoder via a bad normalized FSE count.
+Patch20:        grafana-compress-1.20.2-cve.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26.6
