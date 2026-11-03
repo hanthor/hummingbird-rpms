@@ -8,6 +8,6 @@
   "modification_status": "clean",
   "release_monitoring_project_id": 3648,
   "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/pixman",
+  "upstream_repo": "https://gitlab.freedesktop.org/pixman/pixman",
   "version": "0.46.4"
 }
