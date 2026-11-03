@@ -5,7 +5,7 @@
     "release": "6",
     "sha": "5733a2aeafe2753113b4311536cf5a88f90df1ad"
   },
-  "modification_reason": "HUM-4620: gorget source-pipeline.yaml addition; Source0 repointed to the download.qt.io archive mirror, same checksum, no content change",
+  "modification_reason": "HUM-4620: gorget source pipeline and Source0 archive mirror; Backport CVE-2026-105924",
   "modification_status": "modified",
   "upstream_branch": "5.15",
   "upstream_repo": "https://github.com/qt/qtbase",
