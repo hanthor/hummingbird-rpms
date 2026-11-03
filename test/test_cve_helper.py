@@ -1872,51 +1872,29 @@ def test_log_message_print_only_does_not_write_a_file(
     assert "print-only" in msg.lower()
 
 
-def test_log_message_non_utf8_file_skips_redaction_and_warns(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_log_message_non_utf8_file_is_rejected(tmp_path: Path, monkeypatch) -> None:
     log_file = tmp_path / "transcript.md"
-    # Invalid UTF-8 byte sequence (plus a password= string that *would* be
-    # redacted if this were decodable) -- redaction must not run here.
-    log_file.write_bytes(b"password=supersecretvalue\xff\xfe binary garbage")
+    # Invalid UTF-8 byte sequence (plus a password= string that can't be
+    # scanned) -- the file must be refused, never uploaded unscanned.
+    content = b"password=supersecretvalue\xff\xfe binary garbage"
+    log_file.write_bytes(content)
 
-    calls: list[list[str]] = []
+    def fail_rhjira(*a, **k):
+        raise AssertionError("rhjira must not run for non-UTF-8 files")
 
-    def fake_rhjira(args, *, cwd=None):
-        calls.append(args)
-        return SimpleNamespace(returncode=0, stdout="attached", stderr="")
+    monkeypatch.setattr(lib_investigate, "run_rhjira", fail_rhjira)
 
-    monkeypatch.setattr(lib_investigate, "run_rhjira", fake_rhjira)
-    monkeypatch.setattr(
-        lib_investigate,
-        "write_redacted_copy",
-        lambda *a, **k: (_ for _ in ()).throw(
-            AssertionError("write_redacted_copy must not run for non-UTF-8 files")
-        ),
-    )
-
-    out_file, msg = lib_investigate.log_message("HUM-1234", log_file)
-
-    assert out_file == log_file
-    assert "not valid UTF-8" in msg
-    assert "skipped secret redaction" in msg
-    assert "Attached" in msg
-    # The original (unredacted, byte-for-byte intact) file is what's attached.
-    assert calls[0] == ["attach", "HUM-1234", str(log_file)]
-    assert log_file.read_bytes() == b"password=supersecretvalue\xff\xfe binary garbage"
+    with pytest.raises(ValueError, match="not valid UTF-8"):
+        lib_investigate.log_message("HUM-1234", log_file)
+    assert log_file.read_bytes() == content
 
 
-def test_log_message_non_utf8_file_print_only(tmp_path: Path) -> None:
+def test_log_message_non_utf8_file_print_only_is_rejected(tmp_path: Path) -> None:
     log_file = tmp_path / "transcript.md"
     log_file.write_bytes(b"\xff\xfe not valid utf-8")
 
-    out_file, msg = lib_investigate.log_message(
-        "HUM-9999", log_file, print_only=True
-    )
-
-    assert out_file == log_file
-    assert "not valid UTF-8" in msg
-    assert "print-only" in msg.lower()
+    with pytest.raises(ValueError, match="not valid UTF-8"):
+        lib_investigate.log_message("HUM-9999", log_file, print_only=True)
 
 
 def test_log_message_with_existing_file(tmp_path: Path, monkeypatch) -> None:
