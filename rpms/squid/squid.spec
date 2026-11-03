@@ -3,7 +3,7 @@
 
 Name:     squid
 Version:  7.7
-Release:  1%{?dist}
+Release:  1.1%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -40,11 +40,6 @@ Patch203: squid-6.1-perlpath.patch
 Patch204: squid-6.1-symlink-lang-err.patch
 Patch205: squid-7.5-openssl4.patch
 
-# cache_swap.sh
-Requires: bash gawk
-# for httpd conf file - cachemgr script alias
-Requires: httpd-filesystem
-
 # squid_ldap_auth and other LDAP helpers require OpenLDAP
 BuildRequires: make
 BuildRequires: openldap-devel
@@ -75,12 +70,6 @@ BuildRequires: systemd-rpm-macros
 # systemd notify
 BuildRequires: systemd-devel
 
-%{?systemd_requires}
-%{?sysusers_requires_compat}
-
-# Old NetworkManager expects the dispatcher scripts in a different place
-Conflicts: NetworkManager < 1.20
-
 %description
 Squid is a high-performance proxy caching server for Web clients,
 supporting FTP and HTTP data objects. Unlike traditional
@@ -92,6 +81,24 @@ DNS lookups, and implements negative caching of failed requests.
 Squid consists of a main server program squid, a Domain Name System
 lookup program (dnsserver), a program for retrieving FTP data
 (ftpget), and some management and client tools.
+
+%package helpers
+Summary: Optional Squid helpers and host integration
+Requires: %{name} = %{epoch}:%{version}-%{release}
+# cache_swap.sh
+Requires: bash gawk
+# for httpd conf file - cachemgr script alias
+Requires: httpd-filesystem
+
+%{?systemd_requires}
+%{?sysusers_requires_compat}
+
+# Old NetworkManager expects the dispatcher scripts in a different place
+Conflicts: NetworkManager < 1.20
+
+%description helpers
+Optional authentication, external ACL, rewrite, and database logging helpers,
+plus the Fedora systemd, NetworkManager, Apache, and logrotate integration.
 
 %prep
 %{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
@@ -113,6 +120,7 @@ sed -i 's|@SYSCONFDIR@/squid.conf.documented|%{_pkgdocdir}/squid.conf.documented
    --with-logdir='%{_localstatedir}/log/squid' \
    --with-pidfile='/run/squid.pid' \
    --disable-dependency-tracking \
+   --without-systemd \
    --enable-eui \
    --enable-follow-x-forwarded-for \
    --enable-auth \
@@ -218,40 +226,50 @@ install -m 644 -p %{SOURCE10} %{buildroot}%{_tmpfilesdir}/squid.conf
 %files
 %license COPYING 
 %doc CONTRIBUTORS README ChangeLog QUICKSTART src/squid.conf.documented
-%doc contrib/url-normalizer.pl contrib/user-agents.pl
 
-%{_unitdir}/squid.service
-%attr(755,root,root) %dir %{_libexecdir}/squid
-%attr(755,root,root) %{_libexecdir}/squid/cache_swap.sh
 %attr(755,root,root) %dir %{_sysconfdir}/squid
 %attr(755,root,root) %dir %{_libdir}/squid
 %attr(770,squid,root) %dir %{_localstatedir}/log/squid
 %attr(750,squid,squid) %dir %{_localstatedir}/spool/squid
 
-%config(noreplace) %attr(644,root,root) %{_sysconfdir}/httpd/conf.d/squid.conf
 %config(noreplace) %attr(640,root,squid) %{_sysconfdir}/squid/squid.conf
 %config(noreplace) %{_sysconfdir}/squid/mime.conf
 %config(noreplace) %{_sysconfdir}/squid/errorpage.css
-%config(noreplace) %{_sysconfdir}/sysconfig/squid
 # These are not noreplace because they are just sample config files
 %config %{_sysconfdir}/squid/squid.conf.default
 %config %{_sysconfdir}/squid/mime.conf.default
 %config %{_sysconfdir}/squid/errorpage.css.default
-%config(noreplace) %{_sysconfdir}/pam.d/squid
-%config(noreplace) %{_sysconfdir}/logrotate.d/squid
 
 %dir %{_datadir}/squid
 %attr(-,root,root) %{_datadir}/squid/errors
-%{_prefix}/lib/NetworkManager
 %{_datadir}/squid/icons
 %{_sbindir}/squid
 %{_mandir}/man8/*
-%{_libdir}/squid/*
+%{_libdir}/squid/diskd
+%{_libdir}/squid/log_file_daemon
+%{_libdir}/squid/security_file_certgen
+%{_libdir}/squid/unlinkd
 %{_datadir}/snmp/mibs/SQUID-MIB.txt
 %{_sysusersdir}/squid.conf
 %{_tmpfilesdir}/squid.conf
 
-%pre
+%files helpers
+%doc contrib/url-normalizer.pl contrib/user-agents.pl
+%{_unitdir}/squid.service
+%attr(755,root,root) %dir %{_libexecdir}/squid
+%attr(755,root,root) %{_libexecdir}/squid/cache_swap.sh
+%config(noreplace) %attr(644,root,root) %{_sysconfdir}/httpd/conf.d/squid.conf
+%config(noreplace) %{_sysconfdir}/sysconfig/squid
+%config(noreplace) %{_sysconfdir}/pam.d/squid
+%config(noreplace) %{_sysconfdir}/logrotate.d/squid
+%{_prefix}/lib/NetworkManager
+%{_libdir}/squid/*
+%exclude %{_libdir}/squid/diskd
+%exclude %{_libdir}/squid/log_file_daemon
+%exclude %{_libdir}/squid/security_file_certgen
+%exclude %{_libdir}/squid/unlinkd
+
+%pre helpers
 %sysusers_create_compat %{SOURCE9}
 
 for i in /var/log/squid /var/spool/squid ; do
@@ -264,7 +282,7 @@ done
 
 exit 0
 
-%pretrans -p <lua>
+%pretrans helpers -p <lua>
 -- temporarilly commented until https://bugzilla.redhat.com/show_bug.cgi?id=1936422 is resolved
 --
 -- previously /usr/share/squid/errors/es-mx was symlink, now it is directory since squid v5
@@ -295,16 +313,16 @@ do
   end
 end
 
-%post
+%post helpers
 %systemd_post squid.service
 
-%preun
+%preun helpers
 %systemd_preun squid.service
 
-%postun
+%postun helpers
 %systemd_postun_with_restart squid.service
 
-%triggerin -- samba-common
+%triggerin helpers -- samba-common
 if ! getent group wbpriv >/dev/null 2>&1 ; then
   /usr/sbin/groupadd -g 88 wbpriv >/dev/null 2>&1 || :
 fi
