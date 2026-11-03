@@ -6,7 +6,7 @@
 Summary: A program for synchronizing files over a network
 Name: rsync
 Version: 3.5.1
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 URL: https://rsync.samba.org/
 
 Source0: https://download.samba.org/pub/rsync/src/rsync-%{version}%{?prerelease}.tar.gz
@@ -15,6 +15,7 @@ Source3: rsyncd.service
 Source4: rsyncd.conf
 Source5: rsyncd.sysconfig
 Source6: rsyncd@.service
+Patch0: rsync-CVE-2026-119741.patch
 
 BuildRequires: make
 BuildRequires: gcc
