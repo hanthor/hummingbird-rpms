@@ -899,6 +899,8 @@ spec:
           contentType: rpm
         - name: php-pecl-zip-main
           contentType: rpm
+        - name: pixman-main
+          contentType: rpm
         - name: pkgconf-main
           contentType: rpm
         - name: pmix-main

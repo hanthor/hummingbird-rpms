@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/pixman.git",
+    "release": "4",
+    "sha": "bf83d145a32e97973e2cf3afb4971e8cc8cbfa99"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 3648,
+  "track_upstream": "latest",
+  "upstream_repo": "https://src.fedoraproject.org/rpms/pixman",
+  "version": "0.46.4"
+}
