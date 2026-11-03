@@ -31,9 +31,9 @@
 
 PACKAGE="curl"
 
-FTP_URL=ftp://ftp.fi.muni.cz/pub/linux/fedora/linux/releases/42/Everything/x86_64/iso/Fedora-Everything-42-1.1-x86_64-CHECKSUM
-HTTP_URL=https://archives.fedoraproject.org/pub/fedora/linux/releases/42/Everything/x86_64/iso/Fedora-Everything-42-1.1-x86_64-CHECKSUM
-CONTENT=1bd6ab4798983c2fe4a210f9c4ca135fed453d6142ba852c1f8d5fba22e113ab
+FTP_URL=ftp://ftp.fi.muni.cz/pub/linux/fedora/linux/development/rawhide/Everything/x86_64/os/Fedora-Legal-README.txt
+HTTP_URL=https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Fedora-Legal-README.txt
+CONTENT="Fedora Operating System"
 PASSWORD=pAssw0rd
 OPTIONS=""
 rlIsRHEL 7 && OPTIONS="--insecure"
@@ -46,9 +46,10 @@ rlJournalStart
         rlRun "useradd -m curltester" 0 "Adding the test user"
         rlRun "echo $PASSWORD | passwd --stdin curltester" 0 "Setting the password for the test user"
         rlRun "su - curltester -c 'echo $CONTENT > ~/testfile'" 0 "Creating ~curltester/testfile"
-        rlFileBackup --clean --missing-ok $HOME/.ssh /etc/hosts
+        rlFileBackup --clean --missing-ok $HOME/.ssh /etc/hosts /etc/ssh/sshd_config.d/00-test-password-auth.conf
         rlRun "rm -f $HOME/.ssh/*"
         [ -d $HOME/.ssh ] || ( mkdir $HOME/.ssh && restorecon HOME/.ssh )
+        rlRun "echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/00-test-password-auth.conf" 0 "Enabling password authentication"
         rlRun "rlServiceStart sshd"
         rlRun "ssh-keyscan localhost >> $HOME/.ssh/known_hosts"
     rlPhaseEnd

@@ -13,7 +13,7 @@
 Summary: A utility for getting files from remote servers (FTP, HTTP, and others)
 Name: curl
 Version: 8.23.0
-Release: 0.1%{?dist}
+Release: 2%{?dist}
 License: curl
 Source0: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz
 Source1: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz.asc
@@ -22,7 +22,7 @@ Source1: https://curl.se/download/%{name}-%{version_no_tilde}.tar.xz.asc
 # which points to the GPG key as of April 7th 2016 of https://daniel.haxx.se/mykey.asc
 Source2: mykey.asc
 
-# patch making libcurl multilib ready
+# Fedora-specific
 Patch101: 0101-curl-7.32.0-multilib.patch
 
 Provides: curl-full = %{version}-%{release}
@@ -75,7 +75,7 @@ BuildRequires: sed
 BuildRequires: zlib-devel
 
 # For gpg verification of source tarball
-BuildRequires: gnupg2
+BuildRequires: openpgpverify
 
 # needed for generation of shell completions
 BuildRequires: perl(Getopt::Long)
@@ -238,7 +238,7 @@ other hand, the package is smaller and requires fewer run-time dependencies to
 be installed.
 
 %prep
-%{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
+%{openpgpverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
 %autosetup -n %{name}-%{version_no_tilde} -p1
 
 # test 303: raise timeout from 8s to 20s so it doesn't expire during TLS
@@ -384,7 +384,7 @@ for size in minimal full; do (
     export LD_LIBRARY_PATH="${PWD}/lib/.libs"
 
     # tests that must run in serial to avoid intermittent failures under parallel execution
-    serial_tests="766 1399 1451 2402 2404 2500 2502 3300 3301"
+    serial_tests="766 1399 1451 2402 2404 2500 2502 3300 3301 3231 3232"
     serial_excludes=$(for t in $serial_tests; do printf ' !%s' "$t"; done)
     # run the bulk of tests in parallel, excluding serial ones
     # cap at 64 jobs to avoid overwhelming system resources on high-CPU machines
@@ -464,6 +464,21 @@ rm -f ${RPM_BUILD_ROOT}%{_mandir}/man1/wcurl.1*
 %{_libdir}/libcurl.so.4.[0-9].[0-9].minimal
 
 %changelog
+* Thu Oct 29 2026 Jakub Jelen <jjelen@redhat.com> - 8.23.0-2
+- Verify upstream source signatures with openpgpverify
+
+* Thu Oct 15 2026 Jan Macku <jamacku@redhat.com> - 8.23.0-1
+- new upstream release
+
+* Wed Oct 07 2026 Jan Macku <jamacku@redhat.com> - 8.23.0~rc3-1
+- new upstream release candidate
+
+* Fri Sep 25 2026 Jan Macku <jamacku@redhat.com> - 8.23.0~rc2-1
+- new upstream release candidate
+
+* Wed Sep 23 2026 Jan Macku <jamacku@redhat.com> - 8.23.0~rc1-1
+- new upstream release candidate
+
 * Tue Sep 08 2026 Jan Macku <jamacku@redhat.com> - 8.22.0-1
 - new upstream release
 

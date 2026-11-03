@@ -7,7 +7,7 @@ addFilter("crypto-policy-non-compliance-openssl /usr/lib(64)?/libcurl.so.4")
 addFilter("configure-without-libdir-spec")
 
 # Technical term
-addFilter("E: spelling-error \('kerberos',")
+addFilter("W: spelling-error \('kerberos',")
 
 # Artefacts of RemovePathPostfixes: .minimal
 addFilter("W: dangling-relative-symlink /usr/lib/.build-id/.* ../../../../.*curl.*\.minimal")
