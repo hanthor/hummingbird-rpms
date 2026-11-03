@@ -1250,6 +1250,9 @@
       "php-pecl-zip--rpms": [
         "^rpms/php\\-pecl\\-zip/"
       ],
+      "pixman--rpms": [
+        "^rpms/pixman/"
+      ],
       "pkgconf--rpms": [
         "^rpms/pkgconf/"
       ],

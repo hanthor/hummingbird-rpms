@@ -1665,6 +1665,10 @@
         "^rpms/php\\-pecl\\-zip/",
         "^test/rpms/php\\-pecl\\-zip\\.yml$"
       ],
+      "pixman--rpms": [
+        "^rpms/pixman/",
+        "^test/rpms/pixman\\.yml$"
+      ],
       "pkgconf--rpms": [
         "^rpms/pkgconf/",
         "^test/rpms/pkgconf\\.yml$"
