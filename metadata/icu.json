@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/icu.git",
-    "release": "8",
-    "sha": "14ef321a37c61ab81f21f5beaf70dcdd03405283"
+    "release": "9",
+    "sha": "d42d5c572d45e775d69edfa761f094011b4472f8"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/unicode-org/icu",
