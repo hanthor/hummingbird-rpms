@@ -6,7 +6,7 @@ Version: 2.10.9
 %gometa -L
 
 Name:           tempo2.10
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        High-volume distributed tracing backend
 # s390x is unsupported.
 ExcludeArch:    s390x
@@ -22,6 +22,7 @@ Patch1:         0002-livestore-treat-canceled-initial-offset-fetch-as-stop.patch
 Patch3:         0004-vendor-bump-mcp-go-0.56.0.patch
 Patch4:         0005-fix-mcp-CallToolParams-test-helper.patch
 Patch6:         0007-tests-allow-backpressure-polling-to-complete.patch
+Patch7:         0008-vendor-bump-klauspost-compress-v1.20.2.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26

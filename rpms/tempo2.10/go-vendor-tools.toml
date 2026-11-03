@@ -1,6 +1,8 @@
 [archive]
 
 [archive.dependency_overrides]
+# CVE-2026-116591
+"github.com/klauspost/compress" = "v1.20.2"
 # CVE-2026-81092
 "github.com/mark3labs/mcp-go" = "v0.56.0"
 # CVE-2026-93450
