@@ -1,8 +1,8 @@
 %define srcname dbus_python
 
 Name:    dbus-python
-Version: 1.5.0
-Release: 1%{?dist}
+Version: 1.5.1
+Release: 0.1%{?dist}
 Summary: D-Bus Python Bindings
 
 License: MIT
