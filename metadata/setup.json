@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/setup.git",
-    "release": "2",
-    "sha": "96b3f6e097fcbee31b5af44236d32cc19b03ffcc"
+    "release": "5",
+    "sha": "5da28d20eab4728d788c70abb0d51551eb528627"
   },
   "modification_reason": "Change default umask from 022 to 027 for CIS benchmark compliance",
   "modification_status": "modified",

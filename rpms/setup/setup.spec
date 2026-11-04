@@ -1,7 +1,7 @@
 Summary: A set of system configuration and setup files
 Name: setup
 Version: 2.15.1
-Release: 2.1%{?dist}
+Release: 5%{?dist}
 License: LicenseRef-Fedora-Public-Domain
 # This package is a downstream-only project
 URL: https://src.fedoraproject.org/rpms/setup
@@ -38,8 +38,6 @@ BuildRequires: perl-interpreter
 BuildRequires: /usr/bin/systemd-sysusers
 #systemd-rpm-macros: required to use _sysusersdir and _tmpfilesdir macro
 BuildRequires: systemd-rpm-macros
-#require system release for saner dependency order
-Requires: system-release
 
 %description
 The setup package contains a set of important system configuration and
