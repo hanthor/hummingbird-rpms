@@ -1217,6 +1217,9 @@
       "perl-time-local--rpms": [
         "^rpms/perl\\-Time\\-Local/"
       ],
+      "perl-unicode-normalize--rpms": [
+        "^rpms/perl\\-Unicode\\-Normalize/"
+      ],
       "perl-uri--rpms": [
         "^rpms/perl\\-URI/"
       ],

@@ -1621,6 +1621,10 @@
         "^rpms/perl\\-Time\\-Local/",
         "^test/rpms/perl\\-Time\\-Local\\.yml$"
       ],
+      "perl-unicode-normalize--rpms": [
+        "^rpms/perl\\-Unicode\\-Normalize/",
+        "^test/rpms/perl\\-Unicode\\-Normalize\\.yml$"
+      ],
       "perl-uri--rpms": [
         "^rpms/perl\\-URI/",
         "^test/rpms/perl\\-URI\\.yml$"

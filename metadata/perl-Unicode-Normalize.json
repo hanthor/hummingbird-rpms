@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/perl-Unicode-Normalize.git",
+    "release": "527",
+    "sha": "78a89322be896c250fe1f3903327e2e71e9124f9"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 6984,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/Perl/perl5",
+  "version": "1.32"
+}
