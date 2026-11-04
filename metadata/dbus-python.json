@@ -3,11 +3,11 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dbus-python.git",
     "release": "1",
-    "sha": "2ef0710c088e8f732146ae781fac83856d746d0e"
+    "sha": "c6b2fc480f3cdd0eb76cd7cdba6b0435d675ae95"
   },
   "modification_status": "clean",
   "release_monitoring_project_id": 402,
   "track_upstream": "latest",
   "upstream_repo": "https://gitlab.freedesktop.org/dbus/dbus-python",
-  "version": "1.5.0"
+  "version": "1.5.1"
 }
