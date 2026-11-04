@@ -13,7 +13,7 @@ index 19ca601..1e54326 100644
 --- a/setuptools/command/install.py
 +++ b/setuptools/command/install.py
 @@ -55,14 +55,20 @@ class install(orig.install):
-     _nc = dict(new_commands)
+     _nc: ClassVar[dict] = dict(new_commands)
  
      def initialize_options(self):
 +        import os
