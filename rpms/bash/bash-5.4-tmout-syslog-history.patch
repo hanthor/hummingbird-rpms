@@ -1,0 +1,25 @@
+diff --git a/bashhist.h b/bashhist.h
+--- a/bashhist.h
++++ b/bashhist.h
+@@ -72,6 +72,7 @@ extern void bash_clear_history (void);
+ extern int bash_delete_histent (int);
+ extern int bash_delete_history_range (int, int);
+ extern int bash_delete_last_history (void);
++extern void bash_syslog_history (const char *);
+ extern void load_history (void);
+ extern void save_history (void);
+ extern char *bash_default_histfile (void);
+diff --git a/eval.c b/eval.c
+--- a/eval.c
++++ b/eval.c
+@@ -261,6 +261,10 @@ alrm_catcher(int i)
+   msg = _("\007timed out waiting for input: auto-logout\n");
+   write (1, msg, strlen (msg));
+ 
++#if defined (SYSLOG_HISTORY)
++  bash_syslog_history (msg);
++#endif
++
+   bash_logout ();	/* run ~/.bash_logout if this is a login shell */
+   jump_to_top_level (EXITPROG);
+   SIGRETURN (0);
