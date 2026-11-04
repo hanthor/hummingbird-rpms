@@ -3,3 +3,4 @@ clog
 *.rpm
 .build*.log
 mokutil-*/
+mokutil-0.7.3.tar.gz
