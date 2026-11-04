@@ -1,8 +1,9 @@
-From 6bb4e674cdc953f5c0048aa84172539900725166 Mon Sep 17 00:00:00 2001
-From: Jan Macku <jamacku@redhat.com>
-Date: Tue, 16 Dec 2025 10:04:40 +0100
+From d0e2229cca5a235f597139438c38babd3971d360 Mon Sep 17 00:00:00 2001
+From: Kamil Dudka <kdudka@redhat.com>
+Date: Fri, 12 Apr 2013 12:04:05 +0200
 Subject: [PATCH] prevent multilib conflicts on the curl-config script
 
+fedora-only
 ---
  curl-config.in      | 23 +++++------------------
  docs/curl-config.md |  4 +++-
@@ -76,7 +77,7 @@ index 12ad245b79..fa0e03d273 100644
  ## `--version`
  
 diff --git a/libcurl.pc.in b/libcurl.pc.in
-index c0ba5244a8..f3645e1748 100644
+index 8f7e35dd10..38324174b2 100644
 --- a/libcurl.pc.in
 +++ b/libcurl.pc.in
 @@ -28,6 +28,7 @@ libdir=@libdir@
@@ -87,6 +88,3 @@ index c0ba5244a8..f3645e1748 100644
  
  Name: libcurl
  URL: https://curl.se/
--- 
-2.52.0
-
