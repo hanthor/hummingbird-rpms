@@ -1,7 +1,7 @@
-From 8d2df84e6caedbcc0dfdf4bf88c2cb606f3fcdab Mon Sep 17 00:00:00 2001
+From d074553cce4dc0b209afb9680b05e8022fca0918 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 07/53] openssh-5.9p1-ipv6man
+Subject: [PATCH 07/55] openssh-5.9p1-ipv6man
 
 #(drop?) https://bugzilla.mindrot.org/show_bug.cgi?id=1925
 ---

@@ -1,7 +1,7 @@
-From 069e1c8c675b7159653ef33a5897805130fa7d40 Mon Sep 17 00:00:00 2001
+From 7bdad947e927f233976304ab5f59eb238455b0a8 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 36/53] openssh-7.1p2-audit-race-condition
+Subject: [PATCH 36/55] openssh-7.1p2-audit-race-condition
 
 # Audit race condition in forked child (#1310684)
 ---

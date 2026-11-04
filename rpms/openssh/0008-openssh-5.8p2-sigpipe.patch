@@ -1,7 +1,7 @@
-From 18b8d12cf0bd125bf46722826eea79790a4368d3 Mon Sep 17 00:00:00 2001
+From fd1c60b42c2058b9b96d99dce679b3725c23a6cf Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 08/53] openssh-5.8p2-sigpipe
+Subject: [PATCH 08/55] openssh-5.8p2-sigpipe
 
 ---
  ssh-keyscan.c | 3 +++

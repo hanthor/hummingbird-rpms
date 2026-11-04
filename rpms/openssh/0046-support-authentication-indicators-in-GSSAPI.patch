@@ -1,7 +1,7 @@
-From 12f718a27b18fee507b28959c942f8fe3f84efa3 Mon Sep 17 00:00:00 2001
+From f05806568778c7cb6368adee641a8e4ad013a865 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:23:51 +0200
-Subject: [PATCH 46/53] support authentication indicators in GSSAPI
+Subject: [PATCH 46/55] support authentication indicators in GSSAPI
 
 https://github.com/openssh/openssh-portable/pull/500
 
@@ -29,7 +29,7 @@ index 831b611bd..e850041fb 100644
  		AC_SEARCH_LIBS([k_hasafs], [kafs], [AC_DEFINE([USE_AFS], [1],
  			[Define this if you want to use libkafs' AFS support])])
 diff --git a/gss-serv-krb5.c b/gss-serv-krb5.c
-index 723509409..fc7cabc09 100644
+index 34a108bdb..670720868 100644
 --- a/gss-serv-krb5.c
 +++ b/gss-serv-krb5.c
 @@ -43,6 +43,7 @@
@@ -161,7 +161,7 @@ index 723509409..fc7cabc09 100644
  	return retval;
  }
 diff --git a/gss-serv.c b/gss-serv.c
-index 5bc31289e..66d92e4fe 100644
+index d8e1c626a..4a13e91ba 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
 @@ -55,7 +55,7 @@ extern ServerOptions options;
@@ -273,8 +273,8 @@ index 5bc31289e..66d92e4fe 100644
  /* Extract the client details from a given context. This can only reliably
   * be called once for a context */
  
-@@ -387,6 +480,12 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
- 	}
+@@ -396,6 +489,12 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+ 	gss_release_buffer(&ctx->minor, &ename);
  
  	gss_release_buffer(&ctx->minor, &ename);
 +	/* Retrieve authentication indicators, if they exist */
@@ -286,7 +286,7 @@ index 5bc31289e..66d92e4fe 100644
  
  	/* We can't copy this structure, so we just move the pointer to it */
  	client->creds = ctx->client_creds;
-@@ -458,10 +557,17 @@ void
+@@ -467,10 +566,17 @@ void
  ssh_gssapi_cleanup_global_client()
  {
  	OM_uint32 lmin;

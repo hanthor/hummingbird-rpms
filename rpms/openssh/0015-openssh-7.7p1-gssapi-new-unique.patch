@@ -1,10 +1,10 @@
-From 573be6986398ac634329de8209377051d5d780a8 Mon Sep 17 00:00:00 2001
+From 2cf1ea43ed4a3a58c31ecdee8f783963ba5d70c2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 15/53] openssh-7.7p1-gssapi-new-unique
+Subject: [PATCH 15/55] openssh-7.7p1-gssapi-new-unique
 
 ---
- auth-krb5.c     | 264 ++++++++++++++++++++++++++++++++++++++++++------
+ auth-krb5.c     | 278 ++++++++++++++++++++++++++++++++++++++++++------
  auth.h          |   3 +-
  gss-serv-krb5.c |  42 +++-----
  gss-serv.c      |  14 +--
@@ -14,10 +14,10 @@ Subject: [PATCH 15/53] openssh-7.7p1-gssapi-new-unique
  ssh-gss.h       |   4 +-
  sshd-session.c  |   2 +-
  sshd_config.5   |   8 ++
- 10 files changed, 277 insertions(+), 72 deletions(-)
+ 10 files changed, 291 insertions(+), 72 deletions(-)
 
 diff --git a/auth-krb5.c b/auth-krb5.c
-index 3c6dc0622..863110910 100644
+index 3c6dc0622..5260a2032 100644
 --- a/auth-krb5.c
 +++ b/auth-krb5.c
 @@ -51,6 +51,7 @@
@@ -48,13 +48,15 @@ index 3c6dc0622..863110910 100644
  	if (problem)
  		goto out;
  
-@@ -179,15 +180,14 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
+@@ -179,15 +180,16 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
  		goto out;
  #endif
  
 -	authctxt->krb5_ticket_file = (char *)krb5_cc_get_name(authctxt->krb5_ctx, authctxt->krb5_fwd_ccache);
 +	problem = krb5_cc_get_full_name(authctxt->krb5_ctx,
 +	    authctxt->krb5_fwd_ccache, &ticket_name);
++	if (problem)
++		goto out;
  
 -	len = strlen(authctxt->krb5_ticket_file) + 6;
 -	authctxt->krb5_ccname = xmalloc(len);
@@ -69,7 +71,7 @@ index 3c6dc0622..863110910 100644
  		do_pam_putenv("KRB5CCNAME", authctxt->krb5_ccname);
  #endif
  
-@@ -223,11 +223,54 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
+@@ -223,11 +225,54 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
  void
  krb5_cleanup_proc(Authctxt *authctxt)
  {
@@ -125,7 +127,7 @@ index 3c6dc0622..863110910 100644
  	if (authctxt->krb5_user) {
  		krb5_free_principal(authctxt->krb5_ctx, authctxt->krb5_user);
  		authctxt->krb5_user = NULL;
-@@ -238,36 +281,191 @@ krb5_cleanup_proc(Authctxt *authctxt)
+@@ -238,36 +283,203 @@ krb5_cleanup_proc(Authctxt *authctxt)
  	}
  }
  
@@ -207,8 +209,11 @@ index 3c6dc0622..863110910 100644
 +				goto cleanup;
 +			continue;
 +		} else {
-+			p_o = strchr(p_n, '}') + 1;
-+			*p_o = '\0';
++			if ((p_o = strchr(p_n, '}')) == NULL) {
++				debug_f("unterminated token in %s", template);
++				goto cleanup;
++			}
++			*++p_o = '\0';
 +			debug_f("unsupported token %s in %s", p_n, template);
 +			/* unknown token, fallback to the default */
 +			goto cleanup;
@@ -241,13 +246,17 @@ index 3c6dc0622..863110910 100644
 +		return ret;
 +
 +	ret = profile_get_string(p, "libdefaults", "default_ccache_name", NULL, NULL, &value);
++	profile_release(p);
 +	if (ret || !value)
 +		return ret;
 +
 +	ret = ssh_krb5_expand_template(ccname, value);
++	profile_release_string(value);
++	if (ret)
++		return ret;
 +
 +	debug3_f("returning with ccname = %s", *ccname);
-+	return ret;
++	return 0;
 +}
 +
 +krb5_error_code
@@ -263,8 +272,7 @@ index 3c6dc0622..863110910 100644
 +	ret = ssh_krb5_get_cctemplate(ctx, &ccname);
 +	if (ret || !ccname || options.kerberos_unique_ccache) {
 +		/* Otherwise, go with the old method */
-+		if (ccname)
-+			free(ccname);
++		free(ccname);
 +		ccname = NULL;
 +
 +		ret = asprintf(&ccname,
@@ -303,17 +311,20 @@ index 3c6dc0622..863110910 100644
 +	/* set the default with already expanded user IDs */
 +	ret = krb5_cc_set_default_name(ctx, ccname);
 +	if (ret)
-+		return ret;
++		goto out;
 +
 +	if ((colon = strstr(ccname, ":")) != NULL) {
 +		type_len = colon - ccname;
 +		type = malloc((type_len + 1) * sizeof(char));
-+		if (type == NULL)
-+			return ENOMEM;
++		if (type == NULL) {
++			ret = ENOMEM;
++			goto out;
++		}
 +		strncpy(type, ccname, type_len);
 +		type[type_len] = 0;
-+	} else {
-+		type = strdup(ccname);
++	} else if ((type = strdup(ccname)) == NULL) {
++		ret = ENOMEM;
++		goto out;
 +	}
 +
 +	/* If we have a credential cache from krb5.conf, we need to switch
@@ -322,21 +333,24 @@ index 3c6dc0622..863110910 100644
 +	if (krb5_cc_support_switch(ctx, type)) {
 +		debug3_f("calling cc_new_unique(%s)", ccname);
 +		ret = krb5_cc_new_unique(ctx, type, NULL, ccache);
-+		free(type);
 +		if (ret)
-+			return ret;
++			goto out;
 +
 +		debug3_f("calling cc_switch()");
-+		return krb5_cc_switch(ctx, *ccache);
++		ret = krb5_cc_switch(ctx, *ccache);
 +	} else {
 +		/* Otherwise, we can not create a unique ccname here (either
 +		 * it is already unique from above or the type does not support
 +		 * collections
 +		 */
-+		free(type);
 +		debug3_f("calling cc_resolve(%s)", ccname);
-+		return (krb5_cc_resolve(ctx, ccname, ccache));
++		ret = krb5_cc_resolve(ctx, ccname, ccache);
 +	}
++
++out:
++	free(type);
++	free(ccname);
++	return ret;
  }
  #endif /* !HEIMDAL */
  #endif /* KRB5 */
@@ -477,10 +491,10 @@ index c26174928..415fb1893 100644
  
  int
 diff --git a/gss-serv.c b/gss-serv.c
-index bf015aef7..5bc31289e 100644
+index a506051ec..d8e1c626a 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
-@@ -416,23 +416,25 @@ ssh_gssapi_cleanup_creds(void)
+@@ -425,23 +425,25 @@ ssh_gssapi_cleanup_creds(void)
  }
  
  /* As user */
@@ -510,7 +524,7 @@ index bf015aef7..5bc31289e 100644
  }
  
  /* This allows GSSAPI methods to do things to the child's environment based
-@@ -516,9 +518,7 @@ ssh_gssapi_rekey_creds(void) {
+@@ -525,9 +527,7 @@ ssh_gssapi_rekey_creds(void) {
  	char *envstr;
  #endif
  

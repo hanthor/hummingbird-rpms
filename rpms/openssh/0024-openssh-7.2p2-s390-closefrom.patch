@@ -1,7 +1,7 @@
-From 157671a6eeef976de0f2bf7777c810ff0000aa8c Mon Sep 17 00:00:00 2001
+From 9760d7bd1001d53bc1c6b136a487e3441f88a062 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 24/53] openssh-7.2p2-s390-closefrom
+Subject: [PATCH 24/55] openssh-7.2p2-s390-closefrom
 
 # make s390 use /dev/ crypto devices -- ignore closefrom
 ---

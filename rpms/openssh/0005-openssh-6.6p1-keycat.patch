@@ -1,7 +1,7 @@
-From 40cb1cdd8561ba61047536c5adce51efcc5a1dd7 Mon Sep 17 00:00:00 2001
+From d1700309ef10836d51e78ac63ea5297651bd9517 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 05/53] openssh-6.6p1-keycat
+Subject: [PATCH 05/55] openssh-6.6p1-keycat
 
 ---
  .depend          |   1 +

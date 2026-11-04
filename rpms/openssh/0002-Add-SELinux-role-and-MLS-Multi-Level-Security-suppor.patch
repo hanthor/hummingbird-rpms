@@ -1,7 +1,7 @@
-From 2e901e0c17cf7907d374e45d8d998852f8165dd0 Mon Sep 17 00:00:00 2001
+From 65b48b2f97dae1ad0fa9ce3876d758571a479dc2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:06:32 +0200
-Subject: [PATCH 02/53] Add SELinux role and MLS (Multi-Level Security) support
+Subject: [PATCH 02/55] Add SELinux role and MLS (Multi-Level Security) support
 
 openssh-7.8p1-role-mls
 

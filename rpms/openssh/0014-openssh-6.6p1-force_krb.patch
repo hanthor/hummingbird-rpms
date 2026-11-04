@@ -1,7 +1,7 @@
-From 86e6acc12639c293fb98f1949348a1d6a7f77702 Mon Sep 17 00:00:00 2001
+From f52c07ac4f65dd7848441cfedb6f790788e97136 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 14/53] openssh-6.6p1-force_krb
+Subject: [PATCH 14/55] openssh-6.6p1-force_krb
 
 #http://www.mail-archive.com/kerberos@mit.edu/msg17591.html
 ---

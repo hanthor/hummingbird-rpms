@@ -1,7 +1,7 @@
-From 3eba13cb9f6e5f2d099bd9b98d393f247b2b640c Mon Sep 17 00:00:00 2001
+From 17918b3c3aac196f0a9ed639f0b6ff1464b2f4d9 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 18/53] openssh-6.4p1-fromto-remote
+Subject: [PATCH 18/55] openssh-6.4p1-fromto-remote
 
 # Use tty allocation for a remote scp (#985650)
 ---

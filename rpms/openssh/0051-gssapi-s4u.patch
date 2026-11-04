@@ -1,7 +1,7 @@
-From 467b4214eecc48e620c0bd60f1e2f1473a5fe7ca Mon Sep 17 00:00:00 2001
+From 034fa6fd4b2a273e4e689da66258709039841da2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:25:21 +0200
-Subject: [PATCH 51/53] gssapi-s4u
+Subject: [PATCH 51/55] gssapi-s4u
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ---
@@ -17,10 +17,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
  9 files changed, 850 insertions(+), 20 deletions(-)
 
 diff --git a/auth-krb5.c b/auth-krb5.c
-index 2e3c1c80f..9cd3618b2 100644
+index d0784ddeb..23230e970 100644
 --- a/auth-krb5.c
 +++ b/auth-krb5.c
-@@ -465,6 +465,19 @@ ssh_krb5_cc_new_unique(krb5_context ctx, krb5_ccache *ccache, int *need_environm
+@@ -476,6 +476,19 @@ ssh_krb5_cc_new_unique(krb5_context ctx, krb5_ccache *ccache, int *need_environm
  	 * a primary cache for this collection, if it supports that (non-FILE)
  	 */
  	if (krb5_cc_support_switch(ctx, type)) {
@@ -34,12 +34,12 @@ index 2e3c1c80f..9cd3618b2 100644
 +		if (krb5_cc_default(ctx, ccache) == 0) {
 +			debug3_f("reusing existing default ccache of type %s",
 +			    type);
-+			free(type);
-+			return 0;
++			ret = 0;
++			goto out;
 +		}
  		debug3_f("calling cc_new_unique(%s)", ccname);
  		ret = krb5_cc_new_unique(ctx, type, NULL, ccache);
- 		free(type);
+ 		if (ret)
 diff --git a/configure.ac b/configure.ac
 index e850041fb..4d65e4d7e 100644
 --- a/configure.ac
@@ -65,10 +65,10 @@ index e850041fb..4d65e4d7e 100644
  
  	fi
 diff --git a/gss-serv-krb5.c b/gss-serv-krb5.c
-index fc7cabc09..06d450d4d 100644
+index 670720868..83ec0964f 100644
 --- a/gss-serv-krb5.c
 +++ b/gss-serv-krb5.c
-@@ -609,6 +609,231 @@ ssh_gssapi_krb5_updatecreds(ssh_gssapi_ccache *store,
+@@ -610,6 +610,231 @@ ssh_gssapi_krb5_updatecreds(ssh_gssapi_ccache *store,
  	return 1;
  }
  
@@ -301,7 +301,7 @@ index fc7cabc09..06d450d4d 100644
  	"toWM5Slw5Ew8Mqkay+al2g==",
  	"Kerberos",
 diff --git a/gss-serv.c b/gss-serv.c
-index 66d92e4fe..970386127 100644
+index 4a13e91ba..67fa98c43 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
 @@ -55,7 +55,7 @@ extern ServerOptions options;
@@ -313,7 +313,7 @@ index 66d92e4fe..970386127 100644
  
  ssh_gssapi_mech gssapi_null_mech =
      { NULL, NULL, {0, NULL}, NULL, NULL, NULL, NULL, NULL};
-@@ -493,26 +493,382 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+@@ -502,26 +502,382 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  	return (ctx->major);
  }
  

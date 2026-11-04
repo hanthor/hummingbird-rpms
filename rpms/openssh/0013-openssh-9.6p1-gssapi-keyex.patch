@@ -1,7 +1,7 @@
-From 0f49823af059037a1358ef5b7e75daa4c803817a Mon Sep 17 00:00:00 2001
+From eb12899785513fae999f976fe73e72bc19baaf37 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 13/53] openssh-9.6p1-gssapi-keyex
+Subject: [PATCH 13/55] openssh-9.6p1-gssapi-keyex
 
 ---
  .depend         |   2 +
@@ -16,7 +16,7 @@ Subject: [PATCH 13/53] openssh-9.6p1-gssapi-keyex
  configure.ac    |  24 ++
  gss-genr.c      | 313 ++++++++++++++++++++-
  gss-serv-krb5.c |  97 ++++++-
- gss-serv.c      | 192 +++++++++++--
+ gss-serv.c      | 199 ++++++++++++--
  kex-names.c     |  67 ++++-
  kex.c           |  35 ++-
  kex.h           |  34 +++
@@ -46,7 +46,7 @@ Subject: [PATCH 13/53] openssh-9.6p1-gssapi-keyex
  sshd_config.5   |  43 ++-
  sshkey.c        |  72 ++++-
  sshkey.h        |   1 +
- 42 files changed, 2998 insertions(+), 81 deletions(-)
+ 42 files changed, 3005 insertions(+), 81 deletions(-)
  create mode 100644 kexgssc.c
  create mode 100644 kexgsss.c
 
@@ -976,7 +976,7 @@ index 4caac337c..be401fe0e 100644
  
  #endif /* KRB5 */
 diff --git a/gss-serv.c b/gss-serv.c
-index 16f653202..bf015aef7 100644
+index 92247cf51..a506051ec 100644
 --- a/gss-serv.c
 +++ b/gss-serv.c
 @@ -1,7 +1,7 @@
@@ -1051,19 +1051,25 @@ index 16f653202..bf015aef7 100644
  
  	while (supported_mechs[i]->name != NULL) {
  		if (GSS_ERROR(gss_test_oid_set_member(&min_status,
-@@ -278,8 +305,48 @@ OM_uint32
+@@ -278,9 +305,56 @@ OM_uint32
  ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  {
  	int i = 0;
+-
 +	int equal = 0;
 +	gss_name_t new_name = GSS_C_NO_NAME;
-+	gss_buffer_desc ename = GSS_C_EMPTY_BUFFER;
-+
+ 	gss_buffer_desc ename = GSS_C_EMPTY_BUFFER;
+ 
 +	if (options.gss_store_rekey && client->used && ctx->client_creds) {
 +		if (client->mech->oid.length != ctx->oid->length ||
 +		    (memcmp(client->mech->oid.elements,
 +		     ctx->oid->elements, ctx->oid->length) !=0)) {
 +			debug("Rekeyed credentials have different mechanism");
++			return GSS_S_COMPLETE;
++		}
++
++		if (client->name == GSS_C_NO_NAME) {
++			debug("No previous client name to compare against");
 +			return GSS_S_COMPLETE;
 +		}
 +
@@ -1076,15 +1082,16 @@ index 16f653202..bf015aef7 100644
 +
 +		ctx->major = gss_compare_name(&ctx->minor, client->name,
 +		    new_name, &equal);
- 
--	gss_buffer_desc ename;
++
 +		if (GSS_ERROR(ctx->major)) {
 +			ssh_gssapi_error(ctx);
++			gss_release_name(&ctx->minor, &new_name);
 +			return (ctx->major);
 +		}
 +
 +		if (!equal) {
 +			debug("Rekeyed credentials have different name");
++			gss_release_name(&ctx->minor, &new_name);
 +			return GSS_S_COMPLETE;
 +		}
 +
@@ -1098,10 +1105,11 @@ index 16f653202..bf015aef7 100644
 +		client->updated = 1;
 +		return GSS_S_COMPLETE;
 +	}
- 
++
  	client->userok = 0;
  	client->mech = NULL;
-@@ -295,6 +362,13 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+ 
+@@ -295,6 +369,13 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  	if (client->mech == NULL)
  		return GSS_S_FAILURE;
  
@@ -1115,16 +1123,16 @@ index 16f653202..bf015aef7 100644
  	if ((ctx->major = gss_display_name(&ctx->minor, ctx->client,
  	    &client->displayname, NULL))) {
  		ssh_gssapi_error(ctx);
-@@ -312,6 +386,8 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
- 		return (ctx->major);
+@@ -314,6 +395,8 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  	}
+ 	gss_release_buffer(&ctx->minor, &ename);
  
 +	gss_release_buffer(&ctx->minor, &ename);
 +
  	/* We can't copy this structure, so we just move the pointer to it */
  	client->creds = ctx->client_creds;
  	ctx->client_creds = GSS_C_NO_CREDENTIAL;
-@@ -322,11 +398,20 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+@@ -324,11 +407,20 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
  void
  ssh_gssapi_cleanup_creds(void)
  {
@@ -1150,7 +1158,7 @@ index 16f653202..bf015aef7 100644
  	}
  }
  
-@@ -380,7 +465,7 @@ ssh_gssapi_cleanup_global_client()
+@@ -382,7 +474,7 @@ ssh_gssapi_cleanup_global_client()
  
  /* Privileged */
  int
@@ -1159,7 +1167,7 @@ index 16f653202..bf015aef7 100644
  {
  	if (gssapi_client.exportedname.length == 0 ||
  	    gssapi_client.exportedname.value == NULL) {
-@@ -390,6 +475,8 @@ ssh_gssapi_userok(char *user)
+@@ -392,6 +484,8 @@ ssh_gssapi_userok(char *user)
  	if (gssapi_client.mech && gssapi_client.mech->userok)
  		if ((*gssapi_client.mech->userok)(&gssapi_client, user)) {
  			gssapi_client.userok = 1;
@@ -1168,7 +1176,7 @@ index 16f653202..bf015aef7 100644
  			return 1;
  		} else {
  			/* Destroy delegated credentials if userok fails */
-@@ -401,14 +488,85 @@ ssh_gssapi_userok(char *user)
+@@ -403,14 +497,85 @@ ssh_gssapi_userok(char *user)
  	return (0);
  }
  

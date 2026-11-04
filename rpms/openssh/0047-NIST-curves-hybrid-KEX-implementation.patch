@@ -1,17 +1,17 @@
-From ba13f7f17189c53dc2d4518b3d217124892671ce Mon Sep 17 00:00:00 2001
+From 6458eed30112d2f4b478976e17c509d4085ccb08 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 20 Oct 2025 16:07:31 +0200
-Subject: [PATCH 47/53] NIST curves hybrid KEX implementation
+Subject: [PATCH 47/55] NIST curves hybrid KEX implementation
 
 ---
  compat.c                         |  23 +-
  compat.h                         |   1 +
  crypto_api.h                     |   5 +
- kex-names.c                      |  91 ++++-
+ kex-names.c                      |  91 +++-
  kex.c                            |   1 +
  kex.h                            |  20 +-
  kexgen.c                         |  67 ++-
- kexmlkem768x25519.c              | 680 +++++++++++++++++++++++++++++--
+ kexmlkem768x25519.c              | 683 +++++++++++++++++++++++++++++--
  monitor.c                        |   2 +
  myproposal.h                     |   4 +
  regress/unittests/kex/test_kex.c |   4 +
@@ -19,7 +19,7 @@ Subject: [PATCH 47/53] NIST curves hybrid KEX implementation
  ssh_api.c                        |   6 +-
  sshconnect2.c                    |   3 +-
  sshd-auth.c                      |   2 +
- 15 files changed, 852 insertions(+), 60 deletions(-)
+ 15 files changed, 855 insertions(+), 60 deletions(-)
 
 diff --git a/compat.c b/compat.c
 index 4312510e5..e6c7935d4 100644
@@ -447,7 +447,7 @@ index 32968e1f1..d3d8ac93e 100644
  		r = SSH_ERR_INVALID_ARGUMENT;
  		break;
 diff --git a/kexmlkem768x25519.c b/kexmlkem768x25519.c
-index 36658120f..03efb788f 100644
+index 36658120f..2f27b13a8 100644
 --- a/kexmlkem768x25519.c
 +++ b/kexmlkem768x25519.c
 @@ -45,19 +45,34 @@
@@ -665,7 +665,7 @@ index 36658120f..03efb788f 100644
  
  	*server_blobp = NULL;
  	*shared_secretp = NULL;
-@@ -529,6 +614,520 @@ kex_kem_mlkem768x25519_dec(struct kex *kex,
+@@ -529,6 +614,523 @@ kex_kem_mlkem768x25519_dec(struct kex *kex,
  	return r;
  #endif
  }
@@ -1010,9 +1010,12 @@ index 36658120f..03efb788f 100644
 +
 +	/* generate ECDH key pair, store server pubkey after ciphertext */
 +	server_key = nist_pkey_keygen(server_key_len);
++	if (server_key == NULL) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
 +
-+	if ((server_key == NULL) ||
-+	    (r = get_uncompressed_ec_pubkey(server_key, server_pub, server_key_len) != 0) ||
++	if ((r = get_uncompressed_ec_pubkey(server_key, server_pub, server_key_len) != 0) ||
 +	    (r = sshbuf_put(buf, secret, sizeof(secret))) != 0 ||
 +	    (r = sshbuf_put(server_blob, enc_out, enc_out_len) != 0)||
 +	    (r = sshbuf_put(server_blob, server_pub, server_key_len)) != 0)
@@ -1186,7 +1189,7 @@ index 36658120f..03efb788f 100644
  #else /* USE_MLKEM768X25519 */
  int
  kex_kem_mlkem768x25519_keypair(struct kex *kex)
-@@ -550,4 +1149,39 @@ kex_kem_mlkem768x25519_dec(struct kex *kex,
+@@ -550,4 +1152,39 @@ kex_kem_mlkem768x25519_dec(struct kex *kex,
  {
  	return SSH_ERR_SIGN_ALG_UNSUPPORTED;
  }
