@@ -157,6 +157,8 @@ spec:
           contentType: rpm
         - name: capstone-main
           contentType: rpm
+        - name: cargo-nextest-main
+          contentType: rpm
         - name: cargo-rpm-macros-main
           contentType: rpm
         - name: cargo2rpm-main

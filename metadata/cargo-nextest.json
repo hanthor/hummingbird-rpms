@@ -1,0 +1,7 @@
+{
+  "modification_status": "independent",
+  "release_monitoring_project_id": 301562,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/nextest-rs/nextest",
+  "version": "0.9.148"
+}

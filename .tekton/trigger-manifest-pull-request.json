@@ -153,6 +153,10 @@
         "^rpms/capstone/",
         "^test/rpms/capstone\\.yml$"
       ],
+      "cargo-nextest--rpms": [
+        "^rpms/cargo\\-nextest/",
+        "^test/rpms/cargo\\-nextest\\.yml$"
+      ],
       "cargo-rpm-macros--rpms": [
         "^rpms/cargo\\-rpm\\-macros/",
         "^test/rpms/cargo\\-rpm\\-macros\\.yml$"

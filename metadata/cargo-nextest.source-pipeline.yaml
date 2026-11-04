@@ -1,0 +1,13 @@
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "cargo-nextest-${VERSION}"
+    archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+transform:
+  - type: vendor
+    ecosystem: cargo
+    archive_name: "${PACKAGE}-${VERSION}-vendor.tar.xz"
+publish:
+  files:
+    - "${PACKAGE}-${VERSION}.tar.gz"
+    - "${PACKAGE}-${VERSION}-vendor.tar.xz"

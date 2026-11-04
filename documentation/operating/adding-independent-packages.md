@@ -25,6 +25,12 @@ Create the following files in the package directory:
 - Source tarballs (`.tar.gz`, `.tar.bz2`, `.tar.xz`)
 - Any patches or additional configuration files
 
+Rust specs can opt in to isolated tests by requiring `cargo-nextest` when checks are enabled
+and replacing `%cargo_test` with `%cargo_nextest`. Keep existing feature flags and exclusions;
+the macro preserves RPM compiler flags and the `rpm` profile, then runs doctests separately.
+Use `NEXTEST_PROFILE=ci` to select an upstream CI profile. For serial suites, retain
+`RUST_TEST_THREADS=1` and also set `NEXTEST_TEST_THREADS=1`. Publish the runner before its consumers.
+
 ### 3. Generate the `sources` File
 
 The `sources` file must contain SHA512 checksums in BSD-style format:
