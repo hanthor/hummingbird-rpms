@@ -1,16 +1,16 @@
 {
-  "version": "1.27.3",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/golang/go",
+  "cve_product": "Go",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/golang.git",
     "branch": "rawhide",
-    "sha": "204a197e246337b9f2b3e1a4f66552907e9f6798",
-    "release": "1"
+    "git_url": "https://src.fedoraproject.org/rpms/golang.git",
+    "release": "1",
+    "sha": "204a197e246337b9f2b3e1a4f66552907e9f6798"
   },
-  "modification_reason": "Update to upstream version 1.27.3",
-  "upstream_branch": "release-branch.go1.27",
-  "track_upstream": "1.27",
+  "modification_reason": "Align native FIPS patches with golang-fips c427fcd, including the optional startup guard",
+  "modification_status": "modified",
   "release_monitoring_project_id": 1227,
-  "cve_product": "Go"
+  "track_upstream": "1.27",
+  "upstream_branch": "release-branch.go1.27",
+  "upstream_repo": "https://github.com/golang/go",
+  "version": "1.27.3"
 }

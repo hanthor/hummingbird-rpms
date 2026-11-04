@@ -1,33 +1,9 @@
-From 23512fd532edf54107cc6805c7d46c9958a08970 Mon Sep 17 00:00:00 2001
-From: Derek Parker <deparker@redhat.com>
-Date: Wed, 13 May 2026 11:11:04 +0100
-Subject: [PATCH] Default GOFIPS140 to certified with host-auto FIPS detection
+From: Hummingbird maintainers
+Subject: [PATCH] Default to the certified FIPS module with host-auto activation
 
-Adapted from golang-fips/go 001-host-fips-auto.patch for Go 1.25/1.26.
-Original: https://github.com/golang-fips/go/blob/fa8f5fa811df31b1249724773b1a6f3debddad18/patches/001-host-fips-auto.patch
-
-Embed the CMVP #5247 certified FIPS 140-3 module in every binary by
-default and enable host-auto detection: binaries check
-/proc/sys/crypto/fips_enabled at startup and activate FIPS mode only
-when the host kernel has FIPS enabled.
-
-Expect fips140=auto in the Go 1.27.2 snapshot-cache regression test.
-Keep its hash and cache-repair checks unchanged.
----
- .../compile/internal/loopvar/loopvar_test.go  |  6 +--
- src/cmd/compile/internal/ssa/fmahash_test.go  |  2 +-
- src/cmd/dist/build.go                         |  6 ++-
- src/cmd/go/internal/load/godebug.go           |  4 +-
- src/cmd/go/script_test.go                     |  1 +
- src/cmd/go/testdata/script/fips.txt           |  2 +-
- src/cmd/go/testdata/script/fipssnap.txt       |  4 +-
- src/cmd/go/testdata/script/fipssnap_modcache.txt | 6 +--
- .../internal/fips140deps/godebug/godebug.go   | 12 +++++-
- .../internal/fips140deps/hostfips/hostfips.go | 42 +++++++++++++++++++
- src/go/build/deps_test.go                     |  3 +-
- src/run.bash                                  |  4 ++
- 12 files changed, 76 insertions(+), 16 deletions(-)
- create mode 100644 src/crypto/internal/fips140deps/hostfips/hostfips.go
+Adapted from golang-fips/go at c427fcd6aa702f5072295a25e055646c9a1d9347.
+https://github.com/golang-fips/go/blob/c427fcd6aa702f5072295a25e055646c9a1d9347/patches/001-host-fips-auto.patch
+https://github.com/golang-fips/go/blob/c427fcd6aa702f5072295a25e055646c9a1d9347/patches/006-fix-modcache-scripttest.patch
 
 diff --git a/src/cmd/compile/internal/loopvar/loopvar_test.go b/src/cmd/compile/internal/loopvar/loopvar_test.go
 index c4ff8f6..9e6c6ef 100644
@@ -74,10 +50,10 @@ index c563d5b..d0b4be4 100644
  	t.Logf("%v", cmd.Env)
  	b, e := cmd.CombinedOutput()
 diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
-index e4250e1..7e13cda 100644
+index 78d55be..5263059 100644
 --- a/src/cmd/dist/build.go
 +++ b/src/cmd/dist/build.go
-@@ -179,7 +179,7 @@ func xinit() {
+@@ -180,7 +180,7 @@ func xinit() {
  
  	b = os.Getenv("GOFIPS140")
  	if b == "" {
@@ -86,7 +62,7 @@ index e4250e1..7e13cda 100644
  	}
  	gofips140 = b
  
-@@ -245,7 +245,8 @@ func xinit() {
+@@ -246,7 +246,8 @@ func xinit() {
  	os.Setenv("GOPPC64", goppc64)
  	os.Setenv("GORISCV64", goriscv64)
  	os.Setenv("GOROOT", goroot)
@@ -96,7 +72,23 @@ index e4250e1..7e13cda 100644
  
  	// Set GOBIN to GOROOT/bin. The meaning of GOBIN has drifted over time
  	// (see https://go.dev/issue/3269, https://go.dev/cl/183058,
-@@ -1543,6 +1544,7 @@ func cmdbootstrap() {
+@@ -623,6 +624,15 @@ func setup() {
+ 			}
+ 		}
+ 	}
++
++	// Clean up extracted fips snapshot. This must run before
++	// xremove(obj) because the modcache is readonly, and will
++	// prevent pkg/obj from being cleaned.
++	xatexit(func() {
++		objGopath := pathf("%s/pkg/obj/gopath", goroot)
++		run(goroot, ShowOutput|CheckExit, gorootBinGo, "clean", "-modcache")
++		xremoveall(objGopath)
++	})
+ }
+ 
+ /*
+@@ -1560,6 +1570,7 @@ func cmdbootstrap() {
  	os.Setenv("CC", compilerEnvLookup("CC", defaultcc, goos, goarch))
  	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
  	os.Setenv("GOEXPERIMENT", goexperiment)
@@ -104,11 +96,52 @@ index e4250e1..7e13cda 100644
  	// No need to enable PGO for toolchain2.
  	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
  	if debug {
+diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
+index 43ac003..17aa83d 100644
+--- a/src/cmd/dist/test.go
++++ b/src/cmd/dist/test.go
+@@ -158,6 +158,8 @@ func (t *tester) run() {
+ 		}
+ 	}
+ 
++	// Propagate GOFIPS140 to rebuilt toolchain binaries.
++	os.Setenv("GOFIPS140", gofips140)
+ 	if t.rebuild {
+ 		t.out("Building packages and commands.")
+ 		// Force rebuild the whole toolchain.
+@@ -184,6 +186,10 @@ func (t *tester) run() {
+ 		}
+ 	}
+ 
++	if err := os.Setenv("GOFIPS140", "off"); err != nil {
++		fatalf("error setting initial GOFIPS140 value for tests")
++	}
++
+ 	t.timeoutScale = 1
+ 	if s := os.Getenv("GO_TEST_TIMEOUT_SCALE"); s != "" {
+ 		t.timeoutScale, err = strconv.Atoi(s)
+diff --git a/src/cmd/go/internal/fips140/fips140.go b/src/cmd/go/internal/fips140/fips140.go
+index f5d3c2c..49088af 100644
+--- a/src/cmd/go/internal/fips140/fips140.go
++++ b/src/cmd/go/internal/fips140/fips140.go
+@@ -124,10 +124,10 @@ func Init() {
+ 	// toolchain selection, as the GOEXPERIMENT may be valid for the
+ 	// selected toolchain version.
+ 	if cfg.ExperimentErr == nil && cfg.Experiment.BoringCrypto && Enabled() {
+-		base.Fatalf("go: cannot use GOFIPS140 with GOEXPERIMENT=boringcrypto")
++		base.Fatalf("go: use of GOEXPERIMENT=boringcrypto requires GOFIPS140=off")
+ 	}
+ 	if slices.Contains(cfg.BuildContext.BuildTags, "purego") && Enabled() {
+-		base.Fatalf("go: cannot use GOFIPS140 with the purego build tag")
++		base.Fatalf("go: use of purego build tag requires GOFIPS140=off")
+ 	}
+ }
+ 
 diff --git a/src/cmd/go/internal/load/godebug.go b/src/cmd/go/internal/load/godebug.go
-index 817cc4f..5b16691 100644
+index 9f8182b..b5d4881 100644
 --- a/src/cmd/go/internal/load/godebug.go
 +++ b/src/cmd/go/internal/load/godebug.go
-@@ -69,9 +69,9 @@ func defaultGODEBUG(ld *modload.Loader, p *Package, directives, testDirectives,
+@@ -73,9 +73,9 @@ func defaultGODEBUG(ld *modload.Loader, p *Package, directives, testDirectives,
  	var m map[string]string
  
  	// If GOFIPS140 is set to anything but "off",
@@ -121,10 +154,10 @@ index 817cc4f..5b16691 100644
  
  	// Add directives from main module go.mod.
 diff --git a/src/cmd/go/script_test.go b/src/cmd/go/script_test.go
-index 390a367..6b0ea5d 100644
+index 6033ec4..3bad3e4 100644
 --- a/src/cmd/go/script_test.go
 +++ b/src/cmd/go/script_test.go
-@@ -253,6 +253,7 @@ func scriptEnv(srv *vcstest.Server, srvCertFile string) ([]string, error) {
+@@ -256,6 +256,7 @@ func scriptEnv(srv *vcstest.Server, srvCertFile string) ([]string, error) {
  		"CMDGO_TEST_RUN_MAIN=true",
  		"HGRCPATH=",
  		"GOTOOLCHAIN=auto",
@@ -168,9 +201,11 @@ index 4f2d486..31534a1 100644
  # std lists fips snapshot and not regular fips
  go list std
 diff --git a/src/cmd/go/testdata/script/fipssnap_modcache.txt b/src/cmd/go/testdata/script/fipssnap_modcache.txt
+index ca43ec9..db0f6e2 100644
 --- a/src/cmd/go/testdata/script/fipssnap_modcache.txt
 +++ b/src/cmd/go/testdata/script/fipssnap_modcache.txt
-@@ -22,6 +22,6 @@
+@@ -21,7 +21,7 @@ env srcfile=$GOMODCACHE/golang.org/fips140@$snap/fips140/$snap/sha256/sha256.go
+ 
  # unpacking the snapshot records its module zip hash in the module cache
  go list -f '{{.DefaultGODEBUG}}'
 -stdout fips140=on
@@ -178,7 +213,7 @@ diff --git a/src/cmd/go/testdata/script/fipssnap_modcache.txt b/src/cmd/go/testd
  exists $ziphash
  exists $srcfile
  grep '^h1:dtoPX1ALGGp4rMLzyh6oqIkYRXnXxRkpPWu56l5DFpM=$' $ziphash
-@@ -33,7 +33,7 @@
+@@ -33,7 +33,7 @@ cp bad.ziphash $ziphash
  rm $srcfile
  cp stale/sha256.go $srcfile
  go list -f '{{.DefaultGODEBUG}}'
@@ -187,7 +222,7 @@ diff --git a/src/cmd/go/testdata/script/fipssnap_modcache.txt b/src/cmd/go/testd
  exists $srcfile
  ! grep stale $srcfile
  cmp $ziphash good.ziphash
-@@ -43,7 +43,7 @@
+@@ -43,7 +43,7 @@ rm $ziphash
  rm $srcfile
  cp stale/sha256.go $srcfile
  go list -f '{{.DefaultGODEBUG}}'
@@ -226,10 +261,10 @@ index de50d61..22bda7a 100644
  }
 diff --git a/src/crypto/internal/fips140deps/hostfips/hostfips.go b/src/crypto/internal/fips140deps/hostfips/hostfips.go
 new file mode 100644
-index 0000000..da08e30
+index 0000000..84cc1e1
 --- /dev/null
 +++ b/src/crypto/internal/fips140deps/hostfips/hostfips.go
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,59 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -244,6 +279,9 @@ index 0000000..da08e30
 +var (
 +	enabled     bool
 +	enabledOnce sync.Once
++
++	hostEnabled     bool
++	hostEnabledOnce sync.Once
 +)
 +
 +// Enabled returns true if the host system has FIPS mode enabled,
@@ -252,16 +290,30 @@ index 0000000..da08e30
 +// The result is cached after the first call.
 +func Enabled() bool {
 +	enabledOnce.Do(func() {
++		// Test override for verifying code paths without a real FIPS-enabled host
 +		if os.Getenv("GOLANG_NATIVE_HOSTFIPS_OVERRIDE") == "1" {
 +			enabled = true
 +			return
 +		}
-+		enabled = checkHostFIPS()
++		enabled = HostEnabled()
 +	})
 +	return enabled
 +}
 +
++// HostEnabled returns true if the host system has FIPS mode enabled.
++// Unlike Enabled(), this does NOT respect GOLANG_NATIVE_HOSTFIPS_OVERRIDE.
++// Use this when you need to check actual host FIPS status without test overrides.
++// The result is cached after the first call.
++func HostEnabled() bool {
++	hostEnabledOnce.Do(func() {
++		hostEnabled = checkHostFIPS()
++	})
++	return hostEnabled
++}
++
 +func checkHostFIPS() bool {
++	// Look at /proc/sys/crypto/fips_enabled to see if FIPS mode is enabled.
++	// If we run into an error reading that file because it doesn't exist, assume FIPS mode is not enabled.
 +	data, err := os.ReadFile("/proc/sys/crypto/fips_enabled")
 +	if err != nil {
 +		if os.IsNotExist(err) {
@@ -273,10 +325,10 @@ index 0000000..da08e30
 +	return len(data) > 0 && data[0] == '1'
 +}
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index f4b7e9d..9d693b6 100644
+index 4959a42..5c909e9 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -496,7 +496,8 @@ var depsRules = `
+@@ -488,7 +488,8 @@ var depsRules = `
  
  	internal/byteorder < crypto/internal/fips140deps/byteorder;
  	internal/cpu, internal/goarch < crypto/internal/fips140deps/cpu;
@@ -287,19 +339,28 @@ index f4b7e9d..9d693b6 100644
  
  	crypto/internal/fips140deps/time, errors, math/bits, sync/atomic, unsafe
 diff --git a/src/run.bash b/src/run.bash
-index cb47432..faf23ce 100755
+index e774f03..37770c7 100755
 --- a/src/run.bash
 +++ b/src/run.bash
-@@ -30,6 +30,10 @@ if [ ! -f ../bin/go ]; then
+@@ -37,6 +37,14 @@ if [ ! -f ../bin/go ]; then
  fi
  
  export GOENV=off
-+# Prevent the go binary from trying to extract a FIPS snapshot into GOPATH,
-+# which will be set to /nonexist-gopath below. FIPS-specific tests set
-+# GOFIPS140 and GOMODCACHE explicitly in their own environments.
-+export GOFIPS140=off
++# Prevent the go binary from trying to extract a FIPS snapshot
++# into GOPATH, which will be set to /nonexist-gopath below.
++export GOMODCACHE="$(mktemp -d -t run.bash.gomodcache.XXXXXX)"
++if [ $? -ne 0 ]; then
++	echo Could not create modcache in /tmp
++	exit 1
++fi
++trap "../bin/go clean -modcache" EXIT
  eval $(../bin/go tool dist env)
  
  unset CDPATH	# in case user has it set
--- 
-2.54.0
+@@ -57,4 +65,5 @@ if ulimit -T &> /dev/null; then
+ fi
+ 
+ export GOPATH=/nonexist-gopath
+-exec ../bin/go tool dist test -rebuild "$@"
++# Run dist test as a subprocess to trigger cleanup trap.
++../bin/go tool dist test -rebuild "$@"
