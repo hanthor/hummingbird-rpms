@@ -4,11 +4,6 @@ fetch:
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
 transform:
-  - type: run
-    command:
-      - bash
-      - -c
-      - patch -p1 --fuzz=0 --batch < "${PACKAGE_DIR}/0001-russh-0.65.0.patch"
   - type: vendor
     ecosystem: cargo
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.xz"

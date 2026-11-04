@@ -1,0 +1,44 @@
+Subject: [PATCH] test: isolate rejected attach event capture
+
+The shared OCSF tracing callsite has process wide cached interest. Parallel
+tests can initialize it without this test's subscriber, leaving the capture
+empty even though rejected candidates never bind the boundary.
+
+Run the test in a fresh process, following the existing boundary test
+isolation pattern. Preserve all rejection, event count, finding, grant
+redaction, and successful owner attach assertions.
+
+Upstream: https://github.com/NVIDIA/OpenShell/tree/v0.1.7
+---
+--- a/crates/openshell-sandbox/src/boundary_server.rs
++++ b/crates/openshell-sandbox/src/boundary_server.rs
+@@ -8683,6 +8683,29 @@
+         /// configuration event and detection finding, and no grant is logged.
+         #[test]
+         fn rejected_attach_candidates_never_bind_the_boundary() {
++            const CHILD: &str = "OPENSHELL_REJECTED_ATTACH_TEST_CHILD";
++
++            // Keep the tracing callsite cache independent of parallel tests.
++            if std::env::var_os(CHILD).is_none() {
++                let output = std::process::Command::new(std::env::current_exe().unwrap())
++                    .args([
++                        "--exact",
++                        "boundary_server::linux::tests::rejected_attach_candidates_never_bind_the_boundary",
++                        "--nocapture",
++                        "--test-threads=1",
++                    ])
++                    .env(CHILD, "1")
++                    .output()
++                    .expect("run isolated rejected-attach test");
++                assert!(
++                    output.status.success(),
++                    "isolated rejected-attach test failed: {}\n{}",
++                    String::from_utf8_lossy(&output.stdout),
++                    String::from_utf8_lossy(&output.stderr),
++                );
++                return;
++            }
++
+             const SANDBOX: &str = "sandbox-admission";
+             const GENERATION: &str = "generation-admission";
+             let gateway = TestGateway::new();

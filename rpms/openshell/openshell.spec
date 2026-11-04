@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 %global crate openshell
-%global openshell_version 0.1.6
+%global openshell_version 0.1.7
 %global openshell_cargo_version %{openshell_version}
 # Python dist-info metadata intentionally follows the RPM Version. Dev build
 # identity is represented by Release for RPM packages.
@@ -60,8 +60,8 @@ Source0: %{name}-%{openshell_version}.tar.gz
 Source1: %{name}-%{openshell_version}-vendor.tar.xz
 Patch0:  openshell-forward-ssrf-test-endpoint-only.patch
 Patch1:  openshell-listener-lifetime-test-isolation.patch
-Patch2:  0001-russh-0.65.0.patch
 Patch3:  openshell-closed-socket-test-isolation.patch
+Patch4:  openshell-rejected-attach-test-isolation.patch
 
 ExclusiveArch:  x86_64 aarch64
 
