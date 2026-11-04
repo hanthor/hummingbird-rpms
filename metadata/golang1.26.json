@@ -5,7 +5,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/golang.git",
     "sha": "0241d8077bf0228910b349a13b07dc867d476a41"
   },
-  "modification_reason": "Update to upstream version 1.26.10",
+  "modification_reason": "Align native FIPS patches with golang-fips c427fcd, including the optional startup guard",
   "modification_status": "modified",
   "release_monitoring_project_id": 1227,
   "track_upstream": "1.26",
