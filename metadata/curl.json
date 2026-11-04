@@ -1,14 +1,14 @@
 {
-  "version": "8.23.0",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/curl/curl",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/curl.git",
     "branch": "rawhide",
-    "sha": "1ea64490ea3fbc0acfb6b51f29f8397e2a9b3154",
-    "release": "2"
+    "git_url": "https://src.fedoraproject.org/rpms/curl.git",
+    "release": "3",
+    "sha": "90aa47612f24ae5d6c86813f713de3e017ef2039"
   },
   "modification_reason": "Update to upstream version 8.23.0",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 381,
   "track_upstream": "latest",
-  "release_monitoring_project_id": 381
+  "upstream_repo": "https://github.com/curl/curl",
+  "version": "8.23.0"
 }
