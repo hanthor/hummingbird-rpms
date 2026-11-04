@@ -889,6 +889,8 @@ spec:
           contentType: rpm
         - name: perl-uri-main
           contentType: rpm
+        - name: perl-unicode-normalize-main
+          contentType: rpm
         - name: perl-constant-main
           contentType: rpm
         - name: perl-libnet-main
