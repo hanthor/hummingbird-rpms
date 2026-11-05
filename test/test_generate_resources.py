@@ -180,6 +180,12 @@ class TestPromotionPac:
         run = runs[0]
         assert "^rpms/syft/" in run["metadata"]["annotations"]["pipelinesascode.tekton.dev/on-cel-expression"]
         assert run["spec"]["taskRunTemplate"]["serviceAccountName"] == "hummingbird-promotion"
+        assert run["spec"]["taskRunSpecs"] == [
+            {"pipelineTaskName": "clone-repository", "serviceAccountName": "build-pipeline-syft-main"}
+        ]
+        assert {param["name"]: param["value"] for param in run["spec"]["params"]}[
+            "source-storage"
+        ] == "quay.io/redhat-user-workloads/hummingbird-tenant/syft-main:{{revision}}.git"
         assert [task["name"] for task in run["spec"]["pipelineSpec"]["tasks"]] == [
             "clone-repository",
             "find-tested-mr-artifact",

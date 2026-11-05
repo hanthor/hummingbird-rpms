@@ -26,7 +26,7 @@ spec:
     - name: target-branch
       value: '{{ "{{target_branch}}" }}'
     - name: source-storage
-      value: quay.io/hummingbird-ci/promotion-source:{{ "{{revision}}" }}.git
+      value: quay.io/redhat-user-workloads/{{ tenant }}/{{ rpm.name }}:{{ "{{revision}}" }}.git
     - name: archive-url
       value: {{ promotion_archive_url }}
     - name: tool-image
@@ -147,6 +147,9 @@ spec:
       - name: git-auth
   taskRunTemplate:
     serviceAccountName: hummingbird-promotion
+  taskRunSpecs:
+    - pipelineTaskName: clone-repository
+      serviceAccountName: build-pipeline-{{ rpm.name }}
   timeouts:
     pipeline: 1h
     tasks: 1h
