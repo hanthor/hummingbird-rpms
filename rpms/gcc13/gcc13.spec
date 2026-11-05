@@ -45,7 +45,7 @@
 Summary: Various compatibility compilers (C, C++, Fortran, ...)
 Name: gcc%{gcc_major}
 Version: %{gcc_version}
-Release: %{gcc_release}.4%{?dist}
+Release: %{gcc_release}.5%{?dist}
 # License notes for some of the less obvious ones:
 #   gcc/doc/cppinternals.texi: Linux-man-pages-copyleft-2-para
 #   isl: MIT, BSD-2-Clause
@@ -117,6 +117,9 @@ Patch9: gcc13-Wno-format-security.patch
 Patch10: gcc13-rh1574936.patch
 Patch11: gcc13-CVE-2026-102010.patch
 Patch12: gcc13-CVE-2026-115455.patch
+Patch13: gcc13-CVE-2026-115456.patch
+Patch14: gcc13-CVE-2026-114690.patch
+Patch15: gcc13-CVE-2026-114691.patch
 
 %global _gnu %{nil}
 %global gcc_target_platform %{_target_platform}
