@@ -39,7 +39,7 @@
 Summary: An open source implementation of SSH protocol version 2
 Name: openssh
 Version: %{openssh_ver}
-Release: 1%{?dist}
+Release: 2%{?dist}
 URL: http://www.openssh.com/portable.html
 Source0: https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
 Source1: https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz.asc
@@ -114,6 +114,8 @@ Patch0050: 0050-openssh-10.2p1-pam-auth.patch
 Patch0051: 0051-gssapi-s4u.patch
 Patch0052: 0052-openssh-10.2p1-pkcs11-uri.patch
 Patch0053: 0053-gssapi-tests.patch
+Patch0054: 0054-Implement-ML-DSA-signature-algorithms-per-draft-sflu.patch
+Patch0055: 0055-Use-golang.org-suffix-for-certificates.patch
 # Preserve Fedora's post-authentication GSSAPI rekeying; CVE fixes are upstream.
 Patch0061: 0061-fedora-gssapi-rekey-compat.patch
 
@@ -164,7 +166,7 @@ BuildRequires: audit-libs >= 1.0.8
 
 BuildRequires: xauth
 # for tarball signature verification
-BuildRequires: gnupg2
+BuildRequires: openpgpverify
 
 # for regress tests
 BuildRequires: tmux
@@ -249,7 +251,7 @@ an X11 passphrase dialog for OpenSSH.
 This package contains a test SK driver used for OpenSSH test purposes
 
 %prep
-gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
+%{openpgpverify} --keyring='%{SOURCE3}' --signature='%{SOURCE1}' --data='%{SOURCE0}'
 %autosetup -T -b 0 -p1
 
 autoreconf
@@ -524,6 +526,12 @@ test -f %{sysconfig_anaconda} && \
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Wed Nov 04 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 10.6p1-2
+- Providing IdentityFile support for PKCS#11 URI
+- Getting rid of some Kerberos/GSS related memory leaks
+- Enabling pure ML-DSA keys according to draft-sfluhrer-ssh-mldsa, using
+  @golang.org suffix for certificates
+
 * Wed Oct 21 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 10.6p1-1
 - Rebasing OpenSSH to 10.6p1
 

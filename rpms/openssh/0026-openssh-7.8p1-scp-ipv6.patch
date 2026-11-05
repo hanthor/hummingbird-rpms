@@ -1,7 +1,7 @@
-From dcd4c76ef216e4493d4a469304afe71bd8ed7f43 Mon Sep 17 00:00:00 2001
+From ec0208c11f27f146c25381aae1f8aae2d9c0dc1b Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 26/53] openssh-7.8p1-scp-ipv6
+Subject: [PATCH 26/55] openssh-7.8p1-scp-ipv6
 
 # Unbreak scp between two IPv6 hosts (#1620333)
 ---

@@ -1,7 +1,7 @@
-From 928a38995ab234e713313e81afaa3e2b2d004c19 Mon Sep 17 00:00:00 2001
+From 89edfa0d72b61be566dab5fc4fee947c299006cc Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 27/53] openssh-8.0p1-crypto-policies
+Subject: [PATCH 27/55] openssh-8.0p1-crypto-policies
 
 ---
  ssh_config.5  | 168 ++++++++++++++++++--------------------------

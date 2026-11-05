@@ -1,7 +1,7 @@
-From a857e54e79d458c45590e5f33890278efc44ee36 Mon Sep 17 00:00:00 2001
+From ff983db637c04f10acca7b150f1906cf064350b4 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 11/53] openssh-8.7p1-redhat
+Subject: [PATCH 11/55] openssh-8.7p1-redhat
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=1635 (WONTFIX)
 ---

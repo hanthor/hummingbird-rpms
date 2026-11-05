@@ -1,7 +1,7 @@
-From ca95ea01edf9a7d855c959bf6a0b1b1fc3881a9b Mon Sep 17 00:00:00 2001
+From 8dab6562c751cb57f54dcb6c16e94c3d1eed3e9a Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:07:02 +0200
-Subject: [PATCH 04/53] Pass inetd flags and auth context to subprocess calls
+Subject: [PATCH 04/55] Pass inetd flags and auth context to subprocess calls
  for SELinux
 
 openssh-7.6p1-subprocess-selinux

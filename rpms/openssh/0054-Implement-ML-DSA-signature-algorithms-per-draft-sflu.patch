@@ -1,0 +1,1211 @@
+From f4fa836b143d3dd7bcbc872fad323e81fe8a4a25 Mon Sep 17 00:00:00 2001
+From: Dmitry Belyavskiy <beldmit@gmail.com>
+Date: Thu, 4 Jun 2026 17:36:31 +0200
+Subject: [PATCH 54/55] Implement ML-DSA signature algorithms per
+ draft-sfluhrer-ssh-mldsa-06
+
+Add ssh-mldsa-44, ssh-mldsa-65, and ssh-mldsa-87 public key algorithms
+using FIPS 204 (ML-DSA) via OpenSSL 3.5+ EVP API. Includes certificate
+variants and FIPS mode support.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ Makefile.in               |   2 +-
+ authfd.c                  |   8 +
+ configure.ac              |  40 ++-
+ myproposal.h              |  16 +-
+ pathnames.h               |   6 +
+ regress/cert-userkey.sh   |   2 +
+ regress/hostkey-agent.sh  |   2 +-
+ regress/keygen-comment.sh |   1 +
+ regress/keytype.sh        |   6 +
+ regress/krl.sh            |   1 +
+ regress/limit-keytype.sh  |   6 +-
+ ssh-keygen.c              |  16 ++
+ ssh-keyscan.c             |  40 ++-
+ ssh-mldsa.c               | 562 ++++++++++++++++++++++++++++++++++++++
+ sshd-auth.c               |  15 +
+ sshd-session.c            |   5 +
+ sshd.c                    |   5 +
+ sshkey.c                  |  80 ++++++
+ sshkey.h                  |  13 +
+ 19 files changed, 806 insertions(+), 20 deletions(-)
+ create mode 100644 ssh-mldsa.c
+
+diff --git a/Makefile.in b/Makefile.in
+index 2e8fe9f5c..78a6f2333 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -103,7 +103,7 @@ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
+ 	msg.o dns.o entropy.o gss-genr.o umac.o umac128.o \
+ 	smult_curve25519_ref.o \
+ 	poly1305.o chacha.o cipher-chachapoly.o cipher-chachapoly-libcrypto.o \
+-	ssh-ed25519.o digest-openssl.o digest-libc.o \
++	ssh-ed25519.o ssh-mldsa.o digest-openssl.o digest-libc.o \
+ 	libcrux-mlkem-mldsa.o ssh-mldsa-eddsa.o \
+ 	hmac.o ed25519.o ed25519-openssl.o \
+ 	kex.o kex-names.o kexdh.o kexgex.o kexecdh.o kexc25519.o \
+diff --git a/authfd.c b/authfd.c
+index aef809fa6..8cc1be127 100644
+--- a/authfd.c
++++ b/authfd.c
+@@ -605,6 +605,14 @@ ssh_add_identity_constrained(int sock, struct sshkey *key,
+ 	case KEY_ECDSA_CERT:
+ 	case KEY_ECDSA_SK:
+ 	case KEY_ECDSA_SK_CERT:
++#ifdef OPENSSL_HAS_MLDSA
++	case KEY_MLDSA44:
++	case KEY_MLDSA44_CERT:
++	case KEY_MLDSA65:
++	case KEY_MLDSA65_CERT:
++	case KEY_MLDSA87:
++	case KEY_MLDSA87_CERT:
++#endif
+ #endif
+ 	case KEY_ED25519:
+ 	case KEY_ED25519_CERT:
+diff --git a/configure.ac b/configure.ac
+index 72ce8a224..be46dec2d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -13,7 +13,7 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-AC_INIT([OpenSSH], [Portable], [openssh-unix-dev@mindrot.org])
++AC_INIT([OpenSSH],[Portable],[openssh-unix-dev@mindrot.org])
+ AC_CONFIG_MACRO_DIR([m4])
+ AC_CONFIG_SRCDIR([ssh.c])
+ 
+@@ -835,29 +835,22 @@ int main(void) { if (NSVersionOfRunTimeLibrary("System") >= (60 << 16))
+ 	AC_DEFINE([SSH_TUN_PREPEND_AF], [1],
+ 	    [Prepend the address family to IP tunnel traffic])
+ 	AC_MSG_CHECKING([if we have the Security Authorization Session API])
+-	AC_TRY_COMPILE([#include <Security/AuthSession.h>],
+-		[SessionCreate(0, 0);],
+-		[ac_cv_use_security_session_api="yes"
++	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Security/AuthSession.h>]], [[SessionCreate(0, 0);]])],[ac_cv_use_security_session_api="yes"
+ 		 AC_DEFINE([USE_SECURITY_SESSION_API], [1],
+ 			[platform has the Security Authorization Session API])
+ 		 LIBS="$LIBS -framework Security"
+-		 AC_MSG_RESULT([yes])],
+-		[ac_cv_use_security_session_api="no"
++		 AC_MSG_RESULT([yes])],[ac_cv_use_security_session_api="no"
+ 		 AC_MSG_RESULT([no])])
+ 	AC_MSG_CHECKING([if we have an in-memory credentials cache])
+-	AC_TRY_COMPILE(
+-		[#include <Kerberos/Kerberos.h>],
+-		[cc_context_t c;
+-		 (void) cc_initialize (&c, 0, NULL, NULL);],
+-		[AC_DEFINE([USE_CCAPI], [1],
++	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Kerberos/Kerberos.h>]], [[cc_context_t c;
++		 (void) cc_initialize (&c, 0, NULL, NULL);]])],[AC_DEFINE([USE_CCAPI], [1],
+ 			[platform uses an in-memory credentials cache])
+ 		 LIBS="$LIBS -framework Security"
+ 		 AC_MSG_RESULT([yes])
+ 		 if test "x$ac_cv_use_security_session_api" = "xno"; then
+ 			AC_MSG_ERROR([*** Need a security framework to use the credentials cache API ***])
+-		fi],
+-		[AC_MSG_RESULT([no])]
+-	)
++		fi],[AC_MSG_RESULT([no])
++	])
+ 	m4_pattern_allow([AU_IPv])
+ 	AC_CHECK_DECL([AU_IPv4], [],
+ 	    AC_DEFINE([AU_IPv4], [0], [System only supports IPv4 audit records])
+@@ -3433,6 +3426,25 @@ if test "x$openssl" = "xyes" ; then
+ 		;;
+ 	esac
+ 
++	AC_MSG_CHECKING([whether OpenSSL has ML-DSA support])
++	AC_LINK_IFELSE(
++		[AC_LANG_PROGRAM([[
++#include <openssl/evp.h>
++		]], [[
++		EVP_PKEY_CTX *ctx;
++		ctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-44", NULL);
++		if (ctx == NULL) return 1;
++		EVP_PKEY_CTX_free(ctx);
++		]])],
++		[
++			AC_MSG_RESULT([yes])
++			AC_DEFINE([OPENSSL_HAS_MLDSA], [1],
++			    [libcrypto has ML-DSA support])
++		],
++		[
++			AC_MSG_RESULT([no])
++		]
++	)
+ fi
+ 
+ # PKCS11/U2F depend on OpenSSL and dlopen().
+diff --git a/myproposal.h b/myproposal.h
+index 6c9045a89..a38ba11f4 100644
+--- a/myproposal.h
++++ b/myproposal.h
+@@ -62,7 +62,13 @@
+ 	"webauthn-sk-ecdsa-sha2-nistp256@openssh.com," \
+ 	"rsa-sha2-512," \
+ 	"rsa-sha2-256," \
+-	"ssh-mldsa44-ed25519"
++	"ssh-mldsa44-ed25519," \
++	"ssh-mldsa-44-cert-v01@openssh.com," \
++	"ssh-mldsa-65-cert-v01@openssh.com," \
++	"ssh-mldsa-87-cert-v01@openssh.com," \
++	"ssh-mldsa-44," \
++	"ssh-mldsa-65," \
++	"ssh-mldsa-87"
+ 
+ #define	KEX_FIPS_PK_ALG	\
+ 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+@@ -74,7 +80,13 @@
+ 	"ecdsa-sha2-nistp384," \
+ 	"ecdsa-sha2-nistp521," \
+ 	"rsa-sha2-512," \
+-	"rsa-sha2-256"
++	"rsa-sha2-256," \
++	"ssh-mldsa-44-cert-v01@openssh.com," \
++	"ssh-mldsa-65-cert-v01@openssh.com," \
++	"ssh-mldsa-87-cert-v01@openssh.com," \
++	"ssh-mldsa-44," \
++	"ssh-mldsa-65," \
++	"ssh-mldsa-87"
+ 
+ #define	KEX_SERVER_ENCRYPT \
+ 	"chacha20-poly1305@openssh.com," \
+diff --git a/pathnames.h b/pathnames.h
+index a94aec6ac..a16cee7ec 100644
+--- a/pathnames.h
++++ b/pathnames.h
+@@ -40,6 +40,9 @@
+ #define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
+ #define _PATH_HOST_ED25519_KEY_FILE	SSHDIR "/ssh_host_ed25519_key"
+ #define _PATH_HOST_MLDSA44_ED25519_KEY_FILE SSHDIR "/ssh_host_mldsa44_ed25519_key"
++#define _PATH_HOST_MLDSA44_KEY_FILE	SSHDIR "/ssh_host_mldsa44_key"
++#define _PATH_HOST_MLDSA65_KEY_FILE	SSHDIR "/ssh_host_mldsa65_key"
++#define _PATH_HOST_MLDSA87_KEY_FILE	SSHDIR "/ssh_host_mldsa87_key"
+ #define _PATH_DH_MODULI			SSHDIR "/moduli"
+ #define _PATH_SCP_KILL_SWITCH		SSHDIR "/disable_scp"
+ 
+@@ -96,6 +99,9 @@
+ #define _PATH_SSH_CLIENT_ID_ECDSA_SK	_PATH_SSH_USER_DIR "/id_ecdsa_sk"
+ #define _PATH_SSH_CLIENT_ID_ED25519_SK	_PATH_SSH_USER_DIR "/id_ed25519_sk"
+ #define _PATH_SSH_CLIENT_ID_MLDSA44_ED25519 _PATH_SSH_USER_DIR "/id_mldsa44_ed25519"
++#define _PATH_SSH_CLIENT_ID_MLDSA44	_PATH_SSH_USER_DIR "/id_mldsa44"
++#define _PATH_SSH_CLIENT_ID_MLDSA65	_PATH_SSH_USER_DIR "/id_mldsa65"
++#define _PATH_SSH_CLIENT_ID_MLDSA87	_PATH_SSH_USER_DIR "/id_mldsa87"
+ 
+ /*
+  * Configuration file in user's home directory.  This file need not be
+diff --git a/regress/cert-userkey.sh b/regress/cert-userkey.sh
+index 81a5c040a..537498a41 100644
+--- a/regress/cert-userkey.sh
++++ b/regress/cert-userkey.sh
+@@ -35,6 +35,8 @@ kname() {
+ 	rsa-sha2-*) n="$1" ;;
+ 	sk-ecdsa-*) n="sk-ecdsa" ;;
+ 	sk-ssh-ed25519*) n="sk-ssh-ed25519" ;;
++	ssh-mldsa*) n=`echo "$1" | sed 's/@.*//'` ;;
++	mldsa-*) n="ssh-$1" ;;
+ 	# subshell because some seds will add a newline
+ 	*) n=$(echo $1 | sed 's/^rsa/ssh-rsa/;s/^ed/ssh-ed/;s/^mldsa/ssh-mldsa/') ;;
+ 	esac
+diff --git a/regress/hostkey-agent.sh b/regress/hostkey-agent.sh
+index 251d5258e..7bfdb191b 100644
+--- a/regress/hostkey-agent.sh
++++ b/regress/hostkey-agent.sh
+@@ -108,7 +108,7 @@ echo "UpdateHostkeys=yes" >> $OBJ/ssh_proxy
+ echo "GlobalKnownHostsFile=none" >> $OBJ/ssh_proxy
+ 
+ HOSTKEYALGS=""
+-for k in $SSH_KEYTYPES ; do
++for k in $SSH_ACCEPTED_KEYTYPES ; do
+ 	verbose "Addkey type $k"
+ 	echo "Hostkey $OBJ/agent-key.${k}" >> $OBJ/sshd_proxy
+ 	test -z "$HOSTKEYALGS" || HOSTKEYALGS="${HOSTKEYALGS},"
+diff --git a/regress/keygen-comment.sh b/regress/keygen-comment.sh
+index 5b5b8f84f..cd3aef845 100644
+--- a/regress/keygen-comment.sh
++++ b/regress/keygen-comment.sh
+@@ -31,6 +31,7 @@ for fmt in '' RFC4716 PKCS8 PEM; do
+ 		# stored in old formats.
+ 		case "$t" in
+ 		ssh-ed25519|ssh-mldsa44-ed25519|*openssh.com) test -z "$oldfmt" || continue ;;
++		ssh-mldsa-*) test "$fmt" = "PEM" && continue ;;
+ 		esac
+ 		comment="foo bar"
+ 		fmtarg=""
+diff --git a/regress/keytype.sh b/regress/keytype.sh
+index 95e164154..37334439f 100644
+--- a/regress/keytype.sh
++++ b/regress/keytype.sh
+@@ -18,6 +18,9 @@ for i in ${SSH_KEYTYPES}; do
+ 		sk-ssh-ed25519*)	ktypes="$ktypes ed25519-sk" ;;
+ 		sk-ecdsa-sha2-nistp256*) ktypes="$ktypes ecdsa-sk" ;;
+ 		ssh-mldsa44-ed25519*)	ktypes="$ktypes mldsa44-ed25519" ;;
++		ssh-mldsa-44)		ktypes="$ktypes mldsa-44" ;;
++		ssh-mldsa-65)		ktypes="$ktypes mldsa-65" ;;
++		ssh-mldsa-87)		ktypes="$ktypes mldsa-87" ;;
+ 	esac
+ done
+ 
+@@ -44,6 +47,9 @@ kname_to_ktype() {
+ 	ed25519-sk)	echo sk-ssh-ed25519@openssh.com;;
+ 	ecdsa-sk)	echo sk-ecdsa-sha2-nistp256@openssh.com;;
+ 	mldsa44-ed25519) echo ssh-mldsa44-ed25519;;
++	mldsa-44)	echo ssh-mldsa-44;;
++	mldsa-65)	echo ssh-mldsa-65;;
++	mldsa-87)	echo ssh-mldsa-87;;
+ 	esac
+ }
+ 
+diff --git a/regress/krl.sh b/regress/krl.sh
+index 37d9f171a..8620e864f 100644
+--- a/regress/krl.sh
++++ b/regress/krl.sh
+@@ -11,6 +11,7 @@ for t in $SSH_KEYTYPES; do
+ 	case "$t" in
+ 		ecdsa*)		ktype2=ecdsa ;;
+ 		ssh-rsa)	ktype3=rsa ;;
++		ssh-mldsa-44)	ktype4=mldsa-44 ;;
+ 		sk-ssh-ed25519@openssh.com)		ktype5=ed25519-sk ;;
+ 		sk-ecdsa-sha2-nistp256@openssh.com)	ktype6=ecdsa-sk ;;
+ 	esac
+diff --git a/regress/limit-keytype.sh b/regress/limit-keytype.sh
+index 2f5b63a48..70843b309 100644
+--- a/regress/limit-keytype.sh
++++ b/regress/limit-keytype.sh
+@@ -13,10 +13,11 @@ mv $OBJ/ssh_proxy $OBJ/ssh_proxy.orig
+ 
+ ktype1=ed25519; ktype2=ed25519; ktype3=ed25519;
+ ktype4=ed25519; ktype5=ed25519; ktype6=ed25519;
+-for t in $SSH_KEYTYPES ; do 
++for t in $SSH_KEYTYPES ; do
+ 	case "$t" in
+ 		ssh-rsa)	ktype2=rsa ;;
+ 		ecdsa*)		ktype3=ecdsa ;;  # unused
++		ssh-mldsa-44)	ktype4=mldsa-44 ;;
+ 		sk-ssh-ed25519@openssh.com)		ktype5=ed25519-sk ;;
+ 		sk-ecdsa-sha2-nistp256@openssh.com)	ktype6=ecdsa-sk ;;
+ 	esac
+@@ -77,6 +78,9 @@ keytype() {
+ 		rsa)		printf "rsa-sha2-256,rsa-sha2-512,ssh-rsa" ;;
+ 		sk-ecdsa)	printf "sk-ecdsa-*" ;;
+ 		sk-ssh-ed25519)	printf "sk-ssh-ed25519-*" ;;
++		mldsa-44)	printf "ssh-mldsa-44" ;;
++		mldsa-65)	printf "ssh-mldsa-65" ;;
++		mldsa-87)	printf "ssh-mldsa-87" ;;
+ 	esac
+ }
+ 
+diff --git a/ssh-keygen.c b/ssh-keygen.c
+index b20e246d3..30cfe55f9 100644
+--- a/ssh-keygen.c
++++ b/ssh-keygen.c
+@@ -279,6 +279,17 @@ ask_filename(struct passwd *pw, const char *prompt)
+ 		case KEY_MLDSA44_ED25519_CERT:
+ 			name = _PATH_SSH_CLIENT_ID_MLDSA44_ED25519;
+ 			break;
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44:
++			name = _PATH_SSH_CLIENT_ID_MLDSA44;
++			break;
++		case KEY_MLDSA65:
++			name = _PATH_SSH_CLIENT_ID_MLDSA65;
++			break;
++		case KEY_MLDSA87:
++			name = _PATH_SSH_CLIENT_ID_MLDSA87;
++			break;
++#endif
+ 		default:
+ 			fatal("bad key type");
+ 		}
+@@ -1053,6 +1064,11 @@ do_gen_all_hostkeys(struct passwd *pw)
+ #ifdef USE_MLDSA
+ 		{ "mldsa44-ed25519", "MLDSA44-ED25519",
+ 		     _PATH_HOST_MLDSA44_ED25519_KEY_FILE },
++#endif
++#ifdef OPENSSL_HAS_MLDSA
++		{ "mldsa44", "MLDSA44",_PATH_HOST_MLDSA44_KEY_FILE },
++		{ "mldsa65", "MLDSA65",_PATH_HOST_MLDSA65_KEY_FILE },
++		{ "mldsa87", "MLDSA87",_PATH_HOST_MLDSA87_KEY_FILE },
+ #endif
+ 		{ NULL, NULL, NULL }
+ 	};
+diff --git a/ssh-keyscan.c b/ssh-keyscan.c
+index b00d7ba08..c7d211e23 100644
+--- a/ssh-keyscan.c
++++ b/ssh-keyscan.c
+@@ -66,12 +66,25 @@ int ssh_port = SSH_DEFAULT_PORT;
+ #define KT_ECDSA_SK	(1<<4)
+ #define KT_ED25519_SK	(1<<5)
+ #define KT_MLDSA44_ED25519 (1<<6)
++#ifdef OPENSSL_HAS_MLDSA
++#define KT_MLDSA44	(1<<7)
++#define KT_MLDSA65	(1<<8)
++#define KT_MLDSA87	(1<<9)
++#endif
+ 
+ #define KT_MIN		KT_RSA
++#ifdef OPENSSL_HAS_MLDSA
++#define KT_MAX		KT_MLDSA87
++#else
+ #define KT_MAX		KT_MLDSA44_ED25519
++#endif
+ 
+ int get_cert = 0;
+-int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519|KT_ECDSA_SK|KT_ED25519_SK|KT_MLDSA44_ED25519;
++int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519|KT_ECDSA_SK|KT_ED25519_SK|KT_MLDSA44_ED25519
++#ifdef OPENSSL_HAS_MLDSA
++    |KT_MLDSA44|KT_MLDSA65|KT_MLDSA87
++#endif
++    ;
+ 
+ int hash_hosts = 0;		/* Hash hostname on output */
+ 
+@@ -285,6 +298,20 @@ keygrab_ssh2(con *c)
+ 		    "sk-ssh-ed25519-cert-v01@openssh.com" :
+ 		    "sk-ssh-ed25519@openssh.com";
+ 		break;
++#ifdef OPENSSL_HAS_MLDSA
++	case KT_MLDSA44:
++		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
++		    "ssh-mldsa-44-cert-v01@openssh.com" : "ssh-mldsa-44";
++		break;
++	case KT_MLDSA65:
++		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
++		    "ssh-mldsa-65-cert-v01@openssh.com" : "ssh-mldsa-65";
++		break;
++	case KT_MLDSA87:
++		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
++		    "ssh-mldsa-87-cert-v01@openssh.com" : "ssh-mldsa-87";
++		break;
++#endif
+ 	default:
+ 		fatal("unknown key type %d", c->c_keytype);
+ 		break;
+@@ -775,6 +802,17 @@ main(int argc, char **argv)
+ 				case KEY_MLDSA44_ED25519:
+ 					get_keytypes |= KT_MLDSA44_ED25519;
+ 					break;
++#ifdef OPENSSL_HAS_MLDSA
++				case KEY_MLDSA44:
++					get_keytypes |= KT_MLDSA44;
++					break;
++				case KEY_MLDSA65:
++					get_keytypes |= KT_MLDSA65;
++					break;
++				case KEY_MLDSA87:
++					get_keytypes |= KT_MLDSA87;
++					break;
++#endif
+ 				case KEY_UNSPEC:
+ 				default:
+ 					fatal("Unknown key type \"%s\"", tname);
+diff --git a/ssh-mldsa.c b/ssh-mldsa.c
+new file mode 100644
+index 000000000..32b7a9fd4
+--- /dev/null
++++ b/ssh-mldsa.c
+@@ -0,0 +1,562 @@
++/*
++ * Copyright (c) 2026 Dmitry Belyavskiy
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#include "includes.h"
++
++#if defined(WITH_OPENSSL) && defined(OPENSSL_HAS_MLDSA)
++
++#include <sys/types.h>
++#include <string.h>
++
++#include <openssl/evp.h>
++#include <openssl/fips.h>
++#include <openssl/core_names.h>
++#include <openssl/param_build.h>
++
++#include "log.h"
++#include "sshbuf.h"
++#include "ssherr.h"
++#define SSHKEY_INTERNAL
++#include "sshkey.h"
++
++#define FIPS_FALLBACK_PROPQ "provider=default,-fips"
++
++struct mldsa_params {
++	const char *alg_name;
++	const char *evp_name;
++	size_t pk_sz;
++	size_t sig_sz;
++};
++
++static const struct mldsa_params *
++mldsa_params_from_type(int type)
++{
++	static const struct mldsa_params params[] = {
++		{ "ssh-mldsa-44", "ML-DSA-44", MLDSA44_PK_SZ, MLDSA44_SIG_SZ },
++		{ "ssh-mldsa-65", "ML-DSA-65", MLDSA65_PK_SZ, MLDSA65_SIG_SZ },
++		{ "ssh-mldsa-87", "ML-DSA-87", MLDSA87_PK_SZ, MLDSA87_SIG_SZ },
++	};
++	switch (sshkey_type_plain(type)) {
++	case KEY_MLDSA44: return &params[0];
++	case KEY_MLDSA65: return &params[1];
++	case KEY_MLDSA87: return &params[2];
++	default:          return NULL;
++	}
++}
++
++static void
++ssh_mldsa_cleanup(struct sshkey *k)
++{
++	EVP_PKEY_free(k->pkey);
++	k->pkey = NULL;
++}
++
++static int
++ssh_mldsa_equal(const struct sshkey *a, const struct sshkey *b)
++{
++	if (a->pkey == NULL || b->pkey == NULL)
++		return 0;
++	return EVP_PKEY_eq(a->pkey, b->pkey) == 1;
++}
++
++static int
++ssh_mldsa_serialize_public(const struct sshkey *key, struct sshbuf *b,
++    enum sshkey_serialize_rep opts)
++{
++	const struct mldsa_params *params;
++	u_char *pk = NULL;
++	size_t pklen = 0;
++	int r;
++
++	if (key->pkey == NULL)
++		return SSH_ERR_INVALID_ARGUMENT;
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	if (EVP_PKEY_get_raw_public_key(key->pkey, NULL, &pklen) != 1)
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	if (pklen != params->pk_sz)
++		return SSH_ERR_INVALID_FORMAT;
++	if ((pk = malloc(pklen)) == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++	if (EVP_PKEY_get_raw_public_key(key->pkey, pk, &pklen) != 1) {
++		free(pk);
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	}
++	r = sshbuf_put_string(b, pk, pklen);
++	free(pk);
++	return r;
++}
++
++static int
++ssh_mldsa_deserialize_public(const char *ktype, struct sshbuf *b,
++    struct sshkey *key)
++{
++	const struct mldsa_params *params;
++	u_char *pk = NULL;
++	size_t pklen = 0;
++	int r;
++
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	if ((r = sshbuf_get_string(b, &pk, &pklen)) != 0)
++		return r;
++	if (pklen != params->pk_sz) {
++		freezero(pk, pklen);
++		return SSH_ERR_INVALID_FORMAT;
++	}
++
++	EVP_PKEY_free(key->pkey);
++	key->pkey = EVP_PKEY_new_raw_public_key_ex(NULL, params->evp_name,
++	    NULL, pk, pklen);
++	freezero(pk, pklen);
++	if (key->pkey == NULL)
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	return 0;
++}
++
++static int
++ssh_mldsa_serialize_private(const struct sshkey *key, struct sshbuf *b,
++    enum sshkey_serialize_rep opts)
++{
++	const struct mldsa_params *params;
++	u_char *pk = NULL, seed[32];
++	size_t pklen = 0, seedlen = 0;
++	int r;
++
++	if (key->pkey == NULL)
++		return SSH_ERR_INVALID_ARGUMENT;
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	/* Serialize public key */
++	if (EVP_PKEY_get_raw_public_key(key->pkey, NULL, &pklen) != 1)
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	if (pklen != params->pk_sz)
++		return SSH_ERR_INVALID_FORMAT;
++	if ((pk = malloc(pklen)) == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++	if (EVP_PKEY_get_raw_public_key(key->pkey, pk, &pklen) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	if ((r = sshbuf_put_string(b, pk, pklen)) != 0)
++		goto out;
++
++	/* Extract and serialize 32-byte seed */
++	if (EVP_PKEY_get_octet_string_param(key->pkey,
++	    OSSL_PKEY_PARAM_ML_DSA_SEED, seed, sizeof(seed), &seedlen) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	if (seedlen != 32) {
++		r = SSH_ERR_INVALID_FORMAT;
++		goto out;
++	}
++	r = sshbuf_put_string(b, seed, 32);
++
++ out:
++	freezero(pk, pklen);
++	explicit_bzero(seed, sizeof(seed));
++	return r;
++}
++
++static int
++ssh_mldsa_deserialize_private(const char *ktype, struct sshbuf *b,
++    struct sshkey *key)
++{
++	const struct mldsa_params *params;
++	EVP_PKEY_CTX *pctx = NULL;
++	EVP_PKEY *pkey = NULL;
++	OSSL_PARAM params_array[2];
++	u_char *seed = NULL, *pk_orig = NULL, *pk_check = NULL;
++	size_t seedlen, pk_orig_len = 0, pk_check_len = 0;
++	int r;
++
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	/* Deserialize public key first */
++	if ((r = ssh_mldsa_deserialize_public(NULL, b, key)) != 0)
++		return r;
++
++	/* Read 32-byte seed */
++	if ((r = sshbuf_get_string(b, &seed, &seedlen)) != 0)
++		return r;
++	if (seedlen != 32) {
++		r = SSH_ERR_INVALID_FORMAT;
++		goto out;
++	}
++
++	/* Create EVP_PKEY from seed using fromdata API */
++	if ((pctx = EVP_PKEY_CTX_new_from_name(NULL, params->evp_name,
++	    NULL)) == NULL) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++
++	params_array[0] = OSSL_PARAM_construct_octet_string(
++	    OSSL_PKEY_PARAM_ML_DSA_SEED, seed, 32);
++	params_array[1] = OSSL_PARAM_construct_end();
++
++	if (EVP_PKEY_fromdata_init(pctx) != 1 ||
++	    EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
++	    params_array) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++
++	/* Verify public key matches the one deserialized earlier */
++	if (EVP_PKEY_get_raw_public_key(pkey, NULL, &pk_check_len) != 1 ||
++	    pk_check_len != params->pk_sz) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	if ((pk_check = malloc(pk_check_len)) == NULL) {
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if (EVP_PKEY_get_raw_public_key(pkey, pk_check, &pk_check_len) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++
++	/* Get original public key for comparison */
++	if (EVP_PKEY_get_raw_public_key(key->pkey, NULL, &pk_orig_len) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	if ((pk_orig = malloc(pk_orig_len)) == NULL) {
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if (EVP_PKEY_get_raw_public_key(key->pkey, pk_orig,
++	    &pk_orig_len) != 1) {
++		r = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++
++	if (pk_check_len != pk_orig_len ||
++	    timingsafe_bcmp(pk_check, pk_orig, pk_check_len) != 0) {
++		r = SSH_ERR_INVALID_FORMAT;
++		goto out;
++	}
++
++	/* Replace public-only pkey with full keypair */
++	EVP_PKEY_free(key->pkey);
++	key->pkey = pkey;
++	pkey = NULL;
++	r = 0;
++
++ out:
++	EVP_PKEY_CTX_free(pctx);
++	EVP_PKEY_free(pkey);
++	freezero(seed, seedlen);
++	free(pk_check);
++	free(pk_orig);
++	return r;
++}
++
++static int
++ssh_mldsa_generate(struct sshkey *k, int bits)
++{
++	const struct mldsa_params *params;
++	EVP_PKEY_CTX *ctx = NULL;
++	EVP_PKEY *pkey = NULL;
++	OSSL_PARAM gen_params[2];
++	int ret = SSH_ERR_INTERNAL_ERROR;
++
++	if ((params = mldsa_params_from_type(k->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	ctx = EVP_PKEY_CTX_new_from_name(NULL, params->evp_name, NULL);
++	if (ctx == NULL && FIPS_mode())
++		ctx = EVP_PKEY_CTX_new_from_name(NULL, params->evp_name,
++		    FIPS_FALLBACK_PROPQ);
++	if (ctx == NULL) {
++		ret = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++
++	/* Set retain_seed=yes to ensure seed is kept for serialization */
++	gen_params[0] = OSSL_PARAM_construct_utf8_string(
++	    OSSL_PKEY_PARAM_ML_DSA_RETAIN_SEED, "yes", 0);
++	gen_params[1] = OSSL_PARAM_construct_end();
++
++	if (EVP_PKEY_keygen_init(ctx) <= 0 ||
++	    EVP_PKEY_CTX_set_params(ctx, gen_params) != 1 ||
++	    EVP_PKEY_keygen(ctx, &pkey) <= 0) {
++		ret = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	k->pkey = pkey;
++	pkey = NULL;
++	ret = 0;
++ out:
++	EVP_PKEY_free(pkey);
++	EVP_PKEY_CTX_free(ctx);
++	return ret;
++}
++
++static int
++ssh_mldsa_copy_public(const struct sshkey *from, struct sshkey *to)
++{
++	const struct mldsa_params *params;
++	u_char *pk = NULL;
++	size_t pklen = 0;
++
++	if (from->pkey == NULL)
++		return 0;
++	if ((params = mldsa_params_from_type(from->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	if (EVP_PKEY_get_raw_public_key(from->pkey, NULL, &pklen) != 1)
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	if ((pk = malloc(pklen)) == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++	if (EVP_PKEY_get_raw_public_key(from->pkey, pk, &pklen) != 1) {
++		free(pk);
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	}
++
++	EVP_PKEY_free(to->pkey);
++	to->pkey = EVP_PKEY_new_raw_public_key_ex(NULL, params->evp_name,
++	    NULL, pk, pklen);
++	free(pk);
++	if (to->pkey == NULL)
++		return SSH_ERR_LIBCRYPTO_ERROR;
++	return 0;
++}
++
++static int
++ssh_mldsa_sign(struct sshkey *key,
++    u_char **sigp, size_t *lenp,
++    const u_char *data, size_t datalen,
++    const char *alg, const char *sk_provider, const char *sk_pin, u_int compat)
++{
++	const struct mldsa_params *params;
++	EVP_MD_CTX *ctx = NULL;
++	struct sshbuf *b = NULL;
++	u_char *sig = NULL;
++	size_t slen = 0, len;
++	int ret = SSH_ERR_INTERNAL_ERROR;
++
++	if (lenp != NULL)
++		*lenp = 0;
++	if (sigp != NULL)
++		*sigp = NULL;
++
++	if (key == NULL || key->pkey == NULL)
++		return SSH_ERR_INVALID_ARGUMENT;
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	slen = params->sig_sz;
++	if ((sig = malloc(slen)) == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++
++	if ((ctx = EVP_MD_CTX_new()) == NULL) {
++		ret = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if (EVP_DigestSignInit(ctx, NULL, NULL, NULL, key->pkey) != 1 ||
++	    EVP_DigestSign(ctx, sig, &slen, data, datalen) != 1) {
++		ret = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	if (slen != params->sig_sz) {
++		ret = SSH_ERR_INTERNAL_ERROR;
++		goto out;
++	}
++
++	if ((b = sshbuf_new()) == NULL) {
++		ret = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if ((ret = sshbuf_put_cstring(b, params->alg_name)) != 0 ||
++	    (ret = sshbuf_put_string(b, sig, slen)) != 0)
++		goto out;
++	len = sshbuf_len(b);
++	if (sigp != NULL) {
++		if ((*sigp = malloc(len)) == NULL) {
++			ret = SSH_ERR_ALLOC_FAIL;
++			goto out;
++		}
++		memcpy(*sigp, sshbuf_ptr(b), len);
++	}
++	if (lenp != NULL)
++		*lenp = len;
++	ret = 0;
++ out:
++	freezero(sig, slen);
++	sshbuf_free(b);
++	EVP_MD_CTX_free(ctx);
++	return ret;
++}
++
++static int
++ssh_mldsa_verify(const struct sshkey *key,
++    const u_char *sig, size_t siglen,
++    const u_char *data, size_t dlen, const char *alg, u_int compat,
++    struct sshkey_sig_details **detailsp)
++{
++	const struct mldsa_params *params;
++	EVP_MD_CTX *ctx = NULL;
++	struct sshbuf *b = NULL;
++	char *ktype = NULL;
++	const u_char *sigblob;
++	size_t slen;
++	int ret = SSH_ERR_INTERNAL_ERROR;
++
++	if (key == NULL || key->pkey == NULL ||
++	    sig == NULL || siglen == 0)
++		return SSH_ERR_INVALID_ARGUMENT;
++	if ((params = mldsa_params_from_type(key->type)) == NULL)
++		return SSH_ERR_INTERNAL_ERROR;
++
++	if ((b = sshbuf_from(sig, siglen)) == NULL)
++		return SSH_ERR_ALLOC_FAIL;
++	if ((ret = sshbuf_get_cstring(b, &ktype, NULL)) != 0 ||
++	    (ret = sshbuf_get_string_direct(b, &sigblob, &slen)) != 0)
++		goto out;
++	if (strcmp(params->alg_name, ktype) != 0) {
++		ret = SSH_ERR_KEY_TYPE_MISMATCH;
++		goto out;
++	}
++	if (sshbuf_len(b) != 0) {
++		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
++		goto out;
++	}
++	if (slen != params->sig_sz) {
++		ret = SSH_ERR_INVALID_FORMAT;
++		goto out;
++	}
++
++	if ((ctx = EVP_MD_CTX_new()) == NULL) {
++		ret = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if (EVP_DigestVerifyInit(ctx, NULL, NULL, NULL, key->pkey) != 1) {
++		ret = SSH_ERR_LIBCRYPTO_ERROR;
++		goto out;
++	}
++	switch (EVP_DigestVerify(ctx, sigblob, slen, data, dlen)) {
++	case 1:
++		ret = 0;
++		break;
++	case 0:
++		ret = SSH_ERR_SIGNATURE_INVALID;
++		break;
++	default:
++		ret = SSH_ERR_LIBCRYPTO_ERROR;
++		break;
++	}
++ out:
++	EVP_MD_CTX_free(ctx);
++	sshbuf_free(b);
++	free(ktype);
++	return ret;
++}
++
++static const struct sshkey_impl_funcs sshkey_mldsa_funcs = {
++	/* .size = */		NULL,
++	/* .alloc = */		NULL,
++	/* .cleanup = */	ssh_mldsa_cleanup,
++	/* .equal = */		ssh_mldsa_equal,
++	/* .ssh_serialize_public = */ ssh_mldsa_serialize_public,
++	/* .ssh_deserialize_public = */ ssh_mldsa_deserialize_public,
++	/* .ssh_serialize_private = */ ssh_mldsa_serialize_private,
++	/* .ssh_deserialize_private = */ ssh_mldsa_deserialize_private,
++	/* .generate = */	ssh_mldsa_generate,
++	/* .copy_public = */	ssh_mldsa_copy_public,
++	/* .sign = */		ssh_mldsa_sign,
++	/* .verify = */		ssh_mldsa_verify,
++};
++
++const struct sshkey_impl sshkey_mldsa44_impl = {
++	/* .name = */		"ssh-mldsa-44",
++	/* .shortname = */	"MLDSA-44",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA44,
++	/* .nid = */		0,
++	/* .cert = */		0,
++	/* .sigonly = */	0,
++	/* .keybits = */	256,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++const struct sshkey_impl sshkey_mldsa65_impl = {
++	/* .name = */		"ssh-mldsa-65",
++	/* .shortname = */	"MLDSA-65",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA65,
++	/* .nid = */		0,
++	/* .cert = */		0,
++	/* .sigonly = */	0,
++	/* .keybits = */	384,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++const struct sshkey_impl sshkey_mldsa87_impl = {
++	/* .name = */		"ssh-mldsa-87",
++	/* .shortname = */	"MLDSA-87",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA87,
++	/* .nid = */		0,
++	/* .cert = */		0,
++	/* .sigonly = */	0,
++	/* .keybits = */	512,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++const struct sshkey_impl sshkey_mldsa44_cert_impl = {
++	/* .name = */		"ssh-mldsa-44-cert-v01@openssh.com",
++	/* .shortname = */	"MLDSA-44-CERT",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA44_CERT,
++	/* .nid = */		0,
++	/* .cert = */		1,
++	/* .sigonly = */	0,
++	/* .keybits = */	256,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++const struct sshkey_impl sshkey_mldsa65_cert_impl = {
++	/* .name = */		"ssh-mldsa-65-cert-v01@openssh.com",
++	/* .shortname = */	"MLDSA-65-CERT",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA65_CERT,
++	/* .nid = */		0,
++	/* .cert = */		1,
++	/* .sigonly = */	0,
++	/* .keybits = */	384,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++const struct sshkey_impl sshkey_mldsa87_cert_impl = {
++	/* .name = */		"ssh-mldsa-87-cert-v01@openssh.com",
++	/* .shortname = */	"MLDSA-87-CERT",
++	/* .sigalg = */		NULL,
++	/* .type = */		KEY_MLDSA87_CERT,
++	/* .nid = */		0,
++	/* .cert = */		1,
++	/* .sigonly = */	0,
++	/* .keybits = */	512,
++	/* .funcs = */		&sshkey_mldsa_funcs,
++};
++
++#endif /* WITH_OPENSSL && OPENSSL_HAS_MLDSA */
+diff --git a/sshd-auth.c b/sshd-auth.c
+index 80fc024c3..1f1460a5b 100644
+--- a/sshd-auth.c
++++ b/sshd-auth.c
+@@ -252,6 +252,11 @@ list_hostkey_types(void)
+ 		case KEY_MLDSA44_ED25519:
+ 		case KEY_ECDSA_SK:
+ 		case KEY_ED25519_SK:
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44:
++		case KEY_MLDSA65:
++		case KEY_MLDSA87:
++#endif
+ 			append_hostkey_type(b, sshkey_ssh_name(key));
+ 			break;
+ 		}
+@@ -272,6 +277,11 @@ list_hostkey_types(void)
+ 		case KEY_MLDSA44_ED25519_CERT:
+ 		case KEY_ECDSA_SK_CERT:
+ 		case KEY_ED25519_SK_CERT:
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44_CERT:
++		case KEY_MLDSA65_CERT:
++		case KEY_MLDSA87_CERT:
++#endif
+ 			append_hostkey_type(b, sshkey_ssh_name(key));
+ 			break;
+ 		}
+@@ -297,6 +307,11 @@ get_hostkey_public_by_type(int type, int nid, struct ssh *ssh)
+ 		case KEY_MLDSA44_ED25519_CERT:
+ 		case KEY_ECDSA_SK_CERT:
+ 		case KEY_ED25519_SK_CERT:
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44_CERT:
++		case KEY_MLDSA65_CERT:
++		case KEY_MLDSA87_CERT:
++#endif
+ 			key = host_certificates[i];
+ 			break;
+ 		default:
+diff --git a/sshd-session.c b/sshd-session.c
+index 2f807b4ae..59fd30c25 100644
+--- a/sshd-session.c
++++ b/sshd-session.c
+@@ -500,6 +500,11 @@ get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
+ 		case KEY_ECDSA_SK_CERT:
+ 		case KEY_ED25519_SK_CERT:
+ 		case KEY_MLDSA44_ED25519_CERT:
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44_CERT:
++		case KEY_MLDSA65_CERT:
++		case KEY_MLDSA87_CERT:
++#endif
+ 			key = sensitive_data.host_certificates[i];
+ 			break;
+ 		default:
+diff --git a/sshd.c b/sshd.c
+index ebc61a9d6..dddd0ebdf 100644
+--- a/sshd.c
++++ b/sshd.c
+@@ -1715,6 +1715,11 @@ main(int ac, char **av)
+ 		case KEY_MLDSA44_ED25519:
+ 		case KEY_ECDSA_SK:
+ 		case KEY_ED25519_SK:
++#ifdef OPENSSL_HAS_MLDSA
++		case KEY_MLDSA44:
++		case KEY_MLDSA65:
++		case KEY_MLDSA87:
++#endif
+ 			if (have_agent || key != NULL)
+ 				sensitive_data.have_ssh2_key = 1;
+ 			break;
+diff --git a/sshkey.c b/sshkey.c
+index 8560ba46a..2a91b95ac 100644
+--- a/sshkey.c
++++ b/sshkey.c
+@@ -117,6 +117,14 @@ extern const struct sshkey_impl sshkey_rsa_sha256_impl;
+ extern const struct sshkey_impl sshkey_rsa_sha256_cert_impl;
+ extern const struct sshkey_impl sshkey_rsa_sha512_impl;
+ extern const struct sshkey_impl sshkey_rsa_sha512_cert_impl;
++#ifdef OPENSSL_HAS_MLDSA
++extern const struct sshkey_impl sshkey_mldsa44_impl;
++extern const struct sshkey_impl sshkey_mldsa44_cert_impl;
++extern const struct sshkey_impl sshkey_mldsa65_impl;
++extern const struct sshkey_impl sshkey_mldsa65_cert_impl;
++extern const struct sshkey_impl sshkey_mldsa87_impl;
++extern const struct sshkey_impl sshkey_mldsa87_cert_impl;
++#endif
+ #endif /* WITH_OPENSSL */
+ 
+ static int ssh_gss_equal(const struct sshkey *, const struct sshkey *)
+@@ -218,6 +226,14 @@ const struct sshkey_impl * const keyimpls[] = {
+ 	&sshkey_rsa_sha256_cert_impl,
+ 	&sshkey_rsa_sha512_impl,
+ 	&sshkey_rsa_sha512_cert_impl,
++#ifdef OPENSSL_HAS_MLDSA
++	&sshkey_mldsa44_impl,
++	&sshkey_mldsa44_cert_impl,
++	&sshkey_mldsa65_impl,
++	&sshkey_mldsa65_cert_impl,
++	&sshkey_mldsa87_impl,
++	&sshkey_mldsa87_cert_impl,
++#endif
+ #endif /* WITH_OPENSSL */
+ 	&sshkey_gss_kex_impl,
+ 	NULL
+@@ -529,6 +545,12 @@ sshkey_type_plain(int type)
+ 		return KEY_MLDSA44_ED25519;
+ 	case KEY_ED25519_SK_CERT:
+ 		return KEY_ED25519_SK;
++	case KEY_MLDSA44_CERT:
++		return KEY_MLDSA44;
++	case KEY_MLDSA65_CERT:
++		return KEY_MLDSA65;
++	case KEY_MLDSA87_CERT:
++		return KEY_MLDSA87;
+ 	default:
+ 		return type;
+ 	}
+@@ -551,6 +573,12 @@ sshkey_type_certified(int type)
+ 		return KEY_MLDSA44_ED25519_CERT;
+ 	case KEY_ED25519_SK:
+ 		return KEY_ED25519_SK_CERT;
++	case KEY_MLDSA44:
++		return KEY_MLDSA44_CERT;
++	case KEY_MLDSA65:
++		return KEY_MLDSA65_CERT;
++	case KEY_MLDSA87:
++		return KEY_MLDSA87_CERT;
+ 	default:
+ 		return -1;
+ 	}
+@@ -3484,6 +3512,20 @@ sshkey_private_to_blob_pem_pkcs8(struct sshkey *key, struct sshbuf *buf,
+ 			success = pkey != NULL;
+ 		}
+ 		break;
++#endif
++#ifdef OPENSSL_HAS_MLDSA
++	case KEY_MLDSA44:
++	case KEY_MLDSA65:
++	case KEY_MLDSA87:
++		if (format == SSHKEY_PRIVATE_PEM) {
++			r = SSH_ERR_INVALID_FORMAT;
++			goto out;
++		} else {
++			pkey = key->pkey;
++			EVP_PKEY_up_ref(key->pkey);
++			success = 1;
++		}
++		break;
+ #endif
+ 	default:
+ 		success = 0;
+@@ -3531,6 +3573,14 @@ sshkey_private_to_fileblob(struct sshkey *key, struct sshbuf *blob,
+ 	case KEY_ECDSA:
+ 	case KEY_RSA:
+ 	case KEY_ED25519:
++#ifdef OPENSSL_HAS_MLDSA
++	case KEY_MLDSA44:
++	case KEY_MLDSA65:
++	case KEY_MLDSA87:
++	case KEY_MLDSA44_CERT:
++	case KEY_MLDSA65_CERT:
++	case KEY_MLDSA87_CERT:
++#endif
+ 		break; /* see below */
+ #else /* WITH_OPENSSL */
+ 	case KEY_ED25519:
+@@ -3767,6 +3817,36 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
+ 		sshbuf_dump_data(prv->ed25519_sk, ED25519_SK_SZ, stderr);
+ #endif
+ #endif /* OPENSSL_HAS_ED25519 */
++#ifdef OPENSSL_HAS_MLDSA
++	} else if (EVP_PKEY_get0_type_name(pk) != NULL &&
++	    strncmp(EVP_PKEY_get0_type_name(pk), "ML-DSA-", 7) == 0 &&
++	    (type == KEY_UNSPEC || type == KEY_MLDSA44 ||
++	    type == KEY_MLDSA65 || type == KEY_MLDSA87)) {
++		const char *pkey_type = EVP_PKEY_get0_type_name(pk);
++		int ktype;
++
++		if (strcmp(pkey_type, "ML-DSA-44") == 0)
++			ktype = KEY_MLDSA44;
++		else if (strcmp(pkey_type, "ML-DSA-65") == 0)
++			ktype = KEY_MLDSA65;
++		else if (strcmp(pkey_type, "ML-DSA-87") == 0)
++			ktype = KEY_MLDSA87;
++		else {
++			r = SSH_ERR_INVALID_FORMAT;
++			goto out;
++		}
++		if (type != KEY_UNSPEC && type != ktype) {
++			r = SSH_ERR_KEY_TYPE_MISMATCH;
++			goto out;
++		}
++		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL) {
++			r = SSH_ERR_ALLOC_FAIL;
++			goto out;
++		}
++		prv->type = ktype;
++		EVP_PKEY_up_ref(pk);
++		prv->pkey = pk;
++#endif /* OPENSSL_HAS_MLDSA */
+ 	} else {
+ 		r = SSH_ERR_INVALID_FORMAT;
+ 		goto out;
+diff --git a/sshkey.h b/sshkey.h
+index 6a6e1908c..2bbb2ebc5 100644
+--- a/sshkey.h
++++ b/sshkey.h
+@@ -63,6 +63,12 @@ enum sshkey_types {
+ 	KEY_ED25519_SK_CERT,
+ 	KEY_MLDSA44_ED25519,
+ 	KEY_MLDSA44_ED25519_CERT,
++	KEY_MLDSA44,
++	KEY_MLDSA65,
++	KEY_MLDSA87,
++	KEY_MLDSA44_CERT,
++	KEY_MLDSA65_CERT,
++	KEY_MLDSA87_CERT,
+ 	KEY_NULL,
+ 	KEY_UNSPEC
+ };
+@@ -141,6 +147,13 @@ struct sshkey {
+ #define	ED25519_SK_SZ	crypto_sign_ed25519_SECRETKEYBYTES
+ #define	ED25519_PK_SZ	crypto_sign_ed25519_PUBLICKEYBYTES
+ 
++#define	MLDSA44_PK_SZ	1312
++#define	MLDSA44_SIG_SZ	2420
++#define	MLDSA65_PK_SZ	1952
++#define	MLDSA65_SIG_SZ	3309
++#define	MLDSA87_PK_SZ	2592
++#define	MLDSA87_SIG_SZ	4627
++
+ /* Additional fields contained in signature */
+ struct sshkey_sig_details {
+ 	uint32_t sk_counter;	/* U2F signature counter */
+-- 
+2.56.0
+

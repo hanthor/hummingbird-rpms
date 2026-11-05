@@ -1,7 +1,7 @@
-From 3b6c45fa20e35c08c740421ff8b2393569f13e81 Mon Sep 17 00:00:00 2001
+From 1590861f20ec8435a42560412e59e771f245b3b5 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 35/53] openssh-7.6p1-audit
+Subject: [PATCH 35/55] openssh-7.6p1-audit
 
 ---
  Makefile.in       |   2 +-

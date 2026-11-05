@@ -1,7 +1,7 @@
-From 3ae6218eb5b77a5d66158d570df485f9a4197bbf Mon Sep 17 00:00:00 2001
+From a2868d25c3691e8dc2defb70d7ac337f2b8056c9 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 53/53] gssapi-tests
+Subject: [PATCH 53/55] gssapi-tests
 
 ---
  regress/Makefile   |   1 +

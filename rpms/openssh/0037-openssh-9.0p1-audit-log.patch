@@ -1,7 +1,7 @@
-From c6fc191a070b13dbfec2eaedadf5fd32931d9b08 Mon Sep 17 00:00:00 2001
+From ce18975e755c34d6e3a4272b39e928119ad8342b Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 37/53] openssh-9.0p1-audit-log
+Subject: [PATCH 37/55] openssh-9.0p1-audit-log
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=2049947
 ---

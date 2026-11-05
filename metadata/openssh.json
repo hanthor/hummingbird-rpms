@@ -1,12 +1,12 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/openssh.git",
-    "release": "1",
-    "sha": "0ec6dc7f18554f5712f6bf7e5cbf7c0adf83dd97"
-  },
-  "modification_reason": "Retain Fedora GSSAPI cleanup/rekey compatibility; retain HTTPS source-pipeline mirror (HUM-4620)",
+  "version": "10.6p1",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/openssh/openssh-portable",
-  "version": "10.6p1"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/openssh.git",
+    "branch": "rawhide",
+    "sha": "1db1544d99d19804ec29f1c40a2a949238b022a3",
+    "release": "2"
+  },
+  "modification_reason": "Retain Fedora GSSAPI cleanup/rekey compatibility; retain HTTPS source-pipeline mirror (HUM-4620)"
 }

@@ -1,7 +1,7 @@
-From 0cc83d529914b43353f9fb6d6cb14d12c3f1cfa8 Mon Sep 17 00:00:00 2001
+From 08f8b69b36ad6ee154e690e71c026b00181fbbef Mon Sep 17 00:00:00 2001
 From: Zoltan Fridrich <zfridric@redhat.com>
 Date: Mon, 5 May 2025 11:52:25 +0200
-Subject: [PATCH 45/53] Ignore bad hostkeys in known_hosts file
+Subject: [PATCH 45/55] Ignore bad hostkeys in known_hosts file
 
 Signed-off-by: Zoltan Fridrich <zfridric@redhat.com>
 

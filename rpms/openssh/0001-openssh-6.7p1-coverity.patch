@@ -1,9 +1,10 @@
-From bbc321ac230fc4d16357c598e9b1e1650b913b25 Mon Sep 17 00:00:00 2001
+From 268161f04f660a25bbe0bade42a3b7c2efc16259 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 7 Aug 2026 17:25:07 +0200
-Subject: [PATCH 01/53] openssh-6.7p1-coverity
+Subject: [PATCH 01/55] openssh-6.7p1-coverity
 
 ---
+ gss-serv.c                    | 4 +++-
  krl.c                         | 3 +++
  loginrec.c                    | 2 ++
  misc.c                        | 3 +++
@@ -13,8 +14,32 @@ Subject: [PATCH 01/53] openssh-6.7p1-coverity
  readconf.c                    | 1 +
  servconf.c                    | 5 +++--
  serverloop.c                  | 2 +-
- 9 files changed, 20 insertions(+), 10 deletions(-)
+ 10 files changed, 23 insertions(+), 11 deletions(-)
 
+diff --git a/gss-serv.c b/gss-serv.c
+index 16f653202..92247cf51 100644
+--- a/gss-serv.c
++++ b/gss-serv.c
+@@ -279,7 +279,7 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+ {
+ 	int i = 0;
+ 
+-	gss_buffer_desc ename;
++	gss_buffer_desc ename = GSS_C_EMPTY_BUFFER;
+ 
+ 	client->userok = 0;
+ 	client->mech = NULL;
+@@ -309,8 +309,10 @@ ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
+ 
+ 	if ((ctx->major = ssh_gssapi_parse_ename(ctx,&ename,
+ 	    &client->exportedname))) {
++		gss_release_buffer(&ctx->minor, &ename);
+ 		return (ctx->major);
+ 	}
++	gss_release_buffer(&ctx->minor, &ename);
+ 
+ 	/* We can't copy this structure, so we just move the pointer to it */
+ 	client->creds = ctx->client_creds;
 diff --git a/krl.c b/krl.c
 index 0e2b5f155..f2d105f23 100644
 --- a/krl.c

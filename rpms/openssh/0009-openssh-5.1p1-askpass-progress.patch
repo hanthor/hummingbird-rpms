@@ -1,7 +1,7 @@
-From 01144fb895bc9b58c56a1aaaa3460accfb071407 Mon Sep 17 00:00:00 2001
+From ee4dd6133c7b94a7d77d383c00ae3f7bb49e75e5 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 09/53] openssh-5.1p1-askpass-progress
+Subject: [PATCH 09/55] openssh-5.1p1-askpass-progress
 
 ---
  contrib/gnome-ssh-askpass2.c | 39 +++++++++++++++++++++++++++++++++---

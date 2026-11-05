@@ -1,7 +1,7 @@
-From 06d3d3ec2a20c238018b3513ee8c3804333391f9 Mon Sep 17 00:00:00 2001
+From bbb00e499601f62ef2d0d22e2ebe752b50d1eed9 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 25/53] openssh-7.5p1-sandbox
+Subject: [PATCH 25/55] openssh-7.5p1-sandbox
 
 # Sandbox adjustments for s390 and audit
 ---

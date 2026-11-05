@@ -1,7 +1,7 @@
-From ef9865206c8da65194adf7cd45dd820f6020bd5a Mon Sep 17 00:00:00 2001
+From 35b6a699b74a7203c556b80bc95cc3ed1ad7c986 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 33/53] openssh-8.7p1-recursive-scp
+Subject: [PATCH 33/55] openssh-8.7p1-recursive-scp
 
 # Workaround for lack of sftp_realpath in older versions of RHEL
 # https://bugzilla.redhat.com/show_bug.cgi?id=2038854

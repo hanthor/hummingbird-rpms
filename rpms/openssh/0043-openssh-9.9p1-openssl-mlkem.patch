@@ -1,7 +1,7 @@
-From fc3fc20d8fe4ecb76d625bc5e52c775fbc63fb56 Mon Sep 17 00:00:00 2001
+From 6bb160bfd38e92cc5321860748729fb4c9397011 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 43/53] openssh-9.9p1-openssl-mlkem
+Subject: [PATCH 43/55] openssh-9.9p1-openssl-mlkem
 
 ---
  kex-names.c         |  23 +++-

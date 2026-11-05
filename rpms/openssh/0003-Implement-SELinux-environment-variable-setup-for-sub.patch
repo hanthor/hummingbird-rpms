@@ -1,7 +1,7 @@
-From a7151c0c1eb4dbb24a126142142adf9dfcc9b03f Mon Sep 17 00:00:00 2001
+From 8bb716a1c8bd12bfaf096423b52af3a629d8d35c Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 13 Apr 2026 14:06:47 +0200
-Subject: [PATCH 03/53] Implement SELinux environment variable setup for
+Subject: [PATCH 03/55] Implement SELinux environment variable setup for
  subprocess execution
 
 openssh-6.6p1-selinux-env-setup

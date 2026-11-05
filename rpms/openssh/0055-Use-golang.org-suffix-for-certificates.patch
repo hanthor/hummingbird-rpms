@@ -1,0 +1,98 @@
+From 5a509db4cbb60cb227370f63b6f84867ef781676 Mon Sep 17 00:00:00 2001
+From: Dmitry Belyavskiy <beldmit@gmail.com>
+Date: Fri, 23 Oct 2026 14:22:07 +0200
+Subject: [PATCH 55/55] Use @golang.org suffix for certificates
+
+---
+ myproposal.h  | 12 ++++++------
+ ssh-keyscan.c |  6 +++---
+ ssh-mldsa.c   |  6 +++---
+ 3 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/myproposal.h b/myproposal.h
+index a38ba11f4..2e59278a1 100644
+--- a/myproposal.h
++++ b/myproposal.h
+@@ -63,9 +63,9 @@
+ 	"rsa-sha2-512," \
+ 	"rsa-sha2-256," \
+ 	"ssh-mldsa44-ed25519," \
+-	"ssh-mldsa-44-cert-v01@openssh.com," \
+-	"ssh-mldsa-65-cert-v01@openssh.com," \
+-	"ssh-mldsa-87-cert-v01@openssh.com," \
++	"ssh-mldsa-44-cert-v01@golang.org," \
++	"ssh-mldsa-65-cert-v01@golang.org," \
++	"ssh-mldsa-87-cert-v01@golang.org," \
+ 	"ssh-mldsa-44," \
+ 	"ssh-mldsa-65," \
+ 	"ssh-mldsa-87"
+@@ -81,9 +81,9 @@
+ 	"ecdsa-sha2-nistp521," \
+ 	"rsa-sha2-512," \
+ 	"rsa-sha2-256," \
+-	"ssh-mldsa-44-cert-v01@openssh.com," \
+-	"ssh-mldsa-65-cert-v01@openssh.com," \
+-	"ssh-mldsa-87-cert-v01@openssh.com," \
++	"ssh-mldsa-44-cert-v01@golang.org," \
++	"ssh-mldsa-65-cert-v01@golang.org," \
++	"ssh-mldsa-87-cert-v01@golang.org," \
+ 	"ssh-mldsa-44," \
+ 	"ssh-mldsa-65," \
+ 	"ssh-mldsa-87"
+diff --git a/ssh-keyscan.c b/ssh-keyscan.c
+index c7d211e23..a0efed081 100644
+--- a/ssh-keyscan.c
++++ b/ssh-keyscan.c
+@@ -301,15 +301,15 @@ keygrab_ssh2(con *c)
+ #ifdef OPENSSL_HAS_MLDSA
+ 	case KT_MLDSA44:
+ 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+-		    "ssh-mldsa-44-cert-v01@openssh.com" : "ssh-mldsa-44";
++		    "ssh-mldsa-44-cert-v01@golang.org" : "ssh-mldsa-44";
+ 		break;
+ 	case KT_MLDSA65:
+ 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+-		    "ssh-mldsa-65-cert-v01@openssh.com" : "ssh-mldsa-65";
++		    "ssh-mldsa-65-cert-v01@golang.org" : "ssh-mldsa-65";
+ 		break;
+ 	case KT_MLDSA87:
+ 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+-		    "ssh-mldsa-87-cert-v01@openssh.com" : "ssh-mldsa-87";
++		    "ssh-mldsa-87-cert-v01@golang.org" : "ssh-mldsa-87";
+ 		break;
+ #endif
+ 	default:
+diff --git a/ssh-mldsa.c b/ssh-mldsa.c
+index 32b7a9fd4..72d4f7f25 100644
+--- a/ssh-mldsa.c
++++ b/ssh-mldsa.c
+@@ -524,7 +524,7 @@ const struct sshkey_impl sshkey_mldsa87_impl = {
+ };
+ 
+ const struct sshkey_impl sshkey_mldsa44_cert_impl = {
+-	/* .name = */		"ssh-mldsa-44-cert-v01@openssh.com",
++	/* .name = */		"ssh-mldsa-44-cert-v01@golang.org",
+ 	/* .shortname = */	"MLDSA-44-CERT",
+ 	/* .sigalg = */		NULL,
+ 	/* .type = */		KEY_MLDSA44_CERT,
+@@ -536,7 +536,7 @@ const struct sshkey_impl sshkey_mldsa44_cert_impl = {
+ };
+ 
+ const struct sshkey_impl sshkey_mldsa65_cert_impl = {
+-	/* .name = */		"ssh-mldsa-65-cert-v01@openssh.com",
++	/* .name = */		"ssh-mldsa-65-cert-v01@golang.org",
+ 	/* .shortname = */	"MLDSA-65-CERT",
+ 	/* .sigalg = */		NULL,
+ 	/* .type = */		KEY_MLDSA65_CERT,
+@@ -548,7 +548,7 @@ const struct sshkey_impl sshkey_mldsa65_cert_impl = {
+ };
+ 
+ const struct sshkey_impl sshkey_mldsa87_cert_impl = {
+-	/* .name = */		"ssh-mldsa-87-cert-v01@openssh.com",
++	/* .name = */		"ssh-mldsa-87-cert-v01@golang.org",
+ 	/* .shortname = */	"MLDSA-87-CERT",
+ 	/* .sigalg = */		NULL,
+ 	/* .type = */		KEY_MLDSA87_CERT,
+-- 
+2.56.0
+

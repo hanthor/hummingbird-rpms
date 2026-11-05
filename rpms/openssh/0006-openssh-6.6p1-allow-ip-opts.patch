@@ -1,7 +1,7 @@
-From b2a9a77f3e51adbc6d7278766d17103ed7f6dc26 Mon Sep 17 00:00:00 2001
+From fb7bd5d7210c6fc7e9d170675887480a76bb4562 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 06/53] openssh-6.6p1-allow-ip-opts
+Subject: [PATCH 06/55] openssh-6.6p1-allow-ip-opts
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=1644
 ---

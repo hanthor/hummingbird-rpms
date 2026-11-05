@@ -1,7 +1,7 @@
-From 1290a977c0151b679cb5408271cba8401f74fe03 Mon Sep 17 00:00:00 2001
+From 8c21901074b439de6cd1fce2a330fd1cd7eb1150 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 12/53] openssh-7.8p1-UsePAM-warning
+Subject: [PATCH 12/55] openssh-7.8p1-UsePAM-warning
 
 # warn users for unsupported UsePAM=no (#757545)
 ---

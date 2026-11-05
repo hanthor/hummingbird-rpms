@@ -1,7 +1,7 @@
-From d498de77e75f0c5810dff5d613ad947e6d4548ba Mon Sep 17 00:00:00 2001
+From 15ed4ca8b2643d0fd11740390322d0ac5249a805 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 29/53] openssh-8.2p1-visibility
+Subject: [PATCH 29/55] openssh-8.2p1-visibility
 
 # sk-dummy.so built with -fvisibility=hidden does not work
 ---

@@ -1,7 +1,7 @@
-From e390af2fd555754b9c311e8369fad452c22ade8b Mon Sep 17 00:00:00 2001
+From 6fb8b9110d1195ff2c4488bb3d49c1ad70234f74 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 12 Dec 2025 15:35:14 +0100
-Subject: [PATCH 48/53] openssh-7.3p1-x11-max-displays
+Subject: [PATCH 48/55] openssh-7.3p1-x11-max-displays
 
 Move MAX_DISPLAYS to a configuration option (#1341302)
 ---

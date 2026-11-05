@@ -1,7 +1,7 @@
-From 83dde2fe2227bce004d200b553c37a58942c4565 Mon Sep 17 00:00:00 2001
+From 9cc9ee2ce260e6796f6548737d2224b77dfb4c80 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Sun, 12 Apr 2026 12:25:04 +0200
-Subject: [PATCH 50/53] openssh-10.2p1-pam-auth
+Subject: [PATCH 50/55] openssh-10.2p1-pam-auth
 
 https://bugzilla.redhat.com/show_bug.cgi?id=2423900
 

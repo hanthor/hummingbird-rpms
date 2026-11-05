@@ -1,14 +1,14 @@
-From a37213df8ee9fd4a35b438ce568a742e2b837191 Mon Sep 17 00:00:00 2001
+From a50b5c3e2f17d1b049b3cafbb5a06912772e7129 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Mon, 15 Dec 2025 14:24:07 +0100
-Subject: [PATCH 52/53] openssh-10.2p1-pkcs11-uri
+Subject: [PATCH 52/55] openssh-10.2p1-pkcs11-uri
 
 ---
  .depend                          |   1 +
  Makefile.in                      |  26 +-
  configure.ac                     |  37 ++
  regress/Makefile                 |   5 +-
- regress/pkcs11-uri.sh            | 411 ++++++++++++++++
+ regress/pkcs11-uri.sh            | 447 ++++++++++++++++++
  regress/unittests/Makefile       |   2 +-
  regress/unittests/pkcs11/tests.c | 353 ++++++++++++++
  ssh-add.c                        |  46 +-
@@ -19,10 +19,11 @@ Subject: [PATCH 52/53] openssh-10.2p1-pkcs11-uri
  ssh-pkcs11-uri.h                 |  46 ++
  ssh-pkcs11.c                     | 771 ++++++++++++++++++++++---------
  ssh-pkcs11.h                     |   4 +
- ssh.c                            | 104 ++++-
+ ssh.c                            | 108 ++++-
  ssh_config.5                     |  15 +
+ sshconnect2.c                    |  14 +
  sshkey.c                         |   4 +
- 18 files changed, 2134 insertions(+), 272 deletions(-)
+ 19 files changed, 2188 insertions(+), 272 deletions(-)
  create mode 100644 regress/pkcs11-uri.sh
  create mode 100644 regress/unittests/pkcs11/tests.c
  create mode 100644 ssh-pkcs11-uri.c
@@ -226,10 +227,10 @@ index fa19ada28..492112e80 100644
  			-d ${.CURDIR}/unittests/sshkey/testdata $${ARGS}; \
 diff --git a/regress/pkcs11-uri.sh b/regress/pkcs11-uri.sh
 new file mode 100644
-index 000000000..75a6f290a
+index 000000000..846d61d0b
 --- /dev/null
 +++ b/regress/pkcs11-uri.sh
-@@ -0,0 +1,411 @@
+@@ -0,0 +1,447 @@
 +#
 +#  Copyright (c) 2017 Red Hat
 +#
@@ -638,6 +639,42 @@ index 000000000..75a6f290a
 +	trace "kill agent"
 +	${SSHAGENT} -k > /dev/null
 +fi
++
++trace "Test IdentitiesOnly=yes with PKCS#11 URI"
++# Set RSA key as authorized
++grep "RSA" $OBJ/token_keys > $OBJ/authorized_keys_$USER
++
++trace "  (With IdentitiesOnly=yes, wrong key should fail)"
++# Configure to use ECDSA key with IdentitiesOnly, but RSA is authorized
++# Use ssh_proxy which already has BatchMode and IdentityFile entries removed
++cat > $OBJ/ssh_proxy_identonly << EOF
++IdentitiesOnly yes
++IdentityFile "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}"
++EOF
++cat $OBJ/ssh_proxy >> $OBJ/ssh_proxy_identonly
++
++echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy_identonly somehost exit 5
++r=$?
++if [ $r -eq 5 ]; then
++	fail "FAIL: ssh with IdentitiesOnly=yes used wrong key (should fail)"
++fi
++
++trace "  (With IdentitiesOnly=yes, correct key should succeed)"
++# Configure to use RSA key with IdentitiesOnly, RSA is authorized
++cat > $OBJ/ssh_proxy_identonly << EOF
++IdentitiesOnly yes
++IdentityFile "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}"
++EOF
++cat $OBJ/ssh_proxy >> $OBJ/ssh_proxy_identonly
++
++echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy_identonly somehost exit 5
++r=$?
++if [ $r -ne 5 ]; then
++	fail "FAIL: ssh with IdentitiesOnly=yes and correct key failed (exit code $r)"
++fi
++
++# Cleanup
++rm -f $OBJ/ssh_proxy_identonly
 +
 +# Restore original ssh_proxy
 +mv $OBJ/ssh_proxy_bak $OBJ/ssh_proxy
@@ -3209,7 +3246,7 @@ index 1d0277a6d..13459644c 100644
  	    const u_char *, size_t, const char *, const char *,
  	    const char *, u_int);
 diff --git a/ssh.c b/ssh.c
-index 68c16c79c..adc6d2f81 100644
+index 68c16c79c..186e6469e 100644
 --- a/ssh.c
 +++ b/ssh.c
 @@ -848,6 +848,14 @@ main(int ac, char **av)
@@ -3235,14 +3272,15 @@ index 68c16c79c..adc6d2f81 100644
  #endif
  
   skip_connect:
-@@ -2360,6 +2369,45 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
+@@ -2360,6 +2369,47 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
  	    options.escape_char : SSH_ESCAPECHAR_NONE, id);
  }
  
 +#ifdef ENABLE_PKCS11
 +static void
 +load_pkcs11_identity(char *pkcs11_uri, char *identity_files[],
-+    struct sshkey *identity_keys[], int *n_ids)
++    struct sshkey *identity_keys[], int *n_ids,
++    int identity_file_userprovided[], int userprovided)
 +{
 +	int nkeys, i;
 +	struct sshkey **keys;
@@ -3269,6 +3307,7 @@ index 68c16c79c..adc6d2f81 100644
 +			}
 +			identity_keys[*n_ids] = keys[i];
 +			identity_files[*n_ids] = pkcs11_uri_get(uri);
++			identity_file_userprovided[*n_ids] = userprovided;
 +			(*n_ids)++;
 +		}
 +		free(keys);
@@ -3281,7 +3320,7 @@ index 68c16c79c..adc6d2f81 100644
  /* Loads all IdentityFile and CertificateFile keys */
  static void
  load_public_identity_files(const struct ssh_conn_info *cinfo)
-@@ -2374,11 +2422,6 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
+@@ -2374,11 +2424,6 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
  	char *certificate_files[SSH_MAX_CERTIFICATE_FILES];
  	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
  	int certificate_file_userprovided[SSH_MAX_CERTIFICATE_FILES];
@@ -3293,7 +3332,7 @@ index 68c16c79c..adc6d2f81 100644
  
  	n_ids = n_certs = 0;
  	memset(identity_files, 0, sizeof(identity_files));
-@@ -2391,33 +2434,46 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
+@@ -2391,33 +2436,48 @@ load_public_identity_files(const struct ssh_conn_info *cinfo)
  	    sizeof(certificate_file_userprovided));
  
  #ifdef ENABLE_PKCS11
@@ -3329,7 +3368,7 @@ index 68c16c79c..adc6d2f81 100644
 +
 +		/* Add it as any other IdentityFile */
 +		cp = pkcs11_uri_get(uri);
-+		add_identity_file(&options, NULL, cp, 1);
++		add_identity_file(&options, NULL, cp, 0);
 +		free(cp);
 +
 +		pkcs11_uri_cleanup(uri);
@@ -3350,7 +3389,9 @@ index 68c16c79c..adc6d2f81 100644
 +		    strncmp(name, PKCS11_URI_SCHEME,
 +		    strlen(PKCS11_URI_SCHEME)) == 0) {
 +			load_pkcs11_identity(name, identity_files,
-+			    identity_keys, &n_ids);
++			    identity_keys, &n_ids,
++			    identity_file_userprovided,
++			    options.identity_file_userprovided[i]);
 +			free(options.identity_files[i]);
 +			continue;
 +		}
@@ -3385,6 +3426,38 @@ index a4fbecf35..47d00970b 100644
  .It Cm IgnoreUnknown
  Specifies a pattern-list of unknown options to be ignored if they are
  encountered in configuration parsing.
+diff --git a/sshconnect2.c b/sshconnect2.c
+index 20d7622a7..ed75cb1ce 100644
+--- a/sshconnect2.c
++++ b/sshconnect2.c
+@@ -75,6 +75,11 @@
+ #include "ssh-sk.h"
+ #include "sk-api.h"
+ 
++#ifdef ENABLE_PKCS11
++#include "ssh-pkcs11.h"
++#include "ssh-pkcs11-uri.h"
++#endif
++
+ #ifdef GSSAPI
+ #include "ssh-gss.h"
+ #endif
+@@ -2076,6 +2081,15 @@ pubkey_prepare(struct ssh *ssh, Authctxt *authctxt)
+ 				break;
+ 			}
+ 		}
++#ifdef ENABLE_PKCS11
++		/*
++		 * User-provided PKCS11 URI doesn't need an plain-file with
++		 * public key inside!
++		 */
++		if (!found && id->userprovided &&
++		    strncmp(id->filename, PKCS11_URI_SCHEME, strlen(PKCS11_URI_SCHEME)) == 0)
++			found = 1;
++#endif
+ 		/* If IdentitiesOnly set and key not found then don't use it */
+ 		if (!found && options.identities_only) {
+ 			TAILQ_REMOVE(&files, id, next);
 diff --git a/sshkey.c b/sshkey.c
 index 533b8ffa9..8560ba46a 100644
 --- a/sshkey.c

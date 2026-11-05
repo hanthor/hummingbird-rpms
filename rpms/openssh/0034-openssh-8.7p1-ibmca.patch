@@ -1,7 +1,7 @@
-From ba3fc4ba26aee5474f0a82dea44eb99a203c373b Mon Sep 17 00:00:00 2001
+From ac335530672e890a9f496fbff7f656328e12cc71 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 34/53] openssh-8.7p1-ibmca
+Subject: [PATCH 34/55] openssh-8.7p1-ibmca
 
 # downstream only, IBMCA tentative fix
 # From https://bugzilla.redhat.com/show_bug.cgi?id=1976202#c14

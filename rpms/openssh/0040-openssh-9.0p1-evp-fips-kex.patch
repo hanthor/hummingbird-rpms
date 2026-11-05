@@ -1,7 +1,7 @@
-From 224219820fa66356917a648fdf90e660dd041304 Mon Sep 17 00:00:00 2001
+From 3e542a3446b5d8c7b916e8823ea0898baeb201c6 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 40/53] openssh-9.0p1-evp-fips-kex
+Subject: [PATCH 40/55] openssh-9.0p1-evp-fips-kex
 
 ---
  dh.c      |  98 +++++++++++++++++++++++++++++++++-----

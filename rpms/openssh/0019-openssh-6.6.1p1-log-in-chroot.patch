@@ -1,7 +1,7 @@
-From 100c5fe6e0a7e838b8c4793279dc18aa6d19074c Mon Sep 17 00:00:00 2001
+From 4350e4397b371e17a8f3afd4c9fdfbf26dbde6ea Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:28 +0200
-Subject: [PATCH 19/53] openssh-6.6.1p1-log-in-chroot
+Subject: [PATCH 19/55] openssh-6.6.1p1-log-in-chroot
 
 ---
  log.c              | 11 +++++++++--

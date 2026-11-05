@@ -1,7 +1,7 @@
-From 50aac8bc7ee285b84b4b4b5ca09177ebcb421b65 Mon Sep 17 00:00:00 2001
+From d47416b3b34113f09d14da6fd5fc9826733afb67 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Fri, 16 May 2025 14:53:54 +0200
-Subject: [PATCH 44/53] openssh-9.9p2-error_processing
+Subject: [PATCH 44/55] openssh-9.9p2-error_processing
 
 # https://www.openwall.com/lists/oss-security/2025/02/22/1
 ---

@@ -1,7 +1,7 @@
-From df77d50fd29fa47b14681341232b24e1b42daee9 Mon Sep 17 00:00:00 2001
+From b45a2981ecbd16a69023ee927432ba8b15defc5d Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 41/53] openssh-8.7p1-nohostsha1proof
+Subject: [PATCH 41/55] openssh-8.7p1-nohostsha1proof
 
 ---
  compat.c                               |  6 +++++

@@ -1,7 +1,7 @@
-From 6f1d20630d0b07ff213fa91b55748fd6cf4f0856 Mon Sep 17 00:00:00 2001
+From 14b8f6a30a642c8e5dac11decd7923ae5ae8eaa2 Mon Sep 17 00:00:00 2001
 From: Dmitry Belyavskiy <beldmit@gmail.com>
 Date: Thu, 15 May 2025 13:43:29 +0200
-Subject: [PATCH 39/53] openssh-8.7p1-negotiate-supported-algs
+Subject: [PATCH 39/55] openssh-8.7p1-negotiate-supported-algs
 
 # Don't propose disallowed algorithms during hostkey negotiation
 # upstream MR:
