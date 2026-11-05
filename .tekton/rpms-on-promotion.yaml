@@ -27,7 +27,7 @@ spec:
     - name: target-branch
       value: '{{target_branch}}'
     - name: source-storage
-      value: quay.io/hummingbird-ci/promotion-source:{{revision}}.git
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/syft-main:{{revision}}.git
     - name: archive-url
       value: https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com
     - name: tool-image
@@ -148,6 +148,9 @@ spec:
       - name: git-auth
   taskRunTemplate:
     serviceAccountName: hummingbird-promotion
+  taskRunSpecs:
+    - pipelineTaskName: clone-repository
+      serviceAccountName: build-pipeline-syft-main
   timeouts:
     pipeline: 1h
     tasks: 1h

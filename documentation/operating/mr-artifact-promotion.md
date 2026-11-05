@@ -15,8 +15,9 @@ managed release pipeline publishes the RPMs.
 ## Prerequisites
 
 - The package uses two-parent merge commits on `main`, and its MR build and required tests passed.
-- The `hummingbird-promotion` ServiceAccount can read build evidence, create Snapshots, and write
-  source Trusted Artifacts to the configured Quay repository.
+- The Component's build ServiceAccount can push source Trusted Artifacts to its Quay image repository
+  and use the pipeline SCC. The `hummingbird-promotion` ServiceAccount can read build evidence and
+  create Snapshots; it must be able to read the source Trusted Artifact.
 - The Hummingbird tools image contains both promotion commands and accepts a source Trusted Artifact.
 - The MR Snapshot, linked PipelineRun, and image remain available through merge and retry. KubeArchive
   can supply removed Konflux objects, but cannot restore an expired image.
@@ -34,10 +35,11 @@ push-build run.
 
 ## Run and recovery
 
-The promotion run clones the merge commit with full history into a source Trusted Artifact, then runs
-the lookup and Component Snapshot Tasks. Its `COMPONENT_SNAPSHOT` result names the created or reused
-Snapshot. The Snapshot records the promotion PipelineRun start time for Integration Service's existing
-release-order check. The pipeline does not rebuild or create a Release.
+The promotion run clones the merge commit with full history under the Component's build
+ServiceAccount and uploads a source Trusted Artifact to that Component's Quay repository. The lookup
+and Component Snapshot Tasks use `hummingbird-promotion`. Its `COMPONENT_SNAPSHOT` result names the
+created or reused Snapshot. The Snapshot records the promotion PipelineRun start time for Integration
+Service's existing release-order check. The pipeline does not rebuild or create a Release.
 
 Check the Snapshot's Component and push labels, start-time annotation, and Integration Service-created
 Release. The RPM application has no group tests that consume the Global Candidate List, so this phase
