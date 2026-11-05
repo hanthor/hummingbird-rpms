@@ -14,9 +14,6 @@ package_dir=$(cd "$(dirname "$0")" && pwd)
 cd "${source_dir}"
 
 patch -p1 < "${package_dir}/grafana-yarn-cache.patch"
-patch -p1 < "${package_dir}/grafana-nanoid-cve.patch"
-patch -p1 < "${package_dir}/grafana-axios-cve.patch"
-patch -p1 < "${package_dir}/grafana-browserslist-cve.patch"
 
 if [[ "${mode}" == "--generate-compression" ]]; then
     compression_workdir=$(mktemp -d)
@@ -41,17 +38,8 @@ else
     exit 2
 fi
 
-patch -p1 < "${package_dir}/grafana-dompurify-cve.patch"
-patch -p1 < "${package_dir}/grafana-fast-uri-3.1.6-cve.patch"
-patch -p1 < "${package_dir}/grafana-qs-6.16.0-cve.patch"
-patch -p1 < "${package_dir}/grafana-js-yaml-cve.patch"
-patch -p1 < "${package_dir}/grafana-fast-uri-3.1.7-cve.patch"
-patch -p1 < "${package_dir}/grafana-joi-cve.patch"
-patch -p1 < "${package_dir}/grafana-fast-uri-3.1.8-cve.patch"
-patch -p1 < "${package_dir}/grafana-hono-4.13.7-cve.patch"
-patch -p1 < "${package_dir}/grafana-axios-1.20.0-cve.patch"
-patch -p1 < "${package_dir}/grafana-hono-4.13.11-cve.patch"
-patch -p1 < "${package_dir}/grafana-qs-6.16.1.patch"
-patch -p1 < "${package_dir}/grafana-storybook-follow-redirects-cve.patch"
+# 13.1.9's own lockfile already carries the older dependency CVE fixes; only
+# the patches below apply, in the same order as the spec.
 patch -p1 < "${package_dir}/grafana-fast-uri-body-parser-cve.patch"
 patch -p1 < "${package_dir}/grafana-follow-redirects-1.16.2-cve.patch"
+patch -p1 < "${package_dir}/grafana-joi-17.13.9-cve.patch"
