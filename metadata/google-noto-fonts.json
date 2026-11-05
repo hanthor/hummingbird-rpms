@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/google-noto-fonts.git",
     "release": "1",
-    "sha": "432dbe896fcaecae2641ae8b5d9647c92ae1bce4"
+    "sha": "f9685fedcec2268d4a8c22648d5422ee1bb31498"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/notofonts/notofonts.github.io",
-  "version": "20261001"
+  "version": "20261101"
 }
