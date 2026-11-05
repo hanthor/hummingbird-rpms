@@ -58,6 +58,9 @@ def expand_task_run_specs(specs: list) -> list:
 
 # renovate: datasource=docker depName=quay.io/hummingbird-ci/rpmbuild-pipeline
 PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+# renovate: datasource=docker depName=quay.io/hummingbird-ci/hummingbird-tools
+PROMOTION_TOOL_IMAGE = "quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:f676e04fe608084673859ff06c35311dddac520d1b603545fd1c206783ace5dd"
+PROMOTION_ARCHIVE_URL = "https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com"
 
 def load_yaml_file(path: Path) -> dict | None:
     """Load a YAML file, returning None if it doesn't exist."""
@@ -125,6 +128,9 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 
             # Check for overrides
             pkg_config = package_overrides.get(dname, {})
+            rpm_data["push_pipeline"] = pkg_config.get("push_pipeline", "build")
+            if rpm_data["push_pipeline"] not in ("build", "promotion"):
+                raise ValueError(f"{dname}: push_pipeline must be build or promotion")
 
             # Determine the upstream package name for Tekton pipeline
             #
@@ -208,6 +214,8 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
         "branch": branch,
         "application_name": application_name,
         "pipeline_bundle": PIPELINE_BUNDLE,
+        "promotion_tool_image": PROMOTION_TOOL_IMAGE,
+        "promotion_archive_url": PROMOTION_ARCHIVE_URL,
         "tenant": tenant,
         "rpms": rpms,
     }
@@ -393,11 +401,11 @@ def render_template(template_path: Path, macros_dir: Path, variables: dict) -> s
 
 def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     """Generate PAC resources."""
-    if resource_type not in ("push", "pull-request"):
+    if resource_type not in ("push", "pull-request", "promotion"):
         sys.exit(f"ERROR: Invalid resource type: {resource_type}")
 
     print("Building template variables...", file=sys.stderr)
-    variables = build_pac_variables(branch, tenant, resource_type)
+    variables = build_pac_variables(branch, tenant, "push" if resource_type == "promotion" else resource_type)
 
     print("Rendering Pipeline as Code resources...", file=sys.stderr)
     template_path = ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml.j2"
@@ -435,6 +443,7 @@ def generate_gitattributes() -> str:
     lines = [
         ".gitattributes gitlab-generated",
         ".tekton/rpms-on-pull-request.yaml gitlab-generated",
+        ".tekton/rpms-on-promotion.yaml gitlab-generated",
         ".tekton/rpms-on-push.yaml gitlab-generated",
         ".tekton/trigger-manifest-pull-request.json gitlab-generated",
         ".tekton/trigger-manifest-push.json gitlab-generated",
@@ -476,7 +485,7 @@ def main():
     )
     pac_parser.add_argument(
         "resource_type",
-        choices=["push", "pull-request"],
+        choices=["push", "pull-request", "promotion"],
         help="Resource type to generate",
     )
 
@@ -516,6 +525,14 @@ def main():
             manifest = build_trigger_manifest(variables, event_type)
             manifest_json = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
             (ROOT_DIR / ".tekton" / f"trigger-manifest-{resource_type}.json").write_text(manifest_json)
+
+            if resource_type == "push":
+                promotion = render_template(
+                    ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml.j2", macros_dir, variables
+                )
+                if not promotion.endswith("\n"):
+                    promotion += "\n"
+                (ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml").write_text(promotion)
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)

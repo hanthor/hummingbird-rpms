@@ -165,6 +165,36 @@ class TestBuildPacVariables:
         ]
 
 
+class TestPromotionPac:
+    def test_syft_promotion_replaces_only_push_build(self, gen_module):
+        push = gen_module.generate_pac("push", "main", "hummingbird-tenant")
+        promotion = gen_module.generate_pac("promotion", "main", "hummingbird-tenant")
+        mr = gen_module.generate_pac("pull-request", "main", "hummingbird-tenant")
+        runs = list(yaml.safe_load_all(promotion))
+
+        assert "syft-main-on-push" not in push
+        assert "# --- syft ---" not in push
+        assert "syft-main-on-pull-request" in mr
+        assert [run["metadata"]["name"] for run in runs] == ["syft-main-on-promotion"]
+
+        run = runs[0]
+        assert "^rpms/syft/" in run["metadata"]["annotations"]["pipelinesascode.tekton.dev/on-cel-expression"]
+        assert run["spec"]["taskRunTemplate"]["serviceAccountName"] == "hummingbird-promotion"
+        assert [task["name"] for task in run["spec"]["pipelineSpec"]["tasks"]] == [
+            "clone-repository",
+            "find-tested-mr-artifact",
+            "create-promotion-component",
+        ]
+        component_task = run["spec"]["pipelineSpec"]["tasks"][-1]
+        assert {param["name"]: param["value"] for param in component_task["params"]}[
+            "promotionPipelineRun"
+        ] == "$(context.pipelineRun.name)"
+
+        variables = gen_module.build_pac_variables("main", "hummingbird-tenant", "push")
+        manifest = gen_module.build_trigger_manifest(variables, "push")
+        assert "syft--rpms" in manifest["applications"]["rpms-main"]
+
+
 def _load_rpa_config(gen_module, index=0):
     """Load RPA config and global config from the config file."""
     config = gen_module.load_releng_config()

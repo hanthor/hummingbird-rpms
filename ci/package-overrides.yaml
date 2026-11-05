@@ -764,6 +764,7 @@ swift-lang:
 
 syft:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  push_pipeline: promotion
 
 tbb:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"

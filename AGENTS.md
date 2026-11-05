@@ -16,24 +16,25 @@ make dist-git ARGS='<command and arguments>'
 
 Use `limactl shell fedora` only when the Makefile container is unavailable.
 
-| Command | When to use |
-| ------- | ----------- |
-| `./ci/dist_git.py import fedora/<pkg>` | Import a new package from Fedora rawhide (default) or another branch (`--branch f42`) |
-| `./ci/dist_git.py update [<pkg>]` | Pull latest Fedora changes into one or all packages (merges local modifications) |
-| `./ci/dist_git.py sync <pkg>` | Force-sync a package to upstream, discarding local changes |
-| `./ci/dist_git.py rebuild <pkg> --reason "..."` | Bump Release to trigger a no-change rebuild (use `--all` for every package, plus `--exclude pkg1,pkg2` to skip specific ones) |
-| `./ci/dist_git.py rebuild-rev-deps <pkg> --reason "..."` | Rebuild all reverse-dependencies of a package |
-| `./ci/dist_git.py rename <pkg>` | Rename a package (reads new name from spec) |
-| `./ci/dist_git.py mark-modified <pkg> --modified --reason "..."` | Mark a package as locally modified so it isn't auto-updated |
-| `./ci/dist_git.py mark-modified <pkg> --clean` | Clear the modified flag to allow auto-updates again |
-| `./ci/dist_git.py set-upstream <pkg> --track-version <prefix>` | Pin a versioned package to a version line (e.g., `1.26`) |
-| `./ci/dist_git.py list [--clean\|--modified\|--independent\|--prerelease]` | List packages by status |
-| `./ci/dist_git.py diff [<pkg>…\|--all]` | Show what changed locally vs Fedora upstream |
-| `./ci/dist_git.py sanitize-paths <pkg> (or --all)` | Make package filenames Windows-safe, leaving changes for review, use either `<pkg>` or `--all` |
-| `./ci/dist_git.py check-paths` | Reject tracked filenames incompatible with Windows |
-| `./ci/dist_git.py ls-sources <pkg>` | Inspect source archives for a package |
-| `./ci/dist_git.py update-releases` | Refresh `upstream-releases.json` from Bodhi |
-| `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2` | Create a private product: Pulp repos, RPA config, and package assignments |
+| Command                                                                    | When to use                                                                                                                   |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `./ci/dist_git.py import fedora/<pkg>`                                     | Import a new package from Fedora rawhide (default) or another branch (`--branch f42`)                                         |
+| `./ci/dist_git.py update [<pkg>]`                                          | Pull latest Fedora changes into one or all packages (merges local modifications)                                              |
+| `./ci/dist_git.py sync <pkg>`                                              | Force-sync a package to upstream, discarding local changes                                                                    |
+| `./ci/dist_git.py rebuild <pkg> --reason "..."`                            | Bump Release to trigger a no-change rebuild (use `--all` for every package, plus `--exclude pkg1,pkg2` to skip specific ones) |
+| `./ci/dist_git.py rebuild-rev-deps <pkg> --reason "..."`                   | Rebuild all reverse-dependencies of a package                                                                                 |
+| `./ci/dist_git.py rename <pkg>`                                            | Rename a package (reads new name from spec)                                                                                   |
+| `./ci/dist_git.py mark-modified <pkg> --modified --reason "..."`           | Mark a package as locally modified so it isn't auto-updated                                                                   |
+| `./ci/dist_git.py mark-modified <pkg> --clean`                             | Clear the modified flag to allow auto-updates again                                                                           |
+| `./ci/dist_git.py set-upstream <pkg> --track-version <prefix>`             | Pin a versioned package to a version line (e.g., `1.26`)                                                                      |
+| `./ci/dist_git.py list [--clean\|--modified\|--independent\|--prerelease]` | List packages by status                                                                                                       |
+| `./ci/dist_git.py diff [<pkg>…\|--all]`                                    | Show what changed locally vs Fedora upstream                                                                                  |
+| `./ci/dist_git.py sanitize-paths <pkg> (or --all)`                         | Make package filenames Windows-safe, leaving changes for review, use either `<pkg>` or `--all`                                |
+| `./ci/dist_git.py check-paths`                                             | Reject tracked filenames incompatible with Windows                                                                            |
+| `./ci/dist_git.py ls-sources <pkg>`                                        | Inspect source archives for a package                                                                                         |
+| `./ci/dist_git.py update-releases`                                         | Refresh `upstream-releases.json` from Bodhi                                                                                   |
+| `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2`      | Create a private product: Pulp repos, RPA config, and package assignments                                                     |
+| `make generate`                                                            | Regenerate PipelineRun YAML after changing a package's `push_pipeline` in `ci/package-overrides.yaml`                         |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -48,7 +49,7 @@ tooling.
 Common operational tasks that users or AI agents may need to perform:
 
 | Operation                      | `dist_git.py` command                                           | Documentation                                                                                   | When to use                                                            |
-|--------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| ------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Import dist-git package        | `import fedora/<pkg>`                                           | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Add a new package from Fedora dist-git                                 |
 | Add independent package        | _(manual — not from Fedora)_                                    | [Adding Independent Packages](documentation/operating/adding-independent-packages.md)           | Add new package not imported from Fedora                               |
 | Rebuild package (no-change)    | `rebuild <pkg> --reason "..."` (or `--all --exclude pkg1,pkg2`) | [Rebuilding Packages](documentation/operating/rebuilding-packages.md)                           | Faulty RPM published; need to bump Release for rebuild                 |
@@ -73,6 +74,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Add private product            | `add-private-product <product> --packages ...`                  | [Private RPM Repositories](documentation/operating/private-rpm-repositories.md)                 | Create a private product with Pulp repos, RPA, and packages            |
 | Rebase buildroot to new Fedora | _(multi-step; see runbook)_                                     | [Rebasing Buildroot to New Fedora](documentation/operating/rebasing-buildroot-to-new-fedora.md) | Move mock.cfg, core toolchain, and package set to a new Fedora release |
 | Add/rotate GPG source keys     | _(edit `metadata/gpg-keys/` + pipeline YAML)_                   | [GPG Source Verification](documentation/operating/gpg-source-verification.md)                   | Add, rotate, or revoke an upstream signing key for source verification |
+| Enable MR artifact promotion   | _(set `push_pipeline: promotion`, then `make generate`)_        | [MR Artifact Promotion](documentation/operating/mr-artifact-promotion.md)                       | Replace a package push build with promotion of its tested MR artifact  |
 
 ## Post-Import / Post-Add Requirements
 
