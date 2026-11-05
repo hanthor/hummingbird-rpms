@@ -530,6 +530,8 @@ def main():
                 promotion = render_template(
                     ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml.j2", macros_dir, variables
                 )
+                if not promotion.endswith("\n"):
+                    promotion += "\n"
                 (ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml").write_text(promotion)
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
