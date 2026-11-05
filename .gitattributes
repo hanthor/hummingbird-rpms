@@ -1,5 +1,6 @@
 .gitattributes gitlab-generated
 .tekton/rpms-on-pull-request.yaml gitlab-generated
+.tekton/rpms-on-promotion.yaml gitlab-generated
 .tekton/rpms-on-push.yaml gitlab-generated
 .tekton/trigger-manifest-pull-request.json gitlab-generated
 .tekton/trigger-manifest-push.json gitlab-generated
