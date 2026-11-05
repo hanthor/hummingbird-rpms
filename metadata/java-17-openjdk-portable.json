@@ -4,6 +4,6 @@
   "track_upstream": "17",
   "upstream_repo": "https://github.com/openjdk/jdk17u",
   "upstream_version_transform": "openjdk_to_rpm",
-  "version": "17.0.20.0.8",
+  "version": "17.0.21.1.0",
   "version_transform": "openjdk_to_oracle"
 }
