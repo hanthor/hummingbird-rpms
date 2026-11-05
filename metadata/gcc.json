@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "f44",
     "git_url": "https://src.fedoraproject.org/rpms/gcc.git",
-    "release": "2",
-    "sha": "751f1a1e4dbcefa2345b538165d4b3bad2826c1c"
+    "release": "3",
+    "sha": "79e42aa8526f4487e07566b6a06894ec5eb33baf"
   },
-  "modification_reason": "Disable non-essential language frontends; migrated to gorget source-pipeline.yaml (HUM-5620): all four sources (gcc, nvptx-tools, newlib-cygwin, isl) now fetched by the pipeline instead of update-gcc.sh/manual recipes, with changelog/PR extraction replicated by rpms/gcc/gorget-update-changelog.sh's post: step. upstream_repo points at gcc.gnu.org's read-only mirror on googlesource.com instead of gcc.gnu.org itself (HUM-4621 gcc incident, HUM-6309): gcc.gnu.org's git server aggressively rate-limits clone/fetch operations (confirmed repeatedly, including from a residential VPN), while gnu.googlesource.com -- Google's official read-only mirror of all GNU project repos -- serves the same content reliably and is content-addressed identically (same commit SHAs). This field feeds both gorget's own ${UPSTREAM_REPO} fetch and dist_git.py update's fixed-ref pin-refresh logic, so both benefit.; HUM-8789: CVE-2026-102010",
+  "modification_reason": "Disable non-essential language frontends; use gorget to generate all four source archives and changelog updates (HUM-5620), fetching GCC from the official Google mirror to avoid gcc.gnu.org rate limiting (HUM-4621, HUM-6309).",
   "modification_status": "modified",
   "upstream_repo": "https://gnu.googlesource.com/gcc",
   "version": "16.2.1",
