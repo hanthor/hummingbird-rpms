@@ -1,0 +1,1152 @@
+From 2ee9da06a5364d31888cc68289052105cdb9158c Mon Sep 17 00:00:00 2001
+From: Prarit Bhargava <prarit@redhat.com>
+Date: Wed, 4 Nov 2026 10:36:54 -0500
+Subject: [PATCH] vendor: bump github.com/klauspost/compress to v1.20.2
+
+Fixes CVE-2026-116591.
+
+Only go.mod, go.sum and the files removed in v1.20.2 are carried here;
+the rest of vendor/ comes from the regenerated vendor tarball (Source2),
+which is extracted over the patched tree.
+
+Upstream: https://github.com/klauspost/compress/commit/7f5d8528720c895a6106f201719f87eb030a565d
+---
+ go.mod                                        |   2 +-
+ go.sum                                        |   4 +-
+ .../compress/flate/huffman_sortByFreq.go      | 159 ---------
+ .../compress/flate/huffman_sortByLiteral.go   | 201 -----------
+ .../klauspost/compress/flate/regmask_amd64.go |  37 --
+ .../klauspost/compress/flate/regmask_other.go |  39 ---
+ .../klauspost/compress/s2/encode_amd64.go     | 316 ------------------
+ .../compress/s2/encodeblock_amd64.go          | 228 -------------
+ .../compress/zstd/fse_decoder_amd64.go        |  64 ----
+ 9 files changed, 3 insertions(+), 1047 deletions(-)
+ delete mode 100644 vendor/github.com/klauspost/compress/flate/huffman_sortByFreq.go
+ delete mode 100644 vendor/github.com/klauspost/compress/flate/huffman_sortByLiteral.go
+ delete mode 100644 vendor/github.com/klauspost/compress/flate/regmask_amd64.go
+ delete mode 100644 vendor/github.com/klauspost/compress/flate/regmask_other.go
+ delete mode 100644 vendor/github.com/klauspost/compress/s2/encode_amd64.go
+ delete mode 100644 vendor/github.com/klauspost/compress/s2/encodeblock_amd64.go
+ delete mode 100644 vendor/github.com/klauspost/compress/zstd/fse_decoder_amd64.go
+
+diff --git a/go.mod b/go.mod
+index f37703ad6ee8..0f0338e6ba3b 100644
+--- a/go.mod
++++ b/go.mod
+@@ -27,7 +27,7 @@ require (
+ 	github.com/hashicorp/go-hclog v1.6.3 // indirect
+ 	github.com/jedib0t/go-pretty/v6 v6.7.10
+ 	github.com/jsternberg/zap-logfmt v1.3.0
+-	github.com/klauspost/compress v1.18.7
++	github.com/klauspost/compress v1.20.2
+ 	github.com/minio/minio-go/v7 v7.1.0
+ 	github.com/olekukonko/tablewriter v1.1.4
+ 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0
+diff --git a/go.sum b/go.sum
+index 670a83f3915b..adab47598041 100644
+--- a/go.sum
++++ b/go.sum
+@@ -516,8 +516,6 @@ github.com/keybase/go-keychain v0.0.1/go.mod h1:PdEILRW3i9D8JcdM+FmY6RwkHGnhHxXw
+ github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
+ github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
+ github.com/klauspost/compress v1.15.9/go.mod h1:PhcZ0MbTNciWF3rruxRgKxI5NkcHHrHUDtV4Yw2GlzU=
+-github.com/klauspost/compress v1.18.7 h1:aUyZsS4kH3QTKurYhAOwAHxllVPnOthb3vPfnF1Ehjw=
+-github.com/klauspost/compress v1.18.7/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
+ github.com/klauspost/cpuid/v2 v2.0.1/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+ github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
+ github.com/klauspost/cpuid/v2 v2.3.0/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
+@@ -1375,3 +1373,5 @@ sigs.k8s.io/structured-merge-diff/v6 v6.3.2 h1:kwVWMx5yS1CrnFWA/2QHyRVJ8jM6dBA80
+ sigs.k8s.io/structured-merge-diff/v6 v6.3.2/go.mod h1:M3W8sfWvn2HhQDIbGWj3S099YozAsymCo/wrT5ohRUE=
+ sigs.k8s.io/yaml v1.6.0 h1:G8fkbMSAFqgEFgh4b1wmtzDnioxFCUgTZhlbj5P9QYs=
+ sigs.k8s.io/yaml v1.6.0/go.mod h1:796bPqUfzR/0jLAl6XjHl3Ck7MiyVv8dbTdyT3/pMf4=
++github.com/klauspost/compress v1.20.2 h1:v5tiZvm1KGLyg5d5oXdXe3lsSPrbEUiKoXGia//I7Qo=
++github.com/klauspost/compress v1.20.2/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+diff --git a/vendor/github.com/klauspost/compress/flate/huffman_sortByFreq.go b/vendor/github.com/klauspost/compress/flate/huffman_sortByFreq.go
+deleted file mode 100644
+index 6c05ba8c1c2e..000000000000
+--- a/vendor/github.com/klauspost/compress/flate/huffman_sortByFreq.go
++++ /dev/null
+@@ -1,159 +0,0 @@
+-// Copyright 2009 The Go Authors. All rights reserved.
+-// Use of this source code is governed by a BSD-style
+-// license that can be found in the LICENSE file.
+-
+-package flate
+-
+-// Sort sorts data.
+-// It makes one call to data.Len to determine n, and O(n*log(n)) calls to
+-// data.Less and data.Swap. The sort is not guaranteed to be stable.
+-func sortByFreq(data []literalNode) {
+-	n := len(data)
+-	quickSortByFreq(data, 0, n, maxDepth(n))
+-}
+-
+-func quickSortByFreq(data []literalNode, a, b, maxDepth int) {
+-	for b-a > 12 { // Use ShellSort for slices <= 12 elements
+-		if maxDepth == 0 {
+-			heapSort(data, a, b)
+-			return
+-		}
+-		maxDepth--
+-		mlo, mhi := doPivotByFreq(data, a, b)
+-		// Avoiding recursion on the larger subproblem guarantees
+-		// a stack depth of at most lg(b-a).
+-		if mlo-a < b-mhi {
+-			quickSortByFreq(data, a, mlo, maxDepth)
+-			a = mhi // i.e., quickSortByFreq(data, mhi, b)
+-		} else {
+-			quickSortByFreq(data, mhi, b, maxDepth)
+-			b = mlo // i.e., quickSortByFreq(data, a, mlo)
+-		}
+-	}
+-	if b-a > 1 {
+-		// Do ShellSort pass with gap 6
+-		// It could be written in this simplified form cause b-a <= 12
+-		for i := a + 6; i < b; i++ {
+-			if data[i].freq == data[i-6].freq && data[i].literal < data[i-6].literal || data[i].freq < data[i-6].freq {
+-				data[i], data[i-6] = data[i-6], data[i]
+-			}
+-		}
+-		insertionSortByFreq(data, a, b)
+-	}
+-}
+-
+-func doPivotByFreq(data []literalNode, lo, hi int) (midlo, midhi int) {
+-	m := int(uint(lo+hi) >> 1) // Written like this to avoid integer overflow.
+-	if hi-lo > 40 {
+-		// Tukey's ``Ninther,'' median of three medians of three.
+-		s := (hi - lo) / 8
+-		medianOfThreeSortByFreq(data, lo, lo+s, lo+2*s)
+-		medianOfThreeSortByFreq(data, m, m-s, m+s)
+-		medianOfThreeSortByFreq(data, hi-1, hi-1-s, hi-1-2*s)
+-	}
+-	medianOfThreeSortByFreq(data, lo, m, hi-1)
+-
+-	// Invariants are:
+-	//	data[lo] = pivot (set up by ChoosePivot)
+-	//	data[lo < i < a] < pivot
+-	//	data[a <= i < b] <= pivot
+-	//	data[b <= i < c] unexamined
+-	//	data[c <= i < hi-1] > pivot
+-	//	data[hi-1] >= pivot
+-	pivot := lo
+-	a, c := lo+1, hi-1
+-
+-	for ; a < c && (data[a].freq == data[pivot].freq && data[a].literal < data[pivot].literal || data[a].freq < data[pivot].freq); a++ {
+-	}
+-	b := a
+-	for {
+-		for ; b < c && (data[pivot].freq == data[b].freq && data[pivot].literal > data[b].literal || data[pivot].freq > data[b].freq); b++ { // data[b] <= pivot
+-		}
+-		for ; b < c && (data[pivot].freq == data[c-1].freq && data[pivot].literal < data[c-1].literal || data[pivot].freq < data[c-1].freq); c-- { // data[c-1] > pivot
+-		}
+-		if b >= c {
+-			break
+-		}
+-		// data[b] > pivot; data[c-1] <= pivot
+-		data[b], data[c-1] = data[c-1], data[b]
+-		b++
+-		c--
+-	}
+-	// If hi-c<3 then there are duplicates (by property of median of nine).
+-	// Let's be a bit more conservative, and set border to 5.
+-	protect := hi-c < 5
+-	if !protect && hi-c < (hi-lo)/4 {
+-		// Lets test some points for equality to pivot
+-		dups := 0
+-		if data[pivot].freq == data[hi-1].freq && data[pivot].literal > data[hi-1].literal || data[pivot].freq > data[hi-1].freq { // data[hi-1] = pivot
+-			data[c], data[hi-1] = data[hi-1], data[c]
+-			c++
+-			dups++
+-		}
+-		if data[b-1].freq == data[pivot].freq && data[b-1].literal > data[pivot].literal || data[b-1].freq > data[pivot].freq { // data[b-1] = pivot
+-			b--
+-			dups++
+-		}
+-		// m-lo = (hi-lo)/2 > 6
+-		// b-lo > (hi-lo)*3/4-1 > 8
+-		// ==> m < b ==> data[m] <= pivot
+-		if data[m].freq == data[pivot].freq && data[m].literal > data[pivot].literal || data[m].freq > data[pivot].freq { // data[m] = pivot
+-			data[m], data[b-1] = data[b-1], data[m]
+-			b--
+-			dups++
+-		}
+-		// if at least 2 points are equal to pivot, assume skewed distribution
+-		protect = dups > 1
+-	}
+-	if protect {
+-		// Protect against a lot of duplicates
+-		// Add invariant:
+-		//	data[a <= i < b] unexamined
+-		//	data[b <= i < c] = pivot
+-		for {
+-			for ; a < b && (data[b-1].freq == data[pivot].freq && data[b-1].literal > data[pivot].literal || data[b-1].freq > data[pivot].freq); b-- { // data[b] == pivot
+-			}
+-			for ; a < b && (data[a].freq == data[pivot].freq && data[a].literal < data[pivot].literal || data[a].freq < data[pivot].freq); a++ { // data[a] < pivot
+-			}
+-			if a >= b {
+-				break
+-			}
+-			// data[a] == pivot; data[b-1] < pivot
+-			data[a], data[b-1] = data[b-1], data[a]
+-			a++
+-			b--
+-		}
+-	}
+-	// Swap pivot into middle
+-	data[pivot], data[b-1] = data[b-1], data[pivot]
+-	return b - 1, c
+-}
+-
+-// Insertion sort
+-func insertionSortByFreq(data []literalNode, a, b int) {
+-	for i := a + 1; i < b; i++ {
+-		for j := i; j > a && (data[j].freq == data[j-1].freq && data[j].literal < data[j-1].literal || data[j].freq < data[j-1].freq); j-- {
+-			data[j], data[j-1] = data[j-1], data[j]
+-		}
+-	}
+-}
+-
+-// quickSortByFreq, loosely following Bentley and McIlroy,
+-// ``Engineering a Sort Function,'' SP&E November 1993.
+-
+-// medianOfThreeSortByFreq moves the median of the three values data[m0], data[m1], data[m2] into data[m1].
+-func medianOfThreeSortByFreq(data []literalNode, m1, m0, m2 int) {
+-	// sort 3 elements
+-	if data[m1].freq == data[m0].freq && data[m1].literal < data[m0].literal || data[m1].freq < data[m0].freq {
+-		data[m1], data[m0] = data[m0], data[m1]
+-	}
+-	// data[m0] <= data[m1]
+-	if data[m2].freq == data[m1].freq && data[m2].literal < data[m1].literal || data[m2].freq < data[m1].freq {
+-		data[m2], data[m1] = data[m1], data[m2]
+-		// data[m0] <= data[m2] && data[m1] < data[m2]
+-		if data[m1].freq == data[m0].freq && data[m1].literal < data[m0].literal || data[m1].freq < data[m0].freq {
+-			data[m1], data[m0] = data[m0], data[m1]
+-		}
+-	}
+-	// now data[m0] <= data[m1] <= data[m2]
+-}
+diff --git a/vendor/github.com/klauspost/compress/flate/huffman_sortByLiteral.go b/vendor/github.com/klauspost/compress/flate/huffman_sortByLiteral.go
+deleted file mode 100644
+index 93f1aea109e1..000000000000
+--- a/vendor/github.com/klauspost/compress/flate/huffman_sortByLiteral.go
++++ /dev/null
+@@ -1,201 +0,0 @@
+-// Copyright 2009 The Go Authors. All rights reserved.
+-// Use of this source code is governed by a BSD-style
+-// license that can be found in the LICENSE file.
+-
+-package flate
+-
+-// Sort sorts data.
+-// It makes one call to data.Len to determine n, and O(n*log(n)) calls to
+-// data.Less and data.Swap. The sort is not guaranteed to be stable.
+-func sortByLiteral(data []literalNode) {
+-	n := len(data)
+-	quickSort(data, 0, n, maxDepth(n))
+-}
+-
+-func quickSort(data []literalNode, a, b, maxDepth int) {
+-	for b-a > 12 { // Use ShellSort for slices <= 12 elements
+-		if maxDepth == 0 {
+-			heapSort(data, a, b)
+-			return
+-		}
+-		maxDepth--
+-		mlo, mhi := doPivot(data, a, b)
+-		// Avoiding recursion on the larger subproblem guarantees
+-		// a stack depth of at most lg(b-a).
+-		if mlo-a < b-mhi {
+-			quickSort(data, a, mlo, maxDepth)
+-			a = mhi // i.e., quickSort(data, mhi, b)
+-		} else {
+-			quickSort(data, mhi, b, maxDepth)
+-			b = mlo // i.e., quickSort(data, a, mlo)
+-		}
+-	}
+-	if b-a > 1 {
+-		// Do ShellSort pass with gap 6
+-		// It could be written in this simplified form cause b-a <= 12
+-		for i := a + 6; i < b; i++ {
+-			if data[i].literal < data[i-6].literal {
+-				data[i], data[i-6] = data[i-6], data[i]
+-			}
+-		}
+-		insertionSort(data, a, b)
+-	}
+-}
+-func heapSort(data []literalNode, a, b int) {
+-	first := a
+-	lo := 0
+-	hi := b - a
+-
+-	// Build heap with greatest element at top.
+-	for i := (hi - 1) / 2; i >= 0; i-- {
+-		siftDown(data, i, hi, first)
+-	}
+-
+-	// Pop elements, largest first, into end of data.
+-	for i := hi - 1; i >= 0; i-- {
+-		data[first], data[first+i] = data[first+i], data[first]
+-		siftDown(data, lo, i, first)
+-	}
+-}
+-
+-// siftDown implements the heap property on data[lo, hi).
+-// first is an offset into the array where the root of the heap lies.
+-func siftDown(data []literalNode, lo, hi, first int) {
+-	root := lo
+-	for {
+-		child := 2*root + 1
+-		if child >= hi {
+-			break
+-		}
+-		if child+1 < hi && data[first+child].literal < data[first+child+1].literal {
+-			child++
+-		}
+-		if data[first+root].literal > data[first+child].literal {
+-			return
+-		}
+-		data[first+root], data[first+child] = data[first+child], data[first+root]
+-		root = child
+-	}
+-}
+-func doPivot(data []literalNode, lo, hi int) (midlo, midhi int) {
+-	m := int(uint(lo+hi) >> 1) // Written like this to avoid integer overflow.
+-	if hi-lo > 40 {
+-		// Tukey's ``Ninther,'' median of three medians of three.
+-		s := (hi - lo) / 8
+-		medianOfThree(data, lo, lo+s, lo+2*s)
+-		medianOfThree(data, m, m-s, m+s)
+-		medianOfThree(data, hi-1, hi-1-s, hi-1-2*s)
+-	}
+-	medianOfThree(data, lo, m, hi-1)
+-
+-	// Invariants are:
+-	//	data[lo] = pivot (set up by ChoosePivot)
+-	//	data[lo < i < a] < pivot
+-	//	data[a <= i < b] <= pivot
+-	//	data[b <= i < c] unexamined
+-	//	data[c <= i < hi-1] > pivot
+-	//	data[hi-1] >= pivot
+-	pivot := lo
+-	a, c := lo+1, hi-1
+-
+-	for ; a < c && data[a].literal < data[pivot].literal; a++ {
+-	}
+-	b := a
+-	for {
+-		for ; b < c && data[pivot].literal > data[b].literal; b++ { // data[b] <= pivot
+-		}
+-		for ; b < c && data[pivot].literal < data[c-1].literal; c-- { // data[c-1] > pivot
+-		}
+-		if b >= c {
+-			break
+-		}
+-		// data[b] > pivot; data[c-1] <= pivot
+-		data[b], data[c-1] = data[c-1], data[b]
+-		b++
+-		c--
+-	}
+-	// If hi-c<3 then there are duplicates (by property of median of nine).
+-	// Let's be a bit more conservative, and set border to 5.
+-	protect := hi-c < 5
+-	if !protect && hi-c < (hi-lo)/4 {
+-		// Lets test some points for equality to pivot
+-		dups := 0
+-		if data[pivot].literal > data[hi-1].literal { // data[hi-1] = pivot
+-			data[c], data[hi-1] = data[hi-1], data[c]
+-			c++
+-			dups++
+-		}
+-		if data[b-1].literal > data[pivot].literal { // data[b-1] = pivot
+-			b--
+-			dups++
+-		}
+-		// m-lo = (hi-lo)/2 > 6
+-		// b-lo > (hi-lo)*3/4-1 > 8
+-		// ==> m < b ==> data[m] <= pivot
+-		if data[m].literal > data[pivot].literal { // data[m] = pivot
+-			data[m], data[b-1] = data[b-1], data[m]
+-			b--
+-			dups++
+-		}
+-		// if at least 2 points are equal to pivot, assume skewed distribution
+-		protect = dups > 1
+-	}
+-	if protect {
+-		// Protect against a lot of duplicates
+-		// Add invariant:
+-		//	data[a <= i < b] unexamined
+-		//	data[b <= i < c] = pivot
+-		for {
+-			for ; a < b && data[b-1].literal > data[pivot].literal; b-- { // data[b] == pivot
+-			}
+-			for ; a < b && data[a].literal < data[pivot].literal; a++ { // data[a] < pivot
+-			}
+-			if a >= b {
+-				break
+-			}
+-			// data[a] == pivot; data[b-1] < pivot
+-			data[a], data[b-1] = data[b-1], data[a]
+-			a++
+-			b--
+-		}
+-	}
+-	// Swap pivot into middle
+-	data[pivot], data[b-1] = data[b-1], data[pivot]
+-	return b - 1, c
+-}
+-
+-// Insertion sort
+-func insertionSort(data []literalNode, a, b int) {
+-	for i := a + 1; i < b; i++ {
+-		for j := i; j > a && data[j].literal < data[j-1].literal; j-- {
+-			data[j], data[j-1] = data[j-1], data[j]
+-		}
+-	}
+-}
+-
+-// maxDepth returns a threshold at which quicksort should switch
+-// to heapsort. It returns 2*ceil(lg(n+1)).
+-func maxDepth(n int) int {
+-	var depth int
+-	for i := n; i > 0; i >>= 1 {
+-		depth++
+-	}
+-	return depth * 2
+-}
+-
+-// medianOfThree moves the median of the three values data[m0], data[m1], data[m2] into data[m1].
+-func medianOfThree(data []literalNode, m1, m0, m2 int) {
+-	// sort 3 elements
+-	if data[m1].literal < data[m0].literal {
+-		data[m1], data[m0] = data[m0], data[m1]
+-	}
+-	// data[m0] <= data[m1]
+-	if data[m2].literal < data[m1].literal {
+-		data[m2], data[m1] = data[m1], data[m2]
+-		// data[m0] <= data[m2] && data[m1] < data[m2]
+-		if data[m1].literal < data[m0].literal {
+-			data[m1], data[m0] = data[m0], data[m1]
+-		}
+-	}
+-	// now data[m0] <= data[m1] <= data[m2]
+-}
+diff --git a/vendor/github.com/klauspost/compress/flate/regmask_amd64.go b/vendor/github.com/klauspost/compress/flate/regmask_amd64.go
+deleted file mode 100644
+index 6ed28061b2b8..000000000000
+--- a/vendor/github.com/klauspost/compress/flate/regmask_amd64.go
++++ /dev/null
+@@ -1,37 +0,0 @@
+-package flate
+-
+-const (
+-	// Masks for shifts with register sizes of the shift value.
+-	// This can be used to work around the x86 design of shifting by mod register size.
+-	// It can be used when a variable shift is always smaller than the register size.
+-
+-	// reg8SizeMaskX - shift value is 8 bits, shifted is X
+-	reg8SizeMask8  = 7
+-	reg8SizeMask16 = 15
+-	reg8SizeMask32 = 31
+-	reg8SizeMask64 = 63
+-
+-	// reg16SizeMaskX - shift value is 16 bits, shifted is X
+-	reg16SizeMask8  = reg8SizeMask8
+-	reg16SizeMask16 = reg8SizeMask16
+-	reg16SizeMask32 = reg8SizeMask32
+-	reg16SizeMask64 = reg8SizeMask64
+-
+-	// reg32SizeMaskX - shift value is 32 bits, shifted is X
+-	reg32SizeMask8  = reg8SizeMask8
+-	reg32SizeMask16 = reg8SizeMask16
+-	reg32SizeMask32 = reg8SizeMask32
+-	reg32SizeMask64 = reg8SizeMask64
+-
+-	// reg64SizeMaskX - shift value is 64 bits, shifted is X
+-	reg64SizeMask8  = reg8SizeMask8
+-	reg64SizeMask16 = reg8SizeMask16
+-	reg64SizeMask32 = reg8SizeMask32
+-	reg64SizeMask64 = reg8SizeMask64
+-
+-	// regSizeMaskUintX - shift value is uint, shifted is X
+-	regSizeMaskUint8  = reg8SizeMask8
+-	regSizeMaskUint16 = reg8SizeMask16
+-	regSizeMaskUint32 = reg8SizeMask32
+-	regSizeMaskUint64 = reg8SizeMask64
+-)
+diff --git a/vendor/github.com/klauspost/compress/flate/regmask_other.go b/vendor/github.com/klauspost/compress/flate/regmask_other.go
+deleted file mode 100644
+index e62caf711e4c..000000000000
+--- a/vendor/github.com/klauspost/compress/flate/regmask_other.go
++++ /dev/null
+@@ -1,39 +0,0 @@
+-//go:build !amd64
+-
+-package flate
+-
+-const (
+-	// Masks for shifts with register sizes of the shift value.
+-	// This can be used to work around the x86 design of shifting by mod register size.
+-	// It can be used when a variable shift is always smaller than the register size.
+-
+-	// reg8SizeMaskX - shift value is 8 bits, shifted is X
+-	reg8SizeMask8  = 0xff
+-	reg8SizeMask16 = 0xff
+-	reg8SizeMask32 = 0xff
+-	reg8SizeMask64 = 0xff
+-
+-	// reg16SizeMaskX - shift value is 16 bits, shifted is X
+-	reg16SizeMask8  = 0xffff
+-	reg16SizeMask16 = 0xffff
+-	reg16SizeMask32 = 0xffff
+-	reg16SizeMask64 = 0xffff
+-
+-	// reg32SizeMaskX - shift value is 32 bits, shifted is X
+-	reg32SizeMask8  = 0xffffffff
+-	reg32SizeMask16 = 0xffffffff
+-	reg32SizeMask32 = 0xffffffff
+-	reg32SizeMask64 = 0xffffffff
+-
+-	// reg64SizeMaskX - shift value is 64 bits, shifted is X
+-	reg64SizeMask8  = 0xffffffffffffffff
+-	reg64SizeMask16 = 0xffffffffffffffff
+-	reg64SizeMask32 = 0xffffffffffffffff
+-	reg64SizeMask64 = 0xffffffffffffffff
+-
+-	// regSizeMaskUintX - shift value is uint, shifted is X
+-	regSizeMaskUint8  = ^uint(0)
+-	regSizeMaskUint16 = ^uint(0)
+-	regSizeMaskUint32 = ^uint(0)
+-	regSizeMaskUint64 = ^uint(0)
+-)
+diff --git a/vendor/github.com/klauspost/compress/s2/encode_amd64.go b/vendor/github.com/klauspost/compress/s2/encode_amd64.go
+deleted file mode 100644
+index 68d72a41d3a8..000000000000
+--- a/vendor/github.com/klauspost/compress/s2/encode_amd64.go
++++ /dev/null
+@@ -1,316 +0,0 @@
+-//go:build !appengine && !noasm && gc
+-
+-package s2
+-
+-import (
+-	"sync"
+-
+-	"github.com/klauspost/compress/internal/race"
+-)
+-
+-const hasAmd64Asm = true
+-
+-var encPools [4]sync.Pool
+-
+-// encodeBlock encodes a non-empty src to a guaranteed-large-enough dst. It
+-// assumes that the varint-encoded length of the decompressed bytes has already
+-// been written.
+-//
+-// It also assumes that:
+-//
+-//	len(dst) >= MaxEncodedLen(len(src)) &&
+-//	minNonLiteralBlockSize <= len(src) && len(src) <= maxBlockSize
+-func encodeBlock(dst, src []byte) (d int) {
+-	race.ReadSlice(src)
+-	race.WriteSlice(dst)
+-
+-	const (
+-		// Use 12 bit table when less than...
+-		limit12B = 16 << 10
+-		// Use 10 bit table when less than...
+-		limit10B = 4 << 10
+-		// Use 8 bit table when less than...
+-		limit8B = 512
+-	)
+-
+-	if len(src) >= 4<<20 {
+-		const sz, pool = 65536, 0
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeBlockAsm(dst, src, tmp)
+-	}
+-	if len(src) >= limit12B {
+-		const sz, pool = 65536, 0
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeBlockAsm4MB(dst, src, tmp)
+-	}
+-	if len(src) >= limit10B {
+-		const sz, pool = 16384, 1
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeBlockAsm12B(dst, src, tmp)
+-	}
+-	if len(src) >= limit8B {
+-		const sz, pool = 4096, 2
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeBlockAsm10B(dst, src, tmp)
+-	}
+-	if len(src) < minNonLiteralBlockSize {
+-		return 0
+-	}
+-	const sz, pool = 1024, 3
+-	tmp, ok := encPools[pool].Get().(*[sz]byte)
+-	if !ok {
+-		tmp = &[sz]byte{}
+-	}
+-	race.WriteSlice(tmp[:])
+-	defer encPools[pool].Put(tmp)
+-	return encodeBlockAsm8B(dst, src, tmp)
+-}
+-
+-var encBetterPools [5]sync.Pool
+-
+-// encodeBlockBetter encodes a non-empty src to a guaranteed-large-enough dst. It
+-// assumes that the varint-encoded length of the decompressed bytes has already
+-// been written.
+-//
+-// It also assumes that:
+-//
+-//	len(dst) >= MaxEncodedLen(len(src)) &&
+-//	minNonLiteralBlockSize <= len(src) && len(src) <= maxBlockSize
+-func encodeBlockBetter(dst, src []byte) (d int) {
+-	race.ReadSlice(src)
+-	race.WriteSlice(dst)
+-
+-	const (
+-		// Use 12 bit table when less than...
+-		limit12B = 16 << 10
+-		// Use 10 bit table when less than...
+-		limit10B = 4 << 10
+-		// Use 8 bit table when less than...
+-		limit8B = 512
+-	)
+-
+-	if len(src) > 4<<20 {
+-		const sz, pool = 589824, 0
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-		return encodeBetterBlockAsm(dst, src, tmp)
+-	}
+-	if len(src) >= limit12B {
+-		const sz, pool = 589824, 0
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-
+-		return encodeBetterBlockAsm4MB(dst, src, tmp)
+-	}
+-	if len(src) >= limit10B {
+-		const sz, pool = 81920, 0
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-
+-		return encodeBetterBlockAsm12B(dst, src, tmp)
+-	}
+-	if len(src) >= limit8B {
+-		const sz, pool = 20480, 1
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-		return encodeBetterBlockAsm10B(dst, src, tmp)
+-	}
+-	if len(src) < minNonLiteralBlockSize {
+-		return 0
+-	}
+-
+-	const sz, pool = 5120, 2
+-	tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-	if !ok {
+-		tmp = &[sz]byte{}
+-	}
+-	race.WriteSlice(tmp[:])
+-	defer encBetterPools[pool].Put(tmp)
+-	return encodeBetterBlockAsm8B(dst, src, tmp)
+-}
+-
+-// encodeBlockSnappy encodes a non-empty src to a guaranteed-large-enough dst. It
+-// assumes that the varint-encoded length of the decompressed bytes has already
+-// been written.
+-//
+-// It also assumes that:
+-//
+-//	len(dst) >= MaxEncodedLen(len(src)) &&
+-//	minNonLiteralBlockSize <= len(src) && len(src) <= maxBlockSize
+-func encodeBlockSnappy(dst, src []byte) (d int) {
+-	race.ReadSlice(src)
+-	race.WriteSlice(dst)
+-
+-	const (
+-		// Use 12 bit table when less than...
+-		limit12B = 16 << 10
+-		// Use 10 bit table when less than...
+-		limit10B = 4 << 10
+-		// Use 8 bit table when less than...
+-		limit8B = 512
+-	)
+-	if len(src) > 65536 {
+-		const sz, pool = 65536, 0
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeSnappyBlockAsm(dst, src, tmp)
+-	}
+-	if len(src) >= limit12B {
+-		const sz, pool = 65536, 0
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeSnappyBlockAsm64K(dst, src, tmp)
+-	}
+-	if len(src) >= limit10B {
+-		const sz, pool = 16384, 1
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeSnappyBlockAsm12B(dst, src, tmp)
+-	}
+-	if len(src) >= limit8B {
+-		const sz, pool = 4096, 2
+-		tmp, ok := encPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encPools[pool].Put(tmp)
+-		return encodeSnappyBlockAsm10B(dst, src, tmp)
+-	}
+-	if len(src) < minNonLiteralBlockSize {
+-		return 0
+-	}
+-	const sz, pool = 1024, 3
+-	tmp, ok := encPools[pool].Get().(*[sz]byte)
+-	if !ok {
+-		tmp = &[sz]byte{}
+-	}
+-	race.WriteSlice(tmp[:])
+-	defer encPools[pool].Put(tmp)
+-	return encodeSnappyBlockAsm8B(dst, src, tmp)
+-}
+-
+-// encodeBlockSnappy encodes a non-empty src to a guaranteed-large-enough dst. It
+-// assumes that the varint-encoded length of the decompressed bytes has already
+-// been written.
+-//
+-// It also assumes that:
+-//
+-//	len(dst) >= MaxEncodedLen(len(src)) &&
+-//	minNonLiteralBlockSize <= len(src) && len(src) <= maxBlockSize
+-func encodeBlockBetterSnappy(dst, src []byte) (d int) {
+-	race.ReadSlice(src)
+-	race.WriteSlice(dst)
+-
+-	const (
+-		// Use 12 bit table when less than...
+-		limit12B = 16 << 10
+-		// Use 10 bit table when less than...
+-		limit10B = 4 << 10
+-		// Use 8 bit table when less than...
+-		limit8B = 512
+-	)
+-	if len(src) > 65536 {
+-		const sz, pool = 589824, 0
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-		return encodeSnappyBetterBlockAsm(dst, src, tmp)
+-	}
+-
+-	if len(src) >= limit12B {
+-		const sz, pool = 294912, 4
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-
+-		return encodeSnappyBetterBlockAsm64K(dst, src, tmp)
+-	}
+-	if len(src) >= limit10B {
+-		const sz, pool = 81920, 0
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-
+-		return encodeSnappyBetterBlockAsm12B(dst, src, tmp)
+-	}
+-	if len(src) >= limit8B {
+-		const sz, pool = 20480, 1
+-		tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-		if !ok {
+-			tmp = &[sz]byte{}
+-		}
+-		race.WriteSlice(tmp[:])
+-		defer encBetterPools[pool].Put(tmp)
+-		return encodeSnappyBetterBlockAsm10B(dst, src, tmp)
+-	}
+-	if len(src) < minNonLiteralBlockSize {
+-		return 0
+-	}
+-
+-	const sz, pool = 5120, 2
+-	tmp, ok := encBetterPools[pool].Get().(*[sz]byte)
+-	if !ok {
+-		tmp = &[sz]byte{}
+-	}
+-	race.WriteSlice(tmp[:])
+-	defer encBetterPools[pool].Put(tmp)
+-	return encodeSnappyBetterBlockAsm8B(dst, src, tmp)
+-}
+diff --git a/vendor/github.com/klauspost/compress/s2/encodeblock_amd64.go b/vendor/github.com/klauspost/compress/s2/encodeblock_amd64.go
+deleted file mode 100644
+index f43aa8154355..000000000000
+--- a/vendor/github.com/klauspost/compress/s2/encodeblock_amd64.go
++++ /dev/null
+@@ -1,228 +0,0 @@
+-// Code generated by command: go run gen.go -out ../encodeblock_amd64.s -stubs ../encodeblock_amd64.go -pkg=s2. DO NOT EDIT.
+-
+-//go:build !appengine && !noasm && gc && !noasm
+-
+-package s2
+-
+-func _dummy_()
+-
+-// encodeBlockAsm encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4294967295 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBlockAsm(dst []byte, src []byte, tmp *[65536]byte) int
+-
+-// encodeBlockAsm4MB encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4194304 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBlockAsm4MB(dst []byte, src []byte, tmp *[65536]byte) int
+-
+-// encodeBlockAsm12B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 16383 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBlockAsm12B(dst []byte, src []byte, tmp *[16384]byte) int
+-
+-// encodeBlockAsm10B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4095 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBlockAsm10B(dst []byte, src []byte, tmp *[4096]byte) int
+-
+-// encodeBlockAsm8B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 511 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBlockAsm8B(dst []byte, src []byte, tmp *[1024]byte) int
+-
+-// encodeBetterBlockAsm encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4294967295 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBetterBlockAsm(dst []byte, src []byte, tmp *[589824]byte) int
+-
+-// encodeBetterBlockAsm4MB encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4194304 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBetterBlockAsm4MB(dst []byte, src []byte, tmp *[589824]byte) int
+-
+-// encodeBetterBlockAsm12B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 16383 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBetterBlockAsm12B(dst []byte, src []byte, tmp *[81920]byte) int
+-
+-// encodeBetterBlockAsm10B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4095 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBetterBlockAsm10B(dst []byte, src []byte, tmp *[20480]byte) int
+-
+-// encodeBetterBlockAsm8B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 511 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeBetterBlockAsm8B(dst []byte, src []byte, tmp *[5120]byte) int
+-
+-// encodeSnappyBlockAsm encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4294967295 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBlockAsm(dst []byte, src []byte, tmp *[65536]byte) int
+-
+-// encodeSnappyBlockAsm64K encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 65535 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBlockAsm64K(dst []byte, src []byte, tmp *[65536]byte) int
+-
+-// encodeSnappyBlockAsm12B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 16383 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBlockAsm12B(dst []byte, src []byte, tmp *[16384]byte) int
+-
+-// encodeSnappyBlockAsm10B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4095 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBlockAsm10B(dst []byte, src []byte, tmp *[4096]byte) int
+-
+-// encodeSnappyBlockAsm8B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 511 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBlockAsm8B(dst []byte, src []byte, tmp *[1024]byte) int
+-
+-// encodeSnappyBetterBlockAsm encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4294967295 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBetterBlockAsm(dst []byte, src []byte, tmp *[589824]byte) int
+-
+-// encodeSnappyBetterBlockAsm64K encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 65535 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBetterBlockAsm64K(dst []byte, src []byte, tmp *[294912]byte) int
+-
+-// encodeSnappyBetterBlockAsm12B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 16383 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBetterBlockAsm12B(dst []byte, src []byte, tmp *[81920]byte) int
+-
+-// encodeSnappyBetterBlockAsm10B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4095 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBetterBlockAsm10B(dst []byte, src []byte, tmp *[20480]byte) int
+-
+-// encodeSnappyBetterBlockAsm8B encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 511 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func encodeSnappyBetterBlockAsm8B(dst []byte, src []byte, tmp *[5120]byte) int
+-
+-// calcBlockSize encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 4294967295 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func calcBlockSize(src []byte, tmp *[32768]byte) int
+-
+-// calcBlockSizeSmall encodes a non-empty src to a guaranteed-large-enough dst.
+-// Maximum input 1024 bytes.
+-// It assumes that the varint-encoded length of the decompressed bytes has already been written.
+-//
+-//go:noescape
+-func calcBlockSizeSmall(src []byte, tmp *[2048]byte) int
+-
+-// emitLiteral writes a literal chunk and returns the number of bytes written.
+-//
+-// It assumes that:
+-//
+-//	dst is long enough to hold the encoded bytes with margin of 0 bytes
+-//	0 <= len(lit) && len(lit) <= math.MaxUint32
+-//
+-//go:noescape
+-func emitLiteral(dst []byte, lit []byte) int
+-
+-// emitRepeat writes a repeat chunk and returns the number of bytes written.
+-// Length must be at least 4 and < 1<<32
+-//
+-//go:noescape
+-func emitRepeat(dst []byte, offset int, length int) int
+-
+-// emitCopy writes a copy chunk and returns the number of bytes written.
+-//
+-// It assumes that:
+-//
+-//	dst is long enough to hold the encoded bytes
+-//	1 <= offset && offset <= math.MaxUint32
+-//	4 <= length && length <= 1 << 24
+-//
+-//go:noescape
+-func emitCopy(dst []byte, offset int, length int) int
+-
+-// emitCopyNoRepeat writes a copy chunk and returns the number of bytes written.
+-//
+-// It assumes that:
+-//
+-//	dst is long enough to hold the encoded bytes
+-//	1 <= offset && offset <= math.MaxUint32
+-//	4 <= length && length <= 1 << 24
+-//
+-//go:noescape
+-func emitCopyNoRepeat(dst []byte, offset int, length int) int
+-
+-// matchLen returns how many bytes match in a and b
+-//
+-// It assumes that:
+-//
+-//	len(a) <= len(b)
+-//
+-//go:noescape
+-func matchLen(a []byte, b []byte) int
+-
+-// cvtLZ4Block converts an LZ4 block to S2
+-//
+-//go:noescape
+-func cvtLZ4BlockAsm(dst []byte, src []byte) (uncompressed int, dstUsed int)
+-
+-// cvtLZ4sBlock converts an LZ4s block to S2
+-//
+-//go:noescape
+-func cvtLZ4sBlockAsm(dst []byte, src []byte) (uncompressed int, dstUsed int)
+-
+-// cvtLZ4Block converts an LZ4 block to Snappy
+-//
+-//go:noescape
+-func cvtLZ4BlockSnappyAsm(dst []byte, src []byte) (uncompressed int, dstUsed int)
+-
+-// cvtLZ4sBlock converts an LZ4s block to Snappy
+-//
+-//go:noescape
+-func cvtLZ4sBlockSnappyAsm(dst []byte, src []byte) (uncompressed int, dstUsed int)
+diff --git a/vendor/github.com/klauspost/compress/zstd/fse_decoder_amd64.go b/vendor/github.com/klauspost/compress/zstd/fse_decoder_amd64.go
+deleted file mode 100644
+index b8c8607b5dfb..000000000000
+--- a/vendor/github.com/klauspost/compress/zstd/fse_decoder_amd64.go
++++ /dev/null
+@@ -1,64 +0,0 @@
+-//go:build amd64 && !appengine && !noasm && gc
+-
+-package zstd
+-
+-import (
+-	"fmt"
+-)
+-
+-type buildDtableAsmContext struct {
+-	// inputs
+-	stateTable *uint16
+-	norm       *int16
+-	dt         *uint64
+-
+-	// outputs --- set by the procedure in the case of error;
+-	// for interpretation please see the error handling part below
+-	errParam1 uint64
+-	errParam2 uint64
+-}
+-
+-// buildDtable_asm is an x86 assembly implementation of fseDecoder.buildDtable.
+-// Function returns non-zero exit code on error.
+-//
+-//go:noescape
+-func buildDtable_asm(s *fseDecoder, ctx *buildDtableAsmContext) int
+-
+-// please keep in sync with _generate/gen_fse.go
+-const (
+-	errorCorruptedNormalizedCounter = 1
+-	errorNewStateTooBig             = 2
+-	errorNewStateNoBits             = 3
+-)
+-
+-// buildDtable will build the decoding table.
+-func (s *fseDecoder) buildDtable() error {
+-	ctx := buildDtableAsmContext{
+-		stateTable: &s.stateTable[0],
+-		norm:       &s.norm[0],
+-		dt:         (*uint64)(&s.dt[0]),
+-	}
+-	code := buildDtable_asm(s, &ctx)
+-
+-	if code != 0 {
+-		switch code {
+-		case errorCorruptedNormalizedCounter:
+-			position := ctx.errParam1
+-			return fmt.Errorf("corrupted input (position=%d, expected 0)", position)
+-
+-		case errorNewStateTooBig:
+-			newState := decSymbol(ctx.errParam1)
+-			size := ctx.errParam2
+-			return fmt.Errorf("newState (%d) outside table size (%d)", newState, size)
+-
+-		case errorNewStateNoBits:
+-			newState := decSymbol(ctx.errParam1)
+-			oldState := decSymbol(ctx.errParam2)
+-			return fmt.Errorf("newState (%d) == oldState (%d) and no bits", newState, oldState)
+-
+-		default:
+-			return fmt.Errorf("buildDtable_asm returned unhandled nonzero code = %d", code)
+-		}
+-	}
+-	return nil
+-}
+-- 
+2.55.0
+
