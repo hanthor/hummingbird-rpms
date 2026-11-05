@@ -1,12 +1,12 @@
 {
-  "version": "0.197",
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/elfutils.git",
+    "release": "3",
+    "sha": "c8e73a218dbfd8bb2fc9298806aaa48cd79fc70d"
+  },
+  "modification_reason": "Skip stackprof system tests when perf_event_open is unavailable in CI; disable optional libpfm support as in CentOS Stream 10 to fix installation",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/elfutils.git",
-  "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/elfutils.git",
-    "branch": "rawhide",
-    "sha": "2e77d38798f7bde83e02adc904b3c6caf5e980e0",
-    "release": "2"
-  },
-  "modification_reason": "Skip stackprof system tests when perf_event_open is unavailable in CI; disable optional libpfm support as in CentOS Stream 10 to fix installation"
+  "version": "0.197"
 }
