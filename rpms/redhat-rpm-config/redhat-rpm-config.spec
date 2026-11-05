@@ -9,7 +9,7 @@ Name: redhat-rpm-config
 # the older branch. When the branch diverges, bump the Version to the Fedora
 # release number.
 Version: 345
-Release: 6%{?dist}
+Release: 7%{?dist}
 # config.guess, config.sub are GPL-3.0-or-later WITH Autoconf-exception-generic
 License: GPL-1.0-or-later AND GPL-2.0-or-later AND GPL-3.0-or-later WITH Autoconf-exception-generic
 URL: https://src.fedoraproject.org/rpms/redhat-rpm-config
@@ -150,6 +150,10 @@ Obsoletes: rpmautospec-rpm-macros < 0.6.3-2
 Provides: system-rpm-config = %{version}-%{release}
 
 %global rrcdir /usr/lib/rpm/redhat
+
+# These files must be shipped unchanged because they are copied into
+# release tarballs, and have to run on machines that lack a merged /usr.
+%global __brp_mangle_shebangs_exclude_from ^%{rrcdir}/config[.](guess|sub)$
 
 %description
 Red Hat specific rpm configuration files.
