@@ -67,7 +67,7 @@ Epoch: 5
 Version: 6.1.4
 # The `AND` needs to be uppercase in the License for SPDX compatibility
 License: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 %if %{defined golang_arches_future}
 ExclusiveArch: %{golang_arches_future}
 %else
@@ -78,6 +78,7 @@ URL: https://%{name}.io/
 # All SourceN files fetched from upstream
 Source0: https://github.com/containers/%{name}/archive/v%{version_no_tilde}.tar.gz
 Patch0: 0001-backport-bump-klauspost-compress-for-cve-2026-116591.patch
+Patch1: 0002-backport-bump-buildkit-for-cve-2026-121522-and-cve-2026-121520.patch
 Provides: %{name}-manpages = %{epoch}:%{version}-%{release}
 BuildRequires: %{_bindir}/envsubst
 %if %{defined build_with_btrfs}
@@ -87,7 +88,13 @@ BuildRequires: gcc
 BuildRequires: glib2-devel
 BuildRequires: glibc-devel
 BuildRequires: glibc-static
-BuildRequires: golang
+# Hummingbird: pin golang1.27 instead of the generic golang. Both golang1.26 and
+# golang1.27 provide golang, and their -src/-bin packages ship the same files under
+# /usr/lib/golang without Conflicts. On s390x the chroot already has golang1.27, so
+# resolving golang to golang1.26 fails the RPM transaction with file conflicts.
+# The vendored BuildKit bump (CVE-2026-121522, CVE-2026-121520) also needs Go >= 1.26.8.
+# Revert to plain golang once the golang packages are parallel-installable.
+BuildRequires: golang1.27
 BuildRequires: git-core
 %if %{undefined rhel} || 0%{?rhel} >= 10
 BuildRequires: go-rpm-macros
