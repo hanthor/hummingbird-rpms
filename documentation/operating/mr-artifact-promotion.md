@@ -7,7 +7,7 @@ weight: 25
 
 ## Overview
 
-An RPM package can use its tested MR artifact after merge instead of building again on the push. The push PipelineRun reads the merge commit's second Git parent, finds the passed MR Snapshot and image, and creates one override Snapshot. Integration Service then creates the automatic Release; the managed Release pipeline publishes the RPMs.
+An RPM package can use its tested MR artifact after merge instead of building again on the push. The push PipelineRun reads the merge commit's second Git parent, finds the passed MR Snapshot and image, and creates one push-style Component Snapshot. Integration Service then creates the automatic Release; the managed Release pipeline publishes the RPMs.
 
 `syft` is the first package configured for this path. Its MR build remains enabled.
 
@@ -26,9 +26,11 @@ Review the generated YAML and confirm the promotion tools image digest is curren
 
 ## Run and recovery
 
-The promotion run clones the merge commit with full history into a source Trusted Artifact, then runs the lookup and override Tasks. Its `OVERRIDE_SNAPSHOT` result identifies the created or reused Snapshot. Check that Snapshot's Global Candidate List update and the Integration Service-created Release. The promotion pipeline does not rebuild or create a Release itself.
+The Component Snapshot uses the promotion PipelineRun start time for Integration Service's existing release-order check. RPM promotion does not update the Global Candidate List.
 
-Retries reuse a matching live override. If the tested MR evidence is unavailable or the image has expired, use an explicit new build and required tests before release. If a Release fails after the override succeeds, recover through the release workflow rather than creating another override.
+The promotion run clones the merge commit with full history into a source Trusted Artifact, then runs the lookup and Component Snapshot Tasks. Its `COMPONENT_SNAPSHOT` result identifies the created or reused Snapshot. Check the Snapshot's Component and push labels, promotion start-time annotation, and Integration Service-created Release. The promotion pipeline does not rebuild or create a Release itself.
+
+Retries reuse a matching live Component Snapshot. If the tested MR evidence is unavailable or the image has expired, use an explicit new build and required tests before release. If a Release fails after the Snapshot succeeds, recover through the release workflow rather than creating another Snapshot.
 
 ## Development
 

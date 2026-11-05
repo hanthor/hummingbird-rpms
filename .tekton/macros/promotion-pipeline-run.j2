@@ -46,8 +46,8 @@ spec:
       - name: tool-image
         type: string
     results:
-      - name: OVERRIDE_SNAPSHOT
-        value: $(tasks.create-promotion-override.results.OVERRIDE_SNAPSHOT)
+      - name: COMPONENT_SNAPSHOT
+        value: $(tasks.create-promotion-component.results.COMPONENT_SNAPSHOT)
     tasks:
       - name: clone-repository
         params:
@@ -102,7 +102,7 @@ spec:
               value: main
             - name: pathInRepo
               value: hummingbird-tools/tekton/find-tested-mr-artifact.yaml
-      - name: create-promotion-override
+      - name: create-promotion-component
         params:
           - name: sourceArtifact
             value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
@@ -122,6 +122,8 @@ spec:
             value: $(params.target-branch)
           - name: targetRepository
             value: $(params.git-url)
+          - name: promotionPipelineRun
+            value: $(context.pipelineRun.name)
           - name: sourceSnapshot
             value: $(tasks.find-tested-mr-artifact.results.SNAPSHOT)
           - name: buildPipelineRun
@@ -140,7 +142,7 @@ spec:
             - name: revision
               value: main
             - name: pathInRepo
-              value: hummingbird-tools/tekton/create-promotion-override.yaml
+              value: hummingbird-tools/tekton/create-promotion-component.yaml
     workspaces:
       - name: git-auth
   taskRunTemplate:

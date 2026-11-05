@@ -183,8 +183,12 @@ class TestPromotionPac:
         assert [task["name"] for task in run["spec"]["pipelineSpec"]["tasks"]] == [
             "clone-repository",
             "find-tested-mr-artifact",
-            "create-promotion-override",
+            "create-promotion-component",
         ]
+        component_task = run["spec"]["pipelineSpec"]["tasks"][-1]
+        assert {param["name"]: param["value"] for param in component_task["params"]}[
+            "promotionPipelineRun"
+        ] == "$(context.pipelineRun.name)"
 
         variables = gen_module.build_pac_variables("main", "hummingbird-tenant", "push")
         manifest = gen_module.build_trigger_manifest(variables, "push")
