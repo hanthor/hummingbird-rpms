@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-jsonpointer.git",
     "release": "1",
-    "sha": "ae1ae68916b48cd333ff6fedc8b4a259c1225ab7"
+    "sha": "16879bd832653106b4d47be0b3add6fd4b7355de"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/stefankoegl/python-json-pointer",
-  "version": "3.7"
+  "version": "3.8"
 }
