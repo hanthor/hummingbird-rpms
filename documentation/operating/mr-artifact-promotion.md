@@ -49,6 +49,11 @@ A retry reuses a matching live Component Snapshot. If MR evidence is unavailable
 expired, use an explicit new build and required tests before release. Recover a failed Release through
 the release workflow without creating another Snapshot.
 
+After a pipeline or Task fix, retry the original merge commit in a new promotion PipelineRun built
+from the corrected manifest. Rerunning the old PipelineRun would retain its old Task revisions.
+Garbage-collected PipelineRuns cannot be rerun. Do not bump the RPM Release solely to retry
+promotion.
+
 ## Development
 
 Run `python3 ci/generate_resources.py all` and `pytest test/test_generate_resources.py`. Review the
