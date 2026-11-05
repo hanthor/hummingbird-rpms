@@ -10,6 +10,7 @@ SPEC = importlib.util.spec_from_file_location(
     "generate_resources",
     Path(__file__).resolve().parent.parent / "ci" / "generate_resources.py",
 )
+assert SPEC is not None and SPEC.loader is not None
 generate_resources = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(generate_resources)
 
