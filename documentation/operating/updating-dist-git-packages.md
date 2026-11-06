@@ -8,6 +8,11 @@ aliases: [/l/updating-dist-git-packages]
 Packages are automatically updated from Fedora dist-git. Each update creates a separate MR that is
 automatically approved and merged when CI passes.
 
+Packages configured for [MR artifact promotion](mr-artifact-promotion.md) release the image built
+and tested in that MR after it merges. The operating guide shows how to follow the promotion
+PipelineRun, automatic Release, and Pulp publication, including retries. Other packages build again
+on `main`.
+
 ## Portable package filenames
 
 Import, update, and sync escape Windows-invalid filename characters with `~` followed by their

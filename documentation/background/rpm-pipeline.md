@@ -14,9 +14,11 @@ repository.
 The RPM pipeline consists of five main stages:
 
 1. **Spec Change** - A package spec file is modified in `rpms/<package>/`
-2. **Merge Request & Validation** - CI validates the change
-3. **Build** - Konflux builds RPMs per architecture via mock in hermetic mode
-4. **Signing** - Built RPMs are cryptographically signed
+2. **MR Build & Validation** - Konflux builds RPMs and required tests validate them before merge
+3. **Build or Promotion** - After merge, configured packages reuse the tested MR image; other
+   packages build again on `main`
+4. **Release & Signing** - Integration Service creates the Release; the managed pipeline checks
+   Conforma and signs the RPMs
 5. **Publishing** - Signed RPMs are uploaded to the Hummingbird Pulp repository
 
 After publishing, updated RPMs are picked up by the [container image
@@ -27,12 +29,15 @@ pipeline][image-pipeline] via lockfile updates.
 ```mermaid
 flowchart TD
     A["Spec Change<br/>rpms/&lt;package&gt;/"] --> B["Merge Request"]
-    B --> C["CI Validation<br/>(check, tree_status)"]
+    B --> C["MR CI + Konflux build<br/>required Testing Farm tests"]
     C --> D["Merge to main"]
-    D --> E["Konflux RPM Build<br/>Tekton PipelineRun per package<br/>mock hermetic build per arch"]
-    E --> F["RPM Signing<br/>Kerberos-based"]
-    F --> G["Publish to Pulp<br/>packages.redhat.com<br/>/public-hummingbird/&lt;arch&gt;/"]
-    G --> H["Container lockfile updates<br/>(see Image Pipeline)"]
+    D --> E{"Promotion enabled?"}
+    E -->|Yes| F["Promotion PipelineRun<br/>reuse tested image digest"]
+    E -->|No| G["Konflux push build<br/>mock hermetic build per arch"]
+    F --> H["Automatic Release<br/>Conforma, signing"]
+    G --> H
+    H --> I["Publish signed RPMs to Pulp"]
+    I --> J["Container lockfile updates<br/>(see Image Pipeline)"]
 ```
 
 ## Stage 1: Spec Change
@@ -43,13 +48,13 @@ and any associated source files or patches.
 
 ### How changes originate
 
-| Method | Description | Modification Status |
-| -------- | ------------- | --------------------- |
-| Automated Fedora sync | `ci/dist_git.py update` merges upstream Fedora changes | No `independent` packages |
-| Upstream version update | `ci/check_upstream_versions.py --update` bumps to new upstream release | No `independent` packages |
-| Manual patch backport | Developer adds a CVE patch and references it in the `.spec` | Marked `modified` afterward |
-| No-change rebuild | `ci/dist_git.py rebuild <package>` bumps the Release field | Status unchanged |
-| Reverse dependency rebuild | `ci/dist_git.py rebuild-rev-deps <package>` rebuilds all dependents | Status unchanged |
+| Method                     | Description                                                            | Modification Status         |
+| -------------------------- | ---------------------------------------------------------------------- | --------------------------- |
+| Automated Fedora sync      | `ci/dist_git.py update` merges upstream Fedora changes                 | No `independent` packages   |
+| Upstream version update    | `ci/check_upstream_versions.py --update` bumps to new upstream release | No `independent` packages   |
+| Manual patch backport      | Developer adds a CVE patch and references it in the `.spec`            | Marked `modified` afterward |
+| No-change rebuild          | `ci/dist_git.py rebuild <package>` bumps the Release field             | Status unchanged            |
+| Reverse dependency rebuild | `ci/dist_git.py rebuild-rev-deps <package>` rebuilds all dependents    | Status unchanged            |
 
 See [Rebuilding Packages][rebuilding] and [Updating Dist-git
 Packages][updating] for detailed workflows.
@@ -76,15 +81,15 @@ relationship to upstream:
 
 Key fields:
 
-| Field | Purpose |
-| ------- | --------- |
-| `modification_status` | `clean` (auto-updates enabled), `modified` (auto-updates blocked), or `independent` (no upstream) |
-| `modification_reason` | Explanation of local modifications (when `modified`) |
-| `release` | Fedora release at last import/update (not the spec `Release:`), without dist tag; present only while shipping Fedora's release |
-| `upstream_repo` | Canonical upstream git repository URL |
-| `track_upstream` | Version prefix constraint (e.g., `"1.26"` for golang1.26) |
-| `version_transform` | Version mapping rule for CVE analysis (e.g., `dotnet_sdk_to_runtime`) |
-| `cve_product` | CVE vendor/product override (string, or a list for multiple products; e.g. `"Oracle Corporation / Oracle Java SE"`) |
+| Field                 | Purpose                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `modification_status` | `clean` (auto-updates enabled), `modified` (auto-updates blocked), or `independent` (no upstream)                              |
+| `modification_reason` | Explanation of local modifications (when `modified`)                                                                           |
+| `release`             | Fedora release at last import/update (not the spec `Release:`), without dist tag; present only while shipping Fedora's release |
+| `upstream_repo`       | Canonical upstream git repository URL                                                                                          |
+| `track_upstream`      | Version prefix constraint (e.g., `"1.26"` for golang1.26)                                                                      |
+| `version_transform`   | Version mapping rule for CVE analysis (e.g., `dotnet_sdk_to_runtime`)                                                          |
+| `cve_product`         | CVE vendor/product override (string, or a list for multiple products; e.g. `"Oracle Corporation / Oracle Java SE"`)            |
 
 See [Package Metadata Fields][metadata-fields] for `modification_status` and `release`
 configuration, and [Package Modification Tracking][mod-tracking] for managing modification
@@ -166,19 +171,20 @@ Automated update MRs (`chore/*` branches) follow an accelerated path:
 3. After a delay, the `chore_mr_approval` CI job auto-approves the MR
 4. GitLab merges the MR once the pipeline succeeds
 
-## Stage 3: Build
+## Stage 3: Build or Promotion
 
-After merging to main, Konflux builds RPMs automatically.
+Konflux builds RPMs for merge requests. After merge, packages configured for
+[MR Artifact Promotion](../operating/mr-artifact-promotion.md) reuse that tested image; the remaining
+packages build again on `main`.
 
 ### Build triggers
 
-Each package has a Tekton PipelineRun definition generated from its directory
-in `rpms/<package>/` (see [`.tekton/rpms-on-pull-request.yaml.j2`][pr-template]
-and the rendered [`.tekton/rpms-on-pull-request.yaml`][pr-pipeline]).
-[PipelinesAsCode][pac] triggers a build when changes to
-that package's directory are pushed to main. When a single push touches
-multiple packages, one PipelineRun is triggered per affected package directory.
-Merge request pushes also trigger builds for validation.
+Each package has a Tekton MR build PipelineRun definition generated from its directory in
+`rpms/<package>/` (see [`.tekton/rpms-on-pull-request.yaml.j2`][pr-template] and the rendered
+[`.tekton/rpms-on-pull-request.yaml`][pr-pipeline]). [PipelinesAsCode][pac] triggers it for MR
+changes. A push to `main` triggers one PipelineRun per affected package: a promotion run from
+`.tekton/rpms-on-promotion.yaml` when `push_pipeline: promotion` is configured, or a build from
+`.tekton/rpms-on-push.yaml` otherwise.
 
 The `setup` package acts as a canary: changes to `ci/` or `mock/` directories
 also trigger a `setup` build on pull requests, validating build infrastructure
@@ -193,7 +199,7 @@ changes before they reach main.
 The build pipeline (`build-rpm-package`) executes for each target
 architecture:
 
-1. Checks out the repository at the merge commit
+1. Checks out the repository at the MR head or push commit
 2. Calculates build dependencies
 3. Runs `mock` in **hermetic mode** (network-isolated with pre-fetched
    dependencies)
@@ -287,25 +293,27 @@ package-specific tests via `ci/run_tests_rpm.sh`.
 
 These environment variables are available to the tmt test execution:
 
-| Variable      | Description                                                              |
-| ------------- | ------------------------------------------------------------------------ |
-| `IMAGE_NAME`  | Component name (e.g., `openssl-main`)                                    |
-| `IMAGE_URL`   | OCI image URL with built RPMs (e.g., `quay.io/.../openssl-main@sha...`)  |
-| `SNAPSHOT`    | Snapshot metadata (if `PASS_SNAPSHOT_TO_TF` is true)                     |
-| `COMPOSE`     | OS/compose being tested (`RHEL-9-Nightly`)                               |
-| `ARCH`        | Architectures being tested (`x86_64,aarch64`)                            |
-| `TMT_VERSION` | tmt version running the tests                                            |
+| Variable      | Description                                                             |
+| ------------- | ----------------------------------------------------------------------- |
+| `IMAGE_NAME`  | Component name (e.g., `openssl-main`)                                   |
+| `IMAGE_URL`   | OCI image URL with built RPMs (e.g., `quay.io/.../openssl-main@sha...`) |
+| `SNAPSHOT`    | Snapshot metadata (if `PASS_SNAPSHOT_TO_TF` is true)                    |
+| `COMPOSE`     | OS/compose being tested (`RHEL-9-Nightly`)                              |
+| `ARCH`        | Architectures being tested (`x86_64,aarch64`)                           |
+| `TMT_VERSION` | tmt version running the tests                                           |
 
-## Stage 4: Signing
+## Stage 4: Release and Signing
 
-The Konflux Release Service signs built RPMs before publishing:
+Integration Service creates an automatic Release for a passing push Component Snapshot. For an MR
+artifact promotion, the Snapshot reuses the tested digest and does not run the MR tests again.
+Release Service validates Conforma and signs the RPMs before publishing:
 
 - **Method**: Kerberos-based signing via
   `konflux-release-signing-prod@IPA.REDHAT.COM`
 - **Pipeline**: Signing runs as part of the release pipeline, before the Pulp
   upload step
-- **Signing image**: `quay.io/konflux-ci/signing:latest` *(verify pinned
-  digest in ReleasePlanAdmission)*
+- **Signing image**: `quay.io/konflux-ci/signing:latest` _(verify pinned
+  digest in ReleasePlanAdmission)_
 
 ## Stage 5: Publishing to Pulp
 
@@ -345,6 +353,8 @@ documentation in the containers repo for the full container lifecycle.
 
 ## Related Documentation
 
+- [MR Artifact Promotion](../operating/mr-artifact-promotion.md) - Current path that releases a
+  tested MR image without a push rebuild
 - [Rebuilding Packages][rebuilding] - No-change rebuilds, reverse dependency
   rebuilds, and patch backports
 - [Updating Dist-git Packages][updating] - Automated Fedora sync workflow
