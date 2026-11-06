@@ -1,12 +1,12 @@
 %bcond check 1
 
 %global goipath github.com/grafana/loki/v3
-Version: 3.6.19
+Version: 3.6.20
 
 %gometa -L
 
 Name:           loki3.6
-Release:        0.3%{?dist}
+Release:        0.1%{?dist}
 Summary:        Horizontally scalable log aggregation system
 # Checkpoint timing and Arrow timestamp tests fail on the s390x builder.
 ExcludeArch:    s390x
