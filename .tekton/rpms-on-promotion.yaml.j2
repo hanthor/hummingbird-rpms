@@ -1,7 +1,5 @@
-{%- for rpm in rpms -%}
-{%- if rpm.imported and rpm.push_pipeline == 'promotion' -%}
+{%- for rpm in rpms if rpm.imported and rpm.push_pipeline == 'promotion' -%}
 ---
 # --- {{ rpm.dname }} ---
-{{ promotion_pipeline_run(rpm) -}}
-{%- endif -%}
-{%- endfor -%}
+{{ promotion_pipeline_run(rpm) }}
+{% endfor -%}
