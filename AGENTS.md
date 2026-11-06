@@ -75,6 +75,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Rebase buildroot to new Fedora | _(multi-step; see runbook)_                                     | [Rebasing Buildroot to New Fedora](documentation/operating/rebasing-buildroot-to-new-fedora.md) | Move mock.cfg, core toolchain, and package set to a new Fedora release |
 | Add/rotate GPG source keys     | _(edit `metadata/gpg-keys/` + pipeline YAML)_                   | [GPG Source Verification](documentation/operating/gpg-source-verification.md)                   | Add, rotate, or revoke an upstream signing key for source verification |
 | Enable MR artifact promotion   | _(set `push_pipeline: promotion`, then `make generate`)_        | [MR Artifact Promotion](documentation/operating/mr-artifact-promotion.md)                       | Replace a package push build with promotion of its tested MR artifact  |
+| Verify or retry RPM promotion  | _(inspect Konflux Snapshots, PipelineRuns, and Release)_        | [MR Artifact Promotion](documentation/operating/mr-artifact-promotion.md)                       | Trace the tested digest to Pulp and recover a failed promotion         |
 
 ## Post-Import / Post-Add Requirements
 
