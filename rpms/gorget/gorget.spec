@@ -2,7 +2,7 @@
 
 Name:           gorget
 Version:        0.1.29
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Containerized source-pipeline tool for RPM package supply-chain trust
 License:        MIT
 
