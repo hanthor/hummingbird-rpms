@@ -175,9 +175,12 @@ class TestPromotionPac:
         assert "syft-main-on-push" not in push
         assert "# --- syft ---" not in push
         assert "syft-main-on-pull-request" in mr
-        assert [run["metadata"]["name"] for run in runs] == ["syft-main-on-promotion"]
+        assert {run["metadata"]["name"] for run in runs} == {
+            "gorget-main-on-promotion",
+            "syft-main-on-promotion",
+        }
 
-        run = runs[0]
+        run = next(run for run in runs if run["metadata"]["name"] == "syft-main-on-promotion")
         assert "^rpms/syft/" in run["metadata"]["annotations"]["pipelinesascode.tekton.dev/on-cel-expression"]
         assert run["spec"]["taskRunTemplate"]["serviceAccountName"] == "hummingbird-promotion"
         assert run["spec"]["taskRunSpecs"] == [
