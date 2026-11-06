@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rclone.git",
-    "release": "2",
     "sha": "5d2eeb24018e4af0264b6de587e3bd03b6d51710"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.76.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 11750,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rclone/rclone",
-  "version": "1.75.2"
+  "version": "1.76.0"
 }
