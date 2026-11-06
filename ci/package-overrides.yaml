@@ -237,6 +237,7 @@ golang1.27:
 gorget:
   # Independent Hummingbird package -- no Fedora dist-git history to fall back to.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  push_pipeline: promotion
 
 grafana12.4:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
