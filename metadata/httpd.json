@@ -3,13 +3,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/httpd.git",
-    "release": "1",
     "sha": "417e8d51c0e5ec5ef6b54aedb64ca79bf074071b"
   },
-  "modification_reason": "Wrap ssl.conf Listen/VirtualHost in IfFile for graceful startup without certs; disable mod_mime_libmagic for minimal Hummingbird containers",
+  "modification_reason": "Update to upstream version 2.4.70",
   "modification_status": "modified",
   "release_monitoring_project_id": 387502,
   "track_upstream": "2.4",
   "upstream_repo": "https://github.com/apache/httpd",
-  "version": "2.4.69"
+  "version": "2.4.70"
 }
