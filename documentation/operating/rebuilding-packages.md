@@ -83,6 +83,11 @@ Supports `--dry-run` to preview changes without committing:
 
 ### Creating MRs for rebuild commits
 
+For packages configured for [MR artifact promotion](mr-artifact-promotion.md), the MR build and
+required tests produce the image that is released after merge. Follow that guide to verify the
+promotion PipelineRun and automatic Release or recover a failure. Other packages build again on
+`main`.
+
 After creating rebuild commits locally, use `rebuild_multi_mr.sh` to push each commit as its own
 merge request (one MR per package, auto-merge enabled):
 
@@ -515,7 +520,7 @@ grep -n -A2 "pre_commands" rpms/<package>/go-vendor-tools.toml
 
 If your new patch targets a vendored Go module (or you're editing `pre_commands` directly instead
 of adding a patch — don't), and any `pre_commands` entry mutates `go.mod`/`go.sum` (directly, via
-`go get`, or via `go mod tidy`/`edit`), your patch must apply the *same* `go.mod`/`go.sum` change to
+`go get`, or via `go mod tidy`/`edit`), your patch must apply the _same_ `go.mod`/`go.sum` change to
 the actual source tree, not just to `go-vendor-tools.toml`. `pre_commands` cannot substitute for
 this: they require live network access to run `go get`, which `%prep` doesn't have (Konflux builds
 are hermetic). Compute the resulting `go.mod`/`go.sum` diff offline (e.g. clone upstream, apply the
