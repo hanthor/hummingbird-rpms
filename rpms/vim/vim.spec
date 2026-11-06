@@ -28,7 +28,7 @@
 %define baseversion 9.2
 # get bug url from /etc/os-release
 %define bugurl %(source /etc/os-release; echo ${BUG_REPORT_URL})
-%define patchlevel 1202
+%define patchlevel 1302
 %define vimdir vim92
 # metadata/vim.source-pipeline.yaml is pinned to git tag v9.2.1202 (zero-padded
 # patchlevel, unlike baseversion/patchlevel above) -- update both together.
@@ -1068,6 +1068,9 @@ install -p -m644 %{SOURCE11} %{buildroot}/%{_datadir}/fish/vendor_conf.d/vim-def
 
 
 %changelog
+* Fri Nov 06 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.1302-1
+- patchlevel 1302 (fedora#2568065)
+
 * Fri Oct 16 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.2.1202-1
 - patchlevel 1202
 
