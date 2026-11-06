@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/babeltrace.git",
-    "release": "22",
-    "sha": "b5f67b9bc430e8cfb1386eae840b553107711a3b"
+    "release": "23",
+    "sha": "8452c3f6cea0b9c79d0e6cc01cca4f900e60ded5"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/efficios/babeltrace",
