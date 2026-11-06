@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/apt.git",
-    "release": "2",
-    "sha": "6b068751a05294102936c868ad038df1c1d4cfbf"
+    "release": "1",
+    "sha": "a8be581ec95974bda21b00b7de72785407f69d2d"
   },
   "modification_status": "clean",
   "upstream_repo": "https://salsa.debian.org/apt-team/apt",
-  "version": "3.3.5"
+  "version": "3.3.6"
 }
