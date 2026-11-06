@@ -27,12 +27,6 @@ pre_commands = [
         github.com/go-openapi/swag/yamlutils@v0.27.1
     fi
   '''],
-  # CVE-2026-100347, CVE-2026-100348, CVE-2026-100349, CVE-2026-100351,
-  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354, CVE-2026-93450.
-  # Bumps getkin/kin-openapi to v0.149.0 (pulling in
-  # santhosh-tekuri/jsonschema/v6 v6.0.3) to fix multiple Denial of
-  # Service issues and an authentication bypass via URL path decoding.
-  ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
   # CVE-2026-116591: zstd DecodeAll/streaming decoder can panic on a
   # crafted two-block frame (stale fse.Scratch decode-table state reused
   # across blocks). Bumps klauspost/compress to v1.20.2.
