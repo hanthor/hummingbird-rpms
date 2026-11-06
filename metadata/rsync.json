@@ -2,13 +2,13 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rsync.git",
-    "release": "1",
-    "sha": "84ccdc1cebf07000716192181d9a9af7592fb1f1"
+    "release": "2",
+    "sha": "337c62dc45a9a2ce5ae6378a7b7cdf6b01b20f82"
   },
-  "modification_reason": "Backport CVE-2026-119741",
+  "modification_reason": "Track local history of the superseded CVE-2026-119741 backport",
   "modification_status": "modified",
   "release_monitoring_project_id": 4217,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/RsyncProject/rsync",
-  "version": "3.5.1"
+  "version": "3.5.2"
 }
