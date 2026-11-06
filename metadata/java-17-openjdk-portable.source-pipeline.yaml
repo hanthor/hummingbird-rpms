@@ -44,7 +44,7 @@ transform:
         temurin_version="17.0.20"
         temurin_build="8"
         : > gorget-discovered.tsv
-        for temurin_arch in x64 aarch64; do
+        for temurin_arch in x64 aarch64 s390x; do
           temurin_filename="OpenJDK17U-jdk_${temurin_arch}_linux_hotspot_${temurin_version}_${temurin_build}.tar.gz"
           curl --fail --location --retry 3 \
             --output "${temurin_filename}" \

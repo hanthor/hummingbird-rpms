@@ -345,8 +345,8 @@
 # New Version-String scheme-style defines
 %global featurever 17
 %global interimver 0
-%global updatever 20
-%global patchver 0
+%global updatever 21
+%global patchver 1
 # buildjdkver is usually same as %%{featurever},
 # but in time of bootstrap of next jdk, it is featurever-1,
 # and this it is better to change it here, on single place
@@ -413,7 +413,7 @@
 %global origin_nice     OpenJDK
 %global top_level_dir_name   %{vcstag}
 %global top_level_dir_name_backup %{top_level_dir_name}-backup
-%global buildver        8
+%global buildver        0
 %global rpmrelease      0.1
 #%%global tagsuffix     %%{nil}
 # Priority must be 8 digits in total; up to openjdk 1.8, we were using 18..... so when we moved to 11, we had to add another digit
@@ -614,7 +614,7 @@ License:  Apache-1.1 AND Apache-2.0 AND LicenseRef-Callaway-BSD AND LicenseRef-C
 URL:      http://openjdk.java.net/
 
 # The source tarball, generated using generate_source_tarball.sh
-Source0: https://openjdk-sources.osci.io/openjdk%{featurever}/open%{vcstag}%{ea_designator_zip}.tar.xz
+Source0: %{vcstag}.tar.gz
 
 # Use 'icedtea_sync.sh' to update the following
 # They are based on code contained in the IcedTea project (6.x).
@@ -653,6 +653,8 @@ Source18: TestTranslations.java
 # Temurin JDK 17 bootstrap binary
 %ifarch aarch64
 Source20: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-%{bootstrap_jdk_version}+%{bootstrap_jdk_build}/OpenJDK17U-jdk_aarch64_linux_hotspot_%{bootstrap_jdk_version}_%{bootstrap_jdk_build}.tar.gz
+%elifarch s390x
+Source20: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-%{bootstrap_jdk_version}+%{bootstrap_jdk_build}/OpenJDK17U-jdk_s390x_linux_hotspot_%{bootstrap_jdk_version}_%{bootstrap_jdk_build}.tar.gz
 %else
 Source20: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-%{bootstrap_jdk_version}+%{bootstrap_jdk_build}/OpenJDK17U-jdk_x64_linux_hotspot_%{bootstrap_jdk_version}_%{bootstrap_jdk_build}.tar.gz
 %endif
@@ -1152,6 +1154,8 @@ function buildjdk() {
 %ifarch %{ppc64le}
     --with-jobs=1 \
 %endif
+    --with-version-patch=%{patchver} \
+    --with-version-extra1=0 \
     --with-version-build=%{buildver} \
     --with-version-pre="%{ea_designator}" \
     --with-version-opt="%{lts_designator}" \
