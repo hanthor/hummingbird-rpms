@@ -70,9 +70,6 @@ spec:
               value: quay.io/konflux-ci/tekton-catalog/task-git-clone-oci-ta:0.1@sha256:d30f13dd15daf89dd6dc645243b3444d35570d13f7840c3fd65e366022515205
             - name: kind
               value: task
-        workspaces:
-          - name: basic-auth
-            workspace: git-auth
       - name: find-tested-mr-artifact
         params:
           - name: sourceArtifact
@@ -143,8 +140,6 @@ spec:
               value: d5df0dc6173e87acdc45f1aa0c459258a02cef15
             - name: pathInRepo
               value: hummingbird-tools/tekton/create-promotion-component.yaml
-    workspaces:
-      - name: git-auth
   taskRunTemplate:
     serviceAccountName: hummingbird-promotion
   taskRunSpecs:
@@ -153,8 +148,4 @@ spec:
   timeouts:
     pipeline: 1h
     tasks: 1h
-  workspaces:
-    - name: git-auth
-      secret:
-        secretName: '{{ "{{git_auth_secret}}" }}'
 {%- endmacro -%}
