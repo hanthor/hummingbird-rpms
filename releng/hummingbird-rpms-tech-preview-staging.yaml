@@ -725,6 +725,8 @@ spec:
           contentType: rpm
         - name: nats-server2-14-main
           contentType: rpm
+        - name: nats-server2-15-main
+          contentType: rpm
         - name: ncurses-main
           contentType: rpm
         - name: netavark-main

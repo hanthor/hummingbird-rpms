@@ -1,0 +1,63 @@
+tests: allow asynchronous CPU samples to settle
+
+ProcUsage caches CPU usage on a one-second timer on Linux. The fresh ps
+reading can reflect startup work before the cache has been updated. Retry
+for up to five seconds using the existing tolerance, and check sampling
+and parsing errors instead of treating an initial stale value as failure.
+
+--- a/server/pse/pse_test.go
++++ b/server/pse/pse_test.go
+@@ -20,6 +20,7 @@
+ 	"runtime"
+ 	"runtime/debug"
+ 	"testing"
++	"time"
+ )
+ 
+ func TestPSEmulationCPU(t *testing.T) {
+@@ -31,26 +32,33 @@
+ 
+ 	debug.FreeOSMemory()
+ 
+-	// PS version first
++	// Linux refreshes ProcUsage once per second, whereas ps samples on demand.
++	// Retry briefly so the initial cached sample is not compared with startup CPU.
+ 	pidStr := fmt.Sprintf("%d", os.Getpid())
+-	out, err := exec.Command("ps", "o", "pcpu=", "-p", pidStr).Output()
+-	if err != nil {
+-		t.Fatalf("Failed to execute ps command: %v\n", err)
+-	}
++	deadline := time.Now().Add(5 * time.Second)
++	for {
++		out, err := exec.Command("ps", "o", "pcpu=", "-p", pidStr).Output()
++		if err != nil {
++			t.Fatalf("Failed to execute ps command: %v", err)
++		}
++		if err := ProcUsage(&pcpu, &rss, &vss); err != nil {
++			t.Fatalf("Failed to read process usage: %v", err)
++		}
++		if _, err := fmt.Sscanf(string(out), "%f", &psPcpu); err != nil {
++			t.Fatalf("Failed to parse ps CPU usage: %v", err)
++		}
+ 
+-	// Our internal version
+-	ProcUsage(&pcpu, &rss, &vss)
+-
+-	fmt.Sscanf(string(out), "%f", &psPcpu)
+-
+-	if pcpu != psPcpu {
+ 		delta := int64(pcpu - psPcpu)
+ 		if delta < 0 {
+ 			delta = -delta
+ 		}
+-		if delta > 30 { // 30%?
++		if delta <= 30 { // Retain the existing CPU comparison tolerance.
++			return
++		}
++		if !time.Now().Before(deadline) {
+ 			t.Fatalf("CPUs did not match close enough: %f vs %f", pcpu, psPcpu)
+ 		}
++		time.Sleep(100 * time.Millisecond)
+ 	}
+ }
+ 

@@ -1289,6 +1289,10 @@
         "^rpms/nats\\-server2\\.14/",
         "^test/rpms/nats\\-server2\\.14\\.yml$"
       ],
+      "nats-server2-15--rpms": [
+        "^rpms/nats\\-server2\\.15/",
+        "^test/rpms/nats\\-server2\\.15\\.yml$"
+      ],
       "ncurses--rpms": [
         "^rpms/ncurses/",
         "^test/rpms/ncurses\\.yml$"
