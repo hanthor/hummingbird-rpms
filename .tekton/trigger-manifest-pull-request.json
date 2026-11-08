@@ -813,6 +813,10 @@
         "^rpms/kubernetes1\\.36/",
         "^test/rpms/kubernetes1\\.36\\.yml$"
       ],
+      "kubernetes1-37--rpms": [
+        "^rpms/kubernetes1\\.37/",
+        "^test/rpms/kubernetes1\\.37\\.yml$"
+      ],
       "langpacks--rpms": [
         "^rpms/langpacks/",
         "^test/rpms/langpacks\\.yml$"

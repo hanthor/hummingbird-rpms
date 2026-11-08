@@ -611,6 +611,9 @@
       "kubernetes1-36--rpms": [
         "^rpms/kubernetes1\\.36/"
       ],
+      "kubernetes1-37--rpms": [
+        "^rpms/kubernetes1\\.37/"
+      ],
       "langpacks--rpms": [
         "^rpms/langpacks/"
       ],
