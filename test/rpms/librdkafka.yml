@@ -1,0 +1,61 @@
+---
+librdkafka-dynamic-client:
+  command: |
+    rpm_name=$(rpm -qp --queryformat '%{NAME}' "${TEST_RPM}")
+    if [[ "${rpm_name}" != "librdkafka-devel" ]]; then
+      echo "Skipping: requires librdkafka-devel"
+      exit 0
+    fi
+
+    local_rpms=${TEST_REPO_DIR:-$(dirname "${TEST_RPM}")}
+    "${TEST_ENGINE}" run --rm \
+      -v "${local_rpms}:/tmp/local-rpms:ro,z" \
+      quay.io/hummingbird-ci/hummingbird-builder:latest \
+      bash -c '
+        set -euo pipefail
+        dnf install -y /tmp/local-rpms/librdkafka-*.rpm gcc gcc-c++ pkgconf-pkg-config binutils
+        pkg-config --atleast-version=2.12.1 rdkafka
+        pkg-config --exists rdkafka++
+
+        cat > /tmp/client.c << "EOF"
+        #include <stdio.h>
+        #include <librdkafka/rdkafka.h>
+
+        int main(void) {
+            char features[1024];
+            size_t size = sizeof(features);
+            rd_kafka_conf_t *conf = rd_kafka_conf_new();
+            const char *required[] = {
+                "ssl", "sasl", "sasl_gssapi", "sasl_plain", "sasl_scram",
+                "gzip", "snappy", "lz4", "zstd"
+            };
+            if (rd_kafka_version() < 0x020c01ff ||
+                rd_kafka_conf_get(conf, "builtin.features", features, &size) != RD_KAFKA_CONF_OK)
+                return 1;
+            printf("librdkafka %s: %s\n", rd_kafka_version_str(), features);
+            for (size_t i = 0; i < sizeof(required) / sizeof(required[0]); i++) {
+                if (rd_kafka_conf_set(conf, "builtin.features", required[i], NULL, 0) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "Missing feature: %s\n", required[i]);
+                    return 1;
+                }
+            }
+            rd_kafka_conf_destroy(conf);
+            return 0;
+        }
+    EOF
+        gcc -Wall -Werror /tmp/client.c -o /tmp/client $(pkg-config --cflags --libs rdkafka)
+        readelf -d /tmp/client | grep -F "[librdkafka.so.1]"
+        /tmp/client
+
+        cat > /tmp/client.cpp << "EOF"
+        #include <iostream>
+        #include <librdkafka/rdkafkacpp.h>
+        int main() {
+            std::cout << RdKafka::version_str() << std::endl;
+            return RdKafka::version() < 0x020c01ff;
+        }
+    EOF
+        g++ -Wall -Werror /tmp/client.cpp -o /tmp/client-cpp $(pkg-config --cflags --libs rdkafka++)
+        readelf -d /tmp/client-cpp | grep -F "[librdkafka++.so.1]"
+        /tmp/client-cpp
+      '

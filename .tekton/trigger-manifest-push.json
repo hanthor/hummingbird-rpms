@@ -758,6 +758,9 @@
       "libpwquality--rpms": [
         "^rpms/libpwquality/"
       ],
+      "librdkafka--rpms": [
+        "^rpms/librdkafka/"
+      ],
       "librepo--rpms": [
         "^rpms/librepo/"
       ],

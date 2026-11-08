@@ -1,0 +1,13 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/librdkafka.git",
+    "release": "3",
+    "sha": "afa386b23dad59b3aa90717cd700abb8e473fb75"
+  },
+  "modification_status": "clean",
+  "release_monitoring_project_id": 12573,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/confluentinc/librdkafka",
+  "version": "2.14.1"
+}
