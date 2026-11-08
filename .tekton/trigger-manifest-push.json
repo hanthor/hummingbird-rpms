@@ -1298,6 +1298,9 @@
       "prometheus3-13--rpms": [
         "^rpms/prometheus3\\.13/"
       ],
+      "prometheus3-14--rpms": [
+        "^rpms/prometheus3\\.14/"
+      ],
       "prometheus3-5--rpms": [
         "^rpms/prometheus3\\.5/"
       ],

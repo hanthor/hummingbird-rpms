@@ -608,6 +608,9 @@ poppler-data:
 prometheus3.13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+prometheus3.14:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prometheus3.5:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

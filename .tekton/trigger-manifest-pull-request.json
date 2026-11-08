@@ -1729,6 +1729,10 @@
         "^rpms/prometheus3\\.13/",
         "^test/rpms/prometheus3\\.13\\.yml$"
       ],
+      "prometheus3-14--rpms": [
+        "^rpms/prometheus3\\.14/",
+        "^test/rpms/prometheus3\\.14\\.yml$"
+      ],
       "prometheus3-5--rpms": [
         "^rpms/prometheus3\\.5/",
         "^test/rpms/prometheus3\\.5\\.yml$"
