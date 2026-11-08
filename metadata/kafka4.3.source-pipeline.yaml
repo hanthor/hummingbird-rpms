@@ -1,0 +1,26 @@
+# Fetch the upstream tag and build once to populate the Gradle cache.
+fetch:
+  - type: git
+    repo: "${UPSTREAM_REPO}"
+    ref: "${VERSION}"
+    archive-name: "kafka-${VERSION}.tar.gz"
+
+transform:
+  - type: vendor
+    ecosystem: gradle
+    task: releaseTarGz
+    max-workers: 1
+    archive-name: "kafka-${VERSION}-gradle-vendor.tar.gz"
+    outputs:
+      - path: "core/build/distributions/kafka_*-${VERSION}.tgz"
+        name: "kafka-${VERSION}-runtime.tgz"
+
+post:
+  - type: run
+    artifacts: ["kafka-${VERSION}-runtime.tgz"]
+    command: ["./generate-bundled-provides.sh", "kafka-${VERSION}-runtime.tgz"]
+
+publish:
+  files:
+    - "kafka-${VERSION}.tar.gz"
+    - "kafka-${VERSION}-gradle-vendor.tar.gz"

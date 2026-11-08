@@ -7745,6 +7745,201 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- kafka3.9 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: kafka3-9-main
+spec:
+  application: rpms-main
+  componentName: kafka3-9-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/kafka3-9-main
+  source:
+    git:
+      context: rpms/kafka3.9
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: kafka3-9-main
+  name: kafka3-9-main
+spec:
+  image:
+    name: hummingbird-tenant/kafka3-9-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- kafka4.0 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: kafka4-0-main
+spec:
+  application: rpms-main
+  componentName: kafka4-0-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/kafka4-0-main
+  source:
+    git:
+      context: rpms/kafka4.0
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: kafka4-0-main
+  name: kafka4-0-main
+spec:
+  image:
+    name: hummingbird-tenant/kafka4-0-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- kafka4.1 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: kafka4-1-main
+spec:
+  application: rpms-main
+  componentName: kafka4-1-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/kafka4-1-main
+  source:
+    git:
+      context: rpms/kafka4.1
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: kafka4-1-main
+  name: kafka4-1-main
+spec:
+  image:
+    name: hummingbird-tenant/kafka4-1-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- kafka4.2 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: kafka4-2-main
+spec:
+  application: rpms-main
+  componentName: kafka4-2-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/kafka4-2-main
+  source:
+    git:
+      context: rpms/kafka4.2
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: kafka4-2-main
+  name: kafka4-2-main
+spec:
+  image:
+    name: hummingbird-tenant/kafka4-2-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- kafka4.3 ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: kafka4-3-main
+spec:
+  application: rpms-main
+  componentName: kafka4-3-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/kafka4-3-main
+  source:
+    git:
+      context: rpms/kafka4.3
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: kafka4-3-main
+  name: kafka4-3-main
+spec:
+  image:
+    name: hummingbird-tenant/kafka4-3-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- kbd ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
