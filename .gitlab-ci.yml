@@ -142,6 +142,7 @@ check-afdocs:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       changes:
         - CONTRIBUTING.md
+        - documentation/*
         - documentation/**/*
     - !reference [.rules, mr_manual]
 
