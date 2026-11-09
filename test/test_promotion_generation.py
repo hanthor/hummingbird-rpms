@@ -28,6 +28,7 @@ class TestPromotionGeneration(unittest.TestCase):
         self.assertIn("syft-main-on-promotion", names)
         self.assertNotIn("name: gorget-main-on-push", (root / ".tekton/rpms-on-push.yaml").read_text())
         self.assertIn("name: gorget-main-on-pull-request", (root / ".tekton/rpms-on-pull-request.yaml").read_text())
+        # These tests cover the shared promotion path; package rollouts do not need individual assertions.
         for document in documents:
             with self.subTest(pipeline=document["metadata"]["name"]):
                 self.assertEqual(
