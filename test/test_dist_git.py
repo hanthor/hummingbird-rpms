@@ -3181,6 +3181,133 @@ def test_is_package_unmodified_with_indirect_autorelease(
     assert local_spec.read_bytes() == before
 
 
+@pytest.mark.parametrize('local_comment', [False, True], ids=['untouched', 'modified'])
+def test_update_indirect_autorelease_without_mdapi_build(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module, local_comment: bool,
+) -> None:
+    """An unresolved import is valid, but real edits must still block updates."""
+    upstream = upstream_repos['vanilla']
+    upstream_spec = upstream / 'vanilla.spec'
+    upstream_spec.write_text(upstream_spec.read_text().replace(
+        'Release: 1%{?dist}', '%global my_release %{autorelease}\nRelease: %{my_release}',
+    ))
+    subprocess.run(['git', 'commit', '-am', 'Use indirect autorelease'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'get_mdapi_latest_build', return_value=None):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+
+    local_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    assert '%global my_release %{autorelease}' in local_spec.read_text()
+    if local_comment:
+        local_spec.write_text(local_spec.read_text() + '\n# Local change\n')
+    before = local_spec.read_bytes()
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    assert json.loads(metadata_before)['modification_status'] == 'clean'
+    assert dist_git_module.is_package_unmodified(
+        'vanilla', dist_git_module.imports['vanilla'], upstream,
+    ) is (not local_comment)
+    assert local_spec.read_bytes() == before
+
+    new_sha = add_upstream_commit(upstream, 'vanilla', '1.0', '2.0')
+    with patch.object(dist_git_module, 'get_mdapi_latest_build', return_value=None):
+        if local_comment:
+            with pytest.raises(SystemExit, match='metadata says clean but package has local modifications'):
+                run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+            assert local_spec.read_bytes() == before
+            assert metadata_file.read_bytes() == metadata_before
+        else:
+            run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+            metadata = json.loads(metadata_file.read_text())
+            assert metadata['fedora']['sha'] == new_sha
+            assert metadata['modification_status'] == 'clean'
+            assert 'Version: 2.0' in local_spec.read_text()
+
+
+@pytest.mark.parametrize('committed', [False, True], ids=['uncommitted', 'committed'])
+@pytest.mark.parametrize('macro, directive, suffix', [
+    ('specrelease', 'define', '%{?buildid}%{?dist}'),
+    ('krb5_release', 'global', '%{?dist}'),
+])
+@pytest.mark.parametrize('autorelease', [False, True], ids=['numeric', 'resolved-autorelease'])
+def test_update_of_release_macro_rebuild(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module,
+    committed: bool, macro: str, directive: str, suffix: str, autorelease: bool,
+) -> None:
+    """Documented release-macro rebuilds stay clean and do not block updates."""
+    upstream = upstream_repos['vanilla']
+    upstream_spec = upstream / 'vanilla.spec'
+    value = '%{autorelease}' if autorelease else f'65{suffix}'
+    definition = f'%{directive} {macro} {value}'
+    upstream_spec.write_text(upstream_spec.read_text().replace(
+        'Release: 1%{?dist}', f'{definition}\nRelease: %{{{macro}}}',
+    ))
+    subprocess.run(['git', 'commit', '-am', 'Use release macro'], cwd=upstream, check=True)
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '1.0', 'release': '65.fc99'}):
+        run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+
+    local_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    local_spec.write_text(local_spec.read_text().replace(
+        f'%{directive} {macro} 65', f'%{directive} {macro} 65.1',
+    ))
+    assert f'%{directive} {macro} 65.1' in local_spec.read_text()
+    if committed:
+        subprocess.run(['git', 'commit', '-am', 'Release-only rebuild'], cwd=workdir, check=True)
+    before = local_spec.read_bytes()
+    assert dist_git_module.is_package_unmodified('vanilla', dist_git_module.imports['vanilla'], upstream)
+    assert local_spec.read_bytes() == before
+
+    new_sha = add_upstream_commit(upstream, 'vanilla', '1.0', '2.0')
+    with patch.object(dist_git_module, 'get_mdapi_latest_build',
+                      return_value={'version': '2.0', 'release': '65.fc99'}):
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+
+    metadata = json.loads((workdir / 'metadata' / 'vanilla.json').read_text())
+    assert metadata['modification_status'] == 'clean'
+    assert metadata['fedora']['sha'] == new_sha
+    assert metadata['fedora']['release'] == '65'
+    assert 'Version: 2.0' in local_spec.read_text()
+    assert f'%{directive} {macro} 65.1' not in local_spec.read_text()
+
+
+@pytest.mark.parametrize('change', ['comment', 'version', 'macro-suffix', 'patch', 'unrelated-macro'])
+def test_release_macro_rebuild_does_not_hide_real_changes(
+    workdir: Path, upstream_repos: dict[str, Path], dist_git_module, change: str,
+) -> None:
+    """Only numeric release changes are ephemeral, not arbitrary spec edits."""
+    upstream = upstream_repos['vanilla']
+    upstream_spec = upstream / 'vanilla.spec'
+    upstream_spec.write_text('%global prerelease 1\n' + upstream_spec.read_text().replace(
+        'Release: 1%{?dist}', '%define specrelease 65%{?buildid}%{?dist}\nRelease: %{specrelease}',
+    ))
+    subprocess.run(['git', 'commit', '-am', 'Use release macro'], cwd=upstream, check=True)
+    run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
+    package_dir = workdir / 'rpms' / 'vanilla'
+    local_spec = package_dir / 'vanilla.spec'
+    content = local_spec.read_text().replace('specrelease 65', 'specrelease 65.1')
+    if change == 'comment':
+        content += '\n# Local change\n'
+    elif change == 'version':
+        content = content.replace('Version: 1.0', 'Version: 1.1')
+    elif change == 'macro-suffix':
+        content = content.replace('%{?buildid}', '%{?different_buildid}')
+    elif change == 'patch':
+        (package_dir / 'local.patch').write_text('Local patch\n')
+    else:
+        content = content.replace('%global prerelease 1', '%global prerelease 2')
+    local_spec.write_text(content)
+    files_before = {p.name: p.read_bytes() for p in package_dir.iterdir()}
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+
+    assert not dist_git_module.is_package_unmodified('vanilla', dist_git_module.imports['vanilla'], upstream)
+    add_upstream_commit(upstream, 'vanilla', '1.0', '2.0')
+    with pytest.raises(SystemExit, match='metadata says clean but package has local modifications'):
+        run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
+    assert {p.name: p.read_bytes() for p in package_dir.iterdir()} == files_before
+    assert metadata_file.read_bytes() == metadata_before
+
+
 @pytest.mark.parametrize('use_indirect', [False, True], ids=['direct', 'indirect'])
 def test_update_autorelease(workdir: Path, upstream_repos: dict[str, Path], dist_git_module,
                             use_indirect: bool) -> None:

@@ -1054,8 +1054,8 @@ def check_koji_build(package_name: str, version: str, release: str, expected_com
 def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream_dir: Path) -> bool:
     """Check if package directory matches the imported version.
 
-    Local changes that only affect the Release: field in the spec file
-    (which we bump for rebuilds) are ignored.
+    Release: changes and numeric bumps of known release macros are ignored.
+    Imports may contain either unresolved or resolved autorelease definitions.
     """
     if not isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata, ModifiedUpstreamPackageMetadata)):
         raise ValueError(f"Cannot check unmodified status for {type(metadata).__name__}")
@@ -1064,17 +1064,12 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
 
     # Clone upstream_dir as we are going to checkout specific sha and remove .git/ for comparison
     with tempfile.TemporaryDirectory() as tmpdir:
-        temp_dir = Path(tmpdir) / package_name
+        temp_dir = Path(tmpdir) / 'upstream'
         run_git('clone', '--quiet', '--branch', metadata.fedora.branch, '--single-branch',
                 str(upstream_dir), str(temp_dir))
         run_git('checkout', '--quiet', metadata.fedora.sha, cwd=temp_dir)
         shutil.rmtree(temp_dir / '.git')
         sanitize_package_paths(temp_dir)
-
-        # Import/update resolves %autorelease even in indirect macro definitions.
-        # Reproduce that generated change in the comparison copy, not local files.
-        if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
-            replace_autorelease_in_spec(temp_dir, metadata.fedora.release, required=False)
 
         # First, check all non-spec files are identical
         if subprocess.run(
@@ -1083,12 +1078,30 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
         ).returncode != 0:
             return False
 
-        # Then check including spec files, ignoring Release: lines
-        # This checks all other files again, but dist-gits are small and this is very robust
-        return subprocess.run(
-            ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--ignore-matching-lines=^Release:', str(package_dir), str(temp_dir)],
-            stdout=subprocess.DEVNULL,
-        ).returncode == 0
+        # Normalize rebuild differences only in disposable comparison copies.
+        # Keep macro suffixes and unrelated definitions intact so real changes
+        # cannot be hidden by release normalization.
+        local_dir = Path(tmpdir) / 'local'
+        shutil.copytree(package_dir, local_dir)
+        normalize_release_in_specs(local_dir, numeric_only=True)
+        normalize_release_in_specs(temp_dir, numeric_only=True)
+
+        def matches_import() -> bool:
+            return subprocess.run(
+                ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines',
+                 '--ignore-matching-lines=^Release:', str(local_dir), str(temp_dir)],
+                stdout=subprocess.DEVNULL,
+            ).returncode == 0
+
+        # MDAPI can have no build at import time, leaving autorelease unresolved.
+        # Accept that original representation before trying the resolved one.
+        if matches_import():
+            return True
+        if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
+            replace_autorelease_in_spec(temp_dir, metadata.fedora.release, required=False)
+            normalize_release_in_specs(temp_dir, numeric_only=True)
+            return matches_import()
+        return False
 
 
 def import_(url: str, branch: str, ref: str | None = None, directory: str | None = None,
@@ -1221,13 +1234,19 @@ def import_(url: str, branch: str, ref: str | None = None, directory: str | None
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
-def normalize_release_in_specs(directory: Path) -> None:
-    """Normalize Release: lines in all .spec files to avoid merge conflicts."""
+def normalize_release_in_specs(directory: Path, *, numeric_only: bool = False) -> None:
+    """Normalize spec releases for merging or comparison.
+
+    Comparison mode changes only numeric release-macro prefixes, retaining
+    suffixes such as %{?buildid} so edits to them are still detected.
+    """
     for spec_file in directory.glob('*.spec'):
         content = spec_file.read_text()
         normalized = re.sub(r'^Release:.*$', 'Release: 0%{?dist}', content, flags=re.MULTILINE)
+        value_pattern = r'[0-9]+(?:\.[0-9]+)*(?=[ \t%]|$)' if numeric_only else r'\S+'
         normalized = re.sub(
-            r'^(%(?:global|define)\s+(?:portablerelease|rpmrelease|baserelease|gcc_release|specrelease|krb5_release))\s+\S+',
+            r'^(%(?:global|define)\s+(?:portablerelease|rpmrelease|baserelease|gcc_release|specrelease|krb5_release))\s+'
+            + value_pattern,
             r'\1 0', normalized, flags=re.MULTILINE
         )
         spec_file.write_text(normalized)
