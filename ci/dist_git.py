@@ -1071,6 +1071,11 @@ def is_package_unmodified(package_name: str, metadata: PackageMetadata, upstream
         shutil.rmtree(temp_dir / '.git')
         sanitize_package_paths(temp_dir)
 
+        # Import/update resolves %autorelease even in indirect macro definitions.
+        # Reproduce that generated change in the comparison copy, not local files.
+        if isinstance(metadata, (CleanPackageMetadata, ModifiedFedoraPackageMetadata)):
+            replace_autorelease_in_spec(temp_dir, metadata.fedora.release, required=False)
+
         # First, check all non-spec files are identical
         if subprocess.run(
             ['diff', '--recursive', '--ignore-trailing-space', '--ignore-blank-lines', '--exclude=*.spec', str(package_dir), str(temp_dir)],
@@ -1961,7 +1966,8 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
            ref: str | None = None, branch: str | None = None) -> None:
     """Update a single package from upstream.
 
-    In update mode (not sync), local modifications are automatically merged with upstream changes.
+    In update mode (not sync), declared local modifications are automatically merged with upstream changes.
+    Packages marked clean must match their imported contents, apart from release-only changes.
     If the merge has conflicts, the operation fails.
 
     In sync mode, local modifications are discarded.
@@ -2186,6 +2192,13 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
         # Update mode: merge local modifications with upstream changes
         # Sync mode: discard local modifications
         has_modifications = not is_package_unmodified(package_name, metadata, upstream_dir)
+        if not sync and isinstance(metadata, CleanPackageMetadata) and has_modifications:
+            sys.exit(
+                f"ERROR: Cannot update {package_name}: metadata says clean but package has local modifications.\n"
+                f"       Use 'mark-modified {package_name} --modified --reason \"...\"' to preserve them,\n"
+                f"       or explicitly use 'sync {package_name}' to discard them."
+            )
+
         has_conflicts = False
         took_merge_path = False
 
