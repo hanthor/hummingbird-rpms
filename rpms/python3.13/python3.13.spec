@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 License: Python-2.0.1
 
 
@@ -66,7 +66,8 @@ License: Python-2.0.1
 # If this is *not* Main Python, should it contain `Provides: python(abi) ...`?
 # In Fedora no package shall depend on an alternative Python via this tag, so we do not provide it.
 # In ELN/RHEL/CentOS we want to allow building against alternative stacks, so the Provide is enabled.
-%bcond python_abi_provides_for_alt_pythons %{undefined fedora}
+# Hummingbird also ships matching modules for alternative Python stacks.
+%bcond python_abi_provides_for_alt_pythons %[%{undefined fedora} || %{defined hummingbird}]
 
 # Extra build for debugging the interpreter or C-API extensions
 # (the -debug subpackages)
@@ -349,6 +350,9 @@ Source10: idle3.desktop
 
 # AppData file for idle3
 Source11: idle3.appdata.xml
+
+# Select this alternative stack in dedicated Hummingbird RPM buildroots.
+Source12: macros.zz-hummingbird-python313
 
 # (Patches taken from github.com/fedora-python/cpython)
 
@@ -1310,6 +1314,10 @@ done
 %{?python_wheel_inject_sbom:%python_wheel_inject_sbom %{buildroot}%{pylibdir}/ensurepip/_bundled/*.whl}
 %endif
 
+%if %{defined hummingbird} && %{without main_python}
+install -Dpm 0644 %{SOURCE12} %{buildroot}%{rpmmacrodir}/macros.zz-hummingbird-python313
+%endif
+
 # ======================================================
 # Checks for packaging issues
 # ======================================================
@@ -1420,6 +1428,9 @@ CheckPython freethreading
 
 
 %files -n %{pkgname}
+%if %{defined hummingbird} && %{without main_python}
+%{rpmmacrodir}/macros.zz-hummingbird-python313
+%endif
 %doc README.rst
 
 %if %{with main_python}
