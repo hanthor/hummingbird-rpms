@@ -5,7 +5,7 @@
     "release": "9",
     "sha": "8e9e7eb6e4f312296c6fc451b8e0ca1049725391"
   },
-  "modification_reason": "Backport origin RPATH validation fixes (CVE-2026-86805 and CVE-2026-95818)",
+  "modification_reason": "Backport CVE-2026-86805, CVE-2026-95818 and CVE-2026-84243",
   "modification_status": "modified",
   "upstream_repo": "https://sourceware.org/git/glibc.git",
   "version": "2.43"
