@@ -22,12 +22,23 @@ class TestPromotionGeneration(unittest.TestCase):
         root = Path(__file__).resolve().parent.parent
         documents = list(yaml.safe_load_all((root / ".tekton/rpms-on-promotion.yaml").read_text()))
         names = [document["metadata"]["name"] for document in documents]
+        overrides = yaml.safe_load((root / "ci/package-overrides.yaml").read_text())
+        promoted = {
+            f"{generate_resources.sanitize_component_name(package)}-main"
+            for package, config in overrides.items()
+            if isinstance(config, dict)
+            and config.get("push_pipeline") == "promotion"
+            and (root / "rpms" / package).is_dir()
+        }
+        push = (root / ".tekton/rpms-on-push.yaml").read_text()
+        mr = (root / ".tekton/rpms-on-pull-request.yaml").read_text()
 
         self.assertEqual(len(names), len(set(names)))
-        self.assertIn("gorget-main-on-promotion", names)
-        self.assertIn("syft-main-on-promotion", names)
-        self.assertNotIn("name: gorget-main-on-push", (root / ".tekton/rpms-on-push.yaml").read_text())
-        self.assertIn("name: gorget-main-on-pull-request", (root / ".tekton/rpms-on-pull-request.yaml").read_text())
+        self.assertEqual(set(names), {f"{name}-on-promotion" for name in promoted})
+        for name in promoted:
+            with self.subTest(component=name):
+                self.assertNotIn(f"name: {name}-on-push", push)
+                self.assertIn(f"name: {name}-on-pull-request", mr)
         for document in documents:
             with self.subTest(pipeline=document["metadata"]["name"]):
                 self.assertEqual(
