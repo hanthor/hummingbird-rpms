@@ -18,7 +18,7 @@ Subcommands:
   set-fib         Set Fixed in Build after a Pulp NVR check
   close-nab       Comment, set VEX, close as Not a Bug
   create-task     Create a HUM Task, link blockers, set In Progress
-  open-mr         Push a branch and open a package fix MR
+  open-mr         Run the %prep check, push a branch, and open a package fix MR
   lookaside-cmd   Print lookaside upload commands; do not upload
   investigate     One-shot show + probes + related-ticket recap
   version-check   Compare local NVR vs CVE range / FIB / analysis NVR
@@ -85,6 +85,7 @@ from lib.vcs import (  # noqa: E402
     open_package_mr,
     print_bot_mrs,
     resolve_fix_age_dates,
+    run_prep_check,
 )
 from lib.output import (  # noqa: E402
     apply_title_prefix,
@@ -392,6 +393,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-branch", default="", help="Branch to push (default: the task key)."
     )
     mr.add_argument("--no-push", action="store_true", help="Skip git push.")
+    mr.add_argument(
+        "--skip-prep-check",
+        action="store_true",
+        help=(
+            "Skip the ci/build_rpms.sh --prep-only gate. Only use when the user "
+            "explicitly approves."
+        ),
+    )
 
     lookaside = subparsers.add_parser(
         "lookaside-cmd", help="Print lookaside copy/upload commands; do not upload."
@@ -836,6 +845,10 @@ def cmd_open_mr(args: argparse.Namespace) -> int:
         cves=args.cves,
     )
     branch = args.source_branch or task
+    if args.skip_prep_check:
+        print("WARNING: skipping the %prep check (--skip-prep-check)", file=sys.stderr)
+    else:
+        run_prep_check(source_branch=branch)
     url = open_package_mr(
         title=args.title,
         description=description,
