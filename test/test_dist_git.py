@@ -1620,8 +1620,10 @@ def test_update_of_rebuild(imported_workdir, upstream_repos: dict[str, Path], co
 
 @pytest.mark.parametrize('change_state', ['unstaged', 'staged', 'committed'])
 @pytest.mark.parametrize('filename', ['vanilla.spec', 'local.patch'])
+@pytest.mark.parametrize('dry_run', [False, True], ids=['update', 'dry-run'])
 def test_update_refuses_clean_metadata_with_local_changes(
     imported_workdir, upstream_repos: dict[str, Path], change_state: str, filename: str,
+    dry_run: bool,
 ) -> None:
     """A clean metadata flag must not authorize discarding package changes."""
     workdir = imported_workdir('vanilla')
@@ -1651,8 +1653,9 @@ def test_update_refuses_clean_metadata_with_local_changes(
     if change_state == 'committed':
         assert not status_before
 
+    args = ['--dry-run'] if dry_run else []
     result = subprocess.run(
-        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--skip-build-check', 'vanilla'],
+        [str(workdir / 'ci' / 'dist_git.py'), *args, 'update', '--skip-build-check', 'vanilla'],
         cwd=workdir, capture_output=True, text=True,
     )
 
@@ -1666,6 +1669,41 @@ def test_update_refuses_clean_metadata_with_local_changes(
     assert git_output('rev-parse', 'HEAD') == head_before
     assert git_output('status', '--porcelain') == status_before
     assert git_output('diff', '--cached') == index_before
+
+
+def test_update_refuses_local_changes_after_upstream_clone(
+    imported_workdir, upstream_repos: dict[str, Path], dist_git_module,
+) -> None:
+    """The safety check uses the completed upstream clone before refusing updates."""
+    workdir = imported_workdir('vanilla')
+    local_spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    local_spec.write_text(local_spec.read_text() + '\n# Local modification\n')
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    run_git = dist_git_module.run_git
+    is_package_unmodified = dist_git_module.is_package_unmodified
+    completed_clones: list[Path] = []
+    compared_clones: list[Path] = []
+
+    def record_git(*args: str, **kwargs):
+        result = run_git(*args, **kwargs)
+        if args[0] == 'clone':
+            completed_clones.append(Path(args[-1]))
+        return result
+
+    def check_cloned_contents(package_name, metadata, upstream_dir):
+        assert upstream_dir in completed_clones
+        assert (upstream_dir / '.git' / 'HEAD').is_file()
+        assert 'Version: 2.0' in (upstream_dir / 'vanilla.spec').read_text()
+        compared_clones.append(upstream_dir)
+        return is_package_unmodified(package_name, metadata, upstream_dir)
+
+    with patch.object(dist_git_module, 'run_git', side_effect=record_git), \
+         patch.object(dist_git_module, 'is_package_unmodified', side_effect=check_cloned_contents), \
+         pytest.raises(SystemExit, match='metadata says clean but package has local modifications'):
+        run_dist_git(dist_git_module, workdir, 'update', '--skip-build-check', 'vanilla')
+
+    assert len(compared_clones) == 1
 
 
 def test_update_commit_uses_local_package_name(workdir: Path, upstream_repos: dict[str, Path]) -> None:
