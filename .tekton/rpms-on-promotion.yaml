@@ -31,7 +31,7 @@ spec:
     - name: archive-url
       value: https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com
     - name: tool-image
-      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:f676e04fe608084673859ff06c35311dddac520d1b603545fd1c206783ace5dd
+      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:9aff7df17f94c2ebd9968a18eb5381bc7cf6fc4809d2e01aab4ffcdc9e24814f
   pipelineSpec:
     params:
       - name: git-url
@@ -191,7 +191,7 @@ spec:
     - name: archive-url
       value: https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com
     - name: tool-image
-      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:f676e04fe608084673859ff06c35311dddac520d1b603545fd1c206783ace5dd
+      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:9aff7df17f94c2ebd9968a18eb5381bc7cf6fc4809d2e01aab4ffcdc9e24814f
   pipelineSpec:
     params:
       - name: git-url
@@ -351,7 +351,7 @@ spec:
     - name: archive-url
       value: https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com
     - name: tool-image
-      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:f676e04fe608084673859ff06c35311dddac520d1b603545fd1c206783ace5dd
+      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:9aff7df17f94c2ebd9968a18eb5381bc7cf6fc4809d2e01aab4ffcdc9e24814f
   pipelineSpec:
     params:
       - name: git-url
