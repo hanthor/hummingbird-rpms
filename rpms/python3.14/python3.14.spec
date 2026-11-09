@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 License: Python-2.0.1
 
 
@@ -442,6 +442,9 @@ Patch487: 00487-cve-2026-8723.patch
 # gh-150751: validate http.client Content-Length and chunk-size
 Patch488: 0488-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
 Patch489: 00489-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
+
+# CVE-2026-119170: Restore hashlib FIPS enforcement for usedforsecurity=True.
+Patch490: 00490-cve-2026-119170.patch
 
 # (New patches go here ^^^)
 #
