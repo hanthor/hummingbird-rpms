@@ -19,6 +19,21 @@ investigate failures, modify files, and re-run the build without starting over.
 After the build completes (success or failure), you'll be dropped into a mock shell inside the build
 environment.
 
+## Checking Sources and Patches Only
+
+Many build failures come from simple problems: a missing or incorrect source tarball, or a patch that
+does not apply. To catch these without running a full build, use `--prep-only`:
+
+```bash
+./ci/build_rpms.sh --prep-only <package>
+```
+
+This builds the SRPM, which fails if any `Source`/`Patch` file is missing. It then installs the
+BuildRequires and runs only `%prep` (`rpmbuild -rp`, equivalent to `rpmbuild -bp`), which unpacks
+the tarballs and applies the patches. The script exits non-zero if any step fails. The `%prep`
+output is saved to `builds/<package>/results/prep.log`. `--prep-only` cannot be combined with
+`--hermetic`, `--shell-before`, or `--shell-after`.
+
 ## Understanding the Build Environment
 
 The build happens in two layers:
