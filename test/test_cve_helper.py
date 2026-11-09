@@ -723,6 +723,193 @@ def test_open_package_mr_uses_explicit_source_remote(monkeypatch) -> None:
     assert create[create.index("--head") + 1] == "prarit/rpms"
 
 
+def _prep_repo(tmp_path: Path, packages: list[str]) -> None:
+    (tmp_path / "ci").mkdir()
+    (tmp_path / "ci" / "build_rpms.sh").write_text("#!/bin/sh\n")
+    for package in packages:
+        (tmp_path / "rpms" / package).mkdir(parents=True)
+
+
+def _fake_prep_git(
+    tmp_path: Path,
+    calls: list[list[str]],
+    *,
+    diff: str = "",
+    status: str = "",
+    branch_sha: str = "abc",
+    prep_rc: dict[str, int] | None = None,
+):
+    prep_rc = prep_rc or {}
+
+    def fake_run(args, **_kwargs):
+        calls.append(args)
+
+        def ok(stdout: str = "") -> SimpleNamespace:
+            return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+
+        if args == ["git", "rev-parse", "--show-toplevel"]:
+            return ok(f"{tmp_path}\n")
+        if args == ["git", "rev-parse", "HEAD"]:
+            return ok("abc\n")
+        if args[:3] == ["git", "rev-parse", "--verify"]:
+            return ok(f"{branch_sha}\n")
+        if args[:2] == ["git", "status"]:
+            return ok(status)
+        if args == ["git", "remote", "-v"]:
+            return ok("origin\thttps://gitlab.com/redhat/hummingbird/rpms.git (push)\n")
+        if args[:2] == ["git", "diff"]:
+            return ok(diff)
+        if args[0].endswith("build_rpms.sh"):
+            rc = prep_rc.get(args[-1], 0)
+            return SimpleNamespace(
+                returncode=rc, stdout=f"prep output for {args[-1]}\n", stderr=""
+            )
+        raise AssertionError(f"unexpected command: {args}")
+
+    return fake_run
+
+
+def test_changed_packages_lists_existing_rpms_dirs(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, ["bzip2", "curl"])
+    calls: list[list[str]] = []
+    diff = (
+        "rpms/bzip2/bzip2.spec\n"
+        "rpms/bzip2/fix.patch\n"
+        "rpms/curl/sources\n"
+        "rpms/removed/removed.spec\n"
+    )
+    monkeypatch.setattr(lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff=diff))
+
+    assert lib_vcs.changed_packages("origin/main") == ["bzip2", "curl"]
+    assert [
+        "git", "diff", "--name-only", "origin/main...HEAD", "--", "rpms/"
+    ] in calls
+
+
+def test_run_prep_check_runs_each_changed_package(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, ["bzip2", "curl"])
+    calls: list[list[str]] = []
+    diff = "rpms/bzip2/bzip2.spec\nrpms/curl/curl.spec\n"
+    monkeypatch.setattr(lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff=diff))
+
+    assert lib_vcs.run_prep_check(source_branch="HUM-9") == ["bzip2", "curl"]
+
+    script = str(tmp_path / "ci" / "build_rpms.sh")
+    assert [script, "--prep-only", "bzip2"] in calls
+    assert [script, "--prep-only", "curl"] in calls
+    log = tmp_path / "builds" / "bzip2" / "prep-check.log"
+    assert log.read_text() == "prep output for bzip2\n"
+
+
+def test_run_prep_check_raises_on_prep_failure(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, ["bzip2"])
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs,
+        "run_command",
+        _fake_prep_git(
+            tmp_path, calls, diff="rpms/bzip2/bzip2.spec\n", prep_rc={"bzip2": 1}
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="%prep check failed for bzip2"):
+        lib_vcs.run_prep_check(source_branch="HUM-9")
+
+
+def test_run_prep_check_skips_when_no_packages_changed(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, [])
+    calls: list[list[str]] = []
+    monkeypatch.setattr(lib_vcs, "run_command", _fake_prep_git(tmp_path, calls))
+
+    assert lib_vcs.run_prep_check(source_branch="HUM-9") == []
+    assert not any(args[0].endswith("build_rpms.sh") for args in calls)
+
+
+def test_run_prep_check_rejects_uncommitted_changes(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, ["bzip2"])
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs,
+        "run_command",
+        _fake_prep_git(tmp_path, calls, status=" M rpms/bzip2/bzip2.spec\n"),
+    )
+
+    with pytest.raises(RuntimeError, match="Uncommitted changes"):
+        lib_vcs.run_prep_check(source_branch="HUM-9")
+    assert not any(args[0].endswith("build_rpms.sh") for args in calls)
+
+
+def test_run_prep_check_rejects_other_branch(tmp_path, monkeypatch) -> None:
+    _prep_repo(tmp_path, ["bzip2"])
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, branch_sha="def")
+    )
+
+    with pytest.raises(RuntimeError, match="not checked out"):
+        lib_vcs.run_prep_check(source_branch="HUM-9")
+
+
+def _open_mr_args(*extra: str):
+    return helper.build_parser().parse_args(
+        [
+            "open-mr",
+            "--task",
+            "HUM-9",
+            "--tracker",
+            "HUM-1",
+            "--cve",
+            "CVE-2026-1",
+            "--title",
+            "Fix CVE",
+            "-m",
+            "Summary",
+            "--no-push",
+            *extra,
+        ]
+    )
+
+
+def _record_open_mr(monkeypatch, order: list[str], *, prep_error: str = "") -> None:
+    def fake_prep(*, source_branch: str, cwd=None) -> list[str]:
+        order.append(f"prep:{source_branch}")
+        if prep_error:
+            raise RuntimeError(prep_error)
+        return ["bzip2"]
+
+    def fake_open_mr(**_kwargs) -> str:
+        order.append("mr")
+        return "url"
+
+    monkeypatch.setattr(helper, "run_prep_check", fake_prep)
+    monkeypatch.setattr(helper, "open_package_mr", fake_open_mr)
+
+
+def test_open_mr_gated_on_prep_check(monkeypatch) -> None:
+    order: list[str] = []
+    _record_open_mr(monkeypatch, order, prep_error="%prep check failed for bzip2")
+
+    with pytest.raises(RuntimeError, match="%prep check failed"):
+        helper.cmd_open_mr(_open_mr_args())
+    assert order == ["prep:HUM-9"]
+
+
+def test_open_mr_runs_prep_check_before_mr(monkeypatch) -> None:
+    order: list[str] = []
+    _record_open_mr(monkeypatch, order)
+
+    assert helper.cmd_open_mr(_open_mr_args()) == 0
+    assert order == ["prep:HUM-9", "mr"]
+
+
+def test_open_mr_skip_prep_check(monkeypatch) -> None:
+    order: list[str] = []
+    _record_open_mr(monkeypatch, order)
+
+    assert helper.cmd_open_mr(_open_mr_args("--skip-prep-check")) == 0
+    assert order == ["mr"]
+
+
 def test_lookaside_upload_commands() -> None:
     cmds = helper.lookaside_upload_commands(
         [Path("/var/tmp/foo.tar.gz")], "grafana13.1"
