@@ -355,6 +355,7 @@ trigger_documentation:
   rules:
     - if: $CI_PIPELINE_SOURCE =~ 'push|web' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
+        - documentation/*
         - documentation/**/*
         - README.md
         - CONTRIBUTING.md
