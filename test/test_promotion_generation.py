@@ -25,9 +25,12 @@ class TestPromotionGeneration(unittest.TestCase):
 
         self.assertEqual(len(names), len(set(names)))
         self.assertIn("gorget-main-on-promotion", names)
+        self.assertIn("grype-main-on-promotion", names)
         self.assertIn("syft-main-on-promotion", names)
         self.assertNotIn("name: gorget-main-on-push", (root / ".tekton/rpms-on-push.yaml").read_text())
+        self.assertNotIn("name: grype-main-on-push", (root / ".tekton/rpms-on-push.yaml").read_text())
         self.assertIn("name: gorget-main-on-pull-request", (root / ".tekton/rpms-on-pull-request.yaml").read_text())
+        self.assertIn("name: grype-main-on-pull-request", (root / ".tekton/rpms-on-pull-request.yaml").read_text())
         for document in documents:
             with self.subTest(pipeline=document["metadata"]["name"]):
                 self.assertEqual(

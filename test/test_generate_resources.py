@@ -177,8 +177,12 @@ class TestPromotionPac:
         assert "syft-main-on-pull-request" in mr
         assert {run["metadata"]["name"] for run in runs} == {
             "gorget-main-on-promotion",
+            "grype-main-on-promotion",
             "syft-main-on-promotion",
         }
+
+        assert "grype-main-on-push" not in push
+        assert "grype-main-on-pull-request" in mr
 
         run = next(run for run in runs if run["metadata"]["name"] == "syft-main-on-promotion")
         assert "^rpms/syft/" in run["metadata"]["annotations"]["pipelinesascode.tekton.dev/on-cel-expression"]

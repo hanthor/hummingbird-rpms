@@ -266,6 +266,7 @@ grafana13.2:
 
 grype:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  push_pipeline: promotion
 
 haproxy:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
