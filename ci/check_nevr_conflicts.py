@@ -369,6 +369,17 @@ def repo_keys_for_candidate(candidate: Candidate) -> list[str]:
     return []
 
 
+def _dnf_diagnostics(stdout: str | bytes | None, stderr: str | bytes | None) -> str:
+    """Format captured output, including TimeoutExpired's potentially byte streams."""
+    diagnostics = []
+    for label, output in (('stdout', stdout), ('stderr', stderr)):
+        if isinstance(output, bytes):
+            output = output.decode('utf-8', errors='replace')
+        if output and output.strip():
+            diagnostics.append(f"\n{label}: {output.strip()}")
+    return ''.join(diagnostics)
+
+
 def query_pulp_evrs(base_url: str, names: set[str], timeout: int) -> dict[str, set[str]] | None:
     """Return {name: {evr, ...}} of every published EVR for `names` in one Pulp repo.
 
@@ -384,15 +395,23 @@ def query_pulp_evrs(base_url: str, names: set[str], timeout: int) -> dict[str, s
         'dnf', '-q',
         '--repofrompath', f'{repoid},{base_url}',
         '--repo', repoid,
+        # Otherwise inherited DNF configuration can turn an unavailable repo
+        # into a successful empty query, falsely reporting every candidate OK.
+        f'--setopt={repoid}.skip_if_unavailable=False',
         'repoquery', '--qf', f'%{{name}}\t{DNF_EVR_QUERYFORMAT}\n',
         *sorted(names),
     ]
     retry_delay = PULP_QUERY_INITIAL_RETRY_DELAY_SECS
     for attempt in range(PULP_QUERY_ATTEMPTS):
+        started = time.monotonic()
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        except subprocess.TimeoutExpired:
-            message = f"Timed out querying {base_url} for: {', '.join(sorted(names))}"
+        except subprocess.TimeoutExpired as e:
+            message = (
+                f"Timed out querying {base_url} after {time.monotonic() - started:.1f}s "
+                f"(timeout={timeout}s) for: {', '.join(sorted(names))}"
+                f"{_dnf_diagnostics(e.stdout, e.stderr)}"
+            )
         except FileNotFoundError:
             raise NevrCheckError("dnf is required but not found in PATH")
         else:
@@ -404,17 +423,19 @@ def query_pulp_evrs(base_url: str, names: set[str], timeout: int) -> dict[str, s
             # missing from it as "not published" (OK) -- a false negative for
             # exactly the case this tool exists to catch.
             message = (
-                f"dnf repoquery against {base_url} failed (rc={result.returncode}): "
-                f"{result.stderr.strip()}"
+                f"dnf repoquery against {base_url} failed after {time.monotonic() - started:.1f}s "
+                f"(rc={result.returncode}) for: {', '.join(sorted(names))}"
+                f"{_dnf_diagnostics(result.stdout, result.stderr)}"
             )
 
+        message = f"Pulp query attempt {attempt + 1}/{PULP_QUERY_ATTEMPTS}: {message}"
         if attempt == PULP_QUERY_ATTEMPTS - 1:
             logging.error("%s", message)
             return None
 
         logging.warning(
-            "%s; retrying in %d seconds (attempt %d/%d)",
-            message, retry_delay, attempt + 1, PULP_QUERY_ATTEMPTS,
+            "%s; retrying in %d seconds",
+            message, retry_delay,
         )
         time.sleep(retry_delay)
         retry_delay *= 2
@@ -607,7 +628,8 @@ Examples:
                        help='Override the source Pulp repo base URL')
     parser.add_argument('--timeout', type=int,
                        default=int(os.environ.get('DNF_TIMEOUT_SECS', DEFAULT_DNF_TIMEOUT_SECS)),
-                       help='Timeout in seconds for each Pulp query')
+                       help='Timeout in seconds per Pulp query attempt '
+                            f'(default: DNF_TIMEOUT_SECS or {DEFAULT_DNF_TIMEOUT_SECS}; CI sets 120)')
     parser.add_argument('--json', action='store_true', help='Output machine-readable JSON')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
     args = parser.parse_args()
