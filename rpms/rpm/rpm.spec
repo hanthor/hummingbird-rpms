@@ -37,7 +37,7 @@
 Summary: The RPM package management system
 Name: rpm
 Version: %{rpmver}
-Release: %{?snapver:0.%{snapver}.}%{baserelease}.3%{?dist}
+Release: %{?snapver:0.%{snapver}.}%{baserelease}.4%{?dist}
 Url: https://rpm.org/
 License: GPL-2.0-or-later
 Source0: http://ftp.rpm.org/releases/%{srcdir}/rpm-%{srcver}.tar.bz2
@@ -133,6 +133,10 @@ rpm-6.1.0-gettarspec-macro-injection-CVE-2026-78367.patch
 # Backport fix for shell injection via tarball/archive filenames
 # passed to rpmbuild -t and rpmuncompress
 rpm-6.1.0-rpopen-filename-injection-CVE-2026-84837-84838.patch
+# Backport fix for hex2binv() heap overflow via mistyped file signatures tag
+rpm-6.1.0-hex2binv-filesignatures-CVE-2026-103242.patch
+# Backport fix for iterReadArchiveNext() symlink size integer overflow
+rpm-6.1.0-iterReadArchiveNext-symlink-CVE-2026-95520.patch
 
 # These are not yet upstream
 rpm-4.7.1-geode-i686.patch
