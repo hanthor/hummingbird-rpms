@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.13.0-0.1.1%{?dist} -p
+%nodejs_define_version node 1:26.13.0-0.1.2%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -43,7 +43,7 @@
 # Version from node-v26.13.0/lib/punycode.js
 %nodejs_define_version nodejs-punycode 2.1.0
 # Version from node-v26.13.0/deps/undici/src/package.json
-%nodejs_define_version nodejs-undici 8.12.2
+%nodejs_define_version nodejs-undici 8.12.4
 # Version from node-v26.13.0/deps/npm/package.json
 %nodejs_define_version npm 1:11.20.0-%{nodejs_subpackage_release}
 # Version from node-v26.13.0/deps/sqlite/sqlite3.h
@@ -166,6 +166,8 @@ Source101:      nodejs.srpm.macros
 # Upgrade npm-bundled undici (deps/npm/node_modules/undici)
 # from 6.28.0 to 6.29.1 for the remaining security fixes.
 0012-CVE-2026-87018-undici-npm-6.29.1.patch
+# Update built-in undici (deps/undici) from 8.12.2 to 8.12.4
+0013-CVE-2026-116592-undici-8.12.4.patch
 CVE-2026-118764-minimatch-dos-fix.patch
 
 %description
