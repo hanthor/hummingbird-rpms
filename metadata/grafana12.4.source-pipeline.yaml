@@ -17,7 +17,10 @@ transform:
         set -euo pipefail
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
+        # Apply the complete frontend patch sequence and generate this
+        # release's compression patch before creating the offline cache.
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" \
+          . "${VERSION}" --generate-compression
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
           node .yarn/releases/yarn-*.cjs install --immutable
         # CVE-2026-9496 is backported inside the two cached pacote archives.
@@ -37,6 +40,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-yarn-cache-compression-${VERSION}.patch"
 
 # gorget 0.1.16 fixed a bug where a single-module Go vendor archive packed
 # only "vendor/" at its top level, which go_vendor_license --use-archive
@@ -47,6 +51,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-yarn-cache-12.4.14.tar.bz2"
+    checksum: "54ee23f5d932a9f24d4215f370e331148cf81bb02766c27f03019d73d10b2bb3b2e63bbd7d8d3d904a8c9549e2603431a7f934c3f6b67d44257c9bb07030d123"
+    reason: "grafana-uuid-11.1.0-lockfile.patch resolves the ^11 uuid ranges to 11.1.0 (as in 12.4.13) so a single uuid is hoisted instead of nesting 11.1.1 under the elasticsearch plugin, which broke %check; yarn cache regenerated without the uuid 11.1.1 archive"
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "1cada80e916ab9fc2a55ca8262edace96fd3847dce0c6eb533364ac39f16576e82a02ca63ce76babf6c62e9f5d37c228d2f614c1259e9a9e2f5023a8717c7d03"
     reason: "grafana-follow-redirects-serialize-javascript-cve.patch bumps follow-redirects 1.16.1->1.16.2 (CVE-2026-116689), removes serialize-javascript 6.0.2 via terser-webpack-plugin 5.3.16->5.6.1 (CVE-2026-115754), bumps serialize-javascript 7.0.5->7.1.4 (CVE-2026-115897); yarn cache regenerated"
