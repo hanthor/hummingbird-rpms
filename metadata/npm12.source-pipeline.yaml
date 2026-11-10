@@ -1,0 +1,38 @@
+# Keep npm's upstream dependency tree, replacing only glob for CVE-2026-118773.
+# node-gyp is still removed during RPM %prep.
+fetch:
+  - type: url
+    url: "https://registry.npmjs.org/npm/-/npm-${VERSION}.tgz"
+    filename: "npm-${VERSION}.tar.gz"
+  - type: url
+    url: "https://registry.npmjs.org/glob/-/glob-13.0.7.tgz"
+    filename: "glob-13.0.7.tar.gz"
+
+transform:
+  - type: run
+    target: "npm-${VERSION}.tar.gz"
+    artifacts: ["glob-13.0.7.tar.gz"]
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -eu
+        node "${PACKAGE_DIR}/test-nodejs-requires.cjs" package
+        node "${PACKAGE_DIR}/generate-nodejs-requires.cjs" package nodejs-requires.inc
+        rm -rf package/node_modules/glob
+        mkdir -p package/node_modules/glob
+        tar -xf glob-13.0.7.tar.gz --strip-components=1 -C package/node_modules/glob
+        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+          --format=gnu -czf "npm-${VERSION}-glob-13.0.7.tar.gz" package
+    outputs:
+      - "npm-${VERSION}-glob-13.0.7.tar.gz"
+      - "nodejs-requires.inc"
+
+post:
+  - type: run
+    artifacts: ["nodejs-requires.inc"]
+    command: ["test", "-s", "nodejs-requires.inc"]
+
+publish:
+  files:
+    - "npm-${VERSION}-glob-13.0.7.tar.gz"

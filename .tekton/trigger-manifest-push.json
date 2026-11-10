@@ -1019,6 +1019,9 @@
       "nodejs26--rpms": [
         "^rpms/nodejs26/"
       ],
+      "npm12--rpms": [
+        "^rpms/npm12/"
+      ],
       "npth--rpms": [
         "^rpms/npth/"
       ],
