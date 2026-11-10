@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import sys
 from typing import Callable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -369,6 +370,84 @@ def build_mr_description(
         f"Ref: {tracker_list}\n"
         f"CVE: {cve_list}\n"
     )
+
+
+# ---- Pre-MR %prep check ----
+
+PREP_LOG_TAIL_LINES = 40
+
+
+def _git_output(args: list[str], cwd: Path | str | None) -> str:
+    proc = run_command(["git", *args], cwd=cwd)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            (proc.stderr or proc.stdout or f"git {' '.join(args)} failed").strip()
+        )
+    return proc.stdout.strip()
+
+
+def changed_packages(base_ref: str, *, cwd: Path | str | None = None) -> list[str]:
+    """Return packages under rpms/ changed between base_ref and HEAD.
+
+    Packages whose directory no longer exists (removed packages) are skipped.
+    """
+    top = Path(_git_output(["rev-parse", "--show-toplevel"], cwd))
+    names = _git_output(["diff", "--name-only", f"{base_ref}...HEAD", "--", "rpms/"], top)
+    packages: set[str] = set()
+    for line in names.splitlines():
+        parts = Path(line).parts
+        if len(parts) >= 3 and parts[0] == "rpms" and (top / "rpms" / parts[1]).is_dir():
+            packages.add(parts[1])
+    return sorted(packages)
+
+
+def run_prep_check(*, source_branch: str, cwd: Path | str | None = None) -> list[str]:
+    """Run ``ci/build_rpms.sh --prep-only`` for every package changed on the branch.
+
+    The check runs in the checkout containing ``cwd`` (normally the task
+    worktree), so it tests exactly the commits that will be pushed.  Raises
+    RuntimeError if the branch is not checked out, rpms/ has uncommitted
+    changes, or %prep fails for any package.  Returns the checked packages.
+    """
+    top = Path(_git_output(["rev-parse", "--show-toplevel"], cwd))
+    script = top / "ci" / "build_rpms.sh"
+    if not script.is_file():
+        raise RuntimeError(f"{script} not found; cannot run the %prep check")
+    head = _git_output(["rev-parse", "HEAD"], top)
+    branch_head = _git_output(["rev-parse", "--verify", f"{source_branch}^{{commit}}"], top)
+    if head != branch_head:
+        raise RuntimeError(
+            f"Branch {source_branch} is not checked out in {top}; the %prep check "
+            "must run on the commits being submitted"
+        )
+    dirty = _git_output(["status", "--porcelain", "--", "rpms/"], top)
+    if dirty:
+        raise RuntimeError(
+            "Uncommitted changes under rpms/; commit or discard them before "
+            f"opening the MR:\n{dirty}"
+        )
+    target = detect_target_remote(cwd=top)
+    packages = changed_packages(f"{target}/main", cwd=top)
+    if not packages:
+        print("No packages changed under rpms/; skipping %prep check.")
+        return []
+    for package in packages:
+        print(f"Running %prep check: ci/build_rpms.sh --prep-only {package}", flush=True)
+        proc = run_command([str(script), "--prep-only", package], cwd=top)
+        output = f"{proc.stdout or ''}{proc.stderr or ''}"
+        log_dir = top / "builds" / package
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "prep-check.log"
+        log_path.write_text(output, encoding="utf-8")
+        if proc.returncode != 0:
+            tail = "\n".join(output.splitlines()[-PREP_LOG_TAIL_LINES:])
+            print(tail, file=sys.stderr)
+            raise RuntimeError(
+                f"%prep check failed for {package} (exit {proc.returncode}); "
+                f"MR not opened. Full log: {log_path}"
+            )
+        print(f"%prep check passed for {package} (log: {log_path})")
+    return packages
 
 
 def open_package_mr(

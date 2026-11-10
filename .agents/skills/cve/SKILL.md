@@ -33,7 +33,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | `investigate HUM-XXXX [HUM-YYYY ...] --only` | Named tickets only; skip related-ticket discovery |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
-| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Push the branch and open a `glab` MR; `--title` and `--message` are required. |
+| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. |
 | `lookaside-cmd -f FILE -p PKG` | Print upload commands; do not upload |
 | `version-check PKG` | Local NVR vs CVE range / FIB / analysis NVR |
 | `upstream-fix-age` | Fix-commit date vs upstream tag/release date |
@@ -230,6 +230,19 @@ create or add a remote.
 
 **Pre-MR check:** Do not add `%changelog` entries to spec files. CI rejects
 them because they create merge-conflict risks with Fedora updates.
+
+**%prep gate:** `open-mr` runs `ci/build_rpms.sh --prep-only PKG` for every
+package changed under `rpms/` relative to the target `main`. It runs in the
+current checkout, so run `open-mr` from inside the task worktree. This builds
+the SRPM, which catches missing Source/Patch files and sources not yet uploaded
+to the lookaside cache. It then runs `%prep`, which catches broken tarballs and
+patches that do not apply. The MR is opened only if every package passes.
+`open-mr` refuses to run if the source branch is not checked out or `rpms/` has
+uncommitted changes. Each package's full output is saved to
+`builds/PKG/prep-check.log`. If the check fails, fix the package, amend the
+package commit, and rerun `open-mr`. Do not work around the failure. Use
+`--skip-prep-check` only when the user explicitly asks for it, and say so in the
+MR summary.
 
 **Multi-CVE same-package pattern:** when multiple CVEs share the same
 package and fix version, use **one task and one MR** for all of them.
