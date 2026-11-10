@@ -1,0 +1,12 @@
+diff --git a/dist/builder-manager/index.js b/dist/builder-manager/index.js
+--- a/dist/builder-manager/index.js
++++ b/dist/builder-manager/index.js
+@@ -1975,7 +1975,7 @@
+     bundle: !0,
+     minify: !0,
+     sourcemap: !1,
+-    conditions: ["browser", "module", "default"],
++    conditions: ["@grafana-app/source", "browser", "module", "default"],
+     jsxFactory: "React.createElement",
+     jsxFragment: "React.Fragment",
+     jsx: "transform",
