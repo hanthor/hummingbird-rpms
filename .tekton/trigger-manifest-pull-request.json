@@ -1357,6 +1357,10 @@
         "^rpms/nodejs26/",
         "^test/rpms/nodejs26\\.yml$"
       ],
+      "npm12--rpms": [
+        "^rpms/npm12/",
+        "^test/rpms/npm12\\.yml$"
+      ],
       "npth--rpms": [
         "^rpms/npth/",
         "^test/rpms/npth\\.yml$"

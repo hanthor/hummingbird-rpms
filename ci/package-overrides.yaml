@@ -479,6 +479,9 @@ nodejs20-lts:
 node-gyp:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+npm12:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nodejs22:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
