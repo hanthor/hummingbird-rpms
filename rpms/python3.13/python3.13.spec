@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 License: Python-2.0.1
 
 
@@ -419,6 +419,12 @@ Patch477: 00477-raise-an-error-when-importing-stdlib-modules-compiled-for-a-diff
 # gh-150751: validate http.client Content-Length and chunk-size
 Patch478: 0478-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
 Patch479: 00479-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
+
+# 00480 # ac1d49f4fbb33941475c5aa3cb663ab39d64cb73
+# CVE-2026-124249
+#
+# gh-161569: Check cookie policy before deleting expired cookies in http.cookiejar
+Patch480: 00480-cve-2026-124249-check-cookie-policy-before-deleting-expired-cookies.patch
 
 # (New patches go here ^^^)
 #
