@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/trivy.git",
     "sha": "1741a090d7d41332bef492d4d294226992a9e4ed"
   },
-  "modification_reason": "Backport CVE-2026-116591 (klauspost/compress v1.20.3)",
+  "modification_reason": "Backport CVE-2026-116591 (klauspost/compress v1.20.3), CVE-2026-77299 (regexp2)",
   "modification_status": "modified",
   "release_monitoring_project_id": 141362,
   "track_upstream": "latest",
