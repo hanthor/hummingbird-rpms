@@ -16,6 +16,10 @@
 "github.com/go-openapi/swag/stringutils" = "v0.27.1"
 "github.com/go-openapi/swag/typeutils" = "v0.27.1"
 "github.com/go-openapi/swag/yamlutils" = "v0.27.1"
+# CVE-2026-77299: chroma v2.27.0 is the first tagged release using regexp2/v2;
+# regexp2/v2 2.3.0 bounds the backtracking stack.
+"github.com/alecthomas/chroma/v2" = "v2.27.0"
+"github.com/dlclark/regexp2/v2" = "v2.3.0"
 
 [licensing]
 detector = "askalono"
