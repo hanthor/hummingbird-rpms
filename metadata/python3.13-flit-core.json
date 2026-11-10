@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "f44",
     "git_url": "https://src.fedoraproject.org/rpms/python-flit-core.git",
-    "release": "10",
     "sha": "dab9a53bb7b28fe9cb28395357dd90c703616956"
   },
-  "modification_reason": "Bootstrap the Python 3.13 flit-core build backend without pip or pyproject dependency cycles; require the macro-owning Hummingbird interpreter for namespace selection and retain import checks",
+  "modification_reason": "Update to upstream version 4.2.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 44841,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pypa/flit",
-  "version": "3.12.0"
+  "version": "4.2.0"
 }

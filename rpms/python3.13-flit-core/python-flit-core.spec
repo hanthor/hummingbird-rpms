@@ -10,8 +10,8 @@
 %bcond tests %{without bootstrap}
 
 Name:           python3.13-flit-core
-Version:        3.12.0
-Release:        10.1%{?dist}
+Version:        4.2.0
+Release:        0.1%{?dist}
 Summary:        PEP 517 build backend for packages using Flit
 
 # flit-core is BSD-3-Clause
