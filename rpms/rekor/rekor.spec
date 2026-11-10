@@ -3,7 +3,7 @@
 %global goipath github.com/sigstore/rekor
 
 Name:           rekor
-Version:        1.5.6
+Version:        1.6.0
 Release:        0.1%{?dist}
 Summary:        Software supply chain transparency log (Rekor)
 
