@@ -5,8 +5,10 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import time
 import types
 import urllib.request
 import xmlrpc.client
@@ -91,7 +93,7 @@ def test_run_git_retries_ls_remote(dist_git_module) -> None:
     failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
     success = MagicMock(spec=subprocess.CompletedProcess)
 
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, success]) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, success]) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep:
         assert dist_git_module.run_git(
             'ls-remote', 'https://example.invalid/repo.git', 'rawhide'
@@ -108,7 +110,7 @@ def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
     """The final ls-remote error is preserved after bounded retries."""
     failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
 
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, failure]) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, failure]) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep, \
          pytest.raises(subprocess.CalledProcessError) as raised:
         dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git', 'rawhide')
@@ -124,7 +126,7 @@ def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
 @pytest.mark.parametrize('operation', ['clone', 'fetch', 'pull', 'ls-remote'])
 def test_run_git_network_attempt_has_timeout(dist_git_module, operation: str) -> None:
     """Every network attempt has a wall-clock timeout, regardless of protocol."""
-    with patch.object(dist_git_module.subprocess, 'run') as run:
+    with patch.object(dist_git_module, '_run_git_network_attempt') as run:
         dist_git_module.run_git(operation, 'https://example.invalid/repo.git')
 
     assert run.call_args.kwargs.get('timeout') == 120
@@ -144,7 +146,7 @@ def test_run_git_retries_timeout(dist_git_module, check: bool) -> None:
     """A timeout is retryable even when Git exit-code checking is disabled."""
     failure = subprocess.TimeoutExpired(['git', 'ls-remote'], 120)
     success = subprocess.CompletedProcess(['git', 'ls-remote'], 0, stdout='sha\trefs/heads/rawhide\n')
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, success]) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, success]) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep:
         assert dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git', check=check) is success
 
@@ -156,7 +158,7 @@ def test_run_git_retries_timeout(dist_git_module, check: bool) -> None:
 def test_run_git_reraises_final_timeout(dist_git_module) -> None:
     """Exhausted timeout retries preserve the final error and do not sleep again."""
     failures = [subprocess.TimeoutExpired(['git', 'clone'], 120) for _ in range(3)]
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=failures) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=failures) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep, \
          pytest.raises(subprocess.TimeoutExpired) as raised:
         dist_git_module.run_git('clone', 'https://example.invalid/repo.git')
@@ -164,6 +166,114 @@ def test_run_git_reraises_final_timeout(dist_git_module) -> None:
     assert raised.value is failures[-1]
     assert run.call_count == 3
     assert sleep.call_args_list == [call(2), call(4)]
+
+
+def test_git_timeout_kills_transport_helpers(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Timing out Git must kill its helper, not just the parent process."""
+    marker = tmp_path / 'helper-survived'
+    pid_file = tmp_path / 'helper.pid'
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(
+        f'#!{sys.executable}\n'
+        'import subprocess, sys, time\n'
+        f'child = subprocess.Popen([sys.executable, "-c", '
+        f'"import time; from pathlib import Path; time.sleep(1); Path({str(marker)!r}).touch(); time.sleep(30)"])\n'
+        f'open({str(pid_file)!r}, "w").write(str(child.pid))\n'
+        'time.sleep(30)\n'
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.3)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_MAX_ATTEMPTS', 1)
+    try:
+        with pytest.raises(subprocess.TimeoutExpired):
+            dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git')
+        assert pid_file.exists(), 'The test helper did not start before the timeout'
+        time.sleep(1.2)
+        assert not marker.exists(), 'The Git transport helper survived its parent timeout'
+    finally:
+        if pid_file.exists():
+            try:
+                os.kill(int(pid_file.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+@pytest.mark.parametrize('recover', [False, True], ids=['exhausted', 'recovers'])
+def test_git_clone_retries_do_not_leave_partial_destination(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, recover: bool,
+) -> None:
+    """A killed clone must not poison later retries or a future import."""
+    counter = tmp_path / 'attempts'
+    destination = tmp_path / 'package'
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(
+        f'#!{sys.executable}\n'
+        'from pathlib import Path\n'
+        'import sys, time\n'
+        f'counter = Path({str(counter)!r})\n'
+        'attempt = int(counter.read_text()) + 1 if counter.exists() else 1\n'
+        'counter.write_text(str(attempt))\n'
+        'destination = Path(sys.argv[-1])\n'
+        'if destination.exists():\n'
+        '    sys.exit(128)\n'
+        '(destination / ".git").mkdir(parents=True)\n'
+        f'if not {recover!r} or attempt == 1:\n'
+        '    time.sleep(30)\n'
+        '(destination / "package.spec").write_text("complete clone")\n'
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.3)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS', 0)
+
+    if recover:
+        result = dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+        assert result.returncode == 0
+        assert (destination / 'package.spec').read_text() == 'complete clone'
+        assert counter.read_text() == '2'
+    else:
+        with pytest.raises(subprocess.TimeoutExpired):
+            dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+        assert counter.read_text() == '3'
+        assert not destination.exists(), 'Failed clone still blocks future imports'
+
+
+@pytest.mark.parametrize('existing_empty', [False, True])
+def test_git_clone_relative_destination(
+    dist_git_module, tmp_path: Path, upstream_repos: dict[str, Path],
+    monkeypatch: pytest.MonkeyPatch, existing_empty: bool,
+) -> None:
+    """Staging preserves Git's relative cwd/destination and empty-dir behavior."""
+    monkeypatch.chdir(tmp_path)
+    Path('working').mkdir()
+    if existing_empty:
+        Path('working/package').mkdir()
+    result = dist_git_module.run_git('clone', '--quiet', str(upstream_repos['vanilla']), 'package', cwd='working')
+    assert result.returncode == 0
+    assert Path('working/package/vanilla.spec').exists()
+    assert not list(Path('working').glob('.dist-git-clone-*'))
+
+
+def test_git_clone_timeout_preserves_existing_destination(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry cleanup must never delete a destination the caller already owned."""
+    destination = tmp_path / 'package'
+    destination.mkdir()
+    important = destination / 'keep-me'
+    important.write_text('existing user data')
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(f'#!{sys.executable}\nimport time\ntime.sleep(30)\n')
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.1)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_MAX_ATTEMPTS', 1)
+    with pytest.raises(subprocess.TimeoutExpired):
+        dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+    assert important.read_text() == 'existing user data'
 
 
 @pytest.fixture(scope='session')
@@ -1353,6 +1463,60 @@ def test_koji_transport_connection_has_timeout(
         factory.assert_called_once()
         transport.close()
         connection.close.assert_called_once()
+
+
+@pytest.mark.parametrize('status, recover', [(503, True), (503, False), (401, False)])
+def test_koji_chunked_error_discards_cached_connection(
+    dist_git_module, monkeypatch: pytest.MonkeyPatch, status: int, recover: bool,
+) -> None:
+    """Real HTTPConnection state must recover after an unread chunked error."""
+    monkeypatch.delenv('HTTPS_PROXY', raising=False)
+    monkeypatch.delenv('https_proxy', raising=False)
+    class FakeSocket:
+        def __init__(self, response):
+            self.response = response
+            self.closed = False
+
+        def makefile(self, *args, **kwargs):
+            return BytesIO(self.response)
+
+        def sendall(self, data):
+            pass
+
+        def close(self):
+            self.closed = True
+
+    sockets: list[FakeSocket] = []
+
+    def connect(*args, **kwargs):
+        code = 200 if recover and sockets else status
+        if code == 200:
+            body = xmlrpc.client.dumps(({'build_id': 12345},), methodresponse=True).encode()
+            response = b'HTTP/1.1 200 OK\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body
+        else:
+            response = (f'HTTP/1.1 {code} Error\r\nTransfer-Encoding: chunked\r\n'
+                        'Connection: keep-alive\r\n\r\n3\r\nbad\r\n0\r\n\r\n').encode()
+        sock = FakeSocket(response)
+        sockets.append(sock)
+        connection = http.client.HTTPConnection('koji.example')
+        connection.sock = sock
+        return connection
+
+    transport = dist_git_module.KojiTransport()
+    with patch.object(dist_git_module.http.client, 'HTTPSConnection', side_effect=connect), \
+         patch.object(dist_git_module.time, 'sleep') as sleep, \
+         xmlrpc.client.ServerProxy('https://koji.example/kojihub', transport=transport) as server:
+        if recover:
+            assert dist_git_module.call_koji_with_retry(server.getBuild, 'test-nvr') == {'build_id': 12345}
+            assert len(sockets) == 2
+            sleep.assert_called_once_with(2)
+        else:
+            with pytest.raises(xmlrpc.client.ProtocolError) as raised:
+                dist_git_module.call_koji_with_retry(server.getBuild, 'test-nvr')
+            assert raised.value.errcode == status
+            assert len(sockets) == (3 if status == 503 else 1)
+            assert sleep.call_count == (2 if status == 503 else 0)
+        assert sockets[0].closed, 'HTTP error left its socket cached for reuse'
 
 
 def test_koji_retry_on_transient_error(dist_git_module) -> None:
