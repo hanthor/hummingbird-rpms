@@ -2,7 +2,7 @@
 # If a package is not listed in this file, it will use default settings.
 #
 # Available options per package:
-#   push_pipeline: Use the MR-tested image on push (promotion) or rebuild it (build, default)
+#   push_pipeline: "build" (default) rebuilds on push; "promotion" reuses the MR-tested image
 #   timeout_hours: Override the default build timeout (default: 4 hours)
 #   build_architectures: Override the default RPM architectures (aarch64, x86_64, and s390x)
 #   build_platforms: Override the default MPLs (instance sizes) for builds
