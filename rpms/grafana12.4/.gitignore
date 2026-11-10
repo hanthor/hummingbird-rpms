@@ -19,3 +19,7 @@ grafana-yarn-cache-12.4.12.tar.bz2
 grafana-12.4.13-vendor.tar.bz2
 grafana-12.4.13.tar.gz
 grafana-yarn-cache-12.4.13.tar.bz2
+grafana-12.4.14-vendor.tar.bz2
+grafana-12.4.14.tar.gz
+grafana-frontend-12.4.14.patch
+grafana-yarn-cache-12.4.14.tar.bz2
