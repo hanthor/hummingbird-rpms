@@ -1,11 +1,6 @@
 [archive]
 pre_commands = [
-  # CVE-2026-100352, CVE-2026-100353, CVE-2026-100354.
-  # Bumps getkin/kin-openapi to v0.149.0 (pulling in
-  # santhosh-tekuri/jsonschema/v6 v6.0.3) to fix Denial of Service via
-  # non-finite numeric values, nil-pointer dereference in request decoding,
-  # and unbounded recursion during schema validation.
-  ["go", "get", "github.com/getkin/kin-openapi@v0.149.0"],
+  # Grafana 12.4.14 already has kin-openapi v0.151.0 and jsonschema/v6 v6.0.3.
   # CVE-2026-116591.
   # Bumps github.com/klauspost/compress to v1.20.2 to fix Denial of Service
   # via crafted zstd compressed input (DecodeAll and streaming decoder panic

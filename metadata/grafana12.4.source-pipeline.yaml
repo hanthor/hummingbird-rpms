@@ -17,14 +17,7 @@ transform:
         set -euo pipefail
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
-        CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
-        # CVE-2026-9496 is backported inside the two cached pacote archives.
-        # Patch the freshly generated archives before changing yarn.lock to
-        # expect their new checksums, then verify the result offline.
-        "${PACKAGE_DIR}/patch-pacote-cache.py" .yarn/cache
-        patch -p1 < "${PACKAGE_DIR}/grafana-pacote-cve.patch"
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" . "${VERSION}" --generate
         CYPRESS_INSTALL_BINARY=0 YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
           node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
         # Deterministic flags: yarn's own cache writes carry live wall-clock
@@ -37,6 +30,7 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-frontend-${VERSION}.patch"
 
 # gorget 0.1.16 fixed a bug where a single-module Go vendor archive packed
 # only "vendor/" at its top level, which go_vendor_license --use-archive
@@ -47,6 +41,12 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-frontend-12.4.14.patch"
+    checksum: "8d169b28fbc5183454708c5ffe973c15d95cdb786401798609cdc00f608977f5c28257ff7ae4a0cbd6c1dcc99cdb850058b3184f59a8ad669686dd2ff69678eb"
+    reason: "Include the newer serialize-javascript and terser-webpack-plugin CVE overrides in the 12.4.14 frontend patch"
+  - file: "grafana-yarn-cache-12.4.14.tar.bz2"
+    checksum: "2d1d7b4296c745022cd5a0faa9611b5c05e311530f06098e4865255d9d91d3e303b5e6679f7d538df13006a558e3e174f0e0755fbf3a9230d19c6690aa25bd65"
+    reason: "Regenerate the 12.4.14 offline cache with serialize-javascript 7.1.4 and terser-webpack-plugin 5.6.1"
   - file: "grafana-yarn-cache-12.4.13.tar.bz2"
     checksum: "1cada80e916ab9fc2a55ca8262edace96fd3847dce0c6eb533364ac39f16576e82a02ca63ce76babf6c62e9f5d37c228d2f614c1259e9a9e2f5023a8717c7d03"
     reason: "grafana-follow-redirects-serialize-javascript-cve.patch bumps follow-redirects 1.16.1->1.16.2 (CVE-2026-116689), removes serialize-javascript 6.0.2 via terser-webpack-plugin 5.3.16->5.6.1 (CVE-2026-115754), bumps serialize-javascript 7.0.5->7.1.4 (CVE-2026-115897); yarn cache regenerated"
