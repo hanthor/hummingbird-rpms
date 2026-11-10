@@ -159,6 +159,9 @@ check-afdocs:
 check_nevr_conflicts:
   tags: [hum-1cpu-512m]
   needs: ["check"]
+  variables:
+    # Allow cold repository metadata downloads and parsing on small runners.
+    DNF_TIMEOUT_SECS: "120"
   script:
     # Ensure the target branch ref is available locally for the MR diff.
     - git fetch --quiet origin "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
