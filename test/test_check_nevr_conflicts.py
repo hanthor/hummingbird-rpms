@@ -3,7 +3,8 @@
 Where practical these tests exercise the real `rpmspec`/`rpm` binaries against
 synthetic spec files (rather than mocking them), since the whole point of the
 tool is to match what those real tools would produce for an actual build.
-Only `dnf`/Pulp network access is faked, via a PATH-injected script.
+Pulp network access is faked via a PATH-injected `dnf` script. A local
+unavailable-repository test also exercises the real `dnf` without network access.
 """
 
 import json
@@ -478,31 +479,19 @@ def test_check_candidates_brand_new_package_is_ok(checker, fake_dnf):
     assert results[0].status == 'OK'
 
 
-def test_query_pulp_evrs_nonzero_exit_with_partial_stdout_is_failure(
-    checker, fake_dnf, monkeypatch,
-):
-    """A non-zero dnf exit code must be treated as a failed query (None)
-    even if some stdout was produced (e.g. a partial result before a
-    timeout/network drop) -- trusting partial output here would silently
-    treat any missing name as OK, a false negative for a real conflict."""
-    fake_dnf({PUBLIC_BASE_URLS['x86_64']: {'widget': ['1.0-3.hum1']}})
-    monkeypatch.setenv('FAKE_DNF_EXIT_CODE', '1')
-    monkeypatch.setattr(checker.time, 'sleep', lambda _: None)
-
-    result = checker.query_pulp_evrs(PUBLIC_BASE_URLS['x86_64'], {'widget'}, timeout=5)
-
-    assert result is None
-
-
-def test_query_pulp_evrs_retries_timeout_then_succeeds(checker, monkeypatch):
+@pytest.mark.parametrize('failure', ['timeout', 'nonzero'])
+def test_query_pulp_evrs_retries_then_succeeds(checker, monkeypatch, failure):
     calls = 0
     delays = []
 
     def run(*args, **kwargs):
         nonlocal calls
         calls += 1
+        assert '--setopt=nevrcheck.skip_if_unavailable=False' in args[0]
         if calls == 1:
-            raise subprocess.TimeoutExpired(args[0], kwargs['timeout'])
+            if failure == 'timeout':
+                raise subprocess.TimeoutExpired(args[0], kwargs['timeout'], output=b'partial\t1.hum1\n')
+            return subprocess.CompletedProcess(args[0], 1, 'partial\t1.hum1\n', 'temporary failure')
         return subprocess.CompletedProcess(args[0], 0, 'widget\t1.0-3.hum1\n', '')
 
     monkeypatch.setattr(checker.subprocess, 'run', run)
@@ -515,43 +504,99 @@ def test_query_pulp_evrs_retries_timeout_then_succeeds(checker, monkeypatch):
     assert delays == [2]
 
 
-def test_query_pulp_evrs_retries_nonzero_exit_until_exhausted(checker, monkeypatch):
+@pytest.mark.parametrize(('stdout', 'stderr', 'expected'), [
+    (None, None, ''),
+    ('', '  ', ''),
+    ('partial\n', 'failure\n', '\nstdout: partial\nstderr: failure'),
+    (b'partial\n', b'failure\n', '\nstdout: partial\nstderr: failure'),
+    (None, b'bad byte: \xff', '\nstderr: bad byte: \ufffd'),
+])
+def test_dnf_diagnostics(checker, stdout, stderr, expected):
+    assert checker._dnf_diagnostics(stdout, stderr) == expected
+
+
+@pytest.mark.parametrize(('failure', 'detail'), [
+    ('timeout', 'Timed out querying'),
+    ('nonzero', 'dnf repoquery against'),
+])
+def test_query_pulp_evrs_failure_diagnostics_and_exhaustion(checker, monkeypatch, caplog, failure, detail):
     calls = 0
     delays = []
+    timestamps = iter([0, 5, 10, 15, 20, 25])
 
     def run(*args, **kwargs):
         nonlocal calls
         calls += 1
-        return subprocess.CompletedProcess(args[0], 1, '', 'temporary failure')
+        assert kwargs['timeout'] == 5
+        if failure == 'timeout':
+            raise subprocess.TimeoutExpired(
+                args[0], kwargs['timeout'], output=b'widget\t1.hum1\n', stderr=b'temporary failure\n',
+            )
+        return subprocess.CompletedProcess(args[0], 1, 'widget\t1.hum1\n', 'temporary failure\n')
 
     monkeypatch.setattr(checker.subprocess, 'run', run)
     monkeypatch.setattr(checker.time, 'sleep', delays.append)
+    monkeypatch.setattr(checker.time, 'monotonic', lambda: next(timestamps))
 
     result = checker.query_pulp_evrs(PUBLIC_BASE_URLS['x86_64'], {'widget'}, timeout=5)
 
     assert result is None
     assert calls == 3
     assert delays == [2, 4]
+    assert [record.levelname for record in caplog.records] == ['WARNING', 'WARNING', 'ERROR']
+    for attempt, record in enumerate(caplog.records, start=1):
+        message = record.getMessage()
+        assert f'attempt {attempt}/3' in message
+        assert PUBLIC_BASE_URLS['x86_64'] in message
+        assert detail in message
+        assert f'after 5.0s ({"timeout=5s" if failure == "timeout" else "rc=1"})' in message
+        assert 'for: widget' in message
+        assert 'stdout: widget\t1.hum1' in message
+        assert 'stderr: temporary failure' in message
+
+
+def test_query_pulp_evrs_real_dnf_unavailable_repo_is_failure(checker, tmp_path, monkeypatch):
+    """Inherited skip_if_unavailable must not turn missing metadata into an empty success."""
+    dnf = shutil.which('dnf')
+    if dnf is None:
+        pytest.skip('dnf is required for the local repository failure test')
+    real_run = subprocess.run
+    returncodes = []
+
+    def run(cmd, **kwargs):
+        result = real_run([
+            dnf, '--setopt=skip_if_unavailable=True',
+            f'--setopt=cachedir={tmp_path / "cache"}',
+            f'--setopt=logdir={tmp_path / "logs"}',
+            f'--setopt=persistdir={tmp_path / "persist"}',
+            *cmd[1:],
+        ], **kwargs)
+        returncodes.append(result.returncode)
+        return result
+
+    monkeypatch.setattr(checker.subprocess, 'run', run)
+    monkeypatch.setattr(checker.time, 'sleep', lambda _: None)
+
+    result = checker.query_pulp_evrs((tmp_path / 'missing-repo').as_uri(), {'widget'}, timeout=5)
+
+    assert result is None
+    assert len(returncodes) == 3
+    assert all(returncode != 0 for returncode in returncodes)
 
 
 def test_check_candidates_partial_dnf_failure_is_cannot_determine_not_ok(
-    checker, fake_dnf, monkeypatch, tmp_path,
+    checker, fake_dnf, monkeypatch,
 ):
     """End-to-end: a partial dnf failure must surface as CANNOT_DETERMINE,
     never as a false-negative OK."""
     fake_dnf({PUBLIC_BASE_URLS['x86_64']: {'widget': ['1.0-3.hum1']}})
     monkeypatch.setenv('FAKE_DNF_EXIT_CODE', '1')
-    call_log = tmp_path / 'dnf_calls.log'
-    monkeypatch.setenv('FAKE_DNF_CALL_LOG', str(call_log))
-    delays = []
-    monkeypatch.setattr(checker.time, 'sleep', delays.append)
+    monkeypatch.setattr(checker.time, 'sleep', lambda _: None)
     candidates = [checker.Candidate('widget', 'widget', '1.0-9.hum1', 'x86_64')]
 
     results = checker.check_candidates(candidates, PUBLIC_BASE_URLS, timeout=5)
 
     assert results[0].status == 'CANNOT_DETERMINE'
-    assert call_log.read_text().splitlines() == ['call'] * 3
-    assert delays == [2, 4]
 
 
 def test_check_candidates_unrecognized_arch_is_cannot_determine(checker, fake_dnf):
@@ -645,6 +690,59 @@ def test_has_spec_and_get_all_packages(checker, tmp_path):
 #
 # End-to-end main()
 #
+
+def test_ci_query_timeout_allows_cold_metadata_downloads():
+    config = yaml.load((Path(__file__).parent.parent / '.gitlab-ci.yml').read_text(), Loader=yaml.BaseLoader)
+    assert config['check_nevr_conflicts']['variables']['DNF_TIMEOUT_SECS'] == '120'
+
+
+@pytest.mark.parametrize(('env_timeout', 'extra_args', 'expected'), [
+    (None, [], 30),
+    ('120', [], 120),
+    ('120', ['--timeout', '10'], 10),
+])
+def test_main_query_timeout_configuration(checker, monkeypatch, env_timeout, extra_args, expected):
+    if env_timeout is None:
+        monkeypatch.delenv('DNF_TIMEOUT_SECS', raising=False)
+    else:
+        monkeypatch.setenv('DNF_TIMEOUT_SECS', env_timeout)
+    monkeypatch.setattr(sys, 'argv', ['check_nevr_conflicts.py', '--rpms-dir', 'unused', *extra_args])
+    monkeypatch.setattr(checker, 'get_built_rpm_candidates', lambda _: [
+        checker.Candidate('widget', 'widget', '1.hum1', 'x86_64'),
+    ])
+
+    def check_candidates(candidates, base_urls, timeout):
+        assert timeout == expected
+        return [checker.CheckResult(candidate, 'OK') for candidate in candidates]
+
+    monkeypatch.setattr(checker, 'check_candidates', check_candidates)
+
+    assert checker.main() == 0
+
+
+@pytest.mark.parametrize(('with_conflict', 'expected'), [(False, 2), (True, 1)])
+def test_main_failed_queries_preserve_exit_codes(checker, monkeypatch, capsys, with_conflict, expected):
+    monkeypatch.setattr(sys, 'argv', ['check_nevr_conflicts.py', '--rpms-dir', 'unused', '--json'])
+    monkeypatch.setattr(checker, 'get_built_rpm_candidates', lambda _: [
+        checker.Candidate('widget', 'widget', '1.hum1', 'x86_64'),
+        checker.Candidate('widget', 'widget', '1.hum1', 'aarch64'),
+    ])
+
+    def run(cmd, **kwargs):
+        base_url = cmd[cmd.index('--repofrompath') + 1].split(',', 1)[1]
+        if with_conflict and base_url == checker.DEFAULT_BASE_URLS['aarch64']:
+            return subprocess.CompletedProcess(cmd, 0, 'widget\t1.hum1\n', '')
+        raise subprocess.TimeoutExpired(cmd, kwargs['timeout'], output=b'widget\t1.hum1\n')
+
+    monkeypatch.setattr(checker.subprocess, 'run', run)
+    monkeypatch.setattr(checker.time, 'sleep', lambda _: None)
+
+    assert checker.main() == expected
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload['results'][0]['status'] == 'CANNOT_DETERMINE'
+    assert payload['results'][1]['status'] == ('CONFLICT' if with_conflict else 'CANNOT_DETERMINE')
+
 
 def _argv_with_urls(*extra: str) -> list[str]:
     return [
