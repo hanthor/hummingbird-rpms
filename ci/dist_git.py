@@ -50,6 +50,7 @@ from hum.meta.model import (
     VersionFromRef,
 )
 from hum.meta.spec import bump_release as spec_bump_release
+from hum.meta.spec import resolve_spec_version
 from hum.meta.validation import ModificationStatus
 from package_paths import path_problem, portable_component, sanitize_package_paths
 
@@ -1980,6 +1981,17 @@ def _stage_package_for_commit(package_name: str, package_dir: Path,
                 cwd=ROOT_DIR)
 
 
+def _final_spec_version_error(metadata: HumPackageMetadata, package_dir: Path) -> str | None:
+    """Validate candidate metadata against the macro-expanded final spec."""
+    try:
+        validation = metadata.validate(resolve_spec_version=lambda _: resolve_spec_version(package_dir))
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        return f"Cannot validate final spec version for {metadata.package_name}: {error}"
+    if validation.violations:
+        return '; '.join(violation.message for violation in validation.violations)
+    return None
+
+
 def update(package_name: str, skip_build_check: bool = False, sync: bool = False,
            dry_run: bool = False, allow_prerelease: bool = False, mark: bool = False,
            ref: str | None = None, branch: str | None = None) -> None:
@@ -2352,6 +2364,16 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
 
         imports[package_name] = metadata
 
+        # A conflict-free merge can retain a local Version edit. Validate the
+        # actual final spec, not the incoming spec parsed before the merge.
+        version_validation_error = None
+        if not has_conflicts:
+            version_validation_error = _final_spec_version_error(metadata, package_dir)
+            if version_validation_error:
+                has_conflicts = True
+                if dry_run:
+                    sys.exit(f"ERROR: {version_validation_error}")
+
         # Commit the changes (or stage for manual resolution on conflict)
         stale_patch_prefix = "STALE PATCH: " if stale_patches else ""
         stale_patch_body = ""
@@ -2390,6 +2412,15 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
                         'old_version': old_version,
                         'upstream_spec': upstream_spec,
                     }, f)
+
+                if version_validation_error:
+                    # Exit 2 tells the batch caller to commit the unresolved
+                    # package. A version mismatch must not take that path.
+                    sys.exit(
+                        f"ERROR: {version_validation_error}\n"
+                        f"       State preserved -- correct the spec or pending metadata, then run: "
+                        f"./ci/dist_git.py update --continue"
+                    )
 
                 logging.warning(
                     "Resolve conflicts in rpms/%s/, then:\n"
@@ -2501,7 +2532,18 @@ def continue_update(dry_run: bool = False) -> None:
         if 'metadata' in state:
             metadata = HumPackageMetadata._from_raw_dict(package_name, state['metadata'])
             sanitize_package_paths(package_dir)
+            version_validation_error = _final_spec_version_error(metadata, package_dir)
+            if version_validation_error:
+                sys.exit(
+                    f"ERROR: {version_validation_error}\n"
+                    f"       State preserved -- correct the spec or pending metadata, then run: "
+                    f"./ci/dist_git.py update --continue"
+                )
             save_package_metadata(package_name, metadata)
+        else:
+            # Preserve the existing pre-HUM-2672 recovery format. There is no
+            # candidate metadata in these files to validate against the spec.
+            logging.warning("Legacy update state has no pending metadata; cannot validate final spec version")
 
         extra_paths = [f'metadata/{package_name}.json']
         pipeline_file = cuv._load_source_pipeline(package_name)
@@ -3526,9 +3568,12 @@ Examples:
             if args.continue_:
                 continue_update(dry_run=args.dry_run)
             else:
-                # Clean up stale state from a previous abandoned conflict
                 if UPDATE_STATE_FILE.exists():
-                    UPDATE_STATE_FILE.unlink()
+                    sys.exit(
+                        f"ERROR: An update is already pending ({UPDATE_STATE_FILE.name}).\n"
+                        f"       Finish it with './ci/dist_git.py update --continue' before starting another update.\n"
+                        f"       Recovery state and package-file changes have been preserved."
+                    )
                 if args.branch and not args.package:
                     sys.exit("ERROR: --branch requires a package name (cannot change branch for all packages)")
                 packages = [args.package] if args.package else list(imports.keys())
