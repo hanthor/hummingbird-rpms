@@ -36,8 +36,11 @@ transform:
           exit 1
         fi
 
+        # The bundle list changes with each JDK release. Keep its temporary
+        # artifact name versioned so gorget does not treat the new content as
+        # a republished file from an earlier release.
         "${PACKAGE_DIR}/get_bundle_versions.sh" "${source_root}" |
-          sed -n '/^# Version in /,$p' > java-17-openjdk-portable-bundled-provides.txt
+          sed -n '/^# Version in /,$p' > "java-17-openjdk-portable-bundled-provides-${VERSION}.txt"
 
         # OpenJDK 17 sources are bootstrapped with this available Temurin 17
         # release; it is not required to match the source release tag.
@@ -52,13 +55,13 @@ transform:
           printf '%s\t%s\n' "${temurin_filename}" "${temurin_filename}" >> gorget-discovered.tsv
         done
     outputs:
-      - java-17-openjdk-portable-bundled-provides.txt
+      - "java-17-openjdk-portable-bundled-provides-${VERSION}.txt"
     discovered-outputs: gorget-discovered.tsv
 
 post:
   - type: run
     artifacts:
-      - java-17-openjdk-portable-bundled-provides.txt
+      - "java-17-openjdk-portable-bundled-provides-${VERSION}.txt"
     command:
       - "sh"
       - "-c"
@@ -70,5 +73,5 @@ post:
         }
         sed -i -E 's|^Source0:.*$|Source0: %{vcstag}.tar.gz|' "${SPEC_FILE}"
         UPDATE_SPEC_FILE="${SPEC_FILE}" \
-          ./update_bundled_provides.sh java-17-openjdk-portable-bundled-provides.txt
-        rm -f java-17-openjdk-portable-bundled-provides.txt
+          ./update_bundled_provides.sh "java-17-openjdk-portable-bundled-provides-${VERSION}.txt"
+        rm -f "java-17-openjdk-portable-bundled-provides-${VERSION}.txt"
