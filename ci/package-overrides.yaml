@@ -968,3 +968,326 @@ xkeyboard-config:
 
 zeromq:
   push_pipeline: promotion
+
+# HUM-11952 batch 2: packages with default build settings.
+
+NetworkManager:
+  push_pipeline: promotion
+
+PyYAML:
+  push_pipeline: promotion
+
+R-rpm-macros:
+  push_pipeline: promotion
+
+ShellCheck:
+  push_pipeline: promotion
+
+aardvark-dns:
+  push_pipeline: promotion
+
+abattis-cantarell-fonts:
+  push_pipeline: promotion
+
+alsa-lib:
+  push_pipeline: promotion
+
+annobin:
+  push_pipeline: promotion
+
+ansible-packaging:
+  push_pipeline: promotion
+
+apr:
+  push_pipeline: promotion
+
+apr-util:
+  push_pipeline: promotion
+
+audit:
+  push_pipeline: promotion
+
+authselect:
+  push_pipeline: promotion
+
+autoconf:
+  push_pipeline: promotion
+
+avahi:
+  push_pipeline: promotion
+
+bash-completion:
+  push_pipeline: promotion
+
+binutils:
+  push_pipeline: promotion
+
+boost:
+  push_pipeline: promotion
+
+btrfs-progs:
+  push_pipeline: promotion
+
+buildah:
+  push_pipeline: promotion
+
+busybox:
+  push_pipeline: promotion
+
+bzip2:
+  push_pipeline: promotion
+
+c-ares:
+  push_pipeline: promotion
+
+ca-certificates:
+  push_pipeline: promotion
+
+cargo-rpm-macros:
+  push_pipeline: promotion
+
+cargo2rpm:
+  push_pipeline: promotion
+
+catatonit:
+  push_pipeline: promotion
+
+checkpolicy:
+  push_pipeline: promotion
+
+chkconfig:
+  push_pipeline: promotion
+
+chrony:
+  push_pipeline: promotion
+
+chunkah:
+  push_pipeline: promotion
+
+cloud-utils:
+  push_pipeline: promotion
+
+composefs:
+  push_pipeline: promotion
+
+conmon:
+  push_pipeline: promotion
+
+container-selinux:
+  push_pipeline: promotion
+
+containers-common:
+  push_pipeline: promotion
+
+coreutils:
+  push_pipeline: promotion
+
+cpio:
+  push_pipeline: promotion
+
+cracklib:
+  push_pipeline: promotion
+
+createrepo_c:
+  push_pipeline: promotion
+
+crun:
+  push_pipeline: promotion
+
+crypto-policies:
+  push_pipeline: promotion
+
+cryptsetup:
+  push_pipeline: promotion
+
+ctags:
+  push_pipeline: promotion
+
+cups:
+  push_pipeline: promotion
+
+dav1d:
+  push_pipeline: promotion
+
+dbus:
+  push_pipeline: promotion
+
+dbus-broker:
+  push_pipeline: promotion
+
+diffutils:
+  push_pipeline: promotion
+
+dnf:
+  push_pipeline: promotion
+
+dns-root-data:
+  push_pipeline: promotion
+
+dosfstools:
+  push_pipeline: promotion
+
+doxygen:
+  push_pipeline: promotion
+
+duktape:
+  push_pipeline: promotion
+
+dwz:
+  push_pipeline: promotion
+
+e2fsprogs:
+  push_pipeline: promotion
+
+ecj:
+  push_pipeline: promotion
+
+ed:
+  push_pipeline: promotion
+
+efibootmgr:
+  push_pipeline: promotion
+
+efivar:
+  push_pipeline: promotion
+
+emacs-filesystem:
+  push_pipeline: promotion
+
+erlang-rpm-macros:
+  push_pipeline: promotion
+
+fedora-logos:
+  push_pipeline: promotion
+
+fedora-repos:
+  push_pipeline: promotion
+
+file:
+  push_pipeline: promotion
+
+filesystem:
+  push_pipeline: promotion
+
+findutils:
+  push_pipeline: promotion
+
+firewalld:
+  push_pipeline: promotion
+
+fmt:
+  push_pipeline: promotion
+
+fonts-rpm-macros:
+  push_pipeline: promotion
+
+forge-srpm-macros:
+  push_pipeline: promotion
+
+fpc-srpm-macros:
+  push_pipeline: promotion
+
+freetype:
+  push_pipeline: promotion
+
+fstrm:
+  push_pipeline: promotion
+
+fsverity-utils:
+  push_pipeline: promotion
+
+fuse-overlayfs:
+  push_pipeline: promotion
+
+fuse3:
+  push_pipeline: promotion
+
+gap-srpm-macros:
+  push_pipeline: promotion
+
+gawk:
+  push_pipeline: promotion
+
+gd:
+  push_pipeline: promotion
+
+gdb:
+  push_pipeline: promotion
+
+gdbm:
+  push_pipeline: promotion
+
+ghc-srpm-macros:
+  push_pipeline: promotion
+
+git:
+  push_pipeline: promotion
+
+glib2:
+  push_pipeline: promotion
+
+gmp:
+  push_pipeline: promotion
+
+gnat-srpm-macros:
+  push_pipeline: promotion
+
+gnome-srpm-macros:
+  push_pipeline: promotion
+
+gnulib-l10n:
+  push_pipeline: promotion
+
+gnupg2:
+  push_pipeline: promotion
+
+gnutls:
+  push_pipeline: promotion
+
+go-fdo-server:
+  push_pipeline: promotion
+
+go-md2man:
+  push_pipeline: promotion
+
+go-rpm-macros:
+  push_pipeline: promotion
+
+golang1.25:
+  push_pipeline: promotion
+
+golang1.26:
+  push_pipeline: promotion
+
+golist:
+  push_pipeline: promotion
+
+gperftools:
+  push_pipeline: promotion
+
+gpgme:
+  push_pipeline: promotion
+
+gpgverify:
+  push_pipeline: promotion
+
+graphite2:
+  push_pipeline: promotion
+
+graphviz:
+  push_pipeline: promotion
+
+grep:
+  push_pipeline: promotion
+
+groff:
+  push_pipeline: promotion
+
+gzip:
+  push_pipeline: promotion
+
+harfbuzz:
+  push_pipeline: promotion
+
+hiredis:
+  push_pipeline: promotion
