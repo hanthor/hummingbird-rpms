@@ -1333,6 +1333,10 @@
         "^rpms/ninja\\-build/",
         "^test/rpms/ninja\\-build\\.yml$"
       ],
+      "node-gyp--rpms": [
+        "^rpms/node\\-gyp/",
+        "^test/rpms/node\\-gyp\\.yml$"
+      ],
       "nodejs20--rpms": [
         "^rpms/nodejs20/",
         "^test/rpms/nodejs20\\.yml$"

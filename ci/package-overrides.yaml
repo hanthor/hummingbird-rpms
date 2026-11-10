@@ -472,6 +472,9 @@ nodejs20-lts:
   # Harmless no-op against the currently-deployed pipeline bundle.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+node-gyp:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 nodejs22:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
