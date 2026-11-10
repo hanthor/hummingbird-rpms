@@ -23,7 +23,10 @@
 # create /usr/sbin symlinks instead of shipping them in the package. This
 # avoids file conflicts when installing on merged-sbin systems and eliminates
 # bootstrap ordering issues with the bin/sbin merge.
-%bcond sbin_compat 1
+#
+# So far only Fedora >= 43 ships a filesystem package with those file
+# triggers and the required matching virtual provides.
+%bcond sbin_compat %[0%{?fedora} >= 43]
 
 # riscv64 has LTO disabled globally
 %bcond lto       %["%_arch" != "riscv64"]
@@ -82,11 +85,11 @@ Url:            https://systemd.io
 # But don't do that on OBS, otherwise the version subst fails, and will be
 # like 257-123-gabcd257.1 instead of 257-123-gabcd
 %if %{without obs}
-Version:        %{?version_override}%{!?version_override:261.2}
+Version:        %{?version_override}%{!?version_override:262.1}
 %else
 Version:        %{?version_override}%{!?version_override:%(cat meson.version)}
 %endif
-Release:        1.1%{?dist}
+Release:        1%{?dist}
 
 %global stable %(c="%version"; [ "$c" = "${c#*.*}" ]; echo $?)
 
@@ -162,7 +165,7 @@ Patch:          0002-machined-continue-without-resolve.hook-socket.patch
 
 %endif
 
-%ifarch %{ix86} x86_64 aarch64 riscv64
+%ifarch %{ix86} x86_64 aarch64 riscv64 loongarch64
 %global want_bootloader 1
 %endif
 
@@ -529,13 +532,8 @@ Requires:       libblkid.so.1(BLKID_2.30)%{?elf_bits}
 # https://bugzilla.redhat.com/show_bug.cgi?id=1377733#c9
 Suggests:       systemd-bootchart
 
-# https://bugzilla.redhat.com/show_bug.cgi?id=1408878
-%if %{with upstream}
 # v261 handles missing setfont/loadkeys gracefully
 Recommends:     kbd
-%else
-Requires:       kbd
-%endif
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1753381
 Provides:       u2f-hidraw-policy = 1.0.2-40
@@ -565,6 +563,17 @@ This package also provides systemd-timesyncd, a network time protocol daemon.
 It also contains tools to manage encrypted home areas and secrets bound to the
 machine, and to create or grow partitions and make file systems automatically.
 
+%package imds
+Summary: Client for IMDS cloud metadata services
+Requires:       systemd%{_isa} = %{version}-%{release}
+
+%description imds
+%{summary}. When this package
+is installed, systemd-imds-generator will automatically enable systemd-imds
+on supported clouds.
+
+This code should be considered experimental for now.
+
 %package ukify
 Summary:        Tool to build Unified Kernel Images
 Requires:       systemd = %{noarch_requires_version}
@@ -573,7 +582,8 @@ Requires:       (systemd-boot if %{shrink:(
         filesystem(x86-32) or
         filesystem(x86-64) or
         filesystem(aarch64) or
-        filesystem(riscv64)
+        filesystem(riscv64) or
+        filesystem(loongarch64)
 )})
 Requires:       python3dist(pefile)
 Requires:       python3dist(zstandard)
@@ -635,6 +645,17 @@ This package contains the signed version.
 %endif
 %endif
 
+%package import-keys
+Summary:        GPG keys for verifying systemd image imports
+BuildArch:      noarch
+License:        LGPL-2.1-or-later
+# self-obsoletes after package split
+Obsoletes:      systemd-container < 262~rc3-2
+
+%description import-keys
+GPG keyring used by systemd-importd to verify signatures of downloaded
+container and virtual machine images.
+
 %package container
 # Name is the same as in Debian
 Summary: Tools for containers and VMs
@@ -642,12 +663,16 @@ Requires:       systemd%{_isa} = %{version}-%{release}
 Requires(post):   systemd%{_isa} = %{version}-%{release}
 Requires(preun):  systemd%{_isa} = %{version}-%{release}
 Requires(postun): systemd%{_isa} = %{version}-%{release}
+Requires:       gnupg2
+Recommends:     systemd-import-keys = %{noarch_requires_version}
 # For systemd-vmspawn which uses qemu:
 Recommends:     qemu-kvm-core
 %if 0%{?fedora}
 Recommends:     qemu-device-display-virtio-gpu
 Recommends:     qemu-device-display-virtio-vga
 %endif
+# self-obsoletes after package split
+Obsoletes:      systemd-container < 262~rc3-2
 
 # Bias the system towards libcurl-minimal if nothing pulls in full libcurl (#1997040)
 Suggests:       libcurl-minimal
@@ -841,6 +866,9 @@ mv %{_sourcedir}/%{name}.fedora/* %{_sourcedir}
 # Disable user lockdown until rpm implements it natively.
 # https://github.com/rpm-software-management/rpm/issues/3450
 sed -r -i 's/^u!/u/' sysusers.d/*.conf*
+
+# Disable the preset for systemd-coredumd to work with old SELinux policy
+sed -r -i '/enable systemd-coredumpd.service/d' presets/90-systemd.preset
 
 %build
 echo %{status}
@@ -1574,6 +1602,8 @@ fi
 
 %files devel -f .file-list-devel
 
+%files imds -f .file-list-imds
+
 %files udev -f .file-list-udev
 
 %files ukify -f .file-list-ukify
@@ -1584,6 +1614,8 @@ fi
 %files boot -f .file-list-boot
 %endif
 %endif
+
+%files import-keys -f .file-list-import-keys
 
 %files container -f .file-list-container
 %ghost %dir %attr(0700,-,-) /var/lib/machines
