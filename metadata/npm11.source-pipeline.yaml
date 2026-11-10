@@ -1,0 +1,43 @@
+# Keep the upstream tree, updating node-gyp and the glob cancellation fix.
+# The RPM uses the separate node-gyp package and removes the bundled copy.
+fetch:
+  - type: url
+    url: "https://registry.npmjs.org/npm/-/npm-${VERSION}.tgz"
+    filename: "npm-${VERSION}.tar.gz"
+  - type: url
+    url: "https://registry.npmjs.org/node-gyp/-/node-gyp-13.1.0.tgz"
+    filename: "node-gyp-13.1.0.tar.gz"
+  - type: url
+    url: "https://registry.npmjs.org/glob/-/glob-13.0.7.tgz"
+    filename: "glob-13.0.7.tar.gz"
+
+transform:
+  - type: run
+    target: "npm-${VERSION}.tar.gz"
+    artifacts: ["node-gyp-13.1.0.tar.gz", "glob-13.0.7.tar.gz"]
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        rm -rf package/node_modules/node-gyp package/node_modules/glob
+        mkdir -p package/node_modules/node-gyp package/node_modules/glob
+        tar -xf node-gyp-13.1.0.tar.gz --strip-components=1 -C package/node_modules/node-gyp
+        tar -xf glob-13.0.7.tar.gz --strip-components=1 -C package/node_modules/glob
+        node "${PACKAGE_DIR}/prepare-source.cjs" package
+        node "${PACKAGE_DIR}/test-nodejs-requires.cjs" package
+        node "${PACKAGE_DIR}/generate-nodejs-requires.cjs" package nodejs-requires.inc
+        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+          --format=gnu -czf "npm-${VERSION}-node-gyp-13.1.0-glob-13.0.7.tar.gz" package
+    outputs:
+      - "npm-${VERSION}-node-gyp-13.1.0-glob-13.0.7.tar.gz"
+      - nodejs-requires.inc
+
+post:
+  - type: run
+    artifacts: [nodejs-requires.inc]
+    command: [test, -s, nodejs-requires.inc]
+
+publish:
+  files:
+    - "npm-${VERSION}-node-gyp-13.1.0-glob-13.0.7.tar.gz"
