@@ -59,7 +59,7 @@ def expand_task_run_specs(specs: list) -> list:
 # renovate: datasource=docker depName=quay.io/hummingbird-ci/rpmbuild-pipeline
 PIPELINE_BUNDLE = "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
 # renovate: datasource=docker depName=quay.io/hummingbird-ci/hummingbird-tools
-PROMOTION_TOOL_IMAGE = "quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:f676e04fe608084673859ff06c35311dddac520d1b603545fd1c206783ace5dd"
+PROMOTION_TOOL_IMAGE = "quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:80654526f8517579dff271521888706a8a3b358fdc0dc0a6d88ca48885fa957d"
 PROMOTION_ARCHIVE_URL = "https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com"
 
 def load_yaml_file(path: Path) -> dict | None:
