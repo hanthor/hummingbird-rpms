@@ -1,11 +1,14 @@
 Summary: An XML parser library
 Name: expat
 Version: 2.10.0
-Release: 0.1%{?dist}
+Release: 0.2%{?dist}
 Source0: https://github.com/libexpat/libexpat/releases/download/R_2_10_0/expat-%{version}.tar.gz
 Source1: https://github.com/libexpat/libexpat/releases/download/R_2_10_0/expat-%{version}.tar.gz.asc
 # Sebastian Pipping's PGP public key
 Source2: https://keys.openpgp.org/vks/v1/by-fingerprint/3176EF7DB2367F1FCA4F306B1F9B0E909AF37285
+
+# https://github.com/libexpat/libexpat/pull/1492
+Patch0: expat-2.10.0-CVE-2026-124317.patch
 
 URL: https://libexpat.github.io/
 VCS: git:https://github.com/libexpat/libexpat.git
