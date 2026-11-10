@@ -5,6 +5,10 @@ post_commands = [
      "vendor/github.com/dlclark/regexp2/LICENSE"],
 ]
 
+# CVE-2026-77299: upstream hugo pins regexp2/v2 2.2.1; keep the fixed version when regenerating.
+[archive.dependency_overrides]
+"github.com/dlclark/regexp2/v2" = "v2.3.0"
+
 [licensing]
 detector = "askalono"
 [[licensing.licenses]]
