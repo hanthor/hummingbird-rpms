@@ -2,8 +2,11 @@
 # No go_mod_dir: create-vendor-tarball.sh passes _build/ directly to
 # go_vendor_archive create, so it vendors from there without a subdirectory prefix.
 post_commands = [
-  ["curl", "-fSL", "-o", "vendor/bitbucket.org/atlassian/go-asap/v2/LICENSE", "https://bitbucket.org/atlassian/go-asap/raw/HEAD/LICENSE.txt"],
-  ["curl", "-fSL", "-o", "vendor/modernc.org/memory/LICENSE", "https://gitlab.com/cznic/memory/-/raw/master/LICENSE"],
+  # OCB's selected modules change between releases. Add these licenses only
+  # when the corresponding module was actually vendored.
+  ["sh", "-ec", "if test -d vendor/bitbucket.org/atlassian/go-asap/v2; then curl -fSL -o vendor/bitbucket.org/atlassian/go-asap/v2/LICENSE https://bitbucket.org/atlassian/go-asap/raw/HEAD/LICENSE.txt; fi"],
+  ["sh", "-ec", "if test -d vendor/modernc.org/memory; then curl -fSL -o vendor/modernc.org/memory/LICENSE https://gitlab.com/cznic/memory/-/raw/master/LICENSE; fi"],
+  # Keep Avro mandatory: both paths have manual license entries below.
   ["cp", "vendor/github.com/hamba/avro/v2/LICENCE", "vendor/github.com/iskorotkov/avro/v2/LICENCE"],
   # Go 1.27 rejects crypto.RegisterHash(Hash(0), ...). SermoDigital/jose's
   # crypto/none.go registers the JOSE "none" alg against hash id 0 in init(),
@@ -17,7 +20,7 @@ post_commands = [
   # it). Apply the same edit here against the vendored copy so the RPM build
   # does not need a published fork. Drop once asapauthextension/go-asap no
   # longer pull in SermoDigital/jose.
-  ["sed", "-i", "/crypto\\.RegisterHash(crypto\\.Hash(0), h)/d", "vendor/github.com/SermoDigital/jose/crypto/none.go"],
+  ["sh", "-ec", "if test -f vendor/github.com/SermoDigital/jose/crypto/none.go; then sed -i '/crypto\\.RegisterHash(crypto\\.Hash(0), h)/d' vendor/github.com/SermoDigital/jose/crypto/none.go; fi"],
 ]
 
 [licensing]
