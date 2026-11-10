@@ -2163,6 +2163,10 @@
         "^rpms/sqlite/",
         "^test/rpms/sqlite\\.yml$"
       ],
+      "squid--rpms": [
+        "^rpms/squid/",
+        "^test/rpms/squid\\.yml$"
+      ],
       "subversion--rpms": [
         "^rpms/subversion/",
         "^test/rpms/subversion\\.yml$"

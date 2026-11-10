@@ -1622,6 +1622,9 @@
       "sqlite--rpms": [
         "^rpms/sqlite/"
       ],
+      "squid--rpms": [
+        "^rpms/squid/"
+      ],
       "subversion--rpms": [
         "^rpms/subversion/"
       ],
