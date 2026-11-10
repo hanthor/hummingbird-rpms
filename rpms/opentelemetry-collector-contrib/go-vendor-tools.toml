@@ -74,11 +74,6 @@ sha256sum = "349fec2711443e0da8f36e388931fdfe2f874fdd4df307b9a379d01bb9764dc8"
 expression = "MIT"
 
 [[licensing.licenses]]
-path = "vendor/github.com/dgraph-io/ristretto/v2/z/LICENSE"
-sha256sum = "8444f00636d263befe4ea82fd5533df0f86347626b6ede2c07089534d96894a0"
-expression = "MIT AND Apache-2.0"
-
-[[licensing.licenses]]
 path = "vendor/github.com/shirou/gopsutil/v3/LICENSE"
 sha256sum = "ad1e64b82c04fb2ee6bfe521bff01266971ffaa70500024d4ac767c6033aafb9"
 expression = "BSD-3-Clause"
@@ -122,7 +117,7 @@ expression = "BSD-3-Clause"
 # sqlite's generated notice contains flattened third-party license texts;
 # askalono cannot classify the combined document as one license.
 path = "vendor/modernc.org/sqlite/LICENSE-3RD-PARTY.md"
-sha256sum = "b4366b9c27a9364633e015011a231913ed19bf1228f335bf617e50a6f7b168a6"
+sha256sum = "4194f8e7119be72babd499db4f6f1f7547e36e8a7bffcb2b9c8df241b8f1576a"
 expression = "Apache-2.0 AND BSD-3-Clause AND MIT AND MPL-2.0 AND LicenseRef-Fedora-Public-Domain"
 
 [[licensing.licenses]]
