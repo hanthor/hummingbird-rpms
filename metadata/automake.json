@@ -2,11 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/automake.git",
-    "release": "5",
-    "sha": "438f8f151e7410484c51137aaa7435ccc45957da"
+    "release": "1",
+    "sha": "e45f5598f8b58a562f70b3926b2d0e9602eb9ca4"
   },
   "modification_reason": "Exclude gcc-objc/gcc-objc++ BuildRequires (disabled in Hummingbird gcc build)",
   "modification_status": "modified",
   "upstream_repo": "https://git.savannah.gnu.org/git/automake.git",
-  "version": "1.18.1"
+  "version": "1.20"
 }
