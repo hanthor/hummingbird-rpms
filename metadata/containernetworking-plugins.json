@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/containernetworking-plugins.git",
-    "release": "5",
     "sha": "b75ff28cbae163bcd3f96dbd9634be38337fbac1"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 1.10.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 20784,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/containernetworking/plugins",
-  "version": "1.9.1"
+  "version": "1.10.0"
 }
