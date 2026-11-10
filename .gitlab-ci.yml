@@ -122,6 +122,30 @@ check:
   rules:
     - !reference [.rules, mr]
 
+# Build the documentation site with this repo's docs (and CONTRIBUTING.md
+# snippet) mounted in place of the rpms Hugo module, then run the
+# agent-friendly docs (afdocs) suite against it, so a documentation change
+# that breaks the site fails here instead of in the documentation repo's
+# pipeline. The clone is public (no token needed); setup-host resolves the
+# other mounted repos at their default branches, the same way the production
+# site build does.
+check-afdocs:
+  # hugo serve and the afdocs scan run concurrently, as in the documentation
+  # repo's own check-afdocs job.
+  tags: [hum-1cpu-1gi]
+  script:
+    - git clone --depth 1 https://gitlab.com/redhat/hummingbird/documentation.git /tmp/docs
+    - cd /tmp/docs
+    - make setup-host
+    - make check-afdocs-host RPMS_REPO_PATH="$CI_PROJECT_DIR"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes:
+        - CONTRIBUTING.md
+        - documentation/*
+        - documentation/**/*
+    - !reference [.rules, mr_manual]
+
 # Predicts the NEVR(A) each changed package's spec would build and checks it
 # against the public Pulp repo, to catch the case where a Release value
 # already published (e.g. by another rebuild MR based on stale main) would
@@ -331,6 +355,7 @@ trigger_documentation:
   rules:
     - if: $CI_PIPELINE_SOURCE =~ 'push|web' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
+        - documentation/*
         - documentation/**/*
         - README.md
         - CONTRIBUTING.md
