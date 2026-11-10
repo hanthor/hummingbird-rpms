@@ -2,6 +2,7 @@
 # If a package is not listed in this file, it will use default settings.
 #
 # Available options per package:
+#   push_pipeline: "build" (default) rebuilds on push; "promotion" reuses the MR-tested image
 #   timeout_hours: Override the default build timeout (default: 4 hours)
 #   build_architectures: Override the default RPM architectures (aarch64, x86_64, and s390x)
 #   build_platforms: Override the default MPLs (instance sizes) for builds
@@ -815,3 +816,155 @@ xmlsec1:
 
 zstd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
+# HUM-11952 batch 1: recently active packages with default build settings.
+
+apt:
+  push_pipeline: promotion
+
+automake:
+  push_pipeline: promotion
+
+babeltrace:
+  push_pipeline: promotion
+
+containernetworking-plugins:
+  push_pipeline: promotion
+
+dbus-python:
+  push_pipeline: promotion
+
+debugedit:
+  push_pipeline: promotion
+
+dhcpcd:
+  push_pipeline: promotion
+
+dnf5:
+  push_pipeline: promotion
+
+elfutils:
+  push_pipeline: promotion
+
+google-noto-fonts:
+  push_pipeline: promotion
+
+icu:
+  push_pipeline: promotion
+
+inih:
+  push_pipeline: promotion
+
+iproute:
+  push_pipeline: promotion
+
+java-21-openjdk:
+  push_pipeline: promotion
+
+kmod:
+  push_pipeline: promotion
+
+less:
+  push_pipeline: promotion
+
+libbsd:
+  push_pipeline: promotion
+
+liblerc:
+  push_pipeline: promotion
+
+libmd:
+  push_pipeline: promotion
+
+libmodulemd:
+  push_pipeline: promotion
+
+librepo:
+  push_pipeline: promotion
+
+libretls:
+  push_pipeline: promotion
+
+netcat:
+  push_pipeline: promotion
+
+nghttp3:
+  push_pipeline: promotion
+
+nss:
+  push_pipeline: promotion
+
+openldap:
+  push_pipeline: promotion
+
+openssh:
+  push_pipeline: promotion
+
+pixman:
+  push_pipeline: promotion
+
+podman:
+  push_pipeline: promotion
+
+postgresql18:
+  push_pipeline: promotion
+
+python-cffi:
+  push_pipeline: promotion
+
+python-charset-normalizer:
+  push_pipeline: promotion
+
+python-configobj:
+  push_pipeline: promotion
+
+python-distro:
+  push_pipeline: promotion
+
+python-idna:
+  push_pipeline: promotion
+
+python-jsonpatch:
+  push_pipeline: promotion
+
+python-jsonpointer:
+  push_pipeline: promotion
+
+python-jsonschema:
+  push_pipeline: promotion
+
+python-oauthlib:
+  push_pipeline: promotion
+
+python-rpds-py:
+  push_pipeline: promotion
+
+qt6-qtsvg:
+  push_pipeline: promotion
+
+redhat-rpm-config:
+  push_pipeline: promotion
+
+setools:
+  push_pipeline: promotion
+
+setup:
+  push_pipeline: promotion
+
+tpm2-tss:
+  push_pipeline: promotion
+
+tzdata:
+  push_pipeline: promotion
+
+uriparser:
+  push_pipeline: promotion
+
+xfsprogs:
+  push_pipeline: promotion
+
+xkeyboard-config:
+  push_pipeline: promotion
+
+zeromq:
+  push_pipeline: promotion
