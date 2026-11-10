@@ -25,101 +25,10 @@ Patch0:         grafana-yarn-cache.patch
 Patch1:         disable-parallel-db-regression-tests.patch
 # https://github.com/grafana/grafana/commit/9915b2507f5870a590d17260b6e229dc12b3d689
 Patch2:         reset-begintx-test-deadline.patch
-#Patch3:         grafana-fast-uri-cve.patch
-#Patch4:         grafana-npm-cve-brace-postcss.patch
-#Patch5:         grafana-ip-address-cve.patch
-#Patch6:         grafana-browserslist-nanoid-cve.patch
-#Patch7:         grafana-dompurify-cve.patch
-# Must apply after the CVE patches above: pins compressionLevel (was
-# upstream's non-deterministic "mixed") and carries the full yarn.lock
-# checksum regeneration that requires, reflecting their yarn.lock changes.
-#Patch8:         grafana-yarn-cache-compression.patch
-# Generated against the post-compression lockfile, so this comes after
-# grafana-yarn-cache-compression.patch (same order as in source-pipeline.yaml).
-#Patch9:         grafana-js-yaml-cve.patch
-# Generated against the post-js-yaml lockfile, so this comes after Patch9
-# (same order as in source-pipeline.yaml). Bumps vendored fast-uri
-# 3.1.6 -> 3.1.7 for CVE-2026-84394, CVE-2026-84292.
-#Patch10:        grafana-fast-uri-3.1.7-cve.patch
-# Generated against the post-fast-uri-3.1.7 lockfile, so this comes after
-# Patch10 (same order as in source-pipeline.yaml). Bumps vendored undici
-# 7.25.0 -> 7.29.1 for CVE-2026-84961, CVE-2026-19534, CVE-2026-18540,
-# CVE-2026-84933, CVE-2026-18149, CVE-2026-84947, CVE-2026-85008,
-# CVE-2026-84890, CVE-2026-85014.
-#Patch11:        grafana-undici-cve.patch
-# Generated against the post-Patch11 lockfile. Bumps vendored joi
-# 17.13.3 -> 17.13.8 for CVE-2026-90771.
-#Patch12:        grafana-joi-cve.patch
-# Generated against the post-Patch12 lockfile, so this comes after Patch12
-# (same order as in source-pipeline.yaml). Bumps vendored fast-uri
-# 3.1.7 -> 3.1.8 for CVE-2026-86472.
-#Patch13:        grafana-fast-uri-3.1.8-cve.patch
-# Keep the source module graph aligned with go-vendor-tools.toml's
-# go-openapi/swag 0.27.1 vendor update for CVE-2026-93450.
-#Patch14:        grafana-go-openapi-swag-cve.patch
-# Bumps vendored DOMPurify
-# 3.4.12 -> 3.4.13 (CVE-2026-75838).
-#Patch15:        grafana-dompurify-3.4.13-cve.patch
-# Generated against the post-Patch15 lockfile. Backports the CVE-2026-9496
-# fix from pacote 21.5.1 into the vendored pacote 21.0.1 and 21.0.4: replaces
-# the ReDoS-prone /#.*$/ regex in addGitSha with an indexOf/slice approach.
-# The yarn cache tarball ships patched zip files; this patch updates the
-# checksums in yarn.lock to match.
-#Patch16:        grafana-pacote-cve.patch
-# Generated against the post-Patch16 lockfile. Bumps vendored hono
-# 4.12.7 -> 4.13.7 for CVE-2026-93981: hono before 4.13.7 fails to
-# HTML-escape plain strings in hono/jsx server-side rendering paths.
-#Patch17:        grafana-hono-4.13.7-cve.patch
-# Generated against the post-Patch17 lockfile (grafana-hono-4.13.7-cve.patch),
-# so this comes after it. Bumps vendored axios 1.16.0 -> 1.20.0 for
-# CVE-2026-101903: the RFC 2397 data-URL regular expression allows slash
-# characters on both sides of the media-type separator, so an
-# attacker-controlled malformed data: URL with many slashes and no comma
-# causes catastrophic regex backtracking that blocks the Node.js event loop
-# (DoS).
-#Patch18:        grafana-axios-1.20.0-cve.patch
-# Generated against the post-Patch18 lockfile (grafana-axios-1.20.0-cve.patch),
-# so this comes after it. Bumps vendored hono 4.13.7 -> 4.13.11 for
-# CVE-2026-109955: hono before 4.13.11 decodes the serveStatic request path
-# a second time, letting a crafted percent-encoded path bypass prefix
-# middleware (e.g. authentication) and still reach the static file.
-#Patch19:        grafana-hono-4.13.11-cve.patch
-# Generated against the post-Patch19 lockfile (grafana-hono-4.13.11-cve.patch),
-# so this comes after it. Bumps vendored storybook 8.6.18 -> 8.6.19 and
-# 10.0.8 -> 10.6.2 (CVE-2026-114126, CVE-2026-114125) and follow-redirects
-# 1.16.0 -> 1.16.1 (CVE-2026-111756, CVE-2026-111755). Retargets the
-# @storybook/core Grafana esbuild-conditions yarn patch to 8.6.19.
-#Patch20:        grafana-storybook-follow-redirects-cve.patch
-# Generated against the post-Patch20 lockfile
-# (grafana-storybook-follow-redirects-cve.patch), so this comes after it.
-# Bumps vendored qs 6.14.1 -> 6.16.1 for CVE-2026-110816.
-#Patch21:        grafana-qs-6.16.1.patch
-# Match the go-vendor-tools kin-openapi v0.149.0 pre_command in the
-# source tree. Bumps getkin/kin-openapi 0.147.0 -> 0.149.0 (and
-# santhosh-tekuri/jsonschema/v6 6.0.2 -> 6.0.3) for CVE-2026-100352,
-# CVE-2026-100353, CVE-2026-100354.
-#Patch22:        grafana-kin-openapi-0.149.0-cve.patch
-# Generated against the post-Patch21 lockfile (grafana-qs-6.16.1.patch),
-# so this comes after the yarn CVE patch series. Bumps vendored fast-uri
-# 3.1.8 -> 3.1.9 for CVE-2026-110306, CVE-2026-110180, CVE-2026-110095,
-# CVE-2026-110725.
-#Patch23:        grafana-fast-uri-3.1.9-cve.patch
-# Generated against the post-Patch23 lockfile
-# (grafana-fast-uri-3.1.9-cve.patch), so this comes after it. Bumps
-# vendored body-parser 1.20.3 -> 1.20.9 and 2.2.1 -> 2.4.0 for
-# CVE-2026-111181.
-#Patch24:        grafana-body-parser-cve.patch
-# Generated against the post-Patch24 lockfile
-# (grafana-body-parser-cve.patch), so this comes after it. Bumps
-# follow-redirects 1.16.1 -> 1.16.2 for CVE-2026-116689, removes
-# serialize-javascript 6.0.2 by upgrading terser-webpack-plugin 5.3.16
-# -> 5.6.1 (CVE-2026-115754), and bumps serialize-javascript 7.0.5
-# -> 7.1.4 for CVE-2026-115897.
-#Patch25:        grafana-follow-redirects-serialize-javascript-cve.patch
 # Bumps github.com/klauspost/compress v1.19.1 -> v1.20.2 to fix Denial of
 # Service via crafted zstd compressed input for CVE-2026-116591.
-Patch26:        grafana-klauspost-compress-cve.patch
-Patch27:        grafana-frontend-%{version}.patch
+Patch3:         grafana-klauspost-compress-cve.patch
+Patch4:         grafana-frontend-%{version}.patch
 
 # The bundled @swc/core 1.15.3 has no published linux-s390x native build
 # (s390x support was only added in @swc/core 1.15.21), so the frontend

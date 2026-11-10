@@ -13,7 +13,15 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 PACKAGE_DIR = ROOT_DIR / "rpms/grafana12.4"
 
 
-def test_12_4_14_activation_preserves_backend_patches(tmp_path: Path) -> None:
+def test_12_4_14_spec_has_only_active_patches(tmp_path: Path) -> None:
+    current_spec = (PACKAGE_DIR / "grafana12.4.spec").read_text()
+    config = json.loads((PACKAGE_DIR / "frontend-overrides.json").read_text())
+    assert config["legacy_patches"] == []
+    assert config["frontend_patch_number"] == 4
+    assert "#Patch" not in current_spec
+    assert [line.split(":", 1)[0] for line in current_spec.splitlines()
+            if line.startswith("Patch")] == [f"Patch{number}" for number in range(5)]
+
     package_dir = tmp_path / "grafana12.4"
     package_dir.mkdir()
     (package_dir / "frontend-overrides.json").write_text(
@@ -22,7 +30,7 @@ def test_12_4_14_activation_preserves_backend_patches(tmp_path: Path) -> None:
     spec = package_dir / "grafana12.4.spec"
     spec.write_text(
         "Version:        12.4.14\n"
-        + "".join(f"Patch{number}: old-{number}.patch\n" for number in range(27))
+        + "".join(f"Patch{number}: active-{number}.patch\n" for number in range(4))
     )
 
     subprocess.run(
@@ -32,12 +40,9 @@ def test_12_4_14_activation_preserves_backend_patches(tmp_path: Path) -> None:
     )
 
     updated = spec.read_text()
-    for number in (0, 1, 2, 26):
-        assert f"Patch{number}: old-{number}.patch" in updated
-    config = json.loads((package_dir / "frontend-overrides.json").read_text())
-    for number in config["legacy_patches"]:
-        assert f"#Patch{number}: old-{number}.patch" in updated
-    assert "Patch27:        grafana-frontend-%{version}.patch" in updated
+    for number in range(4):
+        assert f"Patch{number}: active-{number}.patch" in updated
+    assert "Patch4:        grafana-frontend-%{version}.patch" in updated
 
 
 def test_post_update_activates_and_applies_frontend(tmp_path: Path) -> None:
