@@ -24,9 +24,11 @@ Optional:
                        Default: ${DEFAULT_TYPE}
   --config <path>      Path to pulp CLI config file (e.g., cli.toml)
   --retain-repo-versions <n>
-                       For --type file only: set retain_repo_versions to <n> on each
-                       file repository when the current value differs (non-negative integer).
+                       Set retain_repo_versions to <n> (non-negative integer).
+                       For rpm, only newly created repositories are updated;
+                       existing repositories require a separate bounded change.
                        Default for file: ${DEFAULT_FILE_RETAIN_REPO_VERSIONS} if omitted.
+                       Default for rpm: leave retention unchanged.
   --help               Show this help message
 
 Examples:
@@ -43,7 +45,7 @@ PULP_DOMAIN=""
 PULP_REPOSITORIES_STRING=""
 PULP_TYPE=""
 PULP_CONFIG_FILE=""
-PULP_FILE_RETAIN_REPO_VERSIONS=""
+PULP_RETAIN_REPO_VERSIONS=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -84,7 +86,7 @@ while [[ $# -gt 0 ]]; do
         echo "🔴 error: --retain-repo-versions requires a value"
         usage 1
       fi
-      PULP_FILE_RETAIN_REPO_VERSIONS="$2"
+      PULP_RETAIN_REPO_VERSIONS="$2"
       shift 2
       ;;
     --help)
@@ -102,8 +104,8 @@ if [[ -z "${PULP_DOMAIN}" ]]; then
   usage 1
 fi
 
-if [[ -n "${PULP_FILE_RETAIN_REPO_VERSIONS}" ]]; then
-  if ! [[ "${PULP_FILE_RETAIN_REPO_VERSIONS}" =~ ^[0-9]+$ ]]; then
+if [[ -n "${PULP_RETAIN_REPO_VERSIONS}" ]]; then
+  if ! [[ "${PULP_RETAIN_REPO_VERSIONS}" =~ ^[0-9]+$ ]]; then
     echo "🔴 error: --retain-repo-versions must be a non-negative integer"
     exit 1
   fi
@@ -116,14 +118,14 @@ else
   echo "ℹ️ Using provided repository type: ${PULP_TYPE}"
 fi
 
-if [[ -n "${PULP_FILE_RETAIN_REPO_VERSIONS}" && "${PULP_TYPE}" != "file" ]]; then
-  echo "🔴 error: --retain-repo-versions is only valid with --type file (default type is rpm)"
+if [[ -n "${PULP_RETAIN_REPO_VERSIONS}" && "${PULP_TYPE}" != "file" && "${PULP_TYPE}" != "rpm" ]]; then
+  echo "🔴 error: --retain-repo-versions is only valid with --type file or rpm"
   exit 1
 fi
 
-if [[ "${PULP_TYPE}" == "file" && -z "${PULP_FILE_RETAIN_REPO_VERSIONS}" ]]; then
-  PULP_FILE_RETAIN_REPO_VERSIONS="${DEFAULT_FILE_RETAIN_REPO_VERSIONS}"
-  echo "ℹ️ Using default retain_repo_versions for file repositories: ${PULP_FILE_RETAIN_REPO_VERSIONS}"
+if [[ "${PULP_TYPE}" == "file" && -z "${PULP_RETAIN_REPO_VERSIONS}" ]]; then
+  PULP_RETAIN_REPO_VERSIONS="${DEFAULT_FILE_RETAIN_REPO_VERSIONS}"
+  echo "ℹ️ Using default retain_repo_versions for file repositories: ${PULP_RETAIN_REPO_VERSIONS}"
 fi
 
 if [[ -z "${PULP_REPOSITORIES_STRING}" ]]; then
@@ -185,13 +187,13 @@ for PULP_REPOSITORY in "${PULP_REPOSITORIES[@]}"; do
       repo_created=true
       # --autopublish is supported for rpm and file types
       update_args=(--autopublish)
-      if [[ "${PULP_TYPE}" == "file" && -n "${PULP_FILE_RETAIN_REPO_VERSIONS}" ]]; then
-        update_args+=(--retain-repo-versions "${PULP_FILE_RETAIN_REPO_VERSIONS}")
-        echo "📝 Setting autopublish and retain_repo_versions=${PULP_FILE_RETAIN_REPO_VERSIONS} for new repository '${PULP_REPOSITORY}'..."
+      if [[ -n "${PULP_RETAIN_REPO_VERSIONS}" ]]; then
+        update_args+=(--retain-repo-versions "${PULP_RETAIN_REPO_VERSIONS}")
+        echo "📝 Setting autopublish and retain_repo_versions=${PULP_RETAIN_REPO_VERSIONS} for new repository '${PULP_REPOSITORY}'..."
       fi
       pulp "${PULP_CONFIG_OPT[@]}" --domain "${PULP_DOMAIN}" "${PULP_TYPE}" repository update --name "${PULP_REPOSITORY}" "${update_args[@]}"
     fi
-    if [[ "${PULP_TYPE}" == "file" && -n "${PULP_FILE_RETAIN_REPO_VERSIONS}" ]]; then
+    if [[ -n "${PULP_RETAIN_REPO_VERSIONS}" ]]; then
       if [[ "${repo_created}" == true ]]; then
         : # already handled above
       else
@@ -209,17 +211,22 @@ if cur is None:
     sys.stdout.write('yes')
 else:
     sys.stdout.write('yes' if int(cur) != want else 'no')
-" "${PULP_FILE_RETAIN_REPO_VERSIONS}") || {
+" "${PULP_RETAIN_REPO_VERSIONS}") || {
           echo "🔴 error: failed to parse JSON for repository '${PULP_REPOSITORY}'"
           exit 1
         }
         if [[ "${need_update}" == "yes" ]]; then
-          echo "📝 Setting retain_repo_versions to ${PULP_FILE_RETAIN_REPO_VERSIONS} for '${PULP_REPOSITORY}'..."
+          if [[ "${PULP_TYPE}" == "rpm" ]]; then
+            echo "🔴 error: RPM repository '${PULP_REPOSITORY}' already exists with a different or absent retention limit."
+            echo "Change existing RPM retention in bounded steps outside repository setup."
+            exit 1
+          fi
+          echo "📝 Setting retain_repo_versions to ${PULP_RETAIN_REPO_VERSIONS} for '${PULP_REPOSITORY}'..."
           pulp "${PULP_CONFIG_OPT[@]}" --domain "${PULP_DOMAIN}" "${PULP_TYPE}" repository update \
             --name "${PULP_REPOSITORY}" \
-            --retain-repo-versions "${PULP_FILE_RETAIN_REPO_VERSIONS}"
+            --retain-repo-versions "${PULP_RETAIN_REPO_VERSIONS}"
         else
-          echo "ℹ️ Repository '${PULP_REPOSITORY}' retain_repo_versions already ${PULP_FILE_RETAIN_REPO_VERSIONS}, skipping update."
+          echo "ℹ️ Repository '${PULP_REPOSITORY}' retain_repo_versions already ${PULP_RETAIN_REPO_VERSIONS}, skipping update."
         fi
       fi
     fi
