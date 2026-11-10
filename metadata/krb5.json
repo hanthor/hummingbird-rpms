@@ -3,11 +3,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/krb5.git",
-    "release": "11",
     "sha": "f50fddae606929218cdb9f8a9de170664202174f"
   },
-  "modification_reason": "Backport CVE-2026-107778 CVE-2026-107708",
+  "modification_reason": "Update to 1.22.3 for CVE-2026-71199, CVE-2026-118380 and 15 related CVEs",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/krb5/krb5",
-  "version": "1.22.2"
+  "version": "1.22.3"
 }

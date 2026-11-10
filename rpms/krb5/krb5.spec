@@ -6,7 +6,7 @@
 %global configure_default_ccache_name 1
 %global configured_default_ccache_name KEYRING:persistent:%%{uid}
 
-%global krb5_release 11%{?dist}
+%global krb5_release 0.1%{?dist}
 
 # This should be e.g. beta1 or %%nil
 %global pre_release %nil
@@ -19,7 +19,7 @@
 %global krb5_version_major 1
 %global krb5_version_minor 22
 # For a release without a patch number set to %%nil
-%global krb5_version_patch 2
+%global krb5_version_patch 3
 
 %global krb5_version_major_minor %{krb5_version_major}.%{krb5_version_minor}
 %global krb5_version %{krb5_version_major_minor}
@@ -58,15 +58,8 @@ Source15: %{name}-tests
 # This will give us CI and makes it easy to generate patchsets.
 #
 # Generate the patchset using:
-#   git format-patch -l1 --stdout fedora-1.22.2-base > krb5-1.22-redhat.patch
+#   git format-patch -l1 --stdout fedora-1.22.3-base > krb5-1.22-redhat.patch
 Patch0:        krb5-1.22-redhat.patch
-
-# CVE-2026-107778: avoid null dereference in krb5_rd_cred() on mismatched
-# KRB-CRED ticket_info arrays
-Patch1:        0001-CVE-2026-107778-rd_cred-null-deref.patch
-# CVE-2026-107708: propagate the error code instead of returning success
-# from get_pac_princ_with_realm() on malformed PAC client names
-Patch2:        0002-CVE-2026-107708-pac-error-propagation.patch
 
 License: Brian-Gladman-2-Clause AND BSD-2-Clause AND (BSD-2-Clause OR GPL-2.0-or-later) AND BSD-2-Clause-first-lines AND BSD-3-Clause AND BSD-4-Clause AND CMU-Mach-nodoc AND FSFULLRWD AND HPND AND HPND-export2-US AND HPND-export-US AND HPND-export-US-acknowledgement AND HPND-export-US-modify AND ISC AND MIT AND MIT-CMU AND OLDAP-2.8 AND OpenVision
 URL: https://web.mit.edu/kerberos/www/
