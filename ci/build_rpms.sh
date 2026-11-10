@@ -27,6 +27,9 @@ Usage: ./ci/build_rpms.sh [OPTIONS] PACKAGE_NAME
                        high-priority repo (useful for testing build compatibility)
   --hermetic         - Match CI: materialize dependencies, then build offline
   --nocheck          - Skip running %check tests during the build
+  --prep-only        - Only run through %prep (rpmbuild -rp).  Verifies that all
+                       sources are present, tarballs unpack, and patches apply
+                       without running the full build.  Produces only an SRPM.
   --shell-before     - Drop into interactive shell instead of running mock
                        (displays the mock command that would be executed)
   --shell-after      - Drop into interactive shell after running mock
@@ -36,7 +39,7 @@ The built RPMs can be found in: builds/PACKAGE_NAME/RPMS/ and builds/PACKAGE_NAM
 
 The default is the faster networked Mock build. Use --hermetic to reproduce
 Konflux's dependency-calculation and network-disabled build phases exactly.
-Interactive shell modes cannot be used with --hermetic.
+Interactive shell modes and --prep-only cannot be used with --hermetic.
 EOF
 }
 
@@ -46,6 +49,7 @@ build_dir=""
 local_rpms_dir=""
 hermetic=""
 nocheck=""
+prep_only=""
 shell_before=""
 shell_after=""
 package_name=""
@@ -77,6 +81,10 @@ while [[ $# -gt 0 ]]; do
             nocheck="--nocheck"
             shift
             ;;
+        --prep-only)
+            prep_only="1"
+            shift
+            ;;
         --shell-before)
             shell_before="1"
             shift
@@ -100,6 +108,11 @@ done
 
 if [[ -n "${hermetic}" && ( -n "${shell_before}" || -n "${shell_after}" ) ]]; then
     echo "Error: Interactive shell modes cannot be used with --hermetic" >&2
+    exit 1
+fi
+
+if [[ -n "${prep_only}" && ( -n "${hermetic}" || -n "${shell_before}" || -n "${shell_after}" ) ]]; then
+    echo "Error: --prep-only cannot be used with --hermetic, --shell-before, or --shell-after" >&2
     exit 1
 fi
 
@@ -259,6 +272,19 @@ mock_cmd="mock -r /config/mock.cfg \\
      --no-clean --no-cleanup-after \\
      ${nocheck}"
 
+# Commands used by --prep-only.  mock's --short-circuit=prep cannot be used:
+# rpmbuild's --short-circuit skips creating the build directory, so %prep
+# fails.  Instead build the SRPM (which verifies all Source/Patch files are
+# present), install its BuildRequires, and run 'rpmbuild -rp' (build through
+# %prep from the SRPM) in the buildroot as the unprivileged build user.
+prep_srpm_cmd="mock -r /config/mock.cfg \\
+     --spec '/repo/rpms/${package_name}/${spec_file_name}' \\
+     --sources /sources \\
+     --resultdir /results \\
+     --no-clean --no-cleanup-after \\
+     --buildsrpm"
+prep_mock="mock -r /config/mock.cfg --resultdir /results --no-clean --no-cleanup-after"
+
 podman run "${podman_args[@]}" "${image}" bash -euo pipefail -c "
 # Configure curl's header until https://github.com/release-engineering/dist-git/issues/88 is fixed
 echo 'header = \"Accept-Encoding: identity\"' > /tmp/.curlrc
@@ -316,6 +342,24 @@ elif [[ -z '${hermetic}' && -n '${shell_after}' ]]; then
     echo '=========================================='
     echo ''
     mock -r /config/mock.cfg --resultdir /results --no-clean --enable-network --shell
+elif [[ -z '${hermetic}' && -n '${prep_only}' ]]; then
+    popd
+    echo 'Building SRPM...'
+    ${prep_srpm_cmd}
+    srpms=(/results/*.src.rpm)
+    if [[ \${#srpms[@]} -ne 1 || ! -f \${srpms[0]} ]]; then
+        echo 'Error: expected exactly one SRPM in /results' >&2
+        exit 1
+    fi
+    srpm=\${srpms[0]}
+    srpm_name=\$(basename \${srpm})
+    echo 'Installing BuildRequires...'
+    ${prep_mock} --installdeps \${srpm}
+    ${prep_mock} --copyin \${srpm} /builddir/build/\${srpm_name}
+    ${prep_mock} --chroot -- chmod 644 /builddir/build/\${srpm_name}
+    echo 'Running %prep (rpmbuild -rp)...'
+    ${prep_mock} --unpriv --chroot -- rpmbuild -rp --nodeps --target ${arch} \
+        /builddir/build/\${srpm_name} 2>&1 | tee /results/prep.log
 elif [[ -z '${hermetic}' ]]; then
     ${mock_cmd}
 
@@ -373,6 +417,11 @@ ls "${workdir}/RPMS"/*.rpm 2>/dev/null || echo "No binary RPMs found"
 echo ""
 echo "Source RPMs:"
 ls "${workdir}/SRPMS"/*.src.rpm 2>/dev/null || echo "No source RPMs found"
+
+if [[ -n "${prep_only}" ]]; then
+    echo ""
+    echo "%prep (rpmbuild -rp) completed successfully for ${package_name}"
+fi
 
 echo ""
 echo "Build outputs saved to: ${workdir}/"
