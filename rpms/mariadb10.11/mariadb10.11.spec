@@ -191,7 +191,7 @@ Provides: mariadb%{majorversion}%{?1:-%{1}}%{?_isa} = %{sameevr}\
 
 Name:             %{majorname}%{majorversion}
 Version:          %{package_version}
-Release:          4.1%{?with_debug:.debug}.10%{?dist}
+Release:          4.1%{?with_debug:.debug}.11%{?dist}
 Epoch:            3
 
 Summary:          A very fast and robust SQL database server
@@ -292,6 +292,8 @@ Patch29:          0042-cve-2026-85746-out-of-bound-buffer-write-st-astext-nested
 Patch30:          CVE-2026-92262.patch
 #   Patch31: CVE-2026-92262 - Galera SST test follow-up
 Patch31:          CVE-2026-92262-test-followup.patch
+#   Patch32: CVE-2026-102523 - unauthorized table access via unencoded partition names
+Patch32:          CVE-2026-102523.patch
 
 # This macro is used for package/sub-package names in the entire specfile
 %if %?mariadb_default
@@ -924,6 +926,7 @@ rm -r storage/rocksdb/
 %patch -P28 -p1
 %patch -P30 -p1
 %patch -P31 -p1
+%patch -P32 -p1
 # Binary fixtures for CVE-2026-92262 upgrade/partition tests (not representable in %%patch)
 tar -xf %{SOURCE74}
 
