@@ -1,0 +1,327 @@
+From: Simon McVittie <smcv@collabora.com>
+Subject: [PATCH] bus: Prevent DoS when a monitor is connected (CVE-2026-120749)
+
+Give driver-generated broadcast messages a serial number before they are
+captured, so that a delivery failure with a monitor attached no longer
+hits the reply_serial != 0 assertion and aborts dbus-daemon.
+
+Upstream: https://gitlab.freedesktop.org/dbus/dbus/-/merge_requests/592
+Origin: https://gitlab.freedesktop.org/dbus/dbus/-/merge_requests/565
+---
+diff --git a/bus/activation.c b/bus/activation.c
+index 68cbaae1761c..25c670f9f95c 100644
+--- a/bus/activation.c
++++ b/bus/activation.c
+@@ -2144,6 +2144,11 @@ bus_activation_activate_service (BusActivation  *activation,
+           if (service)
+             systemd = bus_service_get_primary_owners_connection (service);
+ 
++          /* If we already have a DBusConnection for systemd, we allocate
++           * a serial number as if for a method call, or if not, we
++          * allocate a serial number as if for a broadcast. */
++          bus_message_from_driver_ensure_serial (message, systemd);
++
+           /* Following the general principle of "log early and often",
+            * we capture that we *want* to send the activation message, even if
+            * systemd is not actually there to receive it yet */
+diff --git a/bus/bus.c b/bus/bus.c
+index eaa8f2aeac2a..6b5013a31f4e 100644
+--- a/bus/bus.c
++++ b/bus/bus.c
+@@ -1108,6 +1108,8 @@ bus_context_send_activatable_services_changed (BusContext *context,
+       goto out;
+     }
+ 
++  bus_message_from_driver_ensure_serial (message, NULL);
++
+   if (!bus_transaction_capture (transaction, NULL, NULL, message))
+     {
+       BUS_SET_OOM (error);
+diff --git a/bus/connection.c b/bus/connection.c
+index e79177789e8f..39ba3181a519 100644
+--- a/bus/connection.c
++++ b/bus/connection.c
+@@ -131,6 +131,42 @@ static void bus_connection_drop_pending_replies (BusConnections  *connections,
+ 
+ static dbus_bool_t expire_incomplete_timeout (void *data);
+ 
++/* This has the same logic as _dbus_connection_get_next_client_serial(),
++ * but instead of one serial number per connection, the message bus
++ * maintains one global serial number to be used on broadcasts. */
++static dbus_uint32_t
++get_next_broadcast_serial (void)
++{
++  /* Start just before the wrap-around, so that the wrap-around is tested */
++  static dbus_uint32_t next_broadcast_serial = 0xFFFFFFFFu;
++  dbus_uint32_t ret;
++
++  ret = next_broadcast_serial++;
++
++  if (next_broadcast_serial == 0)
++    next_broadcast_serial = 1;
++
++  return ret;
++}
++
++void
++bus_message_from_driver_ensure_serial (DBusMessage    *message,
++                                       DBusConnection *addressed_recipient)
++{
++  if (dbus_message_get_serial (message) == 0)
++    {
++      dbus_uint32_t serial;
++
++      if (addressed_recipient != NULL)
++        serial = _dbus_connection_get_next_client_serial (addressed_recipient);
++      else
++        serial = get_next_broadcast_serial ();
++
++      _dbus_assert (serial != 0);
++      dbus_message_set_serial (message, serial);
++    }
++}
++
+ #define BUS_CONNECTION_DATA(connection) (dbus_connection_get_data ((connection), connection_data_slot))
+ 
+ static DBusLoop*
+@@ -2249,6 +2285,14 @@ bus_transaction_get_context (BusTransaction  *transaction)
+ /**
+  * Reserve enough memory to capture the given message if the
+  * transaction goes through.
++ *
++ * The message must already have a serial number and a sender.
++ * For messages received from a client, the client was responsible for
++ * assigning a serial number and bus_dispatch() was responsible for
++ * assigning the sender.
++ * For messages generated internally by the dbus-daemon, the source of
++ * the message is responsible for setting the sender to DBUS_SERVICE_DBUS
++ * and assigning a serial number.
+  */
+ dbus_bool_t
+ bus_transaction_capture (BusTransaction *transaction,
+@@ -2262,6 +2306,9 @@ bus_transaction_capture (BusTransaction *transaction,
+   DBusList *recipients = NULL;
+   dbus_bool_t ret = FALSE;
+ 
++  _dbus_assert (dbus_message_get_serial (message) != 0);
++  _dbus_assert (dbus_message_get_sender (message) != NULL);
++
+   connections = bus_context_get_connections (transaction->context);
+ 
+   /* shortcut: don't compose the message unless someone wants it */
+@@ -2323,6 +2370,7 @@ bus_transaction_capture_error_reply (BusTransaction  *transaction,
+   if (!dbus_message_set_sender (reply, DBUS_SERVICE_DBUS))
+     goto out;
+ 
++  bus_message_from_driver_ensure_serial (reply, addressed_recipient);
+   ret = bus_transaction_capture (transaction, NULL, addressed_recipient, reply);
+ 
+ out:
+@@ -2359,13 +2407,7 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
+    * connection, when the transaction is committed, but that's too late
+    * in this case.
+    */
+-  if (dbus_message_get_serial (message) == 0)
+-    {
+-      dbus_uint32_t next_serial;
+-
+-      next_serial = _dbus_connection_get_next_client_serial (connection);
+-      dbus_message_set_serial (message, next_serial);
+-    }
++  bus_message_from_driver_ensure_serial (message, connection);
+ 
+   if (bus_connection_is_active (connection))
+     {
+diff --git a/bus/connection.h b/bus/connection.h
+index 0ce60d11195b..9e48f8c1e282 100644
+--- a/bus/connection.h
++++ b/bus/connection.h
+@@ -175,4 +175,7 @@ int bus_connections_get_peak_bus_names_per_conn   (BusConnections *connections);
+ int bus_connection_get_peak_match_rules           (DBusConnection *connection);
+ int bus_connection_get_peak_bus_names             (DBusConnection *connection);
+ 
++void bus_message_from_driver_ensure_serial (DBusMessage    *message,
++                                            DBusConnection *addressed_recipient);
++
+ #endif /* BUS_CONNECTION_H */
+diff --git a/bus/driver.c b/bus/driver.c
+index fa4213c1ca65..f3f29ad03fea 100644
+--- a/bus/driver.c
++++ b/bus/driver.c
+@@ -267,6 +267,8 @@ bus_driver_send_service_owner_changed (const char     *service_name,
+ 
+   _dbus_assert (dbus_message_has_signature (message, "sss"));
+ 
++  bus_message_from_driver_ensure_serial (message, NULL);
++
+   if (!bus_transaction_capture (transaction, NULL, NULL, message))
+     goto oom;
+ 
+@@ -1007,7 +1009,8 @@ bus_driver_send_ack_reply (DBusConnection *connection,
+ 
+ /*
+  * Send a message from the driver, activating the destination if necessary.
+- * The message must already have a destination set.
++ * The message must already have sender and destination set,
++ * but a serial number will be added if necessary.
+  */
+ static dbus_bool_t
+ bus_driver_send_or_activate (BusTransaction *transaction,
+@@ -1019,11 +1022,14 @@ bus_driver_send_or_activate (BusTransaction *transaction,
+   const char *service_name;
+   DBusString service_string;
+ 
++  _dbus_assert (transaction != NULL);
++  _dbus_assert (message != NULL);
+   _DBUS_ASSERT_ERROR_IS_CLEAR (error);
+ 
+   service_name = dbus_message_get_destination (message);
+ 
+   _dbus_assert (service_name != NULL);
++  _dbus_assert (dbus_message_get_sender (message) != NULL);
+ 
+   _dbus_string_init_const (&service_string, service_name);
+ 
+@@ -1039,6 +1045,11 @@ bus_driver_send_or_activate (BusTransaction *transaction,
+ 
+       activation = bus_context_get_activation (context);
+ 
++      /* Assign a serial number as though this was a broadcast,
++       * since we don't yet know who will receive it.
++       * In practice replies are ignored anyway. */
++      bus_message_from_driver_ensure_serial (message, NULL);
++
+       if (!bus_transaction_capture (transaction, NULL, NULL, message))
+         {
+           BUS_SET_OOM (error);
+@@ -1060,6 +1071,8 @@ bus_driver_send_or_activate (BusTransaction *transaction,
+ 
+       service_conn = bus_service_get_primary_owners_connection (service);
+ 
++      bus_message_from_driver_ensure_serial (message, service_conn);
++
+       if (!bus_transaction_send_from_driver (transaction, service_conn, message))
+         {
+           BUS_SET_OOM (error);
+diff --git a/test/data/valid-config-files/forbidding.conf.in b/test/data/valid-config-files/forbidding.conf.in
+index 58b3cc6a7f88..30ac90f7627a 100644
+--- a/test/data/valid-config-files/forbidding.conf.in
++++ b/test/data/valid-config-files/forbidding.conf.in
+@@ -27,5 +27,8 @@
+ 
+     <!-- Used to reproduce dbus#457 -->
+     <deny receive_interface="org.freedesktop.DBus" receive_member="NameAcquired"/>
++
++    <!-- Used to reproduce dbus#576 -->
++    <deny receive_interface="org.freedesktop.DBus" receive_member="NameOwnerChanged"/>
+   </policy>
+ </busconfig>
+diff --git a/test/monitor.c b/test/monitor.c
+index f685221aa800..b5c7471a120f 100644
+--- a/test/monitor.c
++++ b/test/monitor.c
+@@ -1100,6 +1100,94 @@ test_forbidden_broadcast (Fixture *f,
+   g_assert (m == NULL);
+ }
+ 
++/*
++ * Regression test for https://gitlab.freedesktop.org/dbus/dbus/-/issues/576:
++ * when a bus-generated broadcast such as NameOwnerChanged cannot be delivered
++ * to a subscriber (due to a <deny> rule or exceeding max_outgoing_bytes),
++ * with a monitor attached, the daemon synthesizes an error reply for
++ * monitors. Before the fix, the NameOwnerChanged message had no serial
++ * number, causing the daemon to crash (assertion failure / SIGABRT) when
++ * creating the error reply.
++ *
++ * This is analogous to the initial PoC, but uses a <deny> rule instead of
++ * filling the outgoing queue, to achieve the same undeliverable-broadcast
++ * condition deterministically.
++ */
++static void
++test_forbidden_name_owner_changed (Fixture *f,
++    gconstpointer context)
++{
++  DBusConnection *extra;
++  DBusMessage *m;
++  DBusMessage *noc;
++
++  if (f->address == NULL)
++    return;
++
++  /* The recipient subscribes to NameOwnerChanged. The forbidding config
++   * denies receiving it, so delivery will fail. With a monitor attached,
++   * the daemon must synthesize an error reply for the monitor. */
++  dbus_bus_add_match (f->recipient,
++      "type='signal',interface='org.freedesktop.DBus',"
++      "member='NameOwnerChanged'",
++      &f->e);
++  test_assert_no_error (&f->e);
++
++  become_monitor (f, NULL);
++
++  /* Creating a new connection triggers a NameOwnerChanged broadcast
++   * from the bus driver. Before the fix for dbus#576, this would crash
++   * the daemon because NameOwnerChanged had no serial number when the
++   * daemon tried to create an error reply for the monitor. */
++  extra = test_connect_to_bus (f->ctx, f->address);
++
++  /* Expected monitored messages:
++   * 1. Hello method call
++   * 2. Hello reply
++   * 3. NameOwnerChanged signal (bus-generated broadcast)
++   * 4. AccessDenied error (for denied NameOwnerChanged delivery)
++   * 5. NameAcquired signal (bus-generated unicast to extra)
++   * 6. AccessDenied error (for denied NameAcquired delivery)
++   */
++  while (g_queue_get_length (&f->monitored) < 6)
++    test_main_context_iterate (f->ctx, TRUE);
++
++  m = g_queue_pop_head (&f->monitored);
++  assert_hello (m);
++  dbus_message_unref (m);
++
++  m = g_queue_pop_head (&f->monitored);
++  assert_hello_reply (m);
++  dbus_message_unref (m);
++
++  noc = g_queue_pop_head (&f->monitored);
++  assert_signal (noc, DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS,
++      "NameOwnerChanged", "sss", NULL);
++
++  /* The error reply for the denied NameOwnerChanged delivery.
++   * Before dbus#576 was fixed, the daemon would have crashed before
++   * reaching this point. */
++  m = g_queue_pop_head (&f->monitored);
++  assert_error_reply (m, DBUS_SERVICE_DBUS, DBUS_SERVICE_DBUS,
++      DBUS_ERROR_ACCESS_DENIED);
++  g_assert_cmpint (dbus_message_get_reply_serial (m), ==,
++      dbus_message_get_serial (noc));
++  dbus_message_unref (m);
++  dbus_message_unref (noc);
++
++  m = g_queue_pop_head (&f->monitored);
++  assert_unique_name_acquired (m);
++  expect_name_acquired_error (&f->monitored, m);
++  dbus_message_unref (m);
++
++  m = g_queue_pop_head (&f->monitored);
++  g_assert (m == NULL);
++
++  test_connection_shutdown (f->ctx, extra);
++  dbus_connection_close (extra);
++  dbus_connection_unref (extra);
++}
++
+ static void
+ test_unicast_signal (Fixture *f,
+     gconstpointer context)
+@@ -2038,6 +2126,9 @@ main (int argc,
+       setup, test_broadcast, teardown);
+   g_test_add ("/monitor/forbidden-broadcast", Fixture, &forbidding_config,
+       setup, test_forbidden_broadcast, teardown);
++  g_test_add ("/monitor/forbidden-name-owner-changed",
++      Fixture, &forbidding_config,
++      setup, test_forbidden_name_owner_changed, teardown);
+   g_test_add ("/monitor/unicast-signal", Fixture, NULL,
+       setup, test_unicast_signal, teardown);
+   g_test_add ("/monitor/forbidden", Fixture, &forbidding_config,
