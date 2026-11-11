@@ -1061,9 +1061,13 @@ spec:
           contentType: rpm
         - name: python3-13-packaging-main
           contentType: rpm
+        - name: python3-13-pathspec-main
+          contentType: rpm
         - name: python3-13-pip-main
           contentType: rpm
         - name: python3-13-setuptools-main
+          contentType: rpm
+        - name: python3-13-tomlkit-main
           contentType: rpm
         - name: python3-14-main
           contentType: rpm

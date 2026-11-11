@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-pathspec.git",
+    "release": "4",
+    "sha": "ca62c23cea64e0506367c0c504998a1d75d50128"
+  },
+  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 15607,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/cpburnz/python-pathspec",
+  "version": "1.1.1"
+}
