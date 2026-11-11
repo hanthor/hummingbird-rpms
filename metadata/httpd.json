@@ -1,14 +1,15 @@
 {
-  "cve_product": "Apache Software Foundation / Apache HTTP Server",
+  "version": "2.4.71",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/apache/httpd",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/httpd.git",
-    "sha": "417e8d51c0e5ec5ef6b54aedb64ca79bf074071b"
+    "branch": "rawhide",
+    "sha": "929a461a188cd202e2e372b2cf51e1a95cd8197f",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 2.4.71",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 387502,
   "track_upstream": "2.4",
-  "upstream_repo": "https://github.com/apache/httpd",
-  "version": "2.4.71"
+  "release_monitoring_project_id": 387502,
+  "cve_product": "Apache Software Foundation / Apache HTTP Server"
 }
