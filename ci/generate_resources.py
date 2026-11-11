@@ -698,7 +698,7 @@ def main():
         # and package-overrides.yaml (private_product) are out of sync, which would yield
         # a dead ITS (no components in that application) or an unresolvable manifest key.
         its_apps = set(its_entries["pr"].keys())
-        if pr_manifest_apps is not None:
+        if pr_manifest_apps:
             unknown_its_apps = its_apps - pr_manifest_apps
             if unknown_its_apps:
                 sys.exit(
