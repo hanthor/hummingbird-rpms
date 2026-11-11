@@ -58,7 +58,7 @@
 
 Name:		busybox
 Version:	1.37.0
-Release:  9.4%{?dist}
+Release:  9.5%{?dist}
 Epoch:		1
 Summary:	Statically linked binary providing simplified versions of system commands
 License:	GPL-2.0-only
@@ -109,6 +109,15 @@ Patch10:	busybox-1.37.0-CVE-2026-88832-CVE-2026-88831-CVE-2026-88837-CVE-2026-88
 Patch11:	busybox-1.37.0-CVE-2026-88841-dpkg-status-cursor.patch
 # CVE-2026-108119: prevent tar deferred links escaping the extraction directory
 Patch12:	busybox-1.37.0-CVE-2026-108119-fix-deferred-tar-links.patch
+# CVE-2026-124742: divide-by-zero in the volume_id FAT prober
+# Upstream commit b7c89c493a889e749d98cd9b7fd55be124639215
+Patch13:	busybox-1.37.0-CVE-2026-124742-volumeid-fat-div0.patch
+# Prerequisite for the CVE-2026-88833 fix: require the DHCP cookie to be present
+# Upstream commit fd1972099f28636b5deea200022b528f3a0bd523
+Patch14:	busybox-1.37.0-udhcpc-ensure-cookie-present.patch
+# CVE-2026-88833: udhcpc packet-length underflow in d4_recv_raw_packet()
+# Upstream commit 56e9d36bb64fe508b4d5b9fb01f02bdee6dba792
+Patch15:	busybox-1.37.0-CVE-2026-88833-udhcpc-min-packet-size.patch
 BuildRequires:	gcc
 BuildRequires:	libselinux-devel >= 1.27.7-2
 BuildRequires:	libsepol-devel
@@ -175,6 +184,9 @@ package is build against shared libraries, most notably glibc.
 %patch -P10 -p1 -b .cve-2026-88832-88831-88837-88835-88839
 %patch -P11 -p1 -b .cve-2026-88841
 %patch -P12 -p1 -b .cve-2026-108119
+%patch -P13 -p1 -b .cve-2026-124742
+%patch -P14 -p1 -b .udhcpc-cookie-present
+%patch -P15 -p1 -b .cve-2026-88833
 
 %build
 # Fix architecture name maps
