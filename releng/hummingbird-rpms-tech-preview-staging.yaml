@@ -1057,6 +1057,8 @@ spec:
           contentType: rpm
         - name: python3-13-flit-core-main
           contentType: rpm
+        - name: python3-13-packaging-main
+          contentType: rpm
         - name: python3-13-setuptools-main
           contentType: rpm
         - name: python3-14-main
