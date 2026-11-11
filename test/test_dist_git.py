@@ -5362,6 +5362,24 @@ def test_update_continue(workdir: Path, upstream_repos: dict[str, Path]) -> None
         "Metadata committed by --continue should contain the updated version"
 
 
+def test_autorelease_preserves_conflicted_fields(tmp_path: Path, dist_git_module) -> None:
+    """Release conflicts retain both alternatives and leave subpackages unchanged."""
+    spec = tmp_path / 'example.spec'
+    content = (
+        'Name: example\n<<<<<<< HEAD\nRelease: %autorelease\n=======\n'
+        'Release: 0.3%{?dist}\n>>>>>>> hummingbird-local\n'
+        '%package extra\nRelease: %{release}\n'
+    )
+    spec.write_text(content)
+    dist_git_module.restore_autorelease_definitions(
+        tmp_path, 'Release: %autorelease\n', preserve_conflicts=True,
+    )
+    dist_git_module.replace_autorelease_in_spec(tmp_path, '3')
+    assert spec.read_text() == content.replace('%autorelease', '3%{?dist}')
+
+
+@pytest.mark.parametrize('use_indirect', [False, True])
+@pytest.mark.parametrize('conflict_in_spec', [False, True])
 @pytest.mark.parametrize(('resolved_release', 'legacy_state'), [
     ('%autorelease', False),
     ('0.1%{?dist}', False),
@@ -5369,14 +5387,16 @@ def test_update_continue(workdir: Path, upstream_repos: dict[str, Path]) -> None
 ])
 def test_update_continue_resolves_autorelease(
     workdir: Path, upstream_repos: dict[str, Path], dist_git_module, monkeypatch,
-    resolved_release: str, legacy_state: bool,
+    resolved_release: str, legacy_state: bool, use_indirect: bool, conflict_in_spec: bool,
 ) -> None:
-    """A conflict outside the spec must not leave an unresolved or stale Release."""
+    """Conflict MR candidates and continued updates must contain numeric releases."""
     state_file = workdir / '.dist_git_update_state.json'
     monkeypatch.setattr(dist_git_module, 'UPDATE_STATE_FILE', state_file)
     upstream = upstream_repos['vanilla']
     upstream_spec = upstream / 'vanilla.spec'
-    upstream_spec.write_text(upstream_spec.read_text().replace('Release: 1%{?dist}', 'Release: %autorelease'))
+    definition = ('%global my_release %{autorelease}\nRelease: %{my_release}'
+                  if use_indirect else 'Release: %autorelease')
+    upstream_spec.write_text(upstream_spec.read_text().replace('Release: 1%{?dist}', definition))
     (upstream / 'notes.txt').write_text('original\n')
     subprocess.run(['git', 'add', '-A'], cwd=upstream, check=True)
     subprocess.run(['git', 'commit', '-m', 'Use autorelease'], cwd=upstream, check=True)
@@ -5386,10 +5406,15 @@ def test_update_continue_resolves_autorelease(
 
     package_dir = workdir / 'rpms' / 'vanilla'
     (package_dir / 'notes.txt').write_text('local\n')
+    if conflict_in_spec:
+        spec = package_dir / 'vanilla.spec'
+        spec.write_text(spec.read_text().replace('License: MIT', 'License: BSD'))
     run_dist_git(dist_git_module, workdir, 'mark-modified', 'vanilla', '--modified',
                  '--reason', 'Local notes')
     subprocess.run(['git', 'commit', '-am', 'Local notes'], cwd=workdir, check=True)
     (upstream / 'notes.txt').write_text('upstream\n')
+    if conflict_in_spec:
+        upstream_spec.write_text(upstream_spec.read_text().replace('License: MIT', 'License: GPL'))
     subprocess.run(['git', 'commit', '-am', 'Upstream notes'], cwd=upstream, check=True)
 
     with patch.object(dist_git_module, 'get_mdapi_latest_build',
@@ -5398,8 +5423,17 @@ def test_update_continue_resolves_autorelease(
         run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
     assert exc.value.code == 2
     state = json.loads(state_file.read_text())
-    assert 'Release: %autorelease' in state['upstream_spec']
+    assert definition in state['upstream_spec']
     assert state['metadata']['fedora']['release'] == '3'
+    # The wrapper commits these files directly, then deletes the continuation state.
+    # Its draft MR must already contain the resolved release and conflict markers.
+    conflicted_spec = (package_dir / 'vanilla.spec').read_text()
+    assert 'autorelease' not in conflicted_spec
+    assert ('%global my_release 3%{?dist}' if use_indirect
+            else 'Release: 3%{?dist}') in conflicted_spec
+    assert '<<<<<<< HEAD' in (conflicted_spec if conflict_in_spec
+                              else (package_dir / 'notes.txt').read_text())
+    assert definition in upstream_spec.read_text()
     if legacy_state:
         del state['upstream_spec']
         state_file.write_text(json.dumps(state))
@@ -5408,8 +5442,13 @@ def test_update_continue_resolves_autorelease(
     # macro or a local literal when resolving a simultaneous spec conflict.
     (package_dir / 'notes.txt').write_text('local\n')
     spec = package_dir / 'vanilla.spec'
-    spec.write_text(re.sub(r'^Release:.*$', f'Release: {resolved_release}',
-                           spec.read_text(), flags=re.MULTILINE))
+    content = spec.read_text()
+    if conflict_in_spec:
+        content = re.sub(r'<<<<<<< HEAD\n(.*?)=======\n.*?>>>>>>> hummingbird-local\n',
+                         r'\1', content, flags=re.DOTALL)
+    field = '%global my_release' if use_indirect else 'Release:'
+    spec.write_text(re.sub(rf'^{field}.*$', f'{field} {resolved_release}',
+                           content, flags=re.MULTILINE))
     with patch.object(dist_git_module, 'get_mdapi_latest_build') as mdapi, \
          patch.object(dist_git_module, 'get_koji_server') as koji:
         run_dist_git(dist_git_module, workdir, 'update', '--continue')
@@ -5419,7 +5458,7 @@ def test_update_continue_resolves_autorelease(
         ['git', 'show', 'HEAD:rpms/vanilla/vanilla.spec'], cwd=workdir,
         capture_output=True, text=True, check=True,
     ).stdout
-    assert 'Release: 3%{?dist}\n' in committed_spec
+    assert f'{field} 3%{{?dist}}\n' in committed_spec
     assert '%autorelease' not in committed_spec
     assert not state_file.exists()
 
