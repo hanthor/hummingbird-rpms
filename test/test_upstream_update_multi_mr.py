@@ -493,6 +493,44 @@ def test_git_push_cleanup_waits_for_successful_mr_creation(tmp_path: Path) -> No
     assert "Closed resolved diagnostic MR !4493" in existing_result.stdout
 
 
+def test_existing_update_branch_is_skipped_but_failure_branch_is_retried(
+    tmp_path: Path,
+) -> None:
+    """Rebuilding an update whose MR branch exists wastes the job's time budget."""
+    repo, ci_dir = _create_success_fixture(tmp_path)
+    args_log = tmp_path / "check-args.txt"
+    checker = ci_dir / "check_upstream_versions.py"
+    checker.write_text(
+        """#!/bin/bash
+printf '%s\\n' "$@" > "$CHECK_ARGS_LOG"
+echo '{"results": []}'
+exit 0
+"""
+    )
+    checker.chmod(0o755)
+
+    remote = tmp_path / "remote.git"
+    _run_git(tmp_path, "init", "--quiet", "--bare", str(remote))
+    _run_git(repo, "remote", "add", "origin", str(remote))
+    _run_git(
+        repo, "push", "--quiet", "origin",
+        "HEAD:refs/heads/chore/upstream-update-protobuf",
+        "HEAD:refs/heads/chore/upstream-update-failure-broken",
+    )
+
+    result = subprocess.run(
+        [str(ci_dir / UPDATE_SCRIPT.name), "--create-mrs"], cwd=repo,
+        capture_output=True, text=True,
+        env={**os.environ, "CHECK_ARGS_LOG": str(args_log)},
+    )
+
+    assert result.returncode == 0, result.stderr
+    args = args_log.read_text().splitlines()
+    assert "--skip-package" in args
+    assert args[args.index("--skip-package") + 1] == "protobuf"
+    assert "failure-broken" not in args
+
+
 def test_stale_patch_update_creates_review_required_mr(tmp_path: Path) -> None:
     repo, ci_dir = _create_success_fixture(tmp_path)
     checker = ci_dir / "check_upstream_versions.py"

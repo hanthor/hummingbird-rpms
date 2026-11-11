@@ -200,6 +200,7 @@ class VersionCheckResult:
     error: Optional[str] = None
     anitya_project_id: Optional[int] = None
     updated: bool = False
+    skipped: bool = False
     update_error: Optional[str] = None
     downloaded_sources: Optional[list[str]] = None
     version_source: Optional[str] = None
@@ -2228,9 +2229,18 @@ def run_check(args: argparse.Namespace) -> None:
     # Update spec files if requested
     updates_applied = 0
     use_workqueue = args.workqueue
+    skip_packages = set(getattr(args, "skip_package", None) or ())
     if args.update:
         for result in results:
             if not result.has_update or not result.upstream_version:
+                continue
+            if result.package in skip_packages:
+                result.skipped = True
+                logger.info(
+                    "%s: skipping update to %s; an update branch already exists",
+                    result.package,
+                    result.upstream_version,
+                )
                 continue
             logger.info(
                 "%s: applying upstream update %s -> %s",
@@ -2344,6 +2354,7 @@ def run_check(args: argparse.Namespace) -> None:
                     "upstream_version": r.upstream_version,
                     "has_update": r.has_update,
                     "updated": r.updated,
+                    "skipped": r.skipped,
                     "downloaded_sources": r.downloaded_sources,
                     "error": r.error,
                     "update_error": r.update_error,
@@ -2374,7 +2385,10 @@ def run_check(args: argparse.Namespace) -> None:
             for r in results:
                 if r.has_update:
                     if args.update:
-                        status = "UPDATED" if r.updated else "FAILED"
+                        if r.skipped:
+                            status = "SKIPPED"
+                        else:
+                            status = "UPDATED" if r.updated else "FAILED"
                         print(
                             f"{r.package:<30} {r.current_version:<15} {r.upstream_version:<15} {status}"
                         )
@@ -2523,6 +2537,13 @@ Examples:
             "Submit updates to the workqueue service instead of committing "
             "locally. Requires WORKQUEUE_SERVICE_URL and WORKQUEUE_OIDC_TOKEN "
             "environment variables."
+        ),
+    )
+    check_parser.add_argument(
+        "--skip-package", action="append", default=[], metavar="PACKAGE",
+        help=(
+            "Check PACKAGE but do not apply its update, because an update "
+            "branch or MR already exists. Repeat for multiple packages."
         ),
     )
 

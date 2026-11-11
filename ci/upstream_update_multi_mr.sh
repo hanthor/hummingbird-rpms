@@ -26,6 +26,12 @@
 #
 # Failed update processing creates a draft diagnostic MR. The checker rolls
 # back partial package changes before the draft is created.
+#
+# When creating MRs via git push, packages whose chore/upstream-update-<pkg>
+# branch already exists on the remote are checked but not rebuilt: create_mr.sh
+# refuses to push an existing branch, so rebuilding would only spend the job's
+# time budget to discard the result. Diagnostic chore/upstream-update-failure-*
+# branches are not update branches, so those packages are still retried.
 
 set -euo pipefail
 
@@ -317,6 +323,28 @@ fi
 # Save the current commit before running updates (used by git-push path)
 START_COMMIT=$(git rev-parse HEAD)
 
+# create_mr.sh refuses to push a branch that already exists on the remote, so
+# rebuilding an update whose MR branch already exists only spends the job's
+# time budget to discard the result.  Skip those packages' builds.  Diagnostic
+# failure branches (chore/upstream-update-failure-<pkg>) are not update
+# branches; a package that has one should still be retried.
+SKIP_PACKAGE_ARGS=()
+if [[ "${CREATE_METHOD}" == "git-push" ]]; then
+    if EXISTING_UPDATE_REFS=$(git ls-remote --heads "${REMOTE:-origin}" \
+        'refs/heads/chore/upstream-update-*' 2>/dev/null); then
+        while read -r _ ref; do
+            [[ -z "${ref:-}" ]] && continue
+            package="${ref#refs/heads/chore/upstream-update-}"
+            if [[ "${package}" == failure-* ]]; then
+                continue
+            fi
+            SKIP_PACKAGE_ARGS+=(--skip-package "${package}")
+        done <<<"${EXISTING_UPDATE_REFS}"
+    else
+        echo "WARNING: could not list existing update branches; rebuilding every package" >&2
+    fi
+fi
+
 # ── Phase 2: Run upstream version check ─────────────────────────────
 
 # Request JSON so this wrapper can reliably distinguish update failures from
@@ -335,6 +363,9 @@ echo ""
 
 if [[ -n "${ONLY_PACKAGE}" ]]; then
     CHECK_ARGS+=("${ONLY_PACKAGE}")
+fi
+if [[ ${#SKIP_PACKAGE_ARGS[@]} -gt 0 ]]; then
+    CHECK_ARGS+=("${SKIP_PACKAGE_ARGS[@]}")
 fi
 
 CHECK_OUTPUT=$(mktemp)
@@ -371,6 +402,16 @@ if ! CHECK_WARNING_PACKAGES=$(jq \
 fi
 if ! [[ "${CHECK_WARNING_PACKAGES}" =~ ^[0-9]+$ ]]; then
     echo "ERROR: check_upstream_versions.py produced no parseable warning package count"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! SKIPPED_UPDATES=$(jq '[.results[] | select(.skipped == true)] | length' "${CHECK_OUTPUT}"); then
+    echo "ERROR: Could not parse skipped upstream updates"
+    rm -f "${CHECK_OUTPUT}"
+    exit 1
+fi
+if ! [[ "${SKIPPED_UPDATES}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: check_upstream_versions.py produced no parseable skipped update count"
     rm -f "${CHECK_OUTPUT}"
     exit 1
 fi
@@ -427,6 +468,10 @@ UPDATES_APPLIED=$(jq '[.results[] | select(.updated == true)] | length' "${CHECK
 mapfile -t SUCCESSFUL_PACKAGES < <(
     jq -r '.results[] | select(.updated == true) | .package' "${CHECK_OUTPUT}"
 )
+# shellcheck disable=SC2312  # Command substitution in mapfile is intentional
+mapfile -t SKIPPED_PACKAGES < <(
+    jq -r '.results[] | select(.skipped == true) | .package' "${CHECK_OUTPUT}"
+)
 
 jq . "${CHECK_OUTPUT}"
 rm -f "${CHECK_OUTPUT}"
@@ -450,6 +495,13 @@ if [[ -s "${UPSTREAM_WARNINGS_FILE}" ]]; then
     while IFS= read -r warning; do
         echo "  - ${warning}"
     done < "${UPSTREAM_WARNINGS_FILE}"
+    echo ""
+fi
+if [[ ${SKIPPED_UPDATES} -gt 0 ]]; then
+    echo "Updates skipped because an update MR branch already exists:"
+    for SKIPPED_PACKAGE in "${SKIPPED_PACKAGES[@]}"; do
+        echo "  - ${SKIPPED_PACKAGE}"
+    done
     echo ""
 fi
 
@@ -565,6 +617,10 @@ fi
 # ── Phase 3: Collect commits, create MRs (git-push path) ───────────
 
 if [[ ${COMMITS_CREATED} -eq 0 ]]; then
+    if [[ ${SKIPPED_UPDATES} -gt 0 && ${CHECK_FAILURES} -eq 0 ]]; then
+        echo "No commits were created: all ${SKIPPED_UPDATES} available update(s) already have an MR."
+        exit 0
+    fi
     echo "No commits were created despite updates being reported."
     echo "This may indicate all updates failed."
     echo "  Update/check failures: ${CHECK_FAILURES}"
@@ -706,6 +762,7 @@ else
 fi
 echo "  Commits found:           ${COMMITS_CREATED}"
 echo "  Commits processed:       ${#COMMIT_SHAS[@]}"
+echo "  Skipped (existing MR):   ${SKIPPED_UPDATES}"
 echo "  Existing updates:        ${EXISTING_UPDATES}"
 echo "  Update/check failures:   ${CHECK_FAILURES}"
 echo "  Upstream warnings:       ${CHECK_WARNINGS}"

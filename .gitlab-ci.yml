@@ -278,10 +278,15 @@ dist_git_update:
 
 upstream_version_update:
   tags: [hum-4cpu-4gi]
-  timeout: 1h
+  timeout: 2h
   variables:
-    # Leave time for after_script to report a script-level timeout to Slack.
-    RUNNER_SCRIPT_TIMEOUT: 50m
+    # A single run rebuilds every package with a pending update in one serial
+    # pass, so its runtime scales with the number of upstream releases. Runs
+    # that had accumulated ~24 updates reached the old 50m script limit while
+    # still building updates, so the job was killed before creating any MR and
+    # all of the work was discarded. Leave headroom within the 2h job limit and
+    # time for after_script to report a script-level timeout to Slack.
+    RUNNER_SCRIPT_TIMEOUT: 110m
     RUNNER_AFTER_SCRIPT_TIMEOUT: 5m
   retry:
     max: 2
