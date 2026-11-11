@@ -41,6 +41,7 @@
 _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i0.cloudfront.net/"
 
 abseil-cpp:
+  push_pipeline: promotion
   # Parallel C++ test compilation exceeds the default builders' memory.
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -48,66 +49,84 @@ abseil-cpp:
     - "linux/s390x"
 
 acl:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 aom:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 attr:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bash:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bind:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 prometheus-blackbox-exporter:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bootc:
+  push_pipeline: promotion
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
     - "linux/s390x"
 
 brotli:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bubblewrap:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 caddy:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cairo:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 capstone:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cargo-nextest:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cloud-init:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cmake:
+  push_pipeline: promotion
   build_platforms:
     - "linux-c2xlarge/arm64"
     - "linux-c2xlarge/amd64"
     - "linux/s390x"
 
 composer:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 coredns:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cosign:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 curl:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # Larger builders needed for parallel test suite under valgrind
   build_platforms:
@@ -116,15 +135,19 @@ curl:
     - "linux/s390x"
 
 cyrus-sasl:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 dex:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 distribution:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 dotnet10.0:
+  push_pipeline: promotion
   timeout_hours: 12
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -132,6 +155,7 @@ dotnet10.0:
     - "linux/s390x"
 
 dotnet8.0:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 12
   # s390x disabled: the Mono bootstrap runtime crashes deterministically
@@ -146,6 +170,7 @@ dotnet8.0:
     - "linux-d160-c8xlarge/amd64"
 
 dotnet9.0:
+  push_pipeline: promotion
   timeout_hours: 12
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -153,27 +178,35 @@ dotnet9.0:
     - "linux/s390x"
 
 dracut:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 drpm:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 efi-rpm-macros:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 erlang27:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 etcd:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 environment-modules:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 expat:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 fftw:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-c2xlarge/arm64"
@@ -181,12 +214,15 @@ fftw:
     - "linux/s390x"
 
 fontconfig:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 fulcio:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 gcc:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # Larger builders are required for the build to complete in a reasonable time
   timeout_hours: 12
@@ -196,6 +232,7 @@ gcc:
     - "linux/s390x"
 
 gcc13:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # GCC bootstrap requires the same larger builders as the system compiler
   timeout_hours: 12
@@ -205,6 +242,7 @@ gcc13:
     - "linux/s390x"
 
 gettext:
+  push_pipeline: promotion
   timeout_hours: 8
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -212,12 +250,15 @@ gettext:
     - "linux/s390x"
 
 git-lfs:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 git-sync:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 glibc:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 16
   build_platforms:
@@ -226,9 +267,11 @@ glibc:
     - "linux/s390x"
 
 go-fdo-client:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 golang1.27:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-d160-c8xlarge/amd64"
@@ -241,6 +284,7 @@ gorget:
   push_pipeline: promotion
 
 grafana12.4:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   # The frontend webpack build requires more memory than the default builders provide.
@@ -250,6 +294,7 @@ grafana12.4:
     - "linux/s390x"
 
 grafana13.1:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # The frontend webpack build requires more memory than the default builders provide.
   build_platforms:
@@ -258,6 +303,7 @@ grafana13.1:
     - "linux/s390x"
 
 grafana13.2:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # The frontend webpack build requires more memory than the default builders provide.
   build_platforms:
@@ -270,9 +316,11 @@ grype:
   push_pipeline: promotion
 
 haproxy:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hdf5:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-c2xlarge/arm64"
@@ -280,27 +328,35 @@ hdf5:
     - "linux/s390x"
 
 hello:
+  push_pipeline: promotion
   private_product: example
 
 helm3:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 helm4:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 httpd:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hwloc:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hugo:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 jaeger:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 java-17-openjdk-portable:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -309,6 +365,7 @@ java-17-openjdk-portable:
     - "linux/s390x"
 
 java-21-openjdk-portable:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -317,6 +374,7 @@ java-21-openjdk-portable:
     - "linux/s390x"
 
 java-25-openjdk:
+  push_pipeline: promotion
   timeout_hours: 8
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -324,6 +382,7 @@ java-25-openjdk:
     - "linux/s390x"
 
 java-25-openjdk-portable:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -332,12 +391,15 @@ java-25-openjdk-portable:
     - "linux/s390x"
 
 jsoncpp:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 k6v1:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 k6v2:
+  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 kbd:
@@ -1940,4 +2002,141 @@ readline:
   push_pipeline: promotion
 
 rhash:
+  push_pipeline: promotion
+
+# HUM-11952 batch 5: packages with default build settings.
+
+rootfiles:
+  push_pipeline: promotion
+
+rpm:
+  push_pipeline: promotion
+
+rpm-mpi-hooks:
+  push_pipeline: promotion
+
+rubypick:
+  push_pipeline: promotion
+
+rust-add-determinism:
+  push_pipeline: promotion
+
+rust-archery:
+  push_pipeline: promotion
+
+rust-bootupd:
+  push_pipeline: promotion
+
+rust-imagequant-sys:
+  push_pipeline: promotion
+
+rust-podman-sequoia:
+  push_pipeline: promotion
+
+rust-rav1e:
+  push_pipeline: promotion
+
+rust-rpds:
+  push_pipeline: promotion
+
+sdbus-cpp:
+  push_pipeline: promotion
+
+sed:
+  push_pipeline: promotion
+
+selinux-policy:
+  push_pipeline: promotion
+
+sgml-common:
+  push_pipeline: promotion
+
+shadow-utils:
+  push_pipeline: promotion
+
+skopeo:
+  push_pipeline: promotion
+
+source-highlight:
+  push_pipeline: promotion
+
+spdlog:
+  push_pipeline: promotion
+
+subversion:
+  push_pipeline: promotion
+
+sudo:
+  push_pipeline: promotion
+
+svt-av1:
+  push_pipeline: promotion
+
+sysprof:
+  push_pipeline: promotion
+
+systemd:
+  push_pipeline: promotion
+
+systemd-stub:
+  push_pipeline: promotion
+
+tar:
+  push_pipeline: promotion
+
+tcl:
+  push_pipeline: promotion
+
+tinysparql:
+  push_pipeline: promotion
+
+tk:
+  push_pipeline: promotion
+
+tomcat10:
+  push_pipeline: promotion
+
+tree-sitter-srpm-macros:
+  push_pipeline: promotion
+
+ttmkfdir:
+  push_pipeline: promotion
+
+unzip:
+  push_pipeline: promotion
+
+util-linux:
+  push_pipeline: promotion
+
+uuid:
+  push_pipeline: promotion
+
+vmaf:
+  push_pipeline: promotion
+
+which:
+  push_pipeline: promotion
+
+xorg-x11-fonts:
+  push_pipeline: promotion
+
+xxhash:
+  push_pipeline: promotion
+
+xz:
+  push_pipeline: promotion
+
+yq:
+  push_pipeline: promotion
+
+zchunk:
+  push_pipeline: promotion
+
+zig-srpm-macros:
+  push_pipeline: promotion
+
+zip:
+  push_pipeline: promotion
+
+zlib-ng:
   push_pipeline: promotion
