@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/harfbuzz.git",
-    "release": "2",
-    "sha": "cc1366cb9ba22adf4349a4b8db1248e144b8ff72"
+    "release": "1",
+    "sha": "034c815fd41badd59b4ddd84ac8142fe1aa59c85"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/harfbuzz/harfbuzz",
-  "version": "15.0.0"
+  "version": "15.1.0"
 }
