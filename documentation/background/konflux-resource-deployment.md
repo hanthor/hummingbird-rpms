@@ -66,9 +66,28 @@ Resources are defined in `konflux-templates/` and rendered to `konflux-templates
 **IntegrationTestScenario** resources are defined in
 `konflux-templates/macros/integration-test-scenarios.yml.j2` and rendered into
 `konflux-templates/rendered.yml` alongside Components and ImageRepositories. The same
-`*-components` downstream pipeline that deploys Components also deploys ITS, making ITS
-changes testable before merge (via the downstream MR pipeline) and keeping scenario
-definitions co-located with the packages and trigger manifests they describe.
+`*-components` downstream pipeline that deploys Components also deploys ITS, keeping
+scenario definitions co-located with the packages and trigger manifests they describe.
+
+**Deploy paths for ITS changes**:
+
+- **New scenarios** (`*-components-add` downstream job): detects new resource names and
+  deploys them automatically on rpms MRs. New scenarios are testable before merge.
+- **Edited scenarios** (modified content, same name): `*-components-add` is name-based and
+  does not redeploy existing resources. To apply edits before or after merge, trigger the
+  manual `deploy_components_to_konflux` job in the infrastructure pipeline.
+
+**No-prune behaviour**: The deploy uses server-side apply without pruning — resources
+removed or renamed in `rendered.yml` are **not** deleted from the cluster. A renamed or
+removed ITS remains live and continues producing test PipelineRuns until deleted manually:
+
+```shell
+kubectl delete integrationtestscenario <name> -n hummingbird-tenant
+```
+
+See the infrastructure repo's
+[kubernetes-rendering.md](https://gitlab.com/redhat/hummingbird/infrastructure/-/blob/main/documentation/operating/kubernetes-rendering.md)
+"No pruning" section for details.
 
 The `integration_test_scenarios` section of `.tekton/trigger-manifest-pull-request.json`
 is derived from the same ITS data, ensuring the manifest never drifts from deployed

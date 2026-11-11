@@ -226,9 +226,10 @@ quay.io/redhat-user-workloads/hummingbird-tenant/<package>--main
 Build infrastructure is defined across two repositories:
 
 - **rpms repo** (`konflux-templates/`) - Per-package Component and
-  ImageRepository resources, ReleasePlanAdmission, EnterpriseContractPolicy
+  ImageRepository resources, ReleasePlanAdmission, EnterpriseContractPolicy,
+  IntegrationTestScenario
 - **infrastructure repo** (`kubernetes/rpms-main/`) - Application,
-  ReleasePlan, IntegrationTestScenario, ServiceAccount, and Secret resources
+  ReleasePlan, ServiceAccount, and Secret resources
 
 See [Konflux Resource Deployment][konflux-deploy] for details on how these
 resources are managed and deployed.
@@ -266,19 +267,31 @@ CI][integrations-konflux] and is parameterized as follows:
 
 [integrations-konflux]: https://gitlab.com/testing-farm/integrations-konflux
 
-**Scenario parameters**:
+The generator emits two scenario types per application (see `_ITS_SCENARIO_TYPES` in
+`ci/generate_resources.py`):
 
-- `COMPOSE: RHEL-9-Nightly` - Test environment OS/compose
-- `PIPELINE_MODE: rpm` - Configures RPM testing mode (vs. container)
-- `ARCH: x86_64,aarch64` - Architectures to test (creates separate test runs per arch)
-- `PASS_SNAPSHOT_TO_TF: false` - Don't pass full snapshot JSON (package info comes via
-  `IMAGE_NAME`/`IMAGE_URL` instead)
-- `IMAGE_TAG:` - Version of the tmt-via-testing-farm pipeline bundle
+- **`testing-farm`** (non-optional, `pull_request` context) — runs on every pre-merge
+  component snapshot. Parameters:
+  - `COMPOSE: RHEL-9-Nightly` - Test environment OS/compose
+  - `PIPELINE_MODE: rpm` - Configures RPM testing mode (vs. container)
+  - `ARCH: x86_64,aarch64` - Architectures to test (creates separate test runs per arch)
+  - `PASS_SNAPSHOT_TO_TF: false` - Don't pass full snapshot JSON (package info comes via
+    `IMAGE_NAME`/`IMAGE_URL` instead)
+  - `IMAGE_TAG:` - Version of the tmt-via-testing-farm pipeline bundle
+  - `GIT_URL:` - Allowlisted upstream repo URL (public `rpms-main` application only; omitted
+    for private applications)
+
+- **`testing-farm-upstream`** (optional, `component_attr-main` + `component_setup-main`
+  canary contexts) — runs only on canary component snapshots. Additional parameter:
+  - `TMT_PATH_FROM_CONTEXT: "true"` - Derives the tmt test path from the component context
 
 **Key characteristics**:
 
-- **Single scenario for all packages** - Not per-package, runs for every package build
-- **Context-based triggering** - Runs on `pull_request` snapshots only
+- **Single scenario per application** - Not per-package; runs for every package build in
+  that application
+- **Context-based triggering** - `testing-farm` runs on `pull_request` snapshots only;
+  `testing-farm-upstream` runs on canary component snapshots and is optional (not listed in
+  the trigger manifest)
 - **Package identification** - Konflux automatically provides `IMAGE_NAME` (e.g., `openssl-main`)
   and `IMAGE_URL` (OCI image with built RPMs) as environment variables
 

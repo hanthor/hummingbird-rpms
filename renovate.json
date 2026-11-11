@@ -68,6 +68,12 @@
       "groupName": "rpmbuild-pipeline"
     },
     {
+      "description": "Group testing-farm IMAGE_TAG updates (template + rendered) into one PR",
+      "matchManagers": ["regex"],
+      "matchPackageNames": ["quay.io/testing-farm/tmt-via-testing-farm"],
+      "groupName": "testing-farm-tmt-via-testing-farm"
+    },
+    {
       "description": "Regenerate rendered Tekton YAML after image digest updates",
       "matchManagers": ["custom.regex"],
       "matchFileNames": ["ci/generate_resources.py"],

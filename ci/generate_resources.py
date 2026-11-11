@@ -660,6 +660,8 @@ def main():
         its_entries = build_its_manifest_entries(args.branch)
 
         # Generate PAC resources and trigger manifests together (shared variables)
+        # Collect application names from the pull-request manifest to cross-check ITS apps.
+        pr_manifest_apps: set[str] | None = None
         for resource_type, event_type in (("push", "push"), ("pull-request", "pull_request")):
             print(f"Building {resource_type} template variables...", file=sys.stderr)
             variables = build_pac_variables(args.branch, args.tenant, resource_type)
@@ -677,6 +679,9 @@ def main():
             manifest_json = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
             (ROOT_DIR / ".tekton" / f"trigger-manifest-{resource_type}.json").write_text(manifest_json)
 
+            if event_type == "pull_request":
+                pr_manifest_apps = set(manifest["applications"].keys())
+
             if resource_type == "push":
                 promotion = render_template(
                     ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml.j2", macros_dir, variables
@@ -684,6 +689,21 @@ def main():
                 if not promotion.endswith("\n"):
                     promotion += "\n"
                 (ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml").write_text(promotion)
+
+        # Cross-check: every ITS application must exist in the trigger manifest's
+        # applications dict.  A mismatch means konflux_rpa_config.yml (application_prefix)
+        # and package-overrides.yaml (private_product) are out of sync, which would yield
+        # a dead ITS (no components in that application) or an unresolvable manifest key.
+        its_apps = set(its_entries["pr"].keys())
+        if pr_manifest_apps is not None:
+            unknown_its_apps = its_apps - pr_manifest_apps
+            if unknown_its_apps:
+                sys.exit(
+                    f"ERROR: ITS application(s) {sorted(unknown_its_apps)} not found in the "
+                    f"trigger manifest's applications dict. Check that application_prefix in "
+                    f"ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
+                    f"produce matching application names."
+                )
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)

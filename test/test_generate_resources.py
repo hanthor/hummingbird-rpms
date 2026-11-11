@@ -617,6 +617,29 @@ class TestBuildTriggerManifest:
         assert "^ci/" in apps["setup--rpms"]
         assert "^mock/" in apps["setup--rpms"]
 
+    def test_no_its_entries_omits_integration_test_scenarios_key(self, gen_module):
+        """build_trigger_manifest with no ITS must omit the key entirely, not emit null or {}."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "pkg", "imported": True, "manifest_triggers": ["^rpms/pkg/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push")
+        assert "integration_test_scenarios" not in manifest
+
+    def test_empty_its_entries_dict_omits_integration_test_scenarios_key(self, gen_module):
+        """An empty its_entries dict (push manifest with no component-context scenarios)
+        must also omit the key rather than emitting an empty object."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "pkg", "imported": True, "manifest_triggers": ["^rpms/pkg/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push", its_entries={})
+        assert "integration_test_scenarios" not in manifest
+
 
 class TestValidation:
     """Tests for configuration validation."""
@@ -655,7 +678,7 @@ class TestValidation:
 class TestItsContextRouting:
     """Tests for _route_its_contexts (D2 fail-closed routing)."""
 
-    def test_pull_request_context_routes_to_pr_manifest_with_group_true(self, gen_module):
+    def test_pull_request_context_routes_to_pr_manifest_only(self, gen_module):
         in_pr, in_push = gen_module._route_its_contexts("app-testing-farm", ["pull_request"], False)
         assert in_pr is True
         assert in_push is False
@@ -842,5 +865,29 @@ class TestItsBuildScenariosAndManifest:
             assert "rpms-main-conforma" in pr_names
             push_names = {e["name"] for e in entries["push"]["rpms-main"]}
             assert "rpms-main-conforma" in push_names
+        finally:
+            gen_module._ITS_SCENARIO_TYPES = original_types
+
+    def test_component_context_scenario_has_group_false_in_pr_manifest(
+        self, gen_module, mock_repo_two_apps
+    ):
+        """A component-context (non-optional) scenario must appear in the PR manifest with
+        group: false — component-context scenarios never trigger on group snapshots."""
+        original_types = gen_module._ITS_SCENARIO_TYPES
+        component_type = {
+            "suffix": "conforma",
+            "contexts": ["component"],
+            "optional": False,
+            "tmt_path_from_context": False,
+        }
+        try:
+            gen_module._ITS_SCENARIO_TYPES = original_types + [component_type]
+            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+                entries = gen_module.build_its_manifest_entries("main")
+            conforma_entries = [
+                e for e in entries["pr"]["rpms-main"] if "conforma" in e["name"]
+            ]
+            assert conforma_entries, "component-context scenario must appear in PR manifest"
+            assert all(e["group"] is False for e in conforma_entries)
         finally:
             gen_module._ITS_SCENARIO_TYPES = original_types
