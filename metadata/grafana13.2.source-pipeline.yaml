@@ -15,13 +15,13 @@ transform:
       - "-c"
       - |
         set -euo pipefail
-        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" .
+        bash "${PACKAGE_DIR}/prepare-yarn-cache-source.sh" . "${VERSION}" --generate
         if [ -n "${HTTP_PROXY-}" ]; then export YARN_HTTP_PROXY="${HTTP_PROXY-}"; fi
         if [ -n "${HTTPS_PROXY-}" ]; then export YARN_HTTPS_PROXY="${HTTPS_PROXY-}"; fi
         # Unlike grafana12.4, 13.2's yarn.lock has no Cypress dependency to
         # suppress a binary download for.
         YARN_ENABLE_GLOBAL_CACHE=false YARN_CACHE_FOLDER=.yarn/cache \
-          node .yarn/releases/yarn-*.cjs install --immutable
+          node .yarn/releases/yarn-*.cjs install --immutable --immutable-cache
         # Deterministic flags: yarn's own cache writes carry live wall-clock
         # mtimes and directory listing order isn't guaranteed sorted, so a
         # plain `tar -cjf` here reproduced a different checksum on every
@@ -32,11 +32,27 @@ transform:
           -cjf "grafana-yarn-cache-${VERSION}.tar.bz2" .yarn/cache
     outputs:
       - "grafana-yarn-cache-${VERSION}.tar.bz2"
+      - "grafana-frontend-${VERSION}.patch"
 
 # Same-version yarn-cache regeneration (CVE npm bump) changes the archive
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-13.2.5-vendor.tar.bz2"
+    checksum: "4cc70f3f47c28d1941f69e0e191d5e2aa5aa2be492c13a018ec632e2ec853a66d59fbac5da374156c8eb217416fc8793881feb37e492b67fa03f4c8e8e639d42"
+    reason: "Regenerate the 13.2.5 Go vendor archive with klauspost/compress v1.20.2 for CVE-2026-116591"
+  - file: "grafana-yarn-cache-13.2.5.tar.bz2"
+    checksum: "05e5cf4f3d27c140d3c740b8a0fbc51cc4f12b9c6cdc74e23c89ce1330b4d5528902030eda2d57799e08283c8473fe210fd867a2b2a51a5df06a36a70c718839"
+    reason: "Regenerate the 13.2.5 offline cache with qs 6.17.0, follow-redirects 1.16.2 (CVE-2026-110910, CVE-2026-116689) and joi 17.13.9/18.3.1 (CVE-2026-118772)"
+  - file: "grafana-frontend-13.2.5.patch"
+    checksum: "bde95a68ce6ab8190ad5b9e45b15e6feacbdcd9d2264b01df70cdc24e58d947faa8e2b7b1a85bfa3c50e2780e8e4dedaf12592f00e07fe8e3bad0316ea4ec817"
+    reason: "Regenerate the 13.2.5 frontend patch with qs 6.17.0, follow-redirects 1.16.2 and joi 17.13.9/18.3.1 overrides"
+  - file: "grafana-yarn-cache-13.2.5.tar.bz2"
+    checksum: "75e6f65418659ed30ea196c9b79f68a07e66d6c9d1786a4f8cbfcd8485f987ef4b90b20b659d4a119bde5c89e88ae17e55ae35cdff3d48aa502106d2df8ac905"
+    reason: "Regenerate the 13.2.5 offline cache with s390x native packages after applying the base Yarn patch"
+  - file: "grafana-frontend-13.2.5.patch"
+    checksum: "f1859781ffeeda15f115c959b9a7d4c6372b61bcbe8f35f656b7ee442246d4c82ade2d67fe331132df4d594e14183b66f3ddb2e4c56239a08c74ed189faca2b0"
+    reason: "Generate the 13.2.5 frontend patch against RPM's post-Patch0 source state"
   - file: "grafana-13.2.4-vendor.tar.bz2"
     checksum: "5d4df60e138c7d9bb261ad954579fc763c021657fba6db4d80430f3da6a855ef3e1dad9d3b675e0c011ed469d8e27be5bf36b129d198e6acfa6fb274a1575106"
     reason: "Regenerate the 13.2.4 Go vendor archive with klauspost/compress v1.20.2 for CVE-2026-116591"

@@ -2,9 +2,10 @@
 
 ## `ci/dist_git.py` — The Package Management Tool
 
-**All package operations must go through `ci/dist_git.py`.** Do not manually edit spec
+**Fedora dist-git package operations must go through `ci/dist_git.py`.** Do not manually edit spec
 files, metadata JSON, or Konflux/Tekton resources to perform operations that the script
-handles. Some commands commit their changes. `mark-modified` only updates metadata, so include
+handles. Independent package release updates use `ci/check_upstream_versions.py`.
+Some commands commit their changes. `mark-modified` only updates metadata, so include
 that metadata file in the package commit that needs it.
 
 Use the repository container target because the script needs Python dependencies that are not
@@ -35,6 +36,7 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py update-releases`                                         | Refresh `upstream-releases.json` from Bodhi                                                                                   |
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2`      | Create a private product: Pulp repos, RPA config, and package assignments                                                     |
 | `make generate`                                                            | Regenerate PipelineRun YAML after changing a package's `push_pipeline` in `ci/package-overrides.yaml`                         |
+| `./ci/check_upstream_versions.py check --update <pkg>`                     | Update an independent package to a new upstream version, using its source pipeline when it has one                            |
 
 The `--dry-run` flag is available on most commands to preview without committing.
 
@@ -65,6 +67,7 @@ Common operational tasks that users or AI agents may need to perform:
 | View package differences       | `diff <pkg>`                                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | See what changed in modified packages vs Fedora                        |
 | Add per-package update hooks   | _(edit metadata hooks YAML)_                                    | [Package Modification Tracking](documentation/operating/package-modification-tracking.md)       | Customize spec update, source download, or post-update steps           |
 | Update dist-git packages       | `update [<pkg>]`                                                | [Updating Dist-git Packages](documentation/operating/updating-dist-git-packages.md)             | Test or trigger automated package updates from Fedora                  |
+| Update upstream version        | `check_upstream_versions.py check --update <pkg>`               | [Source Pipeline Tool](documentation/background/source-pipeline-tool.md)                        | Regenerate sources for one package (and frontend patches for Grafana)  |
 | Lookaside cache access         | _(AWS credentials setup)_                                       | [Lookaside Cache Access](documentation/operating/lookaside-cache-access.md)                     | Set up AWS credentials to upload source tarballs                       |
 | Pulp access                    | _(service account setup)_                                       | [Pulp Access](documentation/operating/pulp-access.md)                                           | Create Pulp service accounts and configure CLI credentials             |
 | Analyze upstream diffs         | `diff --all --stat`                                             | [Upstream Diff Analysis](documentation/operating/upstream-diff-analysis.md)                     | Classify modified packages for upstreaming                             |
