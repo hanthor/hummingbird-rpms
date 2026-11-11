@@ -1,0 +1,7 @@
+{
+  "modification_status": "independent",
+  "release_monitoring_project_id": 9031,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/nodejs/node-gyp",
+  "version": "13.1.0"
+}
