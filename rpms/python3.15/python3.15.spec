@@ -50,7 +50,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -434,6 +434,12 @@ Patch486: 00486-gh-148646-add---enable-prebuilt-jit-stencils-configure-flag.patc
 # gh-150751: validate http.client Content-Length and chunk-size
 Patch487: 0487-cve-2026-103995-misinterpretation-http-responses-invalid-chunk.patch
 Patch488: 00488-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
+
+# 00489 # 4e9d037f1cfc8e29efcb1f67bc668e06ff2b6643
+# CVE-2026-124249
+#
+# gh-161569: Check cookie policy before deleting expired cookies in http.cookiejar
+Patch489: 00489-cve-2026-124249-check-cookie-policy-before-deleting-expired-cookies.patch
 
 # (New patches go here ^^^)
 #
