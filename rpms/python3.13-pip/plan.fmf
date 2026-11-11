@@ -6,6 +6,17 @@ discover:
     how: shell
     url: https://src.fedoraproject.org/tests/python.git
     tests:
+    - name: smoke
+      path: /smoke
+      test: ./venv.sh
+    - name: smoke_virtualenv
+      path: /smoke
+      test: METHOD=virtualenv ./venv.sh
+  - name: tests_python_fedora_only
+    how: shell
+    url: https://src.fedoraproject.org/tests/python.git
+    when: distro != fedora-eln and distro == fedora
+    tests:
     - name: smoke310
       path: /smoke
       test: VERSION=3.10 ./venv.sh
@@ -24,6 +35,9 @@ discover:
     - name: smoke315
       path: /smoke
       test: VERSION=3.15 ./venv.sh
+    - name: smoke316
+      path: /smoke
+      test: VERSION=3.16 ./venv.sh
     - name: smoke310_virtualenv
       path: /smoke
       test: VERSION=3.10 METHOD=virtualenv ./venv.sh
@@ -42,6 +56,9 @@ discover:
     - name: smoke315_virtualenv
       path: /smoke
       test: VERSION=3.15 METHOD=virtualenv ./venv.sh
+    - name: smoke316_virtualenv
+      path: /smoke
+      test: VERSION=3.16 METHOD=virtualenv ./venv.sh
   - name: rpms_pyproject-rpm-macros
     how: shell
     url: https://src.fedoraproject.org/rpms/pyproject-rpm-macros.git
@@ -82,12 +99,6 @@ prepare:
     # Keep shared tools and Fedora's cross-version venv checks unchanged.
     - gcc
     - virtualenv
-    - python3.10-devel
-    - python3.11-devel
-    - python3.12-devel
-    - python3.13-devel
-    - python3.14-devel
-    - python3.15-devel
     - python3-devel
     - python3-tox
     - mock
@@ -98,6 +109,17 @@ prepare:
     - shadow-utils
     - expect
     - dnf
+  - name: Install dependencies (Fedora not ELN)
+    how: install
+    when: distro != fedora-eln and distro == fedora
+    package:
+    - python3.10-devel
+    - python3.11-devel
+    - python3.12-devel
+    - python3.13-devel
+    - python3.14-devel
+    - python3.15-devel
+    - python3.16-devel
   - name: Update packages
     how: shell
     script: dnf upgrade -y
