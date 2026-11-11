@@ -1478,6 +1478,9 @@
       "python3-13-pip--rpms": [
         "^rpms/python3\\.13\\-pip/"
       ],
+      "python3-13-pycparser--rpms": [
+        "^rpms/python3\\.13\\-pycparser/"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/"
       ],
