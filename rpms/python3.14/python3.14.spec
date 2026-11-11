@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 License: Python-2.0.1
 
 
@@ -445,6 +445,7 @@ Patch489: 00489-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
 
 # CVE-2026-119170: Restore hashlib FIPS enforcement for usedforsecurity=True.
 Patch490: 00490-cve-2026-119170.patch
+Patch491: 0491-cve-2026-19552-man-in-the-middle-attack-missing-certificate-identity.patch
 
 # (New patches go here ^^^)
 #
