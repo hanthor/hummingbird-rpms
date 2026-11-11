@@ -9,7 +9,7 @@ TIMEOUT_DURATION=600
 # Exit code
 FINAL_RESULT=0
 ARCH=$(uname -m)
-PARARALLEL_TEST_RERUN=""
+PARALLEL_TEST_RERUN=()
 echo "Started test run:"
 # Run the list of test
 while IFS= read -r test_line; do
@@ -52,8 +52,8 @@ while IFS= read -r test_line; do
 
   # Handle test result
   if [ $TEST_RESULT -ne 0 ]; then
-    if [[ "$TEST_PATH" == */parallel/* ]]; then
-      PARARALLEL_TEST_RERUN+="$TEST_SCRIPT"
+    if [[ "$TEST_PATH" == parallel/* ]]; then
+      PARALLEL_TEST_RERUN+=("$TEST_SCRIPT")
       echo "Parallel test failed, marking for rerun: $TEST_SCRIPT"
       continue
     elif [ $TEST_RESULT -eq 124 ]; then
@@ -67,10 +67,15 @@ while IFS= read -r test_line; do
   fi
 done < "$TEST_LIST_FILE"
 
-if [ -n "$PARALLEL_TEST_RERUN" ]; then
+if [ ${#PARALLEL_TEST_RERUN[@]} -gt 0 ]; then
   echo "Started rerun for parallel tests:"
-  for RERUN_SCRIPT in $PARALLEL_TEST_RERUN; do
-    TEST_OUTPUT=$(timeout "$TIMEOUT_DURATION" "$NODE_BIN" "$RERUN_SCRIPT" 2>&1)
+  for RERUN_SCRIPT in "${PARALLEL_TEST_RERUN[@]}"; do
+    RLIMIT_AS=$(grep -oP '// RLIMIT_AS: \K\d+' "$RERUN_SCRIPT" 2>/dev/null || true)
+    ULIMIT_PREFIX=""
+    if [[ -n "$RLIMIT_AS" ]]; then
+      ULIMIT_PREFIX="ulimit -v $((RLIMIT_AS / 1024));"
+    fi
+    TEST_OUTPUT=$(bash -c "${ULIMIT_PREFIX} timeout $TIMEOUT_DURATION \"$NODE_BIN\" \"$RERUN_SCRIPT\"" 2>&1)
     TEST_RESULT=$?
     if [ "$TEST_RESULT" -ne 0 ]; then
       if [ "$TEST_RESULT" -eq 124 ]; then
