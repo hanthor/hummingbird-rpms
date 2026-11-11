@@ -33,7 +33,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | `investigate HUM-XXXX [HUM-YYYY ...] --only` | Named tickets only; skip related-ticket discovery |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
-| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. Title format: `HUM-<TASK>: <pkgs>: fix <CVEs>` (see MR title and MR description below). |
+| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Verify lookaside uploads, run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. Title format: `HUM-<TASK>: <pkgs>: fix <CVEs>` (see MR title and MR description below). |
 | `lookaside-cmd -f FILE -p PKG` | Print upload commands; do not upload |
 | `version-check PKG` | Local NVR vs CVE range / FIB / analysis NVR |
 | `upstream-fix-age` | Fix-commit date vs upstream tag/release date |
@@ -264,6 +264,18 @@ create or add a remote.
 
 **Pre-MR check:** Do not add `%changelog` entries to spec files. CI rejects
 them because they create merge-conflict risks with Fedora updates.
+
+**Lookaside gate:** before the `%prep` check, `open-mr` reads each package whose
+`sources` file changed, downloads every listed tarball from the cache the build
+uses for that package (Hummingbird's when `forked_from` points at Hummingbird,
+otherwise Fedora's, under the spec-file name), streams it through the hash, and
+confirms the hash matches `sources`. Nothing is written to disk. Missing or
+mismatched files fail the command with the list; upload them (`lookaside-cmd`,
+only when the user asks) and rerun. Packages with a private `lookaside_cache_url`
+or a non-Hummingbird `forked_from` are skipped. This verifies the uploaded bytes,
+not their contents: inspect a regenerated vendor/cache archive before uploading.
+Large tarballs make the check slow. Use `--skip-lookaside-check` only when the
+user explicitly asks, and say so in the MR summary.
 
 **%prep gate:** `open-mr` runs `ci/build_rpms.sh --prep-only PKG` for every
 package changed under `rpms/` relative to the target `main`. It runs in the

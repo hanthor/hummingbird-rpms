@@ -86,6 +86,7 @@ from lib.vcs import (  # noqa: E402
     print_bot_mrs,
     resolve_fix_age_dates,
     run_prep_check,
+    verify_lookaside_sources,
 )
 from lib.output import (  # noqa: E402
     apply_title_prefix,
@@ -393,6 +394,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-branch", default="", help="Branch to push (default: the task key)."
     )
     mr.add_argument("--no-push", action="store_true", help="Skip git push.")
+    mr.add_argument(
+        "--skip-lookaside-check",
+        action="store_true",
+        help=(
+            "Skip verifying that sources tarballs exist in the lookaside cache. "
+            "Only use when the user explicitly approves."
+        ),
+    )
     mr.add_argument(
         "--skip-prep-check",
         action="store_true",
@@ -845,6 +854,12 @@ def cmd_open_mr(args: argparse.Namespace) -> int:
         cves=args.cves,
     )
     branch = args.source_branch or task
+    if args.skip_lookaside_check:
+        msg = "WARNING: skipping the lookaside verification (--skip-lookaside-check)"
+        print(msg, file=sys.stderr)
+        print(msg)
+    else:
+        verify_lookaside_sources()
     if args.skip_prep_check:
         msg = "WARNING: skipping the %prep check (--skip-prep-check)"
         print(msg, file=sys.stderr)
