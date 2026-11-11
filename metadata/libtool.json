@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/libtool.git",
-    "release": "1",
-    "sha": "bff0dd58934f6003614f0dc4e344d8ff77049238"
+    "release": "2",
+    "sha": "a19cdb3577fdc154fa57183aed58e3d0699aaa9a"
   },
   "modification_status": "clean",
   "upstream_repo": "https://git.savannah.gnu.org/git/libtool.git",
