@@ -891,3 +891,21 @@ class TestItsBuildScenariosAndManifest:
             assert all(e["group"] is False for e in conforma_entries)
         finally:
             gen_module._ITS_SCENARIO_TYPES = original_types
+
+
+class TestCheckItsCoverage:
+    def test_exits_when_app_has_components_but_no_its(self, gen_module):
+        """An application with components but no ITS must hard-error (D2 fail-closed)."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._check_its_coverage(
+                its_app_names={"rpms-main"},
+                manifest_app_names={"rpms-main", "private-orphan-rpms-main"},
+            )
+        assert exc_info.value.code != 0
+
+    def test_passes_when_all_apps_covered(self, gen_module):
+        """No error when every application with components also has an ITS."""
+        gen_module._check_its_coverage(
+            its_app_names={"rpms-main", "private-example-rpms-main"},
+            manifest_app_names={"rpms-main", "private-example-rpms-main"},
+        )

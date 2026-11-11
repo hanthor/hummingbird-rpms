@@ -615,6 +615,18 @@ def generate_konflux(branch: str, tenant: str, git_repo: str) -> str:
     return render_template(template_path, macros_dir, variables)
 
 
+def _check_its_coverage(its_app_names: set[str], manifest_app_names: set[str]) -> None:
+    """Exit non-zero if any application with components lacks an ITS (D2 fail-closed)."""
+    uncovered = manifest_app_names - its_app_names
+    if uncovered:
+        sys.exit(
+            f"ERROR: Application(s) {sorted(uncovered)} have components in the "
+            f"trigger manifest but no IntegrationTestScenario. Check that application_prefix "
+            f"in ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
+            f"produce matching application names."
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate Tekton/Konflux resources")
     parser.add_argument("--branch", default="main", help="Git branch (default: main)")
@@ -699,14 +711,7 @@ def main():
         # names, which would leave some components without integration test coverage.
         its_apps = set(its_entries["pr"].keys())
         if pr_manifest_apps:
-            uncovered_apps = pr_manifest_apps - its_apps
-            if uncovered_apps:
-                sys.exit(
-                    f"ERROR: Application(s) {sorted(uncovered_apps)} have components in the "
-                    f"trigger manifest but no IntegrationTestScenario. Check that application_prefix "
-                    f"in ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
-                    f"produce matching application names."
-                )
+            _check_its_coverage(its_apps, pr_manifest_apps)
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)
