@@ -5,3 +5,4 @@
 /results_python-pip/
 *.rpm
 *.whl
+pip-26.3.tar.gz

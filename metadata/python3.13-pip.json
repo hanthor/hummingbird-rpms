@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-pip.git",
-    "release": "1",
     "sha": "9d73fb50fcc06da506ba3a91960ee2c4a9351471"
   },
-  "modification_reason": "Python 3.13 variant with Hummingbird security fixes",
+  "modification_reason": "Update to upstream version 26.3",
   "modification_status": "modified",
   "release_monitoring_project_id": 6529,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pypa/pip",
-  "version": "26.2"
+  "version": "26.3"
 }
