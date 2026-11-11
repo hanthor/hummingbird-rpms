@@ -345,6 +345,7 @@ kbd:
 
 krb5:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+  push_pipeline: promotion
 
 kube-state-metrics:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -1296,4 +1297,324 @@ harfbuzz:
   push_pipeline: promotion
 
 hiredis:
+  push_pipeline: promotion
+
+# HUM-11952 batch 3: packages with default build settings.
+
+hostname:
+  push_pipeline: promotion
+
+hummingbird-release:
+  push_pipeline: promotion
+
+ima-evm-utils:
+  push_pipeline: promotion
+
+iptables:
+  push_pipeline: promotion
+
+jansson:
+  push_pipeline: promotion
+
+java-rpm-macros:
+  push_pipeline: promotion
+
+javapackages-tools:
+  push_pipeline: promotion
+
+jbigkit:
+  push_pipeline: promotion
+
+jemalloc:
+  push_pipeline: promotion
+
+jq:
+  push_pipeline: promotion
+
+json-c:
+  push_pipeline: promotion
+
+kernel-headers:
+  push_pipeline: promotion
+
+kernel-srpm-macros:
+  push_pipeline: promotion
+
+keyutils:
+  push_pipeline: promotion
+
+langpacks:
+  push_pipeline: promotion
+
+libX11:
+  push_pipeline: promotion
+
+libXau:
+  push_pipeline: promotion
+
+libXcomposite:
+  push_pipeline: promotion
+
+libXext:
+  push_pipeline: promotion
+
+libXft:
+  push_pipeline: promotion
+
+libXpm:
+  push_pipeline: promotion
+
+libXrender:
+  push_pipeline: promotion
+
+libXtst:
+  push_pipeline: promotion
+
+libaio:
+  push_pipeline: promotion
+
+libarchive:
+  push_pipeline: promotion
+
+libassuan:
+  push_pipeline: promotion
+
+libavif:
+  push_pipeline: promotion
+
+libb2:
+  push_pipeline: promotion
+
+libbpf:
+  push_pipeline: promotion
+
+libcap:
+  push_pipeline: promotion
+
+libcap-ng:
+  push_pipeline: promotion
+
+libcbor:
+  push_pipeline: promotion
+
+libcomps:
+  push_pipeline: promotion
+
+libdnf:
+  push_pipeline: promotion
+
+libeconf:
+  push_pipeline: promotion
+
+libedit:
+  push_pipeline: promotion
+
+libffi:
+  push_pipeline: promotion
+
+libfido2:
+  push_pipeline: promotion
+
+libfontenc:
+  push_pipeline: promotion
+
+libgcrypt:
+  push_pipeline: promotion
+
+libgit2_1.9:
+  push_pipeline: promotion
+
+libgpg-error:
+  push_pipeline: promotion
+
+libidn2:
+  push_pipeline: promotion
+
+libipt:
+  push_pipeline: promotion
+
+libjpeg-turbo:
+  push_pipeline: promotion
+
+libksba:
+  push_pipeline: promotion
+
+libmaxminddb:
+  push_pipeline: promotion
+
+libmnl:
+  push_pipeline: promotion
+
+libmpc:
+  push_pipeline: promotion
+
+libndp:
+  push_pipeline: promotion
+
+libnetfilter_conntrack:
+  push_pipeline: promotion
+
+libnfnetlink:
+  push_pipeline: promotion
+
+libnftnl:
+  push_pipeline: promotion
+
+libnl3:
+  push_pipeline: promotion
+
+libnsl2:
+  push_pipeline: promotion
+
+libpipeline:
+  push_pipeline: promotion
+
+libpsl:
+  push_pipeline: promotion
+
+libpsm2:
+  push_pipeline: promotion
+
+libpwquality:
+  push_pipeline: promotion
+
+libseccomp:
+  push_pipeline: promotion
+
+libselinux:
+  push_pipeline: promotion
+
+libsemanage:
+  push_pipeline: promotion
+
+libsepol:
+  push_pipeline: promotion
+
+libsodium:
+  push_pipeline: promotion
+
+libsolv:
+  push_pipeline: promotion
+
+libssh:
+  push_pipeline: promotion
+
+libssh2:
+  push_pipeline: promotion
+
+libtasn1:
+  push_pipeline: promotion
+
+libtiff:
+  push_pipeline: promotion
+
+libtirpc:
+  push_pipeline: promotion
+
+libtommath:
+  push_pipeline: promotion
+
+libtool:
+  push_pipeline: promotion
+
+libunwind:
+  push_pipeline: promotion
+
+libusb1:
+  push_pipeline: promotion
+
+libuv:
+  push_pipeline: promotion
+
+libverto:
+  push_pipeline: promotion
+
+libwebp:
+  push_pipeline: promotion
+
+libxcb:
+  push_pipeline: promotion
+
+libxcrypt:
+  push_pipeline: promotion
+
+libyaml:
+  push_pipeline: promotion
+
+libzip:
+  push_pipeline: promotion
+
+lksctp-tools:
+  push_pipeline: promotion
+
+llhttp:
+  push_pipeline: promotion
+
+lmdb:
+  push_pipeline: promotion
+
+logrotate:
+  push_pipeline: promotion
+
+lua:
+  push_pipeline: promotion
+
+lua-rpm-macros:
+  push_pipeline: promotion
+
+lujavrite:
+  push_pipeline: promotion
+
+lvm2:
+  push_pipeline: promotion
+
+lz4:
+  push_pipeline: promotion
+
+lzo:
+  push_pipeline: promotion
+
+m4:
+  push_pipeline: promotion
+
+mailcap:
+  push_pipeline: promotion
+
+make:
+  push_pipeline: promotion
+
+man-db:
+  push_pipeline: promotion
+
+mariadb-connector-c:
+  push_pipeline: promotion
+
+mawk:
+  push_pipeline: promotion
+
+meson:
+  push_pipeline: promotion
+
+mkfontscale:
+  push_pipeline: promotion
+
+mpdecimal:
+  push_pipeline: promotion
+
+mpfr:
+  push_pipeline: promotion
+
+munge:
+  push_pipeline: promotion
+
+ncurses:
+  push_pipeline: promotion
+
+netavark:
+  push_pipeline: promotion
+
+nettle:
+  push_pipeline: promotion
+
+nginx:
   push_pipeline: promotion
