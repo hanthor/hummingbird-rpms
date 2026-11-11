@@ -1067,6 +1067,8 @@ spec:
           contentType: rpm
         - name: python3-13-setuptools-main
           contentType: rpm
+        - name: python3-13-tomlkit-main
+          contentType: rpm
         - name: python3-14-main
           contentType: rpm
         - name: python3-15-main
