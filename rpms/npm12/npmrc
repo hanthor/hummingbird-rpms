@@ -1,0 +1,3 @@
+globalconfig=/etc/npmrc
+prefix=/usr/local
+update-notifier=false
