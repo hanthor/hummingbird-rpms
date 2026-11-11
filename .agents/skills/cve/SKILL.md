@@ -33,7 +33,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | `investigate HUM-XXXX [HUM-YYYY ...] --only` | Named tickets only; skip related-ticket discovery |
 | `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
-| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. |
+| `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. Title format: `HUM-<TASK>: <pkgs>: fix <CVEs>` (see MR title and MR description below). |
 | `lookaside-cmd -f FILE -p PKG` | Print upload commands; do not upload |
 | `version-check PKG` | Local NVR vs CVE range / FIB / analysis NVR |
 | `upstream-fix-age` | Fix-commit date vs upstream tag/release date |
@@ -183,6 +183,40 @@ do not change metadata
 `release` for a backport. Do not add `%changelog`. `lookaside-cmd` prints
 copy/upload commands and waits. `open-mr` uses `Closes:` for the **task**,
 `Ref:` for trackers, `CVE:` for IDs. Chat prefix `!${MR_IID}`.
+
+**MR title:** pass `--title` in exactly this form, with no extra words:
+`HUM-<TASK TICKET ID>: <packages>: fix <CVEs>`
+where the ID is the HUM **task** created by `create-task` (not the tracker).
+List up to 5 packages and up to 5 CVEs, comma-separated; above 5 in either
+field use a count for that field instead:
+
+- `HUM-1276: nodejs24: fix CVE-2026-120423`
+- `HUM-1276: pkg1, pkg2: fix CVE-A, CVE-B`
+- `HUM-1276: 8 packages: fix CVE-A, CVE-B`
+- `HUM-1276: nodejs24: fix 7 CVEs`
+- `HUM-1276: 8 packages: fix 7 CVEs`
+
+Whenever a count replaces a list, the MR description **must** list every
+package and every CVE ID explicitly.
+
+**MR description:** pass `--message` using this structure:
+
+```text
+**Scope**
+
+Jira Trackers: HUM-1234, HUM-1235
+Packages: pkg1, pkg2
+CVEs: CVE-A, CVE-B
+
+**Fix**
+<What changed: version/dependency update or backport, and why.>
+
+**Verification**
+<Checks done and their results, and checks not run and why not (if any).>
+```
+
+`open-mr` appends the `Closes:`, `Ref:`, and `CVE:` trailers itself; do not
+include them in `--message`.
 
 For each package backport:
 
