@@ -22,8 +22,33 @@ class TestPromotionGeneration(unittest.TestCase):
         root = Path(__file__).resolve().parent.parent
         documents = list(yaml.safe_load_all((root / ".tekton/rpms-on-promotion.yaml").read_text()))
         names = [document["metadata"]["name"] for document in documents]
+        push = [
+            document
+            for document in yaml.safe_load_all((root / ".tekton/rpms-on-push.yaml").read_text())
+            if document is not None
+        ]
+        packages = {entry.name for entry in (root / "rpms").iterdir() if entry.is_dir()}
+        overrides = yaml.safe_load((root / "ci/package-overrides.yaml").read_text())
+        build_exceptions = {
+            package for package in packages
+            if overrides.get(package, {}).get("push_pipeline") == "build"
+        }
 
         self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(
+            set(names),
+            {
+                f"{generate_resources.sanitize_component_name(package)}-main-on-promotion"
+                for package in packages - build_exceptions
+            },
+        )
+        self.assertEqual(
+            {document["metadata"]["name"] for document in push},
+            {
+                f"{generate_resources.sanitize_component_name(package)}-main-on-push"
+                for package in build_exceptions
+            },
+        )
         self.assertIn("gorget-main-on-promotion", names)
         self.assertIn("syft-main-on-promotion", names)
         self.assertNotIn("name: gorget-main-on-push", (root / ".tekton/rpms-on-push.yaml").read_text())
@@ -60,6 +85,30 @@ class TestPromotionGeneration(unittest.TestCase):
 
         self.assertIn("# --- beta ---\n# PENDING", rendered)
         self.assertNotIn("# --- alpha ---", rendered)
+        self.assertNotIn("\n\n\n", rendered)
+
+    def test_promotion_is_default_and_build_is_explicit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "rpms" / "alpha").mkdir(parents=True)
+            (root / "rpms" / "beta").mkdir()
+            (root / "ci").mkdir()
+            (root / "ci" / "package-overrides.yaml").write_text(
+                "beta:\n  push_pipeline: build\n"
+            )
+
+            with mock.patch.object(generate_resources, "ROOT_DIR", root), mock.patch.object(
+                generate_resources, "_METADATA_REPO"
+            ) as metadata_repo:
+                metadata_repo.load.return_value = None
+                variables = generate_resources.build_pac_variables(
+                    "main", "hummingbird-tenant", "push"
+                )
+
+            self.assertEqual(
+                {rpm["dname"]: rpm["push_pipeline"] for rpm in variables["rpms"]},
+                {"alpha": "promotion", "beta": "build"},
+            )
 
     def test_invalid_push_pipeline_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -128,7 +128,7 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 
             # Check for overrides
             pkg_config = package_overrides.get(dname, {})
-            rpm_data["push_pipeline"] = pkg_config.get("push_pipeline", "build")
+            rpm_data["push_pipeline"] = pkg_config.get("push_pipeline", "promotion")
             if rpm_data["push_pipeline"] not in ("build", "promotion"):
                 raise ValueError(f"{dname}: push_pipeline must be build or promotion")
 
@@ -411,7 +411,7 @@ def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     template_path = ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml.j2"
     macros_dir = ROOT_DIR / ".tekton" / "macros"
 
-    return render_template(template_path, macros_dir, variables)
+    return render_template(template_path, macros_dir, variables).rstrip() + "\n"
 
 
 def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
@@ -519,7 +519,7 @@ def main():
             print(f"Rendering {resource_type} Pipeline as Code resources...", file=sys.stderr)
             template_path = ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml.j2"
             macros_dir = ROOT_DIR / ".tekton" / "macros"
-            pac_result = render_template(template_path, macros_dir, variables)
+            pac_result = render_template(template_path, macros_dir, variables).rstrip() + "\n"
             (ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml").write_text(pac_result)
 
             manifest = build_trigger_manifest(variables, event_type)
