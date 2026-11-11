@@ -25,9 +25,9 @@ The path is:
    Conforma, duplicate-RPM filtering, signing, and Pulp publication.
 
 `syft` was the first package on this path. Check `.tekton/rpms-on-promotion.yaml` for the generated
-promotion runs. `.tekton/rpms-on-push.yaml` contains only explicit build exceptions and pending
-package placeholders. The earlier PR Snapshot Promotion PoC was an experiment; its scripts and
-staging manifests are not the production workflow.
+promotion runs. `.tekton/rpms-on-push.yaml` contains only explicit build exceptions. The earlier PR
+Snapshot Promotion PoC was an experiment; its scripts and staging manifests are not the production
+workflow.
 
 ## Prerequisites
 

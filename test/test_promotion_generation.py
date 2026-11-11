@@ -71,7 +71,7 @@ class TestPromotionGeneration(unittest.TestCase):
                     [{"name": "basic-auth", "workspace": "git-auth"}],
                 )
 
-    def test_promoted_import_counts_before_pending_package(self):
+    def test_push_template_omits_promoted_and_pending_packages(self):
         rendered = generate_resources.render_template(
             generate_resources.ROOT_DIR / ".tekton" / "rpms-on-push.yaml.j2",
             generate_resources.ROOT_DIR / ".tekton" / "macros",
@@ -83,9 +83,10 @@ class TestPromotionGeneration(unittest.TestCase):
             },
         )
 
-        self.assertIn("# --- beta ---\n# PENDING", rendered)
-        self.assertNotIn("# --- alpha ---", rendered)
-        self.assertNotIn("\n\n\n", rendered)
+        self.assertEqual(
+            rendered.strip(),
+            "# Generated push-build PipelineRuns for explicit push_pipeline: build exceptions.",
+        )
 
     def test_promotion_is_default_and_build_is_explicit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
