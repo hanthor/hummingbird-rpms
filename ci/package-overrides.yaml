@@ -2,7 +2,7 @@
 # If a package is not listed in this file, it will use default settings.
 #
 # Available options per package:
-#   push_pipeline: "build" (default) rebuilds on push; "promotion" reuses the MR-tested image
+#   push_pipeline: "promotion" (default) reuses the MR-tested image; "build" rebuilds on push
 #   timeout_hours: Override the default build timeout (default: 4 hours)
 #   build_architectures: Override the default RPM architectures (aarch64, x86_64, and s390x)
 #   build_platforms: Override the default MPLs (instance sizes) for builds
@@ -41,7 +41,6 @@
 _private_lookaside_cache_url: &private_lookaside_cache_url "https://dp9y1t38f72i0.cloudfront.net/"
 
 abseil-cpp:
-  push_pipeline: promotion
   # Parallel C++ test compilation exceeds the default builders' memory.
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -49,84 +48,66 @@ abseil-cpp:
     - "linux/s390x"
 
 acl:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 aom:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 attr:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bash:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bind:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 prometheus-blackbox-exporter:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bootc:
-  push_pipeline: promotion
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
     - "linux-d160-c8xlarge/amd64"
     - "linux/s390x"
 
 brotli:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 bubblewrap:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 caddy:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cairo:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 capstone:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cargo-nextest:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cloud-init:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cmake:
-  push_pipeline: promotion
   build_platforms:
     - "linux-c2xlarge/arm64"
     - "linux-c2xlarge/amd64"
     - "linux/s390x"
 
 composer:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 coredns:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 cosign:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 curl:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # Larger builders needed for parallel test suite under valgrind
   build_platforms:
@@ -135,19 +116,15 @@ curl:
     - "linux/s390x"
 
 cyrus-sasl:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 dex:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 distribution:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 dotnet10.0:
-  push_pipeline: promotion
   timeout_hours: 12
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -155,7 +132,6 @@ dotnet10.0:
     - "linux/s390x"
 
 dotnet8.0:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 12
   # s390x disabled: the Mono bootstrap runtime crashes deterministically
@@ -170,7 +146,6 @@ dotnet8.0:
     - "linux-d160-c8xlarge/amd64"
 
 dotnet9.0:
-  push_pipeline: promotion
   timeout_hours: 12
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -178,35 +153,27 @@ dotnet9.0:
     - "linux/s390x"
 
 dracut:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 drpm:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 efi-rpm-macros:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 erlang27:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 etcd:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 environment-modules:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 expat:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 fftw:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-c2xlarge/arm64"
@@ -214,15 +181,12 @@ fftw:
     - "linux/s390x"
 
 fontconfig:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 fulcio:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 gcc:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # Larger builders are required for the build to complete in a reasonable time
   timeout_hours: 12
@@ -232,7 +196,6 @@ gcc:
     - "linux/s390x"
 
 gcc13:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # GCC bootstrap requires the same larger builders as the system compiler
   timeout_hours: 12
@@ -242,7 +205,6 @@ gcc13:
     - "linux/s390x"
 
 gettext:
-  push_pipeline: promotion
   timeout_hours: 8
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -250,15 +212,12 @@ gettext:
     - "linux/s390x"
 
 git-lfs:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 git-sync:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 glibc:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 16
   build_platforms:
@@ -267,11 +226,9 @@ glibc:
     - "linux/s390x"
 
 go-fdo-client:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 golang1.27:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-d160-c8xlarge/amd64"
@@ -281,10 +238,8 @@ golang1.27:
 gorget:
   # Independent Hummingbird package -- no Fedora dist-git history to fall back to.
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
-  push_pipeline: promotion
 
 grafana12.4:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   # The frontend webpack build requires more memory than the default builders provide.
@@ -294,7 +249,6 @@ grafana12.4:
     - "linux/s390x"
 
 grafana13.1:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # The frontend webpack build requires more memory than the default builders provide.
   build_platforms:
@@ -303,7 +257,6 @@ grafana13.1:
     - "linux/s390x"
 
 grafana13.2:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   # The frontend webpack build requires more memory than the default builders provide.
   build_platforms:
@@ -313,14 +266,11 @@ grafana13.2:
 
 grype:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
-  push_pipeline: promotion
 
 haproxy:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hdf5:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   build_platforms:
     - "linux-c2xlarge/arm64"
@@ -328,35 +278,27 @@ hdf5:
     - "linux/s390x"
 
 hello:
-  push_pipeline: promotion
   private_product: example
 
 helm3:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 helm4:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 httpd:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hwloc:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 hugo:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 jaeger:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 java-17-openjdk-portable:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -365,7 +307,6 @@ java-17-openjdk-portable:
     - "linux/s390x"
 
 java-21-openjdk-portable:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -374,7 +315,6 @@ java-21-openjdk-portable:
     - "linux/s390x"
 
 java-25-openjdk:
-  push_pipeline: promotion
   timeout_hours: 8
   build_platforms:
     - "linux-d160-c8xlarge/arm64"
@@ -382,7 +322,6 @@ java-25-openjdk:
     - "linux/s390x"
 
 java-25-openjdk-portable:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
   timeout_hours: 8
   build_platforms:
@@ -391,15 +330,12 @@ java-25-openjdk-portable:
     - "linux/s390x"
 
 jsoncpp:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 k6v1:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 k6v2:
-  push_pipeline: promotion
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 kbd:
@@ -407,7 +343,6 @@ kbd:
 
 krb5:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
-  push_pipeline: promotion
 
 kube-state-metrics:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -842,7 +777,6 @@ swift-lang:
 
 syft:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
-  push_pipeline: promotion
 
 tbb:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
@@ -888,1258 +822,3 @@ xmlsec1:
 
 zstd:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
-
-# HUM-11952 batch 1: recently active packages with default build settings.
-
-apt:
-  push_pipeline: promotion
-
-automake:
-  push_pipeline: promotion
-
-babeltrace:
-  push_pipeline: promotion
-
-containernetworking-plugins:
-  push_pipeline: promotion
-
-dbus-python:
-  push_pipeline: promotion
-
-debugedit:
-  push_pipeline: promotion
-
-dhcpcd:
-  push_pipeline: promotion
-
-dnf5:
-  push_pipeline: promotion
-
-elfutils:
-  push_pipeline: promotion
-
-google-noto-fonts:
-  push_pipeline: promotion
-
-icu:
-  push_pipeline: promotion
-
-inih:
-  push_pipeline: promotion
-
-iproute:
-  push_pipeline: promotion
-
-java-21-openjdk:
-  push_pipeline: promotion
-
-kmod:
-  push_pipeline: promotion
-
-less:
-  push_pipeline: promotion
-
-libbsd:
-  push_pipeline: promotion
-
-liblerc:
-  push_pipeline: promotion
-
-libmd:
-  push_pipeline: promotion
-
-libmodulemd:
-  push_pipeline: promotion
-
-librepo:
-  push_pipeline: promotion
-
-libretls:
-  push_pipeline: promotion
-
-netcat:
-  push_pipeline: promotion
-
-nghttp3:
-  push_pipeline: promotion
-
-nss:
-  push_pipeline: promotion
-
-openldap:
-  push_pipeline: promotion
-
-openssh:
-  push_pipeline: promotion
-
-pixman:
-  push_pipeline: promotion
-
-podman:
-  push_pipeline: promotion
-
-postgresql18:
-  push_pipeline: promotion
-
-python-cffi:
-  push_pipeline: promotion
-
-python-charset-normalizer:
-  push_pipeline: promotion
-
-python-configobj:
-  push_pipeline: promotion
-
-python-distro:
-  push_pipeline: promotion
-
-python-idna:
-  push_pipeline: promotion
-
-python-jsonpatch:
-  push_pipeline: promotion
-
-python-jsonpointer:
-  push_pipeline: promotion
-
-python-jsonschema:
-  push_pipeline: promotion
-
-python-oauthlib:
-  push_pipeline: promotion
-
-python-rpds-py:
-  push_pipeline: promotion
-
-qt6-qtsvg:
-  push_pipeline: promotion
-
-redhat-rpm-config:
-  push_pipeline: promotion
-
-setools:
-  push_pipeline: promotion
-
-setup:
-  push_pipeline: promotion
-
-tpm2-tss:
-  push_pipeline: promotion
-
-tzdata:
-  push_pipeline: promotion
-
-uriparser:
-  push_pipeline: promotion
-
-xfsprogs:
-  push_pipeline: promotion
-
-xkeyboard-config:
-  push_pipeline: promotion
-
-zeromq:
-  push_pipeline: promotion
-
-# HUM-11952 batch 2: packages with default build settings.
-
-NetworkManager:
-  push_pipeline: promotion
-
-PyYAML:
-  push_pipeline: promotion
-
-R-rpm-macros:
-  push_pipeline: promotion
-
-ShellCheck:
-  push_pipeline: promotion
-
-aardvark-dns:
-  push_pipeline: promotion
-
-abattis-cantarell-fonts:
-  push_pipeline: promotion
-
-alsa-lib:
-  push_pipeline: promotion
-
-annobin:
-  push_pipeline: promotion
-
-ansible-packaging:
-  push_pipeline: promotion
-
-apr:
-  push_pipeline: promotion
-
-apr-util:
-  push_pipeline: promotion
-
-audit:
-  push_pipeline: promotion
-
-authselect:
-  push_pipeline: promotion
-
-autoconf:
-  push_pipeline: promotion
-
-avahi:
-  push_pipeline: promotion
-
-bash-completion:
-  push_pipeline: promotion
-
-binutils:
-  push_pipeline: promotion
-
-boost:
-  push_pipeline: promotion
-
-btrfs-progs:
-  push_pipeline: promotion
-
-buildah:
-  push_pipeline: promotion
-
-busybox:
-  push_pipeline: promotion
-
-bzip2:
-  push_pipeline: promotion
-
-c-ares:
-  push_pipeline: promotion
-
-ca-certificates:
-  push_pipeline: promotion
-
-cargo-rpm-macros:
-  push_pipeline: promotion
-
-cargo2rpm:
-  push_pipeline: promotion
-
-catatonit:
-  push_pipeline: promotion
-
-checkpolicy:
-  push_pipeline: promotion
-
-chkconfig:
-  push_pipeline: promotion
-
-chrony:
-  push_pipeline: promotion
-
-chunkah:
-  push_pipeline: promotion
-
-cloud-utils:
-  push_pipeline: promotion
-
-composefs:
-  push_pipeline: promotion
-
-conmon:
-  push_pipeline: promotion
-
-container-selinux:
-  push_pipeline: promotion
-
-containers-common:
-  push_pipeline: promotion
-
-coreutils:
-  push_pipeline: promotion
-
-cpio:
-  push_pipeline: promotion
-
-cracklib:
-  push_pipeline: promotion
-
-createrepo_c:
-  push_pipeline: promotion
-
-crun:
-  push_pipeline: promotion
-
-crypto-policies:
-  push_pipeline: promotion
-
-cryptsetup:
-  push_pipeline: promotion
-
-ctags:
-  push_pipeline: promotion
-
-cups:
-  push_pipeline: promotion
-
-dav1d:
-  push_pipeline: promotion
-
-dbus:
-  push_pipeline: promotion
-
-dbus-broker:
-  push_pipeline: promotion
-
-diffutils:
-  push_pipeline: promotion
-
-dnf:
-  push_pipeline: promotion
-
-dns-root-data:
-  push_pipeline: promotion
-
-dosfstools:
-  push_pipeline: promotion
-
-doxygen:
-  push_pipeline: promotion
-
-duktape:
-  push_pipeline: promotion
-
-dwz:
-  push_pipeline: promotion
-
-e2fsprogs:
-  push_pipeline: promotion
-
-ecj:
-  push_pipeline: promotion
-
-ed:
-  push_pipeline: promotion
-
-efibootmgr:
-  push_pipeline: promotion
-
-efivar:
-  push_pipeline: promotion
-
-emacs-filesystem:
-  push_pipeline: promotion
-
-erlang-rpm-macros:
-  push_pipeline: promotion
-
-fedora-logos:
-  push_pipeline: promotion
-
-fedora-repos:
-  push_pipeline: promotion
-
-file:
-  push_pipeline: promotion
-
-filesystem:
-  push_pipeline: promotion
-
-findutils:
-  push_pipeline: promotion
-
-firewalld:
-  push_pipeline: promotion
-
-fmt:
-  push_pipeline: promotion
-
-fonts-rpm-macros:
-  push_pipeline: promotion
-
-forge-srpm-macros:
-  push_pipeline: promotion
-
-fpc-srpm-macros:
-  push_pipeline: promotion
-
-freetype:
-  push_pipeline: promotion
-
-fstrm:
-  push_pipeline: promotion
-
-fsverity-utils:
-  push_pipeline: promotion
-
-fuse-overlayfs:
-  push_pipeline: promotion
-
-fuse3:
-  push_pipeline: promotion
-
-gap-srpm-macros:
-  push_pipeline: promotion
-
-gawk:
-  push_pipeline: promotion
-
-gd:
-  push_pipeline: promotion
-
-gdb:
-  push_pipeline: promotion
-
-gdbm:
-  push_pipeline: promotion
-
-ghc-srpm-macros:
-  push_pipeline: promotion
-
-git:
-  push_pipeline: promotion
-
-glib2:
-  push_pipeline: promotion
-
-gmp:
-  push_pipeline: promotion
-
-gnat-srpm-macros:
-  push_pipeline: promotion
-
-gnome-srpm-macros:
-  push_pipeline: promotion
-
-gnulib-l10n:
-  push_pipeline: promotion
-
-gnupg2:
-  push_pipeline: promotion
-
-gnutls:
-  push_pipeline: promotion
-
-go-fdo-server:
-  push_pipeline: promotion
-
-go-md2man:
-  push_pipeline: promotion
-
-go-rpm-macros:
-  push_pipeline: promotion
-
-golang1.25:
-  push_pipeline: promotion
-
-golang1.26:
-  push_pipeline: promotion
-
-golist:
-  push_pipeline: promotion
-
-gperftools:
-  push_pipeline: promotion
-
-gpgme:
-  push_pipeline: promotion
-
-gpgverify:
-  push_pipeline: promotion
-
-graphite2:
-  push_pipeline: promotion
-
-graphviz:
-  push_pipeline: promotion
-
-grep:
-  push_pipeline: promotion
-
-groff:
-  push_pipeline: promotion
-
-gzip:
-  push_pipeline: promotion
-
-harfbuzz:
-  push_pipeline: promotion
-
-hiredis:
-  push_pipeline: promotion
-
-# HUM-11952 batch 3: packages with default build settings.
-
-hostname:
-  push_pipeline: promotion
-
-hummingbird-release:
-  push_pipeline: promotion
-
-ima-evm-utils:
-  push_pipeline: promotion
-
-iptables:
-  push_pipeline: promotion
-
-jansson:
-  push_pipeline: promotion
-
-java-rpm-macros:
-  push_pipeline: promotion
-
-javapackages-tools:
-  push_pipeline: promotion
-
-jbigkit:
-  push_pipeline: promotion
-
-jemalloc:
-  push_pipeline: promotion
-
-jq:
-  push_pipeline: promotion
-
-json-c:
-  push_pipeline: promotion
-
-kernel-headers:
-  push_pipeline: promotion
-
-kernel-srpm-macros:
-  push_pipeline: promotion
-
-keyutils:
-  push_pipeline: promotion
-
-langpacks:
-  push_pipeline: promotion
-
-libX11:
-  push_pipeline: promotion
-
-libXau:
-  push_pipeline: promotion
-
-libXcomposite:
-  push_pipeline: promotion
-
-libXext:
-  push_pipeline: promotion
-
-libXft:
-  push_pipeline: promotion
-
-libXpm:
-  push_pipeline: promotion
-
-libXrender:
-  push_pipeline: promotion
-
-libXtst:
-  push_pipeline: promotion
-
-libaio:
-  push_pipeline: promotion
-
-libarchive:
-  push_pipeline: promotion
-
-libassuan:
-  push_pipeline: promotion
-
-libavif:
-  push_pipeline: promotion
-
-libb2:
-  push_pipeline: promotion
-
-libbpf:
-  push_pipeline: promotion
-
-libcap:
-  push_pipeline: promotion
-
-libcap-ng:
-  push_pipeline: promotion
-
-libcbor:
-  push_pipeline: promotion
-
-libcomps:
-  push_pipeline: promotion
-
-libdnf:
-  push_pipeline: promotion
-
-libeconf:
-  push_pipeline: promotion
-
-libedit:
-  push_pipeline: promotion
-
-libffi:
-  push_pipeline: promotion
-
-libfido2:
-  push_pipeline: promotion
-
-libfontenc:
-  push_pipeline: promotion
-
-libgcrypt:
-  push_pipeline: promotion
-
-libgit2_1.9:
-  push_pipeline: promotion
-
-libgpg-error:
-  push_pipeline: promotion
-
-libidn2:
-  push_pipeline: promotion
-
-libipt:
-  push_pipeline: promotion
-
-libjpeg-turbo:
-  push_pipeline: promotion
-
-libksba:
-  push_pipeline: promotion
-
-libmaxminddb:
-  push_pipeline: promotion
-
-libmnl:
-  push_pipeline: promotion
-
-libmpc:
-  push_pipeline: promotion
-
-libndp:
-  push_pipeline: promotion
-
-libnetfilter_conntrack:
-  push_pipeline: promotion
-
-libnfnetlink:
-  push_pipeline: promotion
-
-libnftnl:
-  push_pipeline: promotion
-
-libnl3:
-  push_pipeline: promotion
-
-libnsl2:
-  push_pipeline: promotion
-
-libpipeline:
-  push_pipeline: promotion
-
-libpsl:
-  push_pipeline: promotion
-
-libpsm2:
-  push_pipeline: promotion
-
-libpwquality:
-  push_pipeline: promotion
-
-libseccomp:
-  push_pipeline: promotion
-
-libselinux:
-  push_pipeline: promotion
-
-libsemanage:
-  push_pipeline: promotion
-
-libsepol:
-  push_pipeline: promotion
-
-libsodium:
-  push_pipeline: promotion
-
-libsolv:
-  push_pipeline: promotion
-
-libssh:
-  push_pipeline: promotion
-
-libssh2:
-  push_pipeline: promotion
-
-libtasn1:
-  push_pipeline: promotion
-
-libtiff:
-  push_pipeline: promotion
-
-libtirpc:
-  push_pipeline: promotion
-
-libtommath:
-  push_pipeline: promotion
-
-libtool:
-  push_pipeline: promotion
-
-libunwind:
-  push_pipeline: promotion
-
-libusb1:
-  push_pipeline: promotion
-
-libuv:
-  push_pipeline: promotion
-
-libverto:
-  push_pipeline: promotion
-
-libwebp:
-  push_pipeline: promotion
-
-libxcb:
-  push_pipeline: promotion
-
-libxcrypt:
-  push_pipeline: promotion
-
-libyaml:
-  push_pipeline: promotion
-
-libzip:
-  push_pipeline: promotion
-
-lksctp-tools:
-  push_pipeline: promotion
-
-llhttp:
-  push_pipeline: promotion
-
-lmdb:
-  push_pipeline: promotion
-
-logrotate:
-  push_pipeline: promotion
-
-lua:
-  push_pipeline: promotion
-
-lua-rpm-macros:
-  push_pipeline: promotion
-
-lujavrite:
-  push_pipeline: promotion
-
-lvm2:
-  push_pipeline: promotion
-
-lz4:
-  push_pipeline: promotion
-
-lzo:
-  push_pipeline: promotion
-
-m4:
-  push_pipeline: promotion
-
-mailcap:
-  push_pipeline: promotion
-
-make:
-  push_pipeline: promotion
-
-man-db:
-  push_pipeline: promotion
-
-mariadb-connector-c:
-  push_pipeline: promotion
-
-mawk:
-  push_pipeline: promotion
-
-meson:
-  push_pipeline: promotion
-
-mkfontscale:
-  push_pipeline: promotion
-
-mpdecimal:
-  push_pipeline: promotion
-
-mpfr:
-  push_pipeline: promotion
-
-munge:
-  push_pipeline: promotion
-
-ncurses:
-  push_pipeline: promotion
-
-netavark:
-  push_pipeline: promotion
-
-nettle:
-  push_pipeline: promotion
-
-nginx:
-  push_pipeline: promotion
-
-# HUM-11952 batch 4: packages with default build settings.
-
-ninja-build:
-  push_pipeline: promotion
-
-npth:
-  push_pipeline: promotion
-
-numactl:
-  push_pipeline: promotion
-
-ocaml-srpm-macros:
-  push_pipeline: promotion
-
-oniguruma:
-  push_pipeline: promotion
-
-openblas-srpm-macros:
-  push_pipeline: promotion
-
-opendbx:
-  push_pipeline: promotion
-
-openscap:
-  push_pipeline: promotion
-
-ostree:
-  push_pipeline: promotion
-
-p11-kit:
-  push_pipeline: promotion
-
-package-notes:
-  push_pipeline: promotion
-
-pam:
-  push_pipeline: promotion
-
-passt:
-  push_pipeline: promotion
-
-patch:
-  push_pipeline: promotion
-
-perl:
-  push_pipeline: promotion
-
-perl-Carp:
-  push_pipeline: promotion
-
-perl-Data-Dumper:
-  push_pipeline: promotion
-
-perl-Digest:
-  push_pipeline: promotion
-
-perl-Digest-MD5:
-  push_pipeline: promotion
-
-perl-Encode:
-  push_pipeline: promotion
-
-perl-Error:
-  push_pipeline: promotion
-
-perl-Exporter:
-  push_pipeline: promotion
-
-perl-File-Path:
-  push_pipeline: promotion
-
-perl-File-Temp:
-  push_pipeline: promotion
-
-perl-Getopt-Long:
-  push_pipeline: promotion
-
-perl-HTTP-Tiny:
-  push_pipeline: promotion
-
-perl-IO-Socket-IP:
-  push_pipeline: promotion
-
-perl-IO-Socket-SSL:
-  push_pipeline: promotion
-
-perl-MIME-Base32:
-  push_pipeline: promotion
-
-perl-MIME-Base64:
-  push_pipeline: promotion
-
-perl-Net-SSLeay:
-  push_pipeline: promotion
-
-perl-PathTools:
-  push_pipeline: promotion
-
-perl-Pod-Escapes:
-  push_pipeline: promotion
-
-perl-Pod-Perldoc:
-  push_pipeline: promotion
-
-perl-Pod-Simple:
-  push_pipeline: promotion
-
-perl-Pod-Usage:
-  push_pipeline: promotion
-
-perl-Scalar-List-Utils:
-  push_pipeline: promotion
-
-perl-Socket:
-  push_pipeline: promotion
-
-perl-Storable:
-  push_pipeline: promotion
-
-perl-Term-ANSIColor:
-  push_pipeline: promotion
-
-perl-Term-Cap:
-  push_pipeline: promotion
-
-perl-TermReadKey:
-  push_pipeline: promotion
-
-perl-Text-ParseWords:
-  push_pipeline: promotion
-
-perl-Text-Tabs+Wrap:
-  push_pipeline: promotion
-
-perl-Thread-Queue:
-  push_pipeline: promotion
-
-perl-Time-HiRes:
-  push_pipeline: promotion
-
-perl-Time-Local:
-  push_pipeline: promotion
-
-perl-URI:
-  push_pipeline: promotion
-
-perl-Unicode-Normalize:
-  push_pipeline: promotion
-
-perl-constant:
-  push_pipeline: promotion
-
-perl-libnet:
-  push_pipeline: promotion
-
-perl-parent:
-  push_pipeline: promotion
-
-perl-podlators:
-  push_pipeline: promotion
-
-perl-srpm-macros:
-  push_pipeline: promotion
-
-perl-threads:
-  push_pipeline: promotion
-
-perl-threads-shared:
-  push_pipeline: promotion
-
-php:
-  push_pipeline: promotion
-
-php-pecl-zip:
-  push_pipeline: promotion
-
-pkgconf:
-  push_pipeline: promotion
-
-policycoreutils:
-  push_pipeline: promotion
-
-polkit:
-  push_pipeline: promotion
-
-popt:
-  push_pipeline: promotion
-
-postgresql17:
-  push_pipeline: promotion
-
-procps-ng:
-  push_pipeline: promotion
-
-psmisc:
-  push_pipeline: promotion
-
-publicsuffix-list:
-  push_pipeline: promotion
-
-pyOpenSSL:
-  push_pipeline: promotion
-
-pyproject-rpm-macros:
-  push_pipeline: promotion
-
-pytest:
-  push_pipeline: promotion
-
-python-attrs:
-  push_pipeline: promotion
-
-python-certifi:
-  push_pipeline: promotion
-
-python-cryptography:
-  push_pipeline: promotion
-
-python-gitlab:
-  push_pipeline: promotion
-
-python-iniconfig:
-  push_pipeline: promotion
-
-python-jinja2:
-  push_pipeline: promotion
-
-python-jinja2-cli:
-  push_pipeline: promotion
-
-python-jsonschema-specifications:
-  push_pipeline: promotion
-
-python-markupsafe:
-  push_pipeline: promotion
-
-python-mypy_extensions:
-  push_pipeline: promotion
-
-python-packaging:
-  push_pipeline: promotion
-
-python-pathspec:
-  push_pipeline: promotion
-
-python-pluggy:
-  push_pipeline: promotion
-
-python-productmd:
-  push_pipeline: promotion
-
-python-pycparser:
-  push_pipeline: promotion
-
-python-pygments:
-  push_pipeline: promotion
-
-python-referencing:
-  push_pipeline: promotion
-
-python-requests:
-  push_pipeline: promotion
-
-python-requests-toolbelt:
-  push_pipeline: promotion
-
-python-rpm-macros:
-  push_pipeline: promotion
-
-python-setuptools:
-  push_pipeline: promotion
-
-python-specfile:
-  push_pipeline: promotion
-
-python-trustme:
-  push_pipeline: promotion
-
-python-types-pyyaml:
-  push_pipeline: promotion
-
-python-types-requests:
-  push_pipeline: promotion
-
-python-typing-extensions:
-  push_pipeline: promotion
-
-python-urllib3:
-  push_pipeline: promotion
-
-python3-mypy:
-  push_pipeline: promotion
-
-python3.10:
-  push_pipeline: promotion
-
-python3.11:
-  push_pipeline: promotion
-
-python3.12:
-  push_pipeline: promotion
-
-qt5:
-  push_pipeline: promotion
-
-qt6:
-  push_pipeline: promotion
-
-rclone:
-  push_pipeline: promotion
-
-rdma-core:
-  push_pipeline: promotion
-
-re2:
-  push_pipeline: promotion
-
-readline:
-  push_pipeline: promotion
-
-rhash:
-  push_pipeline: promotion
-
-# HUM-11952 batch 5: packages with default build settings.
-
-rootfiles:
-  push_pipeline: promotion
-
-rpm:
-  push_pipeline: promotion
-
-rpm-mpi-hooks:
-  push_pipeline: promotion
-
-rubypick:
-  push_pipeline: promotion
-
-rust-add-determinism:
-  push_pipeline: promotion
-
-rust-archery:
-  push_pipeline: promotion
-
-rust-bootupd:
-  push_pipeline: promotion
-
-rust-imagequant-sys:
-  push_pipeline: promotion
-
-rust-podman-sequoia:
-  push_pipeline: promotion
-
-rust-rav1e:
-  push_pipeline: promotion
-
-rust-rpds:
-  push_pipeline: promotion
-
-sdbus-cpp:
-  push_pipeline: promotion
-
-sed:
-  push_pipeline: promotion
-
-selinux-policy:
-  push_pipeline: promotion
-
-sgml-common:
-  push_pipeline: promotion
-
-shadow-utils:
-  push_pipeline: promotion
-
-skopeo:
-  push_pipeline: promotion
-
-source-highlight:
-  push_pipeline: promotion
-
-spdlog:
-  push_pipeline: promotion
-
-subversion:
-  push_pipeline: promotion
-
-sudo:
-  push_pipeline: promotion
-
-svt-av1:
-  push_pipeline: promotion
-
-sysprof:
-  push_pipeline: promotion
-
-systemd:
-  push_pipeline: promotion
-
-systemd-stub:
-  push_pipeline: promotion
-
-tar:
-  push_pipeline: promotion
-
-tcl:
-  push_pipeline: promotion
-
-tinysparql:
-  push_pipeline: promotion
-
-tk:
-  push_pipeline: promotion
-
-tomcat10:
-  push_pipeline: promotion
-
-tree-sitter-srpm-macros:
-  push_pipeline: promotion
-
-ttmkfdir:
-  push_pipeline: promotion
-
-unzip:
-  push_pipeline: promotion
-
-util-linux:
-  push_pipeline: promotion
-
-uuid:
-  push_pipeline: promotion
-
-vmaf:
-  push_pipeline: promotion
-
-which:
-  push_pipeline: promotion
-
-xorg-x11-fonts:
-  push_pipeline: promotion
-
-xxhash:
-  push_pipeline: promotion
-
-xz:
-  push_pipeline: promotion
-
-yq:
-  push_pipeline: promotion
-
-zchunk:
-  push_pipeline: promotion
-
-zig-srpm-macros:
-  push_pipeline: promotion
-
-zip:
-  push_pipeline: promotion
-
-zlib-ng:
-  push_pipeline: promotion
