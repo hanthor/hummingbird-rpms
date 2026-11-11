@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        13.1.9
+Version:        13.1.10
 
 %gometa -L -f
 
@@ -139,12 +139,8 @@ Patch26:        grafana-fast-uri-body-parser-cve.patch
 # dropped and a named credential header could be forwarded on a
 # cross-origin redirect. Patch25 only bumped as far as 1.16.1.
 Patch27:        grafana-follow-redirects-1.16.2-cve.patch
-# Go-only change, unaffected by the yarn/npm CVE-patch ordering above (like
-# Patch9). Matches the go-vendor-tools.toml klauspost/compress pre_command.
-# Fixes CVE-2026-116591: zstd DecodeAll/streaming decoder panic on a
-# crafted two-block frame via stale fse.Scratch decode-table state reused
-# across blocks.
-Patch28:        grafana-klauspost-compress-1.20.2-cve.patch
+# CVE-2026-116591 (klauspost/compress zstd decode-table panic) is fixed
+# upstream as of 13.1.10, which requires klauspost/compress v1.20.3.
 # Generated against the post-Patch27 lockfile. Bumps vendored joi 17.13.8 ->
 # 17.13.9 and 18.2.9 -> 18.3.1 for CVE-2026-118772: the Joi.string().email()
 # multiple-address separator regex does quadratic work on long whitespace runs.
@@ -1322,7 +1318,6 @@ Provides:       bundled(npm(jest-watcher)) = 30.3.0
 Provides:       bundled(npm(jest-worker)) = 27.5.0
 Provides:       bundled(npm(jest-worker)) = 30.3.0
 Provides:       bundled(npm(joi)) = 17.13.9
-Provides:       bundled(npm(joi)) = 18.3.1
 Provides:       bundled(npm(jose)) = 6.2.1
 Provides:       bundled(npm(jquery)) = 3.7.1
 Provides:       bundled(npm(js-cookie)) = 3.0.7
