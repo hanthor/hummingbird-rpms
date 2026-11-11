@@ -6,13 +6,13 @@
 %bcond man 1
 
 %global srcname pip
-%global base_version 26.2
+%global base_version 26.3
 %global upstream_version %{base_version}%{?prerel}
 %global python_wheel_name %{srcname}-%{upstream_version}-py3-none-any.whl
 
 Name:           python-%{srcname}
 Version:        %{base_version}%{?prerel:~%{prerel}}
-Release:        0.2%{?dist}
+Release:        1%{?dist}
 Summary:        A tool for installing and managing Python packages
 
 # We bundle a lot of libraries with pip, which itself is under MIT license.
@@ -112,23 +112,23 @@ Packages" or "Pip Installs Python".
 # %%{_rpmconfigdir}/pythonbundles.py --namespace 'python%%{1}dist' src/pip/_vendor/vendor.txt
 %global bundled() %{expand:
 Provides: bundled(python%{1}dist(cachecontrol)) = 0.14.4
-Provides: bundled(python%{1}dist(certifi)) = 2026.6.17
-Provides: bundled(python%{1}dist(distlib)) = 0.4.2
+Provides: bundled(python%{1}dist(certifi)) = 2026.10.23
+Provides: bundled(python%{1}dist(distlib)) = 0.4.4
 Provides: bundled(python%{1}dist(distro)) = 1.9
-Provides: bundled(python%{1}dist(idna)) = 3.18
-Provides: bundled(python%{1}dist(msgpack)) = 1.1.2
-Provides: bundled(python%{1}dist(packaging)) = 26.2
-Provides: bundled(python%{1}dist(platformdirs)) = 4.10
-Provides: bundled(python%{1}dist(pygments)) = 2.20
-Provides: bundled(python%{1}dist(pyproject-hooks)) = 1.2
+Provides: bundled(python%{1}dist(idna)) = 3.20
+Provides: bundled(python%{1}dist(msgpack)) = 1.2.4
+Provides: bundled(python%{1}dist(packaging)) = 26.3
+Provides: bundled(python%{1}dist(platformdirs)) = 4.12.4
+Provides: bundled(python%{1}dist(pygments)) = 2.21
+Provides: bundled(python%{1}dist(pyproject-hooks)) = 1.3.3
 Provides: bundled(python%{1}dist(requests)) = 2.34.2
 Provides: bundled(python%{1}dist(resolvelib)) = 1.2.1
-Provides: bundled(python%{1}dist(rich)) = 14.2
+Provides: bundled(python%{1}dist(rich)) = 15
 Provides: bundled(python%{1}dist(setuptools)) = 70.3
-Provides: bundled(python%{1}dist(tomli)) = 2.4.1
+Provides: bundled(python%{1}dist(tomli)) = 2.3.2
 Provides: bundled(python%{1}dist(tomli-w)) = 1.2
-Provides: bundled(python%{1}dist(truststore)) = 0.10.4
-Provides: bundled(python%{1}dist(urllib3)) = 2.7
+Provides: bundled(python%{1}dist(truststore)) = 0.10.5
+Provides: bundled(python%{1}dist(urllib3)) = 2.8
 }
 
 # Some manylinux1 wheels need libcrypt.so.1.
@@ -163,6 +163,7 @@ BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python3-rpm-generators >= 11-8
 BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-flit-core
+BuildRequires:  python%{python3_pkgversion}-packaging
 BuildRequires:  bash-completion
 BuildRequires:  ca-certificates
 Requires:       ca-certificates
@@ -286,7 +287,7 @@ sed -i -e "s/^\\(complete.*\\) pip%{python3_version}\$/\\1 pip%{python3_version}
 
 # Install the built wheel and inject SBOM into it (if the macro is available)
 mkdir -p %{buildroot}%{python_wheel_dir}
-install -p %{_pyproject_wheeldir}/%{python_wheel_name} -t %{buildroot}%{python_wheel_dir}
+install -pm0644 %{_pyproject_wheeldir}/%{python_wheel_name} -t %{buildroot}%{python_wheel_dir}
 %{?python_wheel_inject_sbom:%python_wheel_inject_sbom %{buildroot}%{python_wheel_dir}/%{python_wheel_name}}
 
 
@@ -317,8 +318,11 @@ pytest_k="$pytest_k and not (functional and bazaar)"
 pytest_k="$pytest_k and not test_all_fields and not test_report_mixed_not_found and not test_basic_show"  # "Editable project location" missing
 pytest_k="$pytest_k and not test_basic_install_from_wheel"
 pytest_k="$pytest_k and not test_check_unsupported"
-# Hummingbird buildroot has no cmake on PATH for this isolation smoke test
+# these require cmake/keyring wheels not available locally
 pytest_k="$pytest_k and not test_build_env_can_still_access_python_tools_on_system_path"
+pytest_k="$pytest_k and not test_build_dependency_install_uses_same_keyring_as_root"
+# this requires the rich wheel (added to test-common-wheels in 26.3) not available locally
+pytest_k="$pytest_k and not debundled"
 # keyring CLI version parsing differs with Hummingbird's keyring packaging
 pytest_k="$pytest_k and not test_keyring_cli_outdated_version"
 

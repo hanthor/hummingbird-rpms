@@ -1,12 +1,12 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/python-pip.git",
-    "release": "1",
-    "sha": "9d73fb50fcc06da506ba3a91960ee2c4a9351471"
-  },
-  "modification_reason": "CVE-2026-8643; CVE-2026-13346",
+  "version": "26.3",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/pypa/pip",
-  "version": "26.2"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/python-pip.git",
+    "branch": "rawhide",
+    "sha": "0a744b31f8d369556dc1ded86edf4b05f5e31fa6",
+    "release": "1"
+  },
+  "modification_reason": "CVE-2026-8643; CVE-2026-13346"
 }
