@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl3
 Version: 3.5.9
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -104,6 +104,9 @@ Patch0057: 0057-Disable-RSA-PKCS1.5-FIPS-POST-not-relevant-for-RHEL.patch
 Patch0058: 0058-Skip-tests-not-matching-Fedora-RHEL-FIPS-changes.patch
 Patch0100: 0100-separate-provider-folder.patch
 Patch0101: 0101-RH-Rename-openssl.cnf-to-openssl3.cnf.patch
+Patch0102: 0102-Backport-CVE-2026-88822-bss_dgram-initialise-variable.patch
+Patch0103: 0103-Backport-CVE-2026-88823-AES-GCM-SIV-zero-length-AAD.patch
+Patch0104: 0104-Backport-CVE-2026-95692-AES-GCM-SIV-reject-IV-length.patch
 
 License: Apache-2.0
 URL: http://www.openssl.org/
