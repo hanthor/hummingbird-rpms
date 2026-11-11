@@ -1,0 +1,90 @@
+From 31d9e3316f484eee3802a3aecda205b8f5bf8690 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Miro=20Hron=C4=8Dok?= <miro@hroncok.cz>
+Date: Fri, 18 Sep 2026 12:01:16 +0200
+Subject: [PATCH] chore: Define project metadata via [project] table (PEP 621)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This leads to a small METADATA diff:
+
+     Name: tomlkit
+     Version: 0.15.1
+     Summary: Style preserving TOML library
+    -License: MIT
+    +License-Expression: MIT
+     License-File: LICENSE
+     Author: Sébastien Eustace
+     Author-email: sebastien@eustace.io
+     Requires-Python: >=3.9
+    -Classifier: License :: OSI Approved :: MIT License
+     Classifier: Programming Language :: Python :: 3
+     Classifier: Programming Language :: Python :: 3.9
+
+The difference is only wrt. license, PEP 639.
+
+The required poetry-core version was bumped to support this.
+
+There is no immediate need for this change,
+it's pure modernization.
+My personal motivation is for me to make it easier
+to experiment with different build backends.
+
+I used LLM to draft this change, then I reviewed it line by line.
+
+Assisted-By: Claude Opus 5
+---
+ pyproject.toml | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index f578226..7ab27ce 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,18 +1,21 @@
+-[tool.poetry]
++[project]
+ name = "tomlkit"
+ version = "0.13.2"
+ description = "Style preserving TOML library"
+ authors = [
+-    "Sébastien Eustace <sebastien@eustace.io>",
+-    "Frost Ming <me@frostming.com>"
++    { name = "Sébastien Eustace", email = "sebastien@eustace.io" },
++    { name = "Frost Ming", email = "me@frostming.com" }
+ ]
+ license = "MIT"
+ 
+ readme = "README.md"
++requires-python = ">=3.8"
+ 
+-homepage = "https://github.com/sdispater/tomlkit"
+-repository = "https://github.com/sdispater/tomlkit"
++[project.urls]
++Homepage = "https://github.com/sdispater/tomlkit"
++Repository = "https://github.com/sdispater/tomlkit"
+ 
++[tool.poetry]
+ include = [
+   { path = "tomlkit/py.typed" },
+   { path = "tests", format = "sdist" },
+@@ -20,9 +23,6 @@ include = [
+   { path = "CHANGELOG.md", format = "sdist" },
+ ]
+ 
+-[tool.poetry.dependencies]
+-python = ">=3.8"
+-
+ [tool.poetry.dev-dependencies]
+ pytest = "^7.2.0"
+ pytest-cov = "^4.0.0"
+@@ -55,5 +55,5 @@ lines-after-imports = 2
+ lines-between-types = 1
+ 
+ [build-system]
+-requires = ["poetry-core>=1.0.0a9"]
++requires = ["poetry-core>=2.0.0"]
+ build-backend = "poetry.core.masonry.api"
+-- 
+2.55.0
+

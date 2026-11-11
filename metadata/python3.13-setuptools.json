@@ -5,7 +5,7 @@
     "release": "2",
     "sha": "1c627c74ff95fee120970924b513a5e320bae9a1"
   },
-  "modification_reason": "Bootstrap the Python 3.13 setuptools backend without a frontend dependency cycle; require the macro-owning interpreter, retain bootstrap inventory checks, and leave the shared wheel to the default stack",
+  "modification_reason": "Python 3.13 variant with reviewed build checks",
   "modification_status": "modified",
   "release_monitoring_project_id": 4021,
   "track_upstream": "latest",

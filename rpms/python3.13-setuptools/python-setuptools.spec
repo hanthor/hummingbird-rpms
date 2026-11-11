@@ -1,8 +1,5 @@
 # used when bootstrapping new Python versions
-%bcond bootstrap 1
-
-# Track this temporary stage in the PR, not in the RPM release suffix.
-%global __bootstrap %{nil}
+%bcond bootstrap 0
 
 # The shared wheel companion is supplied by the existing default stack.
 %bcond wheel 0
@@ -10,14 +7,15 @@
 # The original RHEL N+1 content set is defined by (build)dependencies
 # of the packages in Fedora ELN. Hence we disable tests and documentation here
 # to prevent pulling many unwanted packages in.
-%bcond tests %[%{without bootstrap} && %{defined fedora}]
+# Full-suite collection needs jaraco.path and path outside this stack.
+%bcond tests 0
 
 %global python_wheel_name setuptools-%{version}-py3-none-any.whl
 
 Name:           python3.13-setuptools
 # When updating, update the bundled libraries versions bellow!
 Version:        83.0.0
-Release:        2.1%{?dist}
+Release:        2.2%{?dist}
 Summary:        Easily build and distribute Python packages
 # setuptools is MIT
 # autocommand is LGPL-3.0-only
@@ -66,7 +64,7 @@ BuildRequires:  pyproject-rpm-macros
 
 %if %{without bootstrap}
 # Not to use the pre-generated egg-info, we use setuptools from previous build to generate it
-BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python3.13-setuptools
 %endif
 
 # Virtual provides for the packages bundled by setuptools.
