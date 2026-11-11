@@ -1,4 +1,19 @@
-* Sat Oct 24 2026 Zdenek Pytela <zpytela@redhat.com>
+* Tue Nov 10 2026 Zdenek Pytela <zpytela@redhat.com> - 45.24-1
+- Allow sshd-session bind and connect to all tcp ports
+- Allow tftpd the process setcap permission
+- Allow pdns get attributes of filesystems with extended attributes
+- Allow systemd hostnamed to access psi (bsc#1288617)
+- file_contexts.subs_dist: map systemd-sysext/confext staging dirs onto /
+- devices: label VFIO character device nodes
+- Label HOME_DIR/.config/mozilla with mozilla_home_t
+- Allow importd to read unlabeled (bsc#1286901)
+- Allow systemd-importd to rw global pressure information (bsc#1286901)
+- Allow importd to manage machined symlinks as well (bsc#1286901)
+- Add 2 more generators for systemd
+- Allow dbus-broker read systemd-nsresourced runtime socket file
+- Allow systemd_pstore_t to create directories on systemd_pstore_var_lib_t
+
+* Sat Oct 24 2026 Zdenek Pytela <zpytela@redhat.com> - 45.23-1
 - Allow httpd map its private runtime files
 - Allow qatlib get attributes of a hugetlbfs filesystem
 - Allow rhsmcertd list insights-client config dirs
