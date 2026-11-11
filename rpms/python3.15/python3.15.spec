@@ -50,7 +50,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 License: Python-2.0.1
 
 # The PYC magic number, see Include/internal/pycore_magic_number.h
@@ -440,6 +440,24 @@ Patch488: 00488-cve-2026-116566-reject-null-bytes-getaddrinfo.patch
 #
 # gh-161569: Check cookie policy before deleting expired cookies in http.cookiejar
 Patch489: 00489-cve-2026-124249-check-cookie-policy-before-deleting-expired-cookies.patch
+
+# 00490 # e891a9117985888df3e5d48145cf07ddda098335
+# CVE-2026-115791
+#
+# gh-161705: Prevent shadowing stdlib in gzip/tarfile/zipfile CLI
+Patch490: 00490-cve-2026-115791-prevent-shadowing-stdlib-in-archive-cli.patch
+
+# 00491 # 8dde46eaa6baf5f027a7234845b20d50b509624e
+# CVE-2026-19552
+#
+# gh-161503: Check hostname in ssl.get_server_certificate with custom ca_certs
+Patch491: 00491-cve-2026-19552-check-hostname-in-ssl-get-server-certificate.patch
+
+# 00492 # 2f0e294d85c905691e360586ebd1d1f7e7a1f5df
+# CVE-2026-115559
+#
+# gh-160369: Reject buffered plaintext after IMAP STARTTLS
+Patch492: 00492-cve-2026-115559-reject-buffered-plaintext-after-imap-starttls.patch
 
 # (New patches go here ^^^)
 #
