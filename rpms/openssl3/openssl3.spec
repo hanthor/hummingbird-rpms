@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl3
 Version: 3.5.9
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -107,6 +107,8 @@ Patch0101: 0101-RH-Rename-openssl.cnf-to-openssl3.cnf.patch
 Patch0102: 0102-Backport-CVE-2026-88822-bss_dgram-initialise-variable.patch
 Patch0103: 0103-Backport-CVE-2026-88823-AES-GCM-SIV-zero-length-AAD.patch
 Patch0104: 0104-Backport-CVE-2026-95692-AES-GCM-SIV-reject-IV-length.patch
+Patch0105: 0105-Backport-CVE-2026-95691-QUIC-CRYPTO-frame-retransmission-UAF.patch
+Patch0106: 0106-Backport-CVE-2026-107496-EC-key-reject-invalid-group-order.patch
 
 License: Apache-2.0
 URL: http://www.openssl.org/
