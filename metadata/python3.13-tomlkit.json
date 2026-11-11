@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-tomlkit.git",
-    "release": "10",
     "sha": "f92c0df1aa80b6a0bc757908ecd43bbdc750f1f4"
   },
-  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_reason": "Update to upstream version 0.15.2",
   "modification_status": "modified",
   "release_monitoring_project_id": 19609,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/python-poetry/tomlkit",
-  "version": "0.13.2"
+  "version": "0.15.2"
 }
