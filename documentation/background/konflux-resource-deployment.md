@@ -22,9 +22,9 @@ This separation allows independent iteration on each concern.
 | ImageRepository          | rpms           | manual  | manual    | -        | -          |
 | ReleasePlanAdmission     | rpms           | -       | automatic | manual   | automatic  |
 | EnterpriseContractPolicy | rpms           | -       | automatic | manual   | automatic  |
+| IntegrationTestScenario  | rpms           | manual  | manual    | -        | -          |
 | Application              | infrastructure | -       | -         | manual   | automatic  |
 | ReleasePlan              | infrastructure | -       | -         | manual   | automatic  |
-| IntegrationTestScenario  | infrastructure | -       | -         | manual   | automatic  |
 | ServiceAccount, Secret   | infrastructure | -       | -         | manual   | automatic  |
 
 **Legend**:
@@ -61,16 +61,27 @@ Resources are defined in `konflux-templates/` and rendered to `konflux-templates
 1. **Consistency**: Follows the containers repo pattern of keeping policy definitions alongside the
    resources they govern.
 
+### RPMs Repo — IntegrationTestScenario
+
+**IntegrationTestScenario** resources are defined in
+`konflux-templates/macros/integration-test-scenarios.yml.j2` and rendered into
+`konflux-templates/rendered.yml` alongside Components and ImageRepositories. The same
+`*-components` downstream pipeline that deploys Components also deploys ITS, making ITS
+changes testable before merge (via the downstream MR pipeline) and keeping scenario
+definitions co-located with the packages and trigger manifests they describe.
+
+The `integration_test_scenarios` section of `.tekton/trigger-manifest-pull-request.json`
+is derived from the same ITS data, ensuring the manifest never drifts from deployed
+scenarios.
+
 ### Infrastructure Repo
 
-**Application, ReleasePlan, and IntegrationTestScenario** are defined in `kubernetes/rpms-main/`:
+**Application and ReleasePlan** are defined in `kubernetes/rpms-main/`:
 
 1. **Independent iteration**: Changes are decoupled from rpms repo activity—they can be modified,
    test-deployed via manual trigger in an infrastructure MR, verified, and merged without touching
    the rpms repo.
-2. **Testable before merge**: If defined in the rpms repo, these would only deploy after merging to
-   main, making iteration difficult.
-3. **Static configuration**: These resources don't depend on per-package data.
+2. **Static configuration**: These resources don't depend on per-package data.
 
 **ServiceAccount and Secret** for releases are defined in `kubernetes/setup-konflux/`:
 

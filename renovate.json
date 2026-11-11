@@ -20,6 +20,28 @@
     },
     {
       "customType": "regex",
+      "description": "Update Testing Farm IMAGE_TAG in integration test scenario templates",
+      "managerFilePatterns": [
+        "/konflux-templates/macros/integration-test-scenarios\\.yml\\.j2$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\n\\s*-\\s*\\{name:\\s*IMAGE_TAG,\\s*value:\\s*(?<currentValue>v[\\d.]+)\\}"
+      ],
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Testing Farm IMAGE_TAG in rendered Konflux YAML",
+      "managerFilePatterns": [
+        "/konflux-templates/rendered\\.yml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\n\\s*-\\s*\\{name:\\s*IMAGE_TAG,\\s*value:\\s*(?<currentValue>v[\\d.]+)\\}"
+      ],
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
       "description": "Update release-service-catalog git reference in Konflux template",
       "managerFilePatterns": ["/konflux-templates/konflux-resources\\.yml\\.j2$/"],
       "matchStrings": [

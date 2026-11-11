@@ -221,6 +221,142 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
     }
 
 
+# ITS context routing (D2): contexts that map to the PR manifest (with group flag)
+# or to the push manifest.  Optional scenarios are silently excluded.
+_KNOWN_ITS_CONTEXTS = {"pull_request", "component"}
+
+# Per-application ITS scenario types defined once and used for both template rendering
+# and manifest-entry derivation (D2: single source, no duplication).
+# Each entry: suffix appended to the app name, contexts list, optional flag, and
+# additional template flags.
+_ITS_SCENARIO_TYPES: list[dict] = [
+    {
+        "suffix": "testing-farm",
+        "contexts": ["pull_request"],
+        "optional": False,
+        "tmt_path_from_context": False,
+    },
+    {
+        "suffix": "testing-farm-upstream",
+        "contexts": ["component_attr-main", "component_setup-main"],
+        "optional": True,
+        "tmt_path_from_context": True,
+    },
+]
+
+
+def _get_its_applications(branch: str) -> list[dict]:
+    """Return sorted application dicts that own IntegrationTestScenarios in this repo.
+
+    Derived from ci/konflux_rpa_config.yml: every configured application (public
+    rpms-main plus each private-*-rpms-main) gets a testing-farm ITS.
+    The public application includes GIT_URL (allowlisted repo for group snapshots);
+    private applications omit it, matching the infrastructure templates verbatim.
+    """
+    config = load_releng_config()
+    apps = []
+    for rpa in config["rpas"]:
+        prefix = rpa.get("application_prefix")
+        if prefix:
+            apps.append({
+                "name": f"{prefix}-{branch}",
+                "include_git_url": rpa.get("private_product") is None,
+            })
+    return sorted(apps, key=lambda a: a["name"])
+
+
+def _build_its_scenarios(branch: str) -> list[dict]:
+    """Build the full list of ITS scenario dicts from _ITS_SCENARIO_TYPES and applications.
+
+    This is the single source used by both the Jinja2 template renderer (rendered.yml)
+    and the trigger-manifest builder.  Editing _ITS_SCENARIO_TYPES changes both outputs
+    atomically, preventing drift between the deployed ITS and the manifest expectations.
+    """
+    apps = _get_its_applications(branch)
+    scenarios = []
+    for app in apps:
+        for stype in _ITS_SCENARIO_TYPES:
+            scenarios.append({
+                "name": f"{app['name']}-{stype['suffix']}",
+                "application": app["name"],
+                "contexts": stype["contexts"],
+                "optional": stype["optional"],
+                "include_git_url": app["include_git_url"] and not stype["optional"],
+                "tmt_path_from_context": stype["tmt_path_from_context"],
+            })
+    return scenarios
+
+
+def _route_its_contexts(
+    scenario_name: str, contexts: list[str], optional: bool
+) -> tuple[bool, bool]:
+    """Return (in_pr_manifest, in_push_manifest) for one ITS.
+
+    pull_request  → PR list (group: true), not push list.
+    component     → PR list (group: false), push list.
+    optional      → excluded from both (silent).
+    Anything else, including an empty context list → hard error (fail-closed, D2).
+    """
+    if optional:
+        return False, False
+
+    has_pull_request = "pull_request" in contexts
+    has_component = "component" in contexts
+    unknown = [c for c in contexts if c not in _KNOWN_ITS_CONTEXTS]
+    if unknown:
+        sys.exit(
+            f"ERROR: IntegrationTestScenario '{scenario_name}' has non-optional "
+            f"context(s) not routable to the trigger manifest: {unknown}. "
+            f"Mark the scenario optional or extend the generator."
+        )
+    if not has_pull_request and not has_component:
+        # Covers both empty contexts [] and contexts containing only canary/unknown kinds
+        # that were silently filtered above — any non-optional scenario that contributes
+        # nothing to either manifest is a hard error.
+        sys.exit(
+            f"ERROR: IntegrationTestScenario '{scenario_name}' is non-optional "
+            f"but has no routable contexts (pull_request/component). "
+            f"Mark the scenario optional or add a routable context."
+        )
+    return True, has_component
+
+
+def build_its_manifest_entries(branch: str) -> dict[str, dict]:
+    """Build integration_test_scenarios sections for PR and push manifests.
+
+    Derives entries from _build_its_scenarios() — the same data used to render
+    rendered.yml — so the manifest cannot diverge from the deployed ITS (D2).
+
+    Returns {"pr": {app: [{"name": ..., "group": ...}]},
+             "push": {app: [{"name": ...}]}}.
+    Non-optional pull_request-context scenarios → PR list (group: true).
+    Non-optional component-context scenarios → PR list (group: false) + push list.
+    Optional scenarios are excluded from both lists.
+    Generator exits non-zero for non-optional scenarios with unroutable contexts,
+    including an empty context list.
+    """
+    pr_manifest: dict[str, list] = {}
+    push_manifest: dict[str, list] = {}
+
+    for s in _build_its_scenarios(branch):
+        in_pr, in_push = _route_its_contexts(s["name"], s["contexts"], s["optional"])
+        app_name: str = s["application"]
+        if in_pr:
+            pr_manifest.setdefault(app_name, []).append({
+                "name": s["name"],
+                "group": "pull_request" in s["contexts"],
+            })
+        if in_push:
+            push_manifest.setdefault(app_name, []).append({"name": s["name"]})
+
+    for app_name in pr_manifest:
+        pr_manifest[app_name] = sorted(pr_manifest[app_name], key=lambda e: e["name"])
+    for app_name in push_manifest:
+        push_manifest[app_name] = sorted(push_manifest[app_name], key=lambda e: e["name"])
+
+    return {"pr": pr_manifest, "push": push_manifest}
+
+
 def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
     """Build variables for Konflux templates."""
     packages = get_all_packages()
@@ -261,6 +397,7 @@ def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
         "branch": branch,
         "tenant": tenant,
         "git_repo": git_repo,
+        "integration_test_scenarios": _build_its_scenarios(branch),
         "rpms": rpms,
     }
 
@@ -414,8 +551,13 @@ def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     return render_template(template_path, macros_dir, variables).rstrip() + "\n"
 
 
-def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
-    """Build trigger manifest from already-computed PAC variables."""
+def build_trigger_manifest(pac_variables: dict, event_type: str, its_entries: dict | None = None) -> dict:
+    """Build trigger manifest from already-computed PAC variables.
+
+    its_entries is the per-manifest slice from build_its_manifest_entries():
+    {"app": [{"name": ..., "group": ...}]} for pull_request,
+    {"app": [{"name": ...}]} for push.
+    """
     default_application = pac_variables["application_name"]
     applications: dict[str, dict[str, list[str]]] = {}
 
@@ -428,11 +570,14 @@ def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
             "manifest_triggers"
         ]
 
-    return {
+    manifest: dict = {
         "type": event_type,
         "excludes": [],
         "applications": applications,
     }
+    if its_entries:
+        manifest["integration_test_scenarios"] = its_entries
+    return manifest
 
 
 def generate_gitattributes() -> str:
@@ -511,6 +656,9 @@ def main():
             print(content)
     elif args.command == "all":
         # Generate all resources (equivalent to generate.sh)
+        # Compute ITS manifest entries once; they depend only on branch.
+        its_entries = build_its_manifest_entries(args.branch)
+
         # Generate PAC resources and trigger manifests together (shared variables)
         for resource_type, event_type in (("push", "push"), ("pull-request", "pull_request")):
             print(f"Building {resource_type} template variables...", file=sys.stderr)
@@ -522,7 +670,10 @@ def main():
             pac_result = render_template(template_path, macros_dir, variables).rstrip() + "\n"
             (ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml").write_text(pac_result)
 
-            manifest = build_trigger_manifest(variables, event_type)
+            # PR manifest carries integration_test_scenarios; push manifest omits the
+            # section entirely because rpms has no component-context (post-merge) scenarios.
+            its_manifest_entries = its_entries["pr"] if event_type == "pull_request" else its_entries["push"]
+            manifest = build_trigger_manifest(variables, event_type, its_manifest_entries)
             manifest_json = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
             (ROOT_DIR / ".tekton" / f"trigger-manifest-{resource_type}.json").write_text(manifest_json)
 

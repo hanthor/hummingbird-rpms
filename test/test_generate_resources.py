@@ -494,6 +494,28 @@ class TestPrivateProductFiltering:
         assert len(all_components) == len(rpms_dirs)
         assert len(set(all_components)) == len(all_components)
 
+_MINIMAL_RPA_CONFIG = textwrap.dedent("""\
+    global:
+      branch: main
+      tenant: hummingbird-tenant
+      release_tenant: rhtap-releng-tenant
+      git_repo: https://gitlab.com/redhat/hummingbird/rpms.git
+    rpas:
+      - name: hummingbird-rpms-tech-preview-staging
+        application_prefix: rpms
+        release_org: registry.stage.redhat.io/hummingbird-tech-preview
+        single_component_mode: true
+        service_account_name: hummingbird-rpm-release-staging
+        pulp_unsigned_domain: pub-unsigned
+        pulp_signed_domain: pub-signed
+        pulp_secret_name: pub-secret
+        pipeline_revision: dev
+        pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
+        component_filter:
+          path_prefix: rpms/
+""")
+
+
 class TestPrivateProductKonfluxVariables:
     """Tests for per-component application names in Konflux variables."""
 
@@ -508,6 +530,7 @@ class TestPrivateProductKonfluxVariables:
               private_product: example
             """)
         )
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -521,6 +544,7 @@ class TestPrivateProductKonfluxVariables:
         (tmp_path / "rpms" / "pkg").mkdir(parents=True)
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -626,3 +650,197 @@ class TestValidation:
         with patch.object(gen_module, "ROOT_DIR", mock_repo):
             with pytest.raises(ValueError, match="incomplete-rpa.*release_org"):
                 gen_module.generate_releng()
+
+
+class TestItsContextRouting:
+    """Tests for _route_its_contexts (D2 fail-closed routing)."""
+
+    def test_pull_request_context_routes_to_pr_manifest_with_group_true(self, gen_module):
+        in_pr, in_push = gen_module._route_its_contexts("app-testing-farm", ["pull_request"], False)
+        assert in_pr is True
+        assert in_push is False
+
+    def test_component_context_routes_to_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_contexts("app-conforma", ["component"], False)
+        assert in_pr is True
+        assert in_push is True
+
+    def test_mixed_pull_request_and_component_routes_to_both(self, gen_module):
+        in_pr, in_push = gen_module._route_its_contexts(
+            "app-mixed", ["pull_request", "component"], False
+        )
+        assert in_pr is True
+        assert in_push is True
+
+    def test_optional_scenario_excluded_from_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_contexts(
+            "app-upstream", ["component_attr-main"], True
+        )
+        assert in_pr is False
+        assert in_push is False
+
+    def test_empty_contexts_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional scenario with empty context list must hard-error (D2 fail-closed)."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_contexts("app-no-context", [], False)
+        assert exc_info.value.code != 0
+
+    def test_unknown_context_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional scenario with an unrecognized context must hard-error."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_contexts("app-bad", ["group"], False)
+        assert exc_info.value.code != 0
+
+    def test_canary_context_only_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional canary-only context (not in pull_request/component) must hard-error."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_contexts(
+                "app-canary-only", ["component_attr-main", "component_setup-main"], False
+            )
+        assert exc_info.value.code != 0
+
+    def test_optional_empty_contexts_does_not_error(self, gen_module):
+        """Optional scenarios are always silently excluded, even with empty contexts."""
+        in_pr, in_push = gen_module._route_its_contexts("app-opt", [], True)
+        assert in_pr is False
+        assert in_push is False
+
+
+class TestItsBuildScenariosAndManifest:
+    """Tests for _build_its_scenarios and build_its_manifest_entries (D2 single source)."""
+
+    @pytest.fixture
+    def mock_repo_two_apps(self, tmp_path):
+        """Minimal repo with one public + one private application."""
+        (tmp_path / "rpms" / "pkg").mkdir(parents=True)
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(
+            textwrap.dedent("""\
+            global:
+              branch: main
+              tenant: hummingbird-tenant
+              release_tenant: rhtap-releng-tenant
+              git_repo: https://gitlab.com/redhat/hummingbird/rpms.git
+            rpas:
+              - name: hummingbird-rpms-tech-preview-staging
+                application_prefix: rpms
+                release_org: registry.stage.redhat.io/hummingbird-tech-preview
+                single_component_mode: true
+                service_account_name: hummingbird-rpm-release-staging
+                pulp_unsigned_domain: pub-unsigned
+                pulp_signed_domain: pub-signed
+                pulp_secret_name: pub-secret
+                pipeline_revision: dev
+                pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
+                component_filter:
+                  path_prefix: rpms/
+              - name: hummingbird-rpms-private-example
+                application_prefix: private-example-rpms
+                release_org: registry.stage.redhat.io/hummingbird-tech-preview
+                single_component_mode: true
+                service_account_name: hummingbird-rpm-release-staging
+                pulp_unsigned_domain: priv-unsigned
+                pulp_signed_domain: priv-signed
+                pulp_secret_name: priv-secret
+                pipeline_revision: dev
+                pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
+                private_product: example
+                component_filter:
+                  path_prefix: rpms/
+            """)
+        )
+        return tmp_path
+
+    def test_scenarios_derived_from_its_scenario_types(self, gen_module, mock_repo_two_apps):
+        """_build_its_scenarios produces one scenario per app × ITS_SCENARIO_TYPES entry."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        n_apps = 2
+        n_types = len(gen_module._ITS_SCENARIO_TYPES)
+        assert len(scenarios) == n_apps * n_types
+
+    def test_scenario_names_derived_from_app_and_suffix(self, gen_module, mock_repo_two_apps):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        names = {s["name"] for s in scenarios}
+        assert "rpms-main-testing-farm" in names
+        assert "rpms-main-testing-farm-upstream" in names
+        assert "private-example-rpms-main-testing-farm" in names
+        assert "private-example-rpms-main-testing-farm-upstream" in names
+
+    def test_public_app_includes_git_url_non_optional(self, gen_module, mock_repo_two_apps):
+        """Public app non-optional ITS gets include_git_url=True."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        tf = next(s for s in scenarios if s["name"] == "rpms-main-testing-farm")
+        assert tf["include_git_url"] is True
+
+    def test_private_app_does_not_include_git_url(self, gen_module, mock_repo_two_apps):
+        """Private app ITS omits GIT_URL (matches infrastructure template verbatim)."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        tf = next(s for s in scenarios if s["name"] == "private-example-rpms-main-testing-farm")
+        assert tf["include_git_url"] is False
+
+    def test_pr_manifest_contains_non_optional_pull_request_scenarios(
+        self, gen_module, mock_repo_two_apps
+    ):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries("main")
+        pr = entries["pr"]
+        assert "rpms-main" in pr
+        assert "private-example-rpms-main" in pr
+        assert any(e["name"] == "rpms-main-testing-farm" for e in pr["rpms-main"])
+        assert all(e["group"] is True for e in pr["rpms-main"])
+
+    def test_push_manifest_is_empty_for_rpms_repo(self, gen_module, mock_repo_two_apps):
+        """rpms has no component-context scenarios so push manifest has no ITS section."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries("main")
+        assert entries["push"] == {}
+
+    def test_optional_upstream_excluded_from_manifests(self, gen_module, mock_repo_two_apps):
+        """testing-farm-upstream (optional) must not appear in either manifest."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries("main")
+        for app_entries in entries["pr"].values():
+            assert not any("upstream" in e["name"] for e in app_entries)
+        for app_entries in entries["push"].values():
+            assert not any("upstream" in e["name"] for e in app_entries)
+
+    def test_pr_entries_sorted_by_name(self, gen_module, mock_repo_two_apps):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries("main")
+        for app_entries in entries["pr"].values():
+            names = [e["name"] for e in app_entries]
+            assert names == sorted(names)
+
+    def test_build_its_scenarios_uses_its_scenario_types_as_single_source(
+        self, gen_module, mock_repo_two_apps
+    ):
+        """Manifest entries are derived from _build_its_scenarios, not a parallel definition.
+
+        Adding a scenario type to _ITS_SCENARIO_TYPES must appear in both
+        _build_its_scenarios() and build_its_manifest_entries() without further changes.
+        """
+        original_types = gen_module._ITS_SCENARIO_TYPES
+        extra_type = {
+            "suffix": "conforma",
+            "contexts": ["component"],
+            "optional": False,
+            "tmt_path_from_context": False,
+        }
+        try:
+            gen_module._ITS_SCENARIO_TYPES = original_types + [extra_type]
+            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+                scenarios = gen_module._build_its_scenarios("main")
+                entries = gen_module.build_its_manifest_entries("main")
+            scenario_names = {s["name"] for s in scenarios}
+            assert "rpms-main-conforma" in scenario_names
+            pr_names = {e["name"] for e in entries["pr"]["rpms-main"]}
+            assert "rpms-main-conforma" in pr_names
+            push_names = {e["name"] for e in entries["push"]["rpms-main"]}
+            assert "rpms-main-conforma" in push_names
+        finally:
+            gen_module._ITS_SCENARIO_TYPES = original_types

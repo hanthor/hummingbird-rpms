@@ -282,14 +282,15 @@ there following the same pattern as `rpms-main`:
    The ReleasePlan connects the private Application to its ReleasePlanAdmission. Without
    it, builds in the private Application will not trigger releases.
 
-5. Copy `10-integration-test-scenarios-testing-farm.yml.j2` from `kubernetes/rpms-main/`.
-   The template is fully parameterized with `{{ env["PROJECT_NAME"] }}` so no edits are
-   needed. This may be needed to prevent the Konflux PR group integration test from
-   blocking MRs that touch private product packages.
+   The IntegrationTestScenario for the new private application is generated automatically
+   by this repo's `ci/generate_resources.py` — it derives the application list from
+   `ci/konflux_rpa_config.yml`. Once you add the RPA entry in step 5 and run
+   `make generate`, the new application's testing-farm ITS will appear in
+   `konflux-templates/rendered.yml` and the trigger manifest.
 
-Merge this MR in the infrastructure repo first — the CI pipeline will deploy the Application,
-ReleasePlan, and IntegrationTestScenarios to the cluster. Components and RPAs in this repo
-reference it by name, so the Application must exist before they are applied.
+Merge this MR in the infrastructure repo first — the CI pipeline will deploy the Application
+and ReleasePlan to the cluster. Components and RPAs in this repo reference it by name, so
+the Application must exist before they are applied.
 
 ### 5. Add RPA configuration
 
