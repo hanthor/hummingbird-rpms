@@ -1484,6 +1484,9 @@
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/"
       ],
+      "python3-13-vcs-versioning--rpms": [
+        "^rpms/python3\\.13\\-vcs\\-versioning/"
+      ],
       "python3-14--rpms": [
         "^rpms/python3\\.14/"
       ],

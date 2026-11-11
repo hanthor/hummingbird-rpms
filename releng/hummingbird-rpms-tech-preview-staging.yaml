@@ -1069,6 +1069,8 @@ spec:
           contentType: rpm
         - name: python3-13-tomlkit-main
           contentType: rpm
+        - name: python3-13-vcs-versioning-main
+          contentType: rpm
         - name: python3-14-main
           contentType: rpm
         - name: python3-15-main

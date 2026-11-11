@@ -1977,6 +1977,10 @@
         "^rpms/python3\\.13\\-tomlkit/",
         "^test/rpms/python3\\.13\\-tomlkit\\.yml$"
       ],
+      "python3-13-vcs-versioning--rpms": [
+        "^rpms/python3\\.13\\-vcs\\-versioning/",
+        "^test/rpms/python3\\.13\\-vcs\\-versioning\\.yml$"
+      ],
       "python3-14--rpms": [
         "^rpms/python3\\.14/",
         "^test/rpms/python3\\.14\\.yml$"
