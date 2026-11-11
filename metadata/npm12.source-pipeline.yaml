@@ -1,0 +1,26 @@
+fetch:
+  - type: url
+    url: "https://registry.npmjs.org/npm/-/npm-${VERSION}.tgz"
+    filename: "npm-${VERSION}.tar.gz"
+
+transform:
+  - type: run
+    path: package
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        node "${PACKAGE_DIR}/test-nodejs-requires.cjs" .
+        node "${PACKAGE_DIR}/generate-nodejs-requires.cjs" . nodejs-requires.inc
+    outputs:
+      - nodejs-requires.inc
+
+post:
+  - type: run
+    artifacts: [nodejs-requires.inc]
+    command: [test, -s, nodejs-requires.inc]
+
+publish:
+  files:
+    - "npm-${VERSION}.tar.gz"
