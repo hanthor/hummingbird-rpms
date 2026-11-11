@@ -1618,3 +1618,326 @@ nettle:
 
 nginx:
   push_pipeline: promotion
+
+# HUM-11952 batch 4: packages with default build settings.
+
+ninja-build:
+  push_pipeline: promotion
+
+npth:
+  push_pipeline: promotion
+
+numactl:
+  push_pipeline: promotion
+
+ocaml-srpm-macros:
+  push_pipeline: promotion
+
+oniguruma:
+  push_pipeline: promotion
+
+openblas-srpm-macros:
+  push_pipeline: promotion
+
+opendbx:
+  push_pipeline: promotion
+
+openscap:
+  push_pipeline: promotion
+
+ostree:
+  push_pipeline: promotion
+
+p11-kit:
+  push_pipeline: promotion
+
+package-notes:
+  push_pipeline: promotion
+
+pam:
+  push_pipeline: promotion
+
+passt:
+  push_pipeline: promotion
+
+patch:
+  push_pipeline: promotion
+
+perl:
+  push_pipeline: promotion
+
+perl-Carp:
+  push_pipeline: promotion
+
+perl-Data-Dumper:
+  push_pipeline: promotion
+
+perl-Digest:
+  push_pipeline: promotion
+
+perl-Digest-MD5:
+  push_pipeline: promotion
+
+perl-Encode:
+  push_pipeline: promotion
+
+perl-Error:
+  push_pipeline: promotion
+
+perl-Exporter:
+  push_pipeline: promotion
+
+perl-File-Path:
+  push_pipeline: promotion
+
+perl-File-Temp:
+  push_pipeline: promotion
+
+perl-Getopt-Long:
+  push_pipeline: promotion
+
+perl-HTTP-Tiny:
+  push_pipeline: promotion
+
+perl-IO-Socket-IP:
+  push_pipeline: promotion
+
+perl-IO-Socket-SSL:
+  push_pipeline: promotion
+
+perl-MIME-Base32:
+  push_pipeline: promotion
+
+perl-MIME-Base64:
+  push_pipeline: promotion
+
+perl-Net-SSLeay:
+  push_pipeline: promotion
+
+perl-PathTools:
+  push_pipeline: promotion
+
+perl-Pod-Escapes:
+  push_pipeline: promotion
+
+perl-Pod-Perldoc:
+  push_pipeline: promotion
+
+perl-Pod-Simple:
+  push_pipeline: promotion
+
+perl-Pod-Usage:
+  push_pipeline: promotion
+
+perl-Scalar-List-Utils:
+  push_pipeline: promotion
+
+perl-Socket:
+  push_pipeline: promotion
+
+perl-Storable:
+  push_pipeline: promotion
+
+perl-Term-ANSIColor:
+  push_pipeline: promotion
+
+perl-Term-Cap:
+  push_pipeline: promotion
+
+perl-TermReadKey:
+  push_pipeline: promotion
+
+perl-Text-ParseWords:
+  push_pipeline: promotion
+
+perl-Text-Tabs+Wrap:
+  push_pipeline: promotion
+
+perl-Thread-Queue:
+  push_pipeline: promotion
+
+perl-Time-HiRes:
+  push_pipeline: promotion
+
+perl-Time-Local:
+  push_pipeline: promotion
+
+perl-URI:
+  push_pipeline: promotion
+
+perl-Unicode-Normalize:
+  push_pipeline: promotion
+
+perl-constant:
+  push_pipeline: promotion
+
+perl-libnet:
+  push_pipeline: promotion
+
+perl-parent:
+  push_pipeline: promotion
+
+perl-podlators:
+  push_pipeline: promotion
+
+perl-srpm-macros:
+  push_pipeline: promotion
+
+perl-threads:
+  push_pipeline: promotion
+
+perl-threads-shared:
+  push_pipeline: promotion
+
+php:
+  push_pipeline: promotion
+
+php-pecl-zip:
+  push_pipeline: promotion
+
+pkgconf:
+  push_pipeline: promotion
+
+policycoreutils:
+  push_pipeline: promotion
+
+polkit:
+  push_pipeline: promotion
+
+popt:
+  push_pipeline: promotion
+
+postgresql17:
+  push_pipeline: promotion
+
+procps-ng:
+  push_pipeline: promotion
+
+psmisc:
+  push_pipeline: promotion
+
+publicsuffix-list:
+  push_pipeline: promotion
+
+pyOpenSSL:
+  push_pipeline: promotion
+
+pyproject-rpm-macros:
+  push_pipeline: promotion
+
+pytest:
+  push_pipeline: promotion
+
+python-attrs:
+  push_pipeline: promotion
+
+python-certifi:
+  push_pipeline: promotion
+
+python-cryptography:
+  push_pipeline: promotion
+
+python-gitlab:
+  push_pipeline: promotion
+
+python-iniconfig:
+  push_pipeline: promotion
+
+python-jinja2:
+  push_pipeline: promotion
+
+python-jinja2-cli:
+  push_pipeline: promotion
+
+python-jsonschema-specifications:
+  push_pipeline: promotion
+
+python-markupsafe:
+  push_pipeline: promotion
+
+python-mypy_extensions:
+  push_pipeline: promotion
+
+python-packaging:
+  push_pipeline: promotion
+
+python-pathspec:
+  push_pipeline: promotion
+
+python-pluggy:
+  push_pipeline: promotion
+
+python-productmd:
+  push_pipeline: promotion
+
+python-pycparser:
+  push_pipeline: promotion
+
+python-pygments:
+  push_pipeline: promotion
+
+python-referencing:
+  push_pipeline: promotion
+
+python-requests:
+  push_pipeline: promotion
+
+python-requests-toolbelt:
+  push_pipeline: promotion
+
+python-rpm-macros:
+  push_pipeline: promotion
+
+python-setuptools:
+  push_pipeline: promotion
+
+python-specfile:
+  push_pipeline: promotion
+
+python-trustme:
+  push_pipeline: promotion
+
+python-types-pyyaml:
+  push_pipeline: promotion
+
+python-types-requests:
+  push_pipeline: promotion
+
+python-typing-extensions:
+  push_pipeline: promotion
+
+python-urllib3:
+  push_pipeline: promotion
+
+python3-mypy:
+  push_pipeline: promotion
+
+python3.10:
+  push_pipeline: promotion
+
+python3.11:
+  push_pipeline: promotion
+
+python3.12:
+  push_pipeline: promotion
+
+qt5:
+  push_pipeline: promotion
+
+qt6:
+  push_pipeline: promotion
+
+rclone:
+  push_pipeline: promotion
+
+rdma-core:
+  push_pipeline: promotion
+
+re2:
+  push_pipeline: promotion
+
+readline:
+  push_pipeline: promotion
+
+rhash:
+  push_pipeline: promotion
