@@ -1,0 +1,70 @@
+{
+  "pre_patches": ["grafana-yarn-cache.patch"],
+  "manifests": {
+    "package.json": {
+      "resolutions": {
+        "swagger-ui-react/dompurify": "3.4.13",
+        "dompurify": "3.4.13",
+        "js-yaml@npm:4.1.1": "4.3.2",
+        "js-yaml@npm:=4.1.1": "4.3.2",
+        "storybook@npm:10.6.2": "patch:storybook@npm%3A10.6.2#~/.yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch",
+        "fast-uri": "3.1.9",
+        "qs": "6.17.0",
+        "js-yaml@npm:^3.10.0": "3.15.2",
+        "js-yaml@npm:^3.13.1": "3.15.2",
+        "js-yaml@npm:=4.3.0": "4.3.2",
+        "js-yaml@npm:^4.1.0": "4.3.2",
+        "js-yaml@npm:^4.2.0": "4.3.2",
+        "joi@npm:^17.11.0": "17.13.9",
+        "joi@npm:^18.2.1": "18.3.1",
+        "axios": "1.20.0",
+        "hono": "4.13.11",
+        "follow-redirects": "1.16.2",
+        "body-parser": "2.4.0"
+      },
+      "dependencies": {
+        "dompurify": "3.4.13"
+      }
+    },
+    "packages/grafana-flamegraph/package.json": {
+      "devDependencies": {
+        "@storybook/react": "10.6.2",
+        "@storybook/react-webpack5": "10.6.2",
+        "storybook": "10.6.2"
+      }
+    },
+    "packages/grafana-ui/package.json": {
+      "devDependencies": {
+        "@storybook/addon-a11y": "10.6.2",
+        "@storybook/addon-docs": "10.6.2",
+        "@storybook/react": "10.6.2",
+        "@storybook/react-webpack5": "10.6.2",
+        "storybook": "10.6.2"
+      }
+    }
+  },
+  "assets": {
+    ".yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch": "storybook-npm-10.6.2-7da1cdbbd6.patch"
+  },
+  "legacy_patches": [
+    1,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    21
+  ],
+  "frontend_patch_number": 22
+}
