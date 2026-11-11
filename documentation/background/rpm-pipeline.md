@@ -15,8 +15,8 @@ The RPM pipeline consists of five main stages:
 
 1. **Spec Change** - A package spec file is modified in `rpms/<package>/`
 2. **MR Build & Validation** - Konflux builds RPMs and required tests validate them before merge
-3. **Build or Promotion** - After merge, configured packages reuse the tested MR image; other
-   packages build again on `main`
+3. **Promotion or Push Build** - After merge, packages reuse the tested MR image by default;
+   explicit build exceptions build again on `main`
 4. **Release & Signing** - Integration Service creates the Release; the managed pipeline checks
    Conforma and signs the RPMs
 5. **Publishing** - Signed RPMs are uploaded to the Hummingbird Pulp repository
@@ -171,11 +171,11 @@ Automated update MRs (`chore/*` branches) follow an accelerated path:
 3. After a delay, the `chore_mr_approval` CI job auto-approves the MR
 4. GitLab merges the MR once the pipeline succeeds
 
-## Stage 3: Build or Promotion
+## Stage 3: Promotion or Push Build
 
-Konflux builds RPMs for merge requests. After merge, packages configured for
-[MR Artifact Promotion](../operating/mr-artifact-promotion.md) reuse that tested image; the remaining
-packages build again on `main`.
+Konflux builds RPMs for merge requests. After merge, packages use
+[MR Artifact Promotion](../operating/mr-artifact-promotion.md) to release that tested image by
+default. Packages explicitly configured with `push_pipeline: build` build again on `main`.
 
 ### Build triggers
 
@@ -183,8 +183,8 @@ Each package has a Tekton MR build PipelineRun definition generated from its dir
 `rpms/<package>/` (see [`.tekton/rpms-on-pull-request.yaml.j2`][pr-template] and the rendered
 [`.tekton/rpms-on-pull-request.yaml`][pr-pipeline]). [PipelinesAsCode][pac] triggers it for MR
 changes. A push to `main` triggers one PipelineRun per affected package: a promotion run from
-`.tekton/rpms-on-promotion.yaml` when `push_pipeline: promotion` is configured, or a build from
-`.tekton/rpms-on-push.yaml` otherwise.
+`.tekton/rpms-on-promotion.yaml` by default, or a build from `.tekton/rpms-on-push.yaml` for an
+explicit `push_pipeline: build` exception.
 
 The `setup` package acts as a canary: changes to `ci/` or `mock/` directories
 also trigger a `setup` build on pull requests, validating build infrastructure

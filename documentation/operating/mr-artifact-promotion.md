@@ -6,8 +6,8 @@ aliases: [/l/mr-artifact-promotion]
 
 ## Overview
 
-An RPM package configured for promotion releases the image built and tested in its merge request
-(MR). Merging the MR starts a promotion PipelineRun, not another RPM build. The promoted image keeps
+An RPM package releases the image built and tested in its merge request (MR) by default. Merging the
+MR starts a promotion PipelineRun, not another RPM build. The promoted image keeps
 the MR source revision and digest; the merge commit records why it was released.
 
 The path is:
@@ -24,9 +24,10 @@ The path is:
    creates the automatic Release. Release Service runs the existing managed pipeline, including
    Conforma, duplicate-RPM filtering, signing, and Pulp publication.
 
-`syft` was the first package on this path. Check `.tekton/rpms-on-promotion.yaml` for the current
-package set; packages absent from it continue to build on push. The earlier PR Snapshot Promotion
-PoC was an experiment; its scripts and staging manifests are not the production workflow.
+`syft` was the first package on this path. Check `.tekton/rpms-on-promotion.yaml` for the generated
+promotion runs. `.tekton/rpms-on-push.yaml` contains only explicit build exceptions. The earlier PR
+Snapshot Promotion PoC was an experiment; its scripts and staging manifests are not the production
+workflow.
 
 ## Prerequisites
 
@@ -42,12 +43,13 @@ PoC was an experiment; its scripts and staging manifests are not the production 
 
 [tools-tasks]: https://gitlab.com/redhat/hummingbird/tools/-/blob/main/documentation/hummingbird-tools.md
 
-## Enable a package
+## Choose the push pipeline
 
-Set `push_pipeline: promotion` for the package in `ci/package-overrides.yaml`, then run
-`make generate`. The generator removes the package's push build from `.tekton/rpms-on-push.yaml` and
-adds its push-triggered PipelineRun to `.tekton/rpms-on-promotion.yaml`. The package remains in
-`trigger-manifest-push.json` so its pushes reach Pipelines as Code.
+Imported packages use promotion by default. Set `push_pipeline: build` in
+`ci/package-overrides.yaml` only for a documented exception, then run `make generate`. The generator
+places each package's push-triggered PipelineRun in `.tekton/rpms-on-promotion.yaml` or
+`.tekton/rpms-on-push.yaml` accordingly. Every package remains in `trigger-manifest-push.json` so
+its pushes reach Pipelines as Code. Remove the `build` override to restore promotion.
 
 Review the generated YAML and confirm the Hummingbird tools image digest is current. Keep the MR
 build in `.tekton/rpms-on-pull-request.yaml`. A package merge should start one promotion run and no
