@@ -78879,6 +78879,166 @@ spec:
       secret:
         secretName: '{{git_auth_secret}}'
 ---
+# --- python3.13-pathspec ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" &&
+      files.all.exists(x, x.matches("^rpms/python3.13-pathspec/"))
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-pathspec-main
+    pipelines.appstudio.openshift.io/type: promotion
+  name: python3-13-pathspec-main-on-promotion
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: source-storage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-pathspec-main:{{revision}}.git
+    - name: archive-url
+      value: https://kubearchive-api-server-product-kubearchive.apps.kflux-prd-rh03.nnv1.p1.openshiftapps.com
+    - name: tool-image
+      value: quay.io/hummingbird-ci/hummingbird-tools:latest@sha256:80654526f8517579dff271521888706a8a3b358fdc0dc0a6d88ca48885fa957d
+  pipelineSpec:
+    params:
+      - name: git-url
+        type: string
+      - name: revision
+        type: string
+      - name: target-branch
+        type: string
+      - name: source-storage
+        type: string
+      - name: archive-url
+        type: string
+      - name: tool-image
+        type: string
+    results:
+      - name: COMPONENT_SNAPSHOT
+        value: $(tasks.create-promotion-component.results.COMPONENT_SNAPSHOT)
+    tasks:
+      - name: clone-repository
+        params:
+          - name: url
+            value: $(params.git-url)
+          - name: revision
+            value: $(params.revision)
+          - name: depth
+            value: "0"
+          - name: ociStorage
+            value: $(params.source-storage)
+          - name: ociArtifactExpiresAfter
+            value: 5d
+        taskRef:
+          resolver: bundles
+          params:
+            - name: name
+              value: git-clone-oci-ta
+            - name: bundle
+              value: quay.io/konflux-ci/tekton-catalog/task-git-clone-oci-ta:0.1@sha256:d30f13dd15daf89dd6dc645243b3444d35570d13f7840c3fd65e366022515205
+            - name: kind
+              value: task
+        workspaces:
+          - name: basic-auth
+            workspace: git-auth
+      - name: find-tested-mr-artifact
+        params:
+          - name: sourceArtifact
+            value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+          - name: toolImage
+            value: $(params.tool-image)
+          - name: archiveUrl
+            value: $(params.archive-url)
+          - name: mergeCommit
+            value: $(params.revision)
+          - name: namespace
+            value: hummingbird-tenant
+          - name: application
+            value: rpms-main
+          - name: component
+            value: python3-13-pathspec-main
+          - name: targetBranch
+            value: $(params.target-branch)
+          - name: targetRepository
+            value: $(params.git-url)
+        taskRef:
+          resolver: git
+          params:
+            - name: url
+              value: https://gitlab.com/redhat/hummingbird/tools.git
+            - name: revision
+              value: d5df0dc6173e87acdc45f1aa0c459258a02cef15
+            - name: pathInRepo
+              value: hummingbird-tools/tekton/find-tested-mr-artifact.yaml
+      - name: create-promotion-component
+        params:
+          - name: sourceArtifact
+            value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+          - name: toolImage
+            value: $(params.tool-image)
+          - name: archiveUrl
+            value: $(params.archive-url)
+          - name: mergeCommit
+            value: $(params.revision)
+          - name: namespace
+            value: hummingbird-tenant
+          - name: application
+            value: rpms-main
+          - name: component
+            value: python3-13-pathspec-main
+          - name: targetBranch
+            value: $(params.target-branch)
+          - name: targetRepository
+            value: $(params.git-url)
+          - name: promotionPipelineRun
+            value: $(context.pipelineRun.name)
+          - name: sourceSnapshot
+            value: $(tasks.find-tested-mr-artifact.results.SNAPSHOT)
+          - name: buildPipelineRun
+            value: $(tasks.find-tested-mr-artifact.results.BUILD_PIPELINERUN)
+          - name: image
+            value: $(tasks.find-tested-mr-artifact.results.IMAGE)
+          - name: sourceSha
+            value: $(tasks.find-tested-mr-artifact.results.SOURCE_SHA)
+          - name: sourceUrl
+            value: $(tasks.find-tested-mr-artifact.results.SOURCE_URL)
+        taskRef:
+          resolver: git
+          params:
+            - name: url
+              value: https://gitlab.com/redhat/hummingbird/tools.git
+            - name: revision
+              value: d5df0dc6173e87acdc45f1aa0c459258a02cef15
+            - name: pathInRepo
+              value: hummingbird-tools/tekton/create-promotion-component.yaml
+    workspaces:
+      - name: git-auth
+  taskRunTemplate:
+    serviceAccountName: hummingbird-promotion
+  taskRunSpecs:
+    - pipelineTaskName: clone-repository
+      serviceAccountName: build-pipeline-python3-13-pathspec-main
+  timeouts:
+    pipeline: 1h
+    tasks: 1h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+---
 # --- python3.13-pip ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun

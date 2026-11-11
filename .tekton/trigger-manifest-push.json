@@ -1472,6 +1472,9 @@
       "python3-13-packaging--rpms": [
         "^rpms/python3\\.13\\-packaging/"
       ],
+      "python3-13-pathspec--rpms": [
+        "^rpms/python3\\.13\\-pathspec/"
+      ],
       "python3-13-pip--rpms": [
         "^rpms/python3\\.13\\-pip/"
       ],
