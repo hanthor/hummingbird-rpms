@@ -1,10 +1,17 @@
+import configparser
+import hashlib
 import os
 import re
 import shutil
 import sys
+import urllib.error
+import urllib.request
 from typing import Callable
+
 from datetime import datetime, timezone
 from pathlib import Path
+
+import yaml
 
 from lib.models import BotMrEntry, MR_URL_RE, GITLAB_RPMS_REPO
 from lib.utils import run_command, http_get_json, normalize_hum_key, repo_root
@@ -370,6 +377,141 @@ def build_mr_description(
         f"Ref: {tracker_list}\n"
         f"CVE: {cve_list}\n"
     )
+
+
+# ---- Pre-MR lookaside verification ----
+
+SOURCES_LINE_RE = re.compile(r"^(?P<algo>[A-Za-z0-9]+) \((?P<name>[^)]+)\) = (?P<hash>[0-9a-fA-F]+)$")
+
+
+def parse_sources_file(path: Path) -> list[tuple[str, str, str]]:
+    """Return (hashtype, filename, hash) for each entry in a dist-git ``sources`` file."""
+    entries: list[tuple[str, str, str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        match = SOURCES_LINE_RE.match(line.strip())
+        if not match:
+            raise RuntimeError(f"Unparseable line in {path}: {line!r}")
+        entries.append((match["algo"].lower(), match["name"], match["hash"].lower()))
+    return entries
+
+
+def _package_override(package: str, top: Path) -> dict:
+    overrides_path = top / "ci" / "package-overrides.yaml"
+    if not overrides_path.is_file():
+        return {}  # no overrides file means no package has overrides
+    overrides = yaml.safe_load(overrides_path.read_text()) or {}
+    return overrides.get(package) or {}
+
+
+def _lookaside_url(
+    package: str, hashtype: str, name: str, digest: str, top: Path
+) -> tuple[str | None, str]:
+    """Return (url, reason) for where the build fetches this tarball from.
+
+    Mirrors ci/build_rpms.sh: a package with ``forked_from`` pointing at
+    Hummingbird uses Hummingbird's cache under its directory name; a package
+    with no ``forked_from`` uses Fedora's cache under the upstream (spec file)
+    name.  URL layouts come from mock/dist-git-client.ini.  url is None, with
+    the reason, when the package cannot be checked (private cache or unknown fork).
+    """
+    override = _package_override(package, top)
+    if override.get("lookaside_cache_url"):
+        return None, "uses a private lookaside cache"
+    forked_from = override.get("forked_from") or ""
+    if forked_from and "hummingbird" not in forked_from:
+        return None, f"is forked from {forked_from}"
+    section = "hummingbird" if forked_from else "fedora"
+    upstream = package
+    if not forked_from:
+        specs = sorted((top / "rpms" / package).glob("*.spec"))
+        if specs:
+            upstream = specs[0].stem
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(top / "mock" / "dist-git-client.ini")
+    base = config[section]["lookaside_location"].rstrip("/")
+    pattern = config[section]["lookaside_uri_pattern"]
+    path = pattern.format(name=upstream, filename=name, hashtype=hashtype, hash=digest)
+    return f"{base}/{path}", ""
+
+
+def _lookaside_problem(package: str, hashtype: str, name: str, digest: str, url: str) -> str | None:
+    """Download url, streaming it through the hash, and compare with digest.
+
+    Returns None if the downloaded bytes match, otherwise a description of the
+    problem (missing, or the digest that was actually served).  Nothing is
+    written to disk.
+    """
+    try:
+        hasher = hashlib.new(hashtype)
+    except ValueError as err:
+        raise RuntimeError(f"{package}: unsupported hash type {hashtype!r} for {name}") from err
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url), timeout=60) as resp:
+            while chunk := resp.read(1024 * 1024):
+                hasher.update(chunk)
+    except urllib.error.HTTPError as err:
+        if err.code in (403, 404):
+            # The CloudFront/S3 cache answers 403 for a key that does not exist (the
+            # bucket denies listing), so 403 and 404 both mean "not uploaded".
+            return (
+                f"{package}: {name} not found in lookaside cache "
+                f"(HTTP {err.code}, {hashtype} {digest}): {url}"
+            )
+        raise RuntimeError(f"{package}: HTTP {err.code} downloading {url}") from err
+    except urllib.error.URLError as err:
+        raise RuntimeError(f"{package}: cannot reach lookaside cache: {err.reason}") from err
+    if hasher.hexdigest() != digest:
+        return f"{package}: {name} downloaded but {hashtype} is {hasher.hexdigest()}, expected {digest}"
+    return None
+
+
+def verify_lookaside_sources(*, cwd: Path | str | None = None) -> list[str]:
+    """Download and hash every tarball in each changed package's ``sources`` file.
+
+    Only packages whose ``sources`` file changed relative to the target main are
+    checked.  Each tarball is streamed from the lookaside cache and its
+    hash compared with ``sources``.  Each package is checked against the cache the
+    build uses for it (Hummingbird's or Fedora's); private-cache and
+    foreign-fork packages are skipped.  Raises RuntimeError listing every missing or mismatched file.
+    Returns the packages checked.
+    """
+    top = Path(_git_output(["rev-parse", "--show-toplevel"], cwd))
+    target = detect_target_remote(cwd=top)
+    names = _git_output(
+        ["diff", "--name-only", f"{target}/main...HEAD", "--", "rpms/*/sources"], top
+    )
+    packages = sorted({Path(line).parts[1] for line in names.splitlines() if (top / line).is_file()})
+    if not packages:
+        print("No `sources` files changed; skipping lookaside verification.")
+        return []
+    problems: list[str] = []
+    checked: list[str] = []
+    for package in packages:
+        entries = parse_sources_file(top / "rpms" / package / "sources")
+        if not entries:
+            print(f"lookaside SKIP: {package} has no entries in its sources file")
+            continue
+        skip_reason = ""
+        for hashtype, name, digest in entries:
+            url, skip_reason = _lookaside_url(package, hashtype, name, digest, top)
+            if url is None:
+                print(f"lookaside SKIP: {package} {skip_reason}")
+                break
+            problem = _lookaside_problem(package, hashtype, name, digest, url)
+            if problem:
+                problems.append(problem)
+            else:
+                print(f"lookaside OK: {package}/{name}")
+        if not skip_reason:
+            checked.append(package)
+    if problems:
+        raise RuntimeError(
+            "Lookaside cache verification failed; upload (see `lookaside-cmd`) and "
+            "rerun. MR not opened:\n  " + "\n  ".join(problems)
+        )
+    return checked
 
 
 # ---- Pre-MR %prep check ----

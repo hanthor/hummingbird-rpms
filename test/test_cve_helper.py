@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import sys
@@ -769,6 +770,188 @@ def _fake_prep_git(
     return fake_run
 
 
+class _Body:
+    """Minimal urlopen() response that yields data in chunks."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    def read(self, size: int = -1) -> bytes:
+        chunk, self._data = self._data[:size], self._data[size:]
+        return chunk
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+def _lookaside_repo(
+    tmp_path: Path, payload: bytes = b"tarball bytes", override: str = "{}"
+) -> None:
+    _prep_repo(tmp_path, ["bzip2"])
+    (tmp_path / "ci" / "package-overrides.yaml").write_text(f"bzip2: {override}\n")
+    (tmp_path / "mock").mkdir(exist_ok=True)
+    (tmp_path / "mock" / "dist-git-client.ini").write_text(
+        (Path(__file__).parent.parent / "mock" / "dist-git-client.ini").read_text()
+    )
+    (tmp_path / "rpms" / "bzip2" / "sources").write_text(
+        f"SHA512 (bzip2-1.tar.gz) = {hashlib.sha512(payload).hexdigest()}\n"
+    )
+
+
+def _stream_urls(tmp_path, monkeypatch, payload: bytes) -> list[str]:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+    urls: list[str] = []
+
+    def fake_urlopen(request, timeout):
+        urls.append(request.full_url)
+        return _Body(payload)
+
+    monkeypatch.setattr(lib_vcs.urllib.request, "urlopen", fake_urlopen)
+    return urls
+
+
+def test_verify_lookaside_sources_hummingbird_fork_uses_hummingbird_cache(
+    tmp_path, monkeypatch
+) -> None:
+    payload = b"tarball bytes" * 200_000  # spans several read chunks
+    _lookaside_repo(
+        tmp_path, payload, override='{forked_from: "https://gitlab.com/redhat/hummingbird/rpms"}'
+    )
+    urls = _stream_urls(tmp_path, monkeypatch, payload)
+
+    assert lib_vcs.verify_lookaside_sources() == ["bzip2"]
+    digest = hashlib.sha512(payload).hexdigest()
+    assert urls == [
+        f"https://d1766whheab9hg.cloudfront.net/rpms/bzip2/bzip2-1.tar.gz/sha512/{digest}/bzip2-1.tar.gz"
+    ]
+
+
+def test_verify_lookaside_sources_unforked_uses_fedora_cache_and_spec_name(
+    tmp_path, monkeypatch
+) -> None:
+    payload = b"tarball bytes"
+    _lookaside_repo(tmp_path, payload)
+    (tmp_path / "rpms" / "bzip2" / "bzip2-upstream.spec").write_text("Name: bzip2-upstream\n")
+    urls = _stream_urls(tmp_path, monkeypatch, payload)
+
+    assert lib_vcs.verify_lookaside_sources() == ["bzip2"]
+    digest = hashlib.sha512(payload).hexdigest()
+    assert urls == [
+        f"https://src.fedoraproject.org/repo/pkgs/rpms/bzip2-upstream/bzip2-1.tar.gz/sha512/{digest}/bzip2-1.tar.gz"
+    ]
+
+
+def test_verify_lookaside_sources_reports_missing(tmp_path, monkeypatch) -> None:
+    _lookaside_repo(tmp_path)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+
+    def fake_urlopen(request, timeout):
+        raise lib_vcs.urllib.error.HTTPError(request.full_url, 404, "nf", {}, None)
+
+    monkeypatch.setattr(lib_vcs.urllib.request, "urlopen", fake_urlopen)
+
+    with pytest.raises(RuntimeError, match=r"bzip2: bzip2-1.tar.gz not found .*HTTP 404"):
+        lib_vcs.verify_lookaside_sources()
+
+
+def test_verify_lookaside_sources_treats_403_as_missing(tmp_path, monkeypatch) -> None:
+    _lookaside_repo(tmp_path)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+
+    def fake_urlopen(request, timeout):
+        raise lib_vcs.urllib.error.HTTPError(request.full_url, 403, "denied", {}, None)
+
+    monkeypatch.setattr(lib_vcs.urllib.request, "urlopen", fake_urlopen)
+
+    with pytest.raises(RuntimeError, match=r"bzip2-1.tar.gz not found .*HTTP 403"):
+        lib_vcs.verify_lookaside_sources()
+
+
+def test_verify_lookaside_sources_empty_sources_not_counted_as_checked(
+    tmp_path, monkeypatch
+) -> None:
+    _lookaside_repo(tmp_path)
+    (tmp_path / "rpms" / "bzip2" / "sources").write_text("")
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+
+    def fake_urlopen(request, timeout):
+        raise AssertionError("nothing to download")
+
+    monkeypatch.setattr(lib_vcs.urllib.request, "urlopen", fake_urlopen)
+
+    assert lib_vcs.verify_lookaside_sources() == []
+
+
+def test_verify_lookaside_sources_reports_hash_mismatch(tmp_path, monkeypatch) -> None:
+    _lookaside_repo(tmp_path)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+    monkeypatch.setattr(
+        lib_vcs.urllib.request, "urlopen", lambda request, timeout: _Body(b"corrupted")
+    )
+
+    with pytest.raises(RuntimeError, match=r"bzip2-1.tar.gz downloaded but sha512 is"):
+        lib_vcs.verify_lookaside_sources()
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        "{lookaside_cache_url: 'https://dp9y1t38f72i0.cloudfront.net/'}",
+        "{forked_from: 'https://gitlab.com/example/rpms'}",
+    ],
+)
+def test_verify_lookaside_sources_skips_unverifiable_packages(
+    tmp_path, monkeypatch, override
+) -> None:
+    _lookaside_repo(tmp_path, override=override)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        lib_vcs, "run_command", _fake_prep_git(tmp_path, calls, diff="rpms/bzip2/sources\n")
+    )
+
+    def fake_urlopen(request, timeout):
+        raise AssertionError("skipped packages must not be downloaded")
+
+    monkeypatch.setattr(lib_vcs.urllib.request, "urlopen", fake_urlopen)
+
+    assert lib_vcs.verify_lookaside_sources() == []
+
+
+def test_lookaside_problem_rejects_unknown_hash_type() -> None:
+    with pytest.raises(RuntimeError, match="unsupported hash type 'blake3'"):
+        lib_vcs._lookaside_problem("bzip2", "blake3", "bzip2-1.tar.gz", "abc", "https://x/y")
+
+
+def test_package_override_without_overrides_file(tmp_path) -> None:
+    assert lib_vcs._package_override("bzip2", tmp_path) == {}
+
+
+def test_verify_lookaside_sources_skips_when_sources_unchanged(tmp_path, monkeypatch) -> None:
+    _lookaside_repo(tmp_path)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(lib_vcs, "run_command", _fake_prep_git(tmp_path, calls))
+
+    assert lib_vcs.verify_lookaside_sources() == []
+
+
 def test_changed_packages_lists_existing_rpms_dirs(tmp_path, monkeypatch) -> None:
     _prep_repo(tmp_path, ["bzip2", "curl"])
     calls: list[list[str]] = []
@@ -871,6 +1054,10 @@ def _open_mr_args(*extra: str):
 
 
 def _record_open_mr(monkeypatch, order: list[str], *, prep_error: str = "") -> None:
+    def fake_lookaside(**_kwargs) -> list[str]:
+        order.append("lookaside")
+        return ["bzip2"]
+
     def fake_prep(*, source_branch: str, cwd=None) -> list[str]:
         order.append(f"prep:{source_branch}")
         if prep_error:
@@ -881,6 +1068,7 @@ def _record_open_mr(monkeypatch, order: list[str], *, prep_error: str = "") -> N
         order.append("mr")
         return "url"
 
+    monkeypatch.setattr(helper, "verify_lookaside_sources", fake_lookaside)
     monkeypatch.setattr(helper, "run_prep_check", fake_prep)
     monkeypatch.setattr(helper, "open_package_mr", fake_open_mr)
 
@@ -891,7 +1079,7 @@ def test_open_mr_gated_on_prep_check(monkeypatch) -> None:
 
     with pytest.raises(RuntimeError, match="%prep check failed"):
         helper.cmd_open_mr(_open_mr_args())
-    assert order == ["prep:HUM-9"]
+    assert order == ["lookaside", "prep:HUM-9"]
 
 
 def test_open_mr_runs_prep_check_before_mr(monkeypatch) -> None:
@@ -899,7 +1087,7 @@ def test_open_mr_runs_prep_check_before_mr(monkeypatch) -> None:
     _record_open_mr(monkeypatch, order)
 
     assert helper.cmd_open_mr(_open_mr_args()) == 0
-    assert order == ["prep:HUM-9", "mr"]
+    assert order == ["lookaside", "prep:HUM-9", "mr"]
 
 
 def test_open_mr_skip_prep_check(monkeypatch) -> None:
@@ -907,7 +1095,34 @@ def test_open_mr_skip_prep_check(monkeypatch) -> None:
     _record_open_mr(monkeypatch, order)
 
     assert helper.cmd_open_mr(_open_mr_args("--skip-prep-check")) == 0
-    assert order == ["mr"]
+    assert order == ["lookaside", "mr"]
+
+
+def test_open_mr_gated_on_lookaside_check(monkeypatch) -> None:
+    order: list[str] = []
+    _record_open_mr(monkeypatch, order)
+
+    def failing_lookaside(**_kwargs) -> list[str]:
+        order.append("lookaside")
+        raise RuntimeError("Lookaside cache verification failed")
+
+    monkeypatch.setattr(helper, "verify_lookaside_sources", failing_lookaside)
+
+    with pytest.raises(RuntimeError, match="Lookaside cache verification failed"):
+        helper.cmd_open_mr(_open_mr_args())
+    assert order == ["lookaside"]
+
+
+def test_open_mr_skip_lookaside_check(monkeypatch, capsys) -> None:
+    order: list[str] = []
+    _record_open_mr(monkeypatch, order)
+
+    assert helper.cmd_open_mr(_open_mr_args("--skip-lookaside-check")) == 0
+    assert order == ["prep:HUM-9", "mr"]
+    captured = capsys.readouterr()
+    warning = "WARNING: skipping the lookaside verification"
+    assert warning in captured.out
+    assert warning in captured.err
 
 
 def test_lookaside_upload_commands() -> None:
