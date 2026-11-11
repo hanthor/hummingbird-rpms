@@ -757,6 +757,8 @@ spec:
           contentType: rpm
         - name: nodejs26-main
           contentType: rpm
+        - name: npm11-main
+          contentType: rpm
         - name: npth-main
           contentType: rpm
         - name: nss-main
