@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "502477e6ab58792569f09b55278c7ae85e8be0c3"
   },
-  "modification_reason": "Update to upstream version 3.15.2; HUM-11300: CVE-2026-103995; HUM-11399: CVE-2026-116566",
+  "modification_reason": "Update to upstream version 3.15.2; HUM-11300: CVE-2026-103995; HUM-11399: CVE-2026-116566; HUM-12163: CVE-2026-124249",
   "modification_status": "modified",
   "release_monitoring_project_id": 13254,
   "track_upstream": "3.15",
