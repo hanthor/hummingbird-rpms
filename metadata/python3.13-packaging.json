@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-packaging.git",
-    "release": "4",
     "sha": "54df0839bd9e520312285c630532a84c59591358"
   },
-  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_reason": "Update to upstream version 26.3",
   "modification_status": "modified",
   "release_monitoring_project_id": 60461,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pypa/packaging",
-  "version": "26.2"
+  "version": "26.3"
 }
