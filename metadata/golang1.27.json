@@ -6,7 +6,7 @@
     "release": "1",
     "sha": "204a197e246337b9f2b3e1a4f66552907e9f6798"
   },
-  "modification_reason": "Align native FIPS patches with golang-fips c427fcd, including the optional startup guard",
+  "modification_reason": "Align native FIPS patches with golang-fips c427fcd, including the optional startup guard; HUM-12265: CVE-2026-97040",
   "modification_status": "modified",
   "release_monitoring_project_id": 1227,
   "track_upstream": "1.27",

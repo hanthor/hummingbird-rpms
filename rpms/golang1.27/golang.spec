@@ -113,7 +113,7 @@
 
 Name:           %{basepackagename}1.27
 Version:        %{go_version}
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        The Go Programming Language
 # source tree includes several copies of Mark.Twain-Tom.Sawyer.txt under Public Domain
 License:        BSD-3-Clause AND LicenseRef-Fedora-Public-Domain
@@ -171,6 +171,7 @@ Patch15:        0015-Default-GOFIPS140-certified-fips-auto.patch
 # Optional startup guard and certified-module TLS test compatibility.
 Patch16:        0016-strictfipsruntime.patch
 Patch17:        0017-crypto-tests.patch
+Patch18:        0018-cve-2026-97040-arbitrary-code-execution-crafted-syso.patch
 
 # Having documentation separate was broken
 Obsoletes:      %{name}-docs < 1.1-4
