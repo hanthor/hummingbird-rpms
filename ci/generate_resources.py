@@ -693,18 +693,18 @@ def main():
                     promotion += "\n"
                 (ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml").write_text(promotion)
 
-        # Cross-check: every ITS application must exist in the trigger manifest's
-        # applications dict.  A mismatch means konflux_rpa_config.yml (application_prefix)
-        # and package-overrides.yaml (private_product) are out of sync, which would yield
-        # a dead ITS (no components in that application) or an unresolvable manifest key.
+        # Cross-check: every application that has components must also have an ITS.
+        # A mismatch means application_prefix in ci/konflux_rpa_config.yml and
+        # private_product in ci/package-overrides.yaml produce diverging application
+        # names, which would leave some components without integration test coverage.
         its_apps = set(its_entries["pr"].keys())
-        if pr_manifest_apps is not None:
-            unknown_its_apps = its_apps - pr_manifest_apps
-            if unknown_its_apps:
+        if pr_manifest_apps:
+            uncovered_apps = pr_manifest_apps - its_apps
+            if uncovered_apps:
                 sys.exit(
-                    f"ERROR: ITS application(s) {sorted(unknown_its_apps)} not found in the "
-                    f"trigger manifest's applications dict. Check that application_prefix in "
-                    f"ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
+                    f"ERROR: Application(s) {sorted(uncovered_apps)} have components in the "
+                    f"trigger manifest but no IntegrationTestScenario. Check that application_prefix "
+                    f"in ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
                     f"produce matching application names."
                 )
 
