@@ -3591,6 +3591,44 @@ def test_cli_check_json_reports_source_warnings(
     ]
 
 
+def test_cli_skip_package_reports_update_without_applying_it(
+    cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """--skip-package leaves the tree alone but still reports the update."""
+    _create_package(workdir, 'pkg', '1.0')
+    cuv_module.ROOT_DIR = workdir
+    cuv_module.RPMS_DIR = workdir / 'rpms'
+    cuv_module.METADATA_DIR = workdir / 'metadata'
+    check_result = cuv_module.VersionCheckResult(
+        package='pkg',
+        current_version='1.0',
+        upstream_version='2.0',
+        has_update=True,
+    )
+
+    with (
+        patch.object(cuv_module, 'check_package_version', return_value=check_result),
+        patch.object(
+            cuv_module, 'update_spec_version',
+            side_effect=AssertionError('skipped update must not run'),
+        ) as update,
+        patch('sys.argv', [
+            'check_upstream_versions.py', 'check', '--update', '--json',
+            '--skip-package', 'pkg', 'pkg',
+        ]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        cuv_module.main()
+
+    assert exc_info.value.code == 1
+    update.assert_not_called()
+    output = json.loads(capsys.readouterr().out)
+    assert output['updates_available'] == 1
+    assert output['updates_applied'] == 0
+    assert output['results'][0]['skipped'] is True
+    assert output['results'][0]['updated'] is False
+
+
 @pytest.mark.parametrize('json_output', [True, False])
 def test_cli_missing_tracked_release_warns_without_updating(
     cuv_module, workdir: Path, capsys: pytest.CaptureFixture[str], json_output: bool,
