@@ -223,6 +223,9 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 
 # ITS context routing (D2): contexts that map to the PR manifest (with group flag)
 # or to the push manifest.  Optional scenarios are silently excluded.
+# NOTE: "component_attr-*" / "component_setup-*" are intentionally NOT listed —
+# they are always optional=True in this repo and silently excluded before routing.
+# The bare "component" value is reserved for future non-optional post-merge scenarios.
 _KNOWN_ITS_CONTEXTS = {"pull_request", "component"}
 
 # Per-application ITS scenario types defined once and used for both template rendering
