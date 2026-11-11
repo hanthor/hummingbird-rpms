@@ -14,8 +14,8 @@
 
 Name:           python3.13-setuptools
 # When updating, update the bundled libraries versions bellow!
-Version:        83.0.0
-Release:        2.2%{?dist}
+Version:        84.2.1
+Release:        3%{?dist}
 Summary:        Easily build and distribute Python packages
 # setuptools is MIT
 # autocommand is LGPL-3.0-only
@@ -79,7 +79,7 @@ Provides: bundled(python%{python3_pkgversion}dist(jaraco-context)) = 6.1
 Provides: bundled(python%{python3_pkgversion}dist(jaraco-functools)) = 4.4
 Provides: bundled(python%{python3_pkgversion}dist(jaraco-text)) = 4
 Provides: bundled(python%{python3_pkgversion}dist(more-itertools)) = 10.8
-Provides: bundled(python%{python3_pkgversion}dist(packaging)) = 26
+Provides: bundled(python%{python3_pkgversion}dist(packaging)) = 26.3
 Provides: bundled(python%{python3_pkgversion}dist(platformdirs)) = 4.4
 Provides: bundled(python%{python3_pkgversion}dist(tomli)) = 2.4
 Provides: bundled(python%{python3_pkgversion}dist(wheel)) = 0.46.3
@@ -156,7 +156,7 @@ find %{buildroot}%{python3_sitelib} -name tests -print0 | xargs -0 rm -r
 # Install the wheel for the python-setuptools-wheel package
 # and inject SBOM into it (if the macro is available)
 mkdir -p %{buildroot}%{python_wheel_dir}
-install -p %{_pyproject_wheeldir}/%{python_wheel_name} -t %{buildroot}%{python_wheel_dir}
+install -pm0644 %{_pyproject_wheeldir}/%{python_wheel_name} -t %{buildroot}%{python_wheel_dir}
 %{?python_wheel_inject_sbom:%python_wheel_inject_sbom %{buildroot}%{python_wheel_dir}/%{python_wheel_name}}
 %endif
 

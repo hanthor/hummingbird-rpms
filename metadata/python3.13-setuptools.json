@@ -1,14 +1,14 @@
 {
+  "version": "84.2.1",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/pypa/setuptools",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-setuptools.git",
-    "release": "2",
-    "sha": "1c627c74ff95fee120970924b513a5e320bae9a1"
+    "branch": "rawhide",
+    "sha": "4e1a36b8657dee076d1896de021969e1a8a27db4",
+    "release": "3"
   },
   "modification_reason": "Python 3.13 variant with reviewed build checks",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 4021,
   "track_upstream": "latest",
-  "upstream_repo": "https://github.com/pypa/setuptools",
-  "version": "83.0.0"
+  "release_monitoring_project_id": 4021
 }
