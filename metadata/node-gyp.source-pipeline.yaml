@@ -1,0 +1,39 @@
+fetch:
+  - type: url
+    url: "https://registry.npmjs.org/node-gyp/-/node-gyp-${VERSION}.tgz"
+    filename: "node-gyp-${VERSION}.tar.gz"
+
+transform:
+  - type: run
+    path: "package"
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -eu
+        jq 'del(.devDependencies, .scripts)' package.json > package.runtime.json
+        mv package.runtime.json package.json
+        npm install --ignore-scripts --omit=dev --no-audit --no-fund
+        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+          --format=gnu --exclude=node_modules/.package-lock.json \
+          -cjf "node-gyp-${VERSION}-vendor.tar.bz2" node_modules
+    outputs:
+      - "node-gyp-${VERSION}-vendor.tar.bz2"
+      - "package-lock.json"
+
+post:
+  - type: bundled-provides
+    ecosystem: npm
+    modules:
+      - path: package
+    scope: production
+    output: bundled-npm-provides.inc
+  - type: run
+    # Materialize the generated lockfile in the package directory for review.
+    artifacts: ["package-lock.json"]
+    command: ["jq", "-e", ".lockfileVersion == 3 and .name == \"node-gyp\"", "package-lock.json"]
+
+publish:
+  files:
+    - "node-gyp-${VERSION}.tar.gz"
+    - "node-gyp-${VERSION}-vendor.tar.bz2"
