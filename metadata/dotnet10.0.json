@@ -4,12 +4,12 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dotnet10.0.git",
     "release": "1",
-    "sha": "7c207f119cd477d344b75eff2a533b87a4f91eeb"
+    "sha": "db681306f48143f2798e8d1f087de5be3f2d26b7"
   },
-  "modification_reason": "update to SDK 10.0.113 / Runtime 10.0.13 for CVE-2026-70159, CVE-2026-96957; local build patches retained",
+  "modification_reason": "local build patches retained; updated to SDK 10.0.115 / Runtime 10.0.15 for CVE-2026-114146, CVE-2026-114149",
   "modification_status": "modified",
   "upstream_branch": "release/10.0",
   "upstream_repo": "https://github.com/dotnet/runtime",
-  "version": "10.0.114",
+  "version": "10.0.115",
   "version_transform": "dotnet_sdk_to_runtime"
 }
