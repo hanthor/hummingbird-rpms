@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "a236b583370d549010357114d4924a80186fa522"
   },
-  "modification_reason": "Backport CVE-2026-88822, CVE-2026-95692, CVE-2026-88823",
+  "modification_reason": "Backport CVE-2026-88822, CVE-2026-95692, CVE-2026-88823, CVE-2026-95691, CVE-2026-107496",
   "modification_status": "modified",
   "release_monitoring_project_id": 377610,
   "track_upstream": "3.5",
