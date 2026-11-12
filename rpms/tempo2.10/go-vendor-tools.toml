@@ -3,8 +3,8 @@
 [archive.dependency_overrides]
 # CVE-2026-116591
 "github.com/klauspost/compress" = "v1.20.2"
-# CVE-2026-81092
-"github.com/mark3labs/mcp-go" = "v0.56.0"
+# CVE-2026-81092, CVE-2026-123272
+"github.com/mark3labs/mcp-go" = "v1.2.1"
 # CVE-2026-93450
 "github.com/go-openapi/swag" = "v0.27.1"
 "github.com/go-openapi/swag/cmdutils" = "v0.27.1"
