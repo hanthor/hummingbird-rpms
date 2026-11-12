@@ -1,15 +1,15 @@
 {
-  "version": "18.6",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/postgres/postgres",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/postgresql18.git",
     "branch": "rawhide",
-    "sha": "dd65e35dbc1f7b690744cc508c58817b8ade1513",
-    "release": "1"
+    "git_url": "https://src.fedoraproject.org/rpms/postgresql18.git",
+    "release": "1",
+    "sha": "dd65e35dbc1f7b690744cc508c58817b8ade1513"
   },
-  "modification_reason": "Update to upstream version 18.6",
-  "upstream_branch": "REL_18_STABLE",
+  "modification_reason": "Update to upstream version 18.6; HUM-12488: CVE-2026-116335",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 383697,
   "track_upstream": "18",
-  "release_monitoring_project_id": 383697
+  "upstream_branch": "REL_18_STABLE",
+  "upstream_repo": "https://github.com/postgres/postgres",
+  "version": "18.6"
 }
