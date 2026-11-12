@@ -1,0 +1,21 @@
+summary: run upstream unit tests
+test: ./runtest.sh
+require:
+  - cargo
+  - git-core
+  - python3.13
+  - python3.13-click
+  - python3.13-editables
+  - python3.13-filelock
+  - python3.13-hatchling
+  - python3.13-httpx
+  - python3.13-packaging
+  - python3.13-pathspec
+  - python3.13-platformdirs
+  - python3.13-pytest
+  - python3.13-pytest-mock
+  - python3.13-rich
+  - python3.13-tomli-w
+  - python3.13-virtualenv
+  - uv
+duration: 10m
