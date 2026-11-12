@@ -166,6 +166,13 @@ else
     fi
 fi
 
+# Do not switch branches or invoke another update over pending manual recovery.
+if [[ -e .dist_git_update_state.json ]]; then
+    echo "ERROR: An update is already pending (.dist_git_update_state.json)." >&2
+    echo "       Finish it with './ci/dist_git.py update --continue' before restarting the batch." >&2
+    exit 1
+fi
+
 # Ensure git is configured (for both clone and production mode)
 if [[ -z "$(git config user.name 2>/dev/null || true)" ]]; then
     if [[ -n "${GITLAB_USER_NAME:-}" ]]; then
@@ -334,6 +341,16 @@ for metadata_file in "${packages_to_check[@]}"; do
         echo "  ✗ Failed to update ${package}"
         UPDATE_FAILURES=$((UPDATE_FAILURES + 1))
         FAILED_PACKAGES+=("${package} (update failed)")
+        if [[ -e .dist_git_update_state.json ]]; then
+            # A version-validation failure needs manual correction. Continuing
+            # updates or reaching the reset/cherry-pick phase would endanger its
+            # uncommitted files, even when earlier packages updated successfully.
+            printf '%s\n' "${FAILED_PACKAGES[@]}" > "${FAILURES_FILE}"
+            echo "ERROR: Stopping batch: ${package} left pending recovery state (.dist_git_update_state.json)." >&2
+            echo "       Package edits and earlier update commits are preserved; no reset or MR processing was performed." >&2
+            echo "       Correct the pending update, then run './ci/dist_git.py update --continue'." >&2
+            exit 1
+        fi
         continue
     fi
 

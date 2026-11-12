@@ -2300,6 +2300,98 @@ def test_multi_mr_commits_conflicted_update_for_dry_run_mr(
     assert 'Updates failed:          0' in result.stdout
 
 
+def test_final_spec_version_error_handles_subprocess_failure(imported_workdir, dist_git_module) -> None:
+    """A resolver subprocess failure must produce a useful error, not a traceback."""
+    workdir = imported_workdir('vanilla')
+    metadata = dist_git_module.HumPackageMetadata._from_raw_dict(
+        'vanilla', json.loads((workdir / 'metadata' / 'vanilla.json').read_text()),
+    )
+    failure = subprocess.CalledProcessError(1, ['rpmspec', '-q', 'vanilla.spec'])
+    with patch.object(dist_git_module, 'resolve_spec_version', side_effect=failure):
+        error = dist_git_module._final_spec_version_error(metadata, workdir / 'rpms' / 'vanilla')
+    assert error is not None
+    assert 'Cannot validate final spec version for vanilla' in error
+    assert 'rpmspec' in error
+
+
+@pytest.mark.parametrize('version_form', ['literal', 'macro'])
+@pytest.mark.parametrize('mismatch', [False, True], ids=['matching', 'mismatched'])
+@pytest.mark.parametrize('dry_run', [False, True], ids=['commit', 'dry-run'])
+def test_update_validates_final_spec_version(
+    imported_workdir, upstream_repos: dict[str, Path], version_form: str, mismatch: bool, dry_run: bool,
+) -> None:
+    """A clean merge must not commit metadata that disagrees with the final spec."""
+    workdir = imported_workdir('vanilla')
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    final_version = '1.5' if mismatch else '1.0'
+    content = spec.read_text()
+    if version_form == 'macro':
+        content = f'%global package_version {final_version}\n' + content.replace(
+            'Version: 1.0', 'Version: %{package_version}',
+        )
+    else:
+        content = content.replace('Version: 1.0', f'Version: {final_version}')
+    spec.write_text('# Local packaging change\n' + content)
+    subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'mark-modified', 'vanilla', '--modified',
+         '--reason', 'Local packaging change'], cwd=workdir, check=True,
+    )
+    subprocess.run(['git', 'commit', '-am', 'Local packaging change'], cwd=workdir, check=True)
+    upstream = upstream_repos['vanilla']
+    upstream_spec = upstream / 'vanilla.spec'
+    upstream_spec.write_text(upstream_spec.read_text() + '\n# Upstream packaging change\n')
+    subprocess.run(['git', 'commit', '-am', 'Upstream packaging change'], cwd=upstream, check=True)
+
+    def git_output(*args: str) -> str:
+        return subprocess.run(['git', *args], cwd=workdir, check=True, capture_output=True, text=True).stdout
+
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = git_output('rev-parse', 'HEAD')
+    index_before = git_output('diff', '--cached')
+    args = ['--dry-run'] if dry_run else []
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *args, 'update', 'vanilla', '--skip-build-check'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert '# Local packaging change' in spec.read_text()
+    assert '# Upstream packaging change' in spec.read_text()
+    assert '<<<<<<<' not in spec.read_text(), 'This regression must exercise a conflict-free merge'
+    state_file = workdir / '.dist_git_update_state.json'
+    if mismatch:
+        assert result.returncode != 0, 'Committed a mismatched final spec and metadata'
+        assert '1.5' in result.stderr and '1.0' in result.stderr
+        assert 'Version:' in result.stderr and 'metadata version' in result.stderr
+        assert metadata_file.read_bytes() == metadata_before
+        assert git_output('rev-parse', 'HEAD') == head_before
+        assert git_output('diff', '--cached') == index_before
+        assert '1.5' in spec.read_text(), 'Must not silently rewrite the resolved spec'
+        if not dry_run:
+            assert result.returncode == 1, 'Do not let the batch caller commit this as an unresolved merge'
+            assert state_file.exists(), 'Preserve the pending update for correction and continuation'
+            assert json.loads(state_file.read_text())['metadata']['version'] == '1.0'
+            spec.write_text(spec.read_text().replace('1.5', '1.0'))
+            resumed = subprocess.run(
+                [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+                cwd=workdir, capture_output=True, text=True,
+            )
+            assert resumed.returncode == 0, resumed.stderr
+            assert not state_file.exists()
+            assert git_output('rev-parse', 'HEAD') != head_before
+        else:
+            assert not state_file.exists(), 'dry-run must not write recovery state on version mismatch'
+    else:
+        assert result.returncode == 0, result.stderr
+        assert not state_file.exists()
+        assert json.loads(metadata_file.read_text())['version'] == '1.0'
+        if dry_run:
+            assert metadata_file.read_bytes() == metadata_before
+            assert git_output('rev-parse', 'HEAD') == head_before
+        else:
+            assert git_output('rev-parse', 'HEAD') != head_before
+
+
 def test_update_merge_version_bump(imported_workdir, upstream_repos: dict[str, Path]) -> None:
     """Update handles modified packages where the local change is a Version bump.
 
@@ -3705,15 +3797,17 @@ def test_update_merged_autorelease_resets_local_release(
     spec = upstream / 'vanilla.spec'
     definition = ('%global my_release %{autorelease}\nRelease: %{my_release}'
                   if use_indirect else 'Release: %{autorelease}')
-    spec.write_text(spec.read_text().replace('Release: 1%{?dist}', definition))
+    spec.write_text(spec.read_text().replace('Version: 1.0', 'Version: 1.5')
+                    .replace('Release: 1%{?dist}', definition))
     subprocess.run(['git', 'commit', '-am', 'Use autorelease'], cwd=upstream, check=True)
     with patch.object(dist_git_module, 'get_mdapi_latest_build',
-                      return_value={'version': '1.0', 'release': '1.fc99'}):
+                      return_value={'version': '1.5', 'release': '1.fc99'}):
         run_dist_git(dist_git_module, workdir, 'import', f'file://{upstream}')
 
     local = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
-    # The adjacent Version change makes the normalization rebase fail.
-    local.write_text(local.read_text().replace('Version: 1.0', 'Version: 1.5')
+    # An adjacent Epoch edit still makes the normalization rebase fail without
+    # introducing a spec/metadata Version mismatch (rejected by HUM-10161).
+    local.write_text(local.read_text().replace('Version: 1.5', 'Version: 1.5\nEpoch: 1')
                      .replace('1%{?dist}', '1.5%{?dist}')
                      + '\n%package extra\nSummary: Extra\nRelease: %{release}\n'
                      + '%description extra\nExtra package\n%files extra\n')
@@ -3725,7 +3819,7 @@ def test_update_merged_autorelease_resets_local_release(
     subprocess.run(['git', 'commit', '-am', 'Fedora change'], cwd=upstream, check=True)
 
     with patch.object(dist_git_module, 'get_mdapi_latest_build',
-                      return_value={'version': '1.0', 'release': '3.fc99'}):
+                      return_value={'version': '1.5', 'release': '3.fc99'}):
         run_dist_git(dist_git_module, workdir, 'update', 'vanilla', '--skip-build-check')
     result = local.read_text()
     assert '# Fedora change' in result
@@ -5732,6 +5826,112 @@ def test_update_continue_resolves_autorelease(
     assert 'Release: 3%{?dist}\n' in committed_spec
     assert '%autorelease' not in committed_spec
     assert not state_file.exists()
+
+
+@pytest.mark.parametrize('version_form', ['literal', 'macro'])
+@pytest.mark.parametrize('resolved_version', ['11', '12', None], ids=['matching', 'mismatched', 'unparseable'])
+def test_update_continue_validates_resolved_spec_version(
+    workdir: Path, upstream_repos: dict[str, Path], version_form: str, resolved_version: str | None,
+) -> None:
+    """Validate saved candidate metadata, retaining the state and edits on failure."""
+    _create_conflict(workdir, upstream_repos)
+    spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    content = re.sub(r'<<<<<<< HEAD\n.*?=======\n(.*?)>>>>>>> hummingbird-local\n',
+                     r'\1', spec.read_text(), flags=re.DOTALL)
+    assert '<<<<<<<' not in content
+    if resolved_version is None:
+        content = re.sub(r'^Version:.*\n', '', content, flags=re.MULTILINE)
+    elif version_form == 'macro':
+        content = f'%global resolved_version {resolved_version}\n' + content.replace(
+            'Version: 11', 'Version: %{resolved_version}',
+        )
+    else:
+        content = content.replace('Version: 11', f'Version: {resolved_version}')
+    spec.write_text(content)
+
+    def git_output(*args: str) -> str:
+        return subprocess.run(['git', *args], cwd=workdir, check=True, capture_output=True, text=True).stdout
+
+    state_file = workdir / '.dist_git_update_state.json'
+    state_before = state_file.read_bytes()
+    assert json.loads(state_before)['metadata']['version'] == '11'
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_file.read_bytes()
+    assert json.loads(metadata_before)['version'] == '10', 'Use pending metadata, not the old disk version'
+    spec_before = spec.read_bytes()
+    head_before = git_output('rev-parse', 'HEAD')
+    index_before = git_output('diff', '--cached')
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    if resolved_version != '11':
+        assert result.returncode != 0, 'Committed an invalid resolved spec'
+        if resolved_version:
+            assert '12' in result.stderr and '11' in result.stderr
+            assert 'Version:' in result.stderr and 'metadata version' in result.stderr
+        else:
+            assert 'rpmspec' in result.stderr
+        assert state_file.read_bytes() == state_before
+        assert metadata_file.read_bytes() == metadata_before
+        assert spec.read_bytes() == spec_before
+        assert git_output('rev-parse', 'HEAD') == head_before
+        assert git_output('diff', '--cached') == index_before
+        if resolved_version:
+            spec.write_text(content.replace('12', '11'))
+        else:
+            spec.write_text('Version: 11\n' + content)
+        resumed = subprocess.run(
+            [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+            cwd=workdir, capture_output=True, text=True,
+        )
+        assert resumed.returncode == 0, resumed.stderr
+    else:
+        assert result.returncode == 0, result.stderr
+
+    assert not state_file.exists()
+    assert git_output('rev-parse', 'HEAD') != head_before
+    assert json.loads(metadata_file.read_text())['version'] == '11'
+
+
+@pytest.mark.parametrize('packages', [[], ['vanilla'], ['chocolate']], ids=['batch', 'same-package', 'other-package'])
+@pytest.mark.parametrize('dry_run', [False, True], ids=['update', 'dry-run'])
+def test_new_update_preserves_pending_recovery_state(imported_workdir, packages: list[str], dry_run: bool) -> None:
+    """A new invocation must neither replace pending state nor touch any package."""
+    workdir = imported_workdir('vanilla', 'chocolate')
+    state_file = workdir / '.dist_git_update_state.json'
+    metadata = json.loads((workdir / 'metadata' / 'vanilla.json').read_text())
+    state_file.write_text(json.dumps({'package': 'vanilla', 'metadata': metadata,
+                                      'commit_msg': 'Pending vanilla update'}, indent=2) + '\n')
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec.write_text(spec.read_text() + '\n# Pending manual resolution\n')
+    state_before = state_file.read_bytes()
+    files_before = {str(path.relative_to(workdir)): path.read_bytes()
+                    for directory in ('rpms', 'metadata')
+                    for path in (workdir / directory).rglob('*') if path.is_file()}
+
+    def git_output(*args: str) -> str:
+        return subprocess.run(['git', *args], cwd=workdir, check=True, capture_output=True, text=True).stdout
+
+    head_before = git_output('rev-parse', 'HEAD')
+    index_before = git_output('diff', '--cached')
+    args = ['--dry-run'] if dry_run else []
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *args, 'update', '--skip-build-check', *packages],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 1, result.stderr
+    assert state_file.exists(), 'A new update deleted pending recovery state'
+    assert state_file.read_bytes() == state_before
+    assert 'pending' in result.stderr.lower()
+    assert 'update --continue' in result.stderr
+    assert {str(path.relative_to(workdir)): path.read_bytes()
+            for directory in ('rpms', 'metadata')
+            for path in (workdir / directory).rglob('*') if path.is_file()} == files_before
+    assert git_output('rev-parse', 'HEAD') == head_before
+    assert git_output('diff', '--cached') == index_before
 
 
 def test_update_continue_no_state(workdir: Path, upstream_repos: dict[str, Path]) -> None:
