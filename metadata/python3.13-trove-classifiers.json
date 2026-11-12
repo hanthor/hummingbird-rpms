@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-trove-classifiers.git",
+    "release": "1",
+    "sha": "b1c075ee6ad8b1c044ec7a2e0e347058a50ea98f"
+  },
+  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 88298,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/pypa/trove-classifiers",
+  "version": "2026.9.21.13"
+}
