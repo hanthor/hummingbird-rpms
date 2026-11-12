@@ -22,7 +22,7 @@ This separation allows independent iteration on each concern.
 | ImageRepository          | rpms           | manual  | manual    | -        | -          |
 | ReleasePlanAdmission     | rpms           | -       | automatic | manual   | automatic  |
 | EnterpriseContractPolicy | rpms           | -       | automatic | manual   | automatic  |
-| IntegrationTestScenario  | rpms           | -       | automatic | -        | -          |
+| IntegrationTestScenario  | rpms           | -       | automatic | manual   | automatic  |
 | Application              | infrastructure | -       | -         | manual   | automatic  |
 | ReleasePlan              | infrastructure | -       | -         | manual   | automatic  |
 | ServiceAccount, Secret   | infrastructure | -       | -         | manual   | automatic  |
