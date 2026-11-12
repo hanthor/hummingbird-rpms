@@ -2,11 +2,11 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/skopeo.git",
-    "release": "1",
-    "sha": "701428fd2275f8e6aef4346eff8decec78239d78"
+    "release": "2",
+    "sha": "52a040e02081870a6bf3c81678580cd7aa7aa60e"
   },
-  "modification_reason": "Backport CVE-2026-116591",
+  "modification_reason": "Retain numeric release for Fedora update; CVE-2026-116591 fix is included upstream in vendored klauspost/compress 1.20.3",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/containers/skopeo",
-  "version": "1.24.1"
+  "version": "1.25.1"
 }

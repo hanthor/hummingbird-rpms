@@ -1,7 +1,7 @@
 discover:
     how: fmf
     url: https://github.com/containers/skopeo
-    ref: v1.24.1
+    ref: v1.25.1
 execute:
     how: tmt
 prepare:
