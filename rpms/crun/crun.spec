@@ -33,8 +33,8 @@ Epoch: 102
 # If that's what you're reading, Version must be 0, and will be updated by Packit for
 # copr and koji builds.
 # If you're reading this on dist-git, the version is automatically filled in by Packit.
-Version: 1.30.1
-Release: 1.1%{?dist}
+Version: 1.31
+Release: 1%{?dist}
 URL: https://github.com/containers/%{name}
 Source0: %{url}/releases/download/%{version}/%{name}-%{version}.tar.zst
 %if !%{defined copr_build}
@@ -66,7 +66,6 @@ BuildRequires: json-c-devel
 BuildRequires: libseccomp-devel
 BuildRequires: python3-libmount
 BuildRequires: libtool
-BuildRequires: protobuf-c-devel
 BuildRequires: criu-devel >= 3.17.1-2
 Recommends: criu >= 3.17.1
 Recommends: criu-libs
@@ -127,6 +126,7 @@ rm -rf %{buildroot}%{_prefix}/lib*
 %files
 %license COPYING
 %{_bindir}/%{name}
+%{_includedir}/libcrun.h
 %{_mandir}/man1/%{name}.1.gz
 
 %if %{defined krun_support}
