@@ -64,10 +64,10 @@ Epoch: 5
 # If that's what you're reading, Version must be 0, and will be updated by Packit for
 # copr and koji builds.
 # If you're reading this on dist-git, the version is automatically filled in by Packit.
-Version: 6.1.4
+Version: 6.2.0
 # The `AND` needs to be uppercase in the License for SPDX compatibility
 License: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
-Release: 1.4%{?dist}
+Release: 1%{?dist}
 %if %{defined golang_arches_future}
 ExclusiveArch: %{golang_arches_future}
 %else
@@ -77,9 +77,7 @@ Summary: Manage Pods, Containers and Container Images
 URL: https://%{name}.io/
 # All SourceN files fetched from upstream
 Source0: https://github.com/containers/%{name}/archive/v%{version_no_tilde}.tar.gz
-Patch0: 0001-backport-bump-klauspost-compress-for-cve-2026-116591.patch
-Patch1: 0002-backport-bump-buildkit-for-cve-2026-121522-and-cve-2026-121520.patch
-Patch2: 0003-backport-do-not-inherit-auto-update-labels-for-cve-2026-121885.patch
+Patch0: 0001-backport-bump-buildkit-for-cve-2026-121522-and-cve-2026-121520.patch
 Provides: %{name}-manpages = %{epoch}:%{version}-%{release}
 BuildRequires: %{_bindir}/envsubst
 %if %{defined build_with_btrfs}
@@ -207,7 +205,7 @@ when `%{_bindir}/%{name}sh` is set as a login shell or set as os.Args[0].
 %package machine
 Summary: Metapackage for setting up %{name} machine
 Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires: gvisor-tap-vsock
+Requires: gvisor-tap-vsock >= 0.9.0
 %if %{defined qemu}
 %ifarch aarch64
 Requires: qemu-system-aarch64-core
@@ -259,7 +257,7 @@ LDFLAGS="-X %{ld_libpod}/define.buildInfo=${SOURCE_DATE_EPOCH:-$(date +%s)} \
 
 # This variable will be set by Packit actions. See .packit.yaml in the root dir
 # of the repo (upstream as well as Fedora dist-git).
-GIT_COMMIT="464c15fec06f0074c916f9eff87c4806869c2833"
+GIT_COMMIT="055de046937d29450f310fce0fe3071485d8bed9"
 LDFLAGS="$LDFLAGS -X %{ld_libpod}/define.gitCommit=$GIT_COMMIT"
 
 # build rootlessport first
