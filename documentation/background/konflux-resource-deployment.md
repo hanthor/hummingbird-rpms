@@ -96,7 +96,8 @@ See the infrastructure repo's
 
 The `integration_test_scenarios` section of `.tekton/trigger-manifest-pull-request.json`
 is derived from the same `scenarios.yml` matrix, ensuring the manifest never drifts from
-deployed scenarios.
+deployed scenarios. See the [trigger manifests documentation](https://hummingbird-project.io/l/trigger-manifests)
+for the full manifest schema.
 
 ### Infrastructure Repo
 

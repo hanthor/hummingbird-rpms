@@ -286,7 +286,7 @@ there following the same pattern as `rpms-main`:
    by this repo's `ci/generate_resources.py` — it derives the application list from
    `ci/konflux_rpa_config.yml`. Once you add the RPA entry in step 5 and run
    `make generate`, the new application's testing-farm ITS will appear in
-   `konflux-templates/rendered.yml` and the trigger manifest. The ITS is deployed to the
+   `konflux-templates/rendered.yml` and the [trigger manifest](https://hummingbird-project.io/l/trigger-manifests). The ITS is deployed to the
    cluster via the `*-releases` infrastructure sync after this MR merges to main.
 
 Merge this MR in the infrastructure repo first — the CI pipeline will deploy the Application

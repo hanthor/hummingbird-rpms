@@ -297,7 +297,7 @@ The generator emits two scenario types per application (instantiated from templa
   that application
 - **Context-based triggering** - `testing-farm` runs on `pull_request` snapshots only;
   `testing-farm-upstream` runs on canary component snapshots and is optional (not listed in
-  the trigger manifest)
+  the [trigger manifest](https://hummingbird-project.io/l/trigger-manifests))
 - **Package identification** - Konflux automatically provides `IMAGE_NAME` (e.g., `openssl-main`)
   and `IMAGE_URL` (OCI image with built RPMs) as environment variables
 
