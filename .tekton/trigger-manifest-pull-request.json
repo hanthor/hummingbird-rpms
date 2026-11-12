@@ -1969,6 +1969,10 @@
         "^rpms/python3\\.13\\-pip/",
         "^test/rpms/python3\\.13\\-pip\\.yml$"
       ],
+      "python3-13-pycparser--rpms": [
+        "^rpms/python3\\.13\\-pycparser/",
+        "^test/rpms/python3\\.13\\-pycparser\\.yml$"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"
@@ -1976,6 +1980,14 @@
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/",
         "^test/rpms/python3\\.13\\-tomlkit\\.yml$"
+      ],
+      "python3-13-trove-classifiers--rpms": [
+        "^rpms/python3\\.13\\-trove\\-classifiers/",
+        "^test/rpms/python3\\.13\\-trove\\-classifiers\\.yml$"
+      ],
+      "python3-13-vcs-versioning--rpms": [
+        "^rpms/python3\\.13\\-vcs\\-versioning/",
+        "^test/rpms/python3\\.13\\-vcs\\-versioning\\.yml$"
       ],
       "python3-14--rpms": [
         "^rpms/python3\\.14/",
