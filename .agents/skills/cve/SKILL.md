@@ -15,7 +15,8 @@ Hands-on per-ticket work. For bulk `cve-needs-attention` triage use
 `/analyse-cve-needs-attention`. For an overview use `/cve-status`.
 
 Do not run `cve_analysis.py --resolve` from this skill. Consume the
-bot's `{noformat}` comment; write through `cve_helper.py`.
+bot's `{noformat}` comment and the CVE agent's `RECOMMENDATION:` comment,
+verifying their claims yourself; write through `cve_helper.py`.
 
 ## Helper
 
@@ -69,6 +70,22 @@ loads `~/.config/rhjira/agent.env`. Do not paste retry loops.
    Report the evidence-backed affected/not-affected assessment per ticket.
    Each `resolution_hint` and `recommended_next` is a suggestion, not a
    decision.
+
+   The CVE agent's `RECOMMENDATION:` comment and `cve-agent-*` label are
+   claims too: check the evidence they cite instead of accepting the verdict.
+   If the comment says a backport was prepared or an MR was opened, find that
+   MR before creating a task or MR:
+
+   ```bash
+   glab mr list --repo redhat/hummingbird/rpms --search HUM-XXXX --all
+   ```
+
+   Look for branch `cve-agent/hum-xxxx`, label `managed-by::workqueue`, or a
+   draft title starting `backport(`; the `investigate` GitLab MR probe covers
+   the same ground. Confirm it covers this tracker and CVE and that `%prep`
+   passes (`ci/build_rpms.sh --prep-only PKG` from the agent's branch, or check
+   the MR's CI pipeline). If it does, continue from it — push fixes to its branch
+   or review it — and do not open a second MR.
 4. **Choose scope and resolution.** User-named tickets are in-scope.
    Discovered same-CVE siblings require a scope choice: ask whether to
    include all related tickets or only the named tickets. Ask before any
@@ -372,6 +389,7 @@ If the session log file cannot be located in the current environment, omit this 
 1. Never close Done-Errata yourself. Set FIB and leave the tracker open.
 2. Always ask before closing any ticket.
 3. Create HUM tasks for backport or update work; link them with blockers.
+   Reuse an existing CVE agent MR instead of opening another (Step 3).
 4. Use `cve_helper.py` for Jira writes (`jira_client` / `pulp` imports).
    Do not use the Atlassian MCP, `cve_analysis.py --resolve`,
    `advisory_handler`, or `gitlab_sync` for package MRs.
