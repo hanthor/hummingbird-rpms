@@ -49,7 +49,7 @@ URL: https://www.python.org/
 #global prerel ...
 %global upstream_version %{general_version}%{?prerel}
 Version: %{general_version}%{?prerel:~%{prerel}}
-Release: 1.4%{?dist}
+Release: 1.5%{?dist}
 License: Python-2.0.1
 
 
@@ -449,6 +449,17 @@ Patch490: 00490-cve-2026-119170.patch
 # CVE-2026-124249: Check cookie policy before deleting expired cookies in
 # http.cookiejar.
 Patch491: 00491-cve-2026-124249.patch
+
+# CVE-2026-115791: Prevent shadowing the standard library in the gzip, tarfile
+# and zipfile command line interfaces (gh-161705).
+Patch492: 00492-cve-2026-115791-prevent-stdlib-shadowing-in-archive-cli.patch
+
+# CVE-2026-19552: Check the hostname in ssl.get_server_certificate() when
+# ca_certs is given (gh-161503).
+Patch493: 00493-cve-2026-19552-check-hostname-in-get-server-certificate.patch
+
+# CVE-2026-115559: Reject buffered plaintext after IMAP STARTTLS (gh-160369).
+Patch494: 00494-cve-2026-115559-reject-buffered-plaintext-after-imap-starttls.patch
 
 # (New patches go here ^^^)
 #
