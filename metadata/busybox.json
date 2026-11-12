@@ -9,7 +9,7 @@
     "release": "9",
     "sha": "cdff96cad7e09a51ce365e42f0c5713f071a957a"
   },
-  "modification_reason": "backport upstream security fixes; backport fixes for CVE-2026-38753 and CVE-2026-38754; backport fixes for CVE-2026-38752 and CVE-2026-38755; backport fixes for CVE-2026-88832 CVE-2026-88831 CVE-2026-88837 CVE-2026-88835 CVE-2026-88839; backport fix for CVE-2026-88841",
+  "modification_reason": "backport upstream security fixes; backport fixes for CVE-2026-38753 and CVE-2026-38754; backport fixes for CVE-2026-38752 and CVE-2026-38755; backport fixes for CVE-2026-88832 CVE-2026-88831 CVE-2026-88837 CVE-2026-88835 CVE-2026-88839; backport fix for CVE-2026-88841; backport fixes for CVE-2026-124742 and CVE-2026-88833",
   "modification_status": "modified",
   "upstream_repo": "https://git.busybox.net/busybox",
   "version": "1.37.0"
