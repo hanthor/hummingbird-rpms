@@ -47,6 +47,20 @@ package = sys.argv[-1]
 with open(os.environ["DIST_GIT_TEST_UPDATE_CALLS"], "a") as log:
     log.write(package + "\\n")
 outcome = json.loads(os.environ["DIST_GIT_TEST_RESULTS"])[package]
+state_file = Path(".dist_git_update_state.json")
+# Model the dangerous old startup behavior to prove the wrapper never calls
+# the next updater while recovery is pending.
+state_file.unlink(missing_ok=True)
+if outcome == "pending":
+    package_dir = Path("rpms") / package
+    package_dir.mkdir(parents=True, exist_ok=True)
+    (package_dir / f"{package}.spec").write_text("Version: 3\\n")
+    Path("local.txt").write_text("pending package changes\\n")
+    metadata = json.loads((Path("metadata") / f"{package}.json").read_text())
+    metadata["version"] = "2"
+    state_file.write_text(json.dumps({"package": package, "metadata": metadata,
+                                     "commit_msg": f"Update {package} from 1 to 2"}))
+    sys.exit(1)
 if outcome == "updated":
     path = Path("metadata") / f"{package}.json"
     metadata = json.loads(path.read_text())
@@ -185,3 +199,55 @@ def test_mr_creation_failure_is_still_reported(tmp_path: Path) -> None:
 
     assert result.returncode == 1, result.stdout + result.stderr
     assert (repo / ".ci_dist_git_update_failures.txt").read_text() == "tar (MR creation failed)\n"
+
+
+@pytest.mark.parametrize('earlier_success', [False, True])
+def test_pending_recovery_stops_batch_without_resetting_changes(tmp_path: Path, earlier_success: bool) -> None:
+    """A failure with state must stop before another update or any Git reset/MR."""
+    repo = _create_fixture(tmp_path)
+    if earlier_success:
+        (repo / 'metadata' / 'zstd.json').write_text(json.dumps({'modification_status': 'clean', 'version': '1'}))
+        _run_git(repo, 'add', 'metadata/zstd.json')
+        _run_git(repo, 'commit', '-m', 'Add later package')
+    initial_count = int(_run_git(repo, 'rev-list', '--count', 'HEAD'))
+    pending_package = 'tar' if earlier_success else 'sudo'
+    results: dict[str, int | str] = {'sudo': 'updated', 'tar': 'pending', 'zstd': 'updated'} if earlier_success else {
+        'sudo': 'pending', 'tar': 'updated',
+    }
+
+    result = _run_fixture(repo, results)
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert (repo / 'update_calls.txt').read_text() == ('sudo\ntar\n' if earlier_success else 'sudo\n')
+    state_file = repo / '.dist_git_update_state.json'
+    assert state_file.exists(), 'A later update deleted the pending recovery state'
+    state = json.loads(state_file.read_text())
+    assert state['package'] == pending_package
+    assert state['metadata']['version'] == '2'
+    assert (repo / 'rpms' / pending_package / f'{pending_package}.spec').read_text() == 'Version: 3\n'
+    assert (repo / 'local.txt').read_text() == 'pending package changes\n'
+    assert json.loads((repo / 'metadata' / f'{pending_package}.json').read_text())['version'] == '1'
+    assert not (repo / 'mr_calls.jsonl').exists(), 'MR processing must not reset pending package edits'
+    assert int(_run_git(repo, 'rev-list', '--count', 'HEAD')) == initial_count + int(earlier_success)
+    assert (repo / '.ci_dist_git_update_failures.txt').read_text() == f'{pending_package} (update failed)\n'
+    assert 'update --continue' in result.stdout + result.stderr
+
+
+def test_batch_refuses_existing_recovery_state_before_checkout(tmp_path: Path) -> None:
+    repo = _create_fixture(tmp_path)
+    _run_git(repo, 'checkout', '-b', 'pending-work')
+    state_file = repo / '.dist_git_update_state.json'
+    state_file.write_text('{"package": "sudo", "commit_msg": "Pending update"}\n')
+    state_before = state_file.read_bytes()
+    (repo / 'local.txt').write_text('pending manual resolution\n')
+    head_before = _run_git(repo, 'rev-parse', 'HEAD')
+
+    result = _run_fixture(repo, {'sudo': 0, 'tar': 0})
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert not (repo / 'update_calls.txt').exists()
+    assert not (repo / 'mr_calls.jsonl').exists()
+    assert state_file.read_bytes() == state_before
+    assert (repo / 'local.txt').read_text() == 'pending manual resolution\n'
+    assert _run_git(repo, 'rev-parse', '--abbrev-ref', 'HEAD') == 'pending-work'
+    assert _run_git(repo, 'rev-parse', 'HEAD') == head_before
