@@ -1059,6 +1059,8 @@ spec:
           contentType: rpm
         - name: python3-13-flit-core-main
           contentType: rpm
+        - name: python3-13-iniconfig-main
+          contentType: rpm
         - name: python3-13-packaging-main
           contentType: rpm
         - name: python3-13-pathspec-main

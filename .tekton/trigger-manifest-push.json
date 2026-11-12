@@ -1469,6 +1469,9 @@
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/"
       ],
+      "python3-13-iniconfig--rpms": [
+        "^rpms/python3\\.13\\-iniconfig/"
+      ],
       "python3-13-packaging--rpms": [
         "^rpms/python3\\.13\\-packaging/"
       ],
