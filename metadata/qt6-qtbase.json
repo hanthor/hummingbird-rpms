@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "7b093c11df66bdceea2eb068a107a6362dc18ebf"
   },
-  "modification_reason": "Backport CVE-2026-105924",
+  "modification_reason": "Backport CVE-2026-105924, CVE-2026-116337",
   "modification_status": "modified",
   "upstream_branch": "6.11",
   "upstream_repo": "https://github.com/qt/qtbase",
