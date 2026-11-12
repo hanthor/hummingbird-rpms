@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "e2efdbbb57b2127f4401c68e4d323a7827c28022"
   },
-  "modification_reason": "Backport security fixes from python3.14; backport fix for CVE-2026-11972; backport fix for CVE-2026-15308; backport fix for CVE-2026-11940; CVE-2026-4360; CVE-2026-6879; HUM-11298: CVE-2026-103995; HUM-11398: CVE-2026-116566; own the Python 3.13 version-selection macro in the runtime RPM and enable alternative-interpreter ABI provides for matching library RPMs",
+  "modification_reason": "Backport security fixes from python3.14; backport fix for CVE-2026-11972; backport fix for CVE-2026-15308; backport fix for CVE-2026-11940; CVE-2026-4360; CVE-2026-6879; HUM-11298: CVE-2026-103995; HUM-11398: CVE-2026-116566; own the Python 3.13 version-selection macro in the runtime RPM and enable alternative-interpreter ABI provides for matching library RPMs; HUM-12196: CVE-2026-19552",
   "modification_status": "modified",
   "upstream_branch": "3.13",
   "upstream_repo": "https://github.com/python/cpython",
