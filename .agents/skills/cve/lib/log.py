@@ -20,6 +20,8 @@ Supported agents:
 import json
 import os
 import sqlite3
+import shlex
+import subprocess
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -235,6 +237,67 @@ def export_claude_session(
         raise RuntimeError(f"Claude Code session file not found: {session_path}")
     text = _render_claude_transcript(session_path)
     return _write_output(text, out_path, prefix=f"claude-{session_path.stem}-")
+
+
+def export_claude_session_remote(
+    host: str,
+    session_path: str | None = None,
+    *,
+    cwd: Path | None = None,
+    out_path: Path | None = None,
+) -> Path:
+    """Export a Claude Code session transcript from a remote host via SSH.
+
+    Finds the most recently modified session JSONL for `cwd` on `host` under
+    ~/.claude/projects/, or uses `session_path` when given, then renders it
+    locally via the same pipeline as `export_claude_session`.
+    """
+    resolved_cwd = (cwd or Path.cwd()).resolve()
+
+    if session_path is None:
+        dir_name = _claude_project_dir_name(resolved_cwd)
+        quoted_dir = shlex.quote(f".claude/projects/{dir_name}")
+        result = subprocess.run(
+            ["ssh", host,
+             f"ls -t \"$HOME\"/{quoted_dir}/*.jsonl 2>/dev/null | head -1"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        remote_path = result.stdout.strip()
+        if not remote_path:
+            detail = result.stderr.strip()
+            hint = f": {detail}" if detail else ""
+            raise RuntimeError(
+                f"No Claude Code session files found for {resolved_cwd} "
+                f"under ~/.claude/projects/{dir_name} on {host}{hint}"
+            )
+    else:
+        remote_path = session_path
+
+    try:
+        fetch = subprocess.run(
+            ["ssh", host, f"cat {shlex.quote(remote_path)}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            f"Failed to fetch {remote_path} from {host}: {exc.stderr.strip()}"
+        ) from exc
+
+    fd, local_path_str = tempfile.mkstemp(prefix="claude-remote-", suffix=".jsonl")
+    local_path = Path(local_path_str)
+    try:
+        with open(fd, "w") as fh:
+            fh.write(fetch.stdout)
+        text = _render_claude_transcript(local_path)
+    finally:
+        local_path.unlink(missing_ok=True)
+
+    stem = Path(remote_path).stem
+    return _write_output(text, out_path, prefix=f"claude-remote-{stem}-")
 
 
 # ---- Cursor ----

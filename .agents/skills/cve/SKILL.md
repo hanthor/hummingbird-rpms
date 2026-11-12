@@ -335,6 +335,12 @@ handling):
 - **Claude Code:** `cve_helper.py log-message HUM-XXXX --claude`
   (finds the most recently modified `~/.claude/projects/<cwd>/*.jsonl`
   session; pass an explicit `.jsonl` path as the value to target another one).
+  If it prints `Run on HOST:` followed by a command (remote setup where bash
+  runs on a different machine than Claude), give that exact command to the user
+  as a code block to paste on HOST — do not skip it. If it reports
+  `No Claude Code session files found` with no HOST, the transcript is not on
+  disk (Agent SDK host); skip the step. The host is read from `.git/claudehost`
+  (one-time setup: `echo 'hostname' > .git/claudehost`).
 - **OpenCode:** `cve_helper.py log-message HUM-XXXX --opencode`. There is no
   per-session file — `~/.local/share/opencode/log/opencode.log` is one
   shared, unbounded log across all sessions/projects and must never be
