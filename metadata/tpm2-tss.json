@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/tpm2-tss.git",
     "release": "1",
-    "sha": "50a3a4ae82f8c3ce5822290be1537f2991710307"
+    "sha": "0757fb2a02a2faf1d3fadc9fe78f4a89506fec78"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/tpm2-software/tpm2-tss",
-  "version": "4.2.1"
+  "version": "4.2.2"
 }
