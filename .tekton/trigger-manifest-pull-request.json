@@ -1969,6 +1969,10 @@
         "^rpms/python3\\.13\\-pip/",
         "^test/rpms/python3\\.13\\-pip\\.yml$"
       ],
+      "python3-13-pluggy--rpms": [
+        "^rpms/python3\\.13\\-pluggy/",
+        "^test/rpms/python3\\.13\\-pluggy\\.yml$"
+      ],
       "python3-13-pycparser--rpms": [
         "^rpms/python3\\.13\\-pycparser/",
         "^test/rpms/python3\\.13\\-pycparser\\.yml$"
