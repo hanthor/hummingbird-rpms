@@ -1,7 +1,7 @@
 ---
 title: MR Artifact Promotion
 weight: 25
-aliases: [/l/mr-artifact-promotion]
+aliases: [/l/mr-artifact-promotion-rpm]
 ---
 
 ## Overview
@@ -10,24 +10,13 @@ An RPM package releases the image built and tested in its merge request (MR) by 
 MR starts a promotion PipelineRun, not another RPM build. The promoted image keeps
 the MR source revision and digest; the merge commit records why it was released.
 
-The path is:
-
-1. The MR build produces a digest-pinned OCI image containing unsigned RPMs. Required Testing Farm
-   tests pass, and Konflux records the image in an MR Component Snapshot.
-2. A two-parent merge commit `M` lands on `main`. Its second parent `B` is the tested MR head. The
-   push-triggered promotion PipelineRun clones `M`, finds the passed MR Snapshot and its linked build,
-   and verifies that they identify `B` and the same image digest `D`.
-3. The promotion Task creates one push-style Component Snapshot with source `B` and image `D`. It
-   records `M`, the MR Snapshot, build PipelineRun, and promotion PipelineRun in annotations. The
-   promotion PipelineRun does not build RPMs or create a Release.
-4. Integration Service processes the Component Snapshot without another integration test and
-   creates the automatic Release. Release Service runs the existing managed pipeline, including
-   Conforma, duplicate-RPM filtering, signing, and Pulp publication.
-
-`syft` was the first package on this path. Check `.tekton/rpms-on-promotion.yaml` for the generated
-promotion runs. `.tekton/rpms-on-push.yaml` contains only explicit build exceptions. The earlier PR
-Snapshot Promotion PoC was an experiment; its scripts and staging manifests are not the production
-workflow.
+The promotion flow, from the merge-commit parents through MR Snapshot lookup and
+the push-style Component Snapshot to the automatic Release, is described in
+[MR artifact promotion](https://hummingbird-project.io/l/mr-artifact-promotion).
+On the RPM side, the MR build produces a digest-pinned OCI image containing
+unsigned RPMs, required Testing Farm tests gate the merge, and Release Service
+adds duplicate-RPM filtering and Pulp publication to the managed Conforma,
+signing, and publication checks.
 
 ## Prerequisites
 
@@ -38,8 +27,8 @@ workflow.
 - The Hummingbird tools image contains both promotion commands and is pinned by digest. The
   [Hummingbird Tools Task reference][tools-tasks] describes their inputs and validation.
 - The MR Snapshot, linked PipelineRun, and image remain available through merge and retry. KubeArchive
-  can supply removed Konflux objects, but cannot restore an expired image. Check the actual Quay
-  expiry for the selected digest and its tags; do not assume a fixed retention period.
+  can supply removed Konflux objects but cannot restore an expired image; check the actual Quay
+  expiry for the selected digest and its tags and do not assume a fixed retention period.
 
 [tools-tasks]: https://gitlab.com/redhat/hummingbird/tools/-/blob/main/documentation/hummingbird-tools.md
 
@@ -87,10 +76,7 @@ confirm that no push build ran for this Component.
 
 The clone Task runs under the Component build ServiceAccount and stores the source Trusted Artifact
 in the Component's Quay repository. Lookup and Snapshot creation run under
-`hummingbird-promotion`. The Snapshot's `test.appstudio.openshift.io/pipelinerunstarttime` annotation
-is the promotion run's start time for Integration Service's supersession check. The RPM application
-has no group tests consuming the Global Candidate List, so this path needs no separate override
-Snapshot or reducer change.
+`hummingbird-promotion`.
 
 ## Recover a failed run
 
