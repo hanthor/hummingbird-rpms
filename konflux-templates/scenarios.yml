@@ -1,55 +1,38 @@
-# Integration test scenario definitions for the rpms repo.
+# Integration test scenario matrix for the rpms repo.
 # This is the single config source consumed by both the CR rendering
 # (-> konflux-templates/rendered.yml) and the trigger-manifest emission.
-# Editing this file changes both outputs without further code changes.
 #
 # Schema:
-#   scenario_types:        type-level defaults, keyed by suffix
-#     contexts:            Konflux trigger contexts for this type
-#     optional:            if true, excluded from trigger manifests (silent)
-#     tmt_path_from_context: emit TMT_PATH_FROM_CONTEXT param (bool)
-#     image_tag:           value for the IMAGE_TAG param
-#     # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
-#     bundle_image:        quay.io image ref for the resolver bundle (Renovate-managed)
-#     pipeline_timeout:    metadata annotation value
-#     tasks_timeout:       metadata annotation value
-#     finally_timeout:     metadata annotation value
+#   applications:                  keyed by Konflux application name
+#     - template:                  scenario type; CR name = <application>-<template>
+#                                  template file: konflux-templates/scenarios/<template>.yml.j2
+#       triggers:                  Konflux trigger context names
+#       optional: true             if present and true, excluded from trigger manifests
+#       vars:                      per-instance param overrides (key: value)
 #
-#   apps:                  per-application scenario list
-#     - name:              Konflux application name
-#       git_url:           GIT_URL param value (optional; public rpms-main only)
-#       scenarios:         list of type suffixes to instantiate for this app
+# All CR content (params, resolverRefs, Renovate markers, timeout annotations)
+# lives in the template files; this file holds only the instantiation matrix.
 
-scenario_types:
-  testing-farm:
-    contexts: [pull_request]
-    optional: false
-    tmt_path_from_context: false
-    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
-    image_tag: v3.22
-    bundle_image: quay.io/testing-farm/tmt-via-testing-farm
-    pipeline_timeout: 10h
-    tasks_timeout: 9h
-    finally_timeout: 1h
+applications:
+  private-example-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
 
-  testing-farm-upstream:
-    contexts: [component_attr-main, component_setup-main]
-    optional: true
-    tmt_path_from_context: true
-    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
-    image_tag: v3.22
-    bundle_image: quay.io/testing-farm/tmt-via-testing-farm
-    pipeline_timeout: 10h
-    tasks_timeout: 9h
-    finally_timeout: 1h
+  private-nodejs20-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
 
-apps:
-  - name: private-example-rpms-main
-    scenarios: [testing-farm, testing-farm-upstream]
-
-  - name: private-nodejs20-rpms-main
-    scenarios: [testing-farm, testing-farm-upstream]
-
-  - name: rpms-main
-    git_url: https://gitlab.com/redhat/hummingbird/rpms.git
-    scenarios: [testing-farm, testing-farm-upstream]
+  rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+      vars:
+        GIT_URL: https://gitlab.com/redhat/hummingbird/rpms.git
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true

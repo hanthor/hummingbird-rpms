@@ -221,16 +221,16 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
     }
 
 
-# ITS context routing (D2): contexts that map to the PR manifest (with group flag)
-# or to the push manifest.  Optional scenarios are silently excluded.
+# ITS trigger routing (D2): triggers that map to the PR manifest (with group flag)
+# or to the push manifest.  Optional entries are silently excluded.
 # NOTE: "component_attr-*" / "component_setup-*" are intentionally NOT listed —
-# they are always optional=True in this repo and silently excluded before routing.
-# The bare "component" value is reserved for future non-optional post-merge scenarios.
-_KNOWN_ITS_CONTEXTS = {"pull_request", "component"}
+# they are always optional=true in this repo and silently excluded before routing.
+# The bare "component" value is reserved for future non-optional post-merge entries.
+_KNOWN_ITS_TRIGGERS = {"pull_request", "component"}
 
 
 def _load_its_config() -> dict:
-    """Load konflux-templates/scenarios.yml — the single ITS config source.
+    """Load konflux-templates/scenarios.yml — the single ITS config source (matrix format).
 
     Both the CR rendering (-> rendered.yml) and the trigger-manifest emission read
     this file.  Editing it changes both outputs atomically (D2 config-driven revision).
@@ -240,102 +240,99 @@ def _load_its_config() -> dict:
         return yaml.safe_load(f)
 
 
-def _build_its_scenarios(branch: str) -> list[dict]:
-    """Build the full list of ITS scenario dicts from scenarios.yml.
+def _render_its_scenarios() -> list[str]:
+    """Render all ITS CR YAML documents from the scenario matrix and per-type templates.
 
-    This is the single source used by both the Jinja2 template renderer (rendered.yml)
-    and the trigger-manifest builder.  Editing scenarios.yml changes both outputs
-    atomically, preventing drift between the deployed ITS and the manifest expectations.
+    For each application × matrix entry, renders
+    konflux-templates/scenarios/<template>.yml.j2 with application, triggers, and vars.
+    Returns a list of rendered YAML document strings (one per CR) in matrix order.
+    Each string ends without a trailing newline so the caller controls spacing.
     """
     config = _load_its_config()
-    scenario_types = config["scenario_types"]
-    result = []
-    for app in config["apps"]:
-        app_name = app["name"]
-        git_url = app.get("git_url")
-        for suffix in app["scenarios"]:
-            stype = scenario_types[suffix]
-            optional = stype["optional"]
-            result.append({
-                "name": f"{app_name}-{suffix}",
-                "application": app_name,
-                "suffix": suffix,
-                "contexts": stype["contexts"],
-                "optional": optional,
-                "include_git_url": git_url is not None and not optional,
-                "git_url": git_url,
-                "tmt_path_from_context": stype["tmt_path_from_context"],
-                "image_tag": stype["image_tag"],
-                "bundle_image": stype["bundle_image"],
-                "pipeline_timeout": stype["pipeline_timeout"],
-                "tasks_timeout": stype["tasks_timeout"],
-                "finally_timeout": stype["finally_timeout"],
-            })
-    return result
+    env = Environment(
+        loader=FileSystemLoader(str(ROOT_DIR / "konflux-templates" / "scenarios")),
+    )
+    rendered = []
+    for app_name, entries in config["applications"].items():
+        for entry in entries:
+            tmpl_name = f"{entry['template']}.yml.j2"
+            tmpl = env.get_template(tmpl_name)
+            text = tmpl.render(
+                application=app_name,
+                triggers=entry["triggers"],
+                vars=entry.get("vars", {}),
+            ).rstrip("\n")
+            rendered.append(text)
+    return rendered
 
 
-def _route_its_contexts(
-    scenario_name: str, contexts: list[str], optional: bool
+def _route_its_entry(
+    app_name: str, template: str, triggers: list[str], optional: bool
 ) -> tuple[bool, bool]:
-    """Return (in_pr_manifest, in_push_manifest) for one ITS.
+    """Return (in_pr_manifest, in_push_manifest) for one matrix entry.
 
     pull_request  → PR list (group: true), not push list.
     component     → PR list (group: false), push list.
     optional      → excluded from both (silent).
-    Anything else, including an empty context list → hard error (fail-closed, D2).
+    Anything else, including an empty trigger list → hard error (fail-closed, D2).
     """
     if optional:
         return False, False
 
-    has_pull_request = "pull_request" in contexts
-    has_component = "component" in contexts
-    unknown = [c for c in contexts if c not in _KNOWN_ITS_CONTEXTS]
+    has_pull_request = "pull_request" in triggers
+    has_component = "component" in triggers
+    unknown = [t for t in triggers if t not in _KNOWN_ITS_TRIGGERS]
     if unknown:
         sys.exit(
-            f"ERROR: IntegrationTestScenario '{scenario_name}' has non-optional "
-            f"context(s) not routable to the trigger manifest: {unknown}. "
-            f"Mark the scenario optional or extend the generator."
+            f"ERROR: matrix entry '{app_name}/{template}' has non-optional "
+            f"trigger(s) not routable to the trigger manifest: {unknown}. "
+            f"Mark the entry optional or extend the generator."
         )
     if not has_pull_request and not has_component:
-        # Covers both empty contexts [] and contexts containing only canary/unknown kinds
-        # that were silently filtered above — any non-optional scenario that contributes
-        # nothing to either manifest is a hard error.
+        # Covers empty triggers [] and triggers containing only canary kinds
+        # (component_attr-*, component_setup-*) — any non-optional entry that
+        # contributes nothing to either manifest is a hard error.
         sys.exit(
-            f"ERROR: IntegrationTestScenario '{scenario_name}' is non-optional "
-            f"but has no routable contexts (pull_request/component). "
-            f"Mark the scenario optional or add a routable context."
+            f"ERROR: matrix entry '{app_name}/{template}' is non-optional "
+            f"but has no routable triggers (pull_request/component). "
+            f"Mark the entry optional or add a routable trigger."
         )
     return True, has_component
 
 
-def build_its_manifest_entries(branch: str) -> dict[str, dict]:
+def build_its_manifest_entries() -> dict[str, dict]:
     """Build integration_test_scenarios sections for PR and push manifests.
 
-    Derives entries from _build_its_scenarios(), which reads scenarios.yml —
-    the same config used to render rendered.yml — so the manifest cannot
-    diverge from the deployed ITS (D2 config-driven).
+    Reads the matrix from scenarios.yml directly — the same config used to
+    render rendered.yml — so the manifest cannot diverge from the deployed ITS
+    (D2 config-driven).
 
     Returns {"pr": {app: [{"name": ..., "group": ...}]},
              "push": {app: [{"name": ...}]}}.
-    Non-optional pull_request-context scenarios → PR list (group: true).
-    Non-optional component-context scenarios → PR list (group: false) + push list.
-    Optional scenarios are excluded from both lists.
-    Generator exits non-zero for non-optional scenarios with unroutable contexts,
-    including an empty context list.
+    Non-optional pull_request-trigger entries → PR list (group: true).
+    Non-optional component-trigger entries → PR list (group: false) + push list.
+    Optional entries are excluded from both lists.
+    Generator exits non-zero for non-optional entries with unroutable triggers,
+    including an empty trigger list.
     """
+    config = _load_its_config()
     pr_manifest: dict[str, list] = {}
     push_manifest: dict[str, list] = {}
 
-    for s in _build_its_scenarios(branch):
-        in_pr, in_push = _route_its_contexts(s["name"], s["contexts"], s["optional"])
-        app_name: str = s["application"]
-        if in_pr:
-            pr_manifest.setdefault(app_name, []).append({
-                "name": s["name"],
-                "group": "pull_request" in s["contexts"],
-            })
-        if in_push:
-            push_manifest.setdefault(app_name, []).append({"name": s["name"]})
+    for app_name, entries in config["applications"].items():
+        for entry in entries:
+            template = entry["template"]
+            triggers = entry["triggers"]
+            optional = entry.get("optional", False)
+            name = f"{app_name}-{template}"
+            in_pr, in_push = _route_its_entry(app_name, template, triggers, optional)
+            if in_pr:
+                pr_manifest.setdefault(app_name, []).append({
+                    "name": name,
+                    "group": "pull_request" in triggers,
+                })
+            if in_push:
+                push_manifest.setdefault(app_name, []).append({"name": name})
 
     for app_name in pr_manifest:
         pr_manifest[app_name] = sorted(pr_manifest[app_name], key=lambda e: e["name"])
@@ -385,7 +382,7 @@ def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
         "branch": branch,
         "tenant": tenant,
         "git_repo": git_repo,
-        "integration_test_scenarios": _build_its_scenarios(branch),
+        "integration_test_scenarios": _render_its_scenarios(),
         "rpms": rpms,
     }
 
@@ -657,7 +654,7 @@ def main():
     elif args.command == "all":
         # Generate all resources (equivalent to generate.sh)
         # Compute ITS manifest entries once; they depend only on branch.
-        its_entries = build_its_manifest_entries(args.branch)
+        its_entries = build_its_manifest_entries()
 
         # Generate PAC resources and trigger manifests together (shared variables)
         # Collect application names from the pull-request manifest to cross-check ITS apps.

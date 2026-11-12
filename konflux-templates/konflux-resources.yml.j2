@@ -8,6 +8,6 @@
 {%- endif %}
 {%- endfor %}
 {{ policy("registry-hummingbird") }}
-{%- for scenario in integration_test_scenarios %}
-{{ integration_test_scenario(scenario) }}
+{%- for scenario_yaml in integration_test_scenarios %}
+{{ scenario_yaml }}
 {%- endfor %}

@@ -11,20 +11,10 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Minimal scenarios.yml used by fixtures that only need ITS config to be present
-# (not asserting on specific scenario content).
+# Minimal scenarios.yml (matrix format) used by fixtures that only need ITS config to be
+# present without asserting on specific scenario content.
 _MINIMAL_SCENARIOS_YML = textwrap.dedent("""\
-    scenario_types:
-      testing-farm:
-        contexts: [pull_request]
-        optional: false
-        tmt_path_from_context: false
-        image_tag: v3.22
-        bundle_image: quay.io/testing-farm/tmt-via-testing-farm
-        pipeline_timeout: 10h
-        tasks_timeout: 9h
-        finally_timeout: 1h
-    apps: []
+    applications: {}
 """)
 
 
@@ -696,140 +686,142 @@ class TestValidation:
                 gen_module.generate_releng()
 
 
-class TestItsContextRouting:
-    """Tests for _route_its_contexts (D2 fail-closed routing)."""
+class TestItsRouting:
+    """Tests for _route_its_entry (D2 fail-closed routing)."""
 
-    def test_pull_request_context_routes_to_pr_manifest_only(self, gen_module):
-        in_pr, in_push = gen_module._route_its_contexts("app-testing-farm", ["pull_request"], False)
+    def test_pull_request_trigger_routes_to_pr_manifest_only(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry("myapp", "testing-farm", ["pull_request"], False)
         assert in_pr is True
         assert in_push is False
 
-    def test_component_context_routes_to_both_manifests(self, gen_module):
-        in_pr, in_push = gen_module._route_its_contexts("app-conforma", ["component"], False)
+    def test_component_trigger_routes_to_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry("myapp", "conforma", ["component"], False)
         assert in_pr is True
         assert in_push is True
 
     def test_mixed_pull_request_and_component_routes_to_both(self, gen_module):
-        in_pr, in_push = gen_module._route_its_contexts(
-            "app-mixed", ["pull_request", "component"], False
+        in_pr, in_push = gen_module._route_its_entry(
+            "myapp", "mixed", ["pull_request", "component"], False
         )
         assert in_pr is True
         assert in_push is True
 
-    def test_optional_scenario_excluded_from_both_manifests(self, gen_module):
-        in_pr, in_push = gen_module._route_its_contexts(
-            "app-upstream", ["component_attr-main"], True
+    def test_optional_entry_excluded_from_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry(
+            "myapp", "testing-farm-upstream", ["component_attr-main"], True
         )
         assert in_pr is False
         assert in_push is False
 
-    def test_empty_contexts_non_optional_exits_nonzero(self, gen_module):
-        """Non-optional scenario with empty context list must hard-error (D2 fail-closed)."""
+    def test_empty_triggers_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional entry with empty trigger list must hard-error (D2 fail-closed)."""
         with pytest.raises(SystemExit) as exc_info:
-            gen_module._route_its_contexts("app-no-context", [], False)
+            gen_module._route_its_entry("myapp", "testing-farm", [], False)
         assert exc_info.value.code != 0
 
-    def test_unknown_context_non_optional_exits_nonzero(self, gen_module):
-        """Non-optional scenario with an unrecognized context must hard-error."""
+    def test_unknown_trigger_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional entry with an unrecognized trigger must hard-error."""
         with pytest.raises(SystemExit) as exc_info:
-            gen_module._route_its_contexts("app-bad", ["group"], False)
+            gen_module._route_its_entry("myapp", "testing-farm", ["group"], False)
         assert exc_info.value.code != 0
 
-    def test_canary_context_only_non_optional_exits_nonzero(self, gen_module):
-        """Non-optional canary-only context (not in pull_request/component) must hard-error."""
+    def test_canary_trigger_only_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional canary-only triggers (not in pull_request/component) must hard-error."""
         with pytest.raises(SystemExit) as exc_info:
-            gen_module._route_its_contexts(
-                "app-canary-only", ["component_attr-main", "component_setup-main"], False
+            gen_module._route_its_entry(
+                "myapp", "testing-farm-upstream",
+                ["component_attr-main", "component_setup-main"], False
             )
         assert exc_info.value.code != 0
 
-    def test_optional_empty_contexts_does_not_error(self, gen_module):
-        """Optional scenarios are always silently excluded, even with empty contexts."""
-        in_pr, in_push = gen_module._route_its_contexts("app-opt", [], True)
+    def test_optional_empty_triggers_does_not_error(self, gen_module):
+        """Optional entries are always silently excluded, even with empty triggers."""
+        in_pr, in_push = gen_module._route_its_entry("myapp", "testing-farm-upstream", [], True)
         assert in_pr is False
         assert in_push is False
 
 
-class TestItsBuildScenariosAndManifest:
-    """Tests for _build_its_scenarios and build_its_manifest_entries (D2 single source)."""
+class TestItsManifestAndRendering:
+    """Tests for build_its_manifest_entries and _render_its_scenarios (D2 matrix-driven)."""
 
     @pytest.fixture
     def mock_repo_two_apps(self, tmp_path):
-        """Minimal repo with one public + one private application."""
+        """Minimal repo with one public (rpms-main) + one private application."""
         (tmp_path / "rpms" / "pkg").mkdir(parents=True)
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
-        (tmp_path / "konflux-templates").mkdir()
-        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(
+        tmpl_dir = tmp_path / "konflux-templates"
+        tmpl_dir.mkdir()
+        (tmpl_dir / "scenarios.yml").write_text(
             textwrap.dedent("""\
-            scenario_types:
-              testing-farm:
-                contexts: [pull_request]
-                optional: false
-                tmt_path_from_context: false
-                image_tag: v3.22
-                bundle_image: quay.io/testing-farm/tmt-via-testing-farm
-                pipeline_timeout: 10h
-                tasks_timeout: 9h
-                finally_timeout: 1h
-              testing-farm-upstream:
-                contexts: [component_attr-main, component_setup-main]
-                optional: true
-                tmt_path_from_context: true
-                image_tag: v3.22
-                bundle_image: quay.io/testing-farm/tmt-via-testing-farm
-                pipeline_timeout: 10h
-                tasks_timeout: 9h
-                finally_timeout: 1h
-            apps:
-              - name: rpms-main
-                git_url: https://gitlab.com/redhat/hummingbird/rpms.git
-                scenarios: [testing-farm, testing-farm-upstream]
-              - name: private-example-rpms-main
-                scenarios: [testing-farm, testing-farm-upstream]
+            applications:
+              rpms-main:
+                - template: testing-farm
+                  triggers: [pull_request]
+                  vars:
+                    GIT_URL: https://gitlab.com/redhat/hummingbird/rpms.git
+                - template: testing-farm-upstream
+                  triggers: [component_attr-main, component_setup-main]
+                  optional: true
+              private-example-rpms-main:
+                - template: testing-farm
+                  triggers: [pull_request]
+                - template: testing-farm-upstream
+                  triggers: [component_attr-main, component_setup-main]
+                  optional: true
             """)
+        )
+        # Copy the actual scenario templates so _render_its_scenarios can load them
+        scenarios_dir = tmpl_dir / "scenarios"
+        scenarios_dir.mkdir()
+        import shutil
+        shutil.copy(
+            REPO_ROOT / "konflux-templates" / "scenarios" / "testing-farm.yml.j2",
+            scenarios_dir / "testing-farm.yml.j2",
+        )
+        shutil.copy(
+            REPO_ROOT / "konflux-templates" / "scenarios" / "testing-farm-upstream.yml.j2",
+            scenarios_dir / "testing-farm-upstream.yml.j2",
         )
         return tmp_path
 
-    def test_scenarios_derived_from_config(self, gen_module, mock_repo_two_apps):
-        """_build_its_scenarios produces one scenario per app × scenario type in scenarios.yml."""
+    def test_cr_count_matches_matrix_entries(self, gen_module, mock_repo_two_apps):
+        """_render_its_scenarios produces one rendered CR per matrix entry."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-            config = gen_module._load_its_config()
-        # 2 apps × 2 scenario types each = 4 total
-        n_apps = len(config["apps"])
-        n_types = sum(len(app["scenarios"]) for app in config["apps"])
-        assert len(scenarios) == n_types
-        assert n_apps == 2
+            rendered = gen_module._render_its_scenarios()
+        # 2 apps × 2 entries each = 4
+        assert len(rendered) == 4
 
-    def test_scenario_names_derived_from_app_and_suffix(self, gen_module, mock_repo_two_apps):
+    def test_cr_names_derived_from_app_and_template(self, gen_module, mock_repo_two_apps):
+        """CR name in rendered output is <app>-<template>."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-        names = {s["name"] for s in scenarios}
-        assert "rpms-main-testing-farm" in names
-        assert "rpms-main-testing-farm-upstream" in names
-        assert "private-example-rpms-main-testing-farm" in names
-        assert "private-example-rpms-main-testing-farm-upstream" in names
+            rendered = gen_module._render_its_scenarios()
+        all_text = "\n".join(rendered)
+        assert "name: rpms-main-testing-farm" in all_text
+        assert "name: rpms-main-testing-farm-upstream" in all_text
+        assert "name: private-example-rpms-main-testing-farm" in all_text
+        assert "name: private-example-rpms-main-testing-farm-upstream" in all_text
 
-    def test_public_app_includes_git_url_non_optional(self, gen_module, mock_repo_two_apps):
-        """Public app non-optional ITS gets include_git_url=True."""
+    def test_vars_applied_to_rendered_cr(self, gen_module, mock_repo_two_apps):
+        """Per-entry vars (GIT_URL) appear in the rendered CR for rpms-main."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-        tf = next(s for s in scenarios if s["name"] == "rpms-main-testing-farm")
-        assert tf["include_git_url"] is True
+            rendered = gen_module._render_its_scenarios()
+        rpms_tf = next(r for r in rendered if "name: rpms-main-testing-farm\n" in r)
+        assert "GIT_URL" in rpms_tf
+        assert "https://gitlab.com/redhat/hummingbird/rpms.git" in rpms_tf
 
-    def test_private_app_does_not_include_git_url(self, gen_module, mock_repo_two_apps):
-        """Private app ITS omits GIT_URL (matches infrastructure template verbatim)."""
+    def test_private_app_cr_omits_git_url(self, gen_module, mock_repo_two_apps):
+        """Private app entries lack a GIT_URL var; the rendered CR must not contain it."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-        tf = next(s for s in scenarios if s["name"] == "private-example-rpms-main-testing-farm")
-        assert tf["include_git_url"] is False
+            rendered = gen_module._render_its_scenarios()
+        priv_tf = next(r for r in rendered if "name: private-example-rpms-main-testing-farm\n" in r)
+        assert "GIT_URL" not in priv_tf
 
-    def test_pr_manifest_contains_non_optional_pull_request_scenarios(
+    def test_pr_manifest_contains_non_optional_pull_request_entries(
         self, gen_module, mock_repo_two_apps
     ):
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            entries = gen_module.build_its_manifest_entries("main")
+            entries = gen_module.build_its_manifest_entries()
         pr = entries["pr"]
         assert "rpms-main" in pr
         assert "private-example-rpms-main" in pr
@@ -837,15 +829,15 @@ class TestItsBuildScenariosAndManifest:
         assert all(e["group"] is True for e in pr["rpms-main"])
 
     def test_push_manifest_is_empty_for_rpms_repo(self, gen_module, mock_repo_two_apps):
-        """rpms has no component-context scenarios so push manifest has no ITS section."""
+        """rpms has no component-trigger entries so push manifest has no ITS section."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            entries = gen_module.build_its_manifest_entries("main")
+            entries = gen_module.build_its_manifest_entries()
         assert entries["push"] == {}
 
-    def test_optional_upstream_excluded_from_manifests(self, gen_module, mock_repo_two_apps):
-        """testing-farm-upstream (optional) must not appear in either manifest."""
+    def test_optional_entries_excluded_from_manifests(self, gen_module, mock_repo_two_apps):
+        """testing-farm-upstream (optional: true) must not appear in either manifest."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            entries = gen_module.build_its_manifest_entries("main")
+            entries = gen_module.build_its_manifest_entries()
         for app_entries in entries["pr"].values():
             assert not any("upstream" in e["name"] for e in app_entries)
         for app_entries in entries["push"].values():
@@ -853,99 +845,78 @@ class TestItsBuildScenariosAndManifest:
 
     def test_pr_entries_sorted_by_name(self, gen_module, mock_repo_two_apps):
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            entries = gen_module.build_its_manifest_entries("main")
+            entries = gen_module.build_its_manifest_entries()
         for app_entries in entries["pr"].values():
             names = [e["name"] for e in app_entries]
             assert names == sorted(names)
 
-    def test_config_is_single_source_for_scenarios_and_manifest(
+    def test_config_is_single_source_for_manifest_and_rendering(
         self, gen_module, mock_repo_two_apps
     ):
-        """Manifest entries are derived from _build_its_scenarios, which reads scenarios.yml.
+        """Adding an entry to the matrix appears in both manifest and rendered CRs.
 
-        Adding a scenario type to scenarios.yml must appear in both
-        _build_its_scenarios() and build_its_manifest_entries() without further code changes.
+        A conforma-style entry with a minimal stub template confirms the config
+        drives both outputs without further code changes.
         """
+        # Write a minimal stub template for the new type
+        stub = (
+            mock_repo_two_apps / "konflux-templates" / "scenarios" / "conforma.yml.j2"
+        )
+        stub.write_text("---\napiVersion: appstudio.redhat.com/v1beta2\n"
+                        "kind: IntegrationTestScenario\nmetadata:\n"
+                        "  name: {{ application }}-conforma\nspec:\n"
+                        "  application: {{ application }}\n")
+
         def config_with_conforma():
             cfg = yaml.safe_load(
                 (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
             )
-            cfg["scenario_types"]["conforma"] = {
-                "contexts": ["component"],
-                "optional": False,
-                "tmt_path_from_context": False,
-                "image_tag": "v1.0",
-                "bundle_image": "quay.io/example/conforma",
-                "pipeline_timeout": "1h",
-                "tasks_timeout": "1h",
-                "finally_timeout": "10m",
-            }
-            for app in cfg["apps"]:
-                app["scenarios"].append("conforma")
+            cfg["applications"]["rpms-main"].append({
+                "template": "conforma",
+                "triggers": ["component"],
+            })
             return cfg
 
         with patch.object(gen_module, "_load_its_config", config_with_conforma):
-            scenarios = gen_module._build_its_scenarios("main")
-            entries = gen_module.build_its_manifest_entries("main")
-        scenario_names = {s["name"] for s in scenarios}
-        assert "rpms-main-conforma" in scenario_names
+            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+                rendered = gen_module._render_its_scenarios()
+            entries = gen_module.build_its_manifest_entries()
+
+        assert any("rpms-main-conforma" in r for r in rendered)
         pr_names = {e["name"] for e in entries["pr"]["rpms-main"]}
         assert "rpms-main-conforma" in pr_names
         push_names = {e["name"] for e in entries["push"]["rpms-main"]}
         assert "rpms-main-conforma" in push_names
 
-    def test_component_context_scenario_has_group_false_in_pr_manifest(
+    def test_component_trigger_entry_has_group_false_in_pr_manifest(
         self, gen_module, mock_repo_two_apps
     ):
-        """A component-context (non-optional) scenario must appear in the PR manifest with
-        group: false — component-context scenarios never trigger on group snapshots."""
+        """A component-trigger (non-optional) entry must appear in PR manifest with group: false."""
+        stub = (
+            mock_repo_two_apps / "konflux-templates" / "scenarios" / "conforma.yml.j2"
+        )
+        stub.write_text("---\napiVersion: appstudio.redhat.com/v1beta2\n"
+                        "kind: IntegrationTestScenario\nmetadata:\n"
+                        "  name: {{ application }}-conforma\nspec:\n"
+                        "  application: {{ application }}\n")
+
         def config_with_conforma():
             cfg = yaml.safe_load(
                 (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
             )
-            cfg["scenario_types"]["conforma"] = {
-                "contexts": ["component"],
-                "optional": False,
-                "tmt_path_from_context": False,
-                "image_tag": "v1.0",
-                "bundle_image": "quay.io/example/conforma",
-                "pipeline_timeout": "1h",
-                "tasks_timeout": "1h",
-                "finally_timeout": "10m",
-            }
-            for app in cfg["apps"]:
-                app["scenarios"].append("conforma")
+            cfg["applications"]["rpms-main"].append({
+                "template": "conforma",
+                "triggers": ["component"],
+            })
             return cfg
 
         with patch.object(gen_module, "_load_its_config", config_with_conforma):
-            entries = gen_module.build_its_manifest_entries("main")
+            entries = gen_module.build_its_manifest_entries()
         conforma_entries = [
             e for e in entries["pr"]["rpms-main"] if "conforma" in e["name"]
         ]
-        assert conforma_entries, "component-context scenario must appear in PR manifest"
+        assert conforma_entries, "component-trigger entry must appear in PR manifest"
         assert all(e["group"] is False for e in conforma_entries)
-
-    def test_config_fields_flow_into_scenario_dict(self, gen_module, mock_repo_two_apps):
-        """Fields from scenarios.yml (image_tag, bundle_image, timeouts, git_url) must
-        appear in the scenario dicts returned by _build_its_scenarios so the Jinja2
-        template renders them without additional code."""
-        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-        tf = next(s for s in scenarios if s["name"] == "rpms-main-testing-farm")
-        assert tf["image_tag"] == "v3.22"
-        assert tf["bundle_image"] == "quay.io/testing-farm/tmt-via-testing-farm"
-        assert tf["pipeline_timeout"] == "10h"
-        assert tf["tasks_timeout"] == "9h"
-        assert tf["finally_timeout"] == "1h"
-        assert tf["git_url"] == "https://gitlab.com/redhat/hummingbird/rpms.git"
-
-    def test_private_app_scenario_has_no_git_url_param(self, gen_module, mock_repo_two_apps):
-        """Private apps have no git_url in their config entry; include_git_url must be False."""
-        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-            scenarios = gen_module._build_its_scenarios("main")
-        tf = next(s for s in scenarios if s["name"] == "private-example-rpms-main-testing-farm")
-        assert tf["include_git_url"] is False
-        assert tf["git_url"] is None
 
 
 class TestCheckItsCoverage:

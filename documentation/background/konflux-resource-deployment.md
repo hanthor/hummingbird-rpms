@@ -63,11 +63,16 @@ Resources are defined in `konflux-templates/` and rendered to `konflux-templates
 
 ### RPMs Repo — IntegrationTestScenario
 
-**IntegrationTestScenario** resources are defined in `konflux-templates/scenarios.yml`
-(the single config source — apps, scenario types, bundle refs, and Renovate markers) and
-rendered into `konflux-templates/rendered.yml` alongside Components and ImageRepositories.
-The same config drives the trigger-manifest `integration_test_scenarios` section, so the
-manifest cannot drift from deployed ITS.
+**IntegrationTestScenario** resources are defined via two config files:
+
+- `konflux-templates/scenarios.yml` — the application × template matrix (which app gets
+  which scenario type, with which triggers and optional per-instance vars)
+- `konflux-templates/scenarios/<type>.yml.j2` — full CR content per scenario type (params,
+  resolverRef, Renovate markers, timeout annotations)
+
+The generator renders these into `konflux-templates/rendered.yml` alongside Components and
+ImageRepositories. The same matrix drives the trigger-manifest `integration_test_scenarios`
+section, so the manifest cannot drift from deployed ITS.
 
 **Deploy path**: ITS is deployed by the `*-releases` downstream pipeline (not `*-components`).
 The releases sync fetches `rendered.yml` from the **main** branch and runs on every merge to
@@ -90,7 +95,7 @@ See the infrastructure repo's
 "No pruning" section for details.
 
 The `integration_test_scenarios` section of `.tekton/trigger-manifest-pull-request.json`
-is derived from the same `scenarios.yml` config, ensuring the manifest never drifts from
+is derived from the same `scenarios.yml` matrix, ensuring the manifest never drifts from
 deployed scenarios.
 
 ### Infrastructure Repo
