@@ -22,7 +22,7 @@ This separation allows independent iteration on each concern.
 | ImageRepository          | rpms           | manual  | manual    | -        | -          |
 | ReleasePlanAdmission     | rpms           | -       | automatic | manual   | automatic  |
 | EnterpriseContractPolicy | rpms           | -       | automatic | manual   | automatic  |
-| IntegrationTestScenario  | rpms           | manual  | manual    | -        | -          |
+| IntegrationTestScenario  | rpms           | -       | automatic | -        | -          |
 | Application              | infrastructure | -       | -         | manual   | automatic  |
 | ReleasePlan              | infrastructure | -       | -         | manual   | automatic  |
 | ServiceAccount, Secret   | infrastructure | -       | -         | manual   | automatic  |
@@ -65,17 +65,15 @@ Resources are defined in `konflux-templates/` and rendered to `konflux-templates
 
 **IntegrationTestScenario** resources are defined in
 `konflux-templates/macros/integration-test-scenarios.yml.j2` and rendered into
-`konflux-templates/rendered.yml` alongside Components and ImageRepositories. The same
-`*-components` downstream pipeline that deploys Components also deploys ITS, keeping
-scenario definitions co-located with the packages and trigger manifests they describe.
+`konflux-templates/rendered.yml` alongside Components and ImageRepositories.
 
-**Deploy paths for ITS changes**:
-
-- **New scenarios** (`*-components-add` downstream job): detects new resource names and
-  deploys them automatically on rpms MRs. New scenarios are testable before merge.
-- **Edited scenarios** (modified content, same name): `*-components-add` is name-based and
-  does not redeploy existing resources. To apply edits before or after merge, trigger the
-  manual `deploy_components_to_konflux` job in the infrastructure pipeline.
+**Deploy path**: ITS is deployed by the `*-releases` downstream pipeline (not `*-components`).
+The releases sync fetches `rendered.yml` from the **main** branch and runs on every merge to
+main, so ITS changes deploy automatically after merge — including Renovate bundle-digest and
+`IMAGE_TAG` bumps. The components sync is deliberately excluded: it deploys from
+`PARENT_COMMIT_SHA` (MR heads), and ITS is static repo-level config that is not supposed to
+change in an MR — concurrent or stale MR pipelines would otherwise reset the live CR to older
+versions. Pre-merge ITS deployment is intentionally unavailable by design.
 
 **No-prune behaviour**: The deploy uses server-side apply without pruning — resources
 removed or renamed in `rendered.yml` are **not** deleted from the cluster. A renamed or
