@@ -228,66 +228,50 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
 # The bare "component" value is reserved for future non-optional post-merge scenarios.
 _KNOWN_ITS_CONTEXTS = {"pull_request", "component"}
 
-# Per-application ITS scenario types defined once and used for both template rendering
-# and manifest-entry derivation (D2: single source, no duplication).
-# Each entry: suffix appended to the app name, contexts list, optional flag, and
-# additional template flags.
-_ITS_SCENARIO_TYPES: list[dict] = [
-    {
-        "suffix": "testing-farm",
-        "contexts": ["pull_request"],
-        "optional": False,
-        "tmt_path_from_context": False,
-    },
-    {
-        "suffix": "testing-farm-upstream",
-        "contexts": ["component_attr-main", "component_setup-main"],
-        "optional": True,
-        "tmt_path_from_context": True,
-    },
-]
 
+def _load_its_config() -> dict:
+    """Load konflux-templates/scenarios.yml — the single ITS config source.
 
-def _get_its_applications(branch: str) -> list[dict]:
-    """Return sorted application dicts that own IntegrationTestScenarios in this repo.
-
-    Derived from ci/konflux_rpa_config.yml: every configured application (public
-    rpms-main plus each private-*-rpms-main) gets a testing-farm ITS.
-    The public application includes GIT_URL (allowlisted repo for group snapshots);
-    private applications omit it, matching the infrastructure templates verbatim.
+    Both the CR rendering (-> rendered.yml) and the trigger-manifest emission read
+    this file.  Editing it changes both outputs atomically (D2 config-driven revision).
     """
-    config = load_releng_config()
-    apps = []
-    for rpa in config["rpas"]:
-        prefix = rpa.get("application_prefix")
-        if prefix:
-            apps.append({
-                "name": f"{prefix}-{branch}",
-                "include_git_url": rpa.get("private_product") is None,
-            })
-    return sorted(apps, key=lambda a: a["name"])
+    config_path = ROOT_DIR / "konflux-templates" / "scenarios.yml"
+    with open(config_path) as f:
+        return yaml.safe_load(f)
 
 
 def _build_its_scenarios(branch: str) -> list[dict]:
-    """Build the full list of ITS scenario dicts from _ITS_SCENARIO_TYPES and applications.
+    """Build the full list of ITS scenario dicts from scenarios.yml.
 
     This is the single source used by both the Jinja2 template renderer (rendered.yml)
-    and the trigger-manifest builder.  Editing _ITS_SCENARIO_TYPES changes both outputs
+    and the trigger-manifest builder.  Editing scenarios.yml changes both outputs
     atomically, preventing drift between the deployed ITS and the manifest expectations.
     """
-    apps = _get_its_applications(branch)
-    scenarios = []
-    for app in apps:
-        for stype in _ITS_SCENARIO_TYPES:
-            scenarios.append({
-                "name": f"{app['name']}-{stype['suffix']}",
-                "application": app["name"],
+    config = _load_its_config()
+    scenario_types = config["scenario_types"]
+    result = []
+    for app in config["apps"]:
+        app_name = app["name"]
+        git_url = app.get("git_url")
+        for suffix in app["scenarios"]:
+            stype = scenario_types[suffix]
+            optional = stype["optional"]
+            result.append({
+                "name": f"{app_name}-{suffix}",
+                "application": app_name,
+                "suffix": suffix,
                 "contexts": stype["contexts"],
-                "optional": stype["optional"],
-                "include_git_url": app["include_git_url"] and not stype["optional"],
+                "optional": optional,
+                "include_git_url": git_url is not None and not optional,
+                "git_url": git_url,
                 "tmt_path_from_context": stype["tmt_path_from_context"],
+                "image_tag": stype["image_tag"],
+                "bundle_image": stype["bundle_image"],
+                "pipeline_timeout": stype["pipeline_timeout"],
+                "tasks_timeout": stype["tasks_timeout"],
+                "finally_timeout": stype["finally_timeout"],
             })
-    return scenarios
+    return result
 
 
 def _route_its_contexts(
@@ -327,8 +311,9 @@ def _route_its_contexts(
 def build_its_manifest_entries(branch: str) -> dict[str, dict]:
     """Build integration_test_scenarios sections for PR and push manifests.
 
-    Derives entries from _build_its_scenarios() — the same data used to render
-    rendered.yml — so the manifest cannot diverge from the deployed ITS (D2).
+    Derives entries from _build_its_scenarios(), which reads scenarios.yml —
+    the same config used to render rendered.yml — so the manifest cannot
+    diverge from the deployed ITS (D2 config-driven).
 
     Returns {"pr": {app: [{"name": ..., "group": ...}]},
              "push": {app: [{"name": ...}]}}.

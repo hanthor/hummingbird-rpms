@@ -1,0 +1,55 @@
+# Integration test scenario definitions for the rpms repo.
+# This is the single config source consumed by both the CR rendering
+# (-> konflux-templates/rendered.yml) and the trigger-manifest emission.
+# Editing this file changes both outputs without further code changes.
+#
+# Schema:
+#   scenario_types:        type-level defaults, keyed by suffix
+#     contexts:            Konflux trigger contexts for this type
+#     optional:            if true, excluded from trigger manifests (silent)
+#     tmt_path_from_context: emit TMT_PATH_FROM_CONTEXT param (bool)
+#     image_tag:           value for the IMAGE_TAG param
+#     # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
+#     bundle_image:        quay.io image ref for the resolver bundle (Renovate-managed)
+#     pipeline_timeout:    metadata annotation value
+#     tasks_timeout:       metadata annotation value
+#     finally_timeout:     metadata annotation value
+#
+#   apps:                  per-application scenario list
+#     - name:              Konflux application name
+#       git_url:           GIT_URL param value (optional; public rpms-main only)
+#       scenarios:         list of type suffixes to instantiate for this app
+
+scenario_types:
+  testing-farm:
+    contexts: [pull_request]
+    optional: false
+    tmt_path_from_context: false
+    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
+    image_tag: v3.22
+    bundle_image: quay.io/testing-farm/tmt-via-testing-farm
+    pipeline_timeout: 10h
+    tasks_timeout: 9h
+    finally_timeout: 1h
+
+  testing-farm-upstream:
+    contexts: [component_attr-main, component_setup-main]
+    optional: true
+    tmt_path_from_context: true
+    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
+    image_tag: v3.22
+    bundle_image: quay.io/testing-farm/tmt-via-testing-farm
+    pipeline_timeout: 10h
+    tasks_timeout: 9h
+    finally_timeout: 1h
+
+apps:
+  - name: private-example-rpms-main
+    scenarios: [testing-farm, testing-farm-upstream]
+
+  - name: private-nodejs20-rpms-main
+    scenarios: [testing-farm, testing-farm-upstream]
+
+  - name: rpms-main
+    git_url: https://gitlab.com/redhat/hummingbird/rpms.git
+    scenarios: [testing-farm, testing-farm-upstream]

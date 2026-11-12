@@ -9,5 +9,5 @@
 {%- endfor %}
 {{ policy("registry-hummingbird") }}
 {%- for scenario in integration_test_scenarios %}
-{{ integration_test_scenario(scenario, git_repo) }}
+{{ integration_test_scenario(scenario) }}
 {%- endfor %}

@@ -1,4 +1,4 @@
-{%- macro integration_test_scenario(scenario, git_repo) -%}
+{%- macro integration_test_scenario(scenario) -%}
 ---
 apiVersion: appstudio.redhat.com/v1beta2
 kind: IntegrationTestScenario
@@ -7,9 +7,9 @@ metadata:
   labels:
     test.appstudio.openshift.io/optional: "{{ 'true' if scenario.optional else 'false' }}"
   annotations:
-    test.appstudio.openshift.io/pipeline_timeout: 10h
-    test.appstudio.openshift.io/tasks_timeout: 9h
-    test.appstudio.openshift.io/finally_timeout: 1h
+    test.appstudio.openshift.io/pipeline_timeout: {{ scenario.pipeline_timeout }}
+    test.appstudio.openshift.io/tasks_timeout: {{ scenario.tasks_timeout }}
+    test.appstudio.openshift.io/finally_timeout: {{ scenario.finally_timeout }}
     test.appstudio.openshift.io/snapshot-param-as-name: "true"
 spec:
   application: {{ scenario.application }}
@@ -23,20 +23,20 @@ spec:
 {%- if scenario.include_git_url %}
     # Group snapshots do not include the target repository annotation. Use the
     # allowlisted target repository instead of a contributor's fork.
-    - {name: GIT_URL, value: "{{ git_repo }}"}
+    - {name: GIT_URL, value: "{{ scenario.git_url }}"}
 {%- endif %}
     - {name: ARCH, value: "x86_64,aarch64"}
     - {name: PASS_SNAPSHOT_TO_TF, value: "false"}
 {%- if scenario.tmt_path_from_context %}
     - {name: TMT_PATH_FROM_CONTEXT, value: "true"}
 {%- endif %}
-    # renovate: datasource=docker depName=quay.io/testing-farm/tmt-via-testing-farm
-    - {name: IMAGE_TAG, value: v3.22}
+    # renovate: datasource=docker depName={{ scenario.bundle_image }}
+    - {name: IMAGE_TAG, value: {{ scenario.image_tag }}}
   resolverRef:
     resolver: bundles
     params:
-      - {name: bundle, value: quay.io/testing-farm/tmt-via-testing-farm:$(params.IMAGE_TAG)}
+      - {name: bundle, value: {{ scenario.bundle_image }}:$(params.IMAGE_TAG)}
       - {name: name, value: tmt-via-testing-farm}
       - {name: kind, value: pipeline}
-      - {name: url, value: quay.io/testing-farm/tmt-via-testing-farm:$(params.IMAGE_TAG)}
+      - {name: url, value: {{ scenario.bundle_image }}:$(params.IMAGE_TAG)}
 {%- endmacro -%}

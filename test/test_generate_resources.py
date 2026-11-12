@@ -11,6 +11,22 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# Minimal scenarios.yml used by fixtures that only need ITS config to be present
+# (not asserting on specific scenario content).
+_MINIMAL_SCENARIOS_YML = textwrap.dedent("""\
+    scenario_types:
+      testing-farm:
+        contexts: [pull_request]
+        optional: false
+        tmt_path_from_context: false
+        image_tag: v3.22
+        bundle_image: quay.io/testing-farm/tmt-via-testing-farm
+        pipeline_timeout: 10h
+        tasks_timeout: 9h
+        finally_timeout: 1h
+    apps: []
+""")
+
 
 @pytest.fixture
 def gen_module():
@@ -72,6 +88,7 @@ def mock_repo(tmp_path):
         REPO_ROOT / "konflux-templates" / "releng-staging.yml.j2",
         tmpl_dir / "releng-staging.yml.j2",
     )
+    (tmpl_dir / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
     return tmp_path
 
@@ -531,6 +548,8 @@ class TestPrivateProductKonfluxVariables:
             """)
         )
         (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
+        (tmp_path / "konflux-templates").mkdir()
+        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -545,6 +564,8 @@ class TestPrivateProductKonfluxVariables:
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
         (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
+        (tmp_path / "konflux-templates").mkdir()
+        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -738,50 +759,48 @@ class TestItsBuildScenariosAndManifest:
         (tmp_path / "rpms" / "pkg").mkdir(parents=True)
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
-        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(
+        (tmp_path / "konflux-templates").mkdir()
+        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(
             textwrap.dedent("""\
-            global:
-              branch: main
-              tenant: hummingbird-tenant
-              release_tenant: rhtap-releng-tenant
-              git_repo: https://gitlab.com/redhat/hummingbird/rpms.git
-            rpas:
-              - name: hummingbird-rpms-tech-preview-staging
-                application_prefix: rpms
-                release_org: registry.stage.redhat.io/hummingbird-tech-preview
-                single_component_mode: true
-                service_account_name: hummingbird-rpm-release-staging
-                pulp_unsigned_domain: pub-unsigned
-                pulp_signed_domain: pub-signed
-                pulp_secret_name: pub-secret
-                pipeline_revision: dev
-                pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
-                component_filter:
-                  path_prefix: rpms/
-              - name: hummingbird-rpms-private-example
-                application_prefix: private-example-rpms
-                release_org: registry.stage.redhat.io/hummingbird-tech-preview
-                single_component_mode: true
-                service_account_name: hummingbird-rpm-release-staging
-                pulp_unsigned_domain: priv-unsigned
-                pulp_signed_domain: priv-signed
-                pulp_secret_name: priv-secret
-                pipeline_revision: dev
-                pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
-                private_product: example
-                component_filter:
-                  path_prefix: rpms/
+            scenario_types:
+              testing-farm:
+                contexts: [pull_request]
+                optional: false
+                tmt_path_from_context: false
+                image_tag: v3.22
+                bundle_image: quay.io/testing-farm/tmt-via-testing-farm
+                pipeline_timeout: 10h
+                tasks_timeout: 9h
+                finally_timeout: 1h
+              testing-farm-upstream:
+                contexts: [component_attr-main, component_setup-main]
+                optional: true
+                tmt_path_from_context: true
+                image_tag: v3.22
+                bundle_image: quay.io/testing-farm/tmt-via-testing-farm
+                pipeline_timeout: 10h
+                tasks_timeout: 9h
+                finally_timeout: 1h
+            apps:
+              - name: rpms-main
+                git_url: https://gitlab.com/redhat/hummingbird/rpms.git
+                scenarios: [testing-farm, testing-farm-upstream]
+              - name: private-example-rpms-main
+                scenarios: [testing-farm, testing-farm-upstream]
             """)
         )
         return tmp_path
 
-    def test_scenarios_derived_from_its_scenario_types(self, gen_module, mock_repo_two_apps):
-        """_build_its_scenarios produces one scenario per app × ITS_SCENARIO_TYPES entry."""
+    def test_scenarios_derived_from_config(self, gen_module, mock_repo_two_apps):
+        """_build_its_scenarios produces one scenario per app × scenario type in scenarios.yml."""
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
             scenarios = gen_module._build_its_scenarios("main")
-        n_apps = 2
-        n_types = len(gen_module._ITS_SCENARIO_TYPES)
-        assert len(scenarios) == n_apps * n_types
+            config = gen_module._load_its_config()
+        # 2 apps × 2 scenario types each = 4 total
+        n_apps = len(config["apps"])
+        n_types = sum(len(app["scenarios"]) for app in config["apps"])
+        assert len(scenarios) == n_types
+        assert n_apps == 2
 
     def test_scenario_names_derived_from_app_and_suffix(self, gen_module, mock_repo_two_apps):
         with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
@@ -839,58 +858,94 @@ class TestItsBuildScenariosAndManifest:
             names = [e["name"] for e in app_entries]
             assert names == sorted(names)
 
-    def test_build_its_scenarios_uses_its_scenario_types_as_single_source(
+    def test_config_is_single_source_for_scenarios_and_manifest(
         self, gen_module, mock_repo_two_apps
     ):
-        """Manifest entries are derived from _build_its_scenarios, not a parallel definition.
+        """Manifest entries are derived from _build_its_scenarios, which reads scenarios.yml.
 
-        Adding a scenario type to _ITS_SCENARIO_TYPES must appear in both
-        _build_its_scenarios() and build_its_manifest_entries() without further changes.
+        Adding a scenario type to scenarios.yml must appear in both
+        _build_its_scenarios() and build_its_manifest_entries() without further code changes.
         """
-        original_types = gen_module._ITS_SCENARIO_TYPES
-        extra_type = {
-            "suffix": "conforma",
-            "contexts": ["component"],
-            "optional": False,
-            "tmt_path_from_context": False,
-        }
-        try:
-            gen_module._ITS_SCENARIO_TYPES = original_types + [extra_type]
-            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-                scenarios = gen_module._build_its_scenarios("main")
-                entries = gen_module.build_its_manifest_entries("main")
-            scenario_names = {s["name"] for s in scenarios}
-            assert "rpms-main-conforma" in scenario_names
-            pr_names = {e["name"] for e in entries["pr"]["rpms-main"]}
-            assert "rpms-main-conforma" in pr_names
-            push_names = {e["name"] for e in entries["push"]["rpms-main"]}
-            assert "rpms-main-conforma" in push_names
-        finally:
-            gen_module._ITS_SCENARIO_TYPES = original_types
+        def config_with_conforma():
+            cfg = yaml.safe_load(
+                (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
+            )
+            cfg["scenario_types"]["conforma"] = {
+                "contexts": ["component"],
+                "optional": False,
+                "tmt_path_from_context": False,
+                "image_tag": "v1.0",
+                "bundle_image": "quay.io/example/conforma",
+                "pipeline_timeout": "1h",
+                "tasks_timeout": "1h",
+                "finally_timeout": "10m",
+            }
+            for app in cfg["apps"]:
+                app["scenarios"].append("conforma")
+            return cfg
+
+        with patch.object(gen_module, "_load_its_config", config_with_conforma):
+            scenarios = gen_module._build_its_scenarios("main")
+            entries = gen_module.build_its_manifest_entries("main")
+        scenario_names = {s["name"] for s in scenarios}
+        assert "rpms-main-conforma" in scenario_names
+        pr_names = {e["name"] for e in entries["pr"]["rpms-main"]}
+        assert "rpms-main-conforma" in pr_names
+        push_names = {e["name"] for e in entries["push"]["rpms-main"]}
+        assert "rpms-main-conforma" in push_names
 
     def test_component_context_scenario_has_group_false_in_pr_manifest(
         self, gen_module, mock_repo_two_apps
     ):
         """A component-context (non-optional) scenario must appear in the PR manifest with
         group: false — component-context scenarios never trigger on group snapshots."""
-        original_types = gen_module._ITS_SCENARIO_TYPES
-        component_type = {
-            "suffix": "conforma",
-            "contexts": ["component"],
-            "optional": False,
-            "tmt_path_from_context": False,
-        }
-        try:
-            gen_module._ITS_SCENARIO_TYPES = original_types + [component_type]
-            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
-                entries = gen_module.build_its_manifest_entries("main")
-            conforma_entries = [
-                e for e in entries["pr"]["rpms-main"] if "conforma" in e["name"]
-            ]
-            assert conforma_entries, "component-context scenario must appear in PR manifest"
-            assert all(e["group"] is False for e in conforma_entries)
-        finally:
-            gen_module._ITS_SCENARIO_TYPES = original_types
+        def config_with_conforma():
+            cfg = yaml.safe_load(
+                (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
+            )
+            cfg["scenario_types"]["conforma"] = {
+                "contexts": ["component"],
+                "optional": False,
+                "tmt_path_from_context": False,
+                "image_tag": "v1.0",
+                "bundle_image": "quay.io/example/conforma",
+                "pipeline_timeout": "1h",
+                "tasks_timeout": "1h",
+                "finally_timeout": "10m",
+            }
+            for app in cfg["apps"]:
+                app["scenarios"].append("conforma")
+            return cfg
+
+        with patch.object(gen_module, "_load_its_config", config_with_conforma):
+            entries = gen_module.build_its_manifest_entries("main")
+        conforma_entries = [
+            e for e in entries["pr"]["rpms-main"] if "conforma" in e["name"]
+        ]
+        assert conforma_entries, "component-context scenario must appear in PR manifest"
+        assert all(e["group"] is False for e in conforma_entries)
+
+    def test_config_fields_flow_into_scenario_dict(self, gen_module, mock_repo_two_apps):
+        """Fields from scenarios.yml (image_tag, bundle_image, timeouts, git_url) must
+        appear in the scenario dicts returned by _build_its_scenarios so the Jinja2
+        template renders them without additional code."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        tf = next(s for s in scenarios if s["name"] == "rpms-main-testing-farm")
+        assert tf["image_tag"] == "v3.22"
+        assert tf["bundle_image"] == "quay.io/testing-farm/tmt-via-testing-farm"
+        assert tf["pipeline_timeout"] == "10h"
+        assert tf["tasks_timeout"] == "9h"
+        assert tf["finally_timeout"] == "1h"
+        assert tf["git_url"] == "https://gitlab.com/redhat/hummingbird/rpms.git"
+
+    def test_private_app_scenario_has_no_git_url_param(self, gen_module, mock_repo_two_apps):
+        """Private apps have no git_url in their config entry; include_git_url must be False."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            scenarios = gen_module._build_its_scenarios("main")
+        tf = next(s for s in scenarios if s["name"] == "private-example-rpms-main-testing-farm")
+        assert tf["include_git_url"] is False
+        assert tf["git_url"] is None
 
 
 class TestCheckItsCoverage:
