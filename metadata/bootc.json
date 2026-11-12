@@ -3,10 +3,10 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/bootc.git",
     "release": "1",
-    "sha": "8e6828585fe3a3c901d4cbef3fc3245921212ee5"
+    "sha": "51b34423de8772e2bece518be189677b9d61e6e1"
   },
   "modification_reason": "Historical commit missing Upstream trailer",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/bootc-dev/bootc",
-  "version": "1.17.1"
+  "version": "1.17.4"
 }
