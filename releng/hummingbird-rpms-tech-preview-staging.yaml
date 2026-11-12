@@ -1069,6 +1069,8 @@ spec:
           contentType: rpm
         - name: python3-13-setuptools-main
           contentType: rpm
+        - name: python3-13-setuptools-scm-main
+          contentType: rpm
         - name: python3-13-tomlkit-main
           contentType: rpm
         - name: python3-13-trove-classifiers-main
