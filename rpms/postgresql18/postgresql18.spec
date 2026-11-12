@@ -48,7 +48,7 @@
 Summary: PostgreSQL client programs
 Name: %{majorname}%{majorversion}
 Version: 18.6
-Release: 1%{?dist}
+Release: 1.1%{?dist}
 
 # The PostgreSQL license is very similar to other MIT licenses, but the OSI
 # recognizes it as an independent license, so we do as well.
@@ -101,6 +101,7 @@ Patch9: postgresql-server-pg_config.patch
 Patch10: postgresql-datalayout-mismatch-on-s390.patch
 Patch12: postgresql-no-libecpg.patch
 Patch13: postgresql-default-ssl-config.patch
+Patch14: 0014-cve-2026-120149-arbitrary-code-execution-foreign-batch.patch
 
 # This macro is used for package names in the files section
 %if %?postgresql_default
@@ -560,6 +561,15 @@ cat > postgresql18.tmpfiles.conf <<EOF
 d /var/lib/pgsql 0700 postgres postgres -
 EOF
 
+%ifarch x86_64
+%patch -P 14 -p1
+%endif
+%ifarch aarch64
+%patch -P 14 -p1
+%endif
+%ifarch s390x
+%patch -P 14 -p1
+%endif
 %build
 # Avoid LTO on armv7hl as it runs out of memory
 %ifarch armv7hl s390x
