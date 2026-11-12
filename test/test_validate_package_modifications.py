@@ -400,7 +400,7 @@ def test_get_changed_packages_in_mr_diff_base_sha_fetch_failure_raises(validator
     for this call site."""
     monkeypatch.setenv('CI_MERGE_REQUEST_DIFF_BASE_SHA', '0' * 40)
     with patch('time.sleep') as mock_sleep, \
-         patch.object(validator.subprocess, 'run', wraps=validator.subprocess.run) as mock_run, \
+         patch.object(validator.subprocess, 'Popen', wraps=validator.subprocess.Popen) as mock_run, \
          pytest.raises(subprocess.CalledProcessError) as exc_info:
         validator.get_changed_packages_in_mr()
 

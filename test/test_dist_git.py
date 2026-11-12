@@ -1,11 +1,14 @@
 """Integration tests for dist_git importer."""
 
+import http.client
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import time
 import types
 import urllib.request
 import xmlrpc.client
@@ -90,7 +93,7 @@ def test_run_git_retries_ls_remote(dist_git_module) -> None:
     failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
     success = MagicMock(spec=subprocess.CompletedProcess)
 
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, success]) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, success]) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep:
         assert dist_git_module.run_git(
             'ls-remote', 'https://example.invalid/repo.git', 'rawhide'
@@ -107,7 +110,7 @@ def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
     """The final ls-remote error is preserved after bounded retries."""
     failure = subprocess.CalledProcessError(128, ['git', 'ls-remote', 'https://example.invalid/repo.git'])
 
-    with patch.object(dist_git_module.subprocess, 'run', side_effect=[failure, failure, failure]) as run, \
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, failure]) as run, \
          patch.object(dist_git_module.time, 'sleep') as sleep, \
          pytest.raises(subprocess.CalledProcessError) as raised:
         dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git', 'rawhide')
@@ -118,6 +121,159 @@ def test_run_git_reraises_final_ls_remote_failure(dist_git_module) -> None:
         (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS,),
         (dist_git_module.GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS * 2,),
     ]
+
+
+@pytest.mark.parametrize('operation', ['clone', 'fetch', 'pull', 'ls-remote'])
+def test_run_git_network_attempt_has_timeout(dist_git_module, operation: str) -> None:
+    """Every network attempt has a wall-clock timeout, regardless of protocol."""
+    with patch.object(dist_git_module, '_run_git_network_attempt') as run:
+        dist_git_module.run_git(operation, 'https://example.invalid/repo.git')
+
+    assert run.call_args.kwargs.get('timeout') == 120
+
+
+@pytest.mark.parametrize('operation', ['status', 'show', 'commit'])
+def test_run_git_local_command_has_no_network_timeout(dist_git_module, operation: str) -> None:
+    """Network limits must not restrict local operations or commit hooks."""
+    with patch.object(dist_git_module.subprocess, 'run') as run:
+        dist_git_module.run_git(operation)
+
+    assert run.call_args.kwargs.get('timeout') is None
+
+
+@pytest.mark.parametrize('check', [False, True])
+def test_run_git_retries_timeout(dist_git_module, check: bool) -> None:
+    """A timeout is retryable even when Git exit-code checking is disabled."""
+    failure = subprocess.TimeoutExpired(['git', 'ls-remote'], 120)
+    success = subprocess.CompletedProcess(['git', 'ls-remote'], 0, stdout='sha\trefs/heads/rawhide\n')
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=[failure, failure, success]) as run, \
+         patch.object(dist_git_module.time, 'sleep') as sleep:
+        assert dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git', check=check) is success
+
+    assert run.call_count == 3
+    assert sleep.call_args_list == [call(2), call(4)]
+    assert all(attempt.kwargs.get('timeout') == 120 for attempt in run.call_args_list)
+
+
+def test_run_git_reraises_final_timeout(dist_git_module) -> None:
+    """Exhausted timeout retries preserve the final error and do not sleep again."""
+    failures = [subprocess.TimeoutExpired(['git', 'clone'], 120) for _ in range(3)]
+    with patch.object(dist_git_module, '_run_git_network_attempt', side_effect=failures) as run, \
+         patch.object(dist_git_module.time, 'sleep') as sleep, \
+         pytest.raises(subprocess.TimeoutExpired) as raised:
+        dist_git_module.run_git('clone', 'https://example.invalid/repo.git')
+
+    assert raised.value is failures[-1]
+    assert run.call_count == 3
+    assert sleep.call_args_list == [call(2), call(4)]
+
+
+def test_git_timeout_kills_transport_helpers(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Timing out Git must kill its helper, not just the parent process."""
+    marker = tmp_path / 'helper-survived'
+    pid_file = tmp_path / 'helper.pid'
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(
+        f'#!{sys.executable}\n'
+        'import subprocess, sys, time\n'
+        f'child = subprocess.Popen([sys.executable, "-c", '
+        f'"import time; from pathlib import Path; time.sleep(1); Path({str(marker)!r}).touch(); time.sleep(30)"])\n'
+        f'open({str(pid_file)!r}, "w").write(str(child.pid))\n'
+        'time.sleep(30)\n'
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.3)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_MAX_ATTEMPTS', 1)
+    try:
+        with pytest.raises(subprocess.TimeoutExpired):
+            dist_git_module.run_git('ls-remote', 'https://example.invalid/repo.git')
+        assert pid_file.exists(), 'The test helper did not start before the timeout'
+        time.sleep(1.2)
+        assert not marker.exists(), 'The Git transport helper survived its parent timeout'
+    finally:
+        if pid_file.exists():
+            try:
+                os.kill(int(pid_file.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+@pytest.mark.parametrize('recover', [False, True], ids=['exhausted', 'recovers'])
+def test_git_clone_retries_do_not_leave_partial_destination(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, recover: bool,
+) -> None:
+    """A killed clone must not poison later retries or a future import."""
+    counter = tmp_path / 'attempts'
+    destination = tmp_path / 'package'
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(
+        f'#!{sys.executable}\n'
+        'from pathlib import Path\n'
+        'import sys, time\n'
+        f'counter = Path({str(counter)!r})\n'
+        'attempt = int(counter.read_text()) + 1 if counter.exists() else 1\n'
+        'counter.write_text(str(attempt))\n'
+        'destination = Path(sys.argv[-1])\n'
+        'if destination.exists():\n'
+        '    sys.exit(128)\n'
+        '(destination / ".git").mkdir(parents=True)\n'
+        f'if not {recover!r} or attempt == 1:\n'
+        '    time.sleep(30)\n'
+        '(destination / "package.spec").write_text("complete clone")\n'
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.3)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS', 0)
+
+    if recover:
+        result = dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+        assert result.returncode == 0
+        assert (destination / 'package.spec').read_text() == 'complete clone'
+        assert counter.read_text() == '2'
+    else:
+        with pytest.raises(subprocess.TimeoutExpired):
+            dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+        assert counter.read_text() == '3'
+        assert not destination.exists(), 'Failed clone still blocks future imports'
+
+
+@pytest.mark.parametrize('existing_empty', [False, True])
+def test_git_clone_relative_destination(
+    dist_git_module, tmp_path: Path, upstream_repos: dict[str, Path],
+    monkeypatch: pytest.MonkeyPatch, existing_empty: bool,
+) -> None:
+    """Staging preserves Git's relative cwd/destination and empty-dir behavior."""
+    monkeypatch.chdir(tmp_path)
+    Path('working').mkdir()
+    if existing_empty:
+        Path('working/package').mkdir()
+    result = dist_git_module.run_git('clone', '--quiet', str(upstream_repos['vanilla']), 'package', cwd='working')
+    assert result.returncode == 0
+    assert Path('working/package/vanilla.spec').exists()
+    assert not list(Path('working').glob('.dist-git-clone-*'))
+
+
+def test_git_clone_timeout_preserves_existing_destination(
+    dist_git_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry cleanup must never delete a destination the caller already owned."""
+    destination = tmp_path / 'package'
+    destination.mkdir()
+    important = destination / 'keep-me'
+    important.write_text('existing user data')
+    fake_git = tmp_path / 'git'
+    fake_git.write_text(f'#!{sys.executable}\nimport time\ntime.sleep(30)\n')
+    fake_git.chmod(0o755)
+    monkeypatch.setenv('PATH', str(tmp_path) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_TIMEOUT_SECONDS', 0.1)
+    monkeypatch.setattr(dist_git_module, 'GIT_NETWORK_MAX_ATTEMPTS', 1)
+    with pytest.raises(subprocess.TimeoutExpired):
+        dist_git_module.run_git('clone', 'https://example.invalid/repo.git', str(destination))
+    assert important.read_text() == 'existing user data'
 
 
 @pytest.fixture(scope='session')
@@ -1209,9 +1365,162 @@ def test_check_koji_build_finds_numbered_eln_suffix(dist_git_module) -> None:
         mock_server.getBuild.assert_any_call(eln_nvr)
 
 
+@pytest.mark.parametrize('status', [408, 429, 500, 502, 503, 504])
+def test_koji_retries_protocol_error_by_status(dist_git_module, status: int) -> None:
+    """The numeric status wins even when the URL/message contains other codes."""
+    failure = xmlrpc.client.ProtocolError(
+        'https://koji.example/401/kojihub', status, 'error reference 404', {},
+    )
+    success = {'build_id': 12345}
+    method = MagicMock(side_effect=[failure, failure, success])
+    with patch.object(dist_git_module.time, 'sleep') as sleep:
+        assert dist_git_module.call_koji_with_retry(method, 'test-nvr') is success
+
+    assert method.call_args_list == [call('test-nvr')] * 3
+    assert sleep.call_args_list == [call(2), call(4)]
+
+
+@pytest.mark.parametrize('status', [400, 401, 403, 404, 405, 501, 505])
+def test_koji_does_not_retry_permanent_protocol_error(dist_git_module, status: int) -> None:
+    """Permanent HTTP statuses fail immediately, even if their text says 503."""
+    failure = xmlrpc.client.ProtocolError('https://koji.example/503', status, '503 Gateway', {})
+    method = MagicMock(side_effect=failure)
+    with patch.object(dist_git_module.time, 'sleep') as sleep, \
+         pytest.raises(xmlrpc.client.ProtocolError) as raised:
+        dist_git_module.call_koji_with_retry(method, 'test-nvr')
+
+    assert raised.value is failure
+    method.assert_called_once_with('test-nvr')
+    sleep.assert_not_called()
+
+
+def test_koji_reraises_final_protocol_error(dist_git_module) -> None:
+    """A persistent transient HTTP error is bounded to three attempts."""
+    failures = [xmlrpc.client.ProtocolError('https://koji.example', 503, 'Unavailable', {})
+                for _ in range(3)]
+    method = MagicMock(side_effect=failures)
+    with patch.object(dist_git_module.time, 'sleep') as sleep, \
+         pytest.raises(xmlrpc.client.ProtocolError) as raised:
+        dist_git_module.call_koji_with_retry(method)
+
+    assert raised.value is failures[-1]
+    assert method.call_count == 3
+    assert sleep.call_args_list == [call(2), call(4)]
+
+
+@pytest.mark.parametrize('failure', [
+    TimeoutError('request 401 timed out'),
+    ConnectionResetError('connection 404 reset'),
+    http.client.RemoteDisconnected('remote closed connection'),
+    http.client.IncompleteRead(b'partial response'),
+    http.client.BadStatusLine('truncated HTTP response'),
+])
+def test_koji_retries_transport_failure(dist_git_module, failure: Exception) -> None:
+    """Transient transport errors must not be classified by message substrings."""
+    method = MagicMock(side_effect=[failure, 'success'])
+    with patch.object(dist_git_module.time, 'sleep') as sleep:
+        assert dist_git_module.call_koji_with_retry(method) == 'success'
+
+    assert method.call_count == 2
+    sleep.assert_called_once_with(2)
+
+
+def test_koji_reraises_final_transport_timeout(dist_git_module) -> None:
+    failures = [TimeoutError('timed out') for _ in range(3)]
+    method = MagicMock(side_effect=failures)
+    with patch.object(dist_git_module.time, 'sleep') as sleep, \
+         pytest.raises(TimeoutError) as raised:
+        dist_git_module.call_koji_with_retry(method)
+
+    assert raised.value is failures[-1]
+    assert method.call_count == 3
+    assert sleep.call_args_list == [call(2), call(4)]
+
+
+@pytest.mark.parametrize('proxy_variable', [None, 'HTTPS_PROXY', 'https_proxy'])
+def test_koji_transport_connection_has_timeout(
+    dist_git_module, monkeypatch: pytest.MonkeyPatch, proxy_variable: str | None,
+) -> None:
+    """Direct and tunneled connections have bounded socket operations."""
+    monkeypatch.delenv('HTTPS_PROXY', raising=False)
+    monkeypatch.delenv('https_proxy', raising=False)
+    if proxy_variable:
+        monkeypatch.setenv(proxy_variable, 'http://proxy.example:3129')
+    context = MagicMock()
+    transport = dist_git_module.KojiTransport(context=context)
+    with patch.object(dist_git_module.http.client, 'HTTPSConnection') as factory:
+        connection = transport.make_connection('koji.fedoraproject.org')
+        assert factory.call_args.kwargs.get('timeout') == 30
+        assert factory.call_args.kwargs.get('context') is context
+        assert connection is factory.return_value
+        if proxy_variable:
+            assert factory.call_args.args == ('proxy.example', 3129)
+            connection.set_tunnel.assert_called_once_with('koji.fedoraproject.org')
+        else:
+            assert factory.call_args.args[0] == 'koji.fedoraproject.org'
+            connection.set_tunnel.assert_not_called()
+        assert transport.make_connection('koji.fedoraproject.org') is connection
+        factory.assert_called_once()
+        transport.close()
+        connection.close.assert_called_once()
+
+
+@pytest.mark.parametrize('status, recover', [(503, True), (503, False), (401, False)])
+def test_koji_chunked_error_discards_cached_connection(
+    dist_git_module, monkeypatch: pytest.MonkeyPatch, status: int, recover: bool,
+) -> None:
+    """Real HTTPConnection state must recover after an unread chunked error."""
+    monkeypatch.delenv('HTTPS_PROXY', raising=False)
+    monkeypatch.delenv('https_proxy', raising=False)
+    class FakeSocket:
+        def __init__(self, response):
+            self.response = response
+            self.closed = False
+
+        def makefile(self, *args, **kwargs):
+            return BytesIO(self.response)
+
+        def sendall(self, data):
+            pass
+
+        def close(self):
+            self.closed = True
+
+    sockets: list[FakeSocket] = []
+
+    def connect(*args, **kwargs):
+        code = 200 if recover and sockets else status
+        if code == 200:
+            body = xmlrpc.client.dumps(({'build_id': 12345},), methodresponse=True).encode()
+            response = b'HTTP/1.1 200 OK\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body
+        else:
+            response = (f'HTTP/1.1 {code} Error\r\nTransfer-Encoding: chunked\r\n'
+                        'Connection: keep-alive\r\n\r\n3\r\nbad\r\n0\r\n\r\n').encode()
+        sock = FakeSocket(response)
+        sockets.append(sock)
+        connection = http.client.HTTPConnection('koji.example')
+        connection.sock = sock
+        return connection
+
+    transport = dist_git_module.KojiTransport()
+    with patch.object(dist_git_module.http.client, 'HTTPSConnection', side_effect=connect), \
+         patch.object(dist_git_module.time, 'sleep') as sleep, \
+         xmlrpc.client.ServerProxy('https://koji.example/kojihub', transport=transport) as server:
+        if recover:
+            assert dist_git_module.call_koji_with_retry(server.getBuild, 'test-nvr') == {'build_id': 12345}
+            assert len(sockets) == 2
+            sleep.assert_called_once_with(2)
+        else:
+            with pytest.raises(xmlrpc.client.ProtocolError) as raised:
+                dist_git_module.call_koji_with_retry(server.getBuild, 'test-nvr')
+            assert raised.value.errcode == status
+            assert len(sockets) == (3 if status == 503 else 1)
+            assert sleep.call_count == (2 if status == 503 else 0)
+        assert sockets[0].closed, 'HTTP error left its socket cached for reuse'
+
+
 def test_koji_retry_on_transient_error(dist_git_module) -> None:
     """Verify that 502 Bad Gateway errors are retried and eventually succeed."""
-    import http.client
 
     with patch('xmlrpc.client.ServerProxy') as mock_server_class, \
          patch.object(dist_git_module.time, 'sleep') as mock_sleep:
@@ -1223,7 +1532,7 @@ def test_koji_retry_on_transient_error(dist_git_module) -> None:
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
-                raise http.client.HTTPException("502 Bad Gateway")
+                raise xmlrpc.client.ProtocolError('https://koji.example', 502, 'Bad Gateway', {})
             return {
                 'build_id': 12345,
                 'nvr': 'test-1.0-1.fc40',
@@ -1270,17 +1579,18 @@ def test_koji_no_retry_on_fault(dist_git_module) -> None:
 
 def test_koji_no_retry_on_auth_error(dist_git_module) -> None:
     """Ensure HTTP 401/403 errors fail immediately without retries."""
-    import http.client
 
     with patch('xmlrpc.client.ServerProxy') as mock_server_class:
         mock_server = MagicMock()
 
         # Raise 401 Unauthorized
-        mock_server.getBuild.side_effect = http.client.HTTPException("401 Unauthorized")
+        mock_server.getBuild.side_effect = xmlrpc.client.ProtocolError(
+            'https://koji.example', 401, 'Unauthorized', {},
+        )
         mock_server_class.return_value = mock_server
 
         # Should raise immediately without retrying
-        with pytest.raises(http.client.HTTPException):
+        with pytest.raises(xmlrpc.client.ProtocolError):
             dist_git_module.call_koji_with_retry(
                 mock_server.getBuild, 'test-1.0-1.fc40',
                 method_name="Koji getBuild(test-1.0-1.fc40)"

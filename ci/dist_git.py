@@ -14,7 +14,7 @@ import logging
 import os
 import re
 import shutil
-import socket
+import signal
 import subprocess
 import sys
 import tempfile
@@ -104,6 +104,12 @@ sign_off: bool = False
 GIT_NETWORK_RETRY_OPERATIONS = frozenset({'clone', 'fetch', 'pull', 'ls-remote'})
 GIT_NETWORK_MAX_ATTEMPTS = 3
 GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS = 2
+GIT_NETWORK_TIMEOUT_SECONDS = 120
+
+KOJI_REQUEST_TIMEOUT_SECONDS = 30
+KOJI_MAX_ATTEMPTS = 3
+KOJI_INITIAL_RETRY_DELAY_SECONDS = 2
+KOJI_RETRYABLE_HTTP_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 
 class SourceAvailabilityProbe(TypedDict):
@@ -432,22 +438,73 @@ def ls_sources(package: str) -> None:
         list_archive_contents(package_dir / filename)
 
 
+def _run_git_network_attempt(args: tuple[str, ...], *, cwd: Path | str | None,
+                             check: bool, timeout: float) -> subprocess.CompletedProcess[str]:
+    """Run one network attempt, killing its process group on timeout."""
+    command = ['git', *args]
+    with subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE, text=True,
+                          start_new_session=True) as process:
+        try:
+            output, _ = process.communicate(timeout=timeout)
+        except (subprocess.TimeoutExpired, KeyboardInterrupt):
+            # Killing only Git leaves remote helpers alive with sockets/pipes open.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate()
+            raise
+        if check and process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, command, output=output)
+        return subprocess.CompletedProcess(command, process.returncode, stdout=output)
+
+
 def run_git(*args: str, cwd: Path | str | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run git command and return its stdout/exit code.
 
     Network operations, including ``ls-remote``, are attempted at most three
     times with exponential backoff to handle transient upstream or proxy
-    failures. The final Git error is re-raised unchanged.
+    failures. Each network attempt has an explicit timeout. The final Git
+    error or timeout is re-raised unchanged. Clones with explicit destinations
+    use owned staging directories, publishing only a completed checkout.
     """
     should_retry = bool(args) and args[0] in GIT_NETWORK_RETRY_OPERATIONS
 
     max_attempts = GIT_NETWORK_MAX_ATTEMPTS if should_retry else 1
     retry_delay = GIT_NETWORK_INITIAL_RETRY_DELAY_SECONDS
 
+    if not should_retry:
+        return subprocess.run(['git', *args], cwd=cwd, check=check, stdout=subprocess.PIPE, text=True)
+
+    # All clone callers in this script supply the destination as the final arg.
+    # Leave existing nonempty destinations (and symlinks) to Git to reject;
+    # never claim ownership of or clean up a caller's existing files.
+    clone_destination = None
+    if args[0] == 'clone' and len(args) >= 3:
+        destination = Path(args[-1])
+        if not destination.is_absolute():
+            destination = Path(cwd or Path.cwd()).absolute() / destination
+        if not destination.is_symlink() and (not destination.exists() or
+                                             (destination.is_dir() and not any(destination.iterdir()))):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            clone_destination = destination
+
     for attempt in range(max_attempts):
         try:
-            return subprocess.run(['git', *args], cwd=cwd, check=check, stdout=subprocess.PIPE, text=True)
-        except subprocess.CalledProcessError as e:
+            if clone_destination is not None:
+                with tempfile.TemporaryDirectory(prefix='.dist-git-clone-',
+                                                 dir=clone_destination.parent) as staging:
+                    checkout = Path(staging) / 'checkout'
+                    result = _run_git_network_attempt(
+                        (*args[:-1], str(checkout)), cwd=cwd, check=check,
+                        timeout=GIT_NETWORK_TIMEOUT_SECONDS,
+                    )
+                    if result.returncode == 0:
+                        checkout.rename(clone_destination)
+                    result.args = ['git', *args]
+                    return result
+            return _run_git_network_attempt(args, cwd=cwd, check=check, timeout=GIT_NETWORK_TIMEOUT_SECONDS)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             if attempt < max_attempts - 1:
                 logging.warning("Git %s failed (attempt %d/%d): %s", args[0], attempt + 1, max_attempts, e)
                 logging.info("Retrying in %d seconds...", retry_delay)
@@ -788,18 +845,38 @@ class KojiTransport(xmlrpc.client.SafeTransport):
             self.proxy_port = None
 
     def make_connection(self, host):
+        if self._connection and host == self._connection[0]:
+            return self._connection[1]
+
+        chost, self._extra_headers, x509 = self.get_host_info(host)
         if self.proxy_host:
-            connection = http.client.HTTPSConnection(self.proxy_host, self.proxy_port)
-            connection.set_tunnel(host)
-            return connection
+            connection = http.client.HTTPSConnection(
+                self.proxy_host, self.proxy_port, timeout=KOJI_REQUEST_TIMEOUT_SECONDS,
+                context=self.context, **(x509 or {}),
+            )
+            connection.set_tunnel(chost)
         else:
-            # No proxy - use standard connection
-            return super().make_connection(host)
+            connection = http.client.HTTPSConnection(
+                chost, timeout=KOJI_REQUEST_TIMEOUT_SECONDS,
+                context=self.context, **(x509 or {}),
+            )
+        # Match SafeTransport's cache so close() also closes tunneled sockets.
+        self._connection = host, connection
+        return connection
 
     def send_headers(self, connection, headers):
         super().send_headers(connection, headers)
         # Bypass Koji's AI scraper detection
         connection.putheader("Accept", "text/xml")
+
+    def single_request(self, host, handler, request_body, verbose=False):
+        try:
+            return super().single_request(host, handler, request_body, verbose)
+        except xmlrpc.client.ProtocolError:
+            # XML-RPC leaves chunked HTTP errors unread when Content-Length is
+            # absent. Do not reuse that socket for a retry or subsequent call.
+            self.close()
+            raise
 
 
 def get_koji_server() -> xmlrpc.client.ServerProxy:
@@ -821,14 +898,14 @@ class KojiOfflineError(Exception):
 def call_koji_with_retry(method, *args, method_name: str = "Koji method"):
     """Call a Koji XML-RPC method with retry logic for transient errors.
 
-    Retries up to 3 times with exponential backoff (2s, 4s, 8s) on transient errors:
-    - HTTP 5xx errors (server errors like 502, 503)
-    - HTTP 408 (Request Timeout)
+    Makes at most 3 attempts with exponential backoff (2s, 4s) on transient errors:
+    - HTTP 408, 429, 500, 502, 503, 504
     - OSError and subclasses (ConnectionError, TimeoutError, socket errors)
+    - Disconnected, incomplete, or malformed HTTP responses
 
     Does NOT retry on:
     - xmlrpc.client.Fault (server-side application errors)
-    - HTTP 4xx errors except 408 (client errors like 401, 403)
+    - Other HTTP statuses, including authentication failures
 
     Args:
         method: The Koji ServerProxy method to call (e.g., server.getBuild)
@@ -838,10 +915,9 @@ def call_koji_with_retry(method, *args, method_name: str = "Koji method"):
     Returns:
         The result from the Koji method call
     """
-    max_retries = 3
-    retry_delay = 2  # Initial delay in seconds
+    retry_delay = KOJI_INITIAL_RETRY_DELAY_SECONDS
 
-    for attempt in range(max_retries):
+    for attempt in range(KOJI_MAX_ATTEMPTS):
         try:
             return method(*args)
         except xmlrpc.client.Fault as e:
@@ -850,35 +926,18 @@ def call_koji_with_retry(method, *args, method_name: str = "Koji method"):
                 raise KojiOfflineError(e.faultString) from e
             # Don't retry on Fault - these are application-level errors
             raise
-        except (OSError, http.client.HTTPException) as e:
-            # Check if it's a retryable error
-            should_retry = False
-            error_msg = str(e)
-
-            # Retry on HTTP 5xx errors, 408, and network errors
-            if isinstance(e, http.client.HTTPException):
-                # Parse HTTP status from error message
-                if any(status in error_msg for status in ['502', '503', '504', '408']):
-                    should_retry = True
-                elif '5' in error_msg and any(word in error_msg.lower() for word in ['server', 'gateway', 'timeout']):
-                    should_retry = True
-            elif isinstance(e, (ConnectionError, TimeoutError, socket.error, OSError)):
-                # Retry on network/connection errors
-                should_retry = True
-
-            # Check for 4xx errors that should not be retried
-            if any(status in error_msg for status in ['401', '403', '404']):
-                should_retry = False
-
-            if not should_retry or attempt >= max_retries - 1:
-                # Don't retry or last attempt failed
+        except xmlrpc.client.ProtocolError as e:
+            if e.errcode not in KOJI_RETRYABLE_HTTP_STATUSES or attempt >= KOJI_MAX_ATTEMPTS - 1:
                 raise
+            logging.warning("%s failed (attempt %d/%d): %s", method_name, attempt + 1, KOJI_MAX_ATTEMPTS, e)
+        except (OSError, http.client.BadStatusLine, http.client.IncompleteRead) as e:
+            if attempt >= KOJI_MAX_ATTEMPTS - 1:
+                raise
+            logging.warning("%s failed (attempt %d/%d): %s", method_name, attempt + 1, KOJI_MAX_ATTEMPTS, e)
 
-            # Retry with exponential backoff
-            logging.warning("%s failed (attempt %d/%d): %s", method_name, attempt + 1, max_retries, e)
-            logging.info("Retrying in %d seconds...", retry_delay)
-            time.sleep(retry_delay)
-            retry_delay *= 2  # Exponential backoff
+        logging.info("Retrying in %d seconds...", retry_delay)
+        time.sleep(retry_delay)
+        retry_delay *= 2
 
 
 class MdapiPackageInfo(TypedDict, total=False):
