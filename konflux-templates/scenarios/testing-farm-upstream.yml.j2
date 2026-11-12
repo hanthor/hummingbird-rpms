@@ -2,9 +2,9 @@
 apiVersion: appstudio.redhat.com/v1beta2
 kind: IntegrationTestScenario
 metadata:
-  name: {{ application }}-testing-farm-upstream
+  name: {{ application }}-{{ template }}
   labels:
-    test.appstudio.openshift.io/optional: "true"
+    test.appstudio.openshift.io/optional: "{{ 'true' if optional else 'false' }}"
   annotations:
     test.appstudio.openshift.io/pipeline_timeout: 10h
     test.appstudio.openshift.io/tasks_timeout: 9h

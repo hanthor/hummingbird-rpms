@@ -918,6 +918,28 @@ class TestItsManifestAndRendering:
         assert conforma_entries, "component-trigger entry must appear in PR manifest"
         assert all(e["group"] is False for e in conforma_entries)
 
+    def test_contexts_rendered_from_triggers_variable(self, gen_module, mock_repo_two_apps):
+        """The contexts block in the rendered CR must come from the matrix triggers list,
+        not be hardcoded in the template.  Canary triggers (component_attr-*, component_setup-*)
+        must appear verbatim in the upstream CR's contexts."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        upstream = next(
+            r for r in rendered if "name: rpms-main-testing-farm-upstream\n" in r
+        )
+        assert "- {name: component_attr-main}" in upstream
+        assert "- {name: component_setup-main}" in upstream
+
+    def test_optional_label_rendered_from_optional_variable(self, gen_module, mock_repo_two_apps):
+        """The optional label must reflect the matrix entry's optional field, not a
+        hardcoded value in the template.  testing-farm → 'false'; upstream → 'true'."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        tf = next(r for r in rendered if "name: rpms-main-testing-farm\n" in r)
+        upstream = next(r for r in rendered if "name: rpms-main-testing-farm-upstream\n" in r)
+        assert 'test.appstudio.openshift.io/optional: "false"' in tf
+        assert 'test.appstudio.openshift.io/optional: "true"' in upstream
+
 
 class TestCheckItsCoverage:
     def test_exits_when_app_has_components_but_no_its(self, gen_module):

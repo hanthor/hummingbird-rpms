@@ -259,7 +259,9 @@ def _render_its_scenarios() -> list[str]:
             tmpl = env.get_template(tmpl_name)
             text = tmpl.render(
                 application=app_name,
+                template=entry["template"],
                 triggers=entry["triggers"],
+                optional=entry.get("optional", False),
                 vars=entry.get("vars", {}),
             ).rstrip("\n")
             rendered.append(text)
