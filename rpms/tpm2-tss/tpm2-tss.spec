@@ -4,7 +4,7 @@
 %endif
 
 Name:          tpm2-tss
-Version:       4.2.1
+Version:       4.2.2
 Release:       1%{?candidate:.%{candidate}}%{?dist}
 Summary:       TPM2.0 Software Stack
 
@@ -79,7 +79,7 @@ install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_sysusersdir}/tpm2-tss.conf
 %files
 %doc README.md CHANGELOG.md
 %license LICENSE
-%{_sysconfdir}/tpm2-tss/
+%dir %{_sysconfdir}/tpm2-tss/
 %{_libdir}/libtss2-mu.so.0*
 %{_libdir}/libtss2-sys.so.1*
 %{_libdir}/libtss2-esys.so.0*
@@ -101,6 +101,7 @@ install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_sysusersdir}/tpm2-tss.conf
 %{_udevrulesdir}/%{udevrules_prefix}ltt2go-udev.rules
 
 %files fapi
+%{_sysconfdir}/tpm2-tss/fapi*
 %{_libdir}/libtss2-fapi.so.1*
 %{_tmpfilesdir}/tpm2-tss-fapi.conf
 
@@ -154,6 +155,9 @@ use tpm2-tss.
 %{_mandir}/man7/tss2*.7.gz
 
 %changelog
+* Thu Nov 12 2026 Peter Robinson <pbrobinson@fedoraproject.org> - 4.2.2-1
+- Update to 4.2.2
+
 * Fri Oct 30 2026 Peter Robinson <pbrobinson@fedoraproject.org> - 4.2.1-1
 - Update to 4.2.1
 
