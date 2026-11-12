@@ -1,0 +1,12 @@
+discover:
+  - name: Smoke-tests
+    how: shell
+    tests:
+    - name: python-import-test
+      test: python3.13 -c 'import pluggy'
+      require:
+      - python3.13
+      - python3.13-pluggy
+      duration: 1m
+execute:
+  how: tmt

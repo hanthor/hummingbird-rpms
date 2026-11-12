@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-iniconfig.git",
+    "release": "5",
+    "sha": "90b5a64e2b4e307ff64e24a7abf56ba0e81dc33e"
+  },
+  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 114778,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/pytest-dev/iniconfig",
+  "version": "2.3.0"
+}

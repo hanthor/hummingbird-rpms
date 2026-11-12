@@ -1957,6 +1957,10 @@
         "^rpms/python3\\.13\\-flit\\-core/",
         "^test/rpms/python3\\.13\\-flit\\-core\\.yml$"
       ],
+      "python3-13-iniconfig--rpms": [
+        "^rpms/python3\\.13\\-iniconfig/",
+        "^test/rpms/python3\\.13\\-iniconfig\\.yml$"
+      ],
       "python3-13-packaging--rpms": [
         "^rpms/python3\\.13\\-packaging/",
         "^test/rpms/python3\\.13\\-packaging\\.yml$"
@@ -1968,6 +1972,10 @@
       "python3-13-pip--rpms": [
         "^rpms/python3\\.13\\-pip/",
         "^test/rpms/python3\\.13\\-pip\\.yml$"
+      ],
+      "python3-13-pluggy--rpms": [
+        "^rpms/python3\\.13\\-pluggy/",
+        "^test/rpms/python3\\.13\\-pluggy\\.yml$"
       ],
       "python3-13-pycparser--rpms": [
         "^rpms/python3\\.13\\-pycparser/",
