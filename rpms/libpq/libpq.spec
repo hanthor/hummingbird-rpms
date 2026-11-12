@@ -3,7 +3,7 @@
 
 Summary: PostgreSQL client library
 Name: libpq
-Version: %{majorversion}.6
+Version: %{majorversion}.7
 Release: 0.1%{?dist}
 
 License: PostgreSQL
