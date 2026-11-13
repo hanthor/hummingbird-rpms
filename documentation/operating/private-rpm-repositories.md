@@ -182,7 +182,7 @@ If using a dedicated service account (step 1), add a Kubernetes Secret template 
      backend: hv
      meta:
        active: true
-       created_at: '<timestamp>'
+       created_at: "<timestamp>"
        deployed: true
    ```
 
@@ -223,11 +223,11 @@ If using a dedicated service account (step 1), add a Kubernetes Secret template 
    `releng/konflux/rhtap-releng-tenant/public-network/hummingbird-private-pulp-bot-production`
    with the following keys:
 
-   | Key | Value |
-   | --- | --- |
-   | `cli.toml` | Full contents of the Pulp CLI config file |
-   | `expires-on` | `na` |
-   | `owner` | Your Kerberos username |
+   | Key          | Value                                     |
+   | ------------ | ----------------------------------------- |
+   | `cli.toml`   | Full contents of the Pulp CLI config file |
+   | `expires-on` | `na`                                      |
+   | `owner`      | Your Kerberos username                    |
 
 ### 4. Create the Konflux Application
 
@@ -257,7 +257,7 @@ there following the same pattern as `rpms-main`:
    ```yaml
    - PROJECT_NAME:
        - rpms-main
-       - private-<product>-rpms-main   # add this line
+       - private-<product>-rpms-main # add this line
      PROJECT_CONTEXT:
        - konflux-rh03/hummingbird-tenant
    ```
@@ -282,14 +282,18 @@ there following the same pattern as `rpms-main`:
    The ReleasePlan connects the private Application to its ReleasePlanAdmission. Without
    it, builds in the private Application will not trigger releases.
 
-5. Copy `10-integration-test-scenarios-testing-farm.yml.j2` from `kubernetes/rpms-main/`.
-   The template is fully parameterized with `{{ env["PROJECT_NAME"] }}` so no edits are
-   needed. This may be needed to prevent the Konflux PR group integration test from
-   blocking MRs that touch private product packages.
+   The IntegrationTestScenario for the new private application is generated automatically
+   by this repo's `ci/generate_resources.py` — it derives the application list from
+   `ci/konflux_rpa_config.yml`. Once you add the RPA entry in step 5 and run
+   `make generate`, the new application's testing-farm ITS will appear in
+   `konflux-templates/rendered.yml` and the
+   [trigger manifest](https://hummingbird-project.io/l/trigger-manifests). The ITS is
+   deployed to the cluster via the `*-releases` infrastructure sync after this MR merges
+   to main.
 
-Merge this MR in the infrastructure repo first — the CI pipeline will deploy the Application,
-ReleasePlan, and IntegrationTestScenarios to the cluster. Components and RPAs in this repo
-reference it by name, so the Application must exist before they are applied.
+Merge this MR in the infrastructure repo first — the CI pipeline will deploy the Application
+and ReleasePlan to the cluster. Components and RPAs in this repo reference it by name, so
+the Application must exist before they are applied.
 
 ### 5. Add RPA configuration
 
@@ -319,14 +323,14 @@ rpas:
 
 Key fields:
 
-| Field | Purpose |
-| --- | --- |
-| `name` | Kubernetes resource name for the RPA |
-| `application_prefix` | Combined with branch to form the Konflux Application name |
-| `private_product` | Matches the `private_product` value in `package-overrides.yaml` |
-| `pulp_unsigned_domain` | Pulp domain for unsigned RPMs (staging) |
-| `pulp_signed_domain` | Pulp domain for signed RPMs (production) |
-| `pulp_secret_name` | Kubernetes secret containing Pulp publishing credentials |
+| Field                  | Purpose                                                         |
+| ---------------------- | --------------------------------------------------------------- |
+| `name`                 | Kubernetes resource name for the RPA                            |
+| `application_prefix`   | Combined with branch to form the Konflux Application name       |
+| `private_product`      | Matches the `private_product` value in `package-overrides.yaml` |
+| `pulp_unsigned_domain` | Pulp domain for unsigned RPMs (staging)                         |
+| `pulp_signed_domain`   | Pulp domain for signed RPMs (production)                        |
+| `pulp_secret_name`     | Kubernetes secret containing Pulp publishing credentials        |
 
 ### 6. Assign packages and regenerate
 
@@ -375,12 +379,12 @@ the `private_product` field returns the package to public-only publishing.
 
 ## Related Files
 
-| File | Purpose |
-| --- | --- |
-| `ci/package-overrides.yaml` | Per-package `private_product` assignment |
-| `ci/konflux_rpa_config.yml` | RPA definitions (public + private) |
-| `ci/generate_resources.py` | Generates Components, RPAs, and PipelineRuns |
-| `ci/pulp-setup/create-pulp-resources.sh` | Creates Pulp domains and repositories |
-| `konflux-templates/macros/releng/release-plan-admission.yml.j2` | RPA template |
-| `konflux-templates/macros/component.yml.j2` | Component template (per-component application) |
-| `konflux-templates/macros/image-repository.yml.j2` | ImageRepository template (per-component application) |
+| File                                                            | Purpose                                              |
+| --------------------------------------------------------------- | ---------------------------------------------------- |
+| `ci/package-overrides.yaml`                                     | Per-package `private_product` assignment             |
+| `ci/konflux_rpa_config.yml`                                     | RPA definitions (public + private)                   |
+| `ci/generate_resources.py`                                      | Generates Components, RPAs, and PipelineRuns         |
+| `ci/pulp-setup/create-pulp-resources.sh`                        | Creates Pulp domains and repositories                |
+| `konflux-templates/macros/releng/release-plan-admission.yml.j2` | RPA template                                         |
+| `konflux-templates/macros/component.yml.j2`                     | Component template (per-component application)       |
+| `konflux-templates/macros/image-repository.yml.j2`              | ImageRepository template (per-component application) |

@@ -1,0 +1,38 @@
+# Integration test scenario matrix for the rpms repo.
+# This is the single config source consumed by both the CR rendering
+# (-> konflux-templates/rendered.yml) and the trigger-manifest emission.
+#
+# Schema:
+#   applications:                  keyed by Konflux application name
+#     - template:                  scenario type; CR name = <application>-<template>
+#                                  template file: konflux-templates/scenarios/<template>.yml.j2
+#       triggers:                  Konflux trigger context names
+#       optional: true             if present and true, excluded from trigger manifests
+#       vars:                      per-instance param overrides (key: value)
+#
+# All CR content (params, resolverRefs, Renovate markers, timeout annotations)
+# lives in the template files; this file holds only the instantiation matrix.
+
+applications:
+  private-example-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
+
+  private-nodejs20-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
+
+  rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+      vars:
+        GIT_URL: https://gitlab.com/redhat/hummingbird/rpms.git
+    - template: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
