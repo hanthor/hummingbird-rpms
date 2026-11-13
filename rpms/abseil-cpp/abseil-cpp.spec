@@ -1,9 +1,9 @@
 # Installed library version
-%global lib_version 2601.0.0
+%global lib_version 2608.0.0
 
 Name:           abseil-cpp
-Version:        20260107.1
-Release:        1%{?dist}
+Version:        20260817.0
+Release:        0.1%{?dist}
 Summary:        C++ Common Libraries
 
 # The entire source is Apache-2.0, except:
@@ -137,9 +137,10 @@ skips="${skips})$"
 # All shared libraries except installed TESTONLY libraries; see the %%files
 # list for the -testing subpackage for those.
 %{_libdir}/libabsl_base.so.%{lib_version}
-%{_libdir}/libabsl_borrowed_fixup_buffer.so.%{lib_version}
+%{_libdir}/libabsl_base_cpu_detect.so.%{lib_version}
 %{_libdir}/libabsl_city.so.%{lib_version}
 %{_libdir}/libabsl_civil_time.so.%{lib_version}
+%{_libdir}/libabsl_clock_interface.so.%{lib_version}
 %{_libdir}/libabsl_cord.so.%{lib_version}
 %{_libdir}/libabsl_cord_internal.so.%{lib_version}
 %{_libdir}/libabsl_cordz_functions.so.%{lib_version}
@@ -148,7 +149,6 @@ skips="${skips})$"
 %{_libdir}/libabsl_cordz_sample_token.so.%{lib_version}
 %{_libdir}/libabsl_crc32c.so.%{lib_version}
 %{_libdir}/libabsl_crc_cord_state.so.%{lib_version}
-%{_libdir}/libabsl_crc_cpu_detect.so.%{lib_version}
 %{_libdir}/libabsl_crc_internal.so.%{lib_version}
 %{_libdir}/libabsl_debugging_internal.so.%{lib_version}
 %{_libdir}/libabsl_decode_rust_punycode.so.%{lib_version}
@@ -171,6 +171,7 @@ skips="${skips})$"
 %{_libdir}/libabsl_flags_usage_internal.so.%{lib_version}
 %{_libdir}/libabsl_generic_printer_internal.so.%{lib_version}
 %{_libdir}/libabsl_graphcycles_internal.so.%{lib_version}
+%{_libdir}/libabsl_hardening.so.%{lib_version}
 %{_libdir}/libabsl_hash.so.%{lib_version}
 %{_libdir}/libabsl_hashtable_profiler.so.%{lib_version}
 %{_libdir}/libabsl_hashtablez_sampler.so.%{lib_version}
@@ -211,9 +212,12 @@ skips="${skips})$"
 %{_libdir}/libabsl_raw_hash_set.so.%{lib_version}
 %{_libdir}/libabsl_raw_logging_internal.so.%{lib_version}
 %{_libdir}/libabsl_scoped_set_env.so.%{lib_version}
+%{_libdir}/libabsl_simulated_clock.so.%{lib_version}
+%{_libdir}/libabsl_source_location.so.%{lib_version}
 %{_libdir}/libabsl_spinlock_wait.so.%{lib_version}
 %{_libdir}/libabsl_stacktrace.so.%{lib_version}
 %{_libdir}/libabsl_status.so.%{lib_version}
+%{_libdir}/libabsl_status_builder.so.%{lib_version}
 %{_libdir}/libabsl_statusor.so.%{lib_version}
 %{_libdir}/libabsl_str_format_internal.so.%{lib_version}
 %{_libdir}/libabsl_strerror.so.%{lib_version}
