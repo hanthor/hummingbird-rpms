@@ -48,7 +48,8 @@ workflow.
 Imported packages use promotion by default. Set `push_pipeline: build` in
 `ci/package-overrides.yaml` only for a documented exception, then run `make generate`. The generator
 places each package's push-triggered PipelineRun in `.tekton/rpms-on-promotion.yaml` or
-`.tekton/rpms-on-push.yaml` accordingly. Every package remains in `trigger-manifest-push.json` so
+`.tekton/rpms-on-push.yaml` accordingly. Every package remains in `trigger-manifest-push.json` (see
+[trigger manifests documentation](https://hummingbird-project.io/l/trigger-manifests)) so
 its pushes reach Pipelines as Code. Remove the `build` override to restore promotion.
 
 Review the generated YAML and confirm the Hummingbird tools image digest is current. Keep the MR
