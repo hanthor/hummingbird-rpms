@@ -1,11 +1,11 @@
 %global pypi_name packaging
 
-# Bootstrap until the Python 3.13 frontend and test dependencies are available.
+# Specify --with bootstrap to build in bootstrap mode
 # This mode is needed, because python3-rpm-generators need packaging
-%bcond_without bootstrap
+%bcond_with bootstrap
 
-# Track this temporary stage in the PR, not in the RPM release suffix.
-%global __bootstrap %{nil}
+# Only tests using pretend/tomli-w require additional target RPM families.
+%bcond optional_tests 0
 
 # When bootstrapping, the tests and docs are disabled because the dependencies are not yet available.
 # We don't want python-pretend in future RHEL, so we disable tests on RHEL as well.
@@ -25,7 +25,7 @@
 
 Name:           python3.13-%{pypi_name}
 Version:        26.2
-Release:        4.1%{?dist}
+Release:        4.2%{?dist}
 Summary:        Core utilities for Python packages
 
 License:        BSD-2-Clause OR Apache-2.0
@@ -34,6 +34,9 @@ Source0:        %{url}/archive/%{version}/%{pypi_name}-%{version}.tar.gz
 
 # Fix test compatibility with pytest >= 9.1 (non-Collection parametrize)
 Patch:          https://github.com/pypa/packaging/commit/155760e3.patch
+%if %{with tests} && %{without optional_tests}
+Patch1:         localize-optional-test-import.patch
+%endif
 
 BuildArch:      noarch
 
@@ -48,10 +51,12 @@ BuildRequires:  python3.13-flit-core
 
 # Upstream uses nox for testing, we specify the test deps manually as well.
 %if %{with tests}
-BuildRequires:  python%{python3_pkgversion}-hypothesis
-BuildRequires:  python%{python3_pkgversion}-pytest
+BuildRequires:  python3.13-hypothesis
+BuildRequires:  python3.13-pytest
+%if %{with optional_tests}
 BuildRequires:  python%{python3_pkgversion}-pretend
 BuildRequires:  python%{python3_pkgversion}-tomli-w
+%endif
 %endif
 %if %{with docs}
 BuildRequires:  python%{python3_pkgversion}-sphinx
@@ -123,7 +128,7 @@ echo '%{python3_sitelib}/packaging*' > %{pyproject_files}
 %{!?with_bootstrap:%pyproject_check_import}
 %{?with_bootstrap:%py3_check_import packaging}
 %if %{with tests}
-%pytest
+%pytest %{!?with_optional_tests:--ignore tests/test_manylinux.py --ignore tests/test_musllinux.py --ignore tests/test_tags.py --ignore tests/test_pylock.py --deselect=tests/test_version.py::TestVersion::test_compare_other}
 %endif
 
 
