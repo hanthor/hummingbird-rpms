@@ -11,6 +11,12 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# Minimal scenarios.yml (matrix format) used by fixtures that only need ITS config to be
+# present without asserting on specific scenario content.
+_MINIMAL_SCENARIOS_YML = textwrap.dedent("""\
+    applications: {}
+""")
+
 
 @pytest.fixture
 def gen_module():
@@ -72,6 +78,7 @@ def mock_repo(tmp_path):
         REPO_ROOT / "konflux-templates" / "releng-staging.yml.j2",
         tmpl_dir / "releng-staging.yml.j2",
     )
+    (tmpl_dir / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
     return tmp_path
 
@@ -494,6 +501,28 @@ class TestPrivateProductFiltering:
         assert len(all_components) == len(rpms_dirs)
         assert len(set(all_components)) == len(all_components)
 
+_MINIMAL_RPA_CONFIG = textwrap.dedent("""\
+    global:
+      branch: main
+      tenant: hummingbird-tenant
+      release_tenant: rhtap-releng-tenant
+      git_repo: https://gitlab.com/redhat/hummingbird/rpms.git
+    rpas:
+      - name: hummingbird-rpms-tech-preview-staging
+        application_prefix: rpms
+        release_org: registry.stage.redhat.io/hummingbird-tech-preview
+        single_component_mode: true
+        service_account_name: hummingbird-rpm-release-staging
+        pulp_unsigned_domain: pub-unsigned
+        pulp_signed_domain: pub-signed
+        pulp_secret_name: pub-secret
+        pipeline_revision: dev
+        pipeline_url: https://github.com/konflux-ci/release-service-catalog.git
+        component_filter:
+          path_prefix: rpms/
+""")
+
+
 class TestPrivateProductKonfluxVariables:
     """Tests for per-component application names in Konflux variables."""
 
@@ -508,6 +537,9 @@ class TestPrivateProductKonfluxVariables:
               private_product: example
             """)
         )
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
+        (tmp_path / "konflux-templates").mkdir()
+        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -521,6 +553,9 @@ class TestPrivateProductKonfluxVariables:
         (tmp_path / "rpms" / "pkg").mkdir(parents=True)
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
+        (tmp_path / "konflux-templates").mkdir()
+        (tmp_path / "konflux-templates" / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
         with patch.object(gen_module, "ROOT_DIR", tmp_path):
             variables = gen_module.build_konflux_variables("main", "hummingbird-tenant", "https://example.com/rpms.git")
@@ -593,6 +628,29 @@ class TestBuildTriggerManifest:
         assert "^ci/" in apps["setup--rpms"]
         assert "^mock/" in apps["setup--rpms"]
 
+    def test_no_its_entries_omits_integration_test_scenarios_key(self, gen_module):
+        """build_trigger_manifest with no ITS must omit the key entirely, not emit null or {}."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "pkg", "imported": True, "manifest_triggers": ["^rpms/pkg/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push")
+        assert "integration_test_scenarios" not in manifest
+
+    def test_empty_its_entries_dict_omits_integration_test_scenarios_key(self, gen_module):
+        """An empty its_entries dict (push manifest with no component-context scenarios)
+        must also omit the key rather than emitting an empty object."""
+        pac_variables = {
+            "application_name": "rpms-main",
+            "rpms": [
+                {"dname": "pkg", "imported": True, "manifest_triggers": ["^rpms/pkg/"]},
+            ],
+        }
+        manifest = gen_module.build_trigger_manifest(pac_variables, "push", its_entries={})
+        assert "integration_test_scenarios" not in manifest
+
 
 class TestValidation:
     """Tests for configuration validation."""
@@ -626,3 +684,277 @@ class TestValidation:
         with patch.object(gen_module, "ROOT_DIR", mock_repo):
             with pytest.raises(ValueError, match="incomplete-rpa.*release_org"):
                 gen_module.generate_releng()
+
+
+class TestItsRouting:
+    """Tests for _route_its_entry (D2 fail-closed routing)."""
+
+    def test_pull_request_trigger_routes_to_pr_manifest_only(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry("myapp", "testing-farm", ["pull_request"], False)
+        assert in_pr is True
+        assert in_push is False
+
+    def test_component_trigger_routes_to_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry("myapp", "conforma", ["component"], False)
+        assert in_pr is True
+        assert in_push is True
+
+    def test_mixed_pull_request_and_component_routes_to_both(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry(
+            "myapp", "mixed", ["pull_request", "component"], False
+        )
+        assert in_pr is True
+        assert in_push is True
+
+    def test_optional_entry_excluded_from_both_manifests(self, gen_module):
+        in_pr, in_push = gen_module._route_its_entry(
+            "myapp", "testing-farm-upstream", ["component_attr-main"], True
+        )
+        assert in_pr is False
+        assert in_push is False
+
+    def test_empty_triggers_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional entry with empty trigger list must hard-error (D2 fail-closed)."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_entry("myapp", "testing-farm", [], False)
+        assert exc_info.value.code != 0
+
+    def test_unknown_trigger_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional entry with an unrecognized trigger must hard-error."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_entry("myapp", "testing-farm", ["group"], False)
+        assert exc_info.value.code != 0
+
+    def test_canary_trigger_only_non_optional_exits_nonzero(self, gen_module):
+        """Non-optional canary-only triggers (not in pull_request/component) must hard-error."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._route_its_entry(
+                "myapp", "testing-farm-upstream",
+                ["component_attr-main", "component_setup-main"], False
+            )
+        assert exc_info.value.code != 0
+
+    def test_optional_empty_triggers_does_not_error(self, gen_module):
+        """Optional entries are always silently excluded, even with empty triggers."""
+        in_pr, in_push = gen_module._route_its_entry("myapp", "testing-farm-upstream", [], True)
+        assert in_pr is False
+        assert in_push is False
+
+
+class TestItsManifestAndRendering:
+    """Tests for build_its_manifest_entries and _render_its_scenarios (D2 matrix-driven)."""
+
+    @pytest.fixture
+    def mock_repo_two_apps(self, tmp_path):
+        """Minimal repo with one public (rpms-main) + one private application."""
+        (tmp_path / "rpms" / "pkg").mkdir(parents=True)
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "package-overrides.yaml").write_text("{}\n")
+        tmpl_dir = tmp_path / "konflux-templates"
+        tmpl_dir.mkdir()
+        (tmpl_dir / "scenarios.yml").write_text(
+            textwrap.dedent("""\
+            applications:
+              rpms-main:
+                - template: testing-farm
+                  triggers: [pull_request]
+                - template: testing-farm
+                  suffix: testing-farm-upstream
+                  triggers: [component_attr-main, component_setup-main]
+                  optional: true
+                  vars:
+                    TMT_PATH_FROM_CONTEXT: "true"
+              private-example-rpms-main:
+                - template: testing-farm
+                  triggers: [pull_request]
+            """)
+        )
+        # Copy the actual scenario template so _render_its_scenarios can load it
+        scenarios_dir = tmpl_dir / "scenarios"
+        scenarios_dir.mkdir()
+        import shutil
+        shutil.copy(
+            REPO_ROOT / "konflux-templates" / "scenarios" / "testing-farm.yml.j2",
+            scenarios_dir / "testing-farm.yml.j2",
+        )
+        return tmp_path
+
+    def test_cr_count_matches_matrix_entries(self, gen_module, mock_repo_two_apps):
+        """_render_its_scenarios produces one rendered CR per matrix entry."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        # rpms-main: 2 entries; private-example-rpms-main: 1 entry
+        assert len(rendered) == 3
+
+    def test_cr_names_derived_from_app_and_template(self, gen_module, mock_repo_two_apps):
+        """CR name is <app>-<template> normally, or <app>-<suffix> when suffix is set."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        all_text = "\n".join(rendered)
+        assert "name: rpms-main-testing-farm" in all_text
+        assert "name: rpms-main-testing-farm-upstream" in all_text
+        assert "name: private-example-rpms-main-testing-farm" in all_text
+        assert "name: private-example-rpms-main-testing-farm-upstream" not in all_text
+
+    def test_all_crs_include_git_url_template_default(self, gen_module, mock_repo_two_apps):
+        """GIT_URL is a template default on both scenario types: all rendered CRs carry it.
+        Group snapshots lack the target-repo annotation and fork MRs resolve tmt plans from
+        the contributor's fork; the canonical URL pins the allowlisted target repo."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        for r in rendered:
+            assert "GIT_URL" in r, f"GIT_URL missing from: {r[:80]}"
+            assert "https://gitlab.com/redhat/hummingbird/rpms.git" in r
+
+    def test_suffix_overrides_cr_name_and_manifest_name(self, gen_module, mock_repo_two_apps):
+        """When suffix is set, CR name is <app>-<suffix> and manifest entry uses the same name.
+        Only rpms-main has an upstream entry; private apps have testing-farm only."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        all_text = "\n".join(rendered)
+        assert "name: rpms-main-testing-farm-upstream\n" in all_text
+        assert "name: private-example-rpms-main-testing-farm-upstream\n" not in all_text
+        # TMT_PATH_FROM_CONTEXT is emitted via vars loop for the rpms-main upstream
+        upstream = next(r for r in rendered if "name: rpms-main-testing-farm-upstream\n" in r)
+        assert "TMT_PATH_FROM_CONTEXT" in upstream
+
+    def test_pr_manifest_contains_non_optional_pull_request_entries(
+        self, gen_module, mock_repo_two_apps
+    ):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries()
+        pr = entries["pr"]
+        assert "rpms-main" in pr
+        assert "private-example-rpms-main" in pr
+        assert any(e["name"] == "rpms-main-testing-farm" for e in pr["rpms-main"])
+        assert all(e["group"] is True for e in pr["rpms-main"])
+
+    def test_push_manifest_is_empty_for_rpms_repo(self, gen_module, mock_repo_two_apps):
+        """rpms has no component-trigger entries so push manifest has no ITS section."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries()
+        assert entries["push"] == {}
+
+    def test_optional_entries_excluded_from_manifests(self, gen_module, mock_repo_two_apps):
+        """testing-farm-upstream (optional: true) must not appear in either manifest."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries()
+        for app_entries in entries["pr"].values():
+            assert not any("upstream" in e["name"] for e in app_entries)
+        for app_entries in entries["push"].values():
+            assert not any("upstream" in e["name"] for e in app_entries)
+
+    def test_pr_entries_sorted_by_name(self, gen_module, mock_repo_two_apps):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            entries = gen_module.build_its_manifest_entries()
+        for app_entries in entries["pr"].values():
+            names = [e["name"] for e in app_entries]
+            assert names == sorted(names)
+
+    def test_config_is_single_source_for_manifest_and_rendering(
+        self, gen_module, mock_repo_two_apps
+    ):
+        """Adding an entry to the matrix appears in both manifest and rendered CRs.
+
+        A conforma-style entry with a minimal stub template confirms the config
+        drives both outputs without further code changes.
+        """
+        # Write a minimal stub template for the new type
+        stub = (
+            mock_repo_two_apps / "konflux-templates" / "scenarios" / "conforma.yml.j2"
+        )
+        stub.write_text("---\napiVersion: appstudio.redhat.com/v1beta2\n"
+                        "kind: IntegrationTestScenario\nmetadata:\n"
+                        "  name: {{ application }}-conforma\nspec:\n"
+                        "  application: {{ application }}\n")
+
+        def config_with_conforma():
+            cfg = yaml.safe_load(
+                (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
+            )
+            cfg["applications"]["rpms-main"].append({
+                "template": "conforma",
+                "triggers": ["component"],
+            })
+            return cfg
+
+        with patch.object(gen_module, "_load_its_config", config_with_conforma):
+            with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+                rendered = gen_module._render_its_scenarios()
+            entries = gen_module.build_its_manifest_entries()
+
+        assert any("rpms-main-conforma" in r for r in rendered)
+        pr_names = {e["name"] for e in entries["pr"]["rpms-main"]}
+        assert "rpms-main-conforma" in pr_names
+        push_names = {e["name"] for e in entries["push"]["rpms-main"]}
+        assert "rpms-main-conforma" in push_names
+
+    def test_component_trigger_entry_has_group_false_in_pr_manifest(
+        self, gen_module, mock_repo_two_apps
+    ):
+        """A component-trigger (non-optional) entry must appear in PR manifest with group: false."""
+        stub = (
+            mock_repo_two_apps / "konflux-templates" / "scenarios" / "conforma.yml.j2"
+        )
+        stub.write_text("---\napiVersion: appstudio.redhat.com/v1beta2\n"
+                        "kind: IntegrationTestScenario\nmetadata:\n"
+                        "  name: {{ application }}-conforma\nspec:\n"
+                        "  application: {{ application }}\n")
+
+        def config_with_conforma():
+            cfg = yaml.safe_load(
+                (mock_repo_two_apps / "konflux-templates" / "scenarios.yml").read_text()
+            )
+            cfg["applications"]["rpms-main"].append({
+                "template": "conforma",
+                "triggers": ["component"],
+            })
+            return cfg
+
+        with patch.object(gen_module, "_load_its_config", config_with_conforma):
+            entries = gen_module.build_its_manifest_entries()
+        conforma_entries = [
+            e for e in entries["pr"]["rpms-main"] if "conforma" in e["name"]
+        ]
+        assert conforma_entries, "component-trigger entry must appear in PR manifest"
+        assert all(e["group"] is False for e in conforma_entries)
+
+    def test_contexts_rendered_from_triggers_variable(self, gen_module, mock_repo_two_apps):
+        """The contexts block in the rendered CR must come from the matrix triggers list,
+        not be hardcoded in the template.  Canary triggers (component_attr-*, component_setup-*)
+        must appear verbatim in the upstream CR's contexts."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        upstream = next(
+            r for r in rendered if "name: rpms-main-testing-farm-upstream\n" in r
+        )
+        assert "- {name: component_attr-main}" in upstream
+        assert "- {name: component_setup-main}" in upstream
+
+    def test_optional_label_rendered_from_optional_variable(self, gen_module, mock_repo_two_apps):
+        """The optional label must reflect the matrix entry's optional field, not a
+        hardcoded value in the template.  testing-farm → 'false'; upstream → 'true'."""
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_two_apps):
+            rendered = gen_module._render_its_scenarios()
+        tf = next(r for r in rendered if "name: rpms-main-testing-farm\n" in r)
+        upstream = next(r for r in rendered if "name: rpms-main-testing-farm-upstream\n" in r)
+        assert 'test.appstudio.openshift.io/optional: "false"' in tf
+        assert 'test.appstudio.openshift.io/optional: "true"' in upstream
+
+
+class TestCheckItsCoverage:
+    def test_exits_when_app_has_components_but_no_its(self, gen_module):
+        """An application with components but no ITS must hard-error (D2 fail-closed)."""
+        with pytest.raises(SystemExit) as exc_info:
+            gen_module._check_its_coverage(
+                its_app_names={"rpms-main"},
+                manifest_app_names={"rpms-main", "private-orphan-rpms-main"},
+            )
+        assert exc_info.value.code != 0
+
+    def test_passes_when_all_apps_covered(self, gen_module):
+        """No error when every application with components also has an ITS."""
+        gen_module._check_its_coverage(
+            its_app_names={"rpms-main", "private-example-rpms-main"},
+            manifest_app_names={"rpms-main", "private-example-rpms-main"},
+        )
