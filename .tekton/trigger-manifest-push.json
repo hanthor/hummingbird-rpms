@@ -1469,6 +1469,9 @@
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/"
       ],
+      "python3-13-hatch-fancy-pypi-readme--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme/"
+      ],
       "python3-13-hatch-vcs--rpms": [
         "^rpms/python3\\.13\\-hatch\\-vcs/"
       ],

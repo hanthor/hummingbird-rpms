@@ -1059,6 +1059,8 @@ spec:
           contentType: rpm
         - name: python3-13-flit-core-main
           contentType: rpm
+        - name: python3-13-hatch-fancy-pypi-readme-main
+          contentType: rpm
         - name: python3-13-hatch-vcs-main
           contentType: rpm
         - name: python3-13-hatchling-main

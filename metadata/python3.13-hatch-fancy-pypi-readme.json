@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/python-hatch-fancy-pypi-readme.git",
+    "release": "6",
+    "sha": "0ae7693f6b3be1ce6f77c24f69d2035cb277adae"
+  },
+  "modification_reason": "Python 3.13 variant with reviewed test checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 274452,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/hynek/hatch-fancy-pypi-readme",
+  "version": "25.1.0"
+}

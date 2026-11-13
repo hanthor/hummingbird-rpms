@@ -1957,6 +1957,10 @@
         "^rpms/python3\\.13\\-flit\\-core/",
         "^test/rpms/python3\\.13\\-flit\\-core\\.yml$"
       ],
+      "python3-13-hatch-fancy-pypi-readme--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme/",
+        "^test/rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme\\.yml$"
+      ],
       "python3-13-hatch-vcs--rpms": [
         "^rpms/python3\\.13\\-hatch\\-vcs/",
         "^test/rpms/python3\\.13\\-hatch\\-vcs\\.yml$"
