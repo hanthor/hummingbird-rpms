@@ -1,0 +1,21 @@
+applications:
+  private-example-rpms-main:
+  - template: testing-farm
+    triggers:
+    - pull_request
+  private-nodejs20-rpms-main:
+  - template: testing-farm
+    triggers:
+    - pull_request
+  rpms-main:
+  - template: testing-farm
+    triggers:
+    - pull_request
+  - template: testing-farm
+    suffix: testing-farm-upstream
+    triggers:
+    - component_attr-main
+    - component_setup-main
+    optional: true
+    vars:
+      TMT_PATH_FROM_CONTEXT: 'true'

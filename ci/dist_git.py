@@ -611,6 +611,26 @@ def _insert_top_level_yaml_block(lines: list[str], key: str, block_text: str) ->
     return lines[:insert_at] + block_lines + ['\n'] + lines[insert_at:]
 
 
+def _add_scenarios_application(
+    scenarios_path: Path, app_name: str, entries: list[dict]
+) -> None:
+    """Insert a new application entry into konflux-templates/scenarios.yml in sorted order.
+
+    Loads the file with yaml.safe_load, adds the entry, keeps applications sorted by name,
+    and writes back with yaml.safe_dump (canonical PyYAML output, no comments).
+    """
+    with open(scenarios_path) as f:
+        data = yaml.safe_load(f)
+    apps = data.setdefault("applications", {})
+    if app_name in apps:
+        logging.error(f"Application '{app_name}' already exists in {scenarios_path}")
+        sys.exit(1)
+    apps[app_name] = entries
+    data["applications"] = dict(sorted(apps.items()))
+    with open(scenarios_path, "w") as f:
+        yaml.safe_dump(data, f, sort_keys=False, default_flow_style=False)
+
+
 def _append_key_to_yaml_block(lines: list[str], start: int, end: int, line_text: str) -> list[str]:
     """Append a line to an existing YAML block, before any trailing blank separator lines."""
     insert_at = end
@@ -3169,11 +3189,6 @@ def _setup_infra_repo(product: str, infra_path: Path, dry_run: bool) -> None:
     (target_dir / "01-release-plans.yml.j2").write_text(release_plan_content)
     logging.info(f"Created 01-release-plans.yml.j2 for {project_name}")
 
-    its_src = rpms_main_dir / "10-integration-test-scenarios-testing-farm.yml.j2"
-    if its_src.exists():
-        shutil.copy(its_src, target_dir / "10-integration-test-scenarios-testing-farm.yml.j2")
-        logging.info(f"Copied IntegrationTestScenario template to {target_dir}")
-
     ci_yml_path = infra_path / ".gitlab-ci.yml"
     ci_content = ci_yml_path.read_text()
     marker = "          - rpms-main\n"
@@ -3294,6 +3309,15 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
                 )
         overrides_path.write_text(''.join(overrides_lines))
         logging.info(f"Assigned packages to product '{product}': {', '.join(packages)}")
+
+    scenarios_path = ROOT_DIR / 'konflux-templates' / 'scenarios.yml'
+    app_name = f"private-{product}-rpms-main"
+    app_entries = [{"template": "testing-farm", "triggers": ["pull_request"]}]
+    if dry_run:
+        logging.info(f"Dry run: would add '{app_name}' to {scenarios_path.relative_to(ROOT_DIR)}")
+    else:
+        _add_scenarios_application(scenarios_path, app_name, app_entries)
+        logging.info(f"Added '{app_name}' to {scenarios_path.relative_to(ROOT_DIR)}")
 
     _setup_infra_repo(product, Path(infra_repo), dry_run)
 
