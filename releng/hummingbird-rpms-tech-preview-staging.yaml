@@ -1063,6 +1063,8 @@ spec:
           contentType: rpm
         - name: python3-13-charset-normalizer-main
           contentType: rpm
+        - name: python3-13-cryptography-main
+          contentType: rpm
         - name: python3-13-flit-core-main
           contentType: rpm
         - name: python3-13-hatch-fancy-pypi-readme-main

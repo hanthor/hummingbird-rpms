@@ -1,0 +1,28 @@
+From 72638fcabdc25d94de9c99567fc2ecc880a181aa Mon Sep 17 00:00:00 2001
+From: Jeremy Cline <jeremycline@microsoft.com>
+Date: Tue, 5 May 2026 07:43:30 -0400
+Subject: [PATCH] Lower cc dependency
+
+Fedora has 1.2.62 and 63 is just a dep bump
+
+Signed-off-by: Jeremy Cline <jeremycline@microsoft.com>
+---
+ Cargo.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 79ea7aa3c..e8b1a9af9 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -23,7 +23,7 @@ license = "Apache-2.0 OR BSD-3-Clause"
+ [workspace.dependencies]
+ asn1 = { version = "0.24.1", default-features = false }
+ base64 = "0.23"
+-cc = "1.2.63"
++cc = "1.2.62"
+ cfg-if = "1"
+ foreign-types = "0.3"
+ foreign-types-shared = "0.1"
+-- 
+2.55.0
+
