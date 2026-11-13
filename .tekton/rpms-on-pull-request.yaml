@@ -40448,6 +40448,85 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- python3.13-pytest ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-pytest/")
+            || x.matches("^test/rpms/python3\\.13\\-pytest\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-pytest-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-pytest-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-pytest-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: pytest
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "pytest.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-pytest"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-pytest-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- python3.13-setuptools ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
