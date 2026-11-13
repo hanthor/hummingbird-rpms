@@ -1057,6 +1057,8 @@ spec:
           contentType: rpm
         - name: python3-13-main
           contentType: rpm
+        - name: python3-13-attrs-main
+          contentType: rpm
         - name: python3-13-cffi-main
           contentType: rpm
         - name: python3-13-charset-normalizer-main
@@ -1088,6 +1090,8 @@ spec:
         - name: python3-13-semantic-version-main
           contentType: rpm
         - name: python3-13-setuptools-main
+          contentType: rpm
+        - name: python3-13-setuptools-rust-main
           contentType: rpm
         - name: python3-13-setuptools-scm-main
           contentType: rpm

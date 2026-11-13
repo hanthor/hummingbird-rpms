@@ -1,0 +1,124 @@
+# RHEL does not have packaged rust libraries
+%bcond packaged_rust_libraries 0
+# The integration tests depend on the presence of these libraries
+%bcond integration_tests %{with packaged_rust_libraries}
+# Regex of integration tests to skip.
+#  * html-py-ever requires unpackaged rust crates
+%global integration_tests_exc '^(html-py-ever)'
+
+Name:           python3.13-setuptools-rust
+Version:        1.13.0
+Release:        1.1%{?dist}
+Summary:        Setuptools Rust extension plugin
+
+License:        MIT
+URL:            https://github.com/PyO3/setuptools-rust
+Source:         %{pypi_source setuptools_rust}
+
+# Update examples to use PyO3 0.29. Some already have upstream dependabot PR’s:
+#
+# build(deps): bump pyo3 from 0.28.3 to 0.29.0 in /examples/namespace_package
+# https://github.com/PyO3/setuptools-rust/pull/596
+# build(deps): bump pyo3 from 0.28.3 to 0.29.0 in /examples/hello-world
+# https://github.com/PyO3/setuptools-rust/pull/597
+#
+# We presume that the others will get dependabot PR’s shortly.
+Patch:          setuptools_rust-1.13.0-PyO3-0.29.patch
+
+BuildArch:      noarch
+
+# Static requirements must select the target before interpreter macros load.
+BuildRequires:  python3.13-devel >= 3.13.18-1.3
+BuildRequires:  python3.13-pytest
+%if %{undefined rhel} || %{defined epel}
+BuildRequires:  cargo-rpm-macros >= 24
+%else
+# RHEL has rust-toolset instead of cargo-rpm-macros
+BuildRequires:  rust-toolset >= 1.45
+%endif
+%if %{with integration_tests}
+BuildRequires:  python3.13-cffi
+%endif
+
+%global _description %{expand:
+Setuptools helpers for Rust Python extensions. Compile and distribute Python
+extensions written in Rust as easily as if they were written in C.}
+
+Requires:       cargo
+
+%description %{_description}
+
+
+%prep
+%autosetup -p1 -n setuptools_rust-%{version}
+
+%cargo_prep
+
+%if %{with integration_tests}
+for example in $(ls examples/ | grep -vE %{integration_tests_exc}); do
+    cd "examples/${example}"
+    %cargo_prep
+    cd -
+done
+%endif
+
+
+%generate_buildrequires
+%pyproject_buildrequires
+%if %{with integration_tests}
+for example in $(ls examples/ | grep -vE %{integration_tests_exc}); do
+    cd "examples/${example}"
+    %cargo_generate_buildrequires
+    cd - >&2
+done
+%endif
+
+
+%build
+%pyproject_wheel
+
+
+%install
+%pyproject_install
+%pyproject_save_files -l setuptools_rust
+
+
+%check
+%pyproject_check_import
+# Disable tests that require internet access and/or test Windows functionality
+%global test_ignores %{shrink:
+        not test_adjusted_local_rust_target_windows_msvc
+    and not test_get_lib_name_namespace_package
+}
+
+%if %{without packaged_rust_libraries}
+%global test_ignores %{shrink:%{test_ignores}
+    and not test_metadata_contents
+    and not test_metadata_cargo_log
+}
+%endif
+
+%pytest tests/ setuptools_rust/ --import-mode importlib -k '%{test_ignores}'
+
+%if %{with integration_tests}
+export %{py3_test_envvars}
+%global _pyproject_wheeldir dist
+for example in $(ls examples/ | grep -vE %{integration_tests_exc}); do
+    cd "examples/${example}"
+    %pyproject_wheel
+    if [ -d "tests/" ]; then
+        %{python3} -m venv venv --system-site-packages
+        ./venv/bin/pip install dist/*.whl
+        ./venv/bin/python -Pm pytest tests/
+    fi
+    cd -
+done
+%endif
+
+
+%files -f %{pyproject_files}
+%doc README.md CHANGELOG.md
+
+
+%changelog
+%autochangelog

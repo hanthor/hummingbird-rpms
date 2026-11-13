@@ -1953,6 +1953,10 @@
         "^rpms/python3\\.13/",
         "^test/rpms/python3\\.13\\.yml$"
       ],
+      "python3-13-attrs--rpms": [
+        "^rpms/python3\\.13\\-attrs/",
+        "^test/rpms/python3\\.13\\-attrs\\.yml$"
+      ],
       "python3-13-cffi--rpms": [
         "^rpms/python3\\.13\\-cffi/",
         "^test/rpms/python3\\.13\\-cffi\\.yml$"
@@ -2016,6 +2020,10 @@
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"
+      ],
+      "python3-13-setuptools-rust--rpms": [
+        "^rpms/python3\\.13\\-setuptools\\-rust/",
+        "^test/rpms/python3\\.13\\-setuptools\\-rust\\.yml$"
       ],
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/",
