@@ -72,6 +72,14 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  - file: "grafana-yarn-cache-13.1.10.tar.bz2"
+    checksum: "435aa19332fba159fa806fb8f531a0557c3e6e110d53919503a4c976eb2342d02f0f8f27491641179bcc7845b16f44b8440e38ebb9383f31b38d47a55e05d539"
+    reason: "grafana-hono-papaparse-cve.patch bumps hono 4.13.13->4.13.16 (CVE-2026-126355/126356/126357/126358/126359) and papaparse 5.5.3->5.7.1 (CVE-2026-127056); yarn cache regenerated without stale hono-4.13.13 and papaparse-5.5.3 zips"
+  # HUM-12800 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; Patch31 syncs Source0 go.mod/go.sum.
+  - file: "grafana-13.1.10-vendor.tar.bz2"
+    checksum: "45fc9366083d16369c70b8a4d71d989887b0291cda4e448502fe28cc59586980b5d4012ae585a288144ecfc7bdbad4948b57d9ce1ea4c3c6aaf308e5c9adf617"
+    reason: "HUM-12800: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
   - file: "grafana-13.1.8-vendor.tar.bz2"
     checksum: "fed97c406dbf4d5a7bf8fe05dbd910a606cc0a799564bcc1e33b68943d698f866f1d3a550980c16c9b896e67b6ba392d37b1cbcb8a7b8c320947bb988d849005"
     reason: "go-vendor-tools.toml pre_command bumps klauspost/compress 1.19.1->1.20.2 for CVE-2026-116591; vendor archive regenerated"
