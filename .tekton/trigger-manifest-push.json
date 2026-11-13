@@ -1493,6 +1493,9 @@
       "python3-13-pygments--rpms": [
         "^rpms/python3\\.13\\-pygments/"
       ],
+      "python3-13-pytest--rpms": [
+        "^rpms/python3\\.13\\-pytest/"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/"
       ],
