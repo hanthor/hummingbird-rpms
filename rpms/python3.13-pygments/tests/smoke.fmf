@@ -1,0 +1,6 @@
+framework: shell
+require:
+- python3.13
+- python3.13-pygments
+/version:
+    test: python3.13 -m pygments -V
