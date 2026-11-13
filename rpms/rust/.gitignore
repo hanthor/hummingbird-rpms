@@ -492,3 +492,6 @@
 /wasi-libc-wasi-sdk-34.tar.gz
 /rustc-1.99.1-src.tar.xz
 /rustc-1.99.1-src.tar.xz.asc
+rustc-1.100.0-src.tar.xz
+rustc-1.100.0-src.tar.xz.asc
+wasi-libc-wasi-sdk-34.tar.gz
