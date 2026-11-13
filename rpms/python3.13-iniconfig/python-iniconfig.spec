@@ -6,8 +6,8 @@
 %global __bootstrap %{nil}
 
 Name:               python3.13-iniconfig
-Version:            2.3.0
-Release:            5.1%{?dist}
+Version:            2.3.1
+Release:            0.1%{?dist}
 Summary:            Brain-dead simple parsing of ini files
 # SPDX
 License:            MIT
