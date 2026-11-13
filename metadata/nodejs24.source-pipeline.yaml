@@ -27,7 +27,7 @@ transform:
 
   - type: strip-tarball
     target: "node-v${VERSION}.tar.gz"
-    paths: ["*/deps/openssl"]
+    paths: ["*/deps/openssl", "*/deps/npm"]
 
   # Discover the bundled ICU version from the tarball, fetch its two data zips.
   - type: run
@@ -83,3 +83,9 @@ accepted-checksums:
     reason: >-
       Node 24.21.0 update changes the npm subpackage epoch from 1 to 2 in
       packaging/fill-versions.sh; this archive includes that updated script.
+  - file: "packaging-scripts.tar.gz"
+    checksum: "0ccccd6667deb1685a7c8d104ce501db8a12047ad53c8cde7f191bf0abc780d436184275c634d1d080f721b41d506ab561360bd0cb891edc0c48a8c89bc1e55e"
+    reason: "Strip npm in the legacy tarball helper and allow version extraction without npm sources."
+  - file: "node-v24.22.3.tar.gz"
+    checksum: "fcc950bd9fa3e93f3a3140fd9404c8cf64db86f6b305ac9b0add0ea5b02060872f3e4c42a9b4a2fd7b5ca7abb2fbd782cbd5ca5fb2ce82c67d16a631aef0be2b"
+    reason: "Remove bundled npm and its version extraction from the Node.js sources and packaging scripts."
