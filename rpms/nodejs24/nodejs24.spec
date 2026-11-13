@@ -346,6 +346,10 @@ which contains the appropriate version of Node.js Package Manager.
 
 %prep
 %autosetup -n node-v%{node_version} -S git_am
+%if %{without npm}
+# This benchmark needs bundled CLI tools that are absent after npm removal.
+rm -f benchmark/misc/startup-cli-version.js
+%endif
 # clean the archive of the de-vendored dependencies, ensuring they are not used
 readonly -a devendored_paths=(
     deps/v8/third_party/jinja2 tools/inspector_protocol/jinja2
