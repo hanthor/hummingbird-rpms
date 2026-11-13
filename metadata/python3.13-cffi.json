@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-cffi.git",
+    "release": "1",
+    "sha": "c0e0c9e21e0c07aec11ad22b6334b9af80f9a83c"
+  },
+  "modification_reason": "Python 3.13 variant retaining full tests and docs",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 5536,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/python-cffi/cffi",
+  "version": "2.1.1"
+}

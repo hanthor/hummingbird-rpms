@@ -1057,6 +1057,8 @@ spec:
           contentType: rpm
         - name: python3-13-main
           contentType: rpm
+        - name: python3-13-cffi-main
+          contentType: rpm
         - name: python3-13-charset-normalizer-main
           contentType: rpm
         - name: python3-13-flit-core-main
