@@ -5,7 +5,7 @@
     "release": "1",
     "sha": "6f34efa342e5c080d6c65a6df035e011116409f3"
   },
-  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_reason": "Python 3.13 variant with serial test checks",
   "modification_status": "modified",
   "release_monitoring_project_id": 389421,
   "track_upstream": "latest",

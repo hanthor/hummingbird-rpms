@@ -39737,6 +39737,164 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- python3.13-cffi ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-cffi/")
+            || x.matches("^test/rpms/python3\\.13\\-cffi\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-cffi-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-cffi-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-cffi-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-cffi
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-cffi.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-cffi"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-cffi-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python3.13-charset-normalizer ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-charset\\-normalizer/")
+            || x.matches("^test/rpms/python3\\.13\\-charset\\-normalizer\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-charset-normalizer-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-charset-normalizer-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-charset-normalizer-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-charset-normalizer
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-charset-normalizer.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-charset-normalizer"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-charset-normalizer-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- python3.13-flit-core ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -39807,6 +39965,164 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-python3-13-flit-core-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python3.13-hatch-fancy-pypi-readme ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme/")
+            || x.matches("^test/rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-hatch-fancy-pypi-readme-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-hatch-fancy-pypi-readme-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-hatch-fancy-pypi-readme-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-hatch-fancy-pypi-readme
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-hatch-fancy-pypi-readme.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-hatch-fancy-pypi-readme"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-hatch-fancy-pypi-readme-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python3.13-hatch-vcs ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-hatch\\-vcs/")
+            || x.matches("^test/rpms/python3\\.13\\-hatch\\-vcs\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-hatch-vcs-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-hatch-vcs-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-hatch-vcs-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-hatch-vcs
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-hatch-vcs.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-hatch-vcs"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-hatch-vcs-main
   timeouts:
     pipeline: 4h
     tasks: 4h
@@ -40531,6 +40847,85 @@ spec:
         secretName: '{{git_auth_secret}}'
 
 ---
+# --- python3.13-semantic_version ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-semantic_version/")
+            || x.matches("^test/rpms/python3\\.13\\-semantic_version\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-semantic-version-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-semantic-version-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-semantic-version-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-semantic_version
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-semantic_version.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-semantic_version"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-semantic-version-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
 # --- python3.13-setuptools ---
 apiVersion: tekton.dev/v1
 kind: PipelineRun
@@ -40680,6 +41075,85 @@ spec:
         value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
   taskRunTemplate:
     serviceAccountName: build-pipeline-python3-13-setuptools-scm-main
+  timeouts:
+    pipeline: 4h
+    tasks: 4h
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{git_auth_secret}}'
+
+---
+# --- python3.13-sortedcontainers ---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://gitlab.com/redhat/hummingbird/rpms/-/tree/{{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        files.all.exists(x,
+          (
+               x.matches("^rpms/python3\\.13\\-sortedcontainers/")
+            || x.matches("^test/rpms/python3\\.13\\-sortedcontainers\\.yml$")
+          )
+        )
+      )
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rpms-main
+    appstudio.openshift.io/component: python3-13-sortedcontainers-main
+    pipelines.appstudio.openshift.io/type: build
+  name: python3-13-sortedcontainers-main-on-pull-request
+  namespace: hummingbird-tenant
+spec:
+  params:
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: purl-rpm-namespace
+      value: "redhat"
+    - name: image-expires-after
+      value: "5d"
+    - name: ociStorage
+      value: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-sortedcontainers-main:on-mr-{{pull_request_number}}-{{revision}}
+    - name: package-name
+      value: python-sortedcontainers
+    - name: target-branch
+      value: '{{target_branch}}'
+    - name: build-architectures
+      value:
+        - aarch64
+        - x86_64
+        - s390x
+    - name: build-platforms
+      value:
+        - "linux/x86_64"
+        - "linux/arm64"
+        - "linux/s390x"
+    - name: specfile
+      value: "python-sortedcontainers.spec"
+    - name: monorepo-subdir
+      value: "rpms/python3.13-sortedcontainers"
+    - name: mock-config-template-filename-in-sources
+      value: "mock/mock.cfg"
+  pipelineRef:
+    resolver: bundles
+    params:
+      - name: name
+        value: build-rpm-package
+      - name: kind
+        value: pipeline
+      - name: bundle
+        value: "quay.io/hummingbird-ci/rpmbuild-pipeline:latest@sha256:119096893b0bcd007c6f243a6363b83216945b5a61dee77953b3d094bc2f7122"
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-python3-13-sortedcontainers-main
   timeouts:
     pipeline: 4h
     tasks: 4h

@@ -1057,7 +1057,15 @@ spec:
           contentType: rpm
         - name: python3-13-main
           contentType: rpm
+        - name: python3-13-cffi-main
+          contentType: rpm
+        - name: python3-13-charset-normalizer-main
+          contentType: rpm
         - name: python3-13-flit-core-main
+          contentType: rpm
+        - name: python3-13-hatch-fancy-pypi-readme-main
+          contentType: rpm
+        - name: python3-13-hatch-vcs-main
           contentType: rpm
         - name: python3-13-hatchling-main
           contentType: rpm
@@ -1077,9 +1085,13 @@ spec:
           contentType: rpm
         - name: python3-13-pytest-main
           contentType: rpm
+        - name: python3-13-semantic-version-main
+          contentType: rpm
         - name: python3-13-setuptools-main
           contentType: rpm
         - name: python3-13-setuptools-scm-main
+          contentType: rpm
+        - name: python3-13-sortedcontainers-main
           contentType: rpm
         - name: python3-13-tomlkit-main
           contentType: rpm
