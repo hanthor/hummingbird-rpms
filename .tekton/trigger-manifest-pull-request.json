@@ -1985,6 +1985,10 @@
         "^rpms/python3\\.13\\-hypothesis/",
         "^test/rpms/python3\\.13\\-hypothesis\\.yml$"
       ],
+      "python3-13-idna--rpms": [
+        "^rpms/python3\\.13\\-idna/",
+        "^test/rpms/python3\\.13\\-idna\\.yml$"
+      ],
       "python3-13-iniconfig--rpms": [
         "^rpms/python3\\.13\\-iniconfig/",
         "^test/rpms/python3\\.13\\-iniconfig\\.yml$"

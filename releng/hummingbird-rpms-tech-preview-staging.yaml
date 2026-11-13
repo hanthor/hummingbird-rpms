@@ -1073,6 +1073,8 @@ spec:
           contentType: rpm
         - name: python3-13-hypothesis-main
           contentType: rpm
+        - name: python3-13-idna-main
+          contentType: rpm
         - name: python3-13-iniconfig-main
           contentType: rpm
         - name: python3-13-maturin-main

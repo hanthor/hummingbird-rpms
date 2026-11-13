@@ -1490,6 +1490,9 @@
       "python3-13-hypothesis--rpms": [
         "^rpms/python3\\.13\\-hypothesis/"
       ],
+      "python3-13-idna--rpms": [
+        "^rpms/python3\\.13\\-idna/"
+      ],
       "python3-13-iniconfig--rpms": [
         "^rpms/python3\\.13\\-iniconfig/"
       ],
