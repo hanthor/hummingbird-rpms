@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rsync.git",
-    "release": "1",
     "sha": "84ccdc1cebf07000716192181d9a9af7592fb1f1"
   },
-  "modification_reason": "Backport CVE-2026-119741",
+  "modification_reason": "Update to upstream version 3.5.2",
   "modification_status": "modified",
   "release_monitoring_project_id": 4217,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/RsyncProject/rsync",
-  "version": "3.5.1"
+  "version": "3.5.2"
 }
