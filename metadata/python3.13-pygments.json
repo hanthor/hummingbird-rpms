@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-pygments.git",
+    "release": "1",
+    "sha": "bbf5642ceaa1ada05d62c1a20688fcaf6f626e85"
+  },
+  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 3986,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/pygments/pygments",
+  "version": "2.21.0"
+}
