@@ -1,17 +1,15 @@
 # When bootstrapping new Python we need to build flit in bootstrap mode.
 # The Python RPM dependency generators and pip are not yet available.
-%bcond bootstrap 1
-
-# Track this temporary stage in the PR, not in the RPM release suffix.
-%global __bootstrap %{nil}
+%bcond bootstrap 0
 
 # Tests are enabled by default, unless we bootstrap.
 # Disable them to avoid a circular build dependency on testpath.
 %bcond tests %{without bootstrap}
+%bcond testpath_tests 0
 
 Name:           python3.13-flit-core
 Version:        3.12.0
-Release:        10.1%{?dist}
+Release:        10.2%{?dist}
 Summary:        PEP 517 build backend for packages using Flit
 
 # flit-core is BSD-3-Clause
@@ -26,9 +24,11 @@ BuildArch:      noarch
 BuildRequires:  python3.13-devel >= 3.13.18-1.3
 
 %if %{with tests}
-BuildRequires:  python%{python3_pkgversion}-pytest
+BuildRequires:  python3.13-pytest
 # Test deps that require flit-core to build:
+%if %{with testpath_tests}
 BuildRequires:  python%{python3_pkgversion}-testpath
+%endif
 %endif
 
 %global _description %{expand:
@@ -72,8 +72,6 @@ sed -iE 's/, *"flit_core\/vendor\/\*\*\/LICENSE\*"//' pyproject.toml
 
 %install
 %if %{with bootstrap}
-# zipfile extraction uses the process umask, not wheel Unix permission bits.
-umask 022
 %{python3} bootstrap_install.py --install-root %{buildroot} dist/flit_core-%{version}-py3-none-any.whl
 # for consistency with %%pyproject_install/brp-python-rpm-in-distinfo:
 echo rpm > %{buildroot}%{python3_sitelib}/flit_core-%{version}.dist-info/INSTALLER
@@ -85,7 +83,7 @@ rm %{buildroot}%{python3_sitelib}/flit_core-%{version}.dist-info/RECORD
 %check
 %py3_check_import flit_core flit_core.buildapi
 %if %{with tests}
-%pytest
+%pytest %{!?with_testpath_tests:--ignore tests_core/test_build_thyself.py --ignore tests_core/test_buildapi.py --ignore tests_core/test_sdist.py --ignore tests_core/test_wheel.py}
 %endif
 
 
