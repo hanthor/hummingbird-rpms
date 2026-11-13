@@ -1487,8 +1487,14 @@
       "python3-13-hatchling--rpms": [
         "^rpms/python3\\.13\\-hatchling/"
       ],
+      "python3-13-hypothesis--rpms": [
+        "^rpms/python3\\.13\\-hypothesis/"
+      ],
       "python3-13-iniconfig--rpms": [
         "^rpms/python3\\.13\\-iniconfig/"
+      ],
+      "python3-13-maturin--rpms": [
+        "^rpms/python3\\.13\\-maturin/"
       ],
       "python3-13-packaging--rpms": [
         "^rpms/python3\\.13\\-packaging/"

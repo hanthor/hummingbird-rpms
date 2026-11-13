@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/maturin.git",
+    "release": "1",
+    "sha": "b0862851a45fb0637a9f2e374c91257dd1cf1d33"
+  },
+  "modification_reason": "Python 3.13 variant with retained import and CLI checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 42653,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/PyO3/maturin",
+  "version": "1.15.0"
+}

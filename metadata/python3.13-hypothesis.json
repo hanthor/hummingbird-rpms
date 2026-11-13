@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/python-hypothesis.git",
+    "release": "8",
+    "sha": "414177258be2945306fdffd4921b9b063ebd2db1"
+  },
+  "modification_reason": "Python 3.13 variant with retained import checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 7372,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/HypothesisWorks/hypothesis",
+  "version": "6.123.0"
+}
