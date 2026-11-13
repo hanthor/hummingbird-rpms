@@ -9,8 +9,8 @@
 %global __bootstrap %{nil}
 
 Name:           python3.13-setuptools_scm
-Version:        10.2.1
-Release:        2.1%{?dist}
+Version:        10.3.4
+Release:        0.1%{?dist}
 Summary:        Blessed package to manage your versions by SCM tags
 
 # SPDX

@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-setuptools_scm.git",
-    "release": "2",
     "sha": "8f71abaefe4b965c8edc2fbbb61d04bc1955e38d"
   },
-  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_reason": "Update to upstream version 10.3.4",
   "modification_status": "modified",
   "release_monitoring_project_id": 7874,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pypa/setuptools-scm",
-  "version": "10.2.1"
+  "version": "10.3.4"
 }
