@@ -5383,29 +5383,58 @@ def test_rebuild_rev_deps_no_dependencies(imported_workdir, upstream_repos: dict
     assert 'No packages found with BuildRequires: vanilla' in result.stderr
 
 
-def test_ls_sources() -> None:
-    """Integration test: ls-sources on tar"""
+@pytest.mark.parametrize('independent', [False, True])
+def test_ls_sources(
+    tmp_path: Path, dist_git_module, monkeypatch: pytest.MonkeyPatch,
+    capfd: pytest.CaptureFixture[str], independent: bool,
+) -> None:
+    """List a local archive with only the source download replaced."""
+    package_dir = tmp_path / 'rpms' / 'example'
+    archive = _make_source_tarball(package_dir, 'example-1.0', {'configure': '#!/bin/sh\n'})
+    signature = f'{archive.name}.sig'
+    (package_dir / signature).write_text('test signature\n')
+    (package_dir / 'sources').write_text(
+        f'SHA512 ({archive.name}) = abc123\nSHA512 ({signature}) = def456\n'
+    )
+    fedora_url = 'https://src.fedoraproject.org/rpms/example.git'
+    if independent:
+        metadata = dist_git_module.IndependentPackageMetadata(
+            package_name='example', version='1.0', upstream_repo=fedora_url,
+        )
+        source_url = 'https://gitlab.com/redhat/hummingbird/rpms/example.git'
+    else:
+        metadata = dist_git_module.CleanPackageMetadata(
+            package_name='example', version='1.0', upstream_repo=fedora_url,
+            fedora=dist_git_module.FedoraOriginWithRelease(
+                git_url=fedora_url, branch='rawhide', sha='a' * 40, release='1',
+            ),
+        )
+        source_url = fedora_url
+    monkeypatch.setattr(dist_git_module, 'RPMS_DIR', tmp_path / 'rpms')
+    monkeypatch.setattr(dist_git_module, 'imports', {'example': metadata})
+    download_cmd = [
+        'dist-git-client', '--configdir', str(dist_git_module.ROOT_DIR / 'mock'),
+        '--loglevel', 'warning', '--forked-from', source_url, 'sources',
+    ]
+    real_run = subprocess.run
 
-    # This calls the actual dist-git-client and thus downloads the archives
-    # (in the first run). This is a bit awkward for a unit test, but otherwise
-    # we can't meaningfully test this.
-    tar_dir = project_root / 'rpms' / 'tar'
+    def run(cmd, **kwargs):
+        if cmd == download_cmd:
+            return subprocess.CompletedProcess(cmd, 0)
+        assert cmd == ['tar', 'tf', str(archive)]
+        return real_run(cmd, **kwargs)
 
-    result = subprocess.run(
-        [str(project_root / 'ci' / 'dist_git.py'), 'ls-sources', 'tar'],
-        cwd=project_root, capture_output=True, text=True, check=True)
+    with patch.object(dist_git_module.subprocess, 'run', side_effect=run) as mocked_run:
+        dist_git_module.ls_sources('example')
 
-    # Verify output contains archive headers
-    assert re.search(r'==== tar-[\d.]+\.tar\.xz ====', result.stdout)
-    assert re.search(r'==== tar-[\d.]+\.tar\.xz\.sig ====', result.stdout)
-
-    # Verify output contains some tar contents
-    assert re.search(r'tar-[\d.]+/', result.stdout)
-    assert 'configure' in result.stdout
-
-    # Verify files were actually downloaded
-    assert len(list(tar_dir.glob('tar-*.tar.xz'))) == 1
-    assert len(list(tar_dir.glob('tar-*.tar.xz.sig'))) == 1
+    assert mocked_run.call_args_list == [
+        call(download_cmd, cwd=str(package_dir), check=True),
+        call(['tar', 'tf', str(archive)], check=True),
+    ]
+    output = capfd.readouterr().out
+    assert f'==== {archive.name} ====' in output
+    assert f'==== {signature} ====' in output
+    assert 'example-1.0/configure' in output
 
 
 @pytest.mark.parametrize('filename', ['foo.sig', 'foo.asc', 'foo.sign', 'foo.patch'])
