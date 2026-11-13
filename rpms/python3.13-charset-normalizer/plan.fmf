@@ -1,0 +1,10 @@
+discover:
+    how: shell
+    tests:
+    - name: import test
+      test: python3.13 -c 'import charset_normalizer'
+      require:
+      - python3.13
+      - python3.13-charset-normalizer
+execute:
+  how: tmt
