@@ -27,10 +27,6 @@ pre_commands = [
         github.com/go-openapi/swag/yamlutils@v0.27.1
     fi
   '''],
-  # CVE-2026-116591: zstd DecodeAll/streaming decoder can panic on a
-  # crafted two-block frame (stale fse.Scratch decode-table state reused
-  # across blocks). Bumps klauspost/compress to v1.20.2.
-  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
 post_commands = [
   # These nested modules do not carry separate license files. They use the
