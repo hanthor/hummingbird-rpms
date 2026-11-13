@@ -617,6 +617,9 @@ poppler-data:
 postgresql17:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+postgresql18:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 prometheus3.13:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
