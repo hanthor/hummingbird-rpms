@@ -3,7 +3,7 @@
 %{load:%{_sourcedir}/nodejs.srpm.macros}
 
 # === Versions of any software shipped in the main nodejs tarball
-%nodejs_define_version node 1:26.13.1-0.1%{?dist} -p
+%nodejs_define_version node 1:26.13.1-0.1.1%{?dist} -p
 
 # Special release for sub-packages with their own version string.
 # The complex release string ensures that the subpackage release is always increasing,
@@ -44,7 +44,6 @@
 %nodejs_define_version nodejs-punycode 2.1.0
 # Version from node-v26.13.1/deps/undici/src/package.json
 %nodejs_define_version nodejs-undici 8.12.4
-# Version from node-v26.13.1/deps/npm/package.json
 %nodejs_define_version npm 1:11.20.0-%{nodejs_subpackage_release}
 # Version from node-v26.13.1/deps/sqlite/sqlite3.h
 %nodejs_define_version sqlite 3.54.1
@@ -61,6 +60,8 @@
 # === Conditional build – global options
 # Use all vendored dependencies when bootstrapping
 %bcond all_deps_bundled %{with bootstrap}
+# Hummingbird ships npm as a standalone RPM.
+%bcond npm %{undefined hummingbird}
 
 # === Distro-wide build configuration adjustments ===
 # v8 cannot be built with LTO enabled;
@@ -129,8 +130,12 @@ Requires:   %{name}-libs%{?_isa}      = %{node_evr}
 Recommends: %{name}-bin               = %{node_evr}
 Recommends: %{name}-docs              = %{node_evr}
 Recommends: %{name}-full-i18n%{?_isa} = %{node_evr}
+%if %{with npm}
 Recommends: %{name}-npm              >= %{npm_evr}
 Recommends: %{name}-npm-bin          >= %{npm_evr}
+%elif %{defined hummingbird}
+Recommends: npm12
+%endif
 # Virtual provides
 Provides:   nodejs(abi) = %{node_soversion}, nodejs(abi%{node_version_major}) = %{node_soversion}
 Provides:   nodejs(engine) = %{node_version}
@@ -161,11 +166,6 @@ Source101:      nodejs.srpm.macros
 0001-Remove-unused-OpenSSL-config.patch
 0001-fips-disable-options.patch
 0001-v8-memcopy-include-climits.patch
-0002-CVE-2026-102278-brace-expansion-max-depth.patch
-0003-CVE-2026-102276-102277-brace-expansion.patch
-# Upgrade npm-bundled undici (deps/npm/node_modules/undici)
-# from 6.28.0 to 6.29.1 for the remaining security fixes.
-0012-CVE-2026-87018-undici-npm-6.29.1.patch
 CVE-2026-118764-minimatch-dos-fix.patch
 
 %description
@@ -241,6 +241,7 @@ Requires(meta): nodejs%{node_version_major} = %{node_evr}
 %description    docs
 The API documentation for the Node.js JavaScript runtime.
 
+%if %{with npm}
 %package        npm
 Summary:        Node.js Package Manager
 Epoch:          %{npm_epoch}
@@ -257,18 +258,23 @@ Provides:       npm(npm) = %{npm_version}
 npm is a package manager for node.js. You can use it to install and publish
 your node programs. It manages dependencies and does other cool stuff.
 
+%endif
+
 %package        bin
 Summary:        Node.js JavaScript runtime – unversioned symlinks
 Group:          Development/Languages
 BuildArch:      noarch
 Requires:       nodejs%{node_version_major} = %{node_evr}
+%if %{with npm}
 Requires:       (nodejs%{node_version_major}-npm-bin if nodejs%{node_version_major}-npm)
+%endif
 Provides:       alternative-for(nodejs-bin) = %{node_evr}
 Conflicts:      alternative-for(nodejs-bin)
 
 %description    bin
 Binary symlinks for Node.js JavaScript runtime.
 
+%if %{with npm}
 %package        npm-bin
 Summary:        Node.js Package Manager – binary symlinks
 Group:          Development/Languages
@@ -280,6 +286,8 @@ Conflicts:      alternative-for(nodejs-npm-bin)
 
 %description    npm-bin
 Binary symlinks for Node.js Package Manager.
+
+%endif
 
 %prep
 %autosetup -n node-v%{node_version} -S git_am
@@ -324,6 +332,9 @@ readonly -a extra_cflags=(
 readonly -a configure_flags=(
     # Basic build options
     --verbose --ninja
+%if %{without npm}
+    --without-npm
+%endif
     # Use FHS and build separate libnode.so
     --prefix=%{_prefix} --shared --libdir=%{_lib}
     # Use system OpenSSL
@@ -441,6 +452,7 @@ readonly icu_doc_dir="full-icu"
 unzip -od "${icu_data_dir}" "${icu_source}" "${icu_data_file}"
 unzip -od "${icu_doc_dir}"  "${icu_source}" -x "${icu_data_file}"
 
+%if %{with npm}
 # === NPM installation and tweaks
 # Correct permissions in provided scripts
 # - There are executable scripts for Windows PowerShell; RPM would try to pull it as a dependency
@@ -472,6 +484,8 @@ cp -prt  "${RPM_BUILD_ROOT}%{_mandir}" deps/npm/man/*
 rm -rf  "${NPM_DIR}/man"
 ln -srf "${RPM_BUILD_ROOT}%{_mandir}" "${NPM_DIR}/man"
 
+%endif
+
 # === Adjustments to avoid conflict between parallel streams
 # Note: some of the actions here make some of the previous ones redundant
 # (for example, replacing a symlink made few lines above).
@@ -483,6 +497,7 @@ ln -srf "${RPM_BUILD_ROOT}%{_mandir}" "${NPM_DIR}/man"
 readonly NODE_BIN='%{_bindir}/node-%{node_version_major}'
 mv "${RPM_BUILD_ROOT}%{_bindir}/node" "${RPM_BUILD_ROOT}%{_bindir}/node-%{node_version_major}"
 
+%if %{with npm}
 # Make the sitelib into a private one; but keep providing (empty) common one
 mv "${RPM_BUILD_ROOT}%{nodejs_common_sitelib}" "${RPM_BUILD_ROOT}%{nodejs_private_sitelib}"
 # 2025-05-20 FIXME: Turning a symlink into a directory needs to be coordinated across all the active streams.
@@ -519,6 +534,10 @@ relink_bin() {
 relink_bin npm "${NPM_DIR}/bin/npm-cli.js"
 relink_bin npx "${NPM_DIR}/bin/npx-cli.js"
 
+%else
+mkdir -p "${RPM_BUILD_ROOT}%{nodejs_private_sitelib}"
+%endif
+
 # Move manpages to versioned directories
 readonly VERSIONED_MANDIR="${RPM_BUILD_ROOT}%{nodejs_datadir}/man"
 mkdir -p "${VERSIONED_MANDIR}"
@@ -527,19 +546,23 @@ mv    -t "${VERSIONED_MANDIR}" "${RPM_BUILD_ROOT}%{_mandir}"/man?
 # FIXME: This should probably be replaced with ading /usr/share/node-*/man dir to /usr/lib/rpm/brp-compress
 readonly MAN_INFO_COMPRESS="%{?_man_info_compress}%{!?_man_info_compress:gzip -9 -n}"
 find "${VERSIONED_MANDIR}" -type f -name '*.[123456789]' -execdir ${MAN_INFO_COMPRESS} '{}' +
+%if %{with npm}
 # – update npm man symlink
 ln -srfn "${VERSIONED_MANDIR}" "${NPM_DIR}/man"
+%endif
 
 # === stuff related to -bin packages
 # Create versioned man pages symlinks for base package (when no -bins present)
 mkdir -p "${RPM_BUILD_ROOT}%{_mandir}/man1"
 ln -srf  "${VERSIONED_MANDIR}/man1/node.1.gz" "${RPM_BUILD_ROOT}%{_mandir}/man1/node-%{node_version_major}.1.gz"
+%if %{with npm}
 ln -srf  "${VERSIONED_MANDIR}/man1/npm.1.gz" "${RPM_BUILD_ROOT}%{_mandir}/man1/npm-%{node_version_major}.1.gz"
 ln -srf  "${VERSIONED_MANDIR}/man1/npx.1.gz" "${RPM_BUILD_ROOT}%{_mandir}/man1/npx-%{node_version_major}.1.gz"
+%endif
 
 # Create symlinks to the versioned binaries
 pushd '%{buildroot}%{_bindir}'
-for binname in node npm npx; do
+for binname in node %{?with_npm:npm npx}; do
     ln -srfL "${binname}-%{node_version_major}" "${binname}"
 done
 popd
@@ -563,9 +586,11 @@ node() {
         --icu-data-dir="${RPM_BUILD_ROOT}%{nodejs_datadir}/icudata" \
     "$@"
 }
+%if %{with npm}
 npm() {
     node "${RPM_BUILD_ROOT}%{_bindir}/npm-%{node_version_major}" "$@"
 }
+%endif
 
 # === Sanity check for important versions
 node -e 'require("assert").equal(process.versions.node, "%{node_version}")'
@@ -577,18 +602,27 @@ node -e 'require("assert").equal(process.versions.ares.replace(/-DEV$/, ""), "%{
 node --no-deprecation -e 'require("assert").equal(require("punycode").version, "%{nodejs_punycode_version}")'
 %endif
 
+%if %{with npm}
 npm version --json | jq --exit-status '.npm == "%{npm_version}"'
+%endif
 
 # === Custom and/or devendored parts sanity checks
 # - full i18n support is available
 node '%{SOURCE20}'
+%if %{with npm}
 # - npm update notifier is disabled
 npm config list --json | jq --exit-status '.["update-notifier"] == false'
+%endif
 # - Temporal API is available
 node -e 'require("assert").equal(typeof Temporal, "object")'
 
 # === Upstream test suite
+%if %{with npm}
 bash '%{SOURCE10}' "${RPM_BUILD_ROOT}%{_bindir}/node-%{node_version_major}" test/ '%{SOURCE11}'
+%else
+grep -vE '^parallel/test-(npm-(install|version)|release-npm)\.js$' '%{SOURCE11}' > test-without-npm.txt
+bash '%{SOURCE10}' "${RPM_BUILD_ROOT}%{_bindir}/node-%{node_version_major}" test/ test-without-npm.txt
+%endif
 
 
 %files
@@ -645,6 +679,7 @@ bash '%{SOURCE10}' "${RPM_BUILD_ROOT}%{_bindir}/node-%{node_version_major}" test
 %dir        %{nodejs_datadir}/
 %{nodejs_datadir}/icudata/
 
+%if %{with npm}
 %files      npm
 %doc        deps/npm/README.md
 %license    deps/npm/LICENSE
@@ -671,12 +706,16 @@ bash '%{SOURCE10}' "${RPM_BUILD_ROOT}%{_bindir}/node-%{node_version_major}" test
 %exclude %{_mandir}/man1/npm-%{node_version_major}.1*
 %exclude %{_mandir}/man1/npx-%{node_version_major}.1*
 
+%endif
+
 %files      docs
 %doc        doc/README.md
 %license    LICENSE
 %dir        %{_pkgdocdir}
 %{_pkgdocdir}/html/
+%if %{with npm}
 %{_pkgdocdir}/npm/
+%endif
 
 %changelog
 %autochangelog

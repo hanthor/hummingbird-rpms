@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/nodejs22.git",
     "sha": "f3e5420f374e00aa5040d9a5b6384634ba480ec1"
   },
-  "modification_reason": "Update to upstream version 22.23.5",
+  "modification_reason": "Disable bundled npm by default on Hummingbird",
   "modification_status": "modified",
   "release_monitoring_project_id": 8251,
   "track_upstream": "22",

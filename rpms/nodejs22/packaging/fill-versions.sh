@@ -168,7 +168,13 @@ find_version ngtcp2 deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h '' version_
 find_version nodejs-cjs-module-lexer deps/cjs-module-lexer/src/package.json '' version_from_json
 find_version nodejs-punycode lib/punycode.js '' parse_punycode_version
 find_version nodejs-undici deps/undici/src/package.json '' version_from_json
-find_version npm deps/npm/package.json '' parse_npm_version
+# Hummingbird's source pipeline strips npm; other distributions can retain it.
+if test -r node-v*/deps/npm/package.json; then
+    find_version npm deps/npm/package.json '' parse_npm_version
+else
+    # Preserve the optional subpackage metadata when npm sources are absent.
+    sed -nE '/^%nodejs_define_version npm /p' "${SPEC}"
+fi
 find_version sqlite deps/sqlite/sqlite3.h '' version_from_c_define SQLITE_VERSION
 find_version uvwasi deps/uvwasi/include/uvwasi.h '' version_from_c_define UVWASI_VERSION_{MAJOR,MINOR,PATCH}
 find_version v8 deps/v8/include/v8-version.h -p parse_v8_version
