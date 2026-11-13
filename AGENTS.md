@@ -38,7 +38,11 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `make generate`                                                            | Regenerate PipelineRun YAML after changing a package's `push_pipeline` in `ci/package-overrides.yaml`                         |
 | `./ci/check_upstream_versions.py check --update <pkg>`                     | Update an independent package to a new upstream version, using its source pipeline when it has one                            |
 
-The `--dry-run` flag is available on most commands to preview without committing.
+The `dist_git.py --dry-run` flag is command-specific, **not** a side-effect-free preview.
+Import, update, sync, and rebuild commands can still modify files. `mark-modified` and
+`set-upstream` still write metadata. Unsupported combinations are rejected. See the
+[dry-run policy](documentation/operating/updating-dist-git-packages.md#dist_gitpy---dry-run-policy)
+or `<command> --help` for details.
 
 **Keeping this file in sync:** Whenever a new `dist_git.py` subcommand is added, or a new
 operational task is introduced (new script, new workflow, new hook type), update both the
