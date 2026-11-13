@@ -11,7 +11,7 @@ import tempfile
 import zipfile
 
 
-PACOTE_VERSIONS = ("21.0.1", "21.0.4")
+PACOTE_VERSIONS = ("21.0.1",)
 MEMBER = "node_modules/pacote/lib/util/add-git-sha.js"
 VULNERABLE = b"    return spec.rawSpec.replace(/#.*$/, '') + `#${sha}`\n"
 FIXED = (

@@ -1,0 +1,42 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump joi 17.13.8 to 17.13.9 for CVE-2026-118772
+
+diff --git a/package.json b/package.json
+index 770d7a143f31..a3d1e743d62a 100644
+--- a/package.json
++++ b/package.json
+@@ -473,7 +473,8 @@
+     "body-parser@npm:^2.2.1": "2.4.0",
+     "body-parser@npm:1.20.3": "1.20.9",
+     "follow-redirects": "1.16.2",
+-    "serialize-javascript@npm:^7.0.3": "7.1.4"
++    "serialize-javascript@npm:^7.0.3": "7.1.4",
++    "joi@npm:^17.11.0": "17.13.9"
+   },
+   "workspaces": {
+     "packages": [
+diff --git a/yarn.lock b/yarn.lock
+index c97ff932ef89..82cfc8267bbf 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -23682,16 +23682,16 @@ __metadata:
+   languageName: node
+   linkType: hard
+ 
+-"joi@npm:^17.11.0":
+-  version: 17.13.8
+-  resolution: "joi@npm:17.13.8"
++"joi@npm:17.13.9":
++  version: 17.13.9
++  resolution: "joi@npm:17.13.9"
+   dependencies:
+     "@hapi/hoek": "npm:^9.3.0"
+     "@hapi/topo": "npm:^5.1.0"
+     "@sideway/address": "npm:^4.1.5"
+     "@sideway/formula": "npm:^3.0.1"
+     "@sideway/pinpoint": "npm:^2.0.0"
+-  checksum: 10c0/7fe2b38d26dfcbcf1836892384ba2f42f83058795f32dcb3733de4c3b97cac923a8b9053738f10701663872a994f77af351c71e1428117a20bbfc1f94768f648
++  checksum: 10c0/7a52549e8e9d99853d6166b647d102e58197720869aa5339f9b9c1704e471a70918645944a8aa6a9998955dc0a521ffd1580fdb3e9e502b1e2bb88793dd0e50c
+   languageName: node
+   linkType: hard
+ 

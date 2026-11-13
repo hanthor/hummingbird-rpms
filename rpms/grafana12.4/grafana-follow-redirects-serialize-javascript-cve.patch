@@ -1,5 +1,5 @@
 From: Hummingbird <hummingbird@redhat.com>
-Subject: [PATCH] Bump follow-redirects, serialize-javascript, and terser-webpack-plugin for CVE-2026-116689/115897/115754
+Subject: [PATCH] Bump follow-redirects and serialize-javascript for CVE-2026-116689 and CVE-2026-115897
 
 Upstream: https://github.com/follow-redirects/follow-redirects/commit/b0a7751e9cd64cd8eeb6ec67d2f206a9cc88d3f8
 Upstream: https://github.com/yahoo/serialize-javascript/commit/2864b3c6260a3bfd52d2db3e70d1a079de108a61
@@ -10,23 +10,38 @@ in another JavaScript realm was silently replaced with an empty list. A
 cross-origin redirect could then forward a credential header named in that
 discarded list to the redirect destination.
 
-CVE-2026-115754, CVE-2026-115897: serialize-javascript 7.0.5 -> 7.1.4. The
-escapeFunctionBody regex did not neutralize a bare </script prefix when it
-appeared at the very end of a function body, allowing a spoofed toString()
-to break out of an HTML script element. Bumps terser-webpack-plugin from
-5.3.16 to 5.6.1 (which uses serialize-javascript ^7.0.5) and merges all
-^5.3.x/^5.4.x constraints into the existing 5.6.1 entry, eliminating the
-serialize-javascript 6.0.2 copy.
+CVE-2026-115897: serialize-javascript 7.1.2 -> 7.1.4. The escapeFunctionBody
+regex did not neutralize a bare </script prefix when it appeared at the very
+end of a function body, allowing a spoofed toString() to break out of an HTML
+script element.
 
+diff --git a/package.json b/package.json
+index e0ce95fc9af9..770d7a143f31 100644
+--- a/package.json
++++ b/package.json
+@@ -471,7 +471,9 @@
+     "ip-address@npm:10.1.0": "10.3.1",
+     "ip-address@npm:^9.0.5": "10.3.1",
+     "body-parser@npm:^2.2.1": "2.4.0",
+-    "body-parser@npm:1.20.3": "1.20.9"
++    "body-parser@npm:1.20.3": "1.20.9",
++    "follow-redirects": "1.16.2",
++    "serialize-javascript@npm:^7.0.3": "7.1.4"
+   },
+   "workspaces": {
+     "packages": [
 diff --git a/yarn.lock b/yarn.lock
+index 534c4671eb8f..c97ff932ef89 100644
 --- a/yarn.lock
 +++ b/yarn.lock
-@@ -20392,12 +20392,12 @@
+@@ -19425,13 +19425,13 @@ __metadata:
+   languageName: node
    linkType: hard
  
- "follow-redirects@npm:1.16.1":
+-"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.16.0":
 -  version: 1.16.1
 -  resolution: "follow-redirects@npm:1.16.1"
++"follow-redirects@npm:1.16.2":
 +  version: 1.16.2
 +  resolution: "follow-redirects@npm:1.16.2"
    peerDependenciesMeta:
@@ -37,85 +52,18 @@ diff --git a/yarn.lock b/yarn.lock
    languageName: node
    linkType: hard
  
-@@ -32932,19 +32932,10 @@
+@@ -31720,10 +31720,10 @@ __metadata:
    languageName: node
    linkType: hard
  
--"serialize-javascript@npm:^6.0.2":
--  version: 6.0.2
--  resolution: "serialize-javascript@npm:6.0.2"
--  dependencies:
--    randombytes: "npm:^2.1.0"
--  checksum: 10c0/2dd09ef4b65a1289ba24a788b1423a035581bef60817bea1f01eda8e3bda623f86357665fe7ac1b50f6d4f583f97db9615b3f07b2a2e8cbcb75033965f771dd2
--  languageName: node
--  linkType: hard
--
- "serialize-javascript@npm:^7.0.3":
--  version: 7.0.5
--  resolution: "serialize-javascript@npm:7.0.5"
--  checksum: 10c0/7b7818e5267f6d474ec7a56d36ba69dd712726a13eab37706ec94615fb7ca8945471f2b7fb0dc9dbe8c79c1930c1079d97f66f91315c8c8c2ca6c38898cec96f
+-"serialize-javascript@npm:^7.0.3":
+-  version: 7.1.2
+-  resolution: "serialize-javascript@npm:7.1.2"
+-  checksum: 10c0/568ea22e16893a26cd2506433b8d98bb82f4af37e149330a3deb042bd417516988e6ca9a5010739e1a8dc4866caae320f582dfd2a1a0f0ab69ba3c03f1e155ba
++"serialize-javascript@npm:7.1.4":
 +  version: 7.1.4
 +  resolution: "serialize-javascript@npm:7.1.4"
 +  checksum: 10c0/aece56a71a7fc54d51af3c49ef18cc8c47caa2815210709ab585c0b5e72f1e90969bd6c7947cf95e2f8e93d15595ae80ce7137800465b5fa61812693bf7e63ac
    languageName: node
    linkType: hard
  
-@@ -34829,29 +34820,7 @@
-   languageName: node
-   linkType: hard
- 
--"terser-webpack-plugin@npm:^5.3.1, terser-webpack-plugin@npm:^5.3.16":
--  version: 5.3.16
--  resolution: "terser-webpack-plugin@npm:5.3.16"
--  dependencies:
--    "@jridgewell/trace-mapping": "npm:^0.3.25"
--    jest-worker: "npm:^27.4.5"
--    schema-utils: "npm:^4.3.0"
--    serialize-javascript: "npm:^6.0.2"
--    terser: "npm:^5.31.1"
--  peerDependencies:
--    webpack: ^5.1.0
--  peerDependenciesMeta:
--    "@swc/core":
--      optional: true
--    esbuild:
--      optional: true
--    uglify-js:
--      optional: true
--  checksum: 10c0/39e37c5b3015c1a5354a3633f77235677bfa06eac2608ce26d258b1d1a74070a99910319a6f2f2c437eb61dc321f66434febe01d78e73fa96b4d4393b813f4cf
--  languageName: node
--  linkType: hard
--
--"terser-webpack-plugin@npm:^5.3.17":
-+"terser-webpack-plugin@npm:^5.3.1, terser-webpack-plugin@npm:^5.3.16, terser-webpack-plugin@npm:^5.3.17, terser-webpack-plugin@npm:^5.4.0":
-   version: 5.6.1
-   resolution: "terser-webpack-plugin@npm:5.6.1"
-   dependencies:
-@@ -34890,27 +34859,6 @@
-   languageName: node
-   linkType: hard
- 
--"terser-webpack-plugin@npm:^5.4.0":
--  version: 5.4.0
--  resolution: "terser-webpack-plugin@npm:5.4.0"
--  dependencies:
--    "@jridgewell/trace-mapping": "npm:^0.3.25"
--    jest-worker: "npm:^27.4.5"
--    schema-utils: "npm:^4.3.0"
--    terser: "npm:^5.31.1"
--  peerDependencies:
--    webpack: ^5.1.0
--  peerDependenciesMeta:
--    "@swc/core":
--      optional: true
--    esbuild:
--      optional: true
--    uglify-js:
--      optional: true
--  checksum: 10c0/1feed4b9575af795dae6af0c8f0d76d6e1fb7b357b8628d90e834c23a651b918a58cdc48d0ae6c1f0581f74bc8169b33c3b8d049f2d2190bac4e310964e59fde
--  languageName: node
--  linkType: hard
--
- "terser@npm:^5.15.1, terser@npm:^5.17.4, terser@npm:^5.31.1, terser@npm:^5.7.2":
-   version: 5.37.0
-   resolution: "terser@npm:5.37.0"

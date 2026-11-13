@@ -1,0 +1,40 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Resolve the ^11 uuid ranges to 11.1.0 to avoid a nested uuid 11.1.1
+
+12.4.14's lockfile resolves the ^11 uuid ranges to 11.1.1 while the root and
+eight workspaces pin 11.1.0 exactly. Yarn then nests uuid 11.1.1, and its
+.bin/uuid symlink, under the elasticsearch plugin. Grafana's test helper
+fs.CopyRecursive fails on that symlink, so %check fails. Merging the ^11
+ranges into the 11.1.0 entry, as 12.4.13 had, hoists a single uuid.
+
+Lockfile-only change: no package.json edit is needed.
+
+diff --git a/yarn.lock b/yarn.lock
+index f26fa1737ae6..1de9ab59d5eb 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -36021,7 +36021,7 @@ __metadata:
+   languageName: node
+   linkType: hard
+ 
+-"uuid@npm:11.1.0":
++"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.5, uuid@npm:^11.1.0":
+   version: 11.1.0
+   resolution: "uuid@npm:11.1.0"
+   bin:
+@@ -36030,15 +36030,6 @@ __metadata:
+   languageName: node
+   linkType: hard
+ 
+-"uuid@npm:^11.0.0, uuid@npm:^11.0.5, uuid@npm:^11.1.0":
+-  version: 11.1.1
+-  resolution: "uuid@npm:11.1.1"
+-  bin:
+-    uuid: dist/esm/bin/uuid
+-  checksum: 10c0/9e3af58eba872ece5a5e76f4773a94fc78a0ef2c2444c38dbe6b42f41dadf76c01850fd783604f27986f6195e6286aef064d45987d401b2a33127b98ddf7c0c5
+-  languageName: node
+-  linkType: hard
+-
+ "uuid@npm:^13.0.0":
+   version: 13.0.2
+   resolution: "uuid@npm:13.0.2"
