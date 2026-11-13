@@ -545,6 +545,170 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
 # Tests
 #
 
+@pytest.mark.parametrize('arguments,operation', [
+    (['rename', 'vanilla'], 'rename'),
+    (['update-releases'], 'update_releases'),
+    (['list'], 'list_packages'),
+    (['diff', 'vanilla'], 'diff_package'),
+    (['check-paths'], 'check_paths'),
+    (['ls-sources', 'vanilla'], 'ls_sources'),
+])
+def test_dry_run_rejects_unsupported_commands_before_dispatch(
+    dist_git_module, workdir: Path, arguments: list[str], operation: str,
+) -> None:
+    """Ignored dry-run flags must fail before invoking the command or Git checks."""
+    with patch.object(dist_git_module, operation) as command, \
+         patch.object(dist_git_module, 'check_git_config') as git_config, \
+         pytest.raises(SystemExit, match=f'--dry-run is not supported with the {arguments[0]} command'):
+        run_dist_git(dist_git_module, workdir, '--dry-run', *arguments)
+    command.assert_not_called()
+    git_config.assert_not_called()
+
+
+@pytest.mark.parametrize('command,policy', [
+    ('import', 'regenerate resources'),
+    ('update', 'without saving metadata'),
+    ('sync', 'Replace package files'),
+    ('rebuild', 'Modify spec releases'),
+    ('rebuild-rev-deps', 'Modify spec releases'),
+    ('mark-modified', 'accepted for compatibility'),
+    ('set-upstream', 'accepted for compatibility'),
+    ('sanitize-paths', 'Preview portable path changes'),
+    ('add-private-product', 'do not contact Pulp'),
+    ('rename', '--dry-run is not supported'),
+    ('update-releases', '--dry-run is not supported'),
+    ('list', '--dry-run is not supported'),
+    ('diff', '--dry-run is not supported'),
+    ('check-paths', '--dry-run is not supported'),
+    ('ls-sources', '--dry-run is not supported'),
+])
+def test_command_help_documents_dry_run_policy(
+    dist_git_module, workdir: Path, capsys: pytest.CaptureFixture[str], command: str, policy: str,
+) -> None:
+    with pytest.raises(SystemExit) as exited:
+        run_dist_git(dist_git_module, workdir, command, '--help')
+    assert exited.value.code == 0
+    assert policy in ' '.join(capsys.readouterr().out.split())
+
+
+def test_update_help_explains_dry_run_validation_recovery(
+    dist_git_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exited:
+        run_dist_git(dist_git_module, workdir, 'update', '--help')
+    assert exited.value.code == 0
+    help_text = ' '.join(capsys.readouterr().out.split())
+    assert 'Version-validation failures exit with code 1 and leave no resumable state' in help_text
+    assert 'cannot resume a failed dry-run with --continue' in help_text
+
+
+@pytest.mark.parametrize('command', ['mark-modified', 'set-upstream'])
+def test_metadata_commands_dry_run_preserves_metadata_only_policy(imported_workdir, command: str) -> None:
+    """Compatibility means metadata is still written, but never staged or committed."""
+    workdir = imported_workdir('vanilla')
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    if command == 'mark-modified':
+        options = ['--modified', '--reason', 'Local packaging change']
+    else:
+        options = ['--track-version', 'latest', '--project-id', '12345']
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', command, 'vanilla', *options],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert metadata_file.read_bytes() != before
+    metadata = json.loads(metadata_file.read_text())
+    if command == 'mark-modified':
+        assert metadata['modification_status'] == 'modified'
+        assert metadata['modification_reason'] == 'Local packaging change'
+    else:
+        assert metadata['track_upstream'] == 'latest'
+        assert metadata['release_monitoring_project_id'] == 12345
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert not subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+
+
+@pytest.mark.parametrize('command', ['update', 'sync'])
+def test_update_sync_dry_run_changes_files_without_metadata_or_commit(
+    imported_workdir, upstream_repos: dict[str, Path], command: str,
+) -> None:
+    workdir = imported_workdir('vanilla')
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+    options = ['--skip-build-check'] if command == 'update' else []
+    assert 'Version: 1.0' in (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', command, 'vanilla', *options],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert 'Version: 2.0' in (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert not subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    assert not (workdir / '.dist_git_update_state.json').exists()
+
+
+def test_sync_help_qualifies_dry_run_mark(
+    dist_git_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exited:
+        run_dist_git(dist_git_module, workdir, 'sync', '--help')
+    assert exited.value.code == 0
+    help_text = ' '.join(capsys.readouterr().out.split())
+    assert 'only when the SHA and branch are unchanged' in help_text
+    assert 'otherwise sync can replace local edits' in help_text
+
+
+@pytest.mark.parametrize('advanced', [False, True], ids=['unchanged-upstream', 'advanced-upstream'])
+@pytest.mark.parametrize('local_edits', [False, True], ids=['clean', 'local-edits'])
+def test_sync_mark_dry_run_with_advanced_upstream(
+    imported_workdir, upstream_repos: dict[str, Path], advanced: bool, local_edits: bool,
+) -> None:
+    """--mark is a no-change check only for the already-synced path."""
+    workdir = imported_workdir('vanilla')
+    package_dir = workdir / 'rpms' / 'vanilla'
+    spec = package_dir / 'vanilla.spec'
+    assert 'Version: 1.0' in spec.read_text()
+    if local_edits:
+        spec.write_text(spec.read_text() + '\n# Local packaging change\n')
+        (package_dir / 'local.patch').write_text('Local patch\n')
+    files_before = {path.name: path.read_bytes() for path in package_dir.iterdir()}
+    if advanced:
+        add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'sync', '--mark', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    if advanced:
+        assert result.returncode == 0, result.stderr
+        assert 'Version: 2.0' in spec.read_text()
+        assert '# Local packaging change' not in spec.read_text()
+        assert not (package_dir / 'local.patch').exists()
+    else:
+        if local_edits:
+            assert result.returncode != 0
+            assert 'package has modifications' in result.stderr
+        else:
+            assert result.returncode == 0, result.stderr
+        assert {path.name: path.read_bytes() for path in package_dir.iterdir()} == files_before
+
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir) == index_before
+    assert not (workdir / '.dist_git_update_state.json').exists()
+
+
 @pytest.mark.parametrize('filename,expected_module', [
     ('dist_git.py', 'sitecustomize'),
     ('other.py', 'urllib.request'),
@@ -753,6 +917,12 @@ def test_import_dry_run(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """--dry-run prevents commits."""
     # Get initial commit (from fixture setup)
     initial_subject, _ = get_last_commit_info(workdir)
+    initial_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    initial_index = subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    generated_paths = [workdir / name for name in (
+        '.tekton/rpms-on-pull-request.yaml', '.tekton/rpms-on-promotion.yaml', 'konflux-templates/rendered.yml',
+    )]
+    generated_before = {path: path.read_bytes() for path in generated_paths}
 
     # Import with --dry-run
     result = subprocess.run(
@@ -776,6 +946,11 @@ def test_import_dry_run(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     # Verify no commit was created (still at initial commit)
     subject, _ = get_last_commit_info(workdir)
     assert subject == initial_subject
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == initial_head
+    assert subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir) == initial_index
+    for path in generated_paths:
+        assert path.read_bytes() != generated_before[path], f'Import did not regenerate {path.name}'
+        assert b'chocolate-main' in path.read_bytes()
 
 
 def test_import_sign_off(workdir: Path, upstream_repos: dict[str, Path]) -> None:
@@ -5271,6 +5446,34 @@ def test_rebuild_rev_deps_direct(imported_workdir, upstream_repos: dict[str, Pat
 
     # Check summary
     assert 'Rebuild Summary for go-rpm-macros reverse dependencies:' in result.stdout
+    assert 'Total packages: 1' in result.stdout
+    assert 'Successful rebuilds: 1' in result.stdout
+
+
+def test_rebuild_rev_deps_dry_run(imported_workdir) -> None:
+    """Forward dry-run to rebuilds: change dependent specs, never stage or commit."""
+    workdir = imported_workdir('vanilla', 'chocolate')
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec.write_text(spec.read_text().replace('Summary:', 'BuildRequires: go-rpm-macros\nSummary:'))
+    subprocess.run(['git', 'commit', '-am', 'Add reverse dependency'], cwd=workdir, check=True)
+    initial_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    initial_index = subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    unrelated_spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    unrelated_before = unrelated_spec.read_bytes()
+    metadata_before = {path: path.read_bytes() for path in (workdir / 'metadata').glob('*.json')}
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'rebuild-rev-deps', 'go-rpm-macros',
+         '--reason', 'Refresh reverse dependencies'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert 'Release: 1.1%{?dist}' in spec.read_text()
+    assert unrelated_spec.read_bytes() == unrelated_before
+    assert {path: path.read_bytes() for path in (workdir / 'metadata').glob('*.json')} == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == initial_head
+    assert subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir) == initial_index
     assert 'Total packages: 1' in result.stdout
     assert 'Successful rebuilds: 1' in result.stdout
 
