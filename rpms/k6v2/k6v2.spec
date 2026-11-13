@@ -1,12 +1,12 @@
 %bcond check 1
 
 %global goipath go.k6.io/k6/v2
-Version: 2.3.0
+Version: 2.4.0
 
 %gometa -L
 
 Name:           k6v2
-Release:        0.4%{?dist}
+Release:        0.1%{?dist}
 Summary:        Modern load testing tool, version 2
 # Upstream does not support s390x: https://github.com/grafana/k6/issues/3982
 ExcludeArch:    s390x
@@ -16,7 +16,6 @@ URL:            https://github.com/grafana/k6
 Source0:        https://github.com/grafana/k6/archive/refs/tags/v%{version}.tar.gz#/k6-%{version}.tar.gz
 Source1:        go-vendor-tools.toml
 Source2:        https://raw.githubusercontent.com/grafana/k6-cloud-openapi-client-go/97c96146fa7c3cf455a330c6c36cc69fdf6a43e5/LICENSE#/k6-cloud-openapi-client-go-LICENSE
-Patch0:         0001-backport-bump-klauspost-compress-for-cve-2026-116591.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25
