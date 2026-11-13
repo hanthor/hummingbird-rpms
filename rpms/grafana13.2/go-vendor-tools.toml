@@ -1,9 +1,6 @@
 [archive]
 pre_commands = [
   # Upstream Grafana uses go-openapi/swag 0.28.0 and kin-openapi 0.151.0.
-  # CVE-2026-116591: crafted zstd input panics DecodeAll and the streaming
-  # decoder via a bad normalized FSE count.
-  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
 ]
 post_commands = [
   # These nested modules do not carry separate license files. They use the

@@ -3,8 +3,8 @@
   "manifests": {
     "package.json": {
       "resolutions": {
-        "swagger-ui-react/dompurify": "3.4.13",
-        "dompurify": "3.4.13",
+        "swagger-ui-react/dompurify": "3.4.17",
+        "dompurify": "3.4.17",
         "js-yaml@npm:4.1.1": "4.3.2",
         "js-yaml@npm:=4.1.1": "4.3.2",
         "storybook@npm:10.6.2": "patch:storybook@npm%3A10.6.2#~/.yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch",
@@ -18,12 +18,14 @@
         "joi@npm:^17.11.0": "17.13.9",
         "joi@npm:^18.2.1": "18.3.1",
         "axios": "1.20.0",
-        "hono": "4.13.11",
+        "hono": "4.13.16",
+        "node-forge": "1.4.3",
+        "papaparse": "5.7.1",
         "follow-redirects": "1.16.2",
         "body-parser": "2.4.0"
       },
       "dependencies": {
-        "dompurify": "3.4.13"
+        "dompurify": "3.4.17"
       }
     },
     "packages/grafana-flamegraph/package.json": {
