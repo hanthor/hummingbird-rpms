@@ -653,6 +653,62 @@ def test_update_sync_dry_run_changes_files_without_metadata_or_commit(
     assert not (workdir / '.dist_git_update_state.json').exists()
 
 
+def test_sync_help_qualifies_dry_run_mark(
+    dist_git_module, workdir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exited:
+        run_dist_git(dist_git_module, workdir, 'sync', '--help')
+    assert exited.value.code == 0
+    help_text = ' '.join(capsys.readouterr().out.split())
+    assert 'only when the SHA and branch are unchanged' in help_text
+    assert 'otherwise sync can replace local edits' in help_text
+
+
+@pytest.mark.parametrize('advanced', [False, True], ids=['unchanged-upstream', 'advanced-upstream'])
+@pytest.mark.parametrize('local_edits', [False, True], ids=['clean', 'local-edits'])
+def test_sync_mark_dry_run_with_advanced_upstream(
+    imported_workdir, upstream_repos: dict[str, Path], advanced: bool, local_edits: bool,
+) -> None:
+    """--mark is a no-change check only for the already-synced path."""
+    workdir = imported_workdir('vanilla')
+    package_dir = workdir / 'rpms' / 'vanilla'
+    spec = package_dir / 'vanilla.spec'
+    assert 'Version: 1.0' in spec.read_text()
+    if local_edits:
+        spec.write_text(spec.read_text() + '\n# Local packaging change\n')
+        (package_dir / 'local.patch').write_text('Local patch\n')
+    files_before = {path.name: path.read_bytes() for path in package_dir.iterdir()}
+    if advanced:
+        add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'sync', '--mark', 'vanilla'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    if advanced:
+        assert result.returncode == 0, result.stderr
+        assert 'Version: 2.0' in spec.read_text()
+        assert '# Local packaging change' not in spec.read_text()
+        assert not (package_dir / 'local.patch').exists()
+    else:
+        if local_edits:
+            assert result.returncode != 0
+            assert 'package has modifications' in result.stderr
+        else:
+            assert result.returncode == 0, result.stderr
+        assert {path.name: path.read_bytes() for path in package_dir.iterdir()} == files_before
+
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir) == index_before
+    assert not (workdir / '.dist_git_update_state.json').exists()
+
+
 @pytest.mark.parametrize('filename,expected_module', [
     ('dist_git.py', 'sitecustomize'),
     ('other.py', 'urllib.request'),

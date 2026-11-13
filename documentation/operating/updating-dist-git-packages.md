@@ -65,7 +65,7 @@ Each command's `--help` also describes its policy.
 | `import` | Imports files, writes metadata, and regenerates resources, without staging or committing. |
 | `update` | Updates package files, but does not save metadata, run source pipelines, commit, or write recovery state. Existing safety checks still apply. |
 | `update --continue` | Checks for unresolved conflict markers and reports the intended commit, without source verification, spec finalization, or committing. |
-| `sync` | Replaces package files, but does not save metadata, run source pipelines, commit, or write recovery state. With `--mark`, package files and metadata remain unchanged. |
+| `sync` | Replaces package files, but does not save metadata, run source pipelines, commit, or write recovery state. With `--mark`, files are left unchanged only when the requested SHA already matches the recorded SHA and the branch is unchanged. If upstream has advanced or the branch changes, normal sync still replaces files and can discard local edits, even with `--mark`. |
 | `rebuild` | Modifies spec releases without committing. |
 | `rebuild-rev-deps` | Modifies reverse-dependency spec releases without committing. |
 | `sanitize-paths` | Previews portable path changes without changing files. |

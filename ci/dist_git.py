@@ -3433,7 +3433,8 @@ def main() -> None:
                    'With --continue, check conflict markers and report the intended commit '
                    'without finalizing the update.'),
         'sync': ('Replace package files without saving metadata, running source pipelines, committing or writing '
-                 'recovery state. With --mark, leave package files and metadata unchanged.'),
+                 'recovery state. With --mark, package files are unchanged only when the SHA and branch are unchanged; '
+                 'otherwise sync can replace local edits. Metadata remains unchanged in either case.'),
         'rebuild': 'Modify spec releases without committing.',
         'rebuild-rev-deps': 'Modify spec releases of reverse dependencies without committing.',
         'sanitize-paths': 'Preview portable path changes without changing files.',
