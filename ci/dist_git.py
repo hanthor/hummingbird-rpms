@@ -3421,6 +3421,29 @@ def main() -> None:
     # Load upstream-releases.json
     releases = cast(dict[str, dict[str, str]], json.loads(RELEASES_JSON.read_text()))
 
+    # Compatibility policy: --dry-run is command-specific, not a universal
+    # no-write mode. Metadata-only commands keep their established behavior.
+    # Add a policy here when a new subcommand supports --dry-run. Unlisted
+    # commands reject the flag and show "not supported" in their help.
+    dry_run_policies = {
+        'import': 'Import files, write metadata and regenerate resources, but do not stage or commit changes.',
+        'update': ('Update package files without saving metadata, running source pipelines, committing or writing '
+                   'recovery state. Version-validation failures exit with code 1 and leave no resumable state; '
+                   'you cannot resume a failed dry-run with --continue. '
+                   'With --continue, check conflict markers and report the intended commit '
+                   'without finalizing the update.'),
+        'sync': ('Replace package files without saving metadata, running source pipelines, committing or writing '
+                 'recovery state. With --mark, leave package files and metadata unchanged.'),
+        'rebuild': 'Modify spec releases without committing.',
+        'rebuild-rev-deps': 'Modify spec releases of reverse dependencies without committing.',
+        'sanitize-paths': 'Preview portable path changes without changing files.',
+        'add-private-product': 'Preview infrastructure and configuration changes; do not contact Pulp, modify files or commit.',
+        'mark-modified': ('Write metadata as usual; this command never commits. '
+                          '--dry-run is accepted for compatibility, not as a preview.'),
+        'set-upstream': ('Write metadata as usual; this command never commits. '
+                         '--dry-run is accepted for compatibility, not as a preview.'),
+    }
+
     parser = argparse.ArgumentParser(
         description='Import and sync dist-git packages',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -3444,7 +3467,7 @@ Examples:
     )
 
     parser.add_argument('--dry-run', action='store_true',
-                        help='Do not commit changes to git')
+                        help='Command-specific behavior; may write files and metadata. See <command> --help.')
     parser.add_argument('-s', '--sign-off', action='store_true',
                         help='Add Signed-off-by trailer to commit messages')
 
@@ -3606,18 +3629,24 @@ Examples:
         'ReleasePlan, and IntegrationTestScenario templates',
     )
 
+    for command, command_parser in subparsers.choices.items():
+        policy = dry_run_policies.get(command)
+        command_parser.epilog = (
+            f"Dry-run policy (place --dry-run before the command): {policy}"
+            if policy else f"--dry-run is not supported with the {command} command."
+        )
+
     args = parser.parse_args()
 
     # Set global sign-off flag
     global sign_off
     sign_off = args.sign_off
 
-    # Reject --dry-run with rename (rename doesn't support dry-run)
-    if args.command == 'rename' and args.dry_run:
-        sys.exit("ERROR: --dry-run is not supported with the rename command")
+    if args.dry_run and args.command not in dry_run_policies:
+        sys.exit(f"ERROR: --dry-run is not supported with the {args.command} command")
 
     # Check git config for commands that will commit
-    if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources', 'sanitize-paths', 'check-paths'] and (not args.dry_run or args.command == 'rename'):
+    if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources', 'sanitize-paths', 'check-paths'] and not args.dry_run:
         check_git_config()
 
     match args.command:

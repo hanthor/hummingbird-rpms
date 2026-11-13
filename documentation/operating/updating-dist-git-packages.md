@@ -53,6 +53,37 @@ reserved names and paths that differ only by case.
 New clones can check out the corrected tree on Windows. Older commits still contain the original
 filenames, so checking out those commits requires a filesystem that supports them.
 
+## `dist_git.py --dry-run` policy
+
+`--dry-run` preserves each command's established behavior. It is **not** a universal
+side-effect-free preview: several commands still modify package files or metadata. Place the
+flag before the command, for example `make dist-git ARGS='--dry-run update bash'`.
+Each command's `--help` also describes its policy.
+
+| Command | Behavior with `--dry-run` |
+| ------- | ------------------------ |
+| `import` | Imports files, writes metadata, and regenerates resources, without staging or committing. |
+| `update` | Updates package files, but does not save metadata, run source pipelines, commit, or write recovery state. Existing safety checks still apply. |
+| `update --continue` | Checks for unresolved conflict markers and reports the intended commit, without source verification, spec finalization, or committing. |
+| `sync` | Replaces package files, but does not save metadata, run source pipelines, commit, or write recovery state. With `--mark`, package files and metadata remain unchanged. |
+| `rebuild` | Modifies spec releases without committing. |
+| `rebuild-rev-deps` | Modifies reverse-dependency spec releases without committing. |
+| `sanitize-paths` | Previews portable path changes without changing files. |
+| `add-private-product` | Previews configuration and infrastructure changes without contacting Pulp, modifying files, or committing. |
+| `mark-modified`, `set-upstream` | Still write metadata. These commands never commit, with or without `--dry-run`. |
+| `rename`, `update-releases`, `list`, `diff`, `check-paths`, `ls-sources` | Reject the flag before executing the command. |
+
+**Compatibility decision:** `mark-modified` and `set-upstream` continue accepting `--dry-run`
+because existing callers use it for their metadata-only workflows. The flag does not turn
+either command into a preview or suppress metadata writes. Other unsupported combinations,
+including read-only commands where the flag would be ignored, are rejected explicitly.
+A new side-effect-free preview mode is outside this policy.
+
+Version-validation failures exit with code **1**, both with and without `--dry-run`.
+A normal update saves recovery state for correction and `update --continue`. A failed dry-run
+does not create recovery state, so it cannot be resumed with `--continue`. Its package-file
+edits remain available for inspection; correct the problem before starting another update.
+
 ## Testing Locally
 
 ```bash
