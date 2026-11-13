@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-pycparser.git",
-    "release": "4",
     "sha": "549dfe743b7f9933aa27879ec85ac1fbf1e11dee"
   },
-  "modification_reason": "Python 3.13 variant with full unittest checks",
+  "modification_reason": "Update to upstream version 3.12",
   "modification_status": "modified",
   "release_monitoring_project_id": 8175,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/eliben/pycparser",
-  "version": "3.00"
+  "version": "3.12"
 }
