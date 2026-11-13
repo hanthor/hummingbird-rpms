@@ -1989,6 +1989,10 @@
         "^rpms/python3\\.13\\-pygments/",
         "^test/rpms/python3\\.13\\-pygments\\.yml$"
       ],
+      "python3-13-pytest--rpms": [
+        "^rpms/python3\\.13\\-pytest/",
+        "^test/rpms/python3\\.13\\-pytest\\.yml$"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"

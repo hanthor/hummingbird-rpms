@@ -1,0 +1,184 @@
+%bcond bootstrap 1
+
+# Track this temporary stage in the PR, not in the RPM release suffix.
+%global __bootstrap %{nil}
+
+Name:           python3.13-pytest
+Version:        9.1.1
+Release:        1.1%{?dist}
+Summary:        Simple powerful testing with Python
+# SPDX
+License:        MIT
+URL:            https://pytest.org
+Source:         %{pypi_source pytest %{version}}
+
+# Remove -s from Python shebang,
+# ensure that packages installed with pip to user locations are testable
+# https://bugzilla.redhat.com/2152171
+%undefine _py3_shebang_s
+
+# When building pytest for the first time with new Python version
+# we might not yet have all the BRs, those conditionals allow us to do that.
+
+# This can be used to disable all tests for faster bootstrapping.
+# The tests are enabled by default except when building on RHEL/ELN
+# (to avoid pulling in extra dependencies into next RHEL).
+%bcond tests %[%{without bootstrap} && %{undefined rhel}]
+
+# Only disabling the optional tests is a more complex but careful approach
+# Pytest will skip the related tests, so we only conditionalize the BRs
+%bcond optional_tests 0
+
+# Only the JUnit XML module requires an additional xmlschema port.
+%bcond xml_tests 0
+
+# To run the tests in %%check we use pytest-timeout
+# When building pytest for the first time with new Python version
+# that is not possible as it depends on pytest
+%bcond timeout 0
+
+# When building pytest for the first time with new Python version
+# we also don't have sphinx yet and cannot build docs.
+# The docs are enabled by default except when building on RHEL/ELN
+# (to avoid pulling in extra dependencies into next RHEL).
+%bcond docs 0
+
+# Anchor dependency resolution to the macro-owning Hummingbird interpreter.
+BuildRequires:  python3.13-devel >= 3.13.18-1.3
+BuildRequires:  pyproject-rpm-macros >= 0-51
+
+%if %{with tests}
+# we avoid using %%pyproject_buildrequires -x testing as it mixes optional and non-optional deps
+BuildRequires:  python%{python3_pkgversion}-attrs >= 19.2
+BuildRequires:  python%{python3_pkgversion}-hypothesis >= 3.56
+BuildRequires:  python%{python3_pkgversion}-pygments >= 2.7.2
+%if %{with xml_tests}
+BuildRequires:  python3-xmlschema
+%endif
+%if %{with optional_tests}
+BuildRequires:  python3-argcomplete
+#BuildRequires:  python3-asynctest -- not packaged in Fedora
+BuildRequires:  python3-decorator
+BuildRequires:  python3-jinja2
+BuildRequires:  python3-numpy
+BuildRequires:  python3-pexpect
+BuildRequires:  python3-pytest-xdist
+BuildRequires:  python3-twisted
+BuildRequires:  /usr/bin/lsof
+%endif
+%if %{with timeout}
+BuildRequires:  python3-pytest-timeout
+%endif
+%endif
+
+%if %{with docs}
+BuildRequires:  %{_bindir}/rst2html
+# pluggy >= 1 is needed to build the docs, older versions are allowed on runtime:
+BuildRequires:  python3-pluggy >= 1
+BuildRequires:  python3-pygments-pytest
+BuildRequires:  python3-furo
+BuildRequires:  python3-sphinx
+BuildRequires:  python3-sphinx-inline-tabs
+BuildRequires:  python3-sphinx-removed-in
+BuildRequires:  python3-sphinxcontrib-trio
+# See doc/en/conf.py -- sphinxcontrib.inkscapeconverter is only used when inkscape is available
+# we don't BR inkscape so we generally don't need it, but in case inkscape is installed accidentally:
+BuildRequires:  (python3-sphinxcontrib-inkscapeconverter if inkscape)
+BuildRequires:  make
+%endif
+
+BuildArch:      noarch
+
+Provides:       pytest = %{version}-%{release}
+
+%description
+The pytest framework makes it easy to write small tests, yet scales to support
+complex functional testing for applications and libraries.
+
+
+%prep
+%autosetup -p1 -n pytest-%{version}
+
+# documentation dependencies missing in Fedora
+sed -i '/sphinxcontrib-towncrier/d' doc/en/requirements.txt
+sed -i '/sphinxcontrib\.towncrier/d' doc/en/conf.py
+sed -i '/sphinx_issues/d' doc/en/conf.py
+sed -i '/sphinx-issues/d' doc/en/requirements.txt
+
+# Hummingbird F44 buildroot still has Sphinx 8.2; pytest 9.1.1 docs need Sphinx >= 9
+# for sphinx.ext.autodoc._dynamic (Python 3.14 workaround). Skip until Sphinx 9.
+sed -i 's/if sys.version_info >= (3, 14):/if False:  # no autodoc._dynamic in Sphinx < 9/' doc/en/conf.py
+
+
+%generate_buildrequires
+%pyproject_buildrequires -r
+
+
+%build
+%pyproject_wheel
+
+%if %{with docs}
+for l in doc/* ; do
+  %make_build -C $l html PYTHONPATH="$(pwd)/src"
+done
+for f in README CHANGELOG CONTRIBUTING ; do
+  rst2html ${f}.rst > ${f}.html
+done
+%endif
+
+
+%install
+%pyproject_install
+%pyproject_save_files _pytest pytest py
+
+mv %{buildroot}%{_bindir}/pytest %{buildroot}%{_bindir}/pytest-%{python3_version}
+ln -snf pytest-%{python3_version} %{buildroot}%{_bindir}/pytest-3
+mv %{buildroot}%{_bindir}/py.test %{buildroot}%{_bindir}/py.test-%{python3_version}
+ln -snf py.test-%{python3_version} %{buildroot}%{_bindir}/py.test-3
+
+# We use 3.X per default
+ln -snf pytest-%{python3_version} %{buildroot}%{_bindir}/pytest
+ln -snf py.test-%{python3_version} %{buildroot}%{_bindir}/py.test
+
+%if %{with docs}
+mkdir -p _htmldocs/html
+for l in doc/* ; do
+  # remove hidden file
+  rm ${l}/_build/html/.buildinfo
+  mv ${l}/_build/html _htmldocs/html/${l##doc/}
+done
+%endif
+
+# remove shebangs from all scripts
+find %{buildroot}%{python3_sitelib} \
+     -name '*.py' \
+     -exec sed -i -e '1{/^#!/d}' {} \;
+
+
+%check
+%if %{with tests}
+%global __pytest %{buildroot}%{_bindir}/pytest
+# optional_tests deps contain pytest-xdist, so we can use it to run tests faster
+%pytest testing %{?with_timeout:--timeout=30} %{?with_optional_tests:-n auto} %{!?with_xml_tests:--ignore=testing/test_junitxml.py} -rs
+%else
+%pyproject_check_import
+%endif
+
+
+%files -f %{pyproject_files}
+%if %{with docs}
+%doc CHANGELOG.html
+%doc README.html
+%doc CONTRIBUTING.html
+%doc _htmldocs/html
+%endif
+%{_bindir}/pytest
+%{_bindir}/pytest-3
+%{_bindir}/pytest-%{python3_version}
+%{_bindir}/py.test
+%{_bindir}/py.test-3
+%{_bindir}/py.test-%{python3_version}
+
+
+%changelog
+%autochangelog
