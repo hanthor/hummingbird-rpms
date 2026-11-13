@@ -22,9 +22,9 @@ This separation allows independent iteration on each concern.
 | ImageRepository          | rpms           | manual  | manual    | -        | -          |
 | ReleasePlanAdmission     | rpms           | -       | automatic | manual   | automatic  |
 | EnterpriseContractPolicy | rpms           | -       | automatic | manual   | automatic  |
+| IntegrationTestScenario  | rpms           | -       | automatic | manual   | automatic  |
 | Application              | infrastructure | -       | -         | manual   | automatic  |
 | ReleasePlan              | infrastructure | -       | -         | manual   | automatic  |
-| IntegrationTestScenario  | infrastructure | -       | -         | manual   | automatic  |
 | ServiceAccount, Secret   | infrastructure | -       | -         | manual   | automatic  |
 
 **Legend**:
@@ -61,16 +61,52 @@ Resources are defined in `konflux-templates/` and rendered to `konflux-templates
 1. **Consistency**: Follows the containers repo pattern of keeping policy definitions alongside the
    resources they govern.
 
+### RPMs Repo — IntegrationTestScenario
+
+**IntegrationTestScenario** resources are defined via two config files:
+
+- `konflux-templates/scenarios.yml` — the application × template matrix (which app gets
+  which scenario type, with which triggers and optional per-instance vars)
+- `konflux-templates/scenarios/<type>.yml.j2` — full CR content per scenario type (params,
+  resolverRef, Renovate markers, timeout annotations)
+
+The generator renders these into `konflux-templates/rendered.yml` alongside Components and
+ImageRepositories. The same matrix drives the trigger-manifest `integration_test_scenarios`
+section, so the manifest cannot drift from deployed ITS.
+
+**Deploy path**: ITS is deployed by the `*-releases` downstream pipeline (not `*-components`).
+The releases sync fetches `rendered.yml` from the **main** branch and runs on every merge to
+main, so ITS changes deploy automatically after merge — including Renovate bundle-digest and
+`IMAGE_TAG` bumps. The components sync is deliberately excluded: it deploys from
+`PARENT_COMMIT_SHA` (MR heads), and ITS is static repo-level config that is not supposed to
+change in an MR — concurrent or stale MR pipelines would otherwise reset the live CR to older
+versions. Pre-merge ITS deployment is intentionally unavailable by design.
+
+**No-prune behaviour**: The deploy uses server-side apply without pruning — resources
+removed or renamed in `rendered.yml` are **not** deleted from the cluster. A renamed or
+removed ITS remains live and continues producing test PipelineRuns until deleted manually:
+
+```shell
+kubectl delete integrationtestscenario <name> -n hummingbird-tenant
+```
+
+See the infrastructure repo's
+[kubernetes-rendering.md](https://gitlab.com/redhat/hummingbird/infrastructure/-/blob/main/documentation/operating/kubernetes-rendering.md)
+"No pruning" section for details.
+
+The `integration_test_scenarios` section of `.tekton/trigger-manifest-pull-request.json`
+is derived from the same `scenarios.yml` matrix, ensuring the manifest never drifts from
+deployed scenarios. See the [trigger manifests documentation](https://hummingbird-project.io/l/trigger-manifests)
+for the full manifest schema.
+
 ### Infrastructure Repo
 
-**Application, ReleasePlan, and IntegrationTestScenario** are defined in `kubernetes/rpms-main/`:
+**Application and ReleasePlan** are defined in `kubernetes/rpms-main/`:
 
 1. **Independent iteration**: Changes are decoupled from rpms repo activity—they can be modified,
    test-deployed via manual trigger in an infrastructure MR, verified, and merged without touching
    the rpms repo.
-2. **Testable before merge**: If defined in the rpms repo, these would only deploy after merging to
-   main, making iteration difficult.
-3. **Static configuration**: These resources don't depend on per-package data.
+2. **Static configuration**: These resources don't depend on per-package data.
 
 **ServiceAccount and Secret** for releases are defined in `kubernetes/setup-konflux/`:
 
