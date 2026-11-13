@@ -2001,6 +2001,10 @@
         "^rpms/python3\\.13\\-pytest/",
         "^test/rpms/python3\\.13\\-pytest\\.yml$"
       ],
+      "python3-13-semantic-version--rpms": [
+        "^rpms/python3\\.13\\-semantic_version/",
+        "^test/rpms/python3\\.13\\-semantic_version\\.yml$"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"

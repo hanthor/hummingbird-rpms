@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-semantic_version.git",
+    "release": "27",
+    "sha": "d880fd5114668eca6bbb9fb3b51cca56b727235c"
+  },
+  "modification_reason": "Python 3.13 variant without optional Django tests",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 6514,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/rbarrois/python-semanticversion",
+  "version": "2.10.0"
+}

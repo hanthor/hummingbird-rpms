@@ -1081,6 +1081,8 @@ spec:
           contentType: rpm
         - name: python3-13-pytest-main
           contentType: rpm
+        - name: python3-13-semantic-version-main
+          contentType: rpm
         - name: python3-13-setuptools-main
           contentType: rpm
         - name: python3-13-setuptools-scm-main
