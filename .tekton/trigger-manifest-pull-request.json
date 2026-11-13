@@ -2009,6 +2009,10 @@
         "^rpms/python3\\.13\\-setuptools_scm/",
         "^test/rpms/python3\\.13\\-setuptools_scm\\.yml$"
       ],
+      "python3-13-sortedcontainers--rpms": [
+        "^rpms/python3\\.13\\-sortedcontainers/",
+        "^test/rpms/python3\\.13\\-sortedcontainers\\.yml$"
+      ],
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/",
         "^test/rpms/python3\\.13\\-tomlkit\\.yml$"

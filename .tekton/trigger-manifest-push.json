@@ -1508,6 +1508,9 @@
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/"
       ],
+      "python3-13-sortedcontainers--rpms": [
+        "^rpms/python3\\.13\\-sortedcontainers/"
+      ],
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/"
       ],
