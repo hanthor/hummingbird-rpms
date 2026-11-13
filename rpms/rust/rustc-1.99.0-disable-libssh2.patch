@@ -1,6 +1,6 @@
---- rustc-beta-src/src/tools/cargo/Cargo.lock.orig	2026-08-31 17:22:58.354582255 -0500
-+++ rustc-beta-src/src/tools/cargo/Cargo.lock	2026-08-31 17:23:35.153103977 -0500
-@@ -3017,7 +3017,6 @@ checksum = "23c7391e4b9f4ffab1a624223cc1
+--- rustc-beta-src/src/tools/cargo/Cargo.lock.orig
++++ rustc-beta-src/src/tools/cargo/Cargo.lock
+@@ -2879,7 +2879,6 @@
  dependencies = [
   "cc",
   "libc",
@@ -8,30 +8,33 @@
   "libz-sys",
   "openssl-sys",
   "pkg-config",
-@@ -3052,20 +3051,6 @@ dependencies = [
-  "pkg-config",
-  "vcpkg",
- ]
+@@ -2910,23 +2909,8 @@
+ version = "0.38.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f6c19a05435c21ac299d71b6a9c13db3e3f47c520517d58990a462a1397a61db"
+-dependencies = [
+- "pkg-config",
+- "vcpkg",
+-]
 -
 -[[package]]
 -name = "libssh2-sys"
--version = "0.3.2"
+-version = "0.3.4"
 -source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "c04141a07bb0c0bc461cb657808764de571702a59bc5c726c400ac9a7625e3ab"
--dependencies = [
+-checksum = "fce5a0b125f6aeac93b304b35f7f1e9f054aad29ddac57091928e41df3ccd233"
+ dependencies = [
 - "cc",
 - "libc",
 - "libz-sys",
 - "openssl-sys",
-- "pkg-config",
-- "vcpkg",
--]
+  "pkg-config",
+- "semver",
+  "vcpkg",
+ ]
  
- [[package]]
- name = "libz-sys"
---- rustc-beta-src/src/tools/cargo/Cargo.toml.orig	2026-08-31 17:22:50.666473252 -0500
-+++ rustc-beta-src/src/tools/cargo/Cargo.toml	2026-08-31 17:23:14.041192141 -0500
-@@ -51,7 +51,7 @@ filetime = "0.2.27"
+--- rustc-beta-src/src/tools/cargo/Cargo.toml.orig
++++ rustc-beta-src/src/tools/cargo/Cargo.toml
+@@ -51,7 +51,7 @@
  flate2 = { version = "1.1.9", default-features = false, features = ["zlib-rs"] }
  futures = { version = "0.3.32", default-features = false, features = ["std", "executor", "async-await"]}
  futures-timer = "3.0.3"

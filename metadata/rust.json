@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rust.git",
-    "release": "2",
     "sha": "29d7b25adbfdb113642b75461646277683c0f76a"
   },
-  "modification_reason": "Update to upstream version 1.99.0; backport fixes for CVE-2026-109349, CVE-2026-109350, CVE-2026-109351",
+  "modification_reason": "Update to upstream version 1.100.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 7635,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/rust-lang/rust",
-  "version": "1.99.1"
+  "version": "1.100.0"
 }
