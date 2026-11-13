@@ -24,8 +24,8 @@
 %endif
 
 Name:           python3.13-%{pypi_name}
-Version:        26.2
-Release:        4.1%{?dist}
+Version:        26.3
+Release:        0.1%{?dist}
 Summary:        Core utilities for Python packages
 
 License:        BSD-2-Clause OR Apache-2.0
