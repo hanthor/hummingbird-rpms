@@ -1475,6 +1475,9 @@
       "python3-13-charset-normalizer--rpms": [
         "^rpms/python3\\.13\\-charset\\-normalizer/"
       ],
+      "python3-13-cryptography--rpms": [
+        "^rpms/python3\\.13\\-cryptography/"
+      ],
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/"
       ],
@@ -1489,6 +1492,9 @@
       ],
       "python3-13-hypothesis--rpms": [
         "^rpms/python3\\.13\\-hypothesis/"
+      ],
+      "python3-13-idna--rpms": [
+        "^rpms/python3\\.13\\-idna/"
       ],
       "python3-13-iniconfig--rpms": [
         "^rpms/python3\\.13\\-iniconfig/"

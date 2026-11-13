@@ -1,0 +1,19 @@
+--- a/tests/test_version.py
++++ b/tests/test_version.py
+@@ -10,7 +10,6 @@
+ import sys
+ import typing
+ 
+-import pretend
+ import pytest
+ 
+ from packaging._structures import Infinity, NegativeInfinity
+@@ -896,6 +895,8 @@
+ 
+     @pytest.mark.parametrize(("op", "expected"), [("eq", False), ("ne", True)])
+     def test_compare_other(self, op: str, expected: bool) -> None:
++        import pretend
++
+         other = pretend.stub(**{f"__{op}__": lambda _: NotImplemented})
+ 
+         assert getattr(operator, op)(Version("1"), other) is expected
