@@ -2386,5 +2386,25 @@
     }
   },
   "excludes": [],
+  "integration_test_scenarios": {
+    "private-example-rpms-main": [
+      {
+        "group": true,
+        "name": "private-example-rpms-main-testing-farm"
+      }
+    ],
+    "private-nodejs20-rpms-main": [
+      {
+        "group": true,
+        "name": "private-nodejs20-rpms-main-testing-farm"
+      }
+    ],
+    "rpms-main": [
+      {
+        "group": true,
+        "name": "rpms-main-testing-farm"
+      }
+    ]
+  },
   "type": "pull_request"
 }
