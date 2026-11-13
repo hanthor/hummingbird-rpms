@@ -51,6 +51,9 @@ transform:
 # go.mod/go.sum/go.work alongside vendor/, which changes this archive's own
 # checksum without changing any dependency's resolved version or content.
 accepted-checksums:
+  - file: "grafana-12.4.15-vendor.tar.bz2"
+    checksum: "6f6381b236fd4e6b5865f7455cba5588b4b39576846ba3010bcd7413020c6da56acb9142dea0381a6e9089ca154d8583b3d1ead0b52cc432f8fa9ec65ea23d3a"
+    reason: "go-vendor-tools.toml no longer runs go get klauspost/compress@v1.20.2: 12.4.15 already requires v1.20.3 (CVE-2026-116591), and the go get had downgraded it, leaving vendor/ inconsistent with go.mod; vendor archive regenerated"
   - file: "grafana-yarn-cache-12.4.14.tar.bz2"
     checksum: "54ee23f5d932a9f24d4215f370e331148cf81bb02766c27f03019d73d10b2bb3b2e63bbd7d8d3d904a8c9549e2603431a7f934c3f6b67d44257c9bb07030d123"
     reason: "grafana-uuid-11.1.0-lockfile.patch resolves the ^11 uuid ranges to 11.1.0 (as in 12.4.13) so a single uuid is hoisted instead of nesting 11.1.1 under the elasticsearch plugin, which broke %check; yarn cache regenerated without the uuid 11.1.1 archive"
