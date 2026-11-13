@@ -1466,6 +1466,9 @@
       "python3-13--rpms": [
         "^rpms/python3\\.13/"
       ],
+      "python3-13-attrs--rpms": [
+        "^rpms/python3\\.13\\-attrs/"
+      ],
       "python3-13-cffi--rpms": [
         "^rpms/python3\\.13\\-cffi/"
       ],

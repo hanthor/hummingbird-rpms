@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-attrs.git",
+    "release": "4",
+    "sha": "ff603406f67bcd92ee02b2b1e17494ab1c38b55d"
+  },
+  "modification_reason": "Python 3.13 bootstrap pending hypothesis",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 15099,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/python-attrs/attrs",
+  "version": "26.1.0"
+}
