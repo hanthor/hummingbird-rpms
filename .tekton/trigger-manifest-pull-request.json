@@ -1989,6 +1989,10 @@
         "^rpms/python3\\.13\\-iniconfig/",
         "^test/rpms/python3\\.13\\-iniconfig\\.yml$"
       ],
+      "python3-13-maturin--rpms": [
+        "^rpms/python3\\.13\\-maturin/",
+        "^test/rpms/python3\\.13\\-maturin\\.yml$"
+      ],
       "python3-13-packaging--rpms": [
         "^rpms/python3\\.13\\-packaging/",
         "^test/rpms/python3\\.13\\-packaging\\.yml$"
