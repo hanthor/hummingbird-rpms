@@ -1,6 +1,6 @@
 Name:           python3.13-hatchling
-Version:        1.32.4
-Release:        1.1%{?dist}
+Version:        1.33.0
+Release:        0.1%{?dist}
 Summary:        The build backend used by Hatch
 
 # SPDX
