@@ -4,7 +4,7 @@
     "git_url": "https://src.fedoraproject.org/rpms/nodejs24.git",
     "sha": "2c39b0e31468ed3b45f9b38b6e1e9b2f35f48ddd"
   },
-  "modification_reason": "Update to upstream version 24.22.3",
+  "modification_reason": "Disable bundled npm by default on Hummingbird",
   "modification_status": "modified",
   "release_monitoring_project_id": 8251,
   "track_upstream": "24",

@@ -33,5 +33,5 @@ curl --silent "${BASEURL}/SHASUMS256.txt" | sha256sum --check --ignore-missing
 
 log >&2 Repackaging the sources into "${BASENAME}-stripped.tar.gz"
 tar -xzf "${BASENAME}.tar.gz" && rm -f "${BASENAME}.tar.gz"
-rm -rf "${BASENAME}/deps/openssl"
+rm -rf "${BASENAME}/deps/openssl" "${BASENAME}/deps/npm"
 tar -czf "${BASENAME}-stripped.tar.gz" "${BASENAME}"

@@ -28,7 +28,7 @@ transform:
 
   - type: strip-tarball
     target: "node-v${VERSION}.tar.gz"
-    paths: ["*/deps/openssl"]
+    paths: ["*/deps/openssl", "*/deps/npm"]
 
   # Discover the bundled ICU version from the tarball, fetch its two data zips.
   - type: run
@@ -90,3 +90,9 @@ accepted-checksums:
   - file: "packaging-scripts.tar.gz"
     checksum: "20afcd77496c12be26ea1ff28d60338549726f2d2ed53d236ffb501e42b0a01a7dc854daf200e157471b812e416cdc7a007e1ec4deba0b73b8639aa6e382add3"
     reason: "One-time transition: now regenerated deterministically by gorget's own pipeline from packaging/*.sh + Makefile (already in git), instead of a manually maintained lookaside blob. Content is identical; only tar/gzip metadata differs."
+  - file: "packaging-scripts.tar.gz"
+    checksum: "1dacd86162a8d705e077f7bd45acfbb17be74b9dc069dad59ecf5c55e19d40fb074785074059e27bb8bba0009516050fd08261c594905710091742bd71fc0fd4"
+    reason: "Strip npm in the legacy tarball helper and allow version extraction without npm sources."
+  - file: "node-v22.23.5.tar.gz"
+    checksum: "8675d0eefcb97c2361c739c8fa2ff57a550e3eae098db4829d30ad645c4232b51b85a734feb113b2648d49d54a7afbf3f4824d56a1977ca5d0d7e9303db4a5f1"
+    reason: "Remove bundled npm and its version extraction from the Node.js sources and packaging scripts."
