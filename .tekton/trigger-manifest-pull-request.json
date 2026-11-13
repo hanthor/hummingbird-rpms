@@ -1953,9 +1953,25 @@
         "^rpms/python3\\.13/",
         "^test/rpms/python3\\.13\\.yml$"
       ],
+      "python3-13-cffi--rpms": [
+        "^rpms/python3\\.13\\-cffi/",
+        "^test/rpms/python3\\.13\\-cffi\\.yml$"
+      ],
+      "python3-13-charset-normalizer--rpms": [
+        "^rpms/python3\\.13\\-charset\\-normalizer/",
+        "^test/rpms/python3\\.13\\-charset\\-normalizer\\.yml$"
+      ],
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/",
         "^test/rpms/python3\\.13\\-flit\\-core\\.yml$"
+      ],
+      "python3-13-hatch-fancy-pypi-readme--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme/",
+        "^test/rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme\\.yml$"
+      ],
+      "python3-13-hatch-vcs--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-vcs/",
+        "^test/rpms/python3\\.13\\-hatch\\-vcs\\.yml$"
       ],
       "python3-13-hatchling--rpms": [
         "^rpms/python3\\.13\\-hatchling/",
@@ -1993,6 +2009,10 @@
         "^rpms/python3\\.13\\-pytest/",
         "^test/rpms/python3\\.13\\-pytest\\.yml$"
       ],
+      "python3-13-semantic-version--rpms": [
+        "^rpms/python3\\.13\\-semantic_version/",
+        "^test/rpms/python3\\.13\\-semantic_version\\.yml$"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"
@@ -2000,6 +2020,10 @@
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/",
         "^test/rpms/python3\\.13\\-setuptools_scm\\.yml$"
+      ],
+      "python3-13-sortedcontainers--rpms": [
+        "^rpms/python3\\.13\\-sortedcontainers/",
+        "^test/rpms/python3\\.13\\-sortedcontainers\\.yml$"
       ],
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/",

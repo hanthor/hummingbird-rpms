@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/python-sortedcontainers.git",
+    "release": "26",
+    "sha": "a19adddf7b209ab2ac60c6abcb618b0f20df74eb"
+  },
+  "modification_reason": "Python 3.13 variant with scoped plotting checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 15939,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/grantjenks/python-sortedcontainers",
+  "version": "2.4.0"
+}

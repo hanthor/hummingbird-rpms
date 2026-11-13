@@ -1466,8 +1466,20 @@
       "python3-13--rpms": [
         "^rpms/python3\\.13/"
       ],
+      "python3-13-cffi--rpms": [
+        "^rpms/python3\\.13\\-cffi/"
+      ],
+      "python3-13-charset-normalizer--rpms": [
+        "^rpms/python3\\.13\\-charset\\-normalizer/"
+      ],
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/"
+      ],
+      "python3-13-hatch-fancy-pypi-readme--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-fancy\\-pypi\\-readme/"
+      ],
+      "python3-13-hatch-vcs--rpms": [
+        "^rpms/python3\\.13\\-hatch\\-vcs/"
       ],
       "python3-13-hatchling--rpms": [
         "^rpms/python3\\.13\\-hatchling/"
@@ -1496,11 +1508,17 @@
       "python3-13-pytest--rpms": [
         "^rpms/python3\\.13\\-pytest/"
       ],
+      "python3-13-semantic-version--rpms": [
+        "^rpms/python3\\.13\\-semantic_version/"
+      ],
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/"
       ],
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/"
+      ],
+      "python3-13-sortedcontainers--rpms": [
+        "^rpms/python3\\.13\\-sortedcontainers/"
       ],
       "python3-13-tomlkit--rpms": [
         "^rpms/python3\\.13\\-tomlkit/"

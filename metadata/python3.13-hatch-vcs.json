@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "f44",
+    "git_url": "https://src.fedoraproject.org/rpms/python-hatch-vcs.git",
+    "release": "6",
+    "sha": "11c9ffeaa79b4bad48c707fd5b64a873a7abdb28"
+  },
+  "modification_reason": "Python 3.13 variant with full test checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 301800,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/ofek/hatch-vcs",
+  "version": "0.5.0"
+}

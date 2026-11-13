@@ -19420,6 +19420,84 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python3.13-cffi ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-cffi-main
+spec:
+  application: rpms-main
+  componentName: python3-13-cffi-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-cffi-main
+  source:
+    git:
+      context: rpms/python3.13-cffi
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-cffi-main
+  name: python3-13-cffi-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-cffi-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python3.13-charset-normalizer ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-charset-normalizer-main
+spec:
+  application: rpms-main
+  componentName: python3-13-charset-normalizer-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-charset-normalizer-main
+  source:
+    git:
+      context: rpms/python3.13-charset-normalizer
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-charset-normalizer-main
+  name: python3-13-charset-normalizer-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-charset-normalizer-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python3.13-flit-core ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -19452,6 +19530,84 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/python3-13-flit-core-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python3.13-hatch-fancy-pypi-readme ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-hatch-fancy-pypi-readme-main
+spec:
+  application: rpms-main
+  componentName: python3-13-hatch-fancy-pypi-readme-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-hatch-fancy-pypi-readme-main
+  source:
+    git:
+      context: rpms/python3.13-hatch-fancy-pypi-readme
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-hatch-fancy-pypi-readme-main
+  name: python3-13-hatch-fancy-pypi-readme-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-hatch-fancy-pypi-readme-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python3.13-hatch-vcs ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-hatch-vcs-main
+spec:
+  application: rpms-main
+  componentName: python3-13-hatch-vcs-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-hatch-vcs-main
+  source:
+    git:
+      context: rpms/python3.13-hatch-vcs
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-hatch-vcs-main
+  name: python3-13-hatch-vcs-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-hatch-vcs-main
     visibility: public
   notifications:
   - config:
@@ -19810,6 +19966,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- python3.13-semantic_version ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-semantic-version-main
+spec:
+  application: rpms-main
+  componentName: python3-13-semantic-version-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-semantic-version-main
+  source:
+    git:
+      context: rpms/python3.13-semantic_version
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-semantic-version-main
+  name: python3-13-semantic-version-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-semantic-version-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- python3.13-setuptools ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
@@ -19881,6 +20076,45 @@ metadata:
 spec:
   image:
     name: hummingbird-tenant/python3-13-setuptools-scm-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
+# --- python3.13-sortedcontainers ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: python3-13-sortedcontainers-main
+spec:
+  application: rpms-main
+  componentName: python3-13-sortedcontainers-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/python3-13-sortedcontainers-main
+  source:
+    git:
+      context: rpms/python3.13-sortedcontainers
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: python3-13-sortedcontainers-main
+  name: python3-13-sortedcontainers-main
+spec:
+  image:
+    name: hummingbird-tenant/python3-13-sortedcontainers-main
     visibility: public
   notifications:
   - config:

@@ -1,13 +1,9 @@
 # Turn the tests off when bootstrapping Python, because pytest requires pluggy
-%bcond bootstrap 1
-%bcond tests %{without bootstrap}
-
-# Track this temporary stage in the PR, not in the RPM release suffix.
-%global __bootstrap %{nil}
+%bcond tests 1
 
 Name:           python3.13-pluggy
 Version:        1.7.0
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        The plugin manager stripped of pytest specific details
 
 # SPDX
@@ -21,7 +17,7 @@ BuildRequires:  python3.13-devel >= 3.13.18-1.3
 
 %if %{with tests}
 # the [testing] extra includes benchmarking dependencies
-BuildRequires:  python%{python3_pkgversion}-pytest
+BuildRequires:  python3.13-pytest
 %endif
 
 %global _description\
