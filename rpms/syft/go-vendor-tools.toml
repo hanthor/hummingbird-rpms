@@ -1,9 +1,5 @@
 [archive]
 
-[archive.dependency_overrides]
-# CVE-2026-116591
-"github.com/klauspost/compress" = "v1.20.2"
-
 [licensing]
 detector = "askalono"
 exclude_files = ["vendor/modernc.org/memory/LICENSE-LOGO", "vendor/modernc.org/libc/LICENSE-3RD-PARTY.md"]
@@ -79,3 +75,13 @@ expression = "LicenseRef-scancode-public-domain-disclaimer"
 path = "vendor/howett.net/plist/LICENSE"
 sha256sum = "20d9b7d9372369484ecadae229d3e3efee8029b259e11c9a1b07d2e0a3c82e39"
 expression = "BSD-2-Clause AND BSD-3-Clause"
+
+[[licensing.licenses]]
+path = "vendor/github.com/anchore/stereoscope/COPYRIGHT"
+sha256sum = "a8f9764d4e148dc03186c130012a9affa7c92f3b0de1693b133121233a84b1bf"
+expression = "Apache-2.0"
+
+[[licensing.licenses]]
+path = "vendor/github.com/varlink/go/COPYRIGHT"
+sha256sum = "c01abf30ab9d3f83d10e357153f12fd12e9c08e61ffe13550985699a8449ac85"
+expression = "Apache-2.0"
