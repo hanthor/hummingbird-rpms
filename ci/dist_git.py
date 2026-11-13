@@ -3169,11 +3169,6 @@ def _setup_infra_repo(product: str, infra_path: Path, dry_run: bool) -> None:
     (target_dir / "01-release-plans.yml.j2").write_text(release_plan_content)
     logging.info(f"Created 01-release-plans.yml.j2 for {project_name}")
 
-    its_src = rpms_main_dir / "10-integration-test-scenarios-testing-farm.yml.j2"
-    if its_src.exists():
-        shutil.copy(its_src, target_dir / "10-integration-test-scenarios-testing-farm.yml.j2")
-        logging.info(f"Copied IntegrationTestScenario template to {target_dir}")
-
     ci_yml_path = infra_path / ".gitlab-ci.yml"
     ci_content = ci_yml_path.read_text()
     marker = "          - rpms-main\n"

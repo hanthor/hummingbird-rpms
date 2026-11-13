@@ -221,6 +221,132 @@ def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
     }
 
 
+# ITS trigger routing (D2): triggers that map to the PR manifest (with group flag)
+# or to the push manifest.  Optional entries are silently excluded.
+# NOTE: "component_attr-*" / "component_setup-*" are intentionally NOT listed —
+# they are always optional=true in this repo and silently excluded before routing.
+# The bare "component" value is reserved for future non-optional post-merge entries.
+_KNOWN_ITS_TRIGGERS = {"pull_request", "component"}
+
+
+def _load_its_config() -> dict:
+    """Load konflux-templates/scenarios.yml — the single ITS config source (matrix format).
+
+    Both the CR rendering (-> rendered.yml) and the trigger-manifest emission read
+    this file.  Editing it changes both outputs atomically (D2 config-driven revision).
+    """
+    config_path = ROOT_DIR / "konflux-templates" / "scenarios.yml"
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+
+def _render_its_scenarios() -> list[str]:
+    """Render all ITS CR YAML documents from the scenario matrix and per-type templates.
+
+    For each application × matrix entry, renders
+    konflux-templates/scenarios/<template>.yml.j2 with application, triggers, and vars.
+    When a suffix is present the template uses it for the CR name instead of the
+    template name, allowing multiple instantiations of the same template per app.
+    Returns a list of rendered YAML document strings (one per CR) in matrix order.
+    Each string ends without a trailing newline so the caller controls spacing.
+    """
+    config = _load_its_config()
+    env = Environment(
+        loader=FileSystemLoader(str(ROOT_DIR / "konflux-templates" / "scenarios")),
+    )
+    rendered = []
+    for app_name, entries in config["applications"].items():
+        for entry in entries:
+            tmpl_name = f"{entry['template']}.yml.j2"
+            tmpl = env.get_template(tmpl_name)
+            text = tmpl.render(
+                application=app_name,
+                template=entry["template"],
+                suffix=entry.get("suffix", entry["template"]),
+                triggers=entry["triggers"],
+                optional=entry.get("optional", False),
+                vars=entry.get("vars", {}),
+            ).rstrip("\n")
+            rendered.append(text)
+    return rendered
+
+
+def _route_its_entry(
+    app_name: str, template: str, triggers: list[str], optional: bool
+) -> tuple[bool, bool]:
+    """Return (in_pr_manifest, in_push_manifest) for one matrix entry.
+
+    pull_request  → PR list (group: true), not push list.
+    component     → PR list (group: false), push list.
+    optional      → excluded from both (silent).
+    Anything else, including an empty trigger list → hard error (fail-closed, D2).
+    """
+    if optional:
+        return False, False
+
+    has_pull_request = "pull_request" in triggers
+    has_component = "component" in triggers
+    unknown = [t for t in triggers if t not in _KNOWN_ITS_TRIGGERS]
+    if unknown:
+        sys.exit(
+            f"ERROR: matrix entry '{app_name}/{template}' has non-optional "
+            f"trigger(s) not routable to the trigger manifest: {unknown}. "
+            f"Mark the entry optional or extend the generator."
+        )
+    if not has_pull_request and not has_component:
+        # Covers empty triggers [] and triggers containing only canary kinds
+        # (component_attr-*, component_setup-*) — any non-optional entry that
+        # contributes nothing to either manifest is a hard error.
+        sys.exit(
+            f"ERROR: matrix entry '{app_name}/{template}' is non-optional "
+            f"but has no routable triggers (pull_request/component). "
+            f"Mark the entry optional or add a routable trigger."
+        )
+    return True, has_component
+
+
+def build_its_manifest_entries() -> dict[str, dict]:
+    """Build integration_test_scenarios sections for PR and push manifests.
+
+    Reads the matrix from scenarios.yml directly — the same config used to
+    render rendered.yml — so the manifest cannot diverge from the deployed ITS
+    (D2 config-driven).
+
+    Returns {"pr": {app: [{"name": ..., "group": ...}]},
+             "push": {app: [{"name": ...}]}}.
+    Non-optional pull_request-trigger entries → PR list (group: true).
+    Non-optional component-trigger entries → PR list (group: false) + push list.
+    Optional entries are excluded from both lists.
+    Generator exits non-zero for non-optional entries with unroutable triggers,
+    including an empty trigger list.
+    """
+    config = _load_its_config()
+    pr_manifest: dict[str, list] = {}
+    push_manifest: dict[str, list] = {}
+
+    for app_name, entries in config["applications"].items():
+        for entry in entries:
+            template = entry["template"]
+            triggers = entry["triggers"]
+            optional = entry.get("optional", False)
+            name = f"{app_name}-{entry.get('suffix', template)}"
+            in_pr, in_push = _route_its_entry(app_name, template, triggers, optional)
+            if in_pr:
+                pr_manifest.setdefault(app_name, []).append({
+                    "name": name,
+                    "group": "pull_request" in triggers,
+                })
+            if in_push:
+                push_manifest.setdefault(app_name, []).append({"name": name})
+
+    for app_name in pr_manifest:
+        pr_manifest[app_name] = sorted(pr_manifest[app_name], key=lambda e: e["name"])
+    for app_name in push_manifest:
+        push_manifest[app_name] = sorted(push_manifest[app_name], key=lambda e: e["name"])
+
+    return {"pr": pr_manifest, "push": push_manifest}
+
+
 def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
     """Build variables for Konflux templates."""
     packages = get_all_packages()
@@ -261,6 +387,7 @@ def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
         "branch": branch,
         "tenant": tenant,
         "git_repo": git_repo,
+        "integration_test_scenarios": _render_its_scenarios(),
         "rpms": rpms,
     }
 
@@ -414,8 +541,13 @@ def generate_pac(resource_type: str, branch: str, tenant: str) -> str:
     return render_template(template_path, macros_dir, variables).rstrip() + "\n"
 
 
-def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
-    """Build trigger manifest from already-computed PAC variables."""
+def build_trigger_manifest(pac_variables: dict, event_type: str, its_entries: dict | None = None) -> dict:
+    """Build trigger manifest from already-computed PAC variables.
+
+    its_entries is the per-manifest slice from build_its_manifest_entries():
+    {"app": [{"name": ..., "group": ...}]} for pull_request,
+    {"app": [{"name": ...}]} for push.
+    """
     default_application = pac_variables["application_name"]
     applications: dict[str, dict[str, list[str]]] = {}
 
@@ -428,11 +560,14 @@ def build_trigger_manifest(pac_variables: dict, event_type: str) -> dict:
             "manifest_triggers"
         ]
 
-    return {
+    manifest: dict = {
         "type": event_type,
         "excludes": [],
         "applications": applications,
     }
+    if its_entries:
+        manifest["integration_test_scenarios"] = its_entries
+    return manifest
 
 
 def generate_gitattributes() -> str:
@@ -465,6 +600,18 @@ def generate_konflux(branch: str, tenant: str, git_repo: str) -> str:
     macros_dir = ROOT_DIR / "konflux-templates" / "macros"
 
     return render_template(template_path, macros_dir, variables)
+
+
+def _check_its_coverage(its_app_names: set[str], manifest_app_names: set[str]) -> None:
+    """Exit non-zero if any application with components lacks an ITS (D2 fail-closed)."""
+    uncovered = manifest_app_names - its_app_names
+    if uncovered:
+        sys.exit(
+            f"ERROR: Application(s) {sorted(uncovered)} have components in the "
+            f"trigger manifest but no IntegrationTestScenario. Check that application_prefix "
+            f"in ci/konflux_rpa_config.yml and private_product in ci/package-overrides.yaml "
+            f"produce matching application names."
+        )
 
 
 def main():
@@ -511,7 +658,12 @@ def main():
             print(content)
     elif args.command == "all":
         # Generate all resources (equivalent to generate.sh)
+        # Compute ITS manifest entries once; they depend only on branch.
+        its_entries = build_its_manifest_entries()
+
         # Generate PAC resources and trigger manifests together (shared variables)
+        # Collect application names from the pull-request manifest to cross-check ITS apps.
+        pr_manifest_apps: set[str] | None = None
         for resource_type, event_type in (("push", "push"), ("pull-request", "pull_request")):
             print(f"Building {resource_type} template variables...", file=sys.stderr)
             variables = build_pac_variables(args.branch, args.tenant, resource_type)
@@ -522,9 +674,15 @@ def main():
             pac_result = render_template(template_path, macros_dir, variables).rstrip() + "\n"
             (ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml").write_text(pac_result)
 
-            manifest = build_trigger_manifest(variables, event_type)
+            # PR manifest carries integration_test_scenarios; push manifest omits the
+            # section entirely because rpms has no component-context (post-merge) scenarios.
+            its_manifest_entries = its_entries["pr"] if event_type == "pull_request" else its_entries["push"]
+            manifest = build_trigger_manifest(variables, event_type, its_manifest_entries)
             manifest_json = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
             (ROOT_DIR / ".tekton" / f"trigger-manifest-{resource_type}.json").write_text(manifest_json)
+
+            if event_type == "pull_request":
+                pr_manifest_apps = set(manifest["applications"].keys())
 
             if resource_type == "push":
                 promotion = render_template(
@@ -533,6 +691,14 @@ def main():
                 if not promotion.endswith("\n"):
                     promotion += "\n"
                 (ROOT_DIR / ".tekton" / "rpms-on-promotion.yaml").write_text(promotion)
+
+        # Cross-check: every application that has components must also have an ITS.
+        # A mismatch means application_prefix in ci/konflux_rpa_config.yml and
+        # private_product in ci/package-overrides.yaml produce diverging application
+        # names, which would leave some components without integration test coverage.
+        its_apps = set(its_entries["pr"].keys())
+        if pr_manifest_apps:
+            _check_its_coverage(its_apps, pr_manifest_apps)
 
         konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)

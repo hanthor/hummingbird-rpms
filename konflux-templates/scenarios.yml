@@ -1,0 +1,46 @@
+# Integration test scenario matrix for the rpms repo.
+# This is the single config source consumed by both the CR rendering
+# (-> konflux-templates/rendered.yml) and the trigger-manifest emission.
+#
+# Schema:
+#   applications:                  keyed by Konflux application name
+#     - template:                  scenario type; template file: scenarios/<template>.yml.j2
+#       suffix:                    optional CR-name override; CR name = <application>-<suffix>
+#                                  (defaults to <application>-<template> when absent)
+#       triggers:                  Konflux trigger context names
+#       optional: true             if present and true, excluded from trigger manifests
+#       vars:                      per-instance param overrides rendered after template defaults
+#
+# All CR content (params, resolverRefs, Renovate markers, timeout annotations)
+# lives in the template files; this file holds only the instantiation matrix.
+
+applications:
+  private-example-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm
+      suffix: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
+      vars:
+        TMT_PATH_FROM_CONTEXT: "true"
+
+  private-nodejs20-rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm
+      suffix: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
+      vars:
+        TMT_PATH_FROM_CONTEXT: "true"
+
+  rpms-main:
+    - template: testing-farm
+      triggers: [pull_request]
+    - template: testing-farm
+      suffix: testing-farm-upstream
+      triggers: [component_attr-main, component_setup-main]
+      optional: true
+      vars:
+        TMT_PATH_FROM_CONTEXT: "true"
