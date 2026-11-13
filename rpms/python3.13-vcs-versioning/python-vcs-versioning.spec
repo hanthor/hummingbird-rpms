@@ -2,15 +2,12 @@
 # - setuptools_scm >= 10 requires vcs-versioning
 # - pytest itself also requires setuptools_scm
 # When bootstrapping, we cannot run tests at all.
-%bcond bootstrap 1
+%bcond bootstrap 0
 %bcond tests %{without bootstrap}
-
-# Track this temporary stage in the PR, not in the RPM release suffix.
-%global __bootstrap %{nil}
 
 Name:           python3.13-vcs-versioning
 Version:        2.6.0
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        The blessed package to manage your versions by vcs metadata
 License:        MIT
 URL:            https://github.com/pypa/setuptools-scm
@@ -49,7 +46,7 @@ history.}
 # Remove unwanted test dependencies (coverage not needed,
 # pytest-timeout and pytest-xdist not in RHEL)
 %pyproject_patch_dependency pytest-cov:ignore
-%if %{defined rhel}
+%if %{defined rhel} || %{defined hummingbird}
 %pyproject_patch_dependency pytest-timeout:ignore
 %pyproject_patch_dependency pytest-xdist:ignore
 sed -i -e '/^timeout *=/d' pyproject.toml
@@ -57,7 +54,7 @@ sed -i -e '/^timeout *=/d' pyproject.toml
 
 %if %{with tests}
 %check -a
-%pytest -v %{!?rhel:-n auto}
+%pytest -v
 %endif
 
 
