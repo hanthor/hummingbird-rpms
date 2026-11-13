@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rust-archery.git",
-    "release": "3",
-    "sha": "72ec51bce544b10303fcfc1ed13e1c7e6c1a1204"
+    "release": "1",
+    "sha": "44bd4deac8d5efd3dbecdf31d52fc761e0b7f74d"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/orium/archery",
-  "version": "1.2.2"
+  "version": "1.2.3"
 }
