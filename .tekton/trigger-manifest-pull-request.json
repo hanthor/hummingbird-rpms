@@ -2021,6 +2021,10 @@
         "^rpms/python3\\.13\\-setuptools/",
         "^test/rpms/python3\\.13\\-setuptools\\.yml$"
       ],
+      "python3-13-setuptools-rust--rpms": [
+        "^rpms/python3\\.13\\-setuptools\\-rust/",
+        "^test/rpms/python3\\.13\\-setuptools\\-rust\\.yml$"
+      ],
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/",
         "^test/rpms/python3\\.13\\-setuptools_scm\\.yml$"

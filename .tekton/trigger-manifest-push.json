@@ -1517,6 +1517,9 @@
       "python3-13-setuptools--rpms": [
         "^rpms/python3\\.13\\-setuptools/"
       ],
+      "python3-13-setuptools-rust--rpms": [
+        "^rpms/python3\\.13\\-setuptools\\-rust/"
+      ],
       "python3-13-setuptools-scm--rpms": [
         "^rpms/python3\\.13\\-setuptools_scm/"
       ],
