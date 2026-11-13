@@ -1,0 +1,162 @@
+# TODO: Re-enable after reviewing Hypothesis 6.123.0 with pytest 9.1/Python 3.13.
+# Trial failures concern xdist, source/traceback formatting and fixture
+# compatibility. Defer this suite by agreement; retain base/plugin imports
+# and consumer tests. Do not carry trial test-harness patches in this build.
+%bcond tests 0
+
+# Optional extras require separate target ecosystems; retain base metadata/code.
+%bcond extras 0
+
+%if %{defined rhel} || %{defined hummingbird}
+# The cli and ghostwriter extras require black, which is not currently in
+# RHEL/EPEL 10.  It was requested in rhbz#2319803, but the maintainer doesn't
+# think it's a good fit due to the fact that black doesn't have a stable Python
+# API.
+%bcond_with cli
+%bcond_with ghostwriter
+# The django extra requires django, which is not currently in RHEL/EPEL 10.
+# It has been requested in rhbz#2319809.
+%bcond_with django
+# The codemods extra requires libcst, which is not currently in RHEL/EPEL 10.
+# It has been requested in rhbz#2319805.
+%bcond_with codemods
+# Building the docs need several sphinx extensions (sphinx-hoverxref,
+# sphinx-jsonschema, sphinx-rtd-theme, sphinx_selective_exclude) that are not
+# currently in RHEL/EPEL 10.
+%bcond_with doc
+%else
+%bcond_without cli
+%bcond_without ghostwriter
+%bcond_without django
+%bcond_without codemods
+%bcond_without doc
+%endif
+
+Name:           python3.13-hypothesis
+Version:        6.123.0
+Release:        8.1%{?dist}
+Summary:        Library for property based testing
+
+License:        MPL-2.0
+URL:            https://github.com/HypothesisWorks/hypothesis
+Source:         %{url}/archive/hypothesis-python-%{version}/hypothesis-%{version}.tar.gz
+# Patch to use the version of attrs that works with Python 3.14
+# see https://github.com/python-attrs/attrs/pull/1329
+#     https://github.com/python-attrs/attrs/commit/7373d88f9bef8a2ff70972f81e8d8b9dfb7c5653
+Patch:          hypothesis-attrs-py314.diff
+
+BuildArch:      noarch
+
+# Static requirements must select the target before interpreter macros load.
+BuildRequires:  python3.13-devel >= 3.13.18-1.3
+BuildRequires:  pyproject-rpm-macros >= 0-43
+# Required by the retained pytest-plugin import check, even with the suite off.
+BuildRequires:  python3.13-pytest
+
+%if %{with tests}
+# optional test dependencies:
+BuildRequires:  %{py3_dist typing_extensions}
+%endif
+
+%if %{with doc}
+BuildRequires:  %{_bindir}/sphinx-build
+BuildRequires:  %{py3_dist sphinx-hoverxref}
+BuildRequires:  %{py3_dist sphinx-jsonschema}
+BuildRequires:  %{py3_dist sphinx-rtd-theme}
+BuildRequires:  %{py3_dist sphinx_selective_exclude}
+%endif
+
+
+%global _description %{expand:
+Hypothesis is a library for testing your Python code against a much
+larger range of examples than you would ever want to write by
+hand. It’s based on the Haskell library, Quickcheck, and is designed
+to integrate seamlessly into your existing Python unit testing work
+flow.}
+
+%description %{_description}
+
+
+%global extras pytz,dateutil,lark,numpy,pandas,pytest,redis,zoneinfo%{?with_cli:,cli}%{?with_ghostwriter:,ghostwriter}%{?with_django:,django}%{?with_codemods:,codemods}
+# extras with missing deps:
+#  dpcontracts: dpcontracts
+#  crosshair: hypothesis-crosshair, crosshair-tool
+# extras with missing deps on RHEL/EPEL:
+#  cli: black, rich
+#  ghostwriter: black
+#  django: django
+#  codemods: libcst
+%if %{with extras}
+%{pyproject_extras_subpkg -n python%{python3_pkgversion}-hypothesis %{extras}}
+%endif
+
+
+%prep
+%autosetup -n hypothesis-hypothesis-python-%{version}/hypothesis-python -N
+# make it possible to patch files outside hypothesis-python
+pushd ..
+%autopatch -p1
+popd
+# disable Sphinx extensions that require Internet access
+sed -i -e '/sphinx.ext.intersphinx/d' docs/conf.py
+# disable Sphinx non-available extensions
+sed -i -e '/sphinx_codeautolink/d' docs/conf.py
+# disable Sphinx pinning
+sed -i -e 's/needs_sphinx/no_needs_sphinx/' docs/conf.py
+
+
+%generate_buildrequires
+%pyproject_buildrequires %{?with_tests:../requirements/test.in -x %{extras}}
+
+
+%build
+%pyproject_wheel
+
+%if %{with doc}
+PYTHONPATH=src READTHEDOCS=True sphinx-build -b man docs docs/_build/man
+%endif
+
+
+%install
+%pyproject_install
+%pyproject_save_files -l hypothesis '_hypothesis_*'
+
+%if %{with doc}
+install -Dpm0644 -t %{buildroot}%{_mandir}/man1 docs/_build/man/hypothesis.1
+%endif
+
+
+%check
+# The optional CLI/scientific adapters are not needed by base consumers.
+%pyproject_check_import -e hypothesis.extra.codemods -e hypothesis.extra.dateutil -e hypothesis.extra.django -e hypothesis.extra.dpcontracts -e hypothesis.extra.ghostwriter -e hypothesis.extra.lark -e hypothesis.extra.numpy -e 'hypothesis.extra.pandas*' -e hypothesis.extra.pytz -e hypothesis.extra.redis
+%{py3_test_envvars} %{python3} -c "import hypothesis; import _hypothesis_pytestplugin"
+%if %{with tests}
+k=""
+%pytest -v -n auto -k "$k" \
+%if %{without ghostwriter}
+  --ignore tests/ghostwriter \
+%endif
+%if %{without codemods}
+  --ignore tests/codemods --ignore tests/patching \
+%endif
+  --ignore tests/dpcontracts \
+  --ignore tests/redis \
+
+# The BRP that handles bytecompilation already run at the end of %%install.
+# This autogenerated file gets re-generated during tests,
+# the tests asserts the content is identical, but the mtime is changed anyway.
+# Since %%pytest disables byte-compilation, we need to update the pycs manually:
+%py_byte_compile %{python3} %{buildroot}%{python3_sitelib}/hypothesis/internal/conjecture/shrinking/learned_dfas.py
+%endif
+
+
+%files -f %{pyproject_files}
+%doc README.rst
+%{_bindir}/hypothesis
+%if %{with doc}
+%{_mandir}/man1/hypothesis.1*
+%endif
+
+
+%changelog
+%autochangelog
