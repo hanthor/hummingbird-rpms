@@ -21,8 +21,8 @@
 
 Name:    dbus
 Epoch:   1
-Version: 1.16.2
-Release: 7.1%{?dist}
+Version: 1.16.4
+Release: 2%{?dist}
 Summary: D-BUS message bus
 
 # The effective license of the majority of the package, including the shared
@@ -41,7 +41,6 @@ Source6: dbus.user.socket
 Source7: dbus-daemon.user.service
 Source8: dbus-systemd-sysusers.conf
 Patch0: 0001-tools-Use-Python3-for-GetAllMatchRules.patch
-Patch1: 0002-bus-Prevent-DoS-when-a-monitor-is-connected.patch
 
 BuildRequires: gcc
 BuildRequires: meson

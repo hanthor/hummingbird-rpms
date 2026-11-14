@@ -2,11 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dbus.git",
-    "release": "7",
-    "sha": "c21251b53b4f24dd6d8d6957d45e41e87a280497"
+    "release": "2",
+    "sha": "1fb1bf3908884fc50191b3b4ccda2967ed706d86"
   },
-  "modification_reason": "Backport CVE-2026-120749",
-  "modification_status": "modified",
+  "modification_status": "clean",
   "upstream_repo": "https://gitlab.freedesktop.org/dbus/dbus",
-  "version": "1.16.2"
+  "version": "1.16.4"
 }
