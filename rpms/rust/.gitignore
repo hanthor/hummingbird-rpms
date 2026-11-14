@@ -492,6 +492,12 @@
 /wasi-libc-wasi-sdk-34.tar.gz
 /rustc-1.99.1-src.tar.xz
 /rustc-1.99.1-src.tar.xz.asc
-rustc-1.100.0-src.tar.xz
-rustc-1.100.0-src.tar.xz.asc
-wasi-libc-wasi-sdk-34.tar.gz
+/cargo-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz
+/cargo-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz.asc
+/rustc-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz
+/rustc-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz.asc
+/rust-std-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz
+/rust-std-1.98.0-riscv64gc-unknown-linux-gnu.tar.xz.asc
+/rustc-1.100.0-src.tar.xz
+/rustc-1.100.0-src.tar.xz.asc
+/wasi-libc-wasi-sdk-34.tar.gz

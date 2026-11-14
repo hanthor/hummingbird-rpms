@@ -1,4 +1,4 @@
-From 455a2d207713e677828e8913a3bfe1e5d0e44fb1 Mon Sep 17 00:00:00 2001
+From d7a804cdf6cf8cb3e09275c46881475b227cc875 Mon Sep 17 00:00:00 2001
 From: Josh Stone <jistone@redhat.com>
 Date: Mon, 18 Aug 2025 17:11:07 -0700
 Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
@@ -11,6 +11,8 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
  src/bootstrap/src/core/session.rs             | 5 +++++
  5 files changed, 23 insertions(+)
 
+diff --git a/bootstrap.example.toml b/bootstrap.example.toml
+index 7f4aac63f36a..6dfc3f788c71 100644
 --- a/bootstrap.example.toml
 +++ b/bootstrap.example.toml
 @@ -1222,3 +1222,8 @@
@@ -22,9 +24,11 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
 +# Enabled by default on `musl`, `wasi`, and `windows-gnu` targets. Other
 +# targets may ignore this setting if they have nothing to be contained.
 +#self-contained = <platform-specific> (bool)
+diff --git a/src/bootstrap/src/core/build_steps/compile.rs b/src/bootstrap/src/core/build_steps/compile.rs
+index b1157ef38101..96197d09cb29 100644
 --- a/src/bootstrap/src/core/build_steps/compile.rs
 +++ b/src/bootstrap/src/core/build_steps/compile.rs
-@@ -378,6 +378,10 @@
+@@ -378,6 +378,10 @@ fn copy_self_contained_objects(
      compiler: &Compiler,
      target: TargetSelection,
  ) -> Vec<(PathBuf, DependencyType)> {
@@ -35,9 +39,11 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
      let libdir_self_contained =
          builder.sysroot_target_libdir(*compiler, target).join("self-contained");
      t!(fs::create_dir_all(&libdir_self_contained));
+diff --git a/src/bootstrap/src/core/config/config.rs b/src/bootstrap/src/core/config/config.rs
+index f8b00094a0f4..6dc972455d13 100644
 --- a/src/bootstrap/src/core/config/config.rs
 +++ b/src/bootstrap/src/core/config/config.rs
-@@ -961,6 +961,7 @@
+@@ -961,6 +961,7 @@ pub(crate) fn parse_inner(
                      optimized_compiler_builtins: target_optimized_compiler_builtins,
                      allocator: target_allocator,
                      jemalloc: target_jemalloc,
@@ -45,8 +51,7 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
                  } = cfg;
  
                  let mut target = Target::from_triple(&triple);
-@@ -1017,6 +1018,9 @@
-                 });
+@@ -1018,6 +1019,9 @@ pub(crate) fn parse_inner(
                  if let Some(s) = target_no_std {
                      target.no_std = s;
 +                }
@@ -55,6 +60,9 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
                  }
                  target.cc = target_cc.map(PathBuf::from);
                  target.cxx = target_cxx.map(PathBuf::from);
+                 target.ar = target_ar.map(PathBuf::from);
+diff --git a/src/bootstrap/src/core/config/toml/target.rs b/src/bootstrap/src/core/config/toml/target.rs
+index cc3d066a859f..21d48c0e5c62 100644
 --- a/src/bootstrap/src/core/config/toml/target.rs
 +++ b/src/bootstrap/src/core/config/toml/target.rs
 @@ -51,6 +51,7 @@
@@ -83,9 +91,11 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
          target
      }
  }
+diff --git a/src/bootstrap/src/core/session.rs b/src/bootstrap/src/core/session.rs
+index 4ad04df753d0..dd28e7dd8690 100644
 --- a/src/bootstrap/src/core/session.rs
 +++ b/src/bootstrap/src/core/session.rs
-@@ -1176,6 +1176,11 @@
+@@ -1176,6 +1176,11 @@ pub(crate) fn no_std(&self, target: TargetSelection) -> Option<bool> {
          self.config.target_config.get(&target).map(|t| t.no_std)
      }
  
@@ -97,3 +107,5 @@ Subject: [PATCH 1/2] bootstrap: allow disabling target self-contained
      /// Returns `true` if the target will be tested using the `remote-test-client`
      /// and `remote-test-server` binaries.
      pub(crate) fn remote_tested(&self, target: TargetSelection) -> bool {
+-- 
+2.55.0

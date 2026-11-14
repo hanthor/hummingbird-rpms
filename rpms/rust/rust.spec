@@ -1,6 +1,6 @@
 Name:           rust
 Version:        1.100.0
-Release:        0.1%{?dist}
+Release:        1%{?dist}
 Summary:        The Rust Programming Language
 License:        (Apache-2.0 OR MIT) AND (Artistic-2.0 AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0)
 # ^ written as: (rust itself) and (bundled libraries)
@@ -15,9 +15,9 @@ URL:            https://www.rust-lang.org
 # To bootstrap from scratch, set the channel and date from src/stage0
 # e.g. 1.89.0 wants rustc: 1.88.0-2025-06-26
 # or nightly wants some beta-YYYY-MM-DD
-%global bootstrap_version 1.98.0
-%global bootstrap_channel 1.98.0
-%global bootstrap_date 2026-08-20
+%global bootstrap_version 1.99.0
+%global bootstrap_channel 1.99.0
+%global bootstrap_date 2026-10-01
 
 # Only the specified arches will use bootstrap binaries.
 # NOTE: Those binaries used to be uploaded with every new release, but that was
@@ -47,7 +47,7 @@ URL:            https://www.rust-lang.org
 # See src/bootstrap/src/core/build_steps/llvm.rs, fn check_llvm_version
 # See src/llvm-project/cmake/Modules/LLVMVersion.cmake for bundled version.
 %global min_llvm_version 21.0.0
-%global bundled_llvm_version 23.1.1
+%global bundled_llvm_version 23.1.4
 #global llvm_compat_version 21
 %global llvm llvm%{?llvm_compat_version}
 %bcond_with bundled_llvm
@@ -161,7 +161,6 @@ Patch8:         0001-Enable-SHSTK-by-default-on-x86_64-unknown-linux-gnu.patch
 # Ensure llvm worker threads have sufficient stack space. Backport of #163289.
 Patch9:         0001-Ensure-llvm-worker-threads-have-sufficient-stack-spa.patch
 
-
 ### RHEL-specific patches below ###
 
 # Simple rpm macros for rust-toolset (as opposed to full rust-packaging)
@@ -171,7 +170,7 @@ Source102:      cargo_vendor.attr
 Source103:      cargo_vendor.prov
 
 # Disable cargo->libgit2->libssh2 on RHEL, as it's not approved for FIPS (rhbz1732949)
-Patch100:       rustc-1.99.0-disable-libssh2.patch
+Patch100:       rustc-1.100.0-disable-libssh2.patch
 
 # Update vendored lockfiles to fixed dependency versions for CVE tracking.
 Patch101:       0001-Update-vendored-lockfiles-for-CVE-fixes.patch
@@ -194,7 +193,8 @@ Patch104:       rustc-1.99.0-CVE-2026-109351-gix-pack-exact-vec-oom.patch
   elseif arch == "ppc64le" then
     arch = "powerpc64le"
   elseif arch == "riscv64" then
-    arch = "riscv64gc"
+    local rhel = tonumber(rpm.expand("%{?rhel}")) or 0
+    arch = rhel >= 11 and "riscv64a23" or "riscv64gc"
   end
   return arch.."-unknown-linux-"..abi
 end}
@@ -240,6 +240,7 @@ end}
 %if %defined bootstrap_arches
 # For each bootstrap arch, add an additional binary Source.
 # Also define bootstrap_source just for the current target.
+# For RISC-V, only GC is tier 2 with host tools at this time.
 %{lua: do
   local bootstrap_arches = {}
   for arch in rpm.expand("%{bootstrap_arches}"):gmatch("%S+") do
@@ -249,8 +250,9 @@ end}
   local channel = rpm.expand("%{bootstrap_channel}")
   local target_arch = rpm.expand("%{_target_cpu}")
   for i, arch in ipairs(bootstrap_arches) do
-    i = 1000 + i * 6
-    local suffix = channel.."-"..rust_triple(arch)
+    local i = 1000 + i * 6
+    local upstream_arch = arch == "riscv64" and "riscv64gc" or arch
+    local suffix = channel.."-"..rust_triple(upstream_arch)
     print(string.format("Source%d: %s/cargo-%s.tar.xz\n", i, base, suffix))
     print(string.format("Source%d: %s/cargo-%s.tar.xz.asc\n", i+1, base, suffix))
     print(string.format("Source%d: %s/rustc-%s.tar.xz\n", i+2, base, suffix))
@@ -850,9 +852,11 @@ end}
 
 # Set up shared environment variables for build/install/check.
 # *_USE_PKG_CONFIG=1 convinces *-sys crates to use the system library.
+# We need PKG_CONFIG_ALLOW_CROSS when BOOTSTRAP_TRIPLE is different.
 %global rust_env %{shrink:
   %{?rustflags:RUSTFLAGS="%{rustflags}"}
   %{rustc_target_cpus}
+  PKG_CONFIG_ALLOW_CROSS=1
   %{!?with_bundled_sqlite3:LIBSQLITE3_SYS_USE_PKG_CONFIG=1}
   %{!?with_disabled_libssh2:LIBSSH2_SYS_USE_PKG_CONFIG=1}
   %{?llvm_path:PATH="%{llvm_path}:$PATH"}
@@ -880,6 +884,17 @@ end}
 }
 %endif
 %constrain_build -m 4096
+
+%define host_target_config() %{shrink:
+  --set target.%1.linker=%{__cc}
+  --set target.%1.cc=%{__cc}
+  --set target.%1.cxx=%{__cxx}
+  --set target.%1.ar=%{__ar}
+  --set target.%1.ranlib=%{__ranlib}
+  --set target.%1.profiler="%{profiler}"
+  --set target.%1.optimized-compiler-builtins="%{optimized_builtins}"
+  %{!?with_bundled_llvm: --set target.%1.llvm-config=%{llvm_root}/bin/llvm-config}
+}
 
 %if %defined mingw_targets
 %define mingw_target_config %{shrink:
@@ -928,24 +943,26 @@ test -r "%{profiler}"
 %define optimized_builtins %{clang_lib}/%{_arch}-redhat-linux-gnu/libclang_rt.builtins.a
 test -r "%{optimized_builtins}"
 
+# It is possible to use a different bootstrap triple than the desired host,
+# e.g. using riscv64gc-unknown-linux-gnu to build riscv64a23
+BOOTSTRAP_TRIPLE=$(%{local_rust_root}/bin/rustc --print host-tuple)
+BOOTSTRAP_TARGET_CONFIG=""
+if [ "$BOOTSTRAP_TRIPLE" != "%{rust_triple}" ]; then
+  BOOTSTRAP_TARGET_CONFIG="%{host_target_config $BOOTSTRAP_TRIPLE}"
+fi
+
 %configure --disable-option-checking \
   --docdir=%{_pkgdocdir} \
   --libdir=%{common_libdir} \
-  --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
-  --set target.%{rust_triple}.linker=%{__cc} \
-  --set target.%{rust_triple}.cc=%{__cc} \
-  --set target.%{rust_triple}.cxx=%{__cxx} \
-  --set target.%{rust_triple}.ar=%{__ar} \
-  --set target.%{rust_triple}.ranlib=%{__ranlib} \
-  --set target.%{rust_triple}.profiler="%{profiler}" \
-  --set target.%{rust_triple}.optimized-compiler-builtins="%{optimized_builtins}" \
+  --build="$BOOTSTRAP_TRIPLE" $BOOTSTRAP_TARGET_CONFIG \
+  --host=%{rust_triple} --target=%{rust_triple} \
+  %{host_target_config %{rust_triple}} \
   %{?mingw_target_config} \
   %{?wasm_target_config} \
   --python=%{__python3} \
   --local-rust-root=%{local_rust_root} \
   --set build.rustfmt=/bin/true \
-  %{!?with_bundled_llvm: --llvm-root=%{llvm_root} \
-    %{!?with_llvm_static: --enable-llvm-link-shared } } \
+  %{!?with_bundled_llvm: %{!?with_llvm_static: --enable-llvm-link-shared }} \
   --disable-llvm-static-stdcpp \
   --disable-llvm-bitcode-linker \
   --disable-lld \
@@ -976,19 +993,19 @@ test -r "%{optimized_builtins}"
 %define profraw $PWD/build/profiles
 %define profdata $PWD/build/rustc.profdata
 mkdir -p "%{profraw}"
-%{__x} build sysroot --rust-profile-generate="%{profraw}"
+%{__x} build sysroot --set pgo.rustc.generate="%{profraw}"
 # Build cargo as a workload to generate compiler profiles
 # We normally use `x.py`, but in this case we invoke the stage 2 compiler and libs
 # directly to ensure we use the instrumented compiler.
 env LLVM_PROFILE_FILE="%{profraw}/default_%%m_%%p.profraw" \
-  LD_LIBRARY_PATH=$PWD/build/host/stage2/lib \
-  RUSTC=$PWD/build/host/stage2/bin/rustc \
-  cargo build --manifest-path=src/tools/cargo/Cargo.toml
+  LD_LIBRARY_PATH=$PWD/build/%{rust_triple}/stage2/lib \
+  RUSTC=$PWD/build/%{rust_triple}/stage2/bin/rustc \
+  %{local_rust_root}/bin/cargo build --manifest-path=src/tools/cargo/Cargo.toml
 # Finalize the profile data and clean up the raw files
 llvm-profdata merge -o "%{profdata}" "%{profraw}"
 rm -r "%{profraw}" build/%{rust_triple}/stage2*/
 # Redefine the macro to use that profile data from now on
-%global __x %{__x} --rust-profile-use="%{profdata}"
+%global __x %{__x} --set pgo.rustc.use="%{profdata}"
 %endif
 
 # Build the compiler normally (with or without PGO)
@@ -1006,7 +1023,7 @@ done
 %{cargo_tree_manifest -n rustc -- -p rustc-main -p rustdoc}
 %{cargo_tree_manifest -n cargo -m src/tools/cargo}
 %{cargo_tree_manifest -n clippy -m src/tools/clippy}
-%{cargo_tree_manifest -n rust-analyzer -m src/tools/rust-analyzer}
+%{cargo_tree_manifest -n rust-analyzer -m src/tools/rust-analyzer -- -p rust-analyzer -p proc-macro-srv-cli}
 %{cargo_tree_manifest -n rustfmt -m src/tools/rustfmt}
 
 %{cargo_tree_manifest -n std -m library -f backtrace}
@@ -1034,6 +1051,11 @@ rm -rf ./build/dist/ ./build/tmp/
 
 # Some of the components duplicate-install binaries, leaving backups we don't want
 rm -f %{buildroot}%{_bindir}/*.old
+
+# Remove proc-macros libraries leaked by cross builds
+# https://github.com/rust-lang/rust/issues/165478
+find %{buildroot}%{common_libdir} -maxdepth 1 -type f -name '*.so' \
+  ! -name 'librustc_driver-*.so' -exec rm -v '{}' '+'
 
 # Make sure the compiler's shared libraries are in the proper libdir
 %if "%{_libdir}" != "%{common_libdir}"
