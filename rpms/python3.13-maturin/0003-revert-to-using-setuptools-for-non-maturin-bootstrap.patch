@@ -1,4 +1,4 @@
-From f87bfb75a8d1c10a0876c04bf4570882095d12fe Mon Sep 17 00:00:00 2001
+From 72d1dfbd9c5f280a5767ac2876b84669f0770232 Mon Sep 17 00:00:00 2001
 From: Fabio Valentini <decathorpe@gmail.com>
 Date: Tue, 23 Sep 2025 22:47:53 +0200
 Subject: [PATCH 3/3] revert to using setuptools for non-maturin bootstrap
@@ -26,5 +26,5 @@ index 05c67cc1..bf0641a0 100644
  [project]
  name = "maturin"
 -- 
-2.55.0
+2.56.0
 

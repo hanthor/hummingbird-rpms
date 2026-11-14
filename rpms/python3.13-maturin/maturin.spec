@@ -6,8 +6,8 @@
 %bcond patchelf 0
 
 Name:           python3.13-maturin
-Version:        1.15.0
-Release:        1.1%{?dist}
+Version:        1.16.0
+Release:        1%{?dist}
 Summary:        Build and publish Rust crates as Python packages
 SourceLicense:  MIT OR Apache-2.0
 
@@ -24,6 +24,7 @@ SourceLicense:  MIT OR Apache-2.0
 # Apache-2.0 WITH LLVM-exception
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause OR Apache-2.0 OR MIT
+# BSD-3-Clause
 # MIT
 # MIT OR Apache-2.0
 # MIT OR Zlib OR Apache-2.0
