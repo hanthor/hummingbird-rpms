@@ -1,0 +1,14 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/python-idna.git",
+    "release": "1",
+    "sha": "600df0e166ba840365dda2c26a9b131fe833c542"
+  },
+  "modification_reason": "Python 3.13 variant with full pytest checks",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 5487,
+  "track_upstream": "latest",
+  "upstream_repo": "https://github.com/kjd/idna",
+  "version": "3.19"
+}

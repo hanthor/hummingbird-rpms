@@ -1965,6 +1965,10 @@
         "^rpms/python3\\.13\\-charset\\-normalizer/",
         "^test/rpms/python3\\.13\\-charset\\-normalizer\\.yml$"
       ],
+      "python3-13-cryptography--rpms": [
+        "^rpms/python3\\.13\\-cryptography/",
+        "^test/rpms/python3\\.13\\-cryptography\\.yml$"
+      ],
       "python3-13-flit-core--rpms": [
         "^rpms/python3\\.13\\-flit\\-core/",
         "^test/rpms/python3\\.13\\-flit\\-core\\.yml$"
@@ -1984,6 +1988,10 @@
       "python3-13-hypothesis--rpms": [
         "^rpms/python3\\.13\\-hypothesis/",
         "^test/rpms/python3\\.13\\-hypothesis\\.yml$"
+      ],
+      "python3-13-idna--rpms": [
+        "^rpms/python3\\.13\\-idna/",
+        "^test/rpms/python3\\.13\\-idna\\.yml$"
       ],
       "python3-13-iniconfig--rpms": [
         "^rpms/python3\\.13\\-iniconfig/",

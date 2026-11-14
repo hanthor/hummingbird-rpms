@@ -1,0 +1,59 @@
+%global srcname idna
+
+# hypothesis is not available on RHEL
+%bcond hypothesis %{undefined rhel}
+
+Name:           python3.13-%{srcname}
+Version:        3.19
+Release:        1.1%{?dist}
+Summary:        Internationalized Domain Names in Applications (IDNA)
+
+License:        BSD-3-Clause
+URL:            https://github.com/kjd/idna
+Source:         https://pypi.io/packages/source/i/%{srcname}/%{srcname}-%{version}.tar.gz
+BuildArch:      noarch
+
+# Static requirements must select the target before interpreter macros load.
+BuildRequires:  python3.13-devel >= 3.13.18-1.3
+BuildRequires:  python3.13-pytest
+%if %{with hypothesis}
+BuildRequires:  python3.13-hypothesis
+%endif
+
+%description
+A library to support the Internationalised Domain Names in Applications (IDNA)
+protocol as specified in RFC 5891 <http://tools.ietf.org/html/rfc5891>.  This
+version of the protocol is often referred to as "IDNA2008" and can produce
+different results from the earlier standard from 2003.
+
+The library is also intended to act as a suitable drop-in replacement for the
+"encodings.idna" module that comes with the Python standard library but
+currently only supports the older 2003 specification.
+
+%prep
+%autosetup -p1 -n %{srcname}-%{version}
+
+%generate_buildrequires
+%pyproject_buildrequires
+
+%build
+%pyproject_wheel
+
+%install
+%pyproject_install
+%pyproject_save_files %{srcname}
+
+%check
+%if %{without hypothesis}
+%pytest --ignore=tests/test_idna_properties.py
+%else
+%pytest
+%endif
+
+%files -f %pyproject_files
+%license LICENSE.md
+%doc README.md
+%{_bindir}/%{srcname}
+
+%changelog
+%autochangelog
