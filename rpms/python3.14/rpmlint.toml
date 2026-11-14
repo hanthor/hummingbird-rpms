@@ -6,7 +6,7 @@ Filters = [
 
 
     # TESTS:
-    '(zero-length|pem-certificate|uncompressed-zip|file-not-in-%lang) /usr/lib(64)?/python3\.\d+t?/test',
+    '(zero-length|pem-certificate|uncompressed-zip|unable-to-read-zip|file-not-in-%lang) /usr/lib(64)?/python3\.\d+t?/test',
 
 
     # OTHER DELIBERATES:

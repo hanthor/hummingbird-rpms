@@ -22,20 +22,6 @@ discover:
     - name: debugsmoke
       path: /smoke
       test: "PYTHON=python${pybasever}d TOX=false VERSION=${pybasever} CYTHON=true ./venv.sh"
-    - name: selftest
-      path: /selftest
-      test: "VERSION=${pybasever} X='-i test_check_probes' ./parallel.sh"
-    - name: debugtest
-      path: /selftest
-      # test_base_interpreter: https://github.com/python/cpython/issues/131372
-      test: "VERSION=${pybasever} PYTHON=python${pybasever}d X='-i test_check_probes -i test_base_interpreter' ./parallel.sh"
-    - name: freethreadingtest
-      path: /selftest
-      test: "VERSION=${pybasever}t X='-i test_check_probes -i test_base_interpreter' ./parallel.sh"
-    - name: selftest_jit
-      path: /selftest
-      # test_attr_promotion_failure: https://github.com/python/cpython/issues/141833
-      test: "VERSION=${pybasever} PYTHON_JIT=1 X='-i test_check_probes -i test_attr_promotion_failure' ./parallel.sh"
     - name: jit_disabled_by_default
       test: "python${pybasever} -c 'import sys; assert not sys._jit.is_enabled()'"
     - name: jit_disabled_explicitly
@@ -57,6 +43,23 @@ discover:
     - name: marshalparser
       path: /marshalparser
       test: "VERSION=${pybasever} SAMPLE=10 ./test_marshalparser_compatibility.sh"
+    - name: certifi
+      path: /certifi
+      test: "VERSION=${pybasever} ./certifi.sh"
+    - name: selftest
+      path: /selftest
+      test: "VERSION=${pybasever} X='-i test_check_probes' ./parallel.sh"
+    - name: debugtest
+      path: /selftest
+      # test_base_interpreter: https://github.com/python/cpython/issues/131372
+      test: "VERSION=${pybasever} PYTHON=python${pybasever}d X='-i test_check_probes -i test_base_interpreter' ./parallel.sh"
+    - name: freethreadingtest
+      path: /selftest
+      test: "VERSION=${pybasever}t X='-i test_check_probes -i test_base_interpreter' ./parallel.sh"
+    - name: selftest_jit
+      path: /selftest
+      # test_attr_promotion_failure: https://github.com/python/cpython/issues/141833
+      test: "VERSION=${pybasever} PYTHON_JIT=1 X='-i test_check_probes -i test_attr_promotion_failure' ./parallel.sh"
     - name: required_symbols
       path: /required-symbols
       test: "VERSION=${pybasever} ./check.sh"
