@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/pytest.git",
-    "release": "1",
     "sha": "23a4472571f1f7c391721a9510f9cf7ac721b990"
   },
-  "modification_reason": "Python 3.13 bootstrap pending final build",
+  "modification_reason": "Update to upstream version 9.2.0",
   "modification_status": "modified",
   "release_monitoring_project_id": 3765,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pytest-dev/pytest",
-  "version": "9.1.1"
+  "version": "9.2.0"
 }
