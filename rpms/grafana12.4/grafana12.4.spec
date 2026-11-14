@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        12.4.14
+Version:        12.4.15
 
 %gometa -L -f
 
@@ -871,7 +871,6 @@ Provides:       bundled(npm(better-opn)) = 3.0.2
 Provides:       bundled(npm(binary-extensions)) = 2.2.0
 Provides:       bundled(npm(bl)) = 4.1.0
 Provides:       bundled(npm(bl)) = 5.1.0
-Provides:       bundled(npm(body-parser)) = 1.20.9
 Provides:       bundled(npm(body-parser)) = 2.4.0
 Provides:       bundled(npm(boolbase)) = 1.0.0
 Provides:       bundled(npm(brace)) = 0.11.1
@@ -1570,7 +1569,7 @@ Provides:       bundled(npm(ml-regression-simple-linear)) = 3.0.1
 Provides:       bundled(npm(mock-raf)) = 1.0.1
 Provides:       bundled(npm(module-details-from-path)) = 1.0.4
 Provides:       bundled(npm(moment)) = 2.30.1
-Provides:       bundled(npm(moment-timezone)) = 0.5.47
+Provides:       bundled(npm(moment-timezone)) = 0.6.6
 Provides:       bundled(npm(monaco-editor)) = 0.34.1
 Provides:       bundled(npm(monaco-promql)) = 1.8.0
 Provides:       bundled(npm(moveable)) = 0.53.0
@@ -1630,7 +1629,6 @@ Provides:       bundled(npm(ol)) = 10.7.0
 Provides:       bundled(npm(ol-ext)) = 4.0.36
 Provides:       bundled(npm(ol-mapbox-style)) = 13.1.1
 Provides:       bundled(npm(on-finished)) = 2.4.1
-Provides:       bundled(npm(on-finished)) = 2.4.2
 Provides:       bundled(npm(once)) = 1.4.0
 Provides:       bundled(npm(onetime)) = 5.1.2
 Provides:       bundled(npm(onetime)) = 7.0.0
@@ -1746,7 +1744,6 @@ Provides:       bundled(npm(ramda-adjunct)) = 5.1.0
 Provides:       bundled(npm(randexp)) = 0.5.3
 Provides:       bundled(npm(randombytes)) = 2.1.0
 Provides:       bundled(npm(range-parser)) = 1.2.1
-Provides:       bundled(npm(raw-body)) = 2.5.3
 Provides:       bundled(npm(raw-body)) = 3.0.2
 Provides:       bundled(npm(rbush)) = 4.0.1
 Provides:       bundled(npm(rc-overflow)) = 1.4.1
@@ -2009,7 +2006,6 @@ Provides:       bundled(npm(tar)) = 6.2.1
 Provides:       bundled(npm(teex)) = 1.0.1
 Provides:       bundled(npm(terser)) = 5.37.0
 Provides:       bundled(npm(terser-webpack-plugin)) = 5.4.0
-Provides:       bundled(npm(terser-webpack-plugin)) = 5.6.1
 Provides:       bundled(npm(test-exclude)) = 6.0.0
 Provides:       bundled(npm(text-decoder)) = 1.2.3
 Provides:       bundled(npm(throttle-debounce)) = 3.0.1
