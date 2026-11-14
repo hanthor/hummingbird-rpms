@@ -1,12 +1,12 @@
 %bcond check 1
 
 %global goipath go.k6.io/k6
-Version: 1.8.2
+Version: 1.8.3
 
 %gometa -L
 
 Name:           k6v1
-Release:        0.3%{?dist}
+Release:        0.1%{?dist}
 Summary:        Modern load testing tool, version 1
 # Upstream does not support s390x: https://github.com/grafana/k6/issues/3982
 ExcludeArch:    s390x
