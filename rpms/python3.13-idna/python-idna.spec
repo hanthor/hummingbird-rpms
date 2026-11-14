@@ -4,8 +4,8 @@
 %bcond hypothesis %{undefined rhel}
 
 Name:           python3.13-%{srcname}
-Version:        3.19
-Release:        1.1%{?dist}
+Version:        3.20
+Release:        1%{?dist}
 Summary:        Internationalized Domain Names in Applications (IDNA)
 
 License:        BSD-3-Clause
