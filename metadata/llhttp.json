@@ -2,10 +2,10 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/llhttp.git",
-    "release": "2",
-    "sha": "8928d00d88f9103b71b5f6bcdb4c9b4a0408a773"
+    "release": "1",
+    "sha": "045def1d4fa6d755320c159c523f34595c460b46"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/nodejs/llhttp",
-  "version": "9.4.2"
+  "version": "9.4.4"
 }
