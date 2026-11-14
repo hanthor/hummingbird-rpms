@@ -2,8 +2,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-setuptools-rust.git",
-    "release": "1",
-    "sha": "d4d22116ebd11bbb09859b49c9520ceeabbb8142"
+    "release": "2",
+    "sha": "d9bb8f1a12d8842079aacac82b2baee636bdf6ee"
   },
   "modification_reason": "Python 3.13 variant with validated core checks",
   "modification_status": "modified",

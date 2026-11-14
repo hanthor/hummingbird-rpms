@@ -8,7 +8,7 @@
 
 Name:           python3.13-setuptools-rust
 Version:        1.13.0
-Release:        1.1%{?dist}
+Release:        2%{?dist}
 Summary:        Setuptools Rust extension plugin
 
 License:        MIT
