@@ -2,12 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/rust-bootupd.git",
-    "release": "1",
     "sha": "0c793fae7988adc93ffc6556cd7bc8cc936f7f49"
   },
-  "modification_status": "clean",
+  "modification_reason": "Update to upstream version 0.4.0",
+  "modification_status": "modified",
   "release_monitoring_project_id": 242115,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/coreos/bootupd",
-  "version": "0.3.2"
+  "version": "0.4.0"
 }
