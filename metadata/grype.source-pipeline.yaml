@@ -22,3 +22,11 @@ accepted-checksums:
   - file: "grype-0.121.0-vendor.tar.bz2"
     checksum: "b24d8a6281b27f9cf002b3b4ccf4e9da012d0a36e0ac874f1851e43b7e3149478c5030f96f95e84c42b7f24db394b9963031bf6fb2c62e8142ba71e1fa7bd019"
     reason: "HUM-11270: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12710 / CVE-2026-128085: bump otel modules to v1.47.0 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "grype-0.121.3.tar.gz"
+    checksum: "6377154dea626fe5586067ee5c1ae663ce81e3d6bc5834c9620cdc7fed0a5008301391bcf5f1dca9360d35795ea7f0243e5d9fcf3927e41811de313880c58a25"
+    reason: "HUM-12710: Source0 go.mod/go.sum pins synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v0.121.3."
+  - file: "grype-0.121.3-vendor.tar.bz2"
+    checksum: "583d77ef1e4a180ca88c110ae8dd750b0a0590d1710b909a0fa71c30c21c77422316c1e5e18acf678c6b4e8589223e3965db30769f986ea7f39297e5ed4590f0"
+    reason: "HUM-12710: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
