@@ -22,3 +22,12 @@ accepted-checksums:
   - file: "distribution-3.1.2-vendor.tar.bz2"
     checksum: "4ce2d54db1203f2157c2b2b32dbf1720a74db4ff94a80b450c7dfca084e0265dc97c6f429170986f54c32b6996dac513aa62844a4ba7403908f0fab528ad8405"
     reason: "HUM-11271: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12789 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; sync_go_modules updates Source0
+  # go.mod/go.sum to match.
+  - file: "distribution-3.1.2.tar.gz"
+    checksum: "0633921f76451df3ae7b2dd101b9e5bc9e5029f979ed130b6937ba6d814fe9b0d465ecb2b9b1d3d6bb3d92864701be0e1956d8c416e3db587d4de1609045bbd2"
+    reason: "HUM-12789: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v3.1.2."
+  - file: "distribution-3.1.2-vendor.tar.bz2"
+    checksum: "511c1e1a0f95a10d115da4f5956517e227a31fb16dac1daf42734de3fd36e93e6f8bacf23ced496c24960361288cff88b0bc8875c91860f7bf891e9b3236bf98"
+    reason: "HUM-12789: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
