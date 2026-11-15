@@ -1,13 +1,13 @@
 {
-  "fedora": {
-    "branch": "f44",
-    "git_url": "https://src.fedoraproject.org/rpms/blake3.git",
-    "release": "3",
-    "sha": "edee5196a9c3a8e438aefe72db50ed533de2b89e"
-  },
-  "modification_status": "clean",
-  "release_monitoring_project_id": 369414,
-  "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/blake3",
-  "version": "1.8.3"
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/blake3.git",
+  "release": "3",
+  "sha": "edee5196a9c3a8e438aefe72db50ed533de2b89e"
+ },
+ "modification_status": "clean",
+ "release_monitoring_project_id": 369414,
+ "track_upstream": "latest",
+ "upstream_repo": "https://github.com/BLAKE3-team/BLAKE3",
+ "version": "1.8.3"
 }
