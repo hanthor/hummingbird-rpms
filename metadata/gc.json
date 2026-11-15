@@ -1,13 +1,13 @@
 {
-  "fedora": {
-    "branch": "f44",
-    "git_url": "https://src.fedoraproject.org/rpms/gc.git",
-    "release": "6",
-    "sha": "45908a37c82fcf1bd8c8f391a26fa027eb37444d"
-  },
-  "modification_status": "clean",
-  "release_monitoring_project_id": 876,
-  "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/gc",
-  "version": "8.2.6"
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/gc.git",
+  "release": "6",
+  "sha": "45908a37c82fcf1bd8c8f391a26fa027eb37444d"
+ },
+ "modification_status": "clean",
+ "release_monitoring_project_id": 876,
+ "track_upstream": "latest",
+ "upstream_repo": "https://github.com/ivmai/bdwgc",
+ "version": "8.2.6"
 }
