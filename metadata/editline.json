@@ -1,0 +1,11 @@
+{
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/editline.git",
+  "release": "16",
+  "sha": "199bdbc5b2b6ab15676b28b7f8c29bcb43f43940"
+ },
+ "modification_status": "clean",
+ "upstream_repo": "https://github.com/troglobit/editline",
+ "version": "1.17.1"
+}

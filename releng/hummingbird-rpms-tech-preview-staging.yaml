@@ -265,6 +265,8 @@ spec:
           contentType: rpm
         - name: ed-main
           contentType: rpm
+        - name: editline-main
+          contentType: rpm
         - name: efi-rpm-macros-main
           contentType: rpm
         - name: efibootmgr-main

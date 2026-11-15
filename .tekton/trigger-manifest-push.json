@@ -278,6 +278,9 @@
       "ed--rpms": [
         "^rpms/ed/"
       ],
+      "editline--rpms": [
+        "^rpms/editline/"
+      ],
       "efi-rpm-macros--rpms": [
         "^rpms/efi\\-rpm\\-macros/"
       ],

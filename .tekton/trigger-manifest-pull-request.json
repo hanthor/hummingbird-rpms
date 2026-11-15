@@ -369,6 +369,10 @@
         "^rpms/ed/",
         "^test/rpms/ed\\.yml$"
       ],
+      "editline--rpms": [
+        "^rpms/editline/",
+        "^test/rpms/editline\\.yml$"
+      ],
       "efi-rpm-macros--rpms": [
         "^rpms/efi\\-rpm\\-macros/",
         "^test/rpms/efi\\-rpm\\-macros\\.yml$"
