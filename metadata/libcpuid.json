@@ -1,13 +1,13 @@
 {
-  "fedora": {
-    "branch": "f44",
-    "git_url": "https://src.fedoraproject.org/rpms/libcpuid.git",
-    "release": "1",
-    "sha": "492c90e3ed2f6af6ee969e1e858b94c5a2f983f5"
-  },
-  "modification_status": "clean",
-  "release_monitoring_project_id": 241811,
-  "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/libcpuid",
-  "version": "0.8.2"
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/libcpuid.git",
+  "release": "1",
+  "sha": "492c90e3ed2f6af6ee969e1e858b94c5a2f983f5"
+ },
+ "modification_status": "clean",
+ "release_monitoring_project_id": 241811,
+ "track_upstream": "latest",
+ "upstream_repo": "https://github.com/anrieff/libcpuid",
+ "version": "0.8.2"
 }
