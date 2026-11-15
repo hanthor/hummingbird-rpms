@@ -6,7 +6,7 @@ Version: 3.0.4
 %gometa -L
 
 Name:           tempo3.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        High-volume distributed tracing backend
 # s390x is unsupported.
 ExcludeArch:    s390x
@@ -24,6 +24,8 @@ Patch2:         0003-vendor-bump-mcp-go-to-0.56.0.patch
 Patch3:         0004-mcp-tools-test-use-CallToolParams.patch
 # Bump vendored github.com/klauspost/compress to v1.20.2 for CVE-2026-116591
 Patch4:         0005-bump-klauspost-compress-to-1.20.2-for-CVE-2026-116591.patch
+# Bump vendored OpenTelemetry-Go log modules (sdk/log, log exporters) for CVE-2026-128085
+Patch5:         0006-bump-otel-log-to-1.47.0-for-CVE-2026-128085.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.26

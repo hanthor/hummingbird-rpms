@@ -13,3 +13,6 @@ accepted-checksums:
   - file: "tempo-3.0.4-vendor.tar.bz2"
     checksum: "86dd5c6a37e769482928a6b9b8e9572504ecd37ca68910509f7420e1fffb3b3af10df90a71545b872809fd3d5eddcb3a2ac8076176ced0fde7be229c5940e59c"
     reason: "go-vendor-tools.toml dependency_overrides bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591; vendor archive regenerated to include the patched dependency"
+  - file: "tempo-3.0.4-vendor.tar.bz2"
+    checksum: "8749e83a0c49f2a38da3714dae4f7c0d276104d8ead26aa627906237951a8104b1b58fc77c6c400cd6e951c318c0e4d806691bee81b03513657f86e37d3f9c4e"
+    reason: "HUM-12803: vendor archive regenerated with OpenTelemetry-Go v1.47.0 (log exporters v0.23.0) for CVE-2026-128085; go-vendor-tools.toml dependency_overrides bumps the otel modules."
