@@ -1001,6 +1001,9 @@
       "ninja-build--rpms": [
         "^rpms/ninja\\-build/"
       ],
+      "nix--rpms": [
+        "^rpms/nix/"
+      ],
       "node-gyp--rpms": [
         "^rpms/node\\-gyp/"
       ],
