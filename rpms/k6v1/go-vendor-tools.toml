@@ -3,6 +3,17 @@
 [archive.dependency_overrides]
 # CVE-2026-116591
 "github.com/klauspost/compress" = "v1.20.2"
+# CVE-2026-128085
+"go.opentelemetry.io/otel" = "v1.47.0"
+"go.opentelemetry.io/otel/sdk" = "v1.47.0"
+"go.opentelemetry.io/otel/trace" = "v1.47.0"
+"go.opentelemetry.io/otel/metric" = "v1.47.0"
+"go.opentelemetry.io/otel/sdk/metric" = "v1.47.0"
+"go.opentelemetry.io/otel/exporters/otlp/otlptrace" = "v1.47.0"
+"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc" = "v1.47.0"
+"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp" = "v1.47.0"
+"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc" = "v1.47.0"
+"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp" = "v1.47.0"
 
 [licensing]
 detector = "askalono"
@@ -10,5 +21,12 @@ detector = "askalono"
 # askalono cannot reliably distinguish this combined YAML license text.
 [[licensing.licenses]]
 path = "vendor/gopkg.in/yaml.v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "MIT AND (MIT AND Apache-2.0)"
+
+# testify v1.12.1 (required by otel v1.47.0) newly vendors go.yaml.in/yaml/v3,
+# which carries the same combined license text as gopkg.in/yaml.v3.
+[[licensing.licenses]]
+path = "vendor/go.yaml.in/yaml/v3/LICENSE"
 sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
 expression = "MIT AND (MIT AND Apache-2.0)"
