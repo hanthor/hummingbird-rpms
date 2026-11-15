@@ -98,3 +98,6 @@ accepted-checksums:
   - file: "grafana-yarn-cache-13.2.1.tar.bz2"
     checksum: "aa24fdd6fc2453acc3a42466f33e0f86639c816fd4a04858405e02c8ef629f94767ffd7fc937bae30c9f478d9f05d2809c3f89a21a3c9c460ce03ddb14958987"
     reason: "grafana-fast-uri-3.1.7.patch bumps fast-uri 3.1.6->3.1.7 for CVE-2026-84394/CVE-2026-84292; yarn-cache regenerated without stale fast-uri-3.1.6 zip"
+  - file: "grafana-13.2.5-vendor.tar.bz2"
+    checksum: "be434b6a28683e143cf3349b227f0c9098580bc021755f97a668e3e6c38ffb3cc95fda052c6d3176c51cf179e0c5b9cbfab26cb565eee855daf0bc4bea631d40"
+    reason: "Regenerate the 13.2.5 Go vendor archive with the OpenTelemetry-Go modules bumped to v1.47.0 (log exporters v0.23.0) for CVE-2026-128085 (attribute truncation bypass)"
