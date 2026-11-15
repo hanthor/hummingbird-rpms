@@ -6,3 +6,18 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/helm4/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-12796 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; sync_go_modules updates Source0
+  # go.mod/go.sum to match.
+  - file: "helm-4.3.1.tar.gz"
+    checksum: "9f5ac404b5a8d0c6b66ca9c4441e812d8539bba816850ad9b425139272553e08f18c0e47d9f9d29bd7fb5d617c151772c6c3494b04416a4e3966c27e1e968c83"
+    reason: "HUM-12796: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v4.3.1."
+  - file: "helm-4.3.1-vendor.tar.bz2"
+    checksum: "96adb8533625d2a0df24ece8ec1ccdaf506a5a9cf607748eeb03c12e08f339c6b41166eed74b2d0372bea51ec1ca4bf67b49ea44383df371be0dff8b194f3e7e"
+    reason: "HUM-12796: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
