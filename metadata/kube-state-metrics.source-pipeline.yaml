@@ -3,11 +3,25 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "${PACKAGE}-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "${PACKAGE}-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/kube-state-metrics/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
 
 accepted-checksums:
   - file: "kube-state-metrics-2.20.0-vendor.tar.bz2"
     checksum: "84f7a5bbe19bcc0306bf961463943b1147f06028542745118536c0974ab8c09c645ce545274d10834302b6b4e91b27a13ae5fdf27cd39aa3716c4d567295dcd9"
     reason: "go-vendor-tools.toml dependency_overrides bumps github.com/go-git/go-git/v5 to v5.19.2 for CVE-2026-71556; vendor archive regenerated to include the patched dependency (transitively upgrades go-git's own go-billy, circl, filepath-securejoin, sha1cd, and x/exp)"
+  # HUM-12805 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "kube-state-metrics-2.20.0.tar.gz"
+    checksum: "2ee8994714a9112ca67ee14f94d2ee48fe997da60bdf0a408741164103208efbbd19f3a7bcb43b3a12852a60dfb040aab2b2f37901cbcd8d88086b0b2d2ff6e0"
+    reason: "HUM-12805: Source0 go.mod/go.sum synced for go-git v5.19.2 (CVE-2026-71556) and OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v2.20.0."
+  - file: "kube-state-metrics-2.20.0-vendor.tar.bz2"
+    checksum: "1c031df9a8875825988288635c5ddaa3e3bfb3cd101417358618cf97cfec627994fca8fea69b26611e7c6733eaaa0bccd069cc939507081eb4c1c858a18ba642"
+    reason: "HUM-12805: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
