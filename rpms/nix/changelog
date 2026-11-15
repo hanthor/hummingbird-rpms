@@ -1,0 +1,68 @@
+* Mon Oct 27 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-8
+- drop redundant sysusers and tmpfiles.d scriptlets (#2388768)
+- add obsoletes for petersen/nix copr subpackages
+
+* Sat Oct 25 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-7
+- recommends nix-daemon if systemd
+
+* Sat Oct 25 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-6
+- rename users subpackage to system
+- improve /nix/var dirs ownership and perms
+- rename sysusers file to nix.conf
+- move nix-daemon tmpfiles.d to nix-daemon
+
+* Sat Oct 25 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-5
+- split nix-users from nix-daemon and drop nix-singleuser
+- drop all conflicts
+
+* Fri Oct 24 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-4
+- drop filesystem subpackage and ghost singleuser dirs
+- nix-daemon and nix-singleuser conflict with each other
+
+* Thu Oct 23 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-3
+- use tmpfiles.d for nix-filesystem
+- improve the readme
+- list bin files explicitly
+- nix-singleuser now owns its dirs
+- add nix-daemon conflicts for ostree and containers
+- add nix-singleuser recommends for containers
+
+* Sat Oct 18 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-2
+- FHS Exception for /nix was approved (https://pagure.io/fesco/issue/3473)
+- add multiuser setup to daemon subpackage
+- add singleuser and nix-filesystem subpackages
+
+* Mon Sep 22 2025 Jens Petersen <petersen@redhat.com> - 2.31.2-1
+- update to 2.31.2
+
+* Wed Sep 17 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-6
+- list .so files explicitly without globbing (#2388768)
+- disable /usr/lib/tmpfiles.d/nix-daemon.conf for now (#2388768)
+
+* Mon Sep 15 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-5
+- set the soversion to the nix version (#13995, #14001, #14005)
+
+* Sun Sep 14 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-4
+- add simple check with LD_LIBRARY_PATH
+
+* Fri Sep 12 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-3
+- revert to shared libs, add libs subpackage and restore devel
+- apply upstream submitted PR to enable soname versioning (#13966)
+
+* Thu Sep 11 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-2
+- noarch nix-daemon subpackage cannot use _isa requires
+
+* Wed Sep 10 2025 Jens Petersen <petersen@redhat.com> - 2.31.1-1
+- https://github.com/NixOS/nix/blob/2.31.1/doc/manual/source/release-notes/rl-2.31.md
+- rename nix-core to base package
+- use readline (#2388768)
+- improve MESON_OPTS setup (zbyszek, #2388768)
+- use static libs and drop devel package
+- disable perl binding
+
+* Sat Aug 16 2025 Jens Petersen <petersen@redhat.com> - 2.30.2-2
+- fix nix-devel requires
+- add systemd scriptlets for nix-daemon
+
+* Fri Aug 15 2025 Jens Petersen <petersen@redhat.com> - 2.30.2-1
+- initial packaging of nix programs without /nix

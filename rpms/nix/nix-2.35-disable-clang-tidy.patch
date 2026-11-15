@@ -1,0 +1,11 @@
+--- nix-2.35.1/meson.build~	2026-07-14 07:07:05.000000000 +0800
++++ nix-2.35.1/meson.build	2026-07-14 14:12:17.877528309 +0800
+@@ -65,5 +65,6 @@
+ # Static Analysis
+ # Build the custom clang-tidy plugin if LLVM is available.
+ # required: false → gracefully skipped if dependency('LLVM') fails.
+-clang_tidy_plugin_sp = subproject('clang-tidy-plugin', required : false)
+-subdir('nix-meson-build-support/common/clang-tidy')
++## disabled for fedora
++# clang_tidy_plugin_sp = subproject('clang-tidy-plugin', required : false)
++# subdir('nix-meson-build-support/common/clang-tidy')

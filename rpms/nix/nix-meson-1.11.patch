@@ -1,0 +1,62 @@
+--- nix-2.34.7/doc/manual/meson.build~	2026-05-05 23:25:31.727208534 +0800
++++ nix-2.34.7/doc/manual/meson.build	2026-05-05 23:38:59.070126431 +0800
+@@ -106,11 +106,11 @@
+ 
+ # Hacky way to figure out if `nix` is an `ExternalProgram` or
+ # `Executable`. Only the latter can occur in custom target input lists.
+-if nix.full_path().startswith(meson.build_root())
+-  nix_input = nix
+-else
+-  nix_input = []
+-endif
++# if nix.full_path().startswith(meson.build_root())
++#   nix_input = nix
++# else
++#   nix_input = []
++# endif
+ 
+ # HTML manual build (conditional)
+ if get_option('html-manual')
+@@ -160,7 +160,6 @@
+       rl_next_generated,
+       summary_rl_next,
+       json_schema_generated_files,
+-      nix_input,
+     ],
+     output : [
+       'manual',
+@@ -247,7 +246,6 @@
+       input : [
+         files('./render-manpage.sh'),
+         files('./expand-includes.py'),
+-        nix_input,
+       ],
+       output : command[0] + '-' + page + '.1',
+       install : true,
+@@ -370,7 +368,6 @@
+       files('./render-manpage.sh'),
+       files('./expand-includes.py'),
+       nix3_cli_files,
+-      nix_input,
+     ],
+     output : page + '.1',
+     install : true,
+@@ -425,7 +422,6 @@
+       files('./render-manpage.sh'),
+       files('./expand-includes.py'),
+       entry.get(3, []),
+-      nix_input,
+     ],
+     output : '@0@.@1@'.format(entry[0], entry[1]),
+     install : true,
+--- nix-2.34.7/src/nix-functional-tests/meson.build~	2026-05-05 01:22:33.000000000 +0800
++++ nix-2.34.7/src/nix-functional-tests/meson.build	2026-05-05 23:51:52.004873253 +0800
+@@ -276,7 +276,7 @@
+       # them more time than the default of 30 seconds.
+       timeout : 300,
+       # Used for target dependency/ordering tracking, not adding compiler flags or anything.
+-      depends : deps,
++      # depends : deps,
+       workdir : workdir,
+     )
+   endforeach

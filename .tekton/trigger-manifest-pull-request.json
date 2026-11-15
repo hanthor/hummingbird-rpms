@@ -1333,6 +1333,10 @@
         "^rpms/ninja\\-build/",
         "^test/rpms/ninja\\-build\\.yml$"
       ],
+      "nix--rpms": [
+        "^rpms/nix/",
+        "^test/rpms/nix\\.yml$"
+      ],
       "node-gyp--rpms": [
         "^rpms/node\\-gyp/",
         "^test/rpms/node\\-gyp\\.yml$"

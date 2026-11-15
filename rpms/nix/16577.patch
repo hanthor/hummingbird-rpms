@@ -1,0 +1,40 @@
+From d3febf5d77fc82ecbb36f8f4d8f64a4fdb572d2e Mon Sep 17 00:00:00 2001
+From: Jens Petersen <petersen@redhat.com>
+Date: Thu, 8 Oct 2026 21:37:01 +0800
+Subject: [PATCH] meson install scripts/nix*.fish in fish/vendor_conf.d
+
+fixes #16576
+---
+ scripts/meson.build | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/meson.build b/scripts/meson.build
+index bbcf3ef56d3a..5f209cfcc3a7 100644
+--- a/scripts/meson.build
++++ b/scripts/meson.build
+@@ -6,7 +6,7 @@ configure_file(
+   },
+ )
+ 
+-foreach rc : [ '.sh', '.fish', '-daemon.sh', '-daemon.fish' ]
++foreach rc : [ '.sh', '-daemon.sh' ]
+   configure_file(
+     input : 'nix-profile' + rc + '.in',
+     output : 'nix' + rc,
+@@ -18,3 +18,16 @@ foreach rc : [ '.sh', '.fish', '-daemon.sh', '-daemon.fish' ]
+     },
+   )
+ endforeach
++
++foreach rc : [ '.fish', '-daemon.fish' ]
++  configure_file(
++    input : 'nix-profile' + rc + '.in',
++    output : 'nix' + rc,
++    install : true,
++    install_dir : get_option('datadir') / 'fish' / 'vendor_conf.d',
++    install_mode : 'rw-r--r--',
++    configuration : {
++      'localstatedir' : localstatedir,
++    },
++  )
++endforeach

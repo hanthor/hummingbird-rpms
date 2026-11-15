@@ -1,0 +1,6 @@
+summary: nix smoke tests
+require:
+- bash
+- nix
+test: bash test.sh
+framework: shell
