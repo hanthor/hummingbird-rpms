@@ -101,6 +101,10 @@
         "^rpms/binutils/",
         "^test/rpms/binutils\\.yml$"
       ],
+      "blake3--rpms": [
+        "^rpms/blake3/",
+        "^test/rpms/blake3\\.yml$"
+      ],
       "boost--rpms": [
         "^rpms/boost/",
         "^test/rpms/boost\\.yml$"
