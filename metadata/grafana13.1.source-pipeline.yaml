@@ -72,6 +72,11 @@ post:
 # checksum while keeping the filename, so gorget needs an accepted-checksums
 # exception for the new hash.
 accepted-checksums:
+  # HUM-12800 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; Patch30 syncs Source0 go.mod/go.sum.
+  - file: "grafana-13.1.10-vendor.tar.bz2"
+    checksum: "45fc9366083d16369c70b8a4d71d989887b0291cda4e448502fe28cc59586980b5d4012ae585a288144ecfc7bdbad4948b57d9ce1ea4c3c6aaf308e5c9adf617"
+    reason: "HUM-12800: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
   - file: "grafana-13.1.8-vendor.tar.bz2"
     checksum: "fed97c406dbf4d5a7bf8fe05dbd910a606cc0a799564bcc1e33b68943d698f866f1d3a550980c16c9b896e67b6ba392d37b1cbcb8a7b8c320947bb988d849005"
     reason: "go-vendor-tools.toml pre_command bumps klauspost/compress 1.19.1->1.20.2 for CVE-2026-116591; vendor archive regenerated"
