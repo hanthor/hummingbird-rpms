@@ -1193,6 +1193,10 @@
         "^rpms/loki3\\.7/",
         "^test/rpms/loki3\\.7\\.yml$"
       ],
+      "lowdown--rpms": [
+        "^rpms/lowdown/",
+        "^test/rpms/lowdown\\.yml$"
+      ],
       "lua--rpms": [
         "^rpms/lua/",
         "^test/rpms/lua\\.yml$"

@@ -11819,6 +11819,45 @@ spec:
     event: repo_push
     method: webhook
     title: SBOM-event-to-Bombino
+# --- lowdown ---
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    build.appstudio.openshift.io/status: '{"pac":{"state":"enabled"},"message":"done"}'
+    git-provider: gitlab
+    git-provider-url: https://gitlab.com
+    mintmaker.appstudio.redhat.com/disabled: "true"
+    test.appstudio.openshift.io/comment_strategy: disable_all
+  name: lowdown-main
+spec:
+  application: rpms-main
+  componentName: lowdown-main
+  containerImage: quay.io/redhat-user-workloads/hummingbird-tenant/lowdown-main
+  source:
+    git:
+      context: rpms/lowdown
+      revision: main
+      url: https://gitlab.com/redhat/hummingbird/rpms.git
+---
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ImageRepository
+metadata:
+  labels:
+    appstudio.redhat.com/application: rpms-main
+    appstudio.redhat.com/component: lowdown-main
+  name: lowdown-main
+spec:
+  image:
+    name: hummingbird-tenant/lowdown-main
+    visibility: public
+  notifications:
+  - config:
+      url: https://bombino.api.redhat.com/v1/sbom/quay/push
+    event: repo_push
+    method: webhook
+    title: SBOM-event-to-Bombino
 # --- lua ---
 ---
 apiVersion: appstudio.redhat.com/v1alpha1
