@@ -869,6 +869,10 @@
         "^rpms/libcomps/",
         "^test/rpms/libcomps\\.yml$"
       ],
+      "libcpuid--rpms": [
+        "^rpms/libcpuid/",
+        "^test/rpms/libcpuid\\.yml$"
+      ],
       "libdex--rpms": [
         "^rpms/libdex/",
         "^test/rpms/libdex\\.yml$"

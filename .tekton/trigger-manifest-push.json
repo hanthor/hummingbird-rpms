@@ -653,6 +653,9 @@
       "libcomps--rpms": [
         "^rpms/libcomps/"
       ],
+      "libcpuid--rpms": [
+        "^rpms/libcpuid/"
+      ],
       "libdex--rpms": [
         "^rpms/libdex/"
       ],
