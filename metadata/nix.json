@@ -1,13 +1,13 @@
 {
-  "fedora": {
-    "branch": "f44",
-    "git_url": "https://src.fedoraproject.org/rpms/nix.git",
-    "release": "1",
-    "sha": "84d290ab1d1caf6f9125ee5d9e5842ddb612c624"
-  },
-  "modification_status": "clean",
-  "release_monitoring_project_id": 12809,
-  "track_upstream": "latest",
-  "upstream_repo": "https://src.fedoraproject.org/rpms/nix",
-  "version": "2.35.6"
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/nix.git",
+  "release": "1",
+  "sha": "84d290ab1d1caf6f9125ee5d9e5842ddb612c624"
+ },
+ "modification_status": "clean",
+ "release_monitoring_project_id": 12809,
+ "track_upstream": "latest",
+ "upstream_repo": "https://github.com/NixOS/nix",
+ "version": "2.35.6"
 }
