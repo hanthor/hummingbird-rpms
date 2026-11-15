@@ -6,6 +6,10 @@ fetch:
   - type: vendor
     ecosystem: go
     archive_name: "kubernetes-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/kubernetes1.36/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
 
 post:
   - type: run
@@ -19,3 +23,13 @@ post:
           exit 1
         fi
         sed -Ei 's/^(%global k8s_tag[[:space:]]+)v[0-9.]+$/\1v${VERSION}/' "${SPEC_FILE}"
+
+accepted-checksums:
+  # HUM-12791 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "kubernetes-1.36.6.tar.gz"
+    checksum: "74a46fdabcf1a84b1fdff8c75a93e1f0d2f4009c9205716bdad8fa8c26fee39eb2860e24e29ee83c3c5d8b10312550cbae89e8db1e3566892577783f45b82623"
+    reason: "HUM-12791: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v1.36.6."
+  - file: "kubernetes-1.36.6-vendor.tar.bz2"
+    checksum: "a23e2b97ab9cf20205de6c89a8e9e9b3c0bc53418c258103cffaf0da72ea081ca000aa47e6aa5b10893490501574e146f0aea4e9195ed6519e33c7c0015ed3fe"
+    reason: "HUM-12791: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
