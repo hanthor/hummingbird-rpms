@@ -489,6 +489,10 @@
         "^rpms/gawk/",
         "^test/rpms/gawk\\.yml$"
       ],
+      "gc--rpms": [
+        "^rpms/gc/",
+        "^test/rpms/gc\\.yml$"
+      ],
       "gcc--rpms": [
         "^rpms/gcc/",
         "^test/rpms/gcc\\.yml$"

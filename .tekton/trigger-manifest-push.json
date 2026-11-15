@@ -368,6 +368,9 @@
       "gawk--rpms": [
         "^rpms/gawk/"
       ],
+      "gc--rpms": [
+        "^rpms/gc/"
+      ],
       "gcc--rpms": [
         "^rpms/gcc/"
       ],

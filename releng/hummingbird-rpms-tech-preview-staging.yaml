@@ -325,6 +325,8 @@ spec:
           contentType: rpm
         - name: gawk-main
           contentType: rpm
+        - name: gc-main
+          contentType: rpm
         - name: gcc-main
           contentType: rpm
         - name: gcc13-main
