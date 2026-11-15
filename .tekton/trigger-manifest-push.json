@@ -896,6 +896,9 @@
       "loki3-7--rpms": [
         "^rpms/loki3\\.7/"
       ],
+      "lowdown--rpms": [
+        "^rpms/lowdown/"
+      ],
       "lua--rpms": [
         "^rpms/lua/"
       ],

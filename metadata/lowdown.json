@@ -1,0 +1,13 @@
+{
+ "fedora": {
+  "branch": "f44",
+  "git_url": "https://src.fedoraproject.org/rpms/lowdown.git",
+  "release": "3",
+  "sha": "c8d783b0ae326ea31a1c1ad26f6a1d331e753889"
+ },
+ "modification_status": "clean",
+ "release_monitoring_project_id": 241823,
+ "track_upstream": "latest",
+ "upstream_repo": "https://github.com/kristapsdz/lowdown",
+ "version": "2.0.2"
+}
