@@ -29,3 +29,12 @@ accepted-checksums:
   - file: "caddy-2.11.7-vendor.tar.bz2"
     checksum: "55bd82532b377556460999fcc3d5b312ab95d1d04614fcd742fcbc3829c7462f85352ae85f267414b2f5a799644560b4e533e27b5399a5b8df60beb0932599fa"
     reason: "HUM-11275: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12795 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; sync_go_modules updates Source0
+  # go.mod/go.sum to match.
+  - file: "caddy-2.11.7.tar.gz"
+    checksum: "666afea7264fc22bdda25d5de8954302f515095ae1a2a72d843330f9577e3b27462858625b76c4e6330cc172a1d8b69a86f6ff72ac8d5b60ab46decb7dda0633"
+    reason: "HUM-12795: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v2.11.7."
+  - file: "caddy-2.11.7-vendor.tar.bz2"
+    checksum: "6a5215297b2020cbd3801a7131c2ad2d7cae9b531342136a49d4069e709691392ade3913c98f0941d4fa08f622f756307821d3e31f09e438d938e09824a750a7"
+    reason: "HUM-12795: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
