@@ -796,6 +796,9 @@ tempo3.0:
 thrift:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
+tomcat10:
+  forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
+
 tomcat11:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 

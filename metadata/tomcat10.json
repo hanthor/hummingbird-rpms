@@ -5,12 +5,12 @@
     "git_url": "https://src.fedoraproject.org/rpms/tomcat.git",
     "sha": "380a9e9bb498c3f1aaa06e014cc95400da271e7f"
   },
-  "modification_reason": "Update to upstream version 10.1.61",
+  "modification_reason": "Update to upstream version 10.1.62",
   "modification_status": "modified",
   "release_monitoring_project_id": 148939,
   "source_availability_check": "tomcat_apache",
   "track_upstream": "10.1",
   "upstream_branch": "10.1.x",
   "upstream_repo": "https://github.com/apache/tomcat",
-  "version": "10.1.61"
+  "version": "10.1.62"
 }
