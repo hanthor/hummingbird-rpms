@@ -1,5 +1,5 @@
 Name:           cargo-nextest
-Version:        0.9.151
+Version:        0.9.152
 Release:        0.1%{?dist}
 Summary:        Isolated test runner for Rust packages
 
