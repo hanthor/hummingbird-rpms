@@ -3,14 +3,14 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "prometheus-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "prometheus-${VERSION}-vendor.tar.bz2"
     modules:
       - path: "."
         use_workspace: false
-
-transform:
   - type: run
     path: "."
     command:
@@ -32,3 +32,18 @@ transform:
         tar -cjf "prometheus-npm-cache-${VERSION}.tar.bz2" -C "${root}" .npm-cache
     outputs:
       - "prometheus-npm-cache-${VERSION}.tar.bz2"
+
+post:
+  - type: bundled-provides
+    ecosystem: npm
+    modules:
+      - path: "web/ui"
+      - path: "web/ui/react-app"
+    scope: production
+    output: bundled-npm-provides.inc
+
+publish:
+  files:
+    - "prometheus-${VERSION}.tar.gz"
+    - "prometheus-${VERSION}-vendor.tar.bz2"
+    - "prometheus-npm-cache-${VERSION}.tar.bz2"
