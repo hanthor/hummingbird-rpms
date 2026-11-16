@@ -47296,7 +47296,7 @@ spec:
     - name: ociStorage
       value: quay.io/redhat-user-workloads/hummingbird-tenant/tomcat10-main:on-mr-{{pull_request_number}}-{{revision}}
     - name: package-name
-      value: tomcat
+      value: tomcat10
     - name: target-branch
       value: '{{target_branch}}'
     - name: build-architectures
@@ -47315,6 +47315,10 @@ spec:
       value: "rpms/tomcat10"
     - name: mock-config-template-filename-in-sources
       value: "mock/mock.cfg"
+    - name: dist-git-client-configdir
+      value: "mock/"
+    - name: forked-from
+      value: "https://gitlab.com/redhat/hummingbird/rpms"
   pipelineRef:
     resolver: bundles
     params:
