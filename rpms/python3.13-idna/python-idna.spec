@@ -3,9 +3,14 @@
 # hypothesis is not available on RHEL
 %bcond hypothesis %{undefined rhel}
 
+<<<<<<< HEAD
+Name:           python-%{srcname}
+Version:        3.20
+=======
 Name:           python3.13-%{srcname}
 Version:        3.19
-Release:        1.1%{?dist}
+>>>>>>> hummingbird-local
+Release:        %autorelease
 Summary:        Internationalized Domain Names in Applications (IDNA)
 
 License:        BSD-3-Clause
