@@ -203,7 +203,9 @@ def replace_autorelease_in_spec(package_dir: Path, release: str, required: bool 
         logging.info("Replaced %%autorelease with %s%%{?dist} in %s", release, spec_file.name)
 
 
-def restore_autorelease_definitions(package_dir: Path, upstream_spec: str) -> None:
+def restore_autorelease_definitions(
+    package_dir: Path, upstream_spec: str, *, preserve_conflicts: bool = False,
+) -> None:
     """Restore Fedora's autorelease fields after a merge replaces them with literals."""
     for spec_file in package_dir.glob('*.spec'):
         content = spec_file.read_text()
@@ -214,10 +216,24 @@ def restore_autorelease_definitions(package_dir: Path, upstream_spec: str) -> No
             if definition is None:
                 raise ValueError(f"Unsupported %autorelease definition: {line}")
             field = re.escape(definition.group(1))
-            content, count = re.subn(
-                rf'^{field}[ \t]+.*$', lambda _: line, content, count=1, flags=re.MULTILINE,
-            )
-            if count != 1:
+            # Keep both sides of a conflicted field for manual resolution.
+            # Fields outside conflict markers can use the resolved Fedora value.
+            chunks = (re.split(r'(^<<<<<<<[^\n]*\n.*?^>>>>>>>[^\n]*(?:\n|$))',
+                               content, flags=re.MULTILINE | re.DOTALL)
+                      if preserve_conflicts else [content])
+            field_pattern = rf'^{field}[ \t]+.*$'
+            if any(re.search(field_pattern, chunk, flags=re.MULTILINE) for chunk in chunks[1::2]):
+                continue
+            count = 0
+            for index in range(0, len(chunks), 2):
+                chunks[index], count = re.subn(
+                    field_pattern, lambda _: line, chunks[index],
+                    count=1, flags=re.MULTILINE,
+                )
+                if count:
+                    break
+            content = ''.join(chunks)
+            if count != 1 and not preserve_conflicts:
                 raise ValueError(f"Expected one {definition.group(1)} field in {spec_file.name}")
         spec_file.write_text(content)
 
@@ -2324,10 +2340,14 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             shutil.copytree(upstream_dir, package_dir)
 
         # Replace %autorelease in package_dir (now safe, no longer a git repo)
-        if has_autorelease and not has_conflicts:
+        # The MR wrapper commits conflicted files and removes continuation state.
+        # Resolve macros now, but preserve both sides of any conflicted field.
+        if has_autorelease:
             if took_merge_path:
-                restore_autorelease_definitions(package_dir, upstream_spec)
-            replace_autorelease_in_spec(package_dir, release)
+                restore_autorelease_definitions(
+                    package_dir, upstream_spec, preserve_conflicts=has_conflicts,
+                )
+            replace_autorelease_in_spec(package_dir, release, required=not has_conflicts)
 
         logging.info("Updated to %s-%s", version, release)
 
@@ -2574,9 +2594,8 @@ def continue_update(dry_run: bool = False) -> None:
             )
 
     if not dry_run:
-        # update() defers release normalization while merge conflicts exist.
-        # Use the saved upstream definitions and release, without querying a
-        # newer Fedora build when the user resumes the update later.
+        # Manual resolution can restore macros or retain an old local release.
+        # Use the saved Fedora release without querying a newer build.
         if 'metadata' in state:
             release = state['metadata'].get('fedora', {}).get('release')
             upstream_spec = state.get('upstream_spec', '')
