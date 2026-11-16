@@ -1,0 +1,23 @@
+From ccf618b664230e0f5497345e6a4503e6f2c7bca9 Mon Sep 17 00:00:00 2001
+From: Steve Grubb <ausearch.1@gmail.com>
+Date: Thu, 23 Jul 2026 11:26:13 -0400
+Subject: [PATCH] update changelog
+Content-type: text/plain
+
+---
+ ChangeLog | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/ChangeLog b/ChangeLog
+index d230c610c956..1c3ea75a1c4e 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,4 +1,5 @@
+ 2.0.1
++- Enable large file support on 32-bit builds
+ 
+ 2.0
+ - Add decision_threads configuration to fapolicyd.conf
+-- 
+2.55.0
+
