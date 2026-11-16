@@ -3433,16 +3433,64 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
+def _load_command_data(
+    args: argparse.Namespace,
+) -> tuple[dict[str, HumPackageMetadata], dict[str, dict[str, str]]]:
+    """Load only command dependencies; validate full metadata for all-package operations."""
+    all_packages = False
+    selected_packages: list[str] = []
+    match args.command:
+        case 'update':
+            if not args.continue_:
+                all_packages = args.package is None
+                selected_packages = [args.package] if args.package else []
+            elif UPDATE_STATE_FILE.exists():
+                # Modern continuation uses the candidate metadata saved in the
+                # recovery file. Legacy state still relies on metadata on disk.
+                state = json.loads(UPDATE_STATE_FILE.read_text())
+                if 'metadata' not in state:
+                    selected_packages = [state['package']]
+        case 'sync' | 'mark-modified' | 'set-upstream' | 'ls-sources':
+            selected_packages = [args.package]
+        case 'rebuild':
+            all_packages = args.all
+            selected_packages = args.packages
+        case 'sanitize-paths':
+            all_packages = args.all
+            selected_packages = [args.package] if args.package else []
+        case 'diff':
+            all_packages = args.all
+            selected_packages = args.packages
+        case 'import' | 'rename' | 'add-private-product':
+            # These workflows regenerate resources for the entire repository.
+            # Validate those inputs before importing/renaming files or creating
+            # remote infrastructure, not only when the generator finally runs.
+            all_packages = True
+
+    # Other commands intentionally need no eager metadata load: list loads all
+    # metadata itself, rebuild-rev-deps loads metadata for matching dependents,
+    # and update-releases fetches a replacement mapping without reading old data.
+    package_metadata: dict[str, HumPackageMetadata] = {}
+    if all_packages:
+        package_metadata = get_all_imported_packages()
+    else:
+        for package_name in dict.fromkeys(selected_packages):
+            try:
+                package_metadata[package_name] = _METADATA_REPO.load(package_name)
+            except FileNotFoundError:
+                # Preserve each operation's existing missing-package diagnostic.
+                continue
+
+    release_mapping: dict[str, dict[str, str]] = {}
+    if args.command == 'sync' or (args.command == 'update' and not args.continue_):
+        release_mapping = cast(dict[str, dict[str, str]], json.loads(RELEASES_JSON.read_text()))
+    return package_metadata, release_mapping
+
+
 def main() -> None:
     global imports, releases
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-
-    # Load all package metadata from per-package import.json files
-    imports = get_all_imported_packages()
-
-    # Load upstream-releases.json
-    releases = cast(dict[str, dict[str, str]], json.loads(RELEASES_JSON.read_text()))
 
     # Compatibility policy: --dry-run is command-specific, not a universal
     # no-write mode. Metadata-only commands keep their established behavior.
@@ -3668,6 +3716,8 @@ Examples:
 
     if args.dry_run and args.command not in dry_run_policies:
         sys.exit(f"ERROR: --dry-run is not supported with the {args.command} command")
+
+    imports, releases = _load_command_data(args)
 
     # Check git config for commands that will commit
     if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources', 'sanitize-paths', 'check-paths'] and not args.dry_run:
