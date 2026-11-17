@@ -1,6 +1,6 @@
 Name:           python3.13-cffi
 Version:        2.1.1
-Release:        1.1%{?dist}
+Release:        2%{?dist}
 Summary:        Foreign Function Interface for Python to call C code
 # cffi is MIT-0
 %global upstream_license MIT-0
