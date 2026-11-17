@@ -1,12 +1,12 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/vim.git",
-    "release": "1",
-    "sha": "b432bbc9eb0a935c8e486646632e7940c1c054a9"
-  },
-  "modification_reason": "gorget source-pipeline.yaml (HUM-4620): ftp.vim.org decommissioned, fetching from git tag instead",
+  "version": "9.2.1302",
   "modification_status": "modified",
   "upstream_repo": "https://github.com/vim/vim",
-  "version": "9.2.1202"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/vim.git",
+    "branch": "rawhide",
+    "sha": "8203039c9cdad8992edae2f273161d9dd63cff75",
+    "release": "1"
+  },
+  "modification_reason": "gorget source-pipeline.yaml (HUM-4620): ftp.vim.org decommissioned, fetching from git tag instead"
 }
