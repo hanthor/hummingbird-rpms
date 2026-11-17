@@ -11,7 +11,7 @@
 Summary: PDF rendering library
 Name:    poppler
 Version: 26.08.0
-Release:        1.5%{?dist}
+Release: 2%{?dist}
 License: (GPL-2.0-only OR GPL-3.0-only) AND GPL-2.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL:     https://poppler.freedesktop.org/
 Source0: https://poppler.freedesktop.org/poppler-%{version}.tar.xz
@@ -33,6 +33,9 @@ Patch6: 0006-cve-2026-107705-denial-service-stack-based-buffer-overflow.patch
 
 # CVE-2026-93311: integer overflow in SampledFunction::SampledFunction
 Patch7: 0007-CVE-2026-93311-SampledFunction-shift-overflow.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=2537011 - CVE-2026-93653
+Patch8:  poppler-26.08.0-splash-infinite-loop.patch
 
 BuildRequires: make
 BuildRequires: cmake
