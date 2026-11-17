@@ -1,13 +1,14 @@
 {
+  "version": "1.33.0",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/pypa/hatch",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-hatchling.git",
-    "sha": "7732df5320a0058dd932605ebab0e82b408cc559"
+    "branch": "rawhide",
+    "sha": "deff576357b63e944b62a67efd36c3211c0ad335",
+    "release": "2"
   },
   "modification_reason": "Update to upstream version 1.33.0",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 185085,
   "track_upstream": "latest",
-  "upstream_repo": "https://github.com/pypa/hatch",
-  "version": "1.33.0"
+  "release_monitoring_project_id": 185085
 }
