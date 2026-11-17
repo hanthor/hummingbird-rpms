@@ -10,13 +10,13 @@
 %bcond wheel 0
 
 %global srcname pip
-%global base_version 26.2
+%global base_version 26.3
 %global upstream_version %{base_version}%{?prerel}
 %global python_wheel_name %{srcname}-%{upstream_version}-py3-none-any.whl
 
 Name:           python3.13-%{srcname}
 Version:        %{base_version}%{?prerel:~%{prerel}}
-Release:        0.3%{?dist}
+Release:        0.1%{?dist}
 Summary:        A tool for installing and managing Python packages
 
 # We bundle a lot of libraries with pip, which itself is under MIT license.
