@@ -2,13 +2,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python-cryptography.git",
-    "release": "1",
     "sha": "e419312912a928307f1cda0e39109fdd7ced0402"
   },
-  "modification_reason": "Python 3.13 variant retaining HB OpenSSL and test profile",
+  "modification_reason": "Update to upstream version 50.0.2",
   "modification_status": "modified",
   "release_monitoring_project_id": 5532,
   "track_upstream": "latest",
   "upstream_repo": "https://github.com/pyca/cryptography",
-  "version": "50.0.0"
+  "version": "50.0.2"
 }
