@@ -4,8 +4,8 @@
 %global __bootstrap %{nil}
 
 Name:           python3.13-pytest
-Version:        9.1.1
-Release:        1.1%{?dist}
+Version:        9.2.0
+Release:        0.1%{?dist}
 Summary:        Simple powerful testing with Python
 # SPDX
 License:        MIT
