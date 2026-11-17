@@ -5,7 +5,7 @@
 
 Name:           meson
 Version:        1.12.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        High productivity build system
 
 License:        Apache-2.0
@@ -106,6 +106,8 @@ BuildRequires:  /usr/bin/wx-config
 %endif
 BuildRequires:  /usr/bin/sdl2-config
 %endif
+
+Patch0001: 0001-fix-gcc16-response-file.patch
 
 %generate_buildrequires
 %pyproject_buildrequires
