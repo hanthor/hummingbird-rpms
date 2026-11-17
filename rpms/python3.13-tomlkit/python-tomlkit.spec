@@ -21,8 +21,8 @@ Part of the implementation has been adapted, improved and fixed from Molten.}
 
 Name:           python3.13-%{pypi_name}
 Summary:        Style preserving TOML library
-Version:        0.13.2
-Release:        10.1%{?dist}
+Version:        0.15.2
+Release:        0.1%{?dist}
 License:        MIT
 
 URL:            https://github.com/sdispater/tomlkit
