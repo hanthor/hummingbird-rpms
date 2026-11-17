@@ -1,1 +1,5 @@
+<<<<<<< HEAD
+SHA512 (aom-3.15.3.tar.gz) = ec1a988bc9eb5113f4c932e139da510740a7a713ee4eda17a3d053026772fe1b22da1dd9a5cb52c818b18a854eb01f1b0dc23c0b70da0eaf1dab0a490a6be2a6
+=======
 SHA512 (aom-3.15.2.tar.gz) = 5fab2270b81012657306e2ad9ada3b26c7e933ceac63fb0fd9096ebce010cacd1fb67fac3a76d674b878a08f6f80e13e7dbf2cc738cba6ad589b3fbabd03d1fb
+>>>>>>> hummingbird-local
