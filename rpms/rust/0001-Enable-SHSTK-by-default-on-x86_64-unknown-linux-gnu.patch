@@ -1,11 +1,22 @@
-From 891fcd5606878f74f4bc7033cb86912b9013dada Mon Sep 17 00:00:00 2001
+From ca5a468fcd2b4f567b6e4999f4a537523d834987 Mon Sep 17 00:00:00 2001
 From: Josh Stone <jistone@redhat.com>
 Date: Thu, 30 Apr 2026 13:21:13 -0700
 Subject: [PATCH] Enable SHSTK by default on x86_64-unknown-linux-gnu
 
 (cherry picked from commit 1d7707c6d8102e2a0777a3595ac267885f5a5880)
 ---
+ compiler/rustc_codegen_llvm/src/context.rs    | 11 +++---
+ compiler/rustc_session/src/config.rs          | 24 +++----------
+ compiler/rustc_session/src/options.rs         | 35 +++++++++----------
+ compiler/rustc_session/src/session.rs         |  6 +++-
+ compiler/rustc_target/src/spec/json.rs        |  5 ++-
+ compiler/rustc_target/src/spec/mod.rs         | 24 +++++++++++++
+ .../spec/targets/x86_64_unknown_linux_gnu.rs  |  7 +++-
+ tests/codegen-llvm/cf-protection.rs           |  2 +-
+ 8 files changed, 67 insertions(+), 47 deletions(-)
+
 diff --git a/compiler/rustc_codegen_llvm/src/context.rs b/compiler/rustc_codegen_llvm/src/context.rs
+index 0ce3bfe07c41..96fcecfb10c1 100644
 --- a/compiler/rustc_codegen_llvm/src/context.rs
 +++ b/compiler/rustc_codegen_llvm/src/context.rs
 @@ -22,14 +22,14 @@
@@ -26,7 +37,7 @@ diff --git a/compiler/rustc_codegen_llvm/src/context.rs b/compiler/rustc_codegen
  };
  use smallvec::SmallVec;
  
-@@ -467,7 +467,8 @@
+@@ -467,7 +467,8 @@ pub(crate) unsafe fn create_module<'ll>(
      }
  
      // Pass on the control-flow protection flags to LLVM (equivalent to `-fcf-protection` in Clang).
@@ -36,7 +47,7 @@ diff --git a/compiler/rustc_codegen_llvm/src/context.rs b/compiler/rustc_codegen
          llvm::add_module_flag_u32(
              llmod,
              llvm::ModuleFlagMergeBehavior::Override,
-@@ -475,7 +476,7 @@
+@@ -475,7 +476,7 @@ pub(crate) unsafe fn create_module<'ll>(
              1,
          );
      }
@@ -46,14 +57,13 @@ diff --git a/compiler/rustc_codegen_llvm/src/context.rs b/compiler/rustc_codegen
              llmod,
              llvm::ModuleFlagMergeBehavior::Override,
 diff --git a/compiler/rustc_session/src/config.rs b/compiler/rustc_session/src/config.rs
+index 753a4ed0d779..7030997403ae 100644
 --- a/compiler/rustc_session/src/config.rs
 +++ b/compiler/rustc_session/src/config.rs
-@@ -78,22 +78,6 @@
- 
-     /// Emit Control Flow Guard metadata and checks.
+@@ -80,22 +80,6 @@ pub enum CFGuard {
      Checks,
--}
--
+ }
+ 
 -/// The different settings that the `-Z cf-protection` flag can have.
 -#[derive(Clone, Copy, PartialEq, Hash, Debug)]
 -pub enum CFProtection {
@@ -68,10 +78,12 @@ diff --git a/compiler/rustc_session/src/config.rs b/compiler/rustc_session/src/c
 -
 -    /// Emit control-flow protection for both branches and returns.
 -    Full,
- }
- 
+-}
+-
  #[derive(Clone, Copy, Debug, PartialEq, Hash, StableHash, Encodable, Decodable)]
-@@ -3334,13 +3318,13 @@
+ pub enum OptLevel {
+     /// `-Copt-level=0`
+@@ -3334,13 +3318,13 @@ pub(crate) mod dep_tracking {
      use rustc_span::{RealFileName, RemapPathScopeComponents};
      use rustc_structures::CollapseMacroDebuginfo;
      use rustc_target::spec::{
@@ -90,6 +102,7 @@ diff --git a/compiler/rustc_session/src/config.rs b/compiler/rustc_session/src/c
          FunctionReturn, InliningThreshold, InstrumentCoverage, InstrumentMcount,
          InstrumentMcountOpts, InstrumentXRay, LinkerPluginLto, LocationDetail, LtoCli,
 diff --git a/compiler/rustc_session/src/options.rs b/compiler/rustc_session/src/options.rs
+index 0e06713019f9..61404b334152 100644
 --- a/compiler/rustc_session/src/options.rs
 +++ b/compiler/rustc_session/src/options.rs
 @@ -16,9 +16,9 @@
@@ -105,7 +118,7 @@ diff --git a/compiler/rustc_session/src/options.rs b/compiler/rustc_session/src/
  };
  
  use crate::config::*;
-@@ -1376,22 +1376,20 @@
+@@ -1376,22 +1376,20 @@ pub(crate) fn parse_cfguard(slot: &mut CFGuard, v: Option<&str>) -> bool {
          true
      }
  
@@ -141,7 +154,7 @@ diff --git a/compiler/rustc_session/src/options.rs b/compiler/rustc_session/src/
          true
      }
  
-@@ -2413,7 +2411,8 @@
+@@ -2413,7 +2411,8 @@ pub(crate) fn parse_rust_version(slot: &mut Option<RustcVersion>, v: Option<&str
          "whether the stable interface is being built"),
      cache_proc_macros: bool = (false, parse_bool, [TRACKED],
          "cache the results of derive proc macro invocations (potentially unsound!) (default: no"),
@@ -152,24 +165,19 @@ diff --git a/compiler/rustc_session/src/options.rs b/compiler/rustc_session/src/
      check_cfg_all_expected: bool = (false, parse_bool, [UNTRACKED],
          "show all expected values in check-cfg diagnostics (default: no)"),
 diff --git a/compiler/rustc_session/src/session.rs b/compiler/rustc_session/src/session.rs
+index 060e614e8218..f152737752ce 100644
 --- a/compiler/rustc_session/src/session.rs
 +++ b/compiler/rustc_session/src/session.rs
-@@ -28,9 +28,9 @@
+@@ -28,7 +28,7 @@
  use rustc_structures::{CrateType, Limit};
  use rustc_target::asm::InlineAsmArch;
  use rustc_target::spec::{
 -    Arch, CfgAbi, CodeModel, DebuginfoKind, MergeFunctions, Os, PanicStrategy, RelocModel,
--    RelroLevel, SanitizerSet, SmallDataThresholdSupport, SplitDebuginfo, StackProtector,
--    SymbolVisibility, Target, TargetTuple, TlsModel, apple,
-+    Arch, CFProtection, CfgAbi, CodeModel, DebuginfoKind, MergeFunctions, Os, PanicStrategy,
-+    RelocModel, RelroLevel, SanitizerSet, SmallDataThresholdSupport, SplitDebuginfo,
-+    StackProtector, SymbolVisibility, Target, TargetTuple, TlsModel, apple,
++    Arch, CFProtection, CfgAbi, CodeModel, DebuginfoKind, MergeFunctions, Os, PanicStrategy, RelocModel,
+     RelroLevel, SanitizerSet, SmallDataThresholdSupport, SplitDebuginfo, StackProtector,
+     SymbolVisibility, Target, TargetTuple, TlsModel, apple,
  };
- 
- use crate::code_stats::CodeStats;
-@@ -1131,6 +1131,10 @@
-         }
- 
+@@ -1133,6 +1133,10 @@ pub fn branch_protection(&self) -> Option<BranchProtection> {
          bp
 +    }
 +
@@ -178,7 +186,10 @@ diff --git a/compiler/rustc_session/src/session.rs b/compiler/rustc_session/src/
      }
  
      pub fn must_emit_unwind_tables(&self) -> bool {
+         // This is used to control the emission of the `uwtable` attribute on
+         // LLVM functions. The `uwtable` attribute according to LLVM is:
 diff --git a/compiler/rustc_target/src/spec/json.rs b/compiler/rustc_target/src/spec/json.rs
+index 40bf2f664bdb..af95fb856b14 100644
 --- a/compiler/rustc_target/src/spec/json.rs
 +++ b/compiler/rustc_target/src/spec/json.rs
 @@ -12,7 +12,7 @@
@@ -215,10 +226,10 @@ diff --git a/compiler/rustc_target/src/spec/json.rs b/compiler/rustc_target/src/
  
  pub fn json_schema() -> schemars::Schema {
 diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/spec/mod.rs
+index 9673fff0a1a5..d9087c15cb6a 100644
 --- a/compiler/rustc_target/src/spec/mod.rs
 +++ b/compiler/rustc_target/src/spec/mod.rs
-@@ -1224,7 +1224,27 @@
- }
+@@ -1225,6 +1225,26 @@ pub enum StackProtector {
  
  into_diag_arg_using_display!(StackProtector);
 +
@@ -245,7 +256,7 @@ diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/s
  crate::target_spec_enum! {
      pub enum BinaryFormat {
          Coff = "coff",
-@@ -2589,6 +2609,9 @@
+@@ -2589,6 +2609,9 @@ pub struct TargetOptions {
      /// since this is most common among tier 1 and tier 2 targets.
      pub supports_stack_protector: bool,
  
@@ -255,7 +266,7 @@ diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/s
      /// The name of entry function.
      /// Default value is "main"
      pub entry_name: StaticCow<str>,
-@@ -2841,6 +2864,7 @@
+@@ -2841,6 +2864,7 @@ fn default() -> TargetOptions {
              c_enum_min_bits: None,
              generate_arange_section: true,
              supports_stack_protector: true,
@@ -264,6 +275,7 @@ diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/s
              entry_abi: CanonAbi::C,
              supports_fentry: false,
 diff --git a/compiler/rustc_target/src/spec/targets/x86_64_unknown_linux_gnu.rs b/compiler/rustc_target/src/spec/targets/x86_64_unknown_linux_gnu.rs
+index f8556b3415d9..e32c25702661 100644
 --- a/compiler/rustc_target/src/spec/targets/x86_64_unknown_linux_gnu.rs
 +++ b/compiler/rustc_target/src/spec/targets/x86_64_unknown_linux_gnu.rs
 @@ -1,5 +1,6 @@
@@ -286,6 +298,7 @@ diff --git a/compiler/rustc_target/src/spec/targets/x86_64_unknown_linux_gnu.rs 
          llvm_target: "x86_64-unknown-linux-gnu".into(),
          metadata: TargetMetadata {
 diff --git a/tests/codegen-llvm/cf-protection.rs b/tests/codegen-llvm/cf-protection.rs
+index a1c902755afb..b233b241a01f 100644
 --- a/tests/codegen-llvm/cf-protection.rs
 +++ b/tests/codegen-llvm/cf-protection.rs
 @@ -21,7 +21,7 @@ use minicore::*;
