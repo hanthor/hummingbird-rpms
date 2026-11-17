@@ -96,7 +96,7 @@ index 2f2f7e0..bec6595 100644
 -    def contents() -> str:
 -        return read_text("pip._vendor.certifi", "cacert.pem", encoding="ascii")
 +def contents() -> str:
-+    with open(where(), encoding='utf=8') as data:
++    with open(where(), encoding='utf-8') as data:
 +        return data.read()
 -- 
 2.50.1
