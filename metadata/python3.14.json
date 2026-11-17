@@ -1,13 +1,13 @@
 {
+  "version": "3.14.10",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/python/cpython",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/python3.14.git",
-    "release": "1",
-    "sha": "79cd876daf3447a4f528a96301813b4009bc284f"
+    "branch": "rawhide",
+    "sha": "ed3acc3422282b4bfab393d5adcd47f2f9d5cd93",
+    "release": "2"
   },
   "modification_reason": "Add FIPS mode support (00329-fips.patch), CVE-2026-8723 fix for vendored qs; retain local build and test adjustments; rebase FIPS tests onto Python 3.14.9 and drop tarfile backports included upstream; HUM-11299: CVE-2026-103995; HUM-11397: CVE-2026-116566; HUM-12164: CVE-2026-124249; HUM-12382: CVE-2026-115791, CVE-2026-19552, CVE-2026-115559",
-  "modification_status": "modified",
-  "upstream_branch": "3.14",
-  "upstream_repo": "https://github.com/python/cpython",
-  "version": "3.14.10"
+  "upstream_branch": "3.14"
 }
