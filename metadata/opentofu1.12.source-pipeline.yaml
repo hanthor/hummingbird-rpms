@@ -13,3 +13,9 @@ accepted-checksums:
   - file: "opentofu-1.12.9-vendor.tar.bz2"
     checksum: "4600e809d1f54d55bf15eb3154ae6641637794eec297d4962c4b6b95c27f3d0a181fe6add58c215b097dbfb11bc5ef4aa22625e7e3979d797633e6cd8e9628de"
     reason: "HUM-11257: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12801 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via go-vendor-tools.toml pre_commands; Spec Patch0 syncs
+  # Source0 go.mod/go.sum.
+  - file: "opentofu-1.12.12-vendor.tar.bz2"
+    checksum: "a33f24a341bee004c782f36514422b4bc30da6546418106d5ad5864a344ca0cdf337caaaa930d7185489faa685524ba1451f08d306e0fd33196f70fb800756ab"
+    reason: "HUM-12801: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
