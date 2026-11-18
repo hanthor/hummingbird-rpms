@@ -8,7 +8,7 @@ Version:                3.13.5
 %gometa -L -f
 
 Name:           prometheus3.13
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Monitoring system and time series database
 # The offline frontend cache does not include Rollup's native s390x module.
 ExcludeArch:    s390x
@@ -31,6 +31,8 @@ Patch5:         0006-bump-go-openapi-swag-to-0.27.1-gomod.patch
 Patch6:         0007-bump-klauspost-compress-to-1.20.2-gomod.patch
 # CVE-2026-116689: update follow-redirects to 1.16.2 in pnpm lockfile
 Patch7:         0008-bump-follow-redirects-to-1.16.2-pnpm-lock.patch
+# CVE-2026-128085: sync go.mod/go.sum with vendor archive OpenTelemetry-Go v1.47.0 bump
+Patch8:         0009-bump-opentelemetry-otel-to-1.47.0-gomod.patch
 
 BuildRequires:  go-vendor-tools
 BuildRequires:  golang >= 1.25

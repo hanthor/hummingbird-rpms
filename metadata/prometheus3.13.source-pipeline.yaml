@@ -41,5 +41,5 @@ post:
 
 accepted-checksums:
   - file: "prometheus-3.13.5-vendor.tar.bz2"
-    checksum: "054cca226d3360f7b281f411f5587f13f1928e1b4fe6bfeac0a16c2458b4cab93c196a4074a69b012f969e7f62f56bfad8daf6d184641c0ada496ed1d325215f"
-    reason: "go-vendor-tools.toml pre_commands bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591; vendor archive regenerated to include the patched dependency"
+    checksum: "20b4b03477e4c3fea013840fa28dbe72499fd413a9d686b23c30ef7273319962e6164c816c0ae831fac5cfa2c6b99da16da8d512319f9f49330b0b881708035b"
+    reason: "go-vendor-tools.toml pre_commands bumps github.com/klauspost/compress to v1.20.2 for CVE-2026-116591 and the OpenTelemetry-Go modules to v1.47.0 for CVE-2026-128085 (attribute truncation bypass); vendor archive regenerated to include the patched dependencies"
