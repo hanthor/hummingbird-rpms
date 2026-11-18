@@ -6,7 +6,7 @@ Version: 3.7.9
 %gometa -L
 
 Name:           loki3.7
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Horizontally scalable log aggregation system
 # Exclude s390x alongside the Loki 3.6 package.
 ExcludeArch:    s390x
