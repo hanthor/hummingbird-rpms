@@ -232,6 +232,93 @@ class TestSave:
         assert loaded.tag_strip_prefix == "release-"
 
 
+class TestPrivateProducts:
+    @pytest.fixture
+    def private_repo(self, tmp_path: Path) -> MetadataRepository:
+        (tmp_path / "ci").mkdir()
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(yaml.safe_dump({
+            "rpas": [{"name": "public"}, {"private_product": "example"}, {"private_product": "nodejs20"}],
+        }))
+        return MetadataRepository(tmp_path)
+
+    def test_assignment_round_trip_and_clear(
+        self, private_repo: MetadataRepository, tmp_path: Path,
+    ) -> None:
+        metadata = private_repo.create_clean(
+            "hello", version="1", upstream_repo="https://example.com/hello", fedora=clean_fedora(),
+        )
+        metadata.private_product = "example"
+        private_repo.save(metadata)
+        loaded = private_repo.load("hello")
+        assert loaded.private_product == "example"
+        assert loaded.to_dict()["private_product"] == "example"
+        loaded.private_product = None
+        private_repo.save(loaded)
+        assert "private_product" not in json.loads((tmp_path / "metadata" / "hello.json").read_text())
+
+    def test_unknown_product_save_does_not_modify_file(
+        self, private_repo: MetadataRepository, tmp_path: Path,
+    ) -> None:
+        metadata = private_repo.create_independent("hello", version="1", upstream_repo="https://example.com/hello")
+        path = tmp_path / "metadata" / "hello.json"
+        original = path.read_bytes()
+        metadata.private_product = "unknown"
+        with pytest.raises(InvalidMetadataError, match="unknown"):
+            private_repo.save(metadata)
+        assert path.read_bytes() == original
+
+    def test_queries_exclude_public_and_group_sorted_packages(
+        self, private_repo: MetadataRepository,
+    ) -> None:
+        for package, product in [("zebra", "example"), ("alpha", "example"), ("node", "nodejs20"), ("public-lts", None)]:
+            metadata = private_repo.create_independent(package, version="1", upstream_repo="https://example.com/project")
+            metadata.private_product = product
+            private_repo.save(metadata)
+        assert private_repo.private_products() == {"alpha": "example", "node": "nodejs20", "zebra": "example"}
+        assert private_repo.packages_by_private_product() == {
+            "example": ["alpha", "zebra"], "nodejs20": ["node"],
+        }
+
+    def test_query_rejects_unknown_product(
+        self, private_repo: MetadataRepository, tmp_path: Path,
+    ) -> None:
+        (tmp_path / "metadata").mkdir()
+        (tmp_path / "metadata" / "hello.json").write_text(json.dumps({
+            "version": "1", "modification_status": "independent",
+            "upstream_repo": "https://example.com/hello", "private_product": "unknown",
+        }))
+        with pytest.raises(InvalidMetadataError, match="hello.*unknown"):
+            private_repo.private_products()
+
+    def test_query_rejects_malformed_metadata(
+        self, private_repo: MetadataRepository, tmp_path: Path,
+    ) -> None:
+        (tmp_path / "metadata").mkdir()
+        (tmp_path / "metadata" / "hello.json").write_text('{"private_product": ""}')
+        with pytest.raises(MalformedMetadataError):
+            private_repo.private_products()
+
+    def test_empty_queries_need_no_rpa_config(self, tmp_path: Path) -> None:
+        repo = MetadataRepository(tmp_path)
+        assert repo.private_products() == {}
+        assert repo.packages_by_private_product() == {}
+
+    def test_public_metadata_needs_no_rpa_config(self, tmp_path: Path) -> None:
+        repo = MetadataRepository(tmp_path)
+        repo.create_independent("hello-lts", version="1", upstream_repo="https://example.com/hello")
+        assert repo.private_products() == {}
+
+    def test_missing_rpa_config_does_not_allow_private_save(self, tmp_path: Path) -> None:
+        repo = MetadataRepository(tmp_path)
+        metadata = IndependentPackageMetadata(
+            package_name="hello", version="1", upstream_repo="https://example.com/hello",
+            private_product="example",
+        )
+        with pytest.raises(FileNotFoundError):
+            repo.save(metadata)
+        assert not (tmp_path / "metadata" / "hello.json").exists()
+
+
 class TestCreateMethods:
     def test_create_clean_saves_and_returns(self, tmp_path: Path) -> None:
         repo = MetadataRepository(tmp_path)

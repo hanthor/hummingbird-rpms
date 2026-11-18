@@ -116,6 +116,19 @@ retain the Fedora release baseline. When `check_upstream_versions.py` moves a pa
 Fedora, it removes `fedora.release`. See the specification's
 [built NVR rules][built-nvr] for the complete versioning contract.
 
+## `private_product`
+
+`private_product` records an internal product assignment for private RPM distribution. It is
+independent of the package's Fedora relationship and versioning state. See the
+[metadata specification][private-product-spec] for the field's format.
+
+Read and write assignments through `hum.meta`. The library checks that a product matches an
+RPA entry in `ci/konflux_rpa_config.yml`; resource generation uses that assignment to select the
+private Konflux application and exclude the package from public RPAs. Packages without an
+assignment remain public, regardless of their names.
+
+See [Private RPM Repositories][private-repositories] for assignment and onboarding commands.
+
 ## When not to update these fields
 
 Most day-to-day package work changes the spec, sources, or patches, not metadata
@@ -165,6 +178,8 @@ Do not edit `fedora.release` as part of that change.
 - [Updating Dist-git Packages][updating] covers imports and Fedora updates.
 
 [metadata-spec]: https://hummingbird-project.io/l/rpm-metadata-and-versioning
+[private-product-spec]: https://hummingbird-project.io/l/rpm-metadata-and-versioning#private-product-assignment
+[private-repositories]: private-rpm-repositories.md
 [built-nvr]: https://hummingbird-project.io/l/rpm-metadata-and-versioning#computing-the-built-nvr
 [modification-tracking]: package-modification-tracking.md
 [rebuilding]: rebuilding-packages.md

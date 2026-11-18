@@ -636,39 +636,6 @@ def _find_top_level_yaml_block(lines: list[str], key: str) -> tuple[int, int] | 
     return start, end
 
 
-def _insert_top_level_yaml_block(lines: list[str], key: str, block_text: str) -> list[str]:
-    """Insert a new top-level '<key>: ...' block in alphabetical position.
-
-    Preserves the file's one-blank-line-between-entries convention by editing only the
-    inserted lines, unlike a full yaml.load/yaml.dump round-trip (which drops comments
-    and reformats everything else in the file).
-    """
-    insert_at = len(lines)
-    i = 0
-    n = len(lines)
-    while i < n:
-        m = _TOP_LEVEL_YAML_KEY_RE.match(lines[i])
-        if not m:
-            i += 1
-            continue
-        if m.group(1) > key:
-            insert_at = i
-            break
-        i += 1
-        while i < n and (lines[i].strip() == '' or lines[i][0] in (' ', '\t')):
-            i += 1
-
-    block_lines = block_text.splitlines(keepends=True)
-    if block_lines and not block_lines[-1].endswith('\n'):
-        block_lines[-1] += '\n'
-
-    if insert_at == len(lines):
-        if lines and lines[-1].strip() != '':
-            return lines + ['\n'] + block_lines
-        return lines + block_lines
-    return lines[:insert_at] + block_lines + ['\n'] + lines[insert_at:]
-
-
 def _add_scenarios_application(
     scenarios_path: Path, app_name: str, entries: list[dict]
 ) -> None:
@@ -686,16 +653,6 @@ def _add_scenarios_application(
     apps[app_name] = entries
     with open(scenarios_path, "w") as f:
         yaml.safe_dump(data, f, default_flow_style=False)
-
-
-def _append_key_to_yaml_block(lines: list[str], start: int, end: int, line_text: str) -> list[str]:
-    """Append a line to an existing YAML block, before any trailing blank separator lines."""
-    insert_at = end
-    while insert_at > start + 1 and lines[insert_at - 1].strip() == '':
-        insert_at -= 1
-    if not line_text.endswith('\n'):
-        line_text += '\n'
-    return lines[:insert_at] + [line_text] + lines[insert_at:]
 
 
 def update_package_overrides(original_name: str, new_name: str) -> None:
@@ -3306,13 +3263,27 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
                         pulp_secret_name: str, infra_repo: str,
                         dry_run: bool) -> None:
     rpa_config_path = ROOT_DIR / 'ci' / 'konflux_rpa_config.yml'
-    overrides_path = PACKAGE_OVERRIDES_YAML
+    metadata_repo = MetadataRepository(ROOT_DIR)
+    package_metadata: list[HumPackageMetadata] = []
 
     for pkg in packages:
         pkg_dir = ROOT_DIR / 'rpms' / pkg
         if not pkg_dir.is_dir():
             logging.error(f"Package directory does not exist: rpms/{pkg}")
             sys.exit(1)
+        try:
+            metadata = metadata_repo.load(pkg)
+            if metadata.private_product is not None:
+                logging.error(f"Package '{pkg}' already has private_product: {metadata.private_product}")
+                sys.exit(1)
+            metadata.private_product = product
+            result = metadata.validate()
+            if result.violations:
+                raise InvalidMetadataError(result)
+        except (OSError, json.JSONDecodeError, MalformedMetadataError, InvalidMetadataError, ValueError) as exc:
+            logging.error(f"Cannot assign package '{pkg}' to product '{product}': {exc}")
+            sys.exit(1)
+        package_metadata.append(metadata)
 
     with open(rpa_config_path) as f:
         rpa_config = yaml.safe_load(f)
@@ -3320,15 +3291,6 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
     for rpa in rpa_config.get('rpas', []):
         if rpa.get('private_product') == product:
             logging.error(f"Product '{product}' already exists in {rpa_config_path.relative_to(ROOT_DIR)}")
-            sys.exit(1)
-
-    with open(overrides_path) as f:
-        overrides = yaml.safe_load(f) or {}
-
-    for pkg in packages:
-        pkg_overrides = overrides.get(pkg, {})
-        if pkg_overrides and pkg_overrides.get('private_product'):
-            logging.error(f"Package '{pkg}' already has private_product: {pkg_overrides['private_product']}")
             sys.exit(1)
 
     pulp_script = str(ROOT_DIR / 'ci' / 'pulp-setup' / 'create-pulp-resources.sh')
@@ -3395,19 +3357,8 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
     if dry_run:
         logging.info(f"Dry run: would assign packages to product '{product}': {', '.join(packages)}")
     else:
-        overrides_lines = overrides_path.read_text().splitlines(keepends=True)
-        for pkg in packages:
-            block = _find_top_level_yaml_block(overrides_lines, pkg)
-            if block is None:
-                new_block = yaml.dump({pkg: {'private_product': product}},
-                                       default_flow_style=False, sort_keys=False)
-                overrides_lines = _insert_top_level_yaml_block(overrides_lines, pkg, new_block)
-            else:
-                start, end = block
-                overrides_lines = _append_key_to_yaml_block(
-                    overrides_lines, start, end, f"  private_product: {product}\n",
-                )
-        overrides_path.write_text(''.join(overrides_lines))
+        for metadata in package_metadata:
+            metadata_repo.save(metadata)
         logging.info(f"Assigned packages to product '{product}': {', '.join(packages)}")
 
     scenarios_path = ROOT_DIR / 'konflux-templates' / 'scenarios.yml'
@@ -3427,7 +3378,7 @@ def add_private_product(product: str, packages: list[str], pulp_config: str | No
 
         run_git('add',
                 str(rpa_config_path.relative_to(ROOT_DIR)),
-                str(overrides_path.relative_to(ROOT_DIR)),
+                *(f'metadata/{metadata.package_name}.json' for metadata in package_metadata),
                 'konflux-templates', '.tekton', 'releng', '.gitattributes', cwd=ROOT_DIR)
         commit_msg = f"Add private product '{product}' with packages: {', '.join(packages)}"
         run_git_commit('-m', commit_msg, cwd=ROOT_DIR)

@@ -1,5 +1,6 @@
 """Tests for generate_resources.py releng generation."""
 
+import json
 import shutil
 import textwrap
 from pathlib import Path
@@ -16,6 +17,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 _MINIMAL_SCENARIOS_YML = textwrap.dedent("""\
     applications: {}
 """)
+
+
+def _write_metadata(root: Path, package: str, product: str | None = None) -> None:
+    metadata: dict[str, object] = {
+        "version": "1", "modification_status": "independent",
+        "upstream_repo": "https://example.com/project",
+    }
+    if product is not None:
+        metadata["private_product"] = product
+    (root / "metadata").mkdir(exist_ok=True)
+    (root / "metadata" / f"{package}.json").write_text(json.dumps(metadata))
 
 
 @pytest.fixture
@@ -143,10 +155,7 @@ class TestBuildPacVariables:
         package_dir = tmp_path / "rpms" / "glibc"
         package_dir.mkdir(parents=True)
         (package_dir / "glibc.spec").write_text("Name: glibc\n")
-        (tmp_path / "metadata").mkdir()
-        (tmp_path / "metadata" / "glibc.json").write_text(
-            '{"source": "https://src.fedoraproject.org/rpms/glibc.git"}\n'
-        )
+        _write_metadata(tmp_path, "glibc")
         (tmp_path / "ci").mkdir()
         (tmp_path / "ci" / "package-overrides.yaml").write_text(
             textwrap.dedent("""\
@@ -399,13 +408,8 @@ class TestPrivateProductFiltering:
 
     @pytest.fixture
     def mock_repo_with_private(self, mock_repo):
-        """Extend mock_repo with private_product overrides and multi-RPA config."""
-        (mock_repo / "ci" / "package-overrides.yaml").write_text(
-            textwrap.dedent("""\
-            alpha:
-              private_product: example
-            """)
-        )
+        """Extend mock_repo with private_product metadata and multi-RPA config."""
+        _write_metadata(mock_repo, "alpha", "example")
 
         (mock_repo / "ci" / "konflux_rpa_config.yml").write_text(
             textwrap.dedent("""\
@@ -501,6 +505,22 @@ class TestPrivateProductFiltering:
         assert len(all_components) == len(rpms_dirs)
         assert len(set(all_components)) == len(all_components)
 
+    @pytest.mark.parametrize("event_type", ["push", "pull-request"])
+    def test_pac_routes_private_product(self, gen_module, mock_repo_with_private, event_type):
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_with_private):
+            variables = gen_module.build_pac_variables("main", "hummingbird-tenant", event_type)
+        packages = {rpm["dname"]: rpm for rpm in variables["rpms"]}
+        assert packages["alpha"]["application_name"] == "private-example-rpms-main"
+        assert "application_name" not in packages["beta-lib"]
+
+    def test_lts_suffix_does_not_assign_a_product(self, gen_module, mock_repo_with_private):
+        (mock_repo_with_private / "rpms" / "public-lts").mkdir()
+        _write_metadata(mock_repo_with_private, "public-lts")
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_with_private):
+            config, global_config = _load_rpa_config(gen_module)
+            variables = gen_module.build_releng_variables(config, global_config)
+        assert "public-lts-main" in [c["component_name"] for c in variables["component_list"]]
+
 _MINIMAL_RPA_CONFIG = textwrap.dedent("""\
     global:
       branch: main
@@ -531,13 +551,10 @@ class TestPrivateProductKonfluxVariables:
         (tmp_path / "rpms" / "mypkg").mkdir(parents=True)
         (tmp_path / "rpms" / "normalpkg").mkdir(parents=True)
         (tmp_path / "ci").mkdir()
-        (tmp_path / "ci" / "package-overrides.yaml").write_text(
-            textwrap.dedent("""\
-            mypkg:
-              private_product: example
-            """)
+        _write_metadata(tmp_path, "mypkg", "example")
+        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(
+            _MINIMAL_RPA_CONFIG + "  - private_product: example\n"
         )
-        (tmp_path / "ci" / "konflux_rpa_config.yml").write_text(_MINIMAL_RPA_CONFIG)
         (tmp_path / "konflux-templates").mkdir()
         (tmp_path / "konflux-templates" / "scenarios.yml").write_text(_MINIMAL_SCENARIOS_YML)
 
@@ -656,15 +673,12 @@ class TestValidation:
     """Tests for configuration validation."""
 
     def test_unknown_private_product_raises(self, gen_module, mock_repo):
-        """private_product value with no matching RPA raises ValueError."""
-        (mock_repo / "ci" / "package-overrides.yaml").write_text(
-            textwrap.dedent("""\
-            alpha:
-              private_product: nonexistent
-            """)
-        )
+        """private_product with no matching RPA fails library validation."""
+        from hum.meta import InvalidMetadataError
+
+        _write_metadata(mock_repo, "alpha", "nonexistent")
         with patch.object(gen_module, "ROOT_DIR", mock_repo):
-            with pytest.raises(ValueError, match="nonexistent"):
+            with pytest.raises(InvalidMetadataError, match="nonexistent"):
                 gen_module.generate_releng()
 
     def test_missing_rpa_field_raises(self, gen_module, mock_repo):
