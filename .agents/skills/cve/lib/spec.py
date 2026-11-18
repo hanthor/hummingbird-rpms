@@ -121,24 +121,34 @@ def search_cve_in_spec_and_patches(package: str, cve_ids: list[str]) -> bool:
 # ---- Bundled dependency probe ----
 
 
-def probe_spec_deps(package: str, component: str = "") -> list[SpecDepHit]:
+def probe_spec_deps(
+    package: str, component: "str | list[str]" = ""
+) -> list[SpecDepHit]:
+    """Probe a spec for a component. ``component`` may be a single name or a
+    list of alias terms (see ``component_aliases``); a line matches if ANY
+    term matches, so a bundled dependency shipped under a different alias than
+    the CVE's upstream product name is still found."""
     spec_file = spec_path(package)
     if not spec_file.is_file():
         raise RuntimeError(f"Spec not found: {spec_file}")
+    if isinstance(component, (list, tuple)):
+        terms = [str(t).strip() for t in component if str(t).strip()]
+    else:
+        terms = [component.strip()] if component and component.strip() else []
     hits: list[SpecDepHit] = []
     lines = spec_file.read_text(encoding="utf-8", errors="replace").splitlines()
-    component_re = (
-        re.compile(re.escape(component), re.IGNORECASE) if component else None
+    component_res = (
+        [re.compile(re.escape(t), re.IGNORECASE) for t in terms] if terms else None
     )
+
+    def _matches(text: str) -> bool:
+        return any(rx.search(text) for rx in component_res) if component_res else False
+
     for idx, line in enumerate(lines, start=1):
         bundled = BUNDLED_PROVIDES_RE.search(line)
         if bundled:
             name, version = bundled.group(1), bundled.group(2) or ""
-            if (
-                component_re is None
-                or component_re.search(name)
-                or component_re.search(line)
-            ):
+            if component_res is None or _matches(name) or _matches(line):
                 hits.append(
                     SpecDepHit(
                         kind="bundled_provides",
@@ -149,7 +159,7 @@ def probe_spec_deps(package: str, component: str = "") -> list[SpecDepHit]:
                     )
                 )
                 continue
-        if component_re and component_re.search(line):
+        if component_res and _matches(line):
             hits.append(
                 SpecDepHit(
                     kind="component_mention",
@@ -554,6 +564,102 @@ def read_package_metadata(package: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise RuntimeError(f"Metadata {path} is not an object")
     return data
+
+
+# ---- Component alias expansion ----
+
+_ECOSYSTEM_WRAPPER_RE = re.compile(
+    r"(?i)^(?:npm|golang|go|rubygem|gem|crate|cargo|pypi|python|rust|nodejs|composer|nuget)\(([^()]+)\)$"
+)
+_GO_MAJOR_SUFFIX_RE = re.compile(r"/v\d+$")
+
+
+def component_aliases(component: str, package: str = "") -> list[str]:
+    """Expand a CVE "Upstream Affected Component" into candidate search terms.
+
+    A product-name/version mismatch is NOT evidence of absence: a vulnerable
+    dependency is frequently shipped under a different name than the CVE's
+    upstream product (``digitalbazaar/forge`` vs ``node-forge``,
+    ``colinhacks/zod`` vs ``zod``, ``github.com/mark3labs/mcp-go`` vs
+    ``mcp-go``), so matching only the raw name yields a false "0 hits / SBOM
+    miss". This expands a component field into every form worth searching:
+
+    - splits multi-component fields on ``;`` / ``,`` (e.g. ``mariadb; mysql``);
+    - unwraps Fedora ecosystem wrappers ``npm(x)`` / ``golang(x)`` / ``crate(x)``;
+    - for ``vendor / product`` selectors adds both vendor and product;
+    - for path forms (Go modules, scoped npm) adds the last path segment and
+      strips a trailing ``/vN`` major-version suffix;
+    - toggles the ``nodejs-`` RPM prefix on bare names;
+    - adds any ``cve_product`` selectors from ``metadata/<package>.json`` so a
+      known fork/rename mapping is searched too.
+
+    Terms are de-duplicated and returned longest-first so specific names match
+    before short, generic ones. Over-matching is intentional here: for this
+    "false absence" bug it is safer to surface an extra hit (routing to human
+    review) than to miss a bundled component.
+    """
+    terms: list[str] = []
+
+    def add(value: str) -> None:
+        cleaned = (value or "").strip().strip("/").strip()
+        if len(cleaned) >= 2 and cleaned not in terms:
+            terms.append(cleaned)
+
+    for part in re.split(r"[;,]", component or ""):
+        part = part.strip()
+        if not part:
+            continue
+        add(part)
+        wrapper = _ECOSYSTEM_WRAPPER_RE.match(part)
+        if wrapper:
+            part = wrapper.group(1).strip()
+            add(part)
+        if " / " in part:
+            vendor, _, product = part.partition(" / ")
+            add(product.strip())
+            add(vendor.strip())
+            part = product.strip()
+        stripped = _GO_MAJOR_SUFFIX_RE.sub("", part)
+        add(stripped)
+        if "/" in stripped:
+            add(stripped.rsplit("/", 1)[-1])
+
+    # Toggle the nodejs- RPM prefix on simple bare names.
+    for term in list(terms):
+        if "/" in term or " " in term:
+            continue
+        if term.startswith("nodejs-"):
+            add(term[len("nodejs-"):])
+        else:
+            add(f"nodejs-{term}")
+
+    # Fold in cve_product selectors from package metadata (fork/rename map).
+    # Only when an actual component is being expanded: with an empty component
+    # the caller wants the "list all bundled Provides" default, and folding in
+    # cve_product here would silently narrow probe_spec_deps to a filter.
+    if package and (component or "").strip():
+        try:
+            meta = read_package_metadata(package)
+        except RuntimeError:
+            meta = {}
+        cve_product = meta.get("cve_product")
+        selectors = (
+            cve_product
+            if isinstance(cve_product, list)
+            else ([cve_product] if cve_product else [])
+        )
+        for selector in selectors:
+            if not isinstance(selector, str):
+                continue
+            if " / " in selector:
+                vendor, _, product = selector.partition(" / ")
+                add(product.strip())
+                add(vendor.strip())
+            else:
+                add(selector.strip())
+
+    terms.sort(key=len, reverse=True)
+    return terms
 
 
 def release_bump_payload(package: str) -> dict[str, Any]:

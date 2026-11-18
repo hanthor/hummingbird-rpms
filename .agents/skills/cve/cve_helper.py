@@ -69,6 +69,7 @@ from lib.sbom import (  # noqa: E402
     search_sbom_file,
 )
 from lib.spec import (  # noqa: E402
+    component_aliases,
     extract_analysis_nvr,
     probe_spec_deps,
     print_spec_deps,
@@ -329,6 +330,16 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         choices=("Component not Present", "Vulnerable Code not Present"),
         help="VEX justification.",
+    )
+    nab.add_argument(
+        "--fork-advisory-checked",
+        action="store_true",
+        help=(
+            "Confirm the fork's own advisory DB was consulted. Required to "
+            "close a package whose metadata declares cve_product (a fork/rename "
+            "such as mariadb vs mysql), where a product/version mismatch is NOT "
+            "evidence of absence."
+        ),
     )
     _add_comment_template_arguments(nab, with_vex=False)
 
@@ -804,6 +815,62 @@ def _has_nab_evidence(args: argparse.Namespace) -> bool:
     return False
 
 
+# Packages that are forks/renames of their CVE upstream product, where a
+# product-name or version mismatch is EXPECTED and is not, on its own, evidence
+# that the vulnerable code is absent (the code is shared). Maps a package-name
+# prefix to the upstream project's own advisory database to consult instead.
+_FORK_ADVISORY_DBS = {
+    "mariadb": "https://mariadb.com/docs/server/security/cve/community-server",
+    "qt5": "https://www.qt.io/product/security",
+    "qt6": "https://www.qt.io/product/security",
+}
+
+
+def _fork_advisory_db(package: str) -> str:
+    """Return the fork's own advisory-DB URL when the package is a known
+    fork/rename of its CVE upstream product, else ""."""
+    name = (package or "").strip().lower()
+    if not name:
+        return ""
+    for prefix, url in _FORK_ADVISORY_DBS.items():
+        if name == prefix or name.startswith(prefix):
+            return url
+    return ""
+
+
+def _forked_packages_for_close(
+    package: str, tickets: list[str]
+) -> tuple[list[str], bool]:
+    """Return (fork/rename packages implicated by a close-nab call, resolution_failed).
+
+    Checks the explicit --package first, then resolves each ticket's own package
+    from its summary/labels. This keeps the fork guard from being bypassed when
+    --component is used without --package, or when a batch mixes packages so
+    --package is not the fork one. ``resolution_failed`` is True when per-ticket
+    resolution was attempted but errored, so the caller can fail closed rather
+    than silently skip the guard.
+    """
+    forked: list[str] = []
+    resolution_failed = False
+    if package and _fork_advisory_db(package):
+        forked.append(package)
+    # Resolve per-ticket packages too (covers --component-only and mixed
+    # batches). A fetch failure is reported so the caller can fail closed.
+    if not forked:
+        try:
+            reports = gather_ticket_reports(
+                tickets, find_related=False, max_linked=0
+            ).reports
+        except (OSError, RuntimeError, urllib.error.URLError):
+            reports = []
+            resolution_failed = True
+        for report in reports:
+            pkg = getattr(report, "package_guess", "") or ""
+            if pkg and _fork_advisory_db(pkg) and pkg not in forked:
+                forked.append(pkg)
+    return forked, resolution_failed
+
+
 def cmd_close_nab(args: argparse.Namespace) -> int:
     body = resolve_comment_body(args, default_kind="nab")
     kind = str(getattr(args, "kind", "") or "") or "nab"
@@ -819,8 +886,34 @@ def cmd_close_nab(args: argparse.Namespace) -> int:
     if not _has_nab_evidence(args):
         raise RuntimeError(
             "Refusing close-nab: no SBOM or spec-deps evidence. "
-            "Search the SBOM for the ticket's Upstream Affected Component "
-            "(customfield_10632) and pass --sbom-match / --spec-deps."
+            "Search the SBOM and spec for the ticket's Upstream Affected "
+            "Component and its aliases (investigate now expands bundled/fork "
+            "names automatically), then pass --sbom-match / --spec-deps."
+        )
+
+    # ---- Fork guard (before any Jira write) ----
+    package = str(getattr(args, "package", "") or "").strip()
+    fork_advisory_checked = bool(getattr(args, "fork_advisory_checked", False))
+    forked, resolution_failed = _forked_packages_for_close(package, tickets)
+    if forked and not fork_advisory_checked:
+        advisory_db = _fork_advisory_db(forked[0])
+        raise RuntimeError(
+            f"Refusing close-nab: {', '.join(forked)} is a fork/rename of its CVE "
+            "upstream product, so a product-name or version mismatch is NOT "
+            "evidence of absence — the vulnerable code is often shared. Consult the "
+            f"fork's own advisory DB ({advisory_db}) for the affected/fixed "
+            "versions; only re-run with --fork-advisory-checked once you have "
+            "confirmed it is not affected."
+        )
+    # Fail closed: with no --package we rely on per-ticket resolution; if that
+    # errored we cannot evaluate the fork guard, so refuse rather than silently
+    # letting a fork slip through.
+    if not package and resolution_failed and not fork_advisory_checked:
+        raise RuntimeError(
+            "Refusing close-nab: no --package given and could not resolve the "
+            "tickets' packages to evaluate the fork guard. Re-run with --package "
+            "so the guard can check it, or --fork-advisory-checked if you have "
+            "already verified the component's own advisory data."
         )
 
     for raw in tickets:
@@ -900,6 +993,24 @@ def cmd_lookaside(args: argparse.Namespace) -> int:
     return 0
 
 
+def _package_search_terms(reports: list[Any], package: str) -> list[str]:
+    """Union the alias-expanded search terms for every distinct upstream
+    component across a package's tickets. Empty when no component is known, so
+    probe_spec_deps falls back to listing all bundled Provides."""
+    components: list[str] = []
+    for report in reports:
+        comp = getattr(report, "upstream_component", "") or ""
+        pkg = getattr(report, "package_guess", "") or ""
+        if pkg == package and comp and comp not in components:
+            components.append(comp)
+    terms: list[str] = []
+    for comp in components:
+        for term in component_aliases(comp, package):
+            if term not in terms:
+                terms.append(term)
+    return terms
+
+
 def cmd_investigate(args: argparse.Namespace) -> int:
     if args.max_linked < 0:
         print("--max-linked must be >= 0", file=sys.stderr)
@@ -935,13 +1046,12 @@ def cmd_investigate(args: argparse.Namespace) -> int:
             }
         except RuntimeError as err:
             probes["bot_mrs"][package] = {"error": str(err)}
-        component = ""
-        for report in gathered.reports:
-            if report.package_guess == package and report.upstream_component:
-                component = report.upstream_component
-                break
+        # Search EVERY distinct upstream component across this package's
+        # tickets, not just the first: two trackers for the same RPM may concern
+        # different dependencies, and each must be searched.
+        terms = _package_search_terms(gathered.reports, package)
         probes["spec_deps"][package] = [
-            asdict(hit) for hit in probe_spec_deps(package, component)
+            asdict(hit) for hit in probe_spec_deps(package, terms)
         ]
         if args.sbom:
             nvr = ""
@@ -953,7 +1063,6 @@ def cmd_investigate(args: argparse.Namespace) -> int:
                     break
             try:
                 meta = fetch_sbom(package, nvr=nvr, ticket=ticket)
-                terms = [component] if component else []
                 hits = search_sbom_file(Path(meta["path"]), terms) if terms else []
                 probes["sbom"][package] = {
                     **meta,
