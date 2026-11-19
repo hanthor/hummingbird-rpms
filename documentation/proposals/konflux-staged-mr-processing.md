@@ -31,13 +31,13 @@ workqueue running. Pausing its scheduled feeders stops routine new submissions a
 existing work items can still reconcile and merge when GitLab marks their MRs mergeable. Monitor
 those merges during the rollout; a strict no-unselected-merge guarantee would need a separate gate.
 
-A small queue runner accepts an ordered list of MR IDs and a maximum number of in-flight
-PipelineRuns. It offers a dry run, rechecks each MR's current SHA before triggering, records each
+A small queue runner accepts an ordered list of MR IDs and a maximum number of concurrent MR
+attempts. It counts active PipelineRuns in the tenant, though one MR may create several runs.
+It offers a dry run, rechecks each MR's current SHA before triggering, records each
 attempt through its GitLab command comment and matching PipelineRun, and starts the next MR only
-when capacity is free. No shared selection record is needed. Use a new `/retest`
-comment for a missing or failed MR PipelineRun. If an earlier successful status would make
-`/retest` skip the run, use a named `/test <pipelinerun-name>` to force it. [PaC documents these
-commands][pac-commands]. Its `comment_strategy: disable_all` setting controls outgoing status
+when capacity is free. No shared selection record is needed. Use `/test` to rerun all matching
+PipelineRuns even if earlier checks passed. [PaC documents this command][pac-commands]. Its
+`comment_strategy: disable_all` setting controls outgoing status
 comments; validate command handling and the package path match with one GitLab MR before batching.
 
 Count only a PipelineRun whose MR number and revision match the selected MR and SHA and whose
@@ -62,8 +62,8 @@ run or required Konflux check. Normal GitLab validation stays enabled.
 
 - Only the three MR-creating schedules are paused and restored through infrastructure config;
   unrelated schedules and the workqueue keep running. Those jobs stop submitting work.
-- The runner supports dry run and bounded concurrency using GitLab comments and matching
-  PipelineRuns as attempt history. A pilot proves `/retest` and named `/test` create the intended run.
+- The runner supports dry run and bounded MR concurrency using GitLab comments and matching
+  PipelineRuns as attempt history. A pilot proves `/test` creates the intended runs.
 - GitLab auto-merge is canceled on deferred MRs and restored only after a selected MR's current SHA
   has a new build and required tests. Existing workqueue items and unexpected merges are monitored.
 - A priority package without an MR has a documented creation and queueing path. The plan states
