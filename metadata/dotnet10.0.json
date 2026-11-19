@@ -3,8 +3,8 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/dotnet10.0.git",
-    "release": "1",
-    "sha": "db681306f48143f2798e8d1f087de5be3f2d26b7"
+    "release": "2",
+    "sha": "e21da5bbece1de1dc7accec5325110ca8d53733b"
   },
   "modification_reason": "update to SDK 10.0.113 / Runtime 10.0.13 for CVE-2026-70159, CVE-2026-96957; local build patches retained",
   "modification_status": "modified",
