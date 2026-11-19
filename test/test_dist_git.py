@@ -6159,11 +6159,130 @@ def test_new_update_preserves_pending_recovery_state(imported_workdir, packages:
     assert state_file.read_bytes() == state_before
     assert 'pending' in result.stderr.lower()
     assert 'update --continue' in result.stderr
+    assert 'update --abandon' in result.stderr
     assert {str(path.relative_to(workdir)): path.read_bytes()
             for directory in ('rpms', 'metadata')
             for path in (workdir / directory).rglob('*') if path.is_file()} == files_before
     assert git_output('rev-parse', 'HEAD') == head_before
     assert git_output('diff', '--cached') == index_before
+
+
+@pytest.mark.parametrize('dry_run', [False, True], ids=['continue', 'dry-run'])
+def test_update_continue_missing_package_preserves_recovery_state(
+    workdir: Path, upstream_repos: dict[str, Path], dry_run: bool,
+) -> None:
+    """A missing directory must not destroy the information needed to resume."""
+    _create_conflict(workdir, upstream_repos)
+    state_file = workdir / '.dist_git_update_state.json'
+    state_before = state_file.read_bytes()
+    package_dir = workdir / 'rpms' / 'chocolate'
+    saved_package = workdir / 'saved-chocolate'
+    package_dir.rename(saved_package)
+    files_before = {str(path.relative_to(saved_package)): path.read_bytes()
+                    for path in saved_package.rglob('*') if path.is_file()}
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir)
+    options = ['--dry-run'] if dry_run else []
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *options, 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 1, result.stderr
+    assert 'Package directory rpms/chocolate/ not found' in result.stderr
+    assert state_file.exists(), 'Failed continuation deleted pending recovery state'
+    assert state_file.read_bytes() == state_before
+    assert metadata_file.read_bytes() == metadata_before
+    assert {str(path.relative_to(saved_package)): path.read_bytes()
+            for path in saved_package.rglob('*') if path.is_file()} == files_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir) == index_before
+
+    # Once the directory is restored and the merge resolved, the original
+    # recovery information must still be usable for a successful continuation.
+    saved_package.rename(package_dir)
+    spec = package_dir / 'chocolate.spec'
+    spec.write_text(re.sub(r'<<<<<<< HEAD\n.*?=======\n(.*?)>>>>>>> hummingbird-local\n',
+                           r'\1', spec.read_text(), flags=re.DOTALL))
+    resumed = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert resumed.returncode == 0, resumed.stderr
+    assert not state_file.exists()
+    assert json.loads(metadata_file.read_text())['version'] == '11'
+
+
+@pytest.mark.parametrize('dry_run', [False, True], ids=['abandon', 'dry-run'])
+@pytest.mark.parametrize('stage_changes', [False, True], ids=['unstaged', 'staged'])
+@pytest.mark.parametrize('corrupt_state', [False, True], ids=['valid-state', 'corrupt-state'])
+def test_update_abandon_preserves_package_changes(
+    workdir: Path, upstream_repos: dict[str, Path],
+    dry_run: bool, stage_changes: bool, corrupt_state: bool,
+) -> None:
+    """Abandon only recovery state, never package edits, metadata, or the index."""
+    _create_conflict(workdir, upstream_repos)
+    state_file = workdir / '.dist_git_update_state.json'
+    if corrupt_state:
+        state_file.write_text('{invalid recovery JSON\n')
+    state_before = state_file.read_bytes()
+    package_dir = workdir / 'rpms' / 'chocolate'
+    spec = package_dir / 'chocolate.spec'
+    spec.write_text(spec.read_text() + '\n# Preserve this pending edit\n')
+    assert '<<<<<<<' in spec.read_text(), 'Abandoning must not require resolving the merge'
+    (package_dir / 'local.patch').write_bytes(b'Preserve this patch\n')
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata = json.loads(metadata_file.read_text())
+    metadata['modification_reason'] = 'Preserve this metadata edit'
+    metadata_file.write_text(json.dumps(metadata, indent=2) + '\n')
+    if stage_changes:
+        subprocess.run(['git', 'add', '-f', 'rpms/chocolate', 'metadata/chocolate.json'],
+                       cwd=workdir, check=True)
+    files_before = {str(path.relative_to(workdir)): path.read_bytes()
+                    for directory in ('rpms', 'metadata')
+                    for path in (workdir / directory).rglob('*') if path.is_file()}
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir)
+    options = ['--dry-run'] if dry_run else []
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *options, 'update', '--abandon'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    if dry_run:
+        assert state_file.read_bytes() == state_before, 'Dry-run must retain recovery state'
+    else:
+        assert not state_file.exists(), 'Explicit abandonment must remove the recovery state'
+    assert {str(path.relative_to(workdir)): path.read_bytes()
+            for directory in ('rpms', 'metadata')
+            for path in (workdir / directory).rglob('*') if path.is_file()} == files_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir) == index_before
+
+
+@pytest.mark.parametrize('dry_run', [False, True], ids=['abandon', 'dry-run'])
+def test_update_abandon_no_state(workdir: Path, dry_run: bool) -> None:
+    """Missing recovery state is a clear error, not a new update or silent success."""
+    state_file = workdir / '.dist_git_update_state.json'
+    assert not state_file.exists()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir)
+    options = ['--dry-run'] if dry_run else []
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *options, 'update', '--abandon'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 1
+    assert 'No update in progress. Nothing to abandon.' in result.stderr
+    assert 'Traceback' not in result.stderr
+    assert not state_file.exists()
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir) == index_before
 
 
 def test_update_continue_no_state(workdir: Path, upstream_repos: dict[str, Path]) -> None:

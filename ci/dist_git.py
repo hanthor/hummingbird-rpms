@@ -2522,6 +2522,21 @@ def update(package_name: str, skip_build_check: bool = False, sync: bool = False
             run_git_commit('-m', commit_msg, cwd=ROOT_DIR)
 
 
+def abandon_update(dry_run: bool = False) -> None:
+    """Forget pending recovery state without changing package files or Git state."""
+    if not UPDATE_STATE_FILE.exists() and not UPDATE_STATE_FILE.is_symlink():
+        sys.exit("ERROR: No update in progress. Nothing to abandon.")
+    if dry_run:
+        logging.info("Dry run: would remove %s; package files, metadata and staged changes remain untouched",
+                     UPDATE_STATE_FILE.name)
+        return
+    try:
+        UPDATE_STATE_FILE.unlink()
+    except OSError as error:
+        sys.exit(f"ERROR: Cannot remove recovery state {UPDATE_STATE_FILE}: {error}")
+    logging.info("Abandoned pending update; package files, metadata and staged changes remain untouched")
+
+
 def continue_update(dry_run: bool = False) -> None:
     """Continue a conflicted update after manual conflict resolution.
 
@@ -2539,8 +2554,10 @@ def continue_update(dry_run: bool = False) -> None:
     package_dir = RPMS_DIR / package_name
 
     if not package_dir.exists():
-        UPDATE_STATE_FILE.unlink()
-        sys.exit(f"ERROR: Package directory rpms/{package_name}/ not found")
+        sys.exit(
+            f"ERROR: Package directory rpms/{package_name}/ not found\n"
+            f"       Recovery state preserved. Restore the directory, then retry update --continue."
+        )
 
     # Check for remaining conflict markers
     for path in package_dir.rglob('*'):
@@ -3438,12 +3455,6 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-    # Load all package metadata from per-package import.json files
-    imports = get_all_imported_packages()
-
-    # Load upstream-releases.json
-    releases = cast(dict[str, dict[str, str]], json.loads(RELEASES_JSON.read_text()))
-
     # Compatibility policy: --dry-run is command-specific, not a universal
     # no-write mode. Metadata-only commands keep their established behavior.
     # Add a policy here when a new subcommand supports --dry-run. Unlisted
@@ -3452,9 +3463,10 @@ def main() -> None:
         'import': 'Import files, write metadata and regenerate resources, but do not stage or commit changes.',
         'update': ('Update package files without saving metadata, running source pipelines, committing or writing '
                    'recovery state. Version-validation failures exit with code 1 and leave no resumable state; '
-                   'you cannot resume a failed dry-run with --continue. '
-                   'With --continue, check conflict markers and report the intended commit '
-                   'without finalizing the update.'),
+                    'you cannot resume a failed dry-run with --continue. '
+                    'With --continue, check conflict markers and report the intended commit '
+                    'without finalizing the update. With --abandon, preview removing recovery state '
+                    'without deleting it or changing package files, metadata or staged changes.'),
         'sync': ('Replace package files without saving metadata, running source pipelines, committing or writing '
                  'recovery state. With --mark, package files are unchanged only when the SHA and branch are unchanged; '
                  'otherwise sync can replace local edits. Metadata remains unchanged in either case.'),
@@ -3519,8 +3531,11 @@ Examples:
                               help='Update to specific commit/tag/ref instead of latest')
     update_parser.add_argument('--branch', type=str,
                               help='Switch to a different upstream branch and update from it (e.g., --branch f44)')
-    update_parser.add_argument('--continue', action='store_true', dest='continue_',
-                              help='Continue a conflicted update after resolving conflicts')
+    update_mode = update_parser.add_mutually_exclusive_group()
+    update_mode.add_argument('--continue', action='store_true', dest='continue_',
+                             help='Continue a conflicted update after resolving conflicts')
+    update_mode.add_argument('--abandon', action='store_true',
+                             help='Remove pending recovery state only; keep package files, metadata and staged changes')
 
 
     paths_parser = subparsers.add_parser('sanitize-paths', help='Make package paths portable; leave changes for review')
@@ -3669,6 +3684,19 @@ Examples:
     if args.dry_run and args.command not in dry_run_policies:
         sys.exit(f"ERROR: --dry-run is not supported with the {args.command} command")
 
+    if args.command == 'update' and args.abandon:
+        if args.package is not None or args.branch or args.ref or args.skip_build_check or args.allow_prerelease:
+            update_parser.error(
+                "--abandon cannot be combined with a package, --branch, --ref, --skip-build-check or --allow-prerelease"
+            )
+        # Abandonment never reads recovery JSON, package data or release mappings,
+        # and does not require Git identity. Corrupt state can still be removed.
+        abandon_update(dry_run=args.dry_run)
+        return
+
+    imports = get_all_imported_packages()
+    releases = cast(dict[str, dict[str, str]], json.loads(RELEASES_JSON.read_text()))
+
     # Check git config for commands that will commit
     if args.command not in ['list', 'diff', 'set-upstream', 'ls-sources', 'sanitize-paths', 'check-paths'] and not args.dry_run:
         check_git_config()
@@ -3683,7 +3711,8 @@ Examples:
                 if UPDATE_STATE_FILE.exists():
                     sys.exit(
                         f"ERROR: An update is already pending ({UPDATE_STATE_FILE.name}).\n"
-                        f"       Finish it with './ci/dist_git.py update --continue' before starting another update.\n"
+                        f"       Finish it with './ci/dist_git.py update --continue', or explicitly abandon it "
+                        f"with './ci/dist_git.py update --abandon'.\n"
                         f"       Recovery state and package-file changes have been preserved."
                     )
                 if args.branch and not args.package:
