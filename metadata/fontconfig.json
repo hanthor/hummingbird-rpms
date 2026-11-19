@@ -1,11 +1,11 @@
 {
-  "fedora": {
-    "branch": "rawhide",
-    "git_url": "https://src.fedoraproject.org/rpms/fontconfig.git",
-    "release": "3",
-    "sha": "5d0ba8c986c2813cde0a2c6552b15ef859fd9717"
-  },
+  "version": "2.18.4",
   "modification_status": "clean",
   "upstream_repo": "https://gitlab.freedesktop.org/fontconfig/fontconfig",
-  "version": "2.18.3"
+  "fedora": {
+    "git_url": "https://src.fedoraproject.org/rpms/fontconfig.git",
+    "branch": "rawhide",
+    "sha": "2652e881e4717f9e33796323c0d58be413c2b282",
+    "release": "1"
+  }
 }
