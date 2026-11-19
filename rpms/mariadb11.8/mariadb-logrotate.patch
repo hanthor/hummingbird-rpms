@@ -6,6 +6,14 @@ Adjust the 'mariadb.logrotate.sh' script in several ways:
   for the very unlikely, but possible scenario
   in which the debian config file would exist.
 
+<<<<<<< HEAD
+--- a/support-files/mariadb.logrotate.sh
++++ b/support-files/mariadb.logrotate.sh
+@@ -6,7 +6,7 @@
+ # Read https://mariadb.com/docs/server/server-management/server-monitoring-logs/error-log to learn more about logging and
+ # https://mariadb.com/docs/server/server-management/server-monitoring-logs/rotating-logs-on-unix-and-linux about rotating logs.
+
+=======
 Refreshed against the mariadb-11.8.9 source tarball: the surrounding
 documentation comment lines changed (updated kb -> docs URLs, extra
 note about journald), which shifted hunk #1's context enough that it
@@ -17,9 +25,10 @@ no longer applied; the actual lines being changed are unchanged.
  # Read https://mariadb.com/docs/server/server-management/server-monitoring-logs/error-log to learn more about logging and
  # https://mariadb.com/docs/server/server-management/server-monitoring-logs/rotating-logs-on-unix-and-linux about rotating logs.
  
+>>>>>>> hummingbird-local
 -@localstatedir@/mysqld.log @localstatedir@/mariadb.log @logdir@/*.log {
 +@LOG_LOCATION@ {
- 
+
    # Depends on a mysql@localhost unix_socket authenticated user with RELOAD privilege
    @su_user@
 @@ -45,11 +45,6 @@
