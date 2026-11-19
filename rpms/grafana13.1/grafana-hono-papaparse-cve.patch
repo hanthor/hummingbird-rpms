@@ -1,0 +1,97 @@
+From: Hummingbird <hummingbird@redhat.com>
+Subject: [PATCH] Bump hono 4.13.13 -> 4.13.16 and papaparse 5.5.3 -> 5.7.1
+
+Upstream: https://github.com/honojs/hono/releases/tag/v4.13.16
+Upstream: https://github.com/mholt/PapaParse/releases/tag/5.7.1
+
+Hono before 4.13.16 is affected by CVE-2026-126355, CVE-2026-126356,
+CVE-2026-126357, CVE-2026-126358 and CVE-2026-126359 (csrf() ping
+bypass, validator('form') Content-Type bypass, mount() path forwarding,
+RegExpRouter wildcard middleware omission, css helper tag sanitization).
+PapaParse before 5.7.1 is affected by CVE-2026-127056 (quadratic
+parsing of delimiter-free quoted CSV input). The papaparse pin appears
+in both the root package.json and packages/grafana-data/package.json.
+Yarn cache regenerated and uploaded to lookaside.
+
+--- a/package.json
++++ b/package.json
+@@ -218,7 +218,7 @@
+     "nx": "22.5.4",
+     "open": "^10.2.0",
+     "ora": "^9.0.0",
+-    "papaparse": "5.5.3",
++    "papaparse": "5.7.1",
+     "pdf-parse": "^1.1.1",
+     "postcss": "8.5.23",
+     "postcss-loader": "8.1.1",
+@@ -450,7 +450,8 @@
+     "body-parser@npm:^2.2.1": "2.4.0",
+     "follow-redirects": "1.16.2",
+     "joi@npm:^17.11.0": "17.13.9",
+-    "joi@npm:^18.2.1": "18.3.1"
++    "joi@npm:^18.2.1": "18.3.1",
++    "hono": "4.13.16"
+   },
+   "workspaces": {
+     "packages": [
+--- a/packages/grafana-data/package.json
++++ b/packages/grafana-data/package.json
+@@ -82,7 +82,7 @@
+     "moment": "2.31.0",
+     "moment-timezone": "0.5.47",
+     "ol": "10.7.0",
+-    "papaparse": "5.5.3",
++    "papaparse": "5.7.1",
+     "react-use": "^17.6.0",
+     "rxjs": "7.8.2",
+     "string-hash": "^1.1.3",
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -2402,7 +2402,7 @@
+     moment: "npm:2.31.0"
+     moment-timezone: "npm:0.5.47"
+     ol: "npm:10.7.0"
+-    papaparse: "npm:5.5.3"
++    papaparse: "npm:5.7.1"
+     react: "npm:18.3.1"
+     react-dom: "npm:18.3.1"
+     react-use: "npm:^17.6.0"
+@@ -18812,7 +18812,7 @@
+     ol-mapbox-style: "npm:^13.0.1"
+     open: "npm:^10.2.0"
+     ora: "npm:^9.0.0"
+-    papaparse: "npm:5.5.3"
++    papaparse: "npm:5.7.1"
+     pdf-parse: "npm:^1.1.1"
+     pluralize: "npm:^8.0.0"
+     postcss: "npm:8.5.23"
+@@ -19161,10 +19161,10 @@
+   languageName: node
+   linkType: hard
+ 
+-"hono@npm:^4.11.4":
+-  version: 4.13.13
+-  resolution: "hono@npm:4.13.13"
+-  checksum: 10c0/c8524e685a59b4f23a9bea15385eeac5622218949db251cb871b20fd9ef673b751b44ccdee6c22b3df56e5ed4c1b1cebad17b518bdc1823039da39b53ef9c1cf
++"hono@npm:4.13.16":
++  version: 4.13.16
++  resolution: "hono@npm:4.13.16"
++  checksum: 10c0/8a06f1d49bb98fd38a2bc4d5c1f5410b4c5a9fbe2dff85fbad2191a1b55fde93b64b63b2deba97d3e241630aedd800c57d1f4dc539e5f93ece81809fa63cbed9
+   languageName: node
+   linkType: hard
+ 
+@@ -25911,10 +25911,10 @@
+   languageName: node
+   linkType: hard
+ 
+-"papaparse@npm:5.5.3":
+-  version: 5.5.3
+-  resolution: "papaparse@npm:5.5.3"
+-  checksum: 10c0/623aae6a35703308fd5a39d616fb3837231ebc70697346355ea508154d3f24df75b6554b736afc1924192205518a5db14e75f5e1cf35d154326050a37cdd9447
++"papaparse@npm:5.7.1":
++  version: 5.7.1
++  resolution: "papaparse@npm:5.7.1"
++  checksum: 10c0/623319ba95fb35b3d1b105810649545e2e615b842c4ed2fb76217640a0e3343f51ef09163b32bff8df9f47efaa7e528457773da5b434fbf95beee742f3854a1b
+   languageName: node
+   linkType: hard
+ 

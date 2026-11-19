@@ -43,3 +43,4 @@ fi
 patch -p1 < "${package_dir}/grafana-fast-uri-body-parser-cve.patch"
 patch -p1 < "${package_dir}/grafana-follow-redirects-1.16.2-cve.patch"
 patch -p1 < "${package_dir}/grafana-joi-17.13.9-cve.patch"
+patch -p1 < "${package_dir}/grafana-hono-papaparse-cve.patch"
