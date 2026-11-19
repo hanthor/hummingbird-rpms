@@ -32,7 +32,7 @@ Auth is the existing rhjira file (`JIRA_TOKEN`, `JIRA_SERVER` → URL,
 | --- | --- |
 | `investigate HUM-XXXX [HUM-YYYY ...]` | Show + recap + bot-mrs + spec-deps + GitLab MR search. Takes one call with all tickets, not one call per ticket — it dedups per-package probes and runs a single combined GitLab MR search |
 | `investigate HUM-XXXX [HUM-YYYY ...] --only` | Named tickets only; skip related-ticket discovery |
-| `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review |
+| `comment` / `next-release` / `set-fib` / `close-nab` | Jira writes. `--kind nab/fib/analysis/next-release` fills wiki markup from flags or `--from-json`; `--print-only` / `--json` to review. `close-nab` needs `--fork-advisory-checked` for fork/rename packages (mariadb*, qt5*, qt6*) |
 | `create-task --blocks HUM-XXXX [--worktree] --summary "…"` | HUM Task — `--blocks` takes one ticket; link extras with `rhjira edit TASK --blocks HUM-XXXX --noeditor` |
 | `open-mr --task HUM-YYYY --tracker HUM-XXXX --cve CVE-… --title "…" --message "…"` | Verify lookaside uploads, run the `%prep` check, then push the branch and open a `glab` MR; `--title` and `--message` are required. Title format: `HUM-<TASK>: <pkgs>: fix <CVEs>` (see MR title and MR description below). |
 | `lookaside-cmd -f FILE -p PKG` | Print upload commands; do not upload |
@@ -104,38 +104,47 @@ though the steps above say to. That is a known Cursor-side restriction, not
 a missing dependency — print the suggested title and move on instead of
 retrying or searching for a workaround.
 
-For product-mismatch CVEs, search `spec-deps` and the SBOM using the tracker’s
-**Upstream Affected Component** field, not the CVE-reported product. If the
-component is not in the spec, treat an SBOM hit as a false
-positive and close as NAB (`Component not Present`) without further
-SBOM work. If the spec has the component, inspect the source for the
-vulnerable pattern; if that path is not used, close as NAB
-(`Vulnerable Code not Present`).
+**Product-mismatch CVEs — a name or version mismatch is NOT evidence of absence.**
+The vulnerable component is often shipped under a *different name* than the CVE's
+reported product: a fork or rename (`mysql`→`mariadb`, Qt6 `qt5compat`→Qt5), or a
+bundled dependency under an ecosystem alias (`digitalbazaar/forge`→`node-forge`,
+`colinhacks/zod`→`zod`, `github.com/mark3labs/mcp-go`→`mcp-go`). Matching only the
+raw **Upstream Affected Component** string then yields a false "0 hits / SBOM
+miss". `investigate` now expands the component into fork/bundled aliases before
+probing, so trust its `spec-deps`/`sbom` hit counts — but a *miss* is only the
+start of the analysis, never the end.
 
-**Fast-path NAB (skip `version-check`):** When the bot's recap shows
-`mismatch_sbom_miss` (or the SBOM check is a miss) **and** `spec-deps
-hits = 0`, propose NAB (Component not Present) closure immediately
-without running `version-check`.
+Before proposing any mismatch NAB, do all of:
 
-**IMPORTANT:** Before concluding `spec-deps hits = 0`, ensure you check each component
-individually if multiple are listed (run `spec-deps` for each). If the spec file has a
-`Requires` or `BuildRequires` for the component, the product relies on the vulnerable
-component, and you must **NOT** fast-path NAB. In this case, the package is affected/waiting
-for upstream.
+1. **Re-check under aliases.** Confirm `investigate` (or `spec-deps`/`sbom` with
+   every alias) found no `Provides: bundled(...)` / vendored entry. Alias matching
+   is deliberately broad and fail-safe: a hit is a prompt to **confirm**, not
+   proof on its own — it can be an incidental text/metadata match. Verify the hit
+   is a real `bundled(...)`/vendored component (a version, a purl) before relying
+   on it; but a genuine hit means the component is shipped and it is not
+   `Component not Present`. When in doubt, treat a hit as "needs review", never as
+   grounds to auto-close.
+2. **Fork/rebrand → consult the fork's own advisory DB.** If the package is a
+   fork or rename of the CVE's product (e.g. MariaDB for an Oracle MySQL CVE),
+   check that project's own CVE database for the affected/fixed versions — e.g.
+   the MariaDB CVE DB <https://mariadb.com/docs/server/security/cve/community-server>.
+   Do **not** dismiss on the upstream product's version ranges; MariaDB 10.11 is
+   not comparable to MySQL 8.4/9.7. Known fork/rename packages (mariadb*, qt5*,
+   qt6* — see `_FORK_ADVISORY_DBS` in `cve_helper.py`) are guarded: `close-nab`
+   refuses them until you pass `--fork-advisory-checked` confirming you did this.
+3. **Check for a sibling fix.** If a sibling versioned package (e.g. tempo2.10
+   vs tempo3.0) was patched/bumped for the same CVE, the component is real and
+   present — treat this package as affected, not NAB.
+4. **Requires/BuildRequires.** If the spec `Requires`/`BuildRequires` the
+   component, the product relies on it — **NOT** a NAB; it is affected / waiting
+   for upstream.
 
-The three signals together are definitive proof of absence only if the component is not required:
-
-| Signal | Value | Meaning |
-| --- | --- | --- |
-| Bot reason code | `mismatch_sbom_miss` | Product mismatch + SBOM miss |
-| `spec-deps` hits | `0` | Component not referenced in spec (including Requires) |
-| SBOM check | miss | Component not in shipped binaries |
-
-Do not ask the user to run `version-check` first when all three agree and
-no `Requires` exist. (With nothing in the spec and nothing in the SBOM,
-`version-check` will always return `non_comparable`; the three signals are
-already definitive.)
-Present the NAB closure directly and ask for confirmation.
+Only close NAB with **positive** evidence: `Component not Present` requires the
+component to be genuinely absent (no alias hit, no fork/sibling signal);
+`Vulnerable Code not Present` requires the component to **ship** (a spec/SBOM hit)
+plus a source-level reason the vulnerable path is not built or reachable. A bare
+`mismatch_sbom_miss` + `spec-deps hits = 0` is a prompt to investigate aliases
+and the fork's advisory DB, not a shortcut to closure.
 
 ### Resolution commands
 
@@ -378,8 +387,8 @@ If the session log file cannot be located in the current environment, omit this 
 
 | Scenario | Resolution | VEX |
 | --- | --- | --- |
-| Different product / disputed | Not a Bug | Vulnerable Code not Present |
-| Product not in Hummingbird | Not a Bug | Component not Present |
+| Component ships but vulnerable path not built/reachable (confirmed) | Not a Bug | Vulnerable Code not Present |
+| Component genuinely absent (no alias hit, no fork/sibling signal) | Not a Bug | Component not Present |
 | SRPM / vendored dep / backport fixed | Done-Errata via FIB | (not set) |
 | Duplicate of versioned ticket | Duplicate | (not set) |
 | Affected, no upstream fix | In Progress | `cve-next-release` |
@@ -394,9 +403,11 @@ If the session log file cannot be located in the current environment, omit this 
    Do not use the Atlassian MCP, `cve_analysis.py --resolve`,
    `advisory_handler`, or `gitlab_sync` for package MRs.
 5. Do not paste retry helpers. Load `agent.env` once on auth failure.
-6. Do not close mismatch tickets without SBOM evidence unless
-   `spec-deps` shows no bundled reference (that is the evidence) or
-   the user overrides.
+6. A product-name/version mismatch is not evidence of absence. Before a
+   mismatch NAB, expand aliases, consult the fork's own advisory DB, and check
+   for a sibling fix (see "Product-mismatch CVEs" above). For fork/rename
+   packages (mariadb*, qt5*, qt6*; `_FORK_ADVISORY_DBS`), `close-nab` requires
+   `--fork-advisory-checked`.
 7. Comment first, then change state.
 8. Named tickets are the write set; `only` means named tickets only.
 9. Package metadata semantics follow [ADR-0003](https://hummingbird-project.io/docs/adrs/0003-metadata-and-versioning/).

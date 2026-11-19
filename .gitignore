@@ -3,6 +3,9 @@ __pycache__
 .cache/
 .dist_git_update_state.json
 
+# Claude Code worktree artifacts (never commit these to the repo)
+.claude/worktrees/
+
 # Source tarballs (stored in lookaside cache, referenced via sources file)
 # Generate checksums with: sha512sum --tag <file>
 rpms/*/*.tar.gz

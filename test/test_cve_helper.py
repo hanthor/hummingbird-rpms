@@ -2561,6 +2561,10 @@ def test_cmd_close_nab_with_evidence_passes(monkeypatch) -> None:
     monkeypatch.setattr(
         helper, "close_not_a_bug", lambda t, b, v: calls.append(t)
     )
+    # Non-fork --package falls through to per-ticket resolution; keep it offline.
+    monkeypatch.setattr(
+        helper, "gather_ticket_reports", lambda *a, **k: SimpleNamespace(reports=[])
+    )
     args = helper.build_parser().parse_args(
         [
             "close-nab",
@@ -2575,3 +2579,228 @@ def test_cmd_close_nab_with_evidence_passes(monkeypatch) -> None:
     )
     assert helper.cmd_close_nab(args) == 0
     assert calls == ["HUM-99"]
+
+
+# ---- Regression table: product/version-mismatch false-NAB incidents ----
+#
+# Each row is a real case (HUM-10884 and the sibling audit, tracked by
+# HUM-13037) where a CVE was, or would have been, wrongly closed as Not a Bug
+# because the component's CVE name did not lexically match the package. Expanding
+# the component must surface the name the dependency actually ships under, so the
+# spec/SBOM probes stop reporting a false "0 hits". Add a row for each new
+# incident; a dropped alias rule then fails that specific, named row.
+COMPONENT_ALIAS_CASES = [
+    ("mariadb; mysql", "mysql"),  # HUM-10884: Oracle MySQL CVE vs the MariaDB fork
+    ("mariadb; mysql", "mariadb"),
+    ("digitalbazaar/forge", "forge"),  # HUM-11672: vendored as node-forge
+    ("colinhacks/zod", "zod"),  # HUM-9215: vendored as npm zod
+    ("github.com/mark3labs/mcp-go", "mcp-go"),  # HUM-11934: Go module last segment
+    ("github.com/go-git/go-git/v6", "go-git"),  # trailing /vN major suffix stripped
+    ("npm(node-forge)", "node-forge"),  # Fedora ecosystem wrapper unwrapped
+    ("@hono/node-server", "node-server"),  # scoped npm last segment
+    ("undici", "nodejs-undici"),  # nodejs- RPM prefix toggle
+]
+
+
+@pytest.mark.parametrize("component,expected", COMPONENT_ALIAS_CASES)
+def test_component_aliases_regression(component: str, expected: str) -> None:
+    assert expected in helper.component_aliases(component)
+
+
+# Packages that are forks/renames of their CVE upstream product (guarded by
+# close-nab) vs ordinary packages (not guarded).
+FORK_GUARD_CASES = [
+    ("mariadb10.11", True),  # HUM-10884
+    ("mariadb11.8", True),  # HUM-10885
+    ("mariadb-connector-c", True),
+    ("qt5-qtbase", True),  # HUM-11823
+    ("grafana13.1", False),
+    ("nodejs24", False),
+    ("rust", False),
+]
+
+
+@pytest.mark.parametrize("package,is_fork", FORK_GUARD_CASES)
+def test_fork_advisory_db_regression(package: str, is_fork: bool) -> None:
+    assert bool(helper._fork_advisory_db(package)) is is_fork
+
+
+def test_component_aliases_cve_product_only_when_component_present(monkeypatch) -> None:
+    """cve_product is folded into the search terms only when an actual component
+    is being expanded. With an empty component the caller wants the probe's
+    "list all bundled Provides" default, so no cve_product filter is injected."""
+    monkeypatch.setattr(
+        lib_spec, "read_package_metadata", lambda _pkg: {"cve_product": "mysql"}
+    )
+    # Empty component -> no terms (preserves list-all), not a silent filter.
+    assert helper.component_aliases("", "somepkg") == []
+    # Non-empty component -> the cve_product alias is folded in.
+    assert "mysql" in helper.component_aliases("mariadb", "somepkg")
+
+
+def test_probe_spec_deps_matches_bundled_under_alias(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A CVE product name that differs from the bundled name still matches when
+    searched with the expanded alias list (the HUM-10884-class false-miss bug)."""
+    pkg = "grafanaX"
+    pkg_dir = tmp_path / "rpms" / pkg
+    pkg_dir.mkdir(parents=True)
+    (pkg_dir / f"{pkg}.spec").write_text(
+        "Name: grafanaX\nProvides: bundled(npm(node-forge)) = 1.4.0\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lib_utils, "repo_root", lambda: tmp_path)
+    # Raw CVE product "digitalbazaar/forge" would miss; its aliases include "forge".
+    terms = helper.component_aliases("digitalbazaar/forge")
+    hits = helper.probe_spec_deps(pkg, terms)
+    assert any(h.kind == "bundled_provides" and h.bundled_version == "1.4.0" for h in hits)
+
+
+# ---- fork guard on close-nab ----
+
+
+@pytest.mark.parametrize(
+    "evidence_flag,evidence_val",
+    [
+        ("--spec-deps", "1 spec-deps hit(s)"),
+        ("--sbom-match", "1 hit(s)"),
+    ],
+)
+def test_cmd_close_nab_fork_requires_advisory_flag(
+    monkeypatch, evidence_flag: str, evidence_val: str
+) -> None:
+    """The fork guard fires after the evidence gate, regardless of whether the
+    evidence is spec-deps or SBOM."""
+    closed: list[str] = []
+    monkeypatch.setattr(helper, "close_not_a_bug", lambda *a, **k: closed.append("x"))
+    base = [
+        "close-nab",
+        "HUM-10884",
+        "--vex",
+        "Vulnerable Code not Present",
+        "--package",
+        "mariadb10.11",
+        evidence_flag,
+        evidence_val,
+    ]
+    args = helper.build_parser().parse_args(base)
+    with pytest.raises(RuntimeError, match="fork-advisory-checked"):
+        helper.cmd_close_nab(args)
+    assert closed == []
+    # With the confirmation flag the guard passes.
+    args_ok = helper.build_parser().parse_args(base + ["--fork-advisory-checked"])
+    assert helper.cmd_close_nab(args_ok) == 0
+    assert closed == ["x"]
+
+
+def test_cmd_close_nab_fork_guard_resolves_ticket_package(monkeypatch) -> None:
+    """--component without --package (and mixed-package batches) cannot bypass
+    the fork guard: the package is resolved from the ticket itself."""
+    closed: list[str] = []
+    monkeypatch.setattr(helper, "close_not_a_bug", lambda *a, **k: closed.append("x"))
+    monkeypatch.setattr(
+        helper,
+        "gather_ticket_reports",
+        lambda *a, **k: SimpleNamespace(
+            reports=[SimpleNamespace(package_guess="mariadb10.11")]
+        ),
+    )
+    args = helper.build_parser().parse_args(
+        [
+            "close-nab",
+            "HUM-10884",
+            "--vex",
+            "Vulnerable Code not Present",
+            "--component",  # no --package: guard must still resolve the fork
+            "mysql",
+            "--spec-deps",
+            "1 spec-deps hit(s)",
+        ]
+    )
+    with pytest.raises(RuntimeError, match="fork-advisory-checked"):
+        helper.cmd_close_nab(args)
+    assert closed == []
+
+
+def test_package_search_terms_unions_all_components() -> None:
+    """investigate searches every distinct component for a package, not just the
+    first; with no component it returns [] so the probe lists all Provides."""
+    reports = [
+        SimpleNamespace(package_guess="grafana13.1", upstream_component="node-forge"),
+        SimpleNamespace(package_guess="grafana13.1", upstream_component="zod"),
+        SimpleNamespace(package_guess="other", upstream_component="ignored"),
+    ]
+    terms = helper._package_search_terms(reports, "grafana13.1")
+    assert "node-forge" in terms and "zod" in terms
+    assert "ignored" not in terms
+    assert (
+        helper._package_search_terms(
+            [SimpleNamespace(package_guess="grafana13.1", upstream_component="")],
+            "grafana13.1",
+        )
+        == []
+    )
+
+
+def test_component_aliases_empty_component_no_cve_product_injected(monkeypatch) -> None:
+    """Pin the empty-component invariant: with no component, cve_product is NOT
+    folded in, so probe_spec_deps keeps its list-all behavior rather than
+    silently narrowing to a filter."""
+    monkeypatch.setattr(
+        lib_spec, "read_package_metadata", lambda _pkg: {"cve_product": "mysql"}
+    )
+    assert helper.component_aliases("", "mariadb10.11") == []
+
+
+def test_cmd_close_nab_fork_guard_fails_closed_on_resolution_failure(monkeypatch) -> None:
+    """No --package + ticket resolution error -> refuse (fail-closed), so a fork
+    cannot silently bypass the guard on a network error."""
+    closed: list[str] = []
+    monkeypatch.setattr(helper, "close_not_a_bug", lambda *a, **k: closed.append("x"))
+
+    def boom(*_a, **_k):
+        raise OSError("Jira unreachable")
+
+    monkeypatch.setattr(helper, "gather_ticket_reports", boom)
+    args = helper.build_parser().parse_args(
+        [
+            "close-nab",
+            "HUM-10884",
+            "--vex",
+            "Vulnerable Code not Present",
+            "--component",  # no --package
+            "mysql",
+            "--spec-deps",
+            "1 spec-deps hit(s)",
+        ]
+    )
+    with pytest.raises(RuntimeError, match="could not resolve"):
+        helper.cmd_close_nab(args)
+    assert closed == []
+
+
+def test_cmd_close_nab_fork_guard_failclosed_overridden_by_flag(monkeypatch) -> None:
+    """--fork-advisory-checked lets the operator proceed even when resolution fails."""
+    closed: list[str] = []
+    monkeypatch.setattr(helper, "close_not_a_bug", lambda *a, **k: closed.append("x"))
+
+    def boom(*_a, **_k):
+        raise OSError("Jira unreachable")
+
+    monkeypatch.setattr(helper, "gather_ticket_reports", boom)
+    args = helper.build_parser().parse_args(
+        [
+            "close-nab",
+            "HUM-10884",
+            "--vex",
+            "Vulnerable Code not Present",
+            "--component",
+            "mysql",
+            "--spec-deps",
+            "1 spec-deps hit(s)",
+            "--fork-advisory-checked",
+        ]
+    )
+    assert helper.cmd_close_nab(args) == 0
+    assert closed == ["x"]
