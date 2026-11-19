@@ -1,12 +1,13 @@
 {
+  "version": "11.8.10",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/MariaDB/server",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/mariadb11.8.git",
-    "sha": "face7f2cdf45c039b15e3224f749b2cbf81a18d4"
+    "branch": "rawhide",
+    "sha": "9b846f4a788a393e37ed58d20aa32a9ef110a6b0",
+    "release": "1"
   },
   "modification_reason": "Update to upstream version 11.8.9",
-  "modification_status": "modified",
-  "upstream_branch": "11.8",
-  "upstream_repo": "https://github.com/MariaDB/server",
-  "version": "11.8.9"
+  "upstream_branch": "11.8"
 }
