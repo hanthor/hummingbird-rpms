@@ -27,3 +27,11 @@ accepted-checksums:
   - file: "k6-1.8.2-vendor.tar.bz2"
     checksum: "d911a900095ebd73910eed5d3db54aa638bac859e59eba3653d074993ef08a6d8d339ebd11b5e602e42d8fd9cb90d93b7e6468e49dce7be223b9b6d5d5fbfa0a"
     reason: "HUM-11265: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12798 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match.
+  - file: "k6-1.8.2.tar.gz"
+    checksum: "996b9218f81fef331d1793bdbed00a02b129004c1dcd23c4ac85f816d37f3e399958eda36bb25c01e5767c7c9bf66bb62174f8e2fd826061bb91e63dca26411d"
+    reason: "HUM-12798: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v1.8.2."
+  - file: "k6-1.8.2-vendor.tar.bz2"
+    checksum: "2694dc7e4db42217cbc949cce60e217d6e9fcf5000b8164ae4b879baeaafe4b3b1719ba8f6245d3a8851a6efd2af3843cf05e7f29f8c15b1d2738e1245dd8926"
+    reason: "HUM-12798: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
