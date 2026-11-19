@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -95,12 +96,16 @@ def sanitize_component_name(name: str) -> str:
     return result.lower()
 
 
-def build_pac_variables(branch: str, tenant: str, resource_type: str) -> dict:
+def build_pac_variables(
+    branch: str, tenant: str, resource_type: str, *,
+    private_products: Mapping[str, str] | None = None,
+) -> dict:
     """Build variables for PAC (Pipeline as Code) templates."""
     packages = get_all_packages()
     package_overrides = load_yaml_file(ROOT_DIR / "ci" / "package-overrides.yaml") or {}
     metadata_repo = MetadataRepository(ROOT_DIR)
-    private_products = metadata_repo.private_products()
+    if private_products is None:
+        private_products = metadata_repo.private_products()
 
     application_name = f"rpms-{branch}"
 
@@ -348,10 +353,14 @@ def build_its_manifest_entries() -> dict[str, dict]:
     return {"pr": pr_manifest, "push": push_manifest}
 
 
-def build_konflux_variables(branch: str, tenant: str, git_repo: str) -> dict:
+def build_konflux_variables(
+    branch: str, tenant: str, git_repo: str, *,
+    private_products: Mapping[str, str] | None = None,
+) -> dict:
     """Build variables for Konflux templates."""
     packages = get_all_packages()
-    private_products = MetadataRepository(ROOT_DIR).private_products()
+    if private_products is None:
+        private_products = MetadataRepository(ROOT_DIR).private_products()
 
     application_name = f"rpms-{branch}"
 
@@ -399,7 +408,10 @@ _REQUIRED_RPA_FIELDS = [
 ]
 
 
-def build_releng_variables(rpa_config: dict, global_config: dict) -> dict:
+def build_releng_variables(
+    rpa_config: dict, global_config: dict, *,
+    private_products: Mapping[str, str] | None = None,
+) -> dict:
     """Build variables for a single ReleasePlanAdmission."""
     rpa_name = rpa_config.get("name", "<unnamed>")
     for field in _REQUIRED_RPA_FIELDS:
@@ -409,7 +421,8 @@ def build_releng_variables(rpa_config: dict, global_config: dict) -> dict:
                 f"in ci/konflux_rpa_config.yml"
             )
 
-    private_products = MetadataRepository(ROOT_DIR).private_products()
+    if private_products is None:
+        private_products = MetadataRepository(ROOT_DIR).private_products()
 
     packages = get_all_packages()
 
@@ -465,10 +478,12 @@ def load_releng_config() -> dict:
         return yaml.safe_load(f)
 
 
-def generate_releng() -> dict[str, str]:
+def generate_releng(*, private_products: Mapping[str, str] | None = None) -> dict[str, str]:
     """Generate releng (ReleasePlanAdmission) resources for all configured RPAs."""
     config = load_releng_config()
     global_config = config["global"]
+    if private_products is None:
+        private_products = MetadataRepository(ROOT_DIR).private_products()
 
     template_path = ROOT_DIR / "konflux-templates" / "releng-staging.yml.j2"
     macros_dir = ROOT_DIR / "konflux-templates" / "macros" / "releng"
@@ -476,7 +491,7 @@ def generate_releng() -> dict[str, str]:
     results = {}
     for rpa_config in config["rpas"]:
         print(f"Building releng variables for {rpa_config['name']}...", file=sys.stderr)
-        variables = build_releng_variables(rpa_config, global_config)
+        variables = build_releng_variables(rpa_config, global_config, private_products=private_products)
 
         print(f"Rendering {rpa_config['name']}...", file=sys.stderr)
         result = render_template(template_path, macros_dir, variables)
@@ -575,10 +590,13 @@ def generate_gitattributes() -> str:
     return "\n".join(lines) + "\n"
 
 
-def generate_konflux(branch: str, tenant: str, git_repo: str) -> str:
+def generate_konflux(
+    branch: str, tenant: str, git_repo: str, *,
+    private_products: Mapping[str, str] | None = None,
+) -> str:
     """Generate Konflux resources."""
     print("Building template variables...", file=sys.stderr)
-    variables = build_konflux_variables(branch, tenant, git_repo)
+    variables = build_konflux_variables(branch, tenant, git_repo, private_products=private_products)
 
     print("Rendering Konflux resources...", file=sys.stderr)
     template_path = ROOT_DIR / "konflux-templates" / "konflux-resources.yml.j2"
@@ -643,6 +661,8 @@ def main():
             print(content)
     elif args.command == "all":
         # Generate all resources (equivalent to generate.sh)
+        # Share one validated product snapshot across all outputs in this invocation.
+        private_products = MetadataRepository(ROOT_DIR).private_products()
         # Compute ITS manifest entries once; they depend only on branch.
         its_entries = build_its_manifest_entries()
 
@@ -651,7 +671,9 @@ def main():
         pr_manifest_apps: set[str] | None = None
         for resource_type, event_type in (("push", "push"), ("pull-request", "pull_request")):
             print(f"Building {resource_type} template variables...", file=sys.stderr)
-            variables = build_pac_variables(args.branch, args.tenant, resource_type)
+            variables = build_pac_variables(
+                args.branch, args.tenant, resource_type, private_products=private_products,
+            )
 
             print(f"Rendering {resource_type} Pipeline as Code resources...", file=sys.stderr)
             template_path = ROOT_DIR / ".tekton" / f"rpms-on-{resource_type}.yaml.j2"
@@ -685,10 +707,12 @@ def main():
         if pr_manifest_apps:
             _check_its_coverage(its_apps, pr_manifest_apps)
 
-        konflux = generate_konflux(args.branch, args.tenant, args.git_repo)
+        konflux = generate_konflux(
+            args.branch, args.tenant, args.git_repo, private_products=private_products,
+        )
         (ROOT_DIR / "konflux-templates" / "rendered.yml").write_text(konflux)
 
-        releng_results = generate_releng()
+        releng_results = generate_releng(private_products=private_products)
         releng_dir = ROOT_DIR / "releng"
         releng_dir.mkdir(exist_ok=True)
         for name, content in releng_results.items():

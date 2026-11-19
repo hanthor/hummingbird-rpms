@@ -521,6 +521,61 @@ class TestPrivateProductFiltering:
             variables = gen_module.build_releng_variables(config, global_config)
         assert "public-lts-main" in [c["component_name"] for c in variables["component_list"]]
 
+    @pytest.mark.parametrize("products", [{}, {"alpha": "example"}])
+    @pytest.mark.parametrize("builder", ["pac", "konflux", "releng"])
+    def test_builders_reuse_supplied_mapping(self, gen_module, mock_repo_with_private, products, builder):
+        expected = products.copy()
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_with_private), patch.object(
+            gen_module.MetadataRepository, "private_products", side_effect=AssertionError("Unexpected reload"),
+        ):
+            if builder == "pac":
+                gen_module.build_pac_variables("main", "tenant", "push", private_products=products)
+            elif builder == "konflux":
+                gen_module.build_konflux_variables("main", "tenant", "repo", private_products=products)
+            else:
+                config, global_config = _load_rpa_config(gen_module)
+                gen_module.build_releng_variables(config, global_config, private_products=products)
+        assert products == expected
+
+    def test_releng_loads_assignments_once(self, gen_module, mock_repo_with_private):
+        original = gen_module.MetadataRepository.private_products
+        with patch.object(gen_module, "ROOT_DIR", mock_repo_with_private), patch.object(
+            gen_module.MetadataRepository, "private_products", autospec=True, side_effect=original,
+        ) as query:
+            results = gen_module.generate_releng()
+        query.assert_called_once()
+        assert len(results) == 2
+
+    def test_all_shares_mapping_but_reloads_on_next_invocation(self, gen_module, mock_repo_with_private):
+        root = mock_repo_with_private
+        shutil.copytree(
+            REPO_ROOT / ".tekton", root / ".tekton",
+            ignore=shutil.ignore_patterns("*.yaml", "*.json"),
+        )
+        shutil.copytree(
+            REPO_ROOT / "konflux-templates", root / "konflux-templates",
+            dirs_exist_ok=True, ignore=shutil.ignore_patterns("rendered.yml"),
+        )
+        original = gen_module.MetadataRepository.private_products
+        with patch.object(gen_module, "ROOT_DIR", root), patch("sys.argv", ["generate_resources.py", "all"]), patch.object(
+            gen_module.MetadataRepository, "private_products", autospec=True, side_effect=original,
+        ) as query:
+            gen_module.main()
+            query.assert_called_once()
+            manifest = json.loads((root / ".tekton" / "trigger-manifest-push.json").read_text())
+            assert "alpha--rpms" in manifest["applications"]["private-example-rpms-main"]
+
+            repo = gen_module.MetadataRepository(root)
+            metadata = repo.load("alpha")
+            metadata.private_product = None
+            repo.save(metadata)
+
+            gen_module.main()
+            assert query.call_count == 2
+            manifest = json.loads((root / ".tekton" / "trigger-manifest-push.json").read_text())
+            assert "alpha--rpms" in manifest["applications"]["rpms-main"]
+            assert "private-example-rpms-main" not in manifest["applications"]
+
 _MINIMAL_RPA_CONFIG = textwrap.dedent("""\
     global:
       branch: main
