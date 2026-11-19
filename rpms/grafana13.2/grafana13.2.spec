@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        13.2.5
+Version:        13.2.6
 
 %gometa -L -f
 
@@ -86,11 +86,6 @@ Patch3:         grafana-vector-sql-testdata.patch
 # (CVE-2026-110306, CVE-2026-110180, CVE-2026-110095, CVE-2026-110725).
 #Patch18:        grafana-body-parser-fast-uri-cve.patch
 #Patch19:        grafana-qs-6.17.0-follow-redirects-1.16.2-cve.patch
-# Match the go-vendor-tools klauspost/compress v1.20.2 pre_command in the
-# vendor archive. Bumps go.mod/go.sum only; Source1 carries the v1.20.2
-# vendor tree and vendor/modules.txt. CVE-2026-116591: crafted zstd input
-# panics DecodeAll and the streaming decoder via a bad normalized FSE count.
-Patch20:        grafana-compress-1.20.2-cve.patch
 #Patch21:        grafana-joi-cve-2026-118772.patch
 Patch22:        grafana-frontend-%{version}.patch
 # Copy plugin symlinks without chmod following a target not copied yet.
@@ -439,7 +434,7 @@ Provides:       bundled(npm(@msagl/parser)) = 1.1.24
 Provides:       bundled(npm(@mswjs/interceptors)) = 0.39.2
 Provides:       bundled(npm(@napi-rs/wasm-runtime)) = 0.2.12
 Provides:       bundled(npm(@napi-rs/wasm-runtime)) = 1.2.2
-Provides:       bundled(npm(@napi-rs/wasm-runtime)) = 1.2.6
+Provides:       bundled(npm(@napi-rs/wasm-runtime)) = 1.2.7
 Provides:       bundled(npm(@nodelib/fs.scandir)) = 2.1.5
 Provides:       bundled(npm(@nodelib/fs.stat)) = 2.0.5
 Provides:       bundled(npm(@nodelib/fs.walk)) = 1.2.8
@@ -696,7 +691,7 @@ Provides:       bundled(npm(@testing-library/jest-dom)) = 6.6.4
 Provides:       bundled(npm(@testing-library/jest-dom)) = 6.9.1
 Provides:       bundled(npm(@testing-library/react)) = 16.3.0
 Provides:       bundled(npm(@testing-library/user-event)) = 14.6.1
-Provides:       bundled(npm(@testing-library/user-event)) = 14.6.8
+Provides:       bundled(npm(@testing-library/user-event)) = 14.6.10
 Provides:       bundled(npm(@tree-sitter-grammars/tree-sitter-yaml)) = 0.7.1
 Provides:       bundled(npm(@tybys/wasm-util)) = 0.10.3
 Provides:       bundled(npm(@types/aria-query)) = 5.0.1
@@ -1124,7 +1119,7 @@ Provides:       bundled(npm(domelementtype)) = 1.3.1
 Provides:       bundled(npm(domelementtype)) = 2.3.0
 Provides:       bundled(npm(domhandler)) = 2.4.2
 Provides:       bundled(npm(domhandler)) = 4.2.2
-Provides:       bundled(npm(dompurify)) = 3.4.13
+Provides:       bundled(npm(dompurify)) = 3.4.17
 Provides:       bundled(npm(domutils)) = 1.7.0
 Provides:       bundled(npm(domutils)) = 2.8.0
 Provides:       bundled(npm(dot-case)) = 3.0.4
@@ -1288,7 +1283,7 @@ Provides:       bundled(npm(history)) = 4.10.1
 Provides:       bundled(npm(history)) = 5.3.0
 Provides:       bundled(npm(hoist-non-react-statics)) = 3.3.2
 Provides:       bundled(npm(homedir-polyfill)) = 1.0.3
-Provides:       bundled(npm(hono)) = 4.13.11
+Provides:       bundled(npm(hono)) = 4.13.16
 Provides:       bundled(npm(html-entities)) = 2.4.0
 Provides:       bundled(npm(html-escaper)) = 2.0.2
 Provides:       bundled(npm(html-minifier-terser)) = 6.0.2
@@ -1572,7 +1567,7 @@ Provides:       bundled(npm(mock-raf)) = 1.0.1
 Provides:       bundled(npm(module-details-from-path)) = 1.0.4
 Provides:       bundled(npm(moment)) = 2.30.1
 Provides:       bundled(npm(moment)) = 2.31.0
-Provides:       bundled(npm(moment-timezone)) = 0.5.47
+Provides:       bundled(npm(moment-timezone)) = 0.6.6
 Provides:       bundled(npm(monaco-editor)) = 0.34.1
 Provides:       bundled(npm(monaco-promql)) = 1.8.0
 Provides:       bundled(npm(moo)) = 0.5.3
@@ -1596,7 +1591,7 @@ Provides:       bundled(npm(node-abort-controller)) = 3.1.1
 Provides:       bundled(npm(node-addon-api)) = 8.9.0
 Provides:       bundled(npm(node-fetch)) = 2.7.0
 Provides:       bundled(npm(node-fetch-h2)) = 2.3.0
-Provides:       bundled(npm(node-forge)) = 1.4.0
+Provides:       bundled(npm(node-forge)) = 1.4.3
 Provides:       bundled(npm(node-gyp)) = 12.2.0
 Provides:       bundled(npm(node-gyp-build)) = 4.8.4
 Provides:       bundled(npm(node-int64)) = 0.4.0
@@ -1643,7 +1638,7 @@ Provides:       bundled(npm(package-hash)) = 4.0.0
 Provides:       bundled(npm(package-json-from-dist)) = 1.0.1
 Provides:       bundled(npm(package-manager-detector)) = 1.3.0
 Provides:       bundled(npm(pako)) = 2.0.4
-Provides:       bundled(npm(papaparse)) = 5.5.4
+Provides:       bundled(npm(papaparse)) = 5.7.1
 Provides:       bundled(npm(param-case)) = 3.0.4
 Provides:       bundled(npm(parent-module)) = 1.0.1
 Provides:       bundled(npm(parse-color)) = 1.0.0
