@@ -1,14 +1,15 @@
 {
+  "version": "24.22.3",
+  "modification_status": "modified",
+  "upstream_repo": "https://github.com/nodejs/node",
   "fedora": {
-    "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/nodejs24.git",
-    "sha": "2c39b0e31468ed3b45f9b38b6e1e9b2f35f48ddd"
+    "branch": "rawhide",
+    "sha": "be816246e6ebeb69e7ff8dc6ae67591e426f905b",
+    "release": "1"
   },
   "modification_reason": "Disable bundled npm by default on Hummingbird",
-  "modification_status": "modified",
-  "release_monitoring_project_id": 8251,
-  "track_upstream": "24",
   "upstream_branch": "v24.x",
-  "upstream_repo": "https://github.com/nodejs/node",
-  "version": "24.22.3"
+  "track_upstream": "24",
+  "release_monitoring_project_id": 8251
 }

@@ -1,7 +1,11 @@
 Name:           nodejs24
 Epoch:          1
 Version:        24.22.3
+<<<<<<< HEAD
+Release:        %{autorelease}
+=======
 Release:        0.2%{?dist}
+>>>>>>> hummingbird-local
 
 Summary:        JavaScript runtime
 License:        Apache-2.0 AND Artistic-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC0-1.0 AND ISC AND MIT
@@ -55,6 +59,10 @@ URL:            https://nodejs.org
 %nodejs_define_version nodejs-punycode 2.1.0
 # Version from node-v24.22.3/deps/undici/src/package.json
 %nodejs_define_version nodejs-undici 7.30.2
+<<<<<<< HEAD
+# Version from node-v24.22.3/deps/npm/package.json
+=======
+>>>>>>> hummingbird-local
 %nodejs_define_version npm 2:11.19.1-%{nodejs_subpackage_release}
 # Version from node-v24.22.3/deps/sqlite/sqlite3.h
 %nodejs_define_version sqlite 3.54.1
@@ -167,7 +175,19 @@ Source101:      nodejs.srpm.macros
 %patchlist
 0001-Remove-unused-OpenSSL-config.patch
 0002-Disable-FIPS-options.patch
+<<<<<<< HEAD
+# https://github.com/nodejs/node/issues/66894
+0001-fix-build-with-shared-brotli.patch
+# CVE-2026-102276, CVE-2026-102277, CVE-2026-102278 - brace-expansion 5.0.9 -> 5.0.12 (core minimatch inlined bundle + npm copy)
+0001-deps-update-brace-expansion-to-5.0.12.patch
+0001-npm-update-brace-expansion-to-5.0.12.patch
+# CVE-2026-101911 - ip-address 10.5.0 -> 10.7.4 (npm bundled dep)
+0001-npm-update-ip-address-to-10.7.4.patch
+# undici CVE fixes for the copy bundled in npm
+0001-npm-update-undici-to-6.29.1.patch
+=======
 CVE-2026-118764-minimatch-dos-fix.patch
+>>>>>>> hummingbird-local
 
 %description
 Node.js is a platform built on Chrome's JavaScript runtime
