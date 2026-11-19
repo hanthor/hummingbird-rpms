@@ -1,4 +1,33 @@
 [archive]
+pre_commands = [
+  # CVE-2026-128085: the staging modules in the go.work workspace each pin
+  # their own OpenTelemetry-Go requirements, which `go get` in the root
+  # module does not touch. Bump them too so vendor/modules.txt does not keep
+  # the vulnerable versions. Must stay in sync with
+  # 0001-bump-staging-otel-go-mod-for-CVE-2026-128085.patch.
+  ["sh", "-ec", '''
+    for mod in staging/src/k8s.io/*/go.mod; do
+      for path in \
+        go.opentelemetry.io/otel \
+        go.opentelemetry.io/otel/metric \
+        go.opentelemetry.io/otel/sdk \
+        go.opentelemetry.io/otel/sdk/metric \
+        go.opentelemetry.io/otel/trace; do
+        if grep -Eq "^[[:space:]]+${path}[[:space:]]+v" "$mod"; then
+          go mod edit -require="${path}@v1.47.0" "$mod"
+        fi
+      done
+    done
+  '''],
+]
+
+[archive.dependency_overrides]
+# CVE-2026-128085
+"go.opentelemetry.io/otel" = "v1.47.0"
+"go.opentelemetry.io/otel/metric" = "v1.47.0"
+"go.opentelemetry.io/otel/sdk" = "v1.47.0"
+"go.opentelemetry.io/otel/sdk/metric" = "v1.47.0"
+"go.opentelemetry.io/otel/trace" = "v1.47.0"
 
 [licensing]
 detector = "askalono"
