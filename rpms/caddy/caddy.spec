@@ -3,14 +3,14 @@
 # https://github.com/caddyserver/caddy
 %global goipath         github.com/caddyserver/caddy/v2
 %global forgeurl        https://github.com/caddyserver/caddy
-Version:                2.11.7
+Version:                2.11.8
 
 %gometa -L
 %forgemeta
 
 
 Name:           caddy
-Release:        0.4%{?dist}
+Release:        0.1%{?dist}
 Summary:        Web server with automatic HTTPS
 
 # main source code is Apache-2.0
