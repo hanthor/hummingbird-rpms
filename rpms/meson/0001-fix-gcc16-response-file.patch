@@ -1,0 +1,68 @@
+From fd94e39a7c274ccf87a8b8875b749666beec0e07 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 20 Oct 2026 16:42:57 +0200
+Subject: [PATCH] ninjabackend: fix gcc_rsp_quote for GCC 16
+
+Up to GCC 15 (and in clang), a backslash *always* escapes the following
+character, even inside single quotes.  Starting with GCC 16, backslashes
+inside single quotes are literal as in sh.  Avoid quotes and escape every
+special character with a backslash, which works the same way in both cases;
+only newlines still have to be placed in single quotes, which is safe.
+
+This change was done in https://github.com/gcc-mirror/gcc/commit/a87954610f5e48a89b63a3194df9f5087bdc2f77:
+
+> 1. Backslashes within single quotes should not be treated as an
+> escape, thus: '\a' should split to \a, retaining the backslash.
+>
+> 2. Backslashes within double quotes should only act as an escape if
+> they are immediately before one of the characters $ (dollar),
+> ` (backtick), " (double quote), ` (backslash), or \n (newline).  In
+> all other cases a backslash should not be treated as an escape
+> character.  Thus: "\a" should split to \a, but "\$" should split to
+> $.
+>
+> 3. A backslash-newline sequence should be treated as a line
+> continuation, both the backslash and the newline should be removed.
+
+This fixes the failure in the MESON_RSP_THRESHOLD=0 CI job, which can
+be reproduced locally with:
+
+    MESON_RSP_THRESHOLD=0 ./run_single_test.py test\ cases/common/107*
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ mesonbuild/backend/ninjabackend.py | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/mesonbuild/backend/ninjabackend.py b/mesonbuild/backend/ninjabackend.py
+index 79a791a2fe20..d64a2250346e 100644
+--- a/mesonbuild/backend/ninjabackend.py
++++ b/mesonbuild/backend/ninjabackend.py
+@@ -90,15 +90,21 @@ def cmd_quote(arg: str) -> str:
+     execute_wrapper = []
+     rmfile_prefix = ['rm', '-f', '{}', '&&']
+ 
++GCC_RSP_UNSAFE_PAT = re.compile(r'[^\w@%+=:,./-]', re.ASCII)
++
+ def gcc_rsp_quote(s: str) -> str:
+     # see: the function buildargv() in libiberty
+     #
+-    # this differs from sh-quoting in that a backslash *always* escapes the
+-    # following character, even inside single quotes.
+-
+-    s = s.replace('\\', '\\\\')
+-
+-    return quote_func(s)
++    # Up to GCC 15 (and in clang), a backslash *always* escapes the following
++    # character, even inside single quotes.  Starting with GCC 16, backslashes
++    # inside single quotes are literal as in sh.  Avoid quotes and escape
++    # every special character with a backslash, which works the same way in
++    # both cases.  The exception is newlines, for which a backslash is a line
++    # continuation in sh; place them in single quotes instead.
++
++    if not s:
++        return "''"
++    return GCC_RSP_UNSAFE_PAT.sub(lambda m: "'\n'" if m.group() == '\n' else '\\' + m.group(), s)
+ 
+ # a conservative estimate of the command-line length limit
+ rsp_threshold = mesonlib.get_rsp_threshold()
