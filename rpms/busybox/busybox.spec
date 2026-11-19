@@ -57,8 +57,8 @@
 %endif
 
 Name:		busybox
-Version:	1.37.0
-Release:  9.5%{?dist}
+Version:	1.38.0
+Release:	1%{?dist}
 Epoch:		1
 Summary:	Statically linked binary providing simplified versions of system commands
 License:	GPL-2.0-only
@@ -80,6 +80,8 @@ Patch0:		busybox-1.31.1-stime-fix.patch
 # Felt safer to just disable CBQ, as that is what iproute did:
 # https://github.com/iproute2/iproute2/commit/07ba0af3fee132eddc1c2eab643ff4910181c993
 Patch1:		busybox-1.36.1-no-cbq.patch
+<<<<<<< HEAD
+=======
 # sha1_process_block64_shaNI is only valid on x86
 # most of the calls are wrapped in an arch conditional, but they missed one.
 Patch2:		busybox-1.37.0-fix-conditional-for-sha1_process_block64_shaNI.patch
@@ -118,6 +120,7 @@ Patch14:	busybox-1.37.0-udhcpc-ensure-cookie-present.patch
 # CVE-2026-88833: udhcpc packet-length underflow in d4_recv_raw_packet()
 # Upstream commit 56e9d36bb64fe508b4d5b9fb01f02bdee6dba792
 Patch15:	busybox-1.37.0-CVE-2026-88833-udhcpc-min-packet-size.patch
+>>>>>>> hummingbird-local
 BuildRequires:	gcc
 BuildRequires:	libselinux-devel >= 1.27.7-2
 BuildRequires:	libsepol-devel
@@ -173,6 +176,8 @@ package is build against shared libraries, most notably glibc.
 %setup -q -a 10
 %patch -P0 -p1 -b .stime
 %patch -P1 -p1 -b .cbq
+<<<<<<< HEAD
+=======
 %patch -P2 -p1 -b .shani-fix
 %patch -P3 -p1 -b .tar-hardlink-fix
 %patch -P4 -p1 -b .dhcpv6-overflow-fix
@@ -187,6 +192,7 @@ package is build against shared libraries, most notably glibc.
 %patch -P13 -p1 -b .cve-2026-124742
 %patch -P14 -p1 -b .udhcpc-cookie-present
 %patch -P15 -p1 -b .cve-2026-88833
+>>>>>>> hummingbird-local
 
 %build
 # Fix architecture name maps
@@ -411,6 +417,9 @@ ln -s ./busybox %{buildroot}%{_sbindir}/udhcpc
 %{_mandir}/man1/busybox.shared.1.gz
 
 %changelog
+* Wed Nov 18 2026 Tom Callaway <spot@fedoraproject.org> - 1:1.38.0-1
+- update to 1.38.0
+
 * Fri Aug 07 2026 Peter Robinson <pbrobinson@fedoraproject.org> - 1:1.37.0-9
 - Build with -mbranch-protection=standard on aarch64
 
