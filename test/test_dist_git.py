@@ -545,6 +545,205 @@ def run_dist_git(dist_git_module, workdir: Path, *args: str) -> None:
 # Tests
 #
 
+def _damage_cli_data(workdir: Path, damage: str, *, package: str = 'unrelated') -> None:
+    """Corrupt only disposable fixture data, never the real checkout."""
+    if damage == 'metadata-json':
+        (workdir / 'metadata' / f'{package}.json').write_text('{invalid JSON\n')
+    elif damage == 'metadata-schema':
+        (workdir / 'metadata' / f'{package}.json').write_text('[]\n')
+    elif damage == 'release-json':
+        (workdir / 'upstream-releases.json').write_text('{invalid release JSON\n')
+    elif damage == 'missing-releases':
+        (workdir / 'upstream-releases.json').unlink()
+    else:
+        raise AssertionError(f'Unknown test damage: {damage}')
+
+
+@pytest.mark.parametrize('arguments', [['--help'], ['update', '--help'], ['mark-modified', '--help']])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+def test_cli_help_does_not_load_package_data(workdir: Path, arguments: list[str], damage: str) -> None:
+    _damage_cli_data(workdir, damage)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *arguments],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert 'usage:' in result.stdout
+
+
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+@pytest.mark.parametrize('invalid_path', [False, True], ids=['portable-paths', 'invalid-path'])
+def test_check_paths_ignores_unneeded_package_data(workdir: Path, damage: str, invalid_path: bool) -> None:
+    _damage_cli_data(workdir, damage)
+    if invalid_path:
+        (workdir / 'invalid:name').write_text('Tracked invalid filename\n')
+        subprocess.run(['git', 'add', '--', 'invalid:name'], cwd=workdir, check=True)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'check-paths'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    if invalid_path:
+        assert result.returncode != 0
+        assert 'Paths incompatible with Windows' in result.stderr
+        assert 'invalid:name' in result.stderr
+    else:
+        assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize('arguments', [
+    ['mark-modified', 'vanilla', '--modified', '--reason', 'Local packaging change'],
+    ['set-upstream', 'vanilla', '--track-version', 'latest', '--project-id', '12345'],
+    ['--dry-run', 'rebuild', 'vanilla', '--reason', 'Rebuild test'],
+    ['sanitize-paths', 'vanilla'],
+    ['diff', 'vanilla'],
+])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+def test_single_package_commands_load_only_needed_data(
+    imported_workdir, arguments: list[str], damage: str,
+) -> None:
+    workdir = imported_workdir('vanilla')
+    _damage_cli_data(workdir, damage)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *arguments],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    metadata = json.loads((workdir / 'metadata' / 'vanilla.json').read_text())
+    if arguments[0] == 'mark-modified':
+        assert metadata['modification_status'] == 'modified'
+    elif arguments[0] == 'set-upstream':
+        assert metadata['release_monitoring_project_id'] == 12345
+    elif 'rebuild' in arguments:
+        assert 'Release: 1.1%{?dist}' in (workdir / 'rpms' / 'vanilla' / 'vanilla.spec').read_text()
+
+
+@pytest.mark.parametrize('command', ['update', 'sync'])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema'])
+def test_single_package_updates_ignore_unrelated_metadata(
+    imported_workdir, upstream_repos: dict[str, Path], command: str, damage: str,
+) -> None:
+    workdir = imported_workdir('vanilla')
+    new_sha = add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+    _damage_cli_data(workdir, damage)
+    unrelated = workdir / 'metadata' / 'unrelated.json'
+    unrelated_before = unrelated.read_bytes()
+    options = ['--skip-build-check'] if command == 'update' else []
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), command, 'vanilla', *options],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    metadata = json.loads((workdir / 'metadata' / 'vanilla.json').read_text())
+    assert metadata['fedora']['sha'] == new_sha
+    assert metadata['version'] == '2.0'
+    assert unrelated.read_bytes() == unrelated_before
+
+
+@pytest.mark.parametrize('arguments', [
+    ['mark-modified', 'vanilla', '--modified', '--reason', 'Local packaging change'],
+    ['--dry-run', 'rebuild', 'vanilla', '--reason', 'Rebuild test'],
+])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema'])
+def test_single_package_commands_still_reject_invalid_selected_metadata(
+    imported_workdir, arguments: list[str], damage: str,
+) -> None:
+    workdir = imported_workdir('vanilla')
+    _damage_cli_data(workdir, damage, package='vanilla')
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_before = spec.read_bytes()
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *arguments],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert spec.read_bytes() == spec_before
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+
+
+@pytest.mark.parametrize('arguments', [
+    ['list'],
+    ['update', '--skip-build-check'],
+    ['--dry-run', 'rebuild', '--all', '--reason', 'Rebuild test'],
+    ['--dry-run', 'sanitize-paths', '--all'],
+    ['diff', '--all'],
+])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema'])
+def test_batch_commands_still_validate_all_metadata(imported_workdir, arguments: list[str], damage: str) -> None:
+    workdir = imported_workdir('vanilla')
+    _damage_cli_data(workdir, damage)
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_before = spec.read_bytes()
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *arguments],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode != 0, 'A batch command silently ignored invalid package metadata'
+    assert spec.read_bytes() == spec_before
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+
+
+@pytest.mark.parametrize('operation', ['import_', 'rename', 'add_private_product'])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema'])
+def test_resource_generating_commands_validate_global_metadata_before_mutating(
+    dist_git_module, workdir: Path, operation: str, damage: str,
+) -> None:
+    """Repository-wide resource generation still needs valid metadata for every package."""
+    _damage_cli_data(workdir, damage)
+    if operation == 'import_':
+        arguments = ['import', 'file:///unused-upstream.git']
+    elif operation == 'rename':
+        arguments = ['rename', 'vanilla']
+    else:
+        arguments = ['add-private-product', 'test-product', '--packages', 'vanilla',
+                     '--infra-repo', str(workdir / 'infra')]
+    with patch.object(dist_git_module, operation) as command, \
+         pytest.raises((json.JSONDecodeError, dist_git_module.MalformedMetadataError)):
+        run_dist_git(dist_git_module, workdir, *arguments)
+    command.assert_not_called()
+
+
+@pytest.mark.parametrize('command', ['update', 'sync'])
+@pytest.mark.parametrize('damage', ['release-json', 'missing-releases'])
+def test_updates_still_require_valid_release_mapping(
+    imported_workdir, upstream_repos: dict[str, Path], command: str, damage: str,
+) -> None:
+    workdir = imported_workdir('vanilla')
+    add_upstream_commit(upstream_repos['vanilla'], 'vanilla', '1.0', '2.0')
+    _damage_cli_data(workdir, damage)
+    spec = workdir / 'rpms' / 'vanilla' / 'vanilla.spec'
+    spec_before = spec.read_bytes()
+    metadata_file = workdir / 'metadata' / 'vanilla.json'
+    metadata_before = metadata_file.read_bytes()
+    options = ['--skip-build-check'] if command == 'update' else []
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), command, 'vanilla', *options],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert spec.read_bytes() == spec_before
+    assert metadata_file.read_bytes() == metadata_before
+
+
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+def test_update_releases_can_replace_bad_mapping_without_loading_metadata(
+    dist_git_module, workdir: Path, damage: str,
+) -> None:
+    _damage_cli_data(workdir, damage)
+    response = json.dumps({'releases': [{'id_prefix': 'FEDORA', 'branch': 'f99', 'dist_tag': 'f99'}]})
+    with patch.object(dist_git_module.subprocess, 'check_output', return_value=response) as bodhi:
+        run_dist_git(dist_git_module, workdir, 'update-releases')
+    bodhi.assert_called_once()
+    assert json.loads((workdir / 'upstream-releases.json').read_text())['fedora']['f99'] == 'f99'
+
+
 @pytest.mark.parametrize('arguments,operation', [
     (['rename', 'vanilla'], 'rename'),
     (['update-releases'], 'update_releases'),
@@ -6222,6 +6421,109 @@ def test_update_continue_legacy_state(workdir: Path, upstream_repos: dict[str, P
     )
     assert result.returncode == 0, f"--continue failed: {result.stderr}"
     assert not state_file.exists()
+
+
+@pytest.mark.parametrize('legacy_state', [False, True], ids=['modern', 'legacy'])
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+def test_update_continue_ignores_unrelated_command_data(
+    workdir: Path, upstream_repos: dict[str, Path], legacy_state: bool, damage: str,
+) -> None:
+    """Continuation needs its candidate metadata, not unrelated packages or release maps."""
+    new_sha = _create_conflict(workdir, upstream_repos)
+    state_file = workdir / '.dist_git_update_state.json'
+    if legacy_state:
+        state = json.loads(state_file.read_text())
+        del state['metadata']
+        state_file.write_text(json.dumps(state))
+    spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    spec.write_text(re.sub(r'<<<<<<< HEAD\n.*?=======\n(.*?)>>>>>>> hummingbird-local\n',
+                           r'\1', spec.read_text(), flags=re.DOTALL))
+    assert '<<<<<<<' not in spec.read_text()
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    _damage_cli_data(workdir, damage)
+    damaged_path = (workdir / 'metadata' / 'unrelated.json' if damage.startswith('metadata-')
+                    else workdir / 'upstream-releases.json')
+    damaged_before = damaged_path.read_bytes() if damaged_path.exists() else None
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert not state_file.exists()
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) != head_before
+    assert not subprocess.check_output(['git', 'diff', '--cached'], cwd=workdir)
+    assert (damaged_path.read_bytes() if damaged_path.exists() else None) == damaged_before
+    if legacy_state:
+        # Preserve the existing legacy contract: retain the on-disk metadata
+        # when no candidate metadata was recorded in the recovery file.
+        assert metadata_file.read_bytes() == metadata_before
+    else:
+        metadata = json.loads(metadata_file.read_text())
+        assert metadata['version'] == '11'
+        assert metadata['fedora']['sha'] == new_sha
+
+
+@pytest.mark.parametrize('required_input', [
+    'modern-metadata', 'legacy-metadata-json', 'legacy-metadata-schema', 'corrupt-state',
+])
+def test_update_continue_rejects_invalid_required_data(
+    workdir: Path, upstream_repos: dict[str, Path], required_input: str,
+) -> None:
+    """Selective loading must not hide invalid recovery data or required legacy metadata."""
+    _create_conflict(workdir, upstream_repos)
+    state_file = workdir / '.dist_git_update_state.json'
+    state = json.loads(state_file.read_text())
+    if required_input == 'modern-metadata':
+        state['metadata']['version'] = None
+        state_file.write_text(json.dumps(state))
+    elif required_input.startswith('legacy-'):
+        del state['metadata']
+        state_file.write_text(json.dumps(state))
+        _damage_cli_data(workdir, required_input.removeprefix('legacy-'), package='chocolate')
+    else:
+        state_file.write_text('{invalid recovery JSON\n')
+    spec = workdir / 'rpms' / 'chocolate' / 'chocolate.spec'
+    spec.write_text(re.sub(r'<<<<<<< HEAD\n.*?=======\n(.*?)>>>>>>> hummingbird-local\n',
+                           r'\1', spec.read_text(), flags=re.DOTALL))
+    state_before = state_file.read_bytes()
+    spec_before = spec.read_bytes()
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir)
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode != 0
+    assert state_file.read_bytes() == state_before
+    assert spec.read_bytes() == spec_before
+    assert metadata_file.read_bytes() == metadata_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir) == index_before
+
+
+@pytest.mark.parametrize('damage', ['metadata-json', 'metadata-schema', 'release-json', 'missing-releases'])
+def test_update_continue_missing_state_ignores_unrelated_data(workdir: Path, damage: str) -> None:
+    _damage_cli_data(workdir, damage)
+    state_file = workdir / '.dist_git_update_state.json'
+    assert not state_file.exists()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert result.returncode == 1
+    assert 'No update in progress' in result.stderr
+    assert 'Traceback' not in result.stderr
+    assert not state_file.exists()
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
 
 
 def test_update_continue_with_pipeline_calls_gorget(

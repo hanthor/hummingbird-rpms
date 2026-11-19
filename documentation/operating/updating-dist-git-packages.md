@@ -53,6 +53,18 @@ reserved names and paths that differ only by case.
 New clones can check out the corrected tree on Windows. Older commits still contain the original
 filenames, so checking out those commits requires a filesystem that supports them.
 
+## Command data loading
+
+`dist_git.py` parses arguments before reading package metadata or `upstream-releases.json`.
+Help and `check-paths` do not require either data source. Single-package metadata operations
+load only their selected packages; list and all-package operations still validate all metadata.
+Import, rename, and private-product creation also validate all metadata before making changes,
+because they regenerate repository-wide resources.
+
+Only normal `update` and `sync` commands load the release mapping. `update --continue` uses its
+saved recovery data instead. `update-releases` can replace a missing or corrupt mapping without
+loading package metadata or reading the old mapping first.
+
 ## `dist_git.py --dry-run` policy
 
 `--dry-run` preserves each command's established behavior. It is **not** a universal
