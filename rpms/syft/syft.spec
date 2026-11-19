@@ -2,7 +2,7 @@
 
 # https://github.com/anchore/syft
 %global goipath         github.com/anchore/syft
-Version:                1.57.1
+Version:                1.57.2
 
 %gometa -L -f
 
