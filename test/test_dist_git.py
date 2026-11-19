@@ -6380,6 +6380,8 @@ def test_add_private_product(imported_workdir, upstream_repos: dict[str, Path],
                              mock_infra_repo: Path) -> None:
     """Test add-private-product dry run shows all planned actions."""
     workdir = imported_workdir('chocolate')
+    metadata_path = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_path.read_bytes()
 
     result = subprocess.run(
         [str(workdir / 'ci' / 'dist_git.py'), '--dry-run', 'add-private-product', 'testprod',
@@ -6396,6 +6398,7 @@ def test_add_private_product(imported_workdir, upstream_repos: dict[str, Path],
         config = yaml.safe_load(f)
     assert not any(r.get('private_product') == 'testprod' for r in config['rpas'])
     assert not (mock_infra_repo / 'kubernetes' / 'private-testprod-rpms-main').exists()
+    assert metadata_path.read_bytes() == metadata_before
 
 
 def test_add_private_product_nonexistent_package(workdir: Path, mock_infra_repo: Path) -> None:
@@ -6436,12 +6439,10 @@ def test_add_private_product_already_assigned(imported_workdir, upstream_repos: 
     """Test add-private-product fails if package already has a private_product."""
     workdir = imported_workdir('chocolate')
 
-    overrides_path = workdir / 'ci' / 'package-overrides.yaml'
-    with open(overrides_path) as f:
-        overrides = yaml.safe_load(f) or {}
-    overrides['chocolate'] = {'private_product': 'other-product'}
-    with open(overrides_path, 'w') as f:
-        yaml.dump(overrides, f)
+    metadata_path = workdir / 'metadata' / 'chocolate.json'
+    metadata = json.loads(metadata_path.read_text())
+    metadata['private_product'] = 'other-product'
+    metadata_path.write_text(json.dumps(metadata))
     subprocess.run(['git', 'add', '.'], cwd=workdir, check=True)
     subprocess.run(['git', 'commit', '-m', 'assign to other product'], cwd=workdir, check=True)
 
@@ -6528,9 +6529,7 @@ def test_add_private_product_updates_scenarios_yml(
 
 def test_add_private_product_preserves_formatting(imported_workdir, upstream_repos: dict[str, Path],
                                                    mock_infra_repo: Path, dist_git_module) -> None:
-    """A real (non-dry-run) run must only add lines, not reformat/strip comments from
-    ci/package-overrides.yaml or ci/konflux_rpa_config.yml (regression test for a bug where
-    a full yaml.load/yaml.dump round-trip silently dropped every comment in both files)."""
+    """Assignment changes metadata, leaves overrides untouched, and preserves RPA comments."""
     workdir = imported_workdir('chocolate')
 
     overrides_path = workdir / 'ci' / 'package-overrides.yaml'
@@ -6541,7 +6540,7 @@ def test_add_private_product_preserves_formatting(imported_workdir, upstream_rep
     dist_git_module.ROOT_DIR = workdir
     dist_git_module.PACKAGE_OVERRIDES_YAML = overrides_path
 
-    with patch.object(dist_git_module.subprocess, 'run'):
+    with patch.object(dist_git_module.subprocess, 'run') as run:
         dist_git_module.add_private_product(
             'testprod', ['chocolate'], None,
             'hummingbird-pulp-credentials-production-secret', str(mock_infra_repo), False,
@@ -6550,19 +6549,49 @@ def test_add_private_product_preserves_formatting(imported_workdir, upstream_rep
     overrides_after_lines = overrides_path.read_text().splitlines()
     rpa_after_lines = rpa_config_path.read_text().splitlines()
 
-    # Every original line (including comments) must still be present verbatim.
-    for line in overrides_before_lines:
-        assert line in overrides_after_lines
+    assert overrides_before_lines == overrides_after_lines
     for line in rpa_before_lines:
         assert line in rpa_after_lines
 
-    # Only the new package/RPA lines were appended.
-    assert len(overrides_after_lines) - len(overrides_before_lines) == 3
-    assert any('private_product: testprod' in line for line in overrides_after_lines)
+    from hum.meta import MetadataRepository
+
+    metadata = MetadataRepository(workdir).load('chocolate')
+    assert metadata.private_product == 'testprod'
+    staged = [
+        invocation.args[0] for invocation in run.call_args_list
+        if invocation.args[0][:2] == ['git', 'add']
+    ]
+    assert any('metadata/chocolate.json' in command for command in staged)
+    assert all('ci/package-overrides.yaml' not in command for command in staged)
 
     with open(rpa_config_path) as f:
         rpa_config = yaml.safe_load(f)
     assert any(r.get('private_product') == 'testprod' for r in rpa_config['rpas'])
+
+
+@pytest.mark.parametrize('problem', ['missing', 'malformed', 'invalid-tracking', 'empty-product'])
+def test_add_private_product_rejects_invalid_metadata_before_pulp(
+    imported_workdir, mock_infra_repo: Path, dist_git_module, problem: str,
+) -> None:
+    workdir = imported_workdir('chocolate')
+    dist_git_module.ROOT_DIR = workdir
+    path = workdir / 'metadata' / 'chocolate.json'
+    if problem == 'missing':
+        path.unlink()
+    elif problem == 'malformed':
+        path.write_text('{"version": "1"}')
+    elif problem == 'invalid-tracking':
+        metadata = json.loads(path.read_text())
+        metadata['track_upstream'] = 'latest'
+        path.write_text(json.dumps(metadata))
+    product = '' if problem == 'empty-product' else 'testprod'
+    rpa_before = (workdir / 'ci' / 'konflux_rpa_config.yml').read_bytes()
+    with patch.object(dist_git_module.subprocess, 'run') as run, pytest.raises(SystemExit):
+        dist_git_module.add_private_product(
+            product, ['chocolate'], None, 'secret', str(mock_infra_repo), False,
+        )
+    run.assert_not_called()
+    assert (workdir / 'ci' / 'konflux_rpa_config.yml').read_bytes() == rpa_before
 
 
 def test_normalize_release_in_specs_plain(dist_git_module, tmp_path: Path) -> None:

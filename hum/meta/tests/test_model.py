@@ -164,6 +164,7 @@ class TestPackageMetadataBaseFields:
         assert metadata.upstream_repo == "https://git.savannah.gnu.org/git/bash.git"
         assert metadata.upstream_branch is None
         assert metadata.tag_strip_prefix == "v"
+        assert metadata.private_product is None
 
     def test_empty_version_is_rejected_at_construction(self) -> None:
         with pytest.raises(ValueError, match="version"):
@@ -184,6 +185,65 @@ class TestPackageMetadataBaseFields:
                 fedora=clean_fedora(),
                 **base_kwargs(version_from_ref=SimpleNamespace(type="tag")),
             )
+
+
+class TestPrivateProduct:
+    @pytest.mark.parametrize("state", ["clean", "modified-fedora", "modified-upstream", "independent"])
+    def test_load_and_round_trip_in_every_state(self, state: str) -> None:
+        data: dict[str, object] = {
+            "version": "1.0", "upstream_repo": "https://example.com/project",
+            "modification_status": state.split("-")[0], "private_product": "nodejs20",
+        }
+        if state != "independent":
+            fedora = {"git_url": "https://example.com/fedora", "branch": "rawhide", "sha": "abc"}
+            if state != "modified-upstream":
+                fedora["release"] = "1"
+            data["fedora"] = fedora
+        if state.startswith("modified"):
+            data["modification_reason"] = "Local changes"
+        metadata = PackageMetadata._from_raw_dict("project", data)
+        assert metadata.private_product == "nodejs20"
+        assert metadata.to_dict()["private_product"] == "nodejs20"
+        assert metadata.validate().violations == []
+
+    def test_set_and_clear(self) -> None:
+        metadata = IndependentPackageMetadata(**base_kwargs())
+        metadata.private_product = "example"
+        assert metadata.private_product == "example"
+        metadata.private_product = None
+        assert "private_product" not in metadata.to_dict()
+
+    @pytest.mark.parametrize("value", ["", 123, False, [], {}])
+    def test_constructor_and_setter_reject_invalid_values(self, value: object) -> None:
+        with pytest.raises(ValueError, match="private_product"):
+            IndependentPackageMetadata(**base_kwargs(private_product=value))
+        metadata = IndependentPackageMetadata(**base_kwargs(private_product="example"))
+        with pytest.raises(ValueError, match="private_product"):
+            metadata.private_product = value  # type: ignore[assignment]
+        assert metadata.private_product == "example"
+
+    @pytest.mark.parametrize("value", [None, "", 123, False, [], {}])
+    def test_invalid_json_field_is_not_silently_dropped(self, value: object) -> None:
+        data = {
+            "version": "1.0", "upstream_repo": "https://example.com/project",
+            "modification_status": "independent", "private_product": value,
+        }
+        with pytest.raises(MalformedMetadataError, match="private_product"):
+            PackageMetadata._from_raw_dict("project", data)
+
+    def test_validate_detects_invalid_stored_value(self) -> None:
+        metadata = IndependentPackageMetadata(**base_kwargs())
+        metadata._private_product = ""  # simulate mutation bypassing the setter
+        assert any("private_product" in v.message for v in metadata.validate().violations)
+
+    def test_transitions_preserve_product(self) -> None:
+        metadata = CleanPackageMetadata(fedora=clean_fedora(), **base_kwargs(private_product="example"))
+        modified = metadata.to_modified_fedora(reason="Backport")
+        upstream = modified.to_modified_upstream(version="6", reason="Upstream release")
+        independent = upstream.to_independent()
+        assert independent.private_product == "example"
+        clean = independent.to_clean(fedora=clean_fedora(), version="5.4.3")
+        assert clean.private_product == "example"
 
 
 class TestCveProductAndFixStatus:

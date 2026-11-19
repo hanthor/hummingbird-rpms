@@ -98,10 +98,7 @@ class TestPromotionGeneration(unittest.TestCase):
                 "beta:\n  push_pipeline: build\n"
             )
 
-            with mock.patch.object(generate_resources, "ROOT_DIR", root), mock.patch.object(
-                generate_resources, "_METADATA_REPO"
-            ) as metadata_repo:
-                metadata_repo.load.return_value = None
+            with mock.patch.object(generate_resources, "ROOT_DIR", root):
                 variables = generate_resources.build_pac_variables(
                     "main", "hummingbird-tenant", "push"
                 )

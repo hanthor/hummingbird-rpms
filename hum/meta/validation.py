@@ -19,6 +19,7 @@ of the bad call, while ``validate()`` collects every violation into a
 from __future__ import annotations
 
 import re
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -103,6 +104,30 @@ def check_modification_status(value: object) -> ValidationError | None:
 def check_upstream_repo(value: object) -> ValidationError | None:
     """upstream_repo must be present and non-empty."""
     return _check_present_and_non_empty(value, field="upstream_repo")
+
+
+def check_private_product(value: object) -> ValidationError | None:
+    """An optional private product must be a non-empty string."""
+    if value is None:
+        return None
+    return _check_present_and_non_empty(value, field="private_product")
+
+
+def check_private_products(
+    assignments: Mapping[str, str], known_products: Collection[str],
+) -> list[ValidationError]:
+    """Every package assignment must match a configured private RPA."""
+    return [
+        ValidationError(
+            message=(
+                f"Package '{package}' has private_product: '{product}' but no RPA "
+                f"entry has private_product: '{product}'. "
+                f"Known products: {sorted(known_products)}"
+            )
+        )
+        for package, product in assignments.items()
+        if product not in known_products
+    ]
 
 
 def check_version_source(value: object) -> ValidationError | None:

@@ -123,7 +123,6 @@ def checker(tmp_path: Path):
 
     module.ROOT_DIR = tmp_path  # type: ignore[attr-defined]
     module.RPMS_DIR = tmp_path / 'rpms'  # type: ignore[attr-defined]
-    module.PACKAGE_OVERRIDES_YAML = tmp_path / 'ci' / 'package-overrides.yaml'  # type: ignore[attr-defined]
     module.HUMMINGBIRD_RELEASE_SPEC = (  # type: ignore[attr-defined]
         tmp_path / 'rpms' / 'hummingbird-release' / 'hummingbird-release.spec'
     )
@@ -654,18 +653,27 @@ def test_check_candidates_batches_one_query_per_repo(checker, fake_dnf, tmp_path
 # private_product handling
 #
 
-def test_load_private_products(checker, tmp_path):
-    (tmp_path / 'ci' / 'package-overrides.yaml').write_text(yaml.dump({
-        'ldap-widget': {'private_product': 'ldap', 'timeout_hours': 8},
-        'public-widget': {'timeout_hours': 4},
+def _assign_private_product(root: Path) -> None:
+    from hum.meta import MetadataRepository
+
+    (root / 'ci' / 'konflux_rpa_config.yml').write_text(yaml.safe_dump({
+        'rpas': [{'private_product': 'ldap'}],
     }))
+    repo = MetadataRepository(root)
+    metadata = repo.create_independent(
+        'ldap-widget', version='1.0', upstream_repo='https://example.com/ldap-widget',
+    )
+    metadata.private_product = 'ldap'
+    repo.save(metadata)
 
-    assert checker.load_private_products() == {'ldap-widget': 'ldap'}
+
+def test_private_product_query(checker, tmp_path):
+    _assign_private_product(tmp_path)
+    assert checker.MetadataRepository(checker.ROOT_DIR).private_products() == {'ldap-widget': 'ldap'}
 
 
-def test_load_private_products_missing_file_returns_empty(checker, tmp_path):
-    (tmp_path / 'ci' / 'package-overrides.yaml').unlink()
-    assert checker.load_private_products() == {}
+def test_private_product_query_empty_metadata_returns_empty(checker):
+    assert checker.MetadataRepository(checker.ROOT_DIR).private_products() == {}
 
 
 #
@@ -945,7 +953,8 @@ Test
     assert statuses['widget'] == 'CONFLICT'
 
 
-def test_main_private_product_note(checker, tmp_path, fake_dnf, monkeypatch, capsys):
+@pytest.mark.parametrize('json_output', [False, True])
+def test_main_private_product_note(checker, tmp_path, fake_dnf, monkeypatch, capsys, json_output):
     _create_package(tmp_path, 'ldap-widget', """\
 Name: ldap-widget
 Version: 1.0
@@ -958,11 +967,9 @@ Test
 
 %files
 """)
-    (tmp_path / 'ci' / 'package-overrides.yaml').write_text(
-        yaml.dump({'ldap-widget': {'private_product': 'ldap'}})
-    )
+    _assign_private_product(tmp_path)
     fake_dnf({})
-    monkeypatch.setattr(sys, 'argv', _argv_with_urls('ldap-widget'))
+    monkeypatch.setattr(sys, 'argv', _argv_with_urls('ldap-widget', *(['--json'] if json_output else [])))
 
     exit_code = checker.main()
 
@@ -970,6 +977,28 @@ Test
     assert exit_code == 0
     assert 'private_product' in out
     assert 'ldap' in out
+    if json_output:
+        assert all(result['private_product'] == 'ldap' for result in json.loads(out)['results'])
+
+
+@pytest.mark.parametrize('conflict', [False, True])
+def test_main_invalid_private_assignment_preserves_conflict_status(
+    checker, tmp_path, fake_dnf, monkeypatch, capsys, conflict,
+):
+    _create_package(tmp_path, 'ldap-widget', (
+        'Name: ldap-widget\nVersion: 1.0\nRelease: 1%{?dist}\n'
+        'Summary: Test\nLicense: MIT\n\n%description\nTest\n\n%files\n'
+    ))
+    _assign_private_product(tmp_path)
+    (tmp_path / 'ci' / 'konflux_rpa_config.yml').write_text('rpas: []\n')
+    fake_dnf({
+        base_url: {'ldap-widget': ['1.0-1.hum1']} for base_url in PUBLIC_BASE_URLS.values()
+    } if conflict else {})
+    monkeypatch.setattr(sys, 'argv', _argv_with_urls('ldap-widget', '--json'))
+    exit_code = checker.main()
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == (1 if conflict else 2)
+    assert any('Cannot load private product assignments' in error for error in payload['errors'])
 
 
 def _git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:

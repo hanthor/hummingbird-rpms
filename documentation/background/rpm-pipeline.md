@@ -144,7 +144,8 @@ GitLab CI runs validation jobs on every merge request:
   `make check-nevr-conflicts ARGS='--rpms-dir builds/<package>'` after
   `ci/build_rpms.sh`. See `ci/check_nevr_conflicts.py`'s module docstring for
   full details. Known limitations: only the public signed Pulp domain is
-  checked (packages routed to a `private_product` are noted but not fully
+  checked (packages assigned a `private_product` in `metadata/<package>.json`
+  through `hum.meta` are noted but not fully
   verified, since their domains require Pulp API credentials this tool
   doesn't have); and since it reflects Pulp's state at job-run time, it
   reduces but cannot fully close the race where another MR publishes the
