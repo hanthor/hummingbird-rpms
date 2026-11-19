@@ -14,6 +14,8 @@ accepted-checksums:
       and Swag CVE pins that downgraded upstream dependencies. Preserve containerd
       v2.4.1 with its matching API v1.12.0 to fix the missing UpdateSandbox build error."
   - file: "trivy-0.76.1-vendor.tar.bz2"
-    checksum: "30b0620eb30094aa98a0f970439eaf6ceeb6b2426d6937c800ebdcbfc957515179a8f430565a29324d81008b0334716b45b675a06cafceb6b1656f0e60f8a4e9"
+    checksum: "94f987cdc8abce22913ac8f4407e25c7496329412a342cabc76da794f4113d490c78dc01862334cd42f14dfd1725e70899b4d6d2a191a627d115d374cec18d9e"
     reason: "Regenerate the vendor archive after bumping github.com/klauspost/compress
-      to v1.20.3 for CVE-2026-116591 (zstd DoS via crafted two-block frame)."
+      to v1.20.3 for CVE-2026-116591 (zstd DoS via crafted two-block frame) and
+      the OpenTelemetry-Go modules to v1.47.0 for CVE-2026-128085 (attribute
+      truncation bypass)."
