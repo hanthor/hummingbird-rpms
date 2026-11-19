@@ -34,7 +34,7 @@ print(string.sub(hash, 0, 16))
 Summary: Utilities from the general purpose cryptography library with TLS implementation
 Name: openssl
 Version: 3.5.9
-Release: 0.4%{?dist}
+Release: 0.5%{?dist}
 Epoch: 1
 Source0: openssl-%{version}.tar.gz
 Source1: fips-hmacify.sh
@@ -107,6 +107,8 @@ Patch0058: 0058-Skip-tests-not-matching-Fedora-RHEL-FIPS-changes.patch
 Patch0059: 0059-Fix-CVE-2026-88822-QUIC-peer-address-uninitialized.patch
 Patch0060: 0060-Fix-CVE-2026-95692-AES-GCM-SIV-IV-length.patch
 Patch0061: 0061-Fix-CVE-2026-88823-AES-GCM-SIV-zero-length-AAD.patch
+Patch0062: 0062-Fix-CVE-2026-95691-QUIC-CRYPTO-frame-retransmission-UAF.patch
+Patch0063: 0063-Fix-CVE-2026-107496-EC-key-reject-invalid-group-order.patch
 
 License: Apache-2.0
 URL: http://www.openssl.org/
