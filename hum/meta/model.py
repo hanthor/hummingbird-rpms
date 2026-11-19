@@ -21,6 +21,7 @@ from .validation import (
     check_modification_reason,
     check_modification_reason_matches_state,
     check_modification_status,
+    check_private_product,
     check_upstream_repo,
     check_upstream_tracking_combination,
     check_version,
@@ -127,6 +128,7 @@ _RECOGNIZED_FIELDS = frozenset(
         "version_suffix_strip",
         "upstream_version_transform",
         "source_availability_check",
+        "private_product",
         "cve_product",
         "version_transform",
         "fix_status",
@@ -426,6 +428,7 @@ class PackageMetadata(abc.ABC):
         upstream_version_transform: str | None = None,
         source_availability_check: str | None = None,
         version_from_ref: VersionFromRef | None = None,
+        private_product: str | None = None,
         cve_product: str | list[str] | None = None,
         version_transform: str | None = None,
         fix_status: int | None = None,
@@ -453,6 +456,7 @@ class PackageMetadata(abc.ABC):
         self._upstream_version_transform = upstream_version_transform
         self._source_availability_check = source_availability_check
         self._version_from_ref = version_from_ref
+        self.private_product = private_product
         self._cve_product = _normalize_or_raise_cve_product(cve_product)
         self._version_transform = version_transform
         self._fix_status = _normalize_or_raise_fix_status(fix_status)
@@ -498,6 +502,7 @@ class PackageMetadata(abc.ABC):
             "upstream_version_transform": self._upstream_version_transform,
             "source_availability_check": self._source_availability_check,
             "version_from_ref": self._version_from_ref,
+            "private_product": self._private_product,
             "cve_product": self._cve_product,
             "version_transform": self._version_transform,
             "fix_status": self._fix_status,
@@ -538,6 +543,10 @@ class PackageMetadata(abc.ABC):
             raise MalformedMetadataError(
                 f"{package_name}: unrecognized field(s): {sorted(unrecognized)}"
             )
+        if "private_product" in data and data["private_product"] is None:
+            raise MalformedMetadataError(
+                f"{package_name}: private_product must be omitted rather than null"
+            )
 
         modification_status = data.get("modification_status")
         status_error = check_modification_status(modification_status)
@@ -560,6 +569,7 @@ class PackageMetadata(abc.ABC):
                 "upstream_version_transform": data.get("upstream_version_transform"),
                 "source_availability_check": data.get("source_availability_check"),
                 "version_from_ref": version_from_ref,
+                "private_product": data.get("private_product"),
                 # Pre-normalized leniently here, matching read semantics --
                 # __init__'s own strict re-check then always sees an
                 # already-clean value, so a messy legacy file still loads
@@ -700,6 +710,18 @@ class PackageMetadata(abc.ABC):
         self._version_from_ref = value
 
     @property
+    def private_product(self) -> str | None:
+        return self._private_product
+
+    @private_product.setter
+    def private_product(self, value: str | None) -> None:
+        """Set or clear the product; repository operations check RPA membership."""
+        error = check_private_product(value)
+        if error is not None:
+            raise ValueError(error.message)
+        self._private_product = value
+
+    @property
     def cve_product(self) -> str | list[str] | None:
         """Normalized via normalize_cve_product() -- malformed on-disk
         values are dropped with a warning, not raised. Warns only once per
@@ -831,6 +853,7 @@ class PackageMetadata(abc.ABC):
         add(check_upstream_repo(self.upstream_repo))
         add(check_version_source(self.version_source))
         add(check_version_from_ref(self.version_from_ref))
+        add(check_private_product(self.private_product))
         add(check_fedora_release(_fedora_release(self)))
         if hasattr(self, "modification_reason"):
             add(check_modification_reason(self.modification_reason))

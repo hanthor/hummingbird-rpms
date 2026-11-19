@@ -4,10 +4,9 @@ weight: 55
 aliases: [/l/private-rpm-repositories]
 ---
 
-> **AI Agent Note:** When asked to route a package to a private repository, add
-> `private_product: <product>` to the package's entry in `ci/package-overrides.yaml`,
-> then run `make generate` to regenerate resources. The product name must match an
-> existing RPA entry in `ci/konflux_rpa_config.yml`.
+> **AI Agent Note:** Assign a private product through `hum.meta`, which saves
+> `private_product` in `metadata/<package>.json`, then run `make generate`.
+> The product must match an existing RPA entry in `ci/konflux_rpa_config.yml`.
 
 ## Overview
 
@@ -25,16 +24,16 @@ to separate Pulp domains via dedicated Konflux Applications and ReleasePlanAdmis
 2. A **ReleasePlan** connects the private Application to its RPA, enabling
    auto-releases when builds complete.
 3. Packages are assigned to a private product via `private_product` in
-   `ci/package-overrides.yaml`.
+   `metadata/<package>.json`, read and written through `hum.meta`.
 4. A dedicated **RPA** per product routes those packages to private Pulp repositories.
 5. Packages with `private_product` are automatically excluded from the public RPA.
 
 ### Architecture
 
 ```text
-package-overrides.yaml          konflux_rpa_config.yml
-  <package>:                      rpas:
-    private_product: <product>      - name: ...public...
+metadata/<package>.json         konflux_rpa_config.yml
+  "private_product": "<product>"   rpas:
+                                    - name: ...public...
                                     - name: ...private-<product>...
                                       private_product: <product>
         |                                    |
@@ -51,13 +50,25 @@ package-overrides.yaml          konflux_rpa_config.yml
 
 ## Assigning a Package to a Private Product
 
-Add `private_product` to the package's entry in `ci/package-overrides.yaml`:
+Set `private_product` through `hum.meta` for an existing product:
 
-```yaml
-<package>:
-  private_product: <product>
-  timeout_hours: 8
+```bash
+make container <<'SH'
+python3 - <<'PY'
+from pathlib import Path
+from hum.meta import MetadataRepository
+
+repo = MetadataRepository(Path.cwd())
+metadata = repo.load("<package>")
+metadata.private_product = "<product>"
+repo.save(metadata)
+PY
+SH
 ```
+
+This updates `metadata/<package>.json` without changing the package's state. The library checks
+that the product has a matching RPA entry. Do not infer private or LTS status from a package-name
+suffix, and do not add assignments to `ci/package-overrides.yaml`.
 
 Then regenerate all resources:
 
@@ -327,14 +338,14 @@ Key fields:
 | ---------------------- | --------------------------------------------------------------- |
 | `name`                 | Kubernetes resource name for the RPA                            |
 | `application_prefix`   | Combined with branch to form the Konflux Application name       |
-| `private_product`      | Matches the `private_product` value in `package-overrides.yaml` |
+| `private_product`      | Matches the product assignment in `metadata/<package>.json`     |
 | `pulp_unsigned_domain` | Pulp domain for unsigned RPMs (staging)                         |
 | `pulp_signed_domain`   | Pulp domain for signed RPMs (production)                        |
 | `pulp_secret_name`     | Kubernetes secret containing Pulp publishing credentials        |
 
 ### 6. Assign packages and regenerate
 
-Add `private_product: <product>` to each package in `ci/package-overrides.yaml`, then
+Assign each package through `hum.meta` as described in [Assigning a package][assigning], then
 regenerate:
 
 ```bash
@@ -373,18 +384,20 @@ not at the Pulp publishing layer.
 
 ## Public/Private Routing
 
-Packages with `private_product` set in `ci/package-overrides.yaml` are automatically
-excluded from the public RPA and included only in their product's private RPA. Removing
-the `private_product` field returns the package to public-only publishing.
+Packages with `private_product` set in `metadata/<package>.json` are automatically excluded from
+the public RPA and included only in their product's private RPA. Set `metadata.private_product`
+to `None` and save through `hum.meta` to return the package to public-only publishing.
 
 ## Related Files
 
 | File                                                            | Purpose                                              |
 | --------------------------------------------------------------- | ---------------------------------------------------- |
-| `ci/package-overrides.yaml`                                     | Per-package `private_product` assignment             |
+| `metadata/<package>.json`                                       | Per-package `private_product` assignment             |
 | `ci/konflux_rpa_config.yml`                                     | RPA definitions (public + private)                   |
 | `ci/generate_resources.py`                                      | Generates Components, RPAs, and PipelineRuns         |
 | `ci/pulp-setup/create-pulp-resources.sh`                        | Creates Pulp domains and repositories                |
 | `konflux-templates/macros/releng/release-plan-admission.yml.j2` | RPA template                                         |
 | `konflux-templates/macros/component.yml.j2`                     | Component template (per-component application)       |
 | `konflux-templates/macros/image-repository.yml.j2`              | ImageRepository template (per-component application) |
+
+[assigning]: #assigning-a-package-to-a-private-product

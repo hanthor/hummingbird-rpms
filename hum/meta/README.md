@@ -184,6 +184,34 @@ metadata.cve_product = "bash"
 metadata.version_suffix_strip = "-RELEASE"
 ```
 
+## Private products
+
+`private_product` is independent of package state. Set or clear it through the metadata object:
+
+```python
+metadata = repo.load("hello")
+metadata.private_product = "example"
+repo.save(metadata)
+
+metadata.private_product = None  # clear the assignment; omit the field from JSON
+repo.save(metadata)
+```
+
+The setter checks that a supplied value is a non-empty string. `save()` also checks that the
+product matches an RPA entry in `ci/konflux_rpa_config.yml`. `load()` checks the metadata format,
+not the external RPA configuration.
+
+Use repository queries rather than scanning metadata files:
+
+```python
+repo.private_products()  # {"hello": "example", "nodejs20-lts": "nodejs20"}
+repo.packages_by_private_product()  # {"example": ["hello"], "nodejs20": ["nodejs20-lts"]}
+```
+
+Both queries validate assignments against the RPA configuration and reject malformed metadata or
+unknown products. Public packages are omitted. Package names, including a `-lts` suffix, do not
+determine assignments.
+
 ## Validation
 
 Every constructor, setter, and transition already enforces the rules relevant to it, so most

@@ -11,10 +11,6 @@
 #   lookaside_cache_url: URL of a private lookaside cache (CloudFront distribution) for
 #                        downloading source tarballs with signed URLs. When set, the pipeline
 #                        bypasses dist-git-client. Requires the cloudfront-signing-key secret.
-#   private_product: Route this package to a private per-product Pulp repository
-#                    instead of (or in addition to) the public one. The value is the
-#                    product name (e.g., "example", "dotnet") which must match an entry
-#                    in ci/konflux_rpa_config.yml.
 #
 # Example:
 # llvm:
@@ -277,9 +273,6 @@ hdf5:
     - "linux-c2xlarge/amd64"
     - "linux/s390x"
 
-hello:
-  private_product: example
-
 helm3:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
@@ -464,7 +457,6 @@ nodejs20:
   forked_from: "https://gitlab.com/redhat/hummingbird/rpms"
 
 nodejs20-lts:
-  private_product: nodejs20
   lookaside_cache_url: *private_lookaside_cache_url
   # Needed once redhat/hummingbird/pipelines/rpmbuild-pipeline!28 lands: that
   # MR makes process-sources's dist-git-client call unconditional (it no

@@ -49,7 +49,7 @@ run has at least one OK result.
 
 Only the public signed Pulp domain (public-hummingbird) is checked, since it
 is readable anonymously over HTTP. Packages routed to a private product via
-`private_product` in ci/package-overrides.yaml are still checked against the
+`private_product` in metadata/<package>.json are still checked against the
 public domain (in case they are also published there), but a note is printed
 that their private domain was not verified, since it requires Pulp API
 credentials this tool does not have.
@@ -99,9 +99,12 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from hum.meta import MetadataError, MetadataRepository  # noqa: E402
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RPMS_DIR = ROOT_DIR / 'rpms'
-PACKAGE_OVERRIDES_YAML = ROOT_DIR / 'ci' / 'package-overrides.yaml'
 HUMMINGBIRD_RELEASE_SPEC = RPMS_DIR / 'hummingbird-release' / 'hummingbird-release.spec'
 
 DEFAULT_BASE_URLS = {
@@ -494,22 +497,6 @@ def check_candidates(
 
 
 # --------------------------------------------------------------------------
-# private_product handling
-# --------------------------------------------------------------------------
-
-def load_private_products() -> dict[str, str]:
-    """Return {package: private_product} for packages routed to a private repo."""
-    if not PACKAGE_OVERRIDES_YAML.exists():
-        return {}
-    overrides = yaml.safe_load(PACKAGE_OVERRIDES_YAML.read_text()) or {}
-    return {
-        pkg: cfg['private_product']
-        for pkg, cfg in overrides.items()
-        if isinstance(cfg, dict) and cfg.get('private_product')
-    }
-
-
-# --------------------------------------------------------------------------
 # Package selection
 # --------------------------------------------------------------------------
 
@@ -691,7 +678,11 @@ Examples:
     except NevrCheckError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
-    private_products = load_private_products()
+    try:
+        private_products = MetadataRepository(ROOT_DIR).private_products()
+    except (OSError, json.JSONDecodeError, MetadataError, yaml.YAMLError) as e:
+        errors.append(f"Cannot load private product assignments: {e}")
+        private_products = {}
     conflicts = [r for r in results if r.status == 'CONFLICT']
     unknown = [r for r in results if r.status == 'CANNOT_DETERMINE']
     ok_count = len(results) - len(conflicts) - len(unknown)

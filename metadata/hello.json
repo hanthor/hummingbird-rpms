@@ -6,6 +6,7 @@
     "sha": "2621a97179dd5182d127a98a50759a637a4fa334"
   },
   "modification_status": "clean",
+  "private_product": "example",
   "upstream_repo": "https://ftp.gnu.org/gnu/hello/",
   "version": "2.12.3"
 }

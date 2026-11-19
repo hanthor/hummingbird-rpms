@@ -25,8 +25,9 @@ from .model import (
     ModifiedFedoraPackageMetadata,
     ModifiedUpstreamPackageMetadata,
     PackageMetadata,
+    ValidationResult,
 )
-from .validation import _TAG_STRIP_PREFIX_DEFAULT
+from .validation import _TAG_STRIP_PREFIX_DEFAULT, check_private_products
 
 # The base-class fields with no cross-field rules (section 3's "Mutation
 # Types" subsection) -- each is written as-is when not None, nothing more.
@@ -38,6 +39,7 @@ _PLAIN_OPTIONAL_FIELDS = (
     "version_suffix_strip",
     "upstream_version_transform",
     "source_availability_check",
+    "private_product",
     "cve_product",
     "version_transform",
     "fix_status",
@@ -129,12 +131,22 @@ class MetadataRepository:
         location or a conflict-recovery staging path -- path changes
         *where* it's written, not what's enforced before writing.
 
+        Private assignments must also match an RPA entry in
+        ci/konflux_rpa_config.yml.
+
         Otherwise writes to metadata/<package_name>.json, or the explicit
         path if given, serializing whichever concrete class it's given to
         the correct on-disk shape. Any field that's None internally is
         omitted from the JSON, never written as null. The only function
         that ever writes the canonical file."""
         result = metadata.validate()
+        if not result.violations and metadata.private_product is not None:
+            result = ValidationResult(
+                checked_spec_version=result.checked_spec_version,
+                violations=check_private_products(
+                    {metadata.package_name: metadata.private_product}, self._private_product_names(),
+                ),
+            )
         if result.violations:
             raise InvalidMetadataError(result)
 
@@ -219,6 +231,42 @@ class MetadataRepository:
         Fails fast: raises on the first file that can't be loaded rather
         than returning a partial result."""
         return {name: self.load(name) for name in self.packages_with_metadata()}
+
+    def _private_product_names(self) -> set[str]:
+        """Read the product names declared by the repository's RPAs."""
+        path = self._root / "ci" / "konflux_rpa_config.yml"
+        with path.open(encoding="utf-8") as handle:
+            config = yaml.safe_load(handle) or {}
+        return {
+            rpa["private_product"]
+            for rpa in config.get("rpas", [])
+            if rpa.get("private_product")
+        }
+
+    def private_products(self) -> dict[str, str]:
+        """Return validated {package: product} assignments, excluding public packages.
+
+        Fails on malformed metadata or unknown products rather than treating a
+        private package as public. An empty repository needs no RPA configuration.
+        """
+        assignments = {}
+        for package, metadata in self.load_all().items():
+            if metadata.private_product is not None:
+                assignments[package] = metadata.private_product
+        if assignments:
+            violations = check_private_products(assignments, self._private_product_names())
+            if violations:
+                raise InvalidMetadataError(ValidationResult(
+                    checked_spec_version=False, violations=violations,
+                ))
+        return assignments
+
+    def packages_by_private_product(self) -> dict[str, list[str]]:
+        """Return {product: sorted package names} for assigned products."""
+        products: dict[str, list[str]] = {}
+        for package, product in self.private_products().items():
+            products.setdefault(product, []).append(package)
+        return {product: sorted(packages) for product, packages in products.items()}
 
     def packages_with_spec(self) -> list[str]:
         """Packages under rpms/<name>/ that have a .spec file. Matches

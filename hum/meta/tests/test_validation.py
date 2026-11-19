@@ -26,6 +26,8 @@ from hum.meta.validation import (
     check_modification_reason,
     check_modification_reason_matches_state,
     check_modification_status,
+    check_private_product,
+    check_private_products,
     check_upstream_repo,
     check_upstream_tracking_combination,
     check_version,
@@ -51,6 +53,28 @@ def assert_one_violation(violations: list[ValidationError], *expected_substrings
 
 def messages(violations: list[ValidationError]) -> list[str]:
     return [v.message for v in violations]
+
+
+@pytest.mark.parametrize("value", [None, "nodejs20", "example-product"])
+def test_private_product_valid(value: object) -> None:
+    assert check_private_product(value) is None
+
+
+@pytest.mark.parametrize("value", ["", 1, True, [], {}])
+def test_private_product_invalid(value: object) -> None:
+    assert_invalid(check_private_product(value), "private_product", "non-empty")
+
+
+def test_private_products_match_rpas() -> None:
+    assert check_private_products({"hello": "example"}, {"example", "nodejs20"}) == []
+
+
+def test_private_products_report_each_unknown_assignment() -> None:
+    violations = check_private_products({"hello": "missing", "nodejs20-lts": "nodejs20"}, set())
+    assert len(violations) == 2
+    assert "hello" in violations[0].message
+    assert "missing" in violations[0].message
+    assert "nodejs20-lts" in violations[1].message
 
 
 def fedora(**overrides: object) -> SimpleNamespace:
