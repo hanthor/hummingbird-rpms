@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/selinux-policy.git",
     "release": "1",
-    "sha": "f33bf6aeada7398eb835bac4bc2d0f6fb528c714"
+    "sha": "d909f9a243fe8af1056c4b4eeba6dfa2209ba52a"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/fedora-selinux/selinux-policy",
-  "version": "45.24"
+  "version": "45.25"
 }
