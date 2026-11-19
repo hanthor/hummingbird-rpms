@@ -53,6 +53,34 @@ reserved names and paths that differ only by case.
 New clones can check out the corrected tree on Windows. Older commits still contain the original
 filenames, so checking out those commits requires a filesystem that supports them.
 
+## Recovering or abandoning a pending update
+
+A failed update can leave `.dist_git_update_state.json` with the candidate metadata and
+commit message needed to finish the operation. New updates refuse to overwrite that state.
+Correct the reported problem, restore a missing package directory if necessary, then resume:
+
+```bash
+make dist-git ARGS='update --continue'
+```
+
+To deliberately forget the pending operation instead:
+
+```bash
+make dist-git ARGS='--dry-run update --abandon'
+make dist-git ARGS='update --abandon'
+```
+
+`--abandon` removes **only the recovery state file**. It does not revert package files,
+rewrite metadata, change the index, or create a commit. It also works when recovery JSON is
+corrupt or merge conflicts remain. No package metadata, release mapping, or Git identity is
+required. Dry-run previews the removal without deleting the state file.
+
+Abandoning is **not a rollback**: retained files can still contain conflict markers or disagree
+with metadata. Inspect and correct those changes before another package operation. The
+abandoned operation can no longer be resumed with `--continue`. The command fails when no
+pending state exists, and cannot be combined with `--continue`, a package name, or update
+selection flags such as `--branch` and `--ref`.
+
 ## `dist_git.py --dry-run` policy
 
 `--dry-run` preserves each command's established behavior. It is **not** a universal
@@ -65,6 +93,7 @@ Each command's `--help` also describes its policy.
 | `import` | Imports files, writes metadata, and regenerates resources, without staging or committing. |
 | `update` | Updates package files, but does not save metadata, run source pipelines, commit, or write recovery state. Existing safety checks still apply. |
 | `update --continue` | Checks for unresolved conflict markers and reports the intended commit, without source verification, spec finalization, or committing. |
+| `update --abandon` | Previews removing the recovery state file; retains the state file, package files, metadata, and staged changes. |
 | `sync` | Replaces package files, but does not save metadata, run source pipelines, commit, or write recovery state. With `--mark`, files are left unchanged only when the requested SHA already matches the recorded SHA and the branch is unchanged. If upstream has advanced or the branch changes, normal sync still replaces files and can discard local edits, even with `--mark`. |
 | `rebuild` | Modifies spec releases without committing. |
 | `rebuild-rev-deps` | Modifies reverse-dependency spec releases without committing. |
