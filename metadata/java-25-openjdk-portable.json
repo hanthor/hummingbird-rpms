@@ -1,18 +1,18 @@
 {
-  "version": "25.0.5.0.8",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/openjdk/jdk25u",
+  "cve_product": "Oracle Corporation / Oracle Java SE",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/java-25-openjdk-portable.git",
     "branch": "rawhide",
-    "sha": "e9cbee207c7e0f6b8a8cb88b46a0ac71a8e4f38b",
-    "release": "3.0"
+    "git_url": "https://src.fedoraproject.org/rpms/java-25-openjdk-portable.git",
+    "release": "3.1",
+    "sha": "2efa793e95dd6f973b6dec5714807ca7a9e1186f"
   },
   "modification_reason": "Add changelog separator to spec file; CVE-2026-60589; CVE-2026-61308; CVE-2026-70907; CVE-2026-70906",
-  "track_upstream": "25",
+  "modification_status": "modified",
   "release_monitoring_project_id": 378887,
-  "upstream_version_transform": "openjdk_to_rpm",
   "source_availability_check": "openjdk_osci",
-  "cve_product": "Oracle Corporation / Oracle Java SE",
+  "track_upstream": "25",
+  "upstream_repo": "https://github.com/openjdk/jdk25u",
+  "upstream_version_transform": "openjdk_to_rpm",
+  "version": "25.0.5.0.8",
   "version_transform": "openjdk_to_oracle"
 }
