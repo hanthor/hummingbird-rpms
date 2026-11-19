@@ -76,7 +76,7 @@
     {
       "description": "Group testing-farm IMAGE_TAG updates (template + rendered) into one PR",
       "matchManagers": [
-        "regex"
+        "custom.regex"
       ],
       "matchPackageNames": [
         "quay.io/testing-farm/tmt-via-testing-farm"
