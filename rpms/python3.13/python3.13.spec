@@ -427,6 +427,18 @@ Patch480: 0480-cve-2026-19552-man-in-the-middle-attack-missing-certificate-ident
 # gh-161569: Check cookie policy before deleting expired cookies in http.cookiejar
 Patch481: 00481-cve-2026-124249-check-cookie-policy-before-deleting-expired-cookies.patch
 
+# 00482 # e891a9117985888df3e5d48145cf07ddda098335
+# CVE-2026-115791
+#
+# gh-161705: Prevent shadowing stdlib in gzip/tarfile/zipfile CLI
+Patch482: 00482-cve-2026-115791-prevent-shadowing-stdlib-in-gzip-tarfile-zipfile-cli.patch
+
+# 00483 # 2f0e294d85c905691e360586ebd1d1f7e7a1f5df
+# CVE-2026-115559
+#
+# gh-160369: Reject buffered plaintext after IMAP STARTTLS
+Patch483: 00483-cve-2026-115559-reject-buffered-plaintext-after-imap-starttls.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora, EL, etc.,
