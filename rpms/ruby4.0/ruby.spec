@@ -1,6 +1,6 @@
 %global major_version 4
 %global minor_version 0
-%global teeny_version 9
+%global teeny_version 10
 %global major_minor_version %{major_version}.%{minor_version}
 %global ruby_major_minor %{major_version}.%{minor_version}
 %global _rubygem_pkg rubygem%{ruby_major_minor}
@@ -81,7 +81,7 @@
 %global io_nonblock_version 0.3.2
 %global io_wait_version 0.4.0
 %global ipaddr_version 1.2.8
-%global json_version 2.18.0
+%global json_version 2.18.3
 %global net_http_version 0.9.1
 %global net_protocol_version 0.2.2
 %global open_uri_version 0.5.0
@@ -203,7 +203,7 @@ Summary: An interpreter of object-oriented scripting language
 
 Name: %{basepackagename}%{major_version}.%{minor_version}
 Version: %{ruby_version}%{?development_release}
-Release: 41%{?dist}
+Release: 42%{?dist}
 # Licenses, which are likely not included in binary RPMs:
 # Apache-2.0:
 #   benchmark/gc/redblack.rb
@@ -2021,9 +2021,20 @@ make -C %{_vpath_builddir} runruby TESTRUN_SCRIPT=" \
 
 
 %changelog
+* Thu Nov 19 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.10-42
+- Update to Ruby 4.0.10
+- Fixes the following bugs in Regexp and String case conversion
+- Resolves: CGHSA-34m4-m9fh-gqp5 (VE-2026-132825)
+- Resolves: GHSA-7x2q-68qv-6p8x
+- Resolves: GHSA-87fm-7w84-j2px
+- Resolves: GHSA-wpqw-5qxg-m68r
+- Resolves: GHSA-3p8q-wmhx-vm2w
+- Resolves: GHSA-7whj-cfh7-xgm4
+- Resolves: GHSA-pvgc-g7gj-pv6h
+
 * Fri Oct 23 2026 Mamoru TASAKA <mtasaka@fedoraproject.org> - 4.0.9-41
 - Update to Ruby 4.0.9
-- Fixes the following bugs in Omigumo regexp compilation
+- Fixes the following bugs in Onigumo regexp compilation
 - Resolves: CVE-2026-93577
 - Resolves: CVE-2026-97229
 - Resolves: CVE-2026-110264

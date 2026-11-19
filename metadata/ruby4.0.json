@@ -3,12 +3,12 @@
   "fedora": {
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/ruby.git",
-    "release": "41",
-    "sha": "665848c33a474a19afbf9debc55ee332ceb7338b"
+    "release": "42",
+    "sha": "5d56fd3f092e79b53440a11be1801f54428e1230"
   },
   "modification_reason": "CVE-2026-42245; CVE-2026-42246; CVE-2026-42256; CVE-2026-47240; CVE-2026-47242; CVE-2026-54696; CVE-2026-33210; CVE-2026-80212; CVE-2026-80213; added gorget source-pipeline.yaml (HUM-4620 audit finding): Source0's %{name} macro resolves to the versioned package name (ruby4.0), but cache.ruby-lang.org's archive path uses the bare base name 'ruby' -- checksum matches the existing recorded checksum exactly, no content change.",
   "modification_status": "modified",
   "upstream_branch": "ruby_4_0",
   "upstream_repo": "https://github.com/ruby/ruby",
-  "version": "4.0.9"
+  "version": "4.0.10"
 }
