@@ -3,6 +3,23 @@ fetch:
     repo: "${UPSTREAM_REPO}"
     ref: "v${VERSION}"
     archive_name: "spire-${VERSION}.tar.gz"
+
+transform:
   - type: vendor
     ecosystem: go
     archive_name: "spire-${VERSION}-vendor.tar.bz2"
+    # Apply the overrides in rpms/spire1.14/go-vendor-tools.toml's
+    # [archive.dependency_overrides] in an isolated vendor tree, then
+    # synchronize only go.mod/go.sum to Source0 before it is repacked.
+    sync_go_modules: true
+
+accepted-checksums:
+  # HUM-12804 / CVE-2026-128085: bump otel modules to v1.47.0 via
+  # dependency_overrides; sync_go_modules updates Source0 go.mod/go.sum to match
+  # and replaces the former spire1.14-go-vendor-overrides.patch.
+  - file: "spire-1.14.9.tar.gz"
+    checksum: "dafd8de9eb2546a2a264e8f38d03017abc475518ed7d443f8dc078c74fe3d5b52ff69d200db998c22a43615411969ebe905f61e249501245c7fdb6aaa15e41d4"
+    reason: "HUM-12804: Source0 go.mod/go.sum security pins synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v1.14.9."
+  - file: "spire-1.14.9-vendor.tar.bz2"
+    checksum: "e2700ad7ce9dd3cd1ded1324d0aeebe297477f50da7867f499f36617734136a84fe3d0996eca3cf043758e4312b241feb42766ecc5527a434f56414f9416252e"
+    reason: "HUM-12804: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
