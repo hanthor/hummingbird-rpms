@@ -2,21 +2,21 @@
 %{!?version_no_tilde: %define version_no_tilde %{shrink:%(echo '%{version}' | tr '~' '-')}}
 
 Name:           btrfs-progs
-Version:        7.1
-Release:        3.1%{?dist}
+Version:        7.3
+Release:        1%{?dist}
 Summary:        Userspace programs for btrfs
 
 License:        GPL-2.0-only
 URL:            https://btrfs.readthedocs.io
 Source0:        https://www.kernel.org/pub/linux/kernel/people/kdave/%{name}/%{name}-v%{version_no_tilde}.tar.xz
 Source1:        https://www.kernel.org/pub/linux/kernel/people/kdave/%{name}/%{name}-v%{version_no_tilde}.tar.sign
-Source2:        gpgkey-F2B41200C54EFB30380C1756C565D5F9D76D583B.gpg
+Source2:        https://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git/plain/keys/C565D5F9D76D583B.asc
 
 # Special patch source, conditionally applied
 ## Disable RAID56 modes (RHEL-only)
 Source1001:     1001-balance-mkfs-Disable-raid56-modes.patch
 
-BuildRequires:  gnupg2
+BuildRequires:  openpgpverify
 BuildRequires:  gcc, autoconf, automake, make
 BuildRequires:  git-core
 BuildRequires:  e2fsprogs-devel
@@ -92,7 +92,7 @@ btrfs filesystem-specific programs in Python.
 
 
 %prep
-xzcat '%{SOURCE0}' | %{gpgverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data=-
+xzcat '%{SOURCE0}' | %{openpgpverify} --keyring='%{SOURCE2}' --signature='%{SOURCE1}' --data=-
 %autosetup -n %{name}-v%{version_no_tilde} -S git_am
 
 %if 0%{?rhel}
@@ -169,6 +169,13 @@ popd >/dev/null
 
 
 %changelog
+* Thu Nov 19 2026 Igor Raits <igor.raits@gmail.com> - 7.3-1
+- Update to 7.3
+- Resolves: rhbz#2560079
+
+* Thu Nov 05 2026 Jakub Jelen <jjelen@redhat.com> - 7.1-4
+- Verify upstream source signatures with openpgpverify
+
 * Fri Oct 09 2026 Neal Gompa <ngompa@fedoraproject.org> - 7.1-3
 - Switch from libkcapi to openssl for crypto
 
