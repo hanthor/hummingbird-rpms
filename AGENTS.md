@@ -37,6 +37,7 @@ Use `limactl shell fedora` only when the Makefile container is unavailable.
 | `./ci/dist_git.py add-private-product <product> --packages pkg1,pkg2`      | Create a private product: Pulp repos, RPA config, and package assignments                                                     |
 | `make generate`                                                            | Regenerate PipelineRun YAML after changing a package's `push_pipeline` in `ci/package-overrides.yaml`                         |
 | `./ci/check_upstream_versions.py check --update <pkg>`                     | Update an independent package to a new upstream version, using its source pipeline when it has one                            |
+| `python3 ci/konflux_backlog_runner.py --context <rh03> [--apply]`          | Retrigger an ordered MR backlog with bounded MR concurrency; dry run by default                                               |
 
 The `dist_git.py --dry-run` flag is command-specific, **not** a side-effect-free preview.
 Import, update, sync, and rebuild commands can still modify files. `mark-modified` and
@@ -77,6 +78,7 @@ Common operational tasks that users or AI agents may need to perform:
 | Analyze upstream diffs         | `diff --all --stat`                                             | [Upstream Diff Analysis](documentation/operating/upstream-diff-analysis.md)                     | Classify modified packages for upstreaming                             |
 | Report CVE data issues         | _(see docs)_                                                    | [Reporting CVE Data Issues](documentation/operating/reporting-cve-data-issues.md)               | Get incorrect CVE data on cve.org or NIST corrected                    |
 | Konflux resource deployment    | _(background info)_                                             | [Konflux Resource Deployment](documentation/background/konflux-resource-deployment.md)          | Understand how Konflux resources are deployed                          |
+| Process Konflux MR backlog     | `python3 ci/konflux_backlog_runner.py --context <rh03-context>` | [Backlog Runner](documentation/operating/konflux-backlog-runner.md)                             | Retrigger selected RPMs and containers MRs in priority order           |
 | Private RPM repositories       | _(package-overrides + RPA config)_                              | [Private RPM Repositories](documentation/operating/private-rpm-repositories.md)                 | Route packages to private per-product Pulp repos                       |
 | Add private product            | `add-private-product <product> --packages ...`                  | [Private RPM Repositories](documentation/operating/private-rpm-repositories.md)                 | Create a private product with Pulp repos, RPA, and packages            |
 | Rebase buildroot to new Fedora | _(multi-step; see runbook)_                                     | [Rebasing Buildroot to New Fedora](documentation/operating/rebasing-buildroot-to-new-fedora.md) | Move mock.cfg, core toolchain, and package set to a new Fedora release |
