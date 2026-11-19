@@ -20,4 +20,4 @@ diff -up libksba-1.3.0/src/ksba-config.in.multilib libksba-1.3.0/src/ksba-config
 -    fi
      tmp=""
      for i in $libdirs $libs; do
-        if echo "$tmp" | fgrep -v -- "$i" >/dev/null; then
+        if echo "$tmp" | @FGREP@ -v -- "$i" >/dev/null; then
