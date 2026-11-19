@@ -1,9 +1,8 @@
-Sync go.mod/go.sum with the generated 0.76.1 vendor archive.
+Sync go.mod/go.sum with the generated 0.76.2 vendor archive.
 
 Regenerated from the checksum-verified source and vendor archives in sources.
-Match the vendor archive's module files exactly, including the system-linked
-SQLite backend selected by go-vendor-tools.toml's pre_commands and the
-klauspost/compress v1.20.3 bump for CVE-2026-116591.
+Match the vendor archive module files, including the SQLite backend and
+klauspost/compress update selected by go-vendor-tools.toml.
 
 --- a/go.mod
 +++ b/go.mod
@@ -11,19 +10,19 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  	github.com/masahiro331/go-vmdk-parser v0.0.0-20260423020818-08305fa668d2
  	github.com/masahiro331/go-xfs-filesystem v0.0.0-20260422061116-d21e5e4481bb
  	github.com/mattn/go-shellwords v1.0.16
-+	github.com/mattn/go-sqlite3 v1.14.52
++	github.com/mattn/go-sqlite3 v1.14.53
  	github.com/mitchellh/hashstructure/v2 v2.0.2
  	github.com/moby/buildkit v0.34.0
  	github.com/moby/docker-image-spec v1.3.1
 @@ -127,7 +128,6 @@
- 	helm.sh/helm/v4 v4.3.0
+ 	helm.sh/helm/v4 v4.3.1
  	k8s.io/api v0.37.1
  	k8s.io/utils v0.0.0-20260626114624-be93311217bd
 -	modernc.org/sqlite v1.60.1
  )
  
  require (
-@@ -312,7 +312,7 @@
+@@ -313,7 +313,7 @@
  	github.com/josephburnett/jd/v2 v2.3.0 // indirect
  	github.com/json-iterator/go v1.1.12 // indirect
  	github.com/kevinburke/ssh_config v1.2.0 // indirect
@@ -32,7 +31,7 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  	github.com/klauspost/pgzip v1.2.6 // indirect
  	github.com/knqyf263/labeler v0.0.0-20200423181506-7a6e545148c3 // indirect
  	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
-@@ -353,7 +353,6 @@
+@@ -354,7 +354,6 @@
  	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
  	github.com/morikuni/aec v1.1.0 // indirect
  	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -40,10 +39,10 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  	github.com/oklog/ulid/v2 v2.1.2 // indirect
  	github.com/opencontainers/runtime-spec v1.3.0 // indirect
  	github.com/owenrumney/squealer v1.2.12 // indirect
-@@ -461,9 +460,6 @@
+@@ -466,9 +465,6 @@
  	k8s.io/klog/v2 v2.140.0 // indirect
  	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
- 	k8s.io/kubectl v0.37.0 // indirect
+ 	k8s.io/kubectl v0.37.1 // indirect
 -	modernc.org/libc v1.77.1 // indirect
 -	modernc.org/mathutil v1.7.1 // indirect
 -	modernc.org/memory v1.12.1 // indirect
@@ -63,7 +62,7 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  github.com/google/s2a-go v0.1.10 h1:EMp+aOuXN6l8cE/gjF5Bt+vyZxsUuyCWe9chDWR/+uU=
  github.com/google/s2a-go v0.1.10/go.mod h1:pz4tyvwXvJLLbyrkh6FW1eS2zPUXMaTmyNhYtyP2tNw=
  github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 h1:SJ+NtwL6QaZ21U+IrK7d0gGgpjGGvd2kz+FzTHVzdqI=
-@@ -622,6 +622,8 @@
+@@ -622,13 +622,15 @@
  github.com/josephburnett/jd/v2 v2.3.0/go.mod h1:0I5+gbo7y8diuajJjm79AF44eqTheSJy1K7DSbIUFAQ=
  github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
  github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
@@ -72,27 +71,27 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=
  github.com/kevinburke/ssh_config v1.2.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
  github.com/keybase/go-keychain v0.0.1 h1:way+bWYa6lDppZoZcgMbYsvC7GxljxrskdNInRtuthU=
-@@ -629,6 +631,8 @@
+ github.com/keybase/go-keychain v0.0.1/go.mod h1:PdEILRW3i9D8JcdM+FmY6RwkHGnhHxXwkPPMeUgOK1k=
  github.com/klauspost/compress v1.4.1/go.mod h1:RyIbtBH6LamlWaDj8nUwkbUhJ87Yi3uG0guNDohfE1A=
- github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=
- github.com/klauspost/compress v1.20.1/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+-github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=
+-github.com/klauspost/compress v1.20.1/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 +github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=
 +github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
  github.com/klauspost/cpuid v1.2.0 h1:NMpwD2G9JSFOE1/TJjGSo5zG7Yb2bTe7eq1jH+irmeE=
  github.com/klauspost/cpuid v1.2.0/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
  github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
-@@ -716,8 +720,8 @@
+@@ -716,8 +718,8 @@
  github.com/mattn/go-shellwords v1.0.16 h1:RRxAaRzU1YbzOSCj9NJqg2/VIbSWv0dnPoD3EwE8kxI=
  github.com/mattn/go-shellwords v1.0.16/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
  github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 -github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBWDRM=
 -github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
-+github.com/mattn/go-sqlite3 v1.14.52 h1:wVbm2Qnf4OXkqhBTSPuCRZDRnxfbVrrmiCEroVdog8U=
-+github.com/mattn/go-sqlite3 v1.14.52/go.mod h1:6JTjA44L93a0QCyJef5YvlPoKXntQPjzWv5gtm9sB6w=
++github.com/mattn/go-sqlite3 v1.14.53 h1:mnTM0owzUMrKuLo+0w51NUiB0ir2Fo7kFXlPt/l3BGs=
++github.com/mattn/go-sqlite3 v1.14.53/go.mod h1:6JTjA44L93a0QCyJef5YvlPoKXntQPjzWv5gtm9sB6w=
  github.com/miekg/dns v1.1.72 h1:vhmr+TF2A3tuoGNkLDFK9zi36F2LS+hKTRW0Uf8kbzI=
  github.com/miekg/dns v1.1.72/go.mod h1:+EuEPhdHOsfk6Wk5TT2CzssZdqkmFhf8r+aVyDEToIs=
  github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
-@@ -774,8 +778,6 @@
+@@ -774,8 +776,6 @@
  github.com/morikuni/aec v1.1.0/go.mod h1:xDRgiq/iw5l+zkao76YTKzKttOp2cwPEne25HDkJnBw=
  github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
  github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
@@ -101,8 +100,8 @@ klauspost/compress v1.20.3 bump for CVE-2026-116591.
  github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
  github.com/nikolalohinski/gonja/v2 v2.9.1 h1:ZDG0zYs5oR3fsqQFAlkaWiWYxPOBrCUK9k2IsRZhMa8=
  github.com/nikolalohinski/gonja/v2 v2.9.1/go.mod h1:UIzXPVuOsr5h7dZ5DUbqk3/Z7oFA/NLGQGMjqT4L2aU=
-@@ -1243,34 +1245,26 @@
- k8s.io/kubectl v0.37.0/go.mod h1:RSeEl8e/yqDx6srG8Azr0uAtVPNIZljA0PNh9HCBcdg=
+@@ -1243,34 +1243,26 @@
+ k8s.io/kubectl v0.37.1/go.mod h1:66cc4Bz8PxBTxlrHzBuzXEzGIytAnNasKQPeEcpuaV8=
  k8s.io/utils v0.0.0-20260626114624-be93311217bd h1:Ea7fgQ5we8Y9T0OX5o0dAHzQOBRI07D/dEYRaB9ZZEs=
  k8s.io/utils v0.0.0-20260626114624-be93311217bd/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
 -modernc.org/cc/v4 v4.29.7 h1:q+NXGJ0bK3b4TXFYQQVr9pYETGnmwFWkrUzJnMya/Tg=
