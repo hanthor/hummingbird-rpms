@@ -11,8 +11,8 @@ runs.
 
 ## Queue and commands
 
-Edit [`config/konflux-backlog-queue.json`](../../config/konflux-backlog-queue.json) to contain MR
-references in priority order. The team can also supply another file with `--queue`.
+Edit `config/konflux-backlog-queue.json` to contain MR references in priority order. The team can
+also supply another file with `--queue`.
 
 ```json
 [
