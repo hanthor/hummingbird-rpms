@@ -2539,8 +2539,10 @@ def continue_update(dry_run: bool = False) -> None:
     package_dir = RPMS_DIR / package_name
 
     if not package_dir.exists():
-        UPDATE_STATE_FILE.unlink()
-        sys.exit(f"ERROR: Package directory rpms/{package_name}/ not found")
+        sys.exit(
+            f"ERROR: Package directory rpms/{package_name}/ not found\n"
+            f"       Recovery state preserved. Restore the directory, then retry update --continue."
+        )
 
     # Check for remaining conflict markers
     for path in package_dir.rglob('*'):

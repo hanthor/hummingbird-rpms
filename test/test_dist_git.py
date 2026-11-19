@@ -6166,6 +6166,56 @@ def test_new_update_preserves_pending_recovery_state(imported_workdir, packages:
     assert git_output('diff', '--cached') == index_before
 
 
+@pytest.mark.parametrize('dry_run', [False, True], ids=['continue', 'dry-run'])
+def test_update_continue_missing_package_preserves_recovery_state(
+    workdir: Path, upstream_repos: dict[str, Path], dry_run: bool,
+) -> None:
+    """A missing directory must not destroy the information needed to resume."""
+    _create_conflict(workdir, upstream_repos)
+    state_file = workdir / '.dist_git_update_state.json'
+    state_before = state_file.read_bytes()
+    package_dir = workdir / 'rpms' / 'chocolate'
+    saved_package = workdir / 'saved-chocolate'
+    package_dir.rename(saved_package)
+    files_before = {str(path.relative_to(saved_package)): path.read_bytes()
+                    for path in saved_package.rglob('*') if path.is_file()}
+    metadata_file = workdir / 'metadata' / 'chocolate.json'
+    metadata_before = metadata_file.read_bytes()
+    head_before = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir)
+    index_before = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir)
+    options = ['--dry-run'] if dry_run else []
+
+    result = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), *options, 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 1, result.stderr
+    assert 'Package directory rpms/chocolate/ not found' in result.stderr
+    assert state_file.exists(), 'Failed continuation deleted pending recovery state'
+    assert state_file.read_bytes() == state_before
+    assert metadata_file.read_bytes() == metadata_before
+    assert {str(path.relative_to(saved_package)): path.read_bytes()
+            for path in saved_package.rglob('*') if path.is_file()} == files_before
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=workdir) == head_before
+    assert subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=workdir) == index_before
+
+    # Once the directory is restored and the merge resolved, the original
+    # recovery information must still be usable for a successful continuation.
+    saved_package.rename(package_dir)
+    spec = package_dir / 'chocolate.spec'
+    spec.write_text(re.sub(r'<<<<<<< HEAD\n.*?=======\n(.*?)>>>>>>> hummingbird-local\n',
+                           r'\1', spec.read_text(), flags=re.DOTALL))
+    resumed = subprocess.run(
+        [str(workdir / 'ci' / 'dist_git.py'), 'update', '--continue'],
+        cwd=workdir, capture_output=True, text=True,
+    )
+    assert resumed.returncode == 0, resumed.stderr
+    assert not state_file.exists()
+    assert json.loads(metadata_file.read_text())['version'] == '11'
+
+
+
 def test_update_continue_no_state(workdir: Path, upstream_repos: dict[str, Path]) -> None:
     """--continue with no state file exits with error."""
     result = subprocess.run(
