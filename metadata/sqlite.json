@@ -1,14 +1,14 @@
 {
-  "version": "3.54.1",
-  "modification_status": "modified",
-  "upstream_repo": "https://github.com/sqlite/sqlite",
   "fedora": {
-    "git_url": "https://src.fedoraproject.org/rpms/sqlite.git",
     "branch": "rawhide",
-    "sha": "25b716195ef4974ddc5548f1ed2787a237a29802",
-    "release": "1"
+    "git_url": "https://src.fedoraproject.org/rpms/sqlite.git",
+    "release": "2",
+    "sha": "8dbeadd9a182f09db2e6d4f34d0e161724e63c60"
   },
   "modification_reason": "Update to upstream version 3.54.1",
+  "modification_status": "modified",
+  "release_monitoring_project_id": 4877,
   "track_upstream": "latest",
-  "release_monitoring_project_id": 4877
+  "upstream_repo": "https://github.com/sqlite/sqlite",
+  "version": "3.54.1"
 }
