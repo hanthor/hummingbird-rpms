@@ -1,13 +1,8 @@
 [archive]
-pre_commands = [
-  # Upstream 12.4.14 already requires kin-openapi v0.151.0, so no kin-openapi
-  # bump is needed here (a go get @v0.149.0 would downgrade it).
-  # CVE-2026-116591.
-  # Bumps github.com/klauspost/compress to v1.20.2 to fix Denial of Service
-  # via crafted zstd compressed input (DecodeAll and streaming decoder panic
-  # on a crafted two-block frame with an FSE normalized count of 32768).
-  ["go", "get", "github.com/klauspost/compress@v1.20.2"],
-]
+# Upstream 12.4.15 already requires kin-openapi v0.151.0 and
+# github.com/klauspost/compress v1.20.3 (fixes CVE-2026-116591), so no
+# pre_commands bump is needed; a go get @v1.20.2 would downgrade
+# klauspost/compress and leave vendor/ inconsistent with go.mod.
 post_commands = [
   # This module declares MIT in README.md but ships no separate license file.
   ["cp", "-p", "vendor/github.com/mattn/go-localereader/README.md", "vendor/github.com/mattn/go-localereader/LICENSE"],

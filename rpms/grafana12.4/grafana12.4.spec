@@ -2,7 +2,7 @@
 
 # https://github.com/grafana/grafana
 %global goipath github.com/grafana/grafana
-Version:        12.4.14
+Version:        12.4.15
 
 %gometa -L -f
 
@@ -117,9 +117,9 @@ Patch8:         grafana-yarn-cache-compression-%{version}.patch
 # -> 5.6.1 (CVE-2026-115754), and bumps serialize-javascript 7.0.5
 # -> 7.1.4 for CVE-2026-115897.
 #Patch25:        grafana-follow-redirects-serialize-javascript-cve.patch
-# Bumps github.com/klauspost/compress v1.19.1 -> v1.20.2 to fix Denial of
-# Service via crafted zstd compressed input for CVE-2026-116591.
-Patch26:        grafana-klauspost-compress-cve.patch
+# Retired: 12.4.15 already requires klauspost/compress v1.20.3, which fixes
+# CVE-2026-116591 (v1.19.1 -> v1.20.2 bump).
+#Patch26:        grafana-klauspost-compress-cve.patch
 # Generated against the post-compression 12.4.14 lockfile; 12.4.14's own
 # lockfile already carries the older dependency CVE fixes, so only the
 # patches below apply, in this order (same order as
@@ -154,6 +154,13 @@ Patch34:        grafana-uuid-11.1.0-lockfile.patch
 # (pacote 21.5.1 already contains it); updates the yarn.lock checksum to
 # match the patched cache archive.
 Patch35:        grafana-pacote-cve.patch
+# Bumps vendored hono 4.13.13 -> 4.13.16, undici 7.30.1 -> 7.30.2,
+# node-forge 1.4.0 -> 1.4.3 and papaparse 5.5.3 -> 5.7.1 for
+# CVE-2026-126356, CVE-2026-126355, CVE-2026-126357, CVE-2026-126358,
+# CVE-2026-126359, CVE-2026-120415, CVE-2026-120474, CVE-2026-120423,
+# CVE-2026-120222, CVE-2026-116630, CVE-2026-125334, CVE-2026-125336,
+# CVE-2026-127056.
+Patch36:        grafana-hono-undici-node-forge-papaparse-cve.patch
 
 # The bundled @swc/core 1.15.3 has no published linux-s390x native build
 # (s390x support was only added in @swc/core 1.15.21), so the frontend
@@ -871,7 +878,6 @@ Provides:       bundled(npm(better-opn)) = 3.0.2
 Provides:       bundled(npm(binary-extensions)) = 2.2.0
 Provides:       bundled(npm(bl)) = 4.1.0
 Provides:       bundled(npm(bl)) = 5.1.0
-Provides:       bundled(npm(body-parser)) = 1.20.9
 Provides:       bundled(npm(body-parser)) = 2.4.0
 Provides:       bundled(npm(boolbase)) = 1.0.0
 Provides:       bundled(npm(brace)) = 0.11.1
@@ -1284,7 +1290,7 @@ Provides:       bundled(npm(history)) = 4.10.1
 Provides:       bundled(npm(history)) = 5.3.0
 Provides:       bundled(npm(hoist-non-react-statics)) = 3.3.2
 Provides:       bundled(npm(homedir-polyfill)) = 1.0.3
-Provides:       bundled(npm(hono)) = 4.13.13
+Provides:       bundled(npm(hono)) = 4.13.16
 Provides:       bundled(npm(html-element-attributes)) = 1.3.1
 Provides:       bundled(npm(html-entities)) = 2.4.0
 Provides:       bundled(npm(html-escaper)) = 2.0.2
@@ -1570,7 +1576,7 @@ Provides:       bundled(npm(ml-regression-simple-linear)) = 3.0.1
 Provides:       bundled(npm(mock-raf)) = 1.0.1
 Provides:       bundled(npm(module-details-from-path)) = 1.0.4
 Provides:       bundled(npm(moment)) = 2.30.1
-Provides:       bundled(npm(moment-timezone)) = 0.5.47
+Provides:       bundled(npm(moment-timezone)) = 0.6.6
 Provides:       bundled(npm(monaco-editor)) = 0.34.1
 Provides:       bundled(npm(monaco-promql)) = 1.8.0
 Provides:       bundled(npm(moveable)) = 0.53.0
@@ -1596,7 +1602,7 @@ Provides:       bundled(npm(node-domexception)) = 1.0.0
 Provides:       bundled(npm(node-fetch)) = 2.7.0
 Provides:       bundled(npm(node-fetch-commonjs)) = 3.3.2
 Provides:       bundled(npm(node-fetch-h2)) = 2.3.0
-Provides:       bundled(npm(node-forge)) = 1.4.0
+Provides:       bundled(npm(node-forge)) = 1.4.3
 Provides:       bundled(npm(node-gyp)) = 8.3.0
 Provides:       bundled(npm(node-gyp-build)) = 4.8.4
 Provides:       bundled(npm(node-int64)) = 0.4.0
@@ -1630,7 +1636,6 @@ Provides:       bundled(npm(ol)) = 10.7.0
 Provides:       bundled(npm(ol-ext)) = 4.0.36
 Provides:       bundled(npm(ol-mapbox-style)) = 13.1.1
 Provides:       bundled(npm(on-finished)) = 2.4.1
-Provides:       bundled(npm(on-finished)) = 2.4.2
 Provides:       bundled(npm(once)) = 1.4.0
 Provides:       bundled(npm(onetime)) = 5.1.2
 Provides:       bundled(npm(onetime)) = 7.0.0
@@ -1655,7 +1660,7 @@ Provides:       bundled(npm(package-hash)) = 4.0.0
 Provides:       bundled(npm(package-json-from-dist)) = 1.0.1
 Provides:       bundled(npm(package-manager-detector)) = 1.3.0
 Provides:       bundled(npm(pako)) = 2.0.4
-Provides:       bundled(npm(papaparse)) = 5.5.3
+Provides:       bundled(npm(papaparse)) = 5.7.1
 Provides:       bundled(npm(param-case)) = 3.0.4
 Provides:       bundled(npm(parent-module)) = 1.0.1
 Provides:       bundled(npm(parse-color)) = 1.0.0
@@ -1746,7 +1751,6 @@ Provides:       bundled(npm(ramda-adjunct)) = 5.1.0
 Provides:       bundled(npm(randexp)) = 0.5.3
 Provides:       bundled(npm(randombytes)) = 2.1.0
 Provides:       bundled(npm(range-parser)) = 1.2.1
-Provides:       bundled(npm(raw-body)) = 2.5.3
 Provides:       bundled(npm(raw-body)) = 3.0.2
 Provides:       bundled(npm(rbush)) = 4.0.1
 Provides:       bundled(npm(rc-overflow)) = 1.4.1
@@ -2009,7 +2013,6 @@ Provides:       bundled(npm(tar)) = 6.2.1
 Provides:       bundled(npm(teex)) = 1.0.1
 Provides:       bundled(npm(terser)) = 5.37.0
 Provides:       bundled(npm(terser-webpack-plugin)) = 5.4.0
-Provides:       bundled(npm(terser-webpack-plugin)) = 5.6.1
 Provides:       bundled(npm(test-exclude)) = 6.0.0
 Provides:       bundled(npm(text-decoder)) = 1.2.3
 Provides:       bundled(npm(throttle-debounce)) = 3.0.1
@@ -2068,7 +2071,7 @@ Provides:       bundled(npm(ua-parser-js)) = 1.0.41
 Provides:       bundled(npm(uglify-js)) = 3.17.4
 Provides:       bundled(npm(unc-path-regex)) = 0.1.2
 Provides:       bundled(npm(underscore.string)) = 3.3.6
-Provides:       bundled(npm(undici)) = 7.30.1
+Provides:       bundled(npm(undici)) = 7.30.2
 Provides:       bundled(npm(undici-types)) = 7.16.0
 Provides:       bundled(npm(unique-filename)) = 1.1.1
 Provides:       bundled(npm(unique-slug)) = 2.0.2
