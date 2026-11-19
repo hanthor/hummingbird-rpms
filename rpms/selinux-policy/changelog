@@ -1,3 +1,12 @@
+* Tue Nov 17 2026 Zdenek Pytela <zpytela@redhat.com> - 45.25-1
+- Have systemd-ssh-generator use dev_read_vsock()
+- Allow rshim load kernel modules
+- Allow getty read nm-dispatcher console plugin's pid files
+- Allow virtnwfilterd_t map packet_socket
+- Allow iiosensorproxy create and use qipcrtr_socket
+- Allow rndc to read some /proc/net/sys variables
+- Label /dev/paes with crypt_device_t
+
 * Tue Nov 10 2026 Zdenek Pytela <zpytela@redhat.com> - 45.24-1
 - Allow sshd-session bind and connect to all tcp ports
 - Allow tftpd the process setcap permission
