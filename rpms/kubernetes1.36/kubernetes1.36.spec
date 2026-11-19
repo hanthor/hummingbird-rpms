@@ -25,7 +25,7 @@ Version:                %{k8s_ver}
 %gometa -L -f
 
 Name:           %{k8s_name}
-Release:        %autorelease
+Release:        1.1%{?dist}
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 # Node shutdown manager tests fail on the s390x builder.
 ExcludeArch:    s390x
