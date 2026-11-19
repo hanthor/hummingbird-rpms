@@ -243,6 +243,11 @@ def test_missing_expected_build_holds_then_stalls():
         )
         == "stalled"
     )
+    prefix_collision = plr(succeeded="True")
+    prefix_collision["metadata"]["name"] = "another-on-pull-request-extra-abcde"
+    assert (
+        runner.attempt_state([prefix_collision], ref, attempt, NOW, 900) == "admitting"
+    )
 
 
 def test_auto_merge_requires_expected_builds():

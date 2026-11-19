@@ -140,7 +140,11 @@ def attempt_state(
         name
         for name in mr.expected_builds
         if not any(
-            str(run["metadata"]["name"]).startswith(name + "-") for run in matching
+            re.fullmatch(
+                re.escape(name) + r"-[a-z0-9]{5}", str(run["metadata"]["name"])
+            )
+            is not None
+            for run in matching
         )
     ]
     if not matching or missing:
