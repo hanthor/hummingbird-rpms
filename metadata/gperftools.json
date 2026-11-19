@@ -3,9 +3,9 @@
     "branch": "rawhide",
     "git_url": "https://src.fedoraproject.org/rpms/gperftools.git",
     "release": "1",
-    "sha": "4cf8764bffedb10ff1b7e0d5a42b390b04115d5e"
+    "sha": "016b8ad671141e7868275250d8d83c492c1d6403"
   },
   "modification_status": "clean",
   "upstream_repo": "https://github.com/gperftools/gperftools",
-  "version": "2.18.91"
+  "version": "2.19.3"
 }
