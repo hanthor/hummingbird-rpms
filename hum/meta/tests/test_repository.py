@@ -267,6 +267,23 @@ class TestPrivateProducts:
             private_repo.save(metadata)
         assert path.read_bytes() == original
 
+    def test_save_does_not_mutate_model_validation_result(
+        self, private_repo: MetadataRepository, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        metadata = private_repo.create_independent(
+            "hello", version="1", upstream_repo="https://example.com/hello",
+        )
+        metadata.private_product = "unknown"
+        result = metadata.validate(resolve_spec_version=lambda package: package.version)
+        monkeypatch.setattr(metadata, "validate", lambda: result)
+
+        with pytest.raises(InvalidMetadataError, match="unknown") as raised:
+            private_repo.save(metadata)
+
+        assert result.violations == []
+        assert raised.value.result is not result
+        assert raised.value.result.checked_spec_version == result.checked_spec_version
+
     def test_queries_exclude_public_and_group_sorted_packages(
         self, private_repo: MetadataRepository,
     ) -> None:
@@ -275,6 +292,16 @@ class TestPrivateProducts:
             metadata.private_product = product
             private_repo.save(metadata)
         assert private_repo.private_products() == {"alpha": "example", "node": "nodejs20", "zebra": "example"}
+        assert private_repo.packages_by_private_product() == {
+            "example": ["alpha", "zebra"], "nodejs20": ["node"],
+        }
+
+    def test_grouped_packages_are_sorted_independently_of_query_order(
+        self, private_repo: MetadataRepository, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        assignments = {"zebra": "example", "node": "nodejs20", "alpha": "example"}
+        monkeypatch.setattr(private_repo, "private_products", lambda: assignments)
+
         assert private_repo.packages_by_private_product() == {
             "example": ["alpha", "zebra"], "nodejs20": ["node"],
         }

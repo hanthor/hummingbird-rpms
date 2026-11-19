@@ -141,9 +141,12 @@ class MetadataRepository:
         that ever writes the canonical file."""
         result = metadata.validate()
         if not result.violations and metadata.private_product is not None:
-            result.violations.extend(check_private_products(
-                {metadata.package_name: metadata.private_product}, self._private_product_names(),
-            ))
+            result = ValidationResult(
+                checked_spec_version=result.checked_spec_version,
+                violations=check_private_products(
+                    {metadata.package_name: metadata.private_product}, self._private_product_names(),
+                ),
+            )
         if result.violations:
             raise InvalidMetadataError(result)
 
@@ -263,7 +266,7 @@ class MetadataRepository:
         products: dict[str, list[str]] = {}
         for package, product in self.private_products().items():
             products.setdefault(product, []).append(package)
-        return products
+        return {product: sorted(packages) for product, packages in products.items()}
 
     def packages_with_spec(self) -> list[str]:
         """Packages under rpms/<name>/ that have a .spec file. Matches
