@@ -1730,6 +1730,9 @@
       "systemd--rpms": [
         "^rpms/systemd/"
       ],
+      "systemd-boot--rpms": [
+        "^rpms/systemd\\-boot/"
+      ],
       "systemd-stub--rpms": [
         "^rpms/systemd\\-stub/"
       ],

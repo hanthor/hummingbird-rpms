@@ -2307,6 +2307,10 @@
         "^rpms/systemd/",
         "^test/rpms/systemd\\.yml$"
       ],
+      "systemd-boot--rpms": [
+        "^rpms/systemd\\-boot/",
+        "^test/rpms/systemd\\-boot\\.yml$"
+      ],
       "systemd-stub--rpms": [
         "^rpms/systemd\\-stub/",
         "^test/rpms/systemd\\-stub\\.yml$"

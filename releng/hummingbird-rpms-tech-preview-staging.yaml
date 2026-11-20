@@ -1225,6 +1225,8 @@ spec:
           contentType: rpm
         - name: systemd-main
           contentType: rpm
+        - name: systemd-boot-main
+          contentType: rpm
         - name: systemd-stub-main
           contentType: rpm
         - name: tar-main

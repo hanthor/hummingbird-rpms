@@ -1,0 +1,11 @@
+{
+  "fedora": {
+    "branch": "rawhide",
+    "git_url": "https://src.fedoraproject.org/rpms/systemd-boot.git",
+    "release": "5",
+    "sha": "26019e2d760574a5a433599f27a0038c1a9f71b7"
+  },
+  "modification_status": "clean",
+  "upstream_repo": "https://src.fedoraproject.org/rpms/systemd-boot",
+  "version": "261.2"
+}
