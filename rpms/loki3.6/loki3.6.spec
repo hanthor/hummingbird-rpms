@@ -6,7 +6,7 @@ Version: 3.6.20
 %gometa -L
 
 Name:           loki3.6
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Horizontally scalable log aggregation system
 # Checkpoint timing and Arrow timestamp tests fail on the s390x builder.
 ExcludeArch:    s390x

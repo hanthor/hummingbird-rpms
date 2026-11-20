@@ -19,3 +19,12 @@ accepted-checksums:
   - file: "loki-3.6.19-vendor.tar.bz2"
     checksum: "d1f6a7917587a16c2d3442653a08915fa5ed589bd2e991b2a5f33885b8321ef1d41719e570871f3706b26740a98ab20a51d1b7fb5feb44a62d679950d9814384"
     reason: "HUM-11657: vendor archive regenerated with klauspost/compress v1.20.2 for CVE-2026-116591."
+  # HUM-12793 / CVE-2026-128085: bump the OpenTelemetry-Go modules to v1.47.0 (log
+  # exporters to v0.23.0) via dependency_overrides; sync_go_modules updates Source0
+  # go.mod/go.sum to match.
+  - file: "loki-3.6.20.tar.gz"
+    checksum: "1676d4a8784536c7c28e4ddf3356a3bd8cf856601083c3113e646b11009ddf6e976ba964c8875a37dedf78d6eb3abbc3ff95da3e9a1c8d2be0b569c3c3e42bfe"
+    reason: "HUM-12793: Source0 go.mod/go.sum synced for OpenTelemetry-Go v1.47.0 (CVE-2026-128085); remaining source files unchanged from v3.6.20."
+  - file: "loki-3.6.20-vendor.tar.bz2"
+    checksum: "2ca2a8244bed24d4a364f6df1d29c9ae8ac868320a8af7422b047d5ed641f4ad0808635f8ea8cd3c8cecad14b9547eb025b0a1cc0875936771d05d6d69f9da08"
+    reason: "HUM-12793: vendor archive regenerated with OpenTelemetry-Go v1.47.0 for CVE-2026-128085."
